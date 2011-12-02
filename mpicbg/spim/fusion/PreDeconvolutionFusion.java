@@ -22,11 +22,12 @@ import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
 
-public class MappingFusionParalell extends SPIMImageFusion
+public class PreDeconvolutionFusion extends SPIMImageFusion
 {
-	final Image<FloatType> fusedImage;
+	final Image<FloatType> images[], weights[];
+	final int numViews;
 	
-	public MappingFusionParalell( final ViewStructure viewStructure, final ViewStructure referenceViewStructure, 
+	public PreDeconvolutionFusion( final ViewStructure viewStructure, final ViewStructure referenceViewStructure, 
 								  final ArrayList<IsolatedPixelWeightenerFactory<?>> isolatedWeightenerFactories, 
 								  final ArrayList<CombinedPixelWeightenerFactory<?>> combinedWeightenerFactories )
 	{
@@ -36,16 +37,26 @@ public class MappingFusionParalell extends SPIMImageFusion
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Reserving memory for fused image.");
 		
-		ImageFactory<FloatType> fusedImageFactory = new ImageFactory<FloatType>( new FloatType(), conf.outputImageFactory );
-		fusedImage = fusedImageFactory.createImage( new int[]{ imgW, imgH, imgD }, "Fused image"); 
-
-		if (fusedImage == null)
+		final ImageFactory<FloatType> imageFactory = new ImageFactory<FloatType>( new FloatType(), conf.outputImageFactory );
+		numViews = viewStructure.getNumViews();
+		
+		images = new Image[ numViews ];
+		weights = new Image[ numViews ];
+		
+		for ( int view = 0; view < numViews; view++ )
 		{
-			if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
-				IOFunctions.println("MappingFusionParalell.constructor: Cannot create output image: " + conf.outputImageFactory.getErrorMessage());
+			weights[ view ] = imageFactory.createImage( new int[]{ imgW, imgH, imgD }, "weights_" + view );
+			images[ view ] = imageFactory.createImage( new int[]{ imgW, imgH, imgD }, "view_" + view ); 
+			
+			if ( images[ view ] == null || weights[ view ] == null )
+			{
+				if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
+					IOFunctions.println("PreDeconvolutionFusion.constructor: Cannot create output image: " + conf.outputImageFactory.getErrorMessage() );
 
-			return;
-		}
+				return;
+			}
+
+		}		
 	}
 
 	@Override
@@ -65,10 +76,9 @@ public class MappingFusionParalell extends SPIMImageFusion
 		
 		final int numViews = views.size();
 		
-		// clear the previous output image
+		// this is only single channel for noew
 		if ( channelIndex > 0 )
-			for ( final FloatType type : fusedImage )
-				type.set( 0 );
+			return;
 		
 		// load images 
 		for ( final ViewDataBeads view : views )
@@ -127,13 +137,13 @@ public class MappingFusionParalell extends SPIMImageFusion
 						
 			if ( !successful )
 			{
-				IOFunctions.println( "WARNING: Not enough memory for running the content-based fusion, running without it" );
+				IOFunctions.println( "Not enough memory for running the content-based fusion, running without it" );
 				isoWinit = new IsolatedPixelWeightener[ 0 ][ 0 ];
 			}
 		}
 		catch (Exception e)
 		{				
-			IOFunctions.println( "WARNING: Not enough memory for running the content-based fusion, running without it" );
+			IOFunctions.println( "Not enough memory for running the content-based fusion, running without it" );
 			isoWinit = new IsolatedPixelWeightener[ 0 ][ 0 ];
 		}
 		
@@ -213,26 +223,42 @@ public class MappingFusionParalell extends SPIMImageFusion
 		    			for ( int i = 0; i < numViews; ++i )
 		    				tmpCoordinates[ i ] = new Point3f();
 		    			
-		    			final LocalizableCursor<FloatType> it = fusedImage.createLocalizableCursor();
+		    			final LocalizableCursor<FloatType> outIntensity[] = new LocalizableCursor[ numViews ];
+		    			final LocalizableCursor<FloatType> outWeights[] = new LocalizableCursor[ numViews ];
+		    			
+		    			final float[] tmpWeights = new float[ numViews ];
+		    			
+		    			for ( int i = 0; i < numViews; ++i )
+		    			{
+		    				outIntensity[ i ] = images[ i ].createLocalizableCursor();
+		    				outWeights[ i ] = weights[ i ].createLocalizableCursor();
+		    			}
+		    			
+		    			final LocalizableCursor<FloatType> firstCursor = outIntensity[ 0 ];
 		    			
 		    			// create Interpolated Iterators for the input images (every thread need own ones!)
 		    			final Interpolator<FloatType>[] interpolators = new Interpolator[ numViews ];
 		    			for (int view = 0; view < numViews ; view++)
 		    				interpolators[ view ] = views.get( view ).getImage().createInterpolator( conf.interpolatorFactorOutput );
 		    			
-		    			while (it.hasNext())
+		    			while ( firstCursor.hasNext() )
 		    			{
-		    				it.fwd();
+			    			for ( int i = 0; i < numViews; ++i )
+			    			{
+			    				outIntensity[ i ].fwd();
+			    				outWeights[ i ].fwd();
+			    			}
 		    				
-		        			if (it.getPosition(2) % numThreads == myNumber)
+		        			if ( firstCursor.getPosition(2) % numThreads == myNumber )
 		        			{
-		        				// get the coordinates if cropped
-		        				final int x = it.getPosition(0) + cropOffsetX;
-		        				final int y = it.getPosition(1) + cropOffsetY;
-		        				final int z = it.getPosition(2) + cropOffsetZ;
-		
+		        				// get the coordinates if cropped (all coordinates are the same, so we only use the first cursor)
+		        				final int x = firstCursor.getPosition( 0 ) + cropOffsetX;
+		        				final int y = firstCursor.getPosition( 1 ) + cropOffsetY;
+		        				final int z = firstCursor.getPosition( 2 ) + cropOffsetZ;
+
+		        				// how many view contribute at this position
 								int num = 0;
-								for (int i = 0; i < numViews; ++i)
+								for ( int i = 0; i < numViews; ++i )
 								{
 									if ( useView[ i ] )
 									{	            							
@@ -256,28 +282,29 @@ public class MappingFusionParalell extends SPIMImageFusion
 											 loc[ i ][ 1 ] < imageSizes[ i ][ 1 ] && 
 											 loc[ i ][ 2 ] < imageSizes[ i ][ 2 ] )
 		    							{
-		    								use[i] = true;
+		    								use[ i ] = true;
 		    								++num;
 		    							}	
 		    							else
 		    							{
-		    								use[i] = false;
+		    								use[ i ] = false;
 		    							}
 									}
 								}
 		    				
-								if (num > 0)
+								if ( num > 0 )
 								{
 		    						// update combined weighteners
-									if (combW.length > 0)
-										for (final CombinedPixelWeightener<?> w : combW)
+									if ( combW.length > 0 )
+										for ( final CombinedPixelWeightener<?> w : combW )
 											w.updateWeights(locf, use);
 		
 									float sumWeights = 0;
-		    						float value = 0;
+		    						//float value = 0;
 		
-		    						for (int view = 0; view < numViews; ++view)
-		    							if (use[view])
+		    						for ( int view = 0; view < numViews; ++view )
+		    						{
+		    							if ( use[view] )
 		    							{
 		    								float weight = 1;
 		    								
@@ -299,22 +326,39 @@ public class MappingFusionParalell extends SPIMImageFusion
 		    								
 		    								interpolators[view].moveTo( tmp );
 		    								
-		    								value += weight * interpolators[view].getType().get(); 
+		    								//value += weight * interpolators[view].getType().get(); 
 		    								sumWeights += weight;
+		    								
+		    								// set the intensity, remember the weight
+		    								tmpWeights[ view ] = weight;
+		    								outIntensity[ view ].getType().set( interpolators[view].getType().get() );
 		    							}
-		    							
-		    						if (sumWeights > 0)
-		    							it.getType().set(value/sumWeights);
-		
+		    						}
+		    						
+		    						// set the normalized weights
+		    						if ( sumWeights > 0 )
+		    						{
+			    						for ( int view = 0; view < numViews; ++view )
+			    						{
+			    							if ( use[view] )
+			    							{
+			    								outWeights[ view ].getType().set( tmpWeights[ view ]/sumWeights );
+			    							}
+			    						}
+		    						}
+		    									
 	    						}
 	    						
 	            			} // myThread loop       				
 	        			} // iterator loop
 	        			
-	        			it.close();
-	        			for (int view = 0; view < numViews; view++)
-	        				interpolators[view].close();
-	        			
+		    			for ( int i = 0; i < numViews; ++i )
+		    			{
+		    				outIntensity[ i ].close();
+		    				outWeights[ i ].close();
+	        				interpolators[ i ].close();
+		    			}
+		    			
 	        			// close combined pixel weighteners
 	        			for (int i = 0; i < combW.length; i++)
 	        				combW[i].close();     
@@ -338,9 +382,9 @@ public class MappingFusionParalell extends SPIMImageFusion
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Closing all input images (Channel " + channelIndex +  ").");
 
-		// unload images
-		for ( final ViewDataBeads view : views ) 
-			view.closeImage();
+		// do not unload images, we need them to extract the beads!
+		//for ( final ViewDataBeads view : views ) 
+		//	view.closeImage();
 			
 		// close weighteners		
 		// close isolated pixel weighteners
@@ -360,5 +404,15 @@ public class MappingFusionParalell extends SPIMImageFusion
 	}
 
 	@Override
-	public Image<FloatType> getFusedImage() { return fusedImage; } 
+	public Image<FloatType> getFusedImage() { return null; }
+	
+	public Image<FloatType> getFusedImage( final int index ) { return images[ index ]; }
+	public Image<FloatType> getWeightImage( final int index ) { return weights[ index ]; }
+
+	@Override
+	public void closeImages() 
+	{
+		// do nothing, we still need them!
+	}
+
 }
