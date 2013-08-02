@@ -25,12 +25,12 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>VIB-lib</artifactId>
-			<version>${fiji.version}</version>
+			<version>${imagej.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>fiji-lib</artifactId>
-			<version>${fiji.version}</version>
+			<version>${imagej.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imagej</groupId>
@@ -40,7 +40,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>legacy-imglib1</artifactId>
-			<version>${fiji.version}</version>
+			<version>${imagej.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jfree</groupId>
@@ -83,22 +83,22 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>3D_Viewer</artifactId>
-			<version>${fiji.version}</version>
+			<version>${imagej.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Fiji_Plugins</artifactId>
-			<version>${fiji.version}</version>
+			<version>${imagej.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>SPIM_Opener</artifactId>
-			<version>${fiji.version}</version>
+			<version>${imagej.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>${bio-formats.groupId}</groupId>
+			<groupId>loci</groupId>
 			<artifactId>scifio</artifactId>
-			<version>${bio-formats.version}</version>
+			<version>${scifio.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.java.dev.jna</groupId>
@@ -108,17 +108,17 @@
 		<dependency>
 			<groupId>net.imglib2</groupId>
 			<artifactId>imglib2-algorithms</artifactId>
-			<version>${imglib2.version}</version>
+			<version>${imagej.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imglib2</groupId>
 			<artifactId>imglib2-ij</artifactId>
-			<version>${imglib2.version}</version>
+			<version>${imagej.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imglib2</groupId>
 			<artifactId>imglib2</artifactId>
-			<version>${imglib2.version}</version>
+			<version>${imagej.version}</version>
 		</dependency>
 	</dependencies>
 

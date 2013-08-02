@@ -48,12 +48,10 @@ public class FusionControl
 				combinedWeightenerFactories.add( new BlendingSimpleFactory( 0, 0.3f ) );
 		}
 		
-		if ( conf.isDeconvolution && conf.deconvolutionLoadSequentially )
-			fusion = new PreDeconvolutionFusionSequential( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories );
-		else if ( conf.isDeconvolution )
+		if ( conf.isDeconvolution )
 			fusion = new PreDeconvolutionFusion( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories );
 		else if (conf.multipleImageFusion)
-			fusion = new MappingFusionSequentialDifferentOutput( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories, conf.numParalellViews );
+			fusion = new MappingFusionSequentialDifferentOutput( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories );
 		else if (conf.paralellFusion)
 			fusion = new MappingFusionParalell( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories ); //TODO: Remove Max Weight
 		else

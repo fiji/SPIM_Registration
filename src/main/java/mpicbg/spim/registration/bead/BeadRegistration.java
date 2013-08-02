@@ -34,9 +34,6 @@ import mpicbg.util.TransformUtils;
 
 public class BeadRegistration
 {
-	public static float minInlierFactor = 3;
-	public static boolean preAlignTiles = false;
-	
 	final ViewStructure viewStructure;
 	final static NumberFormat nf = NumberFormat.getPercentInstance();
 	
@@ -189,7 +186,7 @@ public class BeadRegistration
                     		final ArrayList< PointMatchGeneric<Bead> > correspondences = new ArrayList<PointMatchGeneric<Bead>>();
                     		final Model<?> model = viewA.getTile().getModel().copy();                    		
                     		
-                    		String result = DetectionRegistration.computeRANSAC( candidates, correspondences, model, conf.max_epsilon, conf.min_inlier_ratio, minInlierFactor, conf.numIterations );
+                    		String result = DetectionRegistration.computeRANSAC( candidates, correspondences, model, conf.max_epsilon, conf.min_inlier_ratio, 3, conf.numIterations );
                     		if ( debugLevel <= ViewStructure.DEBUG_MAIN )
                     			IOFunctions.println( viewA.getName() + "<->" + viewB.getName() +  ": " + result );                    		
 
@@ -358,7 +355,7 @@ public class BeadRegistration
                     		final ArrayList< PointMatchGeneric<Bead> > correspondences = new ArrayList<PointMatchGeneric<Bead>>();
                     		final Model<?> model = viewA.getTile().getModel().copy();                    		
                     		
-                    		String result = DetectionRegistration.computeRANSAC( candidates, correspondences, model, conf.max_epsilon, conf.min_inlier_ratio, minInlierFactor, conf.numIterations );
+                    		String result = DetectionRegistration.computeRANSAC( candidates, correspondences, model, conf.max_epsilon, conf.min_inlier_ratio, 3, conf.numIterations );
                     		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
                     			IOFunctions.println( viewA.getName() + "<->" + viewB.getName() +  ": " + result );                    		
 
@@ -471,21 +468,10 @@ public class BeadRegistration
 		
 		try
 		{
-			if ( preAlignTiles )
-			{
-				int unaligned = tc.preAlign().size(); 
-				if ( unaligned > 0 )
-					IOFunctions.println( "pre-aligned all tiles but " + unaligned );
-				else
-					IOFunctions.println( "prealigned all tiles" );
-			}
-			
 			if ( views.get( 0 ).getViewStructure().getSPIMConfiguration().displayRegistration )
 				tc.optimizeWith3DViewer( 10, 10000, 200, views, debugLevel );
 			else
-			{				
 				tc.optimize( 10, 10000, 200, debugLevel );
-			}
 			
 			//tc.optimizeWithSketchTikZ( 10, 10000, 200, debugLevel );
 			//tc.optimizeWithSketchTikZNuclei( 10, 10000, 200, debugLevel );
