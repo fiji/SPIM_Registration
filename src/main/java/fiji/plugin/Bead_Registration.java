@@ -1,5 +1,7 @@
 package fiji.plugin;
 
+import mpicbg.spim.data.sequence.TimePoint;
+
 import fiji.Debug;
 import fiji.plugin.timelapsedisplay.GraphFrame;
 import fiji.plugin.timelapsedisplay.TimeLapseDisplay;
@@ -52,6 +54,7 @@ public class Bead_Registration implements PlugIn
 	@Override
 	public void run(String arg0) 
 	{
+		new TimePoint( 0, "" );
 		// output to IJ.log
 		IOFunctions.printIJLog = true;
 		
