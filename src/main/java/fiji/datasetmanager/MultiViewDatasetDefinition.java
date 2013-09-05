@@ -14,9 +14,10 @@ public interface MultiViewDatasetDefinition
 	
 	/**
 	 * An explanation for the user what exactly this {@link MultiViewDatasetDefinition}
-	 * supports and how it needs to be stored.
+	 * supports and how it needs to be stored. Up to 15 lines will be displayed with
+	 * 80 characters each. No newline characters are allowed.
 	 * 
-	 * @return
+	 * @return description
 	 */
 	public String getExtendedDescription();
 	
