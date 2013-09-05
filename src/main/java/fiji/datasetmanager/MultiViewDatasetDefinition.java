@@ -1,9 +1,8 @@
 package fiji.datasetmanager;
 
 import mpicbg.spim.data.SpimData;
-import ij.plugin.PlugIn;
 
-public interface MultiViewDatasetDefinition extends PlugIn
+public interface MultiViewDatasetDefinition
 {
 	/**
 	 * Defines the title under which it will be displayed in the list
@@ -12,6 +11,14 @@ public interface MultiViewDatasetDefinition extends PlugIn
 	 * @return
 	 */
 	public String getTitle();
+	
+	/**
+	 * An explanation for the user what exactly this {@link MultiViewDatasetDefinition}
+	 * supports and how it needs to be stored.
+	 * 
+	 * @return
+	 */
+	public String getExtendedDescription();
 	
 	/**
 	 * This method is supposed to (interactively, ideally ImageJ-macroscriptable)

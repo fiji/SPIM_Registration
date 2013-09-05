@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import mpicbg.spim.data.SpimData;
 
 import fiji.datasetmanager.MultiViewDatasetDefinition;
+import fiji.datasetmanager.StackListLOCI;
 
 import ij.IJ;
 import ij.gui.GenericDialog;
@@ -12,8 +13,13 @@ import ij.plugin.PlugIn;
 
 public class Create_Multi_View_Dataset implements PlugIn
 {
-	final public static ArrayList< ? extends MultiViewDatasetDefinition > datasetDefinitions = new ArrayList<MultiViewDatasetDefinition>();
+	final public static ArrayList< MultiViewDatasetDefinition > datasetDefinitions = new ArrayList< MultiViewDatasetDefinition >();
 	public static int defaultDatasetDef = 0;
+	
+	static
+	{
+		datasetDefinitions.add( new StackListLOCI() );
+	}
 
 	@Override
 	public void run(String arg0) 
@@ -40,6 +46,11 @@ public class Create_Multi_View_Dataset implements PlugIn
 			defaultDatasetDef = 0;
 		
 		gd1.addChoice( "Type_of_dataset: ", titles, titles[ defaultDatasetDef ] );
+		Object o1 = gd1.getStringFields().lastElement();
+		gd1.addMessage( "" );
+		gd1.addMessage( "hallo" );
+		Object o2 = gd1.getStringFields().lastElement();
+		
 		gd1.showDialog();
 		if ( gd1.wasCanceled() )
 			return;
