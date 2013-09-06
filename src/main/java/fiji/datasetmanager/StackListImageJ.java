@@ -1,5 +1,12 @@
 package fiji.datasetmanager;
 
+import ij.IJ;
+import ij.ImagePlus;
+import ij.io.Opener;
+import ij.measure.Calibration;
+
+import java.io.File;
+
 import mpicbg.spim.data.SpimData;
 
 public class StackListImageJ extends StackList
@@ -13,6 +20,8 @@ public class StackListImageJ extends StackList
 	@Override
 	public SpimData<?, ?> createDataset()
 	{
+		System.out.println( queryInformation() );
+		
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -33,6 +42,40 @@ public class StackListImageJ extends StackList
 				 "Angle0.ome.tiff ... Angle288.ome.tiff\n" +
 				 "\n" +
 				 "Note: this definition can be used for OpenSPIM data if saved as plain TIFF.";
+	}
+
+	@Override
+	protected boolean loadCalibration( final File file ) 
+	{
+		try
+		{
+			IJ.log( "Loading calibration for: " + file.getAbsolutePath() );
+			
+			final ImagePlus imp = new Opener().openImage( file.getAbsolutePath() );
+
+			if ( imp == null )
+			{
+				IJ.log( "Could not open file: '" + file.getAbsolutePath() + "'" );
+				return false;				
+			}
+			
+			final Calibration c = imp.getCalibration();
+			
+			calX = c.pixelWidth;
+			calY = c.pixelHeight;
+			calZ = c.pixelDepth;
+			
+			calUnit = c.getUnit();
+			
+			imp.close();
+			
+			return true;
+		}
+		catch ( Exception e )
+		{
+			IJ.log( "Could not open file: '" + file.getAbsolutePath() + "'" );
+			return false;
+		}
 	}
 
 }

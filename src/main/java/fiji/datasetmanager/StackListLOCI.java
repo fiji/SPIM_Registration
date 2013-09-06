@@ -1,5 +1,20 @@
 package fiji.datasetmanager;
 
+import ij.IJ;
+
+import java.io.File;
+import java.io.IOException;
+
+import loci.common.services.DependencyException;
+import loci.common.services.ServiceException;
+import loci.common.services.ServiceFactory;
+import loci.formats.ChannelSeparator;
+import loci.formats.FormatException;
+import loci.formats.FormatTools;
+import loci.formats.IFormatReader;
+import loci.formats.meta.IMetadata;
+import loci.formats.meta.MetadataRetrieve;
+import loci.formats.services.OMEXMLService;
 import mpicbg.spim.data.SpimData;
 
 public class StackListLOCI extends StackList
@@ -36,4 +51,86 @@ public class StackListLOCI extends StackList
 				 "\n" +
 				 "Note: this definition can be used for OpenSPIM data.";
 	}
+
+	@Override
+	protected boolean loadCalibration( final File file )
+	{
+		System.out.println( "Loading calibration for: " + file.getAbsolutePath() );
+		
+		final IFormatReader r = new ChannelSeparator();
+
+		if ( !createOMEXMLMetadata( r ) ) 
+		{
+			try 
+			{
+				r.close();
+			} 
+			catch (IOException e) 
+			{
+				e.printStackTrace();
+			}
+			return false;
+		}
+		
+		
+		try 
+		{
+			r.setId( file.getAbsolutePath() );
+			
+			final MetadataRetrieve retrieve = (MetadataRetrieve)r.getMetadataStore();
+			
+			float cal = retrieve.getPixelsPhysicalSizeX( 0 ).getValue().floatValue();
+			if ( cal == 0 )
+			{
+				cal = 1;
+				System.out.println( "StackListLOCI: Warning, calibration for dimension X seems corrupted, setting to 1." );
+			}
+			calX = cal;
+
+			cal = retrieve.getPixelsPhysicalSizeY( 0 ).getValue().floatValue();
+			if ( cal == 0 )
+			{
+				cal = 1;
+				System.out.println( "StackListLOCI: Warning, calibration for dimension Y seems corrupted, setting to 1." );
+			}
+			calY = cal;
+
+			cal = retrieve.getPixelsPhysicalSizeZ( 0 ).getValue().floatValue();
+			if ( cal == 0 )
+			{
+				cal = 1;
+				System.out.println( "StackListLOCI: Warning, calibration for dimension Z seems corrupted, setting to 1." );
+			}
+			calZ = cal;
+			
+			r.close();
+		} 
+		catch ( Exception e) 
+		{
+			IJ.log( "Could not open file: '" + file.getAbsolutePath() + "'" );
+			e.printStackTrace();
+			return false;
+		}
+		
+		return true;
+	}
+
+	private static boolean createOMEXMLMetadata(final IFormatReader r)
+	{
+		try {
+			final ServiceFactory serviceFactory = new ServiceFactory();
+			final OMEXMLService service = serviceFactory
+					.getInstance(OMEXMLService.class);
+			final IMetadata omexmlMeta = service.createOMEXMLMetadata();
+			r.setMetadataStore(omexmlMeta);
+		} catch (final ServiceException e) {
+			e.printStackTrace();
+			return false;
+		} catch (final DependencyException e) {
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}
+
 }

@@ -16,6 +16,7 @@ import java.awt.GridBagLayout;
 import java.awt.Panel;
 import java.awt.ScrollPane;
 import java.awt.Toolkit;
+import java.io.File;
 import java.util.ArrayList;
 
 import mpicbg.spim.io.ConfigurationParserException;
@@ -48,22 +49,38 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	
 	protected ArrayList< int[] > exceptionIds;
 	
+	protected String[] calibrationChoice = new String[]{ "Same calibration for all files (load from first file)", "Same calibration for all files (user defined)", "Load calibration for each file individually" };
+	public static int defaultCalibration = 0;
+	public int calibation;
+	
 	public static String defaultDirectory = "";
 	public static String defaultFileNamePattern = null;
 
 	protected String directory, fileNamePattern;
+	
+	protected double calX = 1, calY = 1, calZ = 1;
+	protected String calUnit = "µm";
 
 	protected boolean queryInformation()
-	{
-		if ( !queryGeneralInformation() )
-			return false;
-		
-		if ( defaultFileNamePattern == null )
-			defaultFileNamePattern = assembleDefaultPattern();
-		
+	{		
 		try 
 		{
+			if ( !queryGeneralInformation() )
+				return false;
+			
+			if ( defaultFileNamePattern == null )
+				defaultFileNamePattern = assembleDefaultPattern();
+
 			if ( !queryNames() )
+				return false;
+
+			if ( showDebugFileNames && !debugShowFiles() )
+				return false;
+			
+			if ( calibation == 0 && !loadFirstCalibration() )
+				return false;
+			
+			if ( !queryDetails() )
 				return false;
 		} 
 		catch ( ConfigurationParserException e )
@@ -71,8 +88,107 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			IJ.log( e.toString() );
 			return false;
 		}
+				
+		return true;
+	}
+	
+	/**
+	 * Assemble the filename for the corresponding file based on the indices for time, channel, illumination and angle
+	 * 
+	 * @param tpID
+	 * @param chID
+	 * @param illID
+	 * @param angleID
+	 * @return
+	 */
+	protected String getFileNameFor( final int tpID, final int chID, final int illID, final int angleID )
+	{
+		String fileName = fileNamePattern;
 		
-		if ( showDebugFileNames && !debugShowFiles() )
+		if ( hasMultipleTimePoints )
+			fileName = fileName.replace( replaceTimepoints, "" + timepointList.get( tpID ) );
+
+		if ( hasMultipleChannels )
+			fileName = fileName.replace( replaceChannels, "" + channelList.get( chID ) );
+
+		if ( hasMultipleIlluminations )
+			fileName = fileName.replace( replaceIlluminations, "" + illuminationsList.get( illID ) );
+
+		if ( hasMultipleAngles )
+			fileName = fileName.replace( replaceAngles, "" + angleList.get( angleID ) );
+		
+		return fileName;
+	}
+	
+	/**
+	 * populates the fields calX, calY, calZ from the first file of the series
+	 * 
+	 * @return - true if successful
+	 */
+	protected boolean loadFirstCalibration()
+	{
+		for ( int t = 0; t < timepointList.size(); ++t )
+			for ( int c = 0; c < channelList.size(); ++c )
+				for ( int i = 0; i < illuminationsList.size(); ++i )
+					for ( int a = 0; a < angleList.size(); ++a )
+					{
+						if ( exceptionIds.size() > 0 && 
+							 exceptionIds.get( 0 )[ 0 ] == t && exceptionIds.get( 0 )[ 1 ] == c && 
+							 exceptionIds.get( 0 )[ 2 ] == t && exceptionIds.get( 0 )[ 3 ] == a )
+						{
+							continue;
+						}
+						else
+						{
+							return loadCalibration( new File( directory, getFileNameFor( t, c, i, a ) ) );
+						}
+					}
+		
+		return false;
+	}
+	
+	/**
+	 * Loads the calibration stored in a specific file and closes it afterwards. Depends on the type of opener that is used.
+	 * 
+	 * @param file
+	 * @return
+	 */
+	protected abstract boolean loadCalibration( final File file );
+	
+	protected boolean queryDetails()
+	{
+		final GenericDialog gd = new GenericDialog( "Define dataset (3/3)" );
+		
+		gd.addMessage( "Channel definitions", new Font( Font.SANS_SERIF, Font.BOLD, 14 ) );
+		gd.addMessage( "" );
+		
+		if ( hasMultipleChannels )
+		{
+			for ( int c = 0; c < channelList.size(); ++c )
+				gd.addCheckbox( "Beads_visible_in_channel_" + channelList.get( c ), true );
+		}
+		else
+		{
+			gd.addCheckbox( "Beads_visible_in_default_channel", true );
+		}
+
+		if ( calibation < 2 )
+		{
+			gd.addMessage( "" );
+			gd.addMessage( "Calibration", new Font( Font.SANS_SERIF, Font.BOLD, 14 ) );			
+			if ( calibation == 1 )
+				gd.addMessage( "(read from file)", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
+			gd.addMessage( "" );
+			
+			gd.addNumericField( "Pixel_distance_x", calX, 5 );
+			gd.addNumericField( "Pixel_distance_y", calY, 5 );
+			gd.addNumericField( "Pixel_distance_z", calZ, 5 );
+			gd.addStringField( "Pixel_unit", calUnit );
+		}
+
+		gd.showDialog();
+		
+		if ( gd.wasCanceled() )
 			return false;
 		
 		return true;
@@ -90,19 +206,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 				for ( int i = 0; i < illuminationsList.size(); ++i )
 					for ( int a = 0; a < angleList.size(); ++a )
 					{
-						String fileName = fileNamePattern;
-						
-						if ( hasMultipleTimePoints )
-							fileName = fileName.replace( replaceTimepoints, "" + timepointList.get( t ) );
-
-						if ( hasMultipleChannels )
-							fileName = fileName.replace( replaceChannels, "" + channelList.get( c ) );
-
-						if ( hasMultipleIlluminations )
-							fileName = fileName.replace( replaceIlluminations, "" + illuminationsList.get( i ) );
-
-						if ( hasMultipleAngles )
-							fileName = fileName.replace( replaceAngles, "" + angleList.get( a ) );
+						String fileName = getFileNameFor( t, c, i, a );
 
 						gd.addCheckbox( fileName, true );
 						
@@ -134,8 +238,8 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	{
 		final GenericDialogPlus gd = new GenericDialogPlus( "Define dataset (2/3)" );
 		
-		gd.addDirectoryOrFileField( "3d_image_files_directory", defaultDirectory );
-		gd.addStringField( "Pattern_of 3d_image_files", defaultFileNamePattern, 40 );
+		gd.addDirectoryOrFileField( "Image_File_directory", defaultDirectory );
+		gd.addStringField( "Image_File_Pattern", defaultFileNamePattern, 40 );
 
 		if ( hasMultipleTimePoints )
 			gd.addStringField( "Timepoints", defaultTimepoints );
@@ -149,8 +253,10 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		if ( hasMultipleAngles )
 			gd.addStringField( "Acquisition_angles", defaultAngles );
 		
+		gd.addChoice( "Calibration", calibrationChoice, calibrationChoice[ defaultCalibration ] );
+		
 		gd.addCheckbox( "Show_list of filenames (to debug and it allows to deselect individual files)", showDebugFileNames );
-		gd.addMessage( "Note: this might take a few seconds if thousands of files are present", new Font( Font.MONOSPACED, Font.ITALIC, 11 ) );
+		gd.addMessage( "Note: this might take a few seconds if thousands of files are present", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
 		
 		gd.showDialog();
 		
@@ -221,6 +327,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 
 		exceptionIds = new ArrayList< int[] >();
 		
+		defaultCalibration = calibation = gd.getNextChoiceIndex();
 		showDebugFileNames = gd.getNextBoolean();
 		
 		return true;		
