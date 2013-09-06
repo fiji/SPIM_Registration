@@ -12,10 +12,22 @@ import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
 import java.awt.AWTEvent;
+import java.awt.BorderLayout;
+import java.awt.Checkbox;
 import java.awt.Choice;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Label;
+import java.awt.LayoutManager;
+import java.awt.Panel;
+import java.awt.ScrollPane;
+import java.awt.Toolkit;
 import java.awt.event.ItemEvent;
 import java.util.ArrayList;
 
@@ -146,17 +158,20 @@ public class Create_Multi_View_Dataset implements PlugIn
 				if ( e instanceof ItemEvent && e.getID() == ItemEvent.ITEM_STATE_CHANGED && e.getSource() == choice )
 				{
 					label.setText( formatEntry( datasetDefinitions.get( choice.getSelectedIndex() ).getExtendedDescription(), numCharacters, numLinesDocumentation ) );
-					//setLabelTexts( labels, datasetDefinitions.get( choice.getSelectedIndex() ).getExtendedDescription(), numCharacters );
 				}
 				return true;
 			}
 		} );
 		
 	}
-
+	
 	public static void main( String args[] )
-	{		
+	{
+		
+
 		//new ImageJ();
 		new Create_Multi_View_Dataset().run( null );
+		
+		System.exit( 0 );
 	}
 }

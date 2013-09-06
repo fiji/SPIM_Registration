@@ -13,6 +13,8 @@ public class StackListLOCI extends StackList
 	@Override
 	public SpimData<?, ?> createDataset()
 	{
+		System.out.println( queryInformation() );
+		
 		// TODO Auto-generated method stub
 		return null;
 	}
