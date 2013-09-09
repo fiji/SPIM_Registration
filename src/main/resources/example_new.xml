@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SpimData version="1.0">
+	<BasePath type="relative">.</BasePath>
+	<SequenceDescription>
+		<ImageLoader class="fiji.spimdata.ImageStackLoaderIJ">
+			<imagedirectory type="relative">.</imagedirectory>
+			<filePattern>spim_TL{t}_Angle{a}.tif</filePattern>
+		</ImageLoader>
+		<ViewSetups>
+			<ViewSetup>
+				<id>0</id>
+				<angle>0</angle>
+				<illumination>0</illumination>
+				<channel>1</channel>
+				<width>0</width>
+				<height>0</height>
+				<depth>0</depth>
+				<pixelWidth>0.0</pixelWidth>
+				<pixelHeight>0.0</pixelHeight>
+				<pixelDepth>0.0</pixelDepth>
+			</ViewSetup>
+			<ViewSetup>
+				<id>1</id>
+				<angle>120</angle>
+				<illumination>0</illumination>
+				<channel>1</channel>
+				<width>0</width>
+				<height>0</height>
+				<depth>0</depth>
+				<pixelWidth>0.0</pixelWidth>
+				<pixelHeight>0.0</pixelHeight>
+				<pixelDepth>0.0</pixelDepth>
+			</ViewSetup>
+			<ViewSetup>
+				<id>2</id>
+				<angle>240</angle>
+				<illumination>0</illumination>
+				<channel>1</channel>
+				<width>0</width>
+				<height>0</height>
+				<depth>0</depth>
+				<pixelWidth>0.0</pixelWidth>
+				<pixelHeight>0.0</pixelHeight>
+				<pixelDepth>0.0</pixelDepth>
+			</ViewSetup>
+			<ViewSetup>
+				<id>3</id>
+				<angle>0</angle>
+				<illumination>0</illumination>
+				<channel>0</channel>
+				<width>0</width>
+				<height>0</height>
+				<depth>387</depth>
+				<pixelWidth>1.0</pixelWidth>
+				<pixelHeight>1.0</pixelHeight>
+				<pixelDepth>1.0</pixelDepth>
+			</ViewSetup>
+		</ViewSetups>
+		<Timepoints type="pattern">
+			<integerpattern>1,4-10,20-50:10,100</integerpattern>
+		</Timepoints>
+		<MissingViews>
+			<MissingView timepoint="0" setup="2" />
+		</MissingViews>
+	</SequenceDescription>
+	<ViewRegistrations>
+		<ReferenceTimepoint>50</ReferenceTimepoint>
+		<ViewRegistration timepoint="0" setup="0" >
+			<ViewTransform type="affine">
+				<Name>may have a name</Name>
+				<affine>0.999821662902832 0.001022040843963623 0.00501742959022522
+					-3.519404888153076 -0.0010658497922122478 0.9997905492782593
+					0.013411939144134521 -0.6369718313217163 -0.001060429960489273
+					-5.734488368034363E-4 5.130109786987305 2.7818984985351562
+				</affine>
+			</ViewTransform>
+		</ViewRegistration>
+		<ViewRegistration timepoint="1" setup="0" >
+			<ViewTransform type="affine">
+				<affine>0.9997981786727905 0.0010066628456115723 0.005043089389801025
+					-3.4342167377471924 -9.974809363484383E-4 0.9995599389076233
+					0.012828335165977478 -0.3961014449596405 -7.83698633313179E-4
+					-0.0011375099420547485 5.129184722900391 2.66168212890625
+				</affine>
+			</ViewTransform>
+		</ViewRegistration>
+		<ViewRegistration timepoint="2" setup="0" >
+			<ViewTransform type="affine">
+				<affine>0.9998526573181152 7.255449891090393E-4 0.007503300905227661
+					-3.686215400695801 -8.680634200572968E-4 0.9995786547660828
+					0.010069437325000763 -0.3393605947494507 -7.03832134604454E-4
+					-0.0020796582102775574 5.140100955963135 2.44415283203125
+				</affine>
+			</ViewTransform>
+		</ViewRegistration>
+		<ViewRegistration timepoint="3" setup="0" >
+			<ViewTransform type="affine">
+				<affine>0.9998241662979126 5.485862493515015E-4 0.0032556653022766113
+					-3.182929515838623 -5.050254985690117E-4 0.9996762871742249
+					0.011955901980400085 -0.05610962212085724 -7.315948605537415E-4
+					-0.001572541892528534 5.18632173538208 1.2060012817382812
+				</affine>
+			</ViewTransform>
+		</ViewRegistration>
+		<ViewRegistration timepoint="4" setup="0" >
+			<ViewTransform type="affine">
+				<affine>0.9998246431350708 3.376118838787079E-4 0.005441755056381226
+					-2.9355766773223877 -3.4151365980505943E-4 0.9998696446418762
+					0.014457106590270996 -0.15880528092384338 -4.759524017572403E-4
+					-4.747025668621063E-4 5.199133396148682 0.5297470092773438
+				</affine>
+			</ViewTransform>
+		</ViewRegistration>
+		<ViewRegistration timepoint="0" setup="1" >
+			<ViewTransform type="affine">
+				<affine>0.9997484683990479 -0.0036543607711791992
+					0.0019213557243347168 -5.094296932220459 0.001493997871875763
+					-0.503555178642273 4.712670803070068 122.64041137695312
+					6.738398224115372E-4 -0.844116747379303 -2.5682554244995117
+					472.02789306640625
+				</affine>
+			</ViewTransform>
+		</ViewRegistration>
+		<ViewRegistration timepoint="1" setup="1" >
+			<ViewTransform type="affine">
+				<affine>0.999729335308075 -0.003490537405014038 0.0033257603645324707
+					-5.321657180786133 0.0011223182082176208 -0.5037053823471069
+					4.710190296173096 122.68980407714844 8.900994434952736E-4
+					-0.843970000743866 -2.5677707195281982 472.0356750488281
+				</affine>
+			</ViewTransform>
+		</ViewRegistration>
+		<ViewRegistration timepoint="2" setup="1" >
+			<ViewTransform type="affine">
+				<affine>0.9997634887695312 -0.0034777820110321045
+					0.0022455453872680664 -5.399645805358887 0.0017833486199378967
+					-0.5032569169998169 4.71791934967041 122.33731079101562
+					8.405838161706924E-4 -0.844441294670105 -2.574167251586914
+					472.134521484375
+				</affine>
+			</ViewTransform>
+		</ViewRegistration>
+		<ViewRegistration timepoint="3" setup="1" >
+			<ViewTransform type="affine">
+				<affine>0.9997636079788208 -0.003083467483520508
+					0.0018324851989746094
+					-5.0570573806762695 0.0019085556268692017 -0.503976583480835
+					4.713336944580078 122.89136505126953 0.0010558012872934341
+					-0.8439595103263855 -2.570619583129883 471.9619140625
+				</affine>
+			</ViewTransform>
+		</ViewRegistration>
+		<ViewRegistration timepoint="4" setup="1" >
+			<ViewTransform type="affine">
+				<affine>0.9997862577438354 -0.0029499828815460205
+					4.481077194213867E-4
+					-5.143670558929443 0.0017743706703186035 -0.5036821961402893
+					4.709909439086914 122.76245880126953 0.0011348966509103775
+					-0.8438893556594849 -2.5730087757110596 472.1696472167969
+				</affine>
+			</ViewTransform>
+		</ViewRegistration>
+		<ViewRegistration timepoint="0" setup="2" >
+			<ViewTransform type="affine">
+			<affine>0.9998370409011841 -0.006631273776292801 0.01666603982448578
+				-5.9060258865356445 -0.0011100731790065765 -0.49260154366493225
+				-4.594888687133789 433.99676513671875 0.011185303330421448
+				0.8422158360481262 -2.5777499675750732 132.3486785888672
+			</affine>
+			</ViewTransform>
+		</ViewRegistration>
+		<ViewRegistration timepoint="1" setup="2" >
+			<ViewTransform type="affine">
+				<affine>0.9998970031738281 -0.006498921662569046 0.01645684987306595
+					-5.852316379547119 -9.906617924571037E-4 -0.49230632185935974
+					-4.58560848236084 434.0477294921875 0.011305325664579868
+					0.8423336744308472 -2.5763437747955322 132.39144897460938
+				</affine>
+			</ViewTransform>
+		</ViewRegistration>
+		<ViewRegistration timepoint="2" setup="2" >
+			<ViewTransform type="affine">
+				<affine>0.9998748302459717 -0.0065449997782707214
+					0.017468221485614777
+					-5.640392780303955 -9.21943224966526E-4 -0.4924962520599365
+					-4.58691930770874 434.36468505859375 0.011583728715777397
+					0.8426724672317505 -2.577573776245117 132.29991149902344
+				</affine>
+			</ViewTransform>
+		</ViewRegistration>
+		<ViewRegistration timepoint="3" setup="2" >
+			<ViewTransform type="affine">
+				<affine>0.999868631362915 -0.006556753069162369 0.01910638064146042
+					-5.767396926879883 -8.373484015464783E-4 -0.49263566732406616
+					-4.582738399505615 434.3675842285156 0.01163708046078682
+					0.8428493738174438 -2.5746335983276367 132.36993408203125
+				</affine>
+			</ViewTransform>
+		</ViewRegistration>
+		<ViewRegistration timepoint="4" setup="2" >
+			<ViewTransform type="affine">
+				<affine>0.99980229139328 -0.006600808352231979 0.020592927932739258
+					-5.177316665649414 -3.3759232610464096E-4 -0.49230149388313293
+					-4.581212520599365 434.4835205078125 0.01157164666801691
+					0.8422901630401611 -2.5754010677337646 132.750732421875
+				</affine>
+			</ViewTransform>
+		</ViewRegistration>
+		<ViewRegistration timepoint="0" setup="3" >
+			<ViewTransform type="affine">
+			<affine>1.0 0.0 0.0 53.0 0.0 1.0 0.0 4.0 0.0 0.0 1.0 6.0</affine>
+			</ViewTransform>
+		</ViewRegistration>
+		<ViewRegistration timepoint="1" setup="3" >
+			<ViewTransform type="affine">
+			<affine>1.0 0.0 0.0 53.0 0.0 1.0 0.0 4.0 0.0 0.0 1.0 6.0</affine>
+			</ViewTransform>
+		</ViewRegistration>
+		<ViewRegistration timepoint="2" setup="3" >
+			<ViewTransform type="affine">
+			<affine>1.0 0.0 0.0 53.0 0.0 1.0 0.0 4.0 0.0 0.0 1.0 6.0</affine>
+			</ViewTransform>
+		</ViewRegistration>
+		<ViewRegistration timepoint="3" setup="3" >
+			<ViewTransform type="affine">
+			<affine>1.0 0.0 0.0 53.0 0.0 1.0 0.0 4.0 0.0 0.0 1.0 6.0</affine>
+			</ViewTransform>
+		</ViewRegistration>
+		<ViewRegistration timepoint="4" setup="3" >
+			<ViewTransform type="affine">
+			<affine>1.0 0.0 0.0 53.0 0.0 1.0 0.0 4.0 0.0 0.0 1.0 6.0</affine>
+			</ViewTransform>
+		</ViewRegistration>
+	</ViewRegistrations>
+</SpimData>

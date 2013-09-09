@@ -17,9 +17,10 @@ import java.awt.Panel;
 import java.awt.ScrollPane;
 import java.awt.Toolkit;
 import java.io.File;
+import java.text.ParseException;
 import java.util.ArrayList;
 
-import mpicbg.spim.io.ConfigurationParserException;
+import mpicbg.spim.data.sequence.IntegerPattern;
 
 public abstract class StackList implements MultiViewDatasetDefinition
 {
@@ -44,6 +45,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 
 	protected String timepoints, channels, illuminations, angles;
 	protected ArrayList< Integer > timepointList, channelList, illuminationsList, angleList;
+	protected ArrayList< Boolean > channelHasBeads;
 	protected String replaceTimepoints, replaceChannels, replaceIlluminations, replaceAngles;
 	protected int numDigitsTimepoints, numDigitsChannels, numDigitsIlluminations, numDigitsAngles;
 	
@@ -83,7 +85,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			if ( !queryDetails() )
 				return false;
 		} 
-		catch ( ConfigurationParserException e )
+		catch ( ParseException e )
 		{
 			IJ.log( e.toString() );
 			return false;
@@ -91,70 +93,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 				
 		return true;
 	}
-	
-	/**
-	 * Assemble the filename for the corresponding file based on the indices for time, channel, illumination and angle
-	 * 
-	 * @param tpID
-	 * @param chID
-	 * @param illID
-	 * @param angleID
-	 * @return
-	 */
-	protected String getFileNameFor( final int tpID, final int chID, final int illID, final int angleID )
-	{
-		String fileName = fileNamePattern;
 		
-		if ( hasMultipleTimePoints )
-			fileName = fileName.replace( replaceTimepoints, "" + timepointList.get( tpID ) );
-
-		if ( hasMultipleChannels )
-			fileName = fileName.replace( replaceChannels, "" + channelList.get( chID ) );
-
-		if ( hasMultipleIlluminations )
-			fileName = fileName.replace( replaceIlluminations, "" + illuminationsList.get( illID ) );
-
-		if ( hasMultipleAngles )
-			fileName = fileName.replace( replaceAngles, "" + angleList.get( angleID ) );
-		
-		return fileName;
-	}
-	
-	/**
-	 * populates the fields calX, calY, calZ from the first file of the series
-	 * 
-	 * @return - true if successful
-	 */
-	protected boolean loadFirstCalibration()
-	{
-		for ( int t = 0; t < timepointList.size(); ++t )
-			for ( int c = 0; c < channelList.size(); ++c )
-				for ( int i = 0; i < illuminationsList.size(); ++i )
-					for ( int a = 0; a < angleList.size(); ++a )
-					{
-						if ( exceptionIds.size() > 0 && 
-							 exceptionIds.get( 0 )[ 0 ] == t && exceptionIds.get( 0 )[ 1 ] == c && 
-							 exceptionIds.get( 0 )[ 2 ] == t && exceptionIds.get( 0 )[ 3 ] == a )
-						{
-							continue;
-						}
-						else
-						{
-							return loadCalibration( new File( directory, getFileNameFor( t, c, i, a ) ) );
-						}
-					}
-		
-		return false;
-	}
-	
-	/**
-	 * Loads the calibration stored in a specific file and closes it afterwards. Depends on the type of opener that is used.
-	 * 
-	 * @param file
-	 * @return
-	 */
-	protected abstract boolean loadCalibration( final File file );
-	
 	protected boolean queryDetails()
 	{
 		final GenericDialog gd = new GenericDialog( "Define dataset (3/3)" );
@@ -162,15 +101,8 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		gd.addMessage( "Channel definitions", new Font( Font.SANS_SERIF, Font.BOLD, 14 ) );
 		gd.addMessage( "" );
 		
-		if ( hasMultipleChannels )
-		{
-			for ( int c = 0; c < channelList.size(); ++c )
-				gd.addCheckbox( "Beads_visible_in_channel_" + channelList.get( c ), true );
-		}
-		else
-		{
-			gd.addCheckbox( "Beads_visible_in_default_channel", true );
-		}
+		for ( int c = 0; c < channelList.size(); ++c )
+			gd.addCheckbox( "Beads_visible_in_channel_" + channelList.get( c ), true );
 
 		if ( calibation < 2 )
 		{
@@ -187,9 +119,26 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		}
 
 		gd.showDialog();
-		
+
+		for ( int c = 0; c < channelList.size(); ++c )
+			gd.addCheckbox( "Beads_visible_in_channel_" + channelList.get( c ), true );
+
 		if ( gd.wasCanceled() )
 			return false;
+		
+		channelHasBeads = new ArrayList<Boolean>( channelList.size() );
+
+		for ( int c = 0; c < channelList.size(); ++c )
+			channelHasBeads.add( gd.getNextBoolean() );
+
+		if ( calibation < 2 )
+		{
+			calX = gd.getNextNumber();
+			calY = gd.getNextNumber();
+			calZ = gd.getNextNumber();
+			
+			calUnit = gd.getNextString();
+		}
 		
 		return true;
 	}
@@ -234,7 +183,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		return true;
 	}
 	
-	protected boolean queryNames() throws ConfigurationParserException
+	protected boolean queryNames() throws ParseException
 	{
 		final GenericDialogPlus gd = new GenericDialogPlus( "Define dataset (2/3)" );
 		
@@ -277,8 +226,8 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			replaceTimepoints = IntegerPattern.getReplaceString( fileNamePattern, TIMEPOINT_PATTERN );
 			
 			if ( replaceTimepoints == null )
-				throw new ConfigurationParserException( "Pattern {" + TIMEPOINT_PATTERN + "} not present in " + fileNamePattern + 
-						" although you indicated there would be several timepoints." );
+				throw new ParseException( "Pattern {" + TIMEPOINT_PATTERN + "} not present in " + fileNamePattern + 
+						" although you indicated there would be several timepoints.", 0 );
 			
 			numDigitsTimepoints = replaceTimepoints.length() - 2;
 		}
@@ -289,8 +238,8 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			replaceChannels = IntegerPattern.getReplaceString( fileNamePattern, CHANNEL_PATTERN );
 			
 			if ( replaceChannels == null )
-				throw new ConfigurationParserException( "Pattern {" + CHANNEL_PATTERN + "} not present in " + fileNamePattern + 
-						" although you indicated there would be several channels." );
+				throw new ParseException( "Pattern {" + CHANNEL_PATTERN + "} not present in " + fileNamePattern + 
+						" although you indicated there would be several channels.", 0 );
 			
 			numDigitsChannels = replaceChannels.length() - 2;
 		}
@@ -301,8 +250,8 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			replaceIlluminations = IntegerPattern.getReplaceString( fileNamePattern, ILLUMINATION_PATTERN );
 			
 			if ( replaceIlluminations == null )
-				throw new ConfigurationParserException( "Pattern {" + ILLUMINATION_PATTERN + "} not present in " + fileNamePattern + 
-						" although you indicated there would be several illumination directions." );
+				throw new ParseException( "Pattern {" + ILLUMINATION_PATTERN + "} not present in " + fileNamePattern + 
+						" although you indicated there would be several illumination directions.", 0 );
 
 			numDigitsIlluminations = replaceIlluminations.length() - 2;
 		}
@@ -313,17 +262,17 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			replaceAngles = IntegerPattern.getReplaceString( fileNamePattern, ANGLE_PATTERN );
 			
 			if ( replaceAngles == null )
-				throw new ConfigurationParserException( "Pattern {" + ANGLE_PATTERN + "} not present in " + fileNamePattern + 
-						" although you indicated there would be several angles." );
+				throw new ParseException( "Pattern {" + ANGLE_PATTERN + "} not present in " + fileNamePattern + 
+						" although you indicated there would be several angles.", 0 );
 			
 			numDigitsAngles = replaceAngles.length() - 2;
 		}
 
 		// get the list of integers
-		timepointList = IntegerPattern.parseIntegerString( timepoints, "timepoints" );
-		channelList = IntegerPattern.parseIntegerString( channels, "channels" );
-		illuminationsList = IntegerPattern.parseIntegerString( illuminations, "illumination directions" );
-		angleList = IntegerPattern.parseIntegerString( angles, "acquisiton angles" );
+		timepointList = IntegerPattern.parseIntegerString( timepoints );
+		channelList = IntegerPattern.parseIntegerString( channels );
+		illuminationsList = IntegerPattern.parseIntegerString( illuminations );
+		angleList = IntegerPattern.parseIntegerString( angles );
 
 		exceptionIds = new ArrayList< int[] >();
 		
@@ -333,6 +282,76 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		return true;		
 	}
 	
+	/**
+	 * Assemble the filename for the corresponding file based on the indices for time, channel, illumination and angle
+	 * 
+	 * @param tpID
+	 * @param chID
+	 * @param illID
+	 * @param angleID
+	 * @return
+	 */
+	protected String getFileNameFor( final int tpID, final int chID, final int illID, final int angleID )
+	{
+		return getFileNameFor( fileNamePattern, replaceTimepoints, replaceChannels, replaceIlluminations, replaceAngles, 
+				timepointList.get( tpID ), channelList.get( chID ), illuminationsList.get( illID ), angleList.get( angleID ) );
+	}
+
+	public static String getFileNameFor( String fileName, 
+			final String replaceTimepoints, final String replaceChannels, 
+			final String replaceIlluminations, final String replaceAngles, 
+			final int tp, final int ch, final int ill, final int angle )
+	{
+		if ( replaceTimepoints != null )
+			fileName = fileName.replace( replaceTimepoints, "" + tp );
+
+		if ( replaceChannels != null )
+			fileName = fileName.replace( replaceChannels, "" + ch );
+
+		if ( replaceIlluminations != null )
+			fileName = fileName.replace( replaceIlluminations, "" + ill );
+
+		if ( replaceAngles != null )
+			fileName = fileName.replace( replaceAngles, "" + angle );
+		
+		return fileName;
+	}
+
+	/**
+	 * populates the fields calX, calY, calZ from the first file of the series
+	 * 
+	 * @return - true if successful
+	 */
+	protected boolean loadFirstCalibration()
+	{
+		for ( int t = 0; t < timepointList.size(); ++t )
+			for ( int c = 0; c < channelList.size(); ++c )
+				for ( int i = 0; i < illuminationsList.size(); ++i )
+					for ( int a = 0; a < angleList.size(); ++a )
+					{
+						if ( exceptionIds.size() > 0 && 
+							 exceptionIds.get( 0 )[ 0 ] == t && exceptionIds.get( 0 )[ 1 ] == c && 
+							 exceptionIds.get( 0 )[ 2 ] == t && exceptionIds.get( 0 )[ 3 ] == a )
+						{
+							continue;
+						}
+						else
+						{
+							return loadCalibration( new File( directory, getFileNameFor( t, c, i, a ) ) );
+						}
+					}
+		
+		return false;
+	}
+	
+	/**
+	 * Loads the calibration stored in a specific file and closes it afterwards. Depends on the type of opener that is used.
+	 * 
+	 * @param file
+	 * @return
+	 */
+	protected abstract boolean loadCalibration( final File file );
+
 	protected String assembleDefaultPattern()
 	{
 		String pattern = "spim";
