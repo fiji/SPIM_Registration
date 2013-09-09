@@ -29,9 +29,18 @@ import java.awt.Panel;
 import java.awt.ScrollPane;
 import java.awt.Toolkit;
 import java.awt.event.ItemEvent;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactoryConfigurationError;
+
 import mpicbg.spim.data.SpimData;
+import mpicbg.spim.data.XmlIoSpimData;
+import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewSetup;
 
 public class Create_Multi_View_Dataset implements PlugIn
 {
@@ -95,12 +104,27 @@ public class Create_Multi_View_Dataset implements PlugIn
 		
 		System.out.println( defaultDatasetDef );
 		
-		final SpimData< ?, ? > spimData = def.createDataset();
+		final SpimData< TimePoint, ViewSetup > spimData = def.createDataset();
 		
 		if ( spimData == null )
 		{
 			IJ.log( "Defining multi-view dataset failed." );
 			return;
+		}
+		else
+		{
+			final XmlIoSpimData< TimePoint, ViewSetup > io = XmlIoSpimData.createDefault();
+			final String xml = new File( spimData.getBasePath(), "example_fromdialog.xml" ).getAbsolutePath();
+			try 
+			{
+				io.save( spimData, xml );
+				System.out.println( "Saved xml '" + xml + "'." );
+			}
+			catch ( Exception e )
+			{
+				System.out.println( "Could not save xml '" + xml + "': " + e );
+				e.printStackTrace();
+			}
 		}
 	}
 	
@@ -167,8 +191,6 @@ public class Create_Multi_View_Dataset implements PlugIn
 	
 	public static void main( String args[] )
 	{
-		
-
 		//new ImageJ();
 		new Create_Multi_View_Dataset().run( null );
 		

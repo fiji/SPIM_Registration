@@ -1,5 +1,7 @@
 package fiji.datasetmanager;
 
+import static mpicbg.spim.data.sequence.XmlKeys.TIMEPOINTS_PATTERN_STRING;
+import fiji.spimdata.ImageStackLoaderIJ;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.gui.GenericDialog;
@@ -19,8 +21,20 @@ import java.awt.Toolkit;
 import java.io.File;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.List;
 
+import mpicbg.spim.data.SpimData;
+import mpicbg.spim.data.registration.ViewRegistration;
+import mpicbg.spim.data.registration.ViewRegistrations;
+import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.IntegerPattern;
+import mpicbg.spim.data.sequence.MissingViews;
+import mpicbg.spim.data.sequence.SequenceDescription;
+import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.TimePoints;
+import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.ViewSetup;
 
 public abstract class StackList implements MultiViewDatasetDefinition
 {
@@ -49,6 +63,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	protected String replaceTimepoints, replaceChannels, replaceIlluminations, replaceAngles;
 	protected int numDigitsTimepoints, numDigitsChannels, numDigitsIlluminations, numDigitsAngles;
 	
+	/* new int[]{ t, c, i, a } - indices */
 	protected ArrayList< int[] > exceptionIds;
 	
 	protected String[] calibrationChoice = new String[]{ "Same calibration for all files (load from first file)", "Same calibration for all files (user defined)", "Load calibration for each file individually" };
@@ -92,6 +107,144 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		}
 				
 		return true;
+	}
+
+	protected abstract ImgLoader createImgLoader();
+	
+	@Override
+	public SpimData< TimePoint, ViewSetup > createDataset()
+	{
+		// collect all the information
+		if ( !queryInformation() )
+			return null;
+		
+		// assemble timepints, viewsetups, missingviews and the imgloader
+		final TimePoints< TimePoint > timepoints = this.createTimePoints();
+		final ArrayList< ViewSetup > setups = this.createViewSetups();
+		final MissingViews missingViews = this.createMissingViews();
+		final ImgLoader imgLoader = createImgLoader();
+		
+		// instantiate the sequencedescription
+		final SequenceDescription< TimePoint, ViewSetup > sequenceDescription = new SequenceDescription< TimePoint, ViewSetup >( timepoints, setups, missingViews, imgLoader );
+		
+		// create the initial view registrations (they are all the identity transform)
+		final ViewRegistrations viewRegistrations = this.createViewRegistrations( sequenceDescription.getViewDescriptions() );
+		
+		// finally create the SpimData itself based on the sequence description and the view registration
+		// TODO: add beads and other specific metadata
+		final SpimData< TimePoint, ViewSetup > spimData = new SpimData< TimePoint, ViewSetup >( new File( directory ), sequenceDescription, viewRegistrations );
+		
+		return spimData;
+	}
+
+	/**
+	 * Assembles the list of {@link ViewRegistration}s for all {@link ViewDescription}s that are present
+	 * 
+	 * @param viewDescriptionList
+	 * @return
+	 */
+	protected ViewRegistrations createViewRegistrations( final List< ViewDescription< TimePoint, ViewSetup > > viewDescriptionList )
+	{
+		final ArrayList< ViewRegistration > viewRegistrationList = new ArrayList< ViewRegistration >();
+		
+		
+		for ( final ViewDescription< TimePoint, ViewSetup > viewDescription : viewDescriptionList )
+			if ( viewDescription.isPresent() )
+				viewRegistrationList.add( new ViewRegistration( viewDescription.getTimePointId(), viewDescription.getViewSetupId() ) );
+		
+		return new ViewRegistrations( viewRegistrationList );
+	}
+
+	/**
+	 * Assembles the list of missing view instances, i.e. {@link ViewSetup} that
+	 * are missing at certain {@link TimePoint}s.
+	 * 
+	 * @return
+	 */
+	protected MissingViews createMissingViews()
+	{
+		final ArrayList< ViewId > missingViews = new ArrayList< ViewId >();
+		
+		if ( exceptionIds.size() == 0 )
+			return new MissingViews( missingViews );
+		
+		for ( int t = 0; t < timepointList.size(); ++t )
+		{			
+			// assemble a subset of exceptions for the current timepoint
+			final ArrayList< int[] > tmp = new ArrayList< int[] >();
+			
+			for ( int[] exceptions : exceptionIds )
+				if ( exceptions[ 0 ] == t )
+					tmp.add( exceptions );
+		
+			
+			if ( tmp.size() > 0 )
+			{
+				int setupId = 0;
+
+				for ( int c = 0; c < channelList.size(); ++c )
+					for ( int i = 0; i < illuminationsList.size(); ++i )
+						for ( int a = 0; a < angleList.size(); ++a )
+						{
+							for ( int[] exceptions : exceptionIds )
+								if ( exceptions[ 1 ] == c && exceptions[ 2 ] == i && exceptions[ 3 ] == a )
+									missingViews.add( new ViewId( t, setupId ) );
+							
+							++setupId;
+						}
+			}
+		}
+		
+		return new MissingViews( missingViews );
+	}
+	
+	/**
+	 * Creates the List of {@link ViewSetup} for the {@link SpimData} object.
+	 * The {@link ViewSetup} are defined independent of the {@link TimePoint},
+	 * each {@link TimePoint} should have the same {@link ViewSetup}s. The {@link MissingViews}
+	 * class defines if some of them are missing for some of the {@link TimePoint}s
+	 * 
+	 * @return
+	 */
+	protected ArrayList< ViewSetup > createViewSetups()
+	{
+		final ArrayList< ViewSetup > viewSetups = new ArrayList< ViewSetup >();
+		
+		for ( int c = 0; c < channelList.size(); ++c )
+			for ( int i = 0; i < illuminationsList.size(); ++i )
+				for ( int a = 0; a < angleList.size(); ++a )
+				{
+					final int channel = channelList.get( c );
+					final int illumination = illuminationsList.get( i );
+					final int angle = angleList.get( a );
+					
+					if ( calibation < 2 )
+						viewSetups.add( new ViewSetup( viewSetups.size(), angle, illumination, channel, -1, -1, -1, calUnit, calX, calY, calZ ) );
+					else
+						viewSetups.add( new ViewSetup( viewSetups.size(), angle, illumination, channel, -1, -1, -1, calUnit, -1, -1, -1 ) );
+				}
+		
+		return viewSetups;
+	}
+	
+	/**
+	 * Creates the {@link TimePoints} for the {@link SpimData} object
+	 * 
+	 * @return
+	 */
+	protected TimePoints< TimePoint > createTimePoints()
+	{
+		final ArrayList< TimePoint > timepointList = new ArrayList< TimePoint >();
+		
+		for ( final int timepoint : this.timepointList )
+			timepointList.add( new TimePoint( timepointList.size(), Integer.toString( timepoint ) ) );
+		
+		final TimePoints< TimePoint > timepoints = new TimePoints< TimePoint >( timepointList );
+		
+		// remember the pattern
+		timepoints.getHashMap().put( TIMEPOINTS_PATTERN_STRING, fileNamePattern );
+		
+		return timepoints;
 	}
 		
 	protected boolean queryDetails()

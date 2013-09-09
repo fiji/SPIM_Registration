@@ -9,13 +9,11 @@ import loci.common.services.DependencyException;
 import loci.common.services.ServiceException;
 import loci.common.services.ServiceFactory;
 import loci.formats.ChannelSeparator;
-import loci.formats.FormatException;
-import loci.formats.FormatTools;
 import loci.formats.IFormatReader;
 import loci.formats.meta.IMetadata;
 import loci.formats.meta.MetadataRetrieve;
 import loci.formats.services.OMEXMLService;
-import mpicbg.spim.data.SpimData;
+import mpicbg.spim.data.sequence.ImgLoader;
 
 public class StackListLOCI extends StackList
 {
@@ -26,10 +24,7 @@ public class StackListLOCI extends StackList
 	}
 
 	@Override
-	public SpimData<?, ?> createDataset()
-	{
-		System.out.println( queryInformation() );
-		
+	protected ImgLoader createImgLoader() {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -132,5 +127,4 @@ public class StackListLOCI extends StackList
 		}
 		return true;
 	}
-
 }
