@@ -24,7 +24,7 @@ public class StackListLOCI extends StackList
 	}
 
 	@Override
-	protected ImgLoader createImgLoader() {
+	protected ImgLoader createAndInitImgLoader( final String path, final File basePath ) {
 		// TODO Auto-generated method stub
 		return null;
 	}

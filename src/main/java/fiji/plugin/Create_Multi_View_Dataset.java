@@ -6,36 +6,18 @@ import fiji.datasetmanager.StackListImageJ;
 import fiji.datasetmanager.StackListLOCI;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
-import ij.ImageJ;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
 import java.awt.AWTEvent;
-import java.awt.BorderLayout;
-import java.awt.Checkbox;
 import java.awt.Choice;
 import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Frame;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.Label;
-import java.awt.LayoutManager;
-import java.awt.Panel;
-import java.awt.ScrollPane;
-import java.awt.Toolkit;
 import java.awt.event.ItemEvent;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
-
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactoryConfigurationError;
 
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.XmlIoSpimData;

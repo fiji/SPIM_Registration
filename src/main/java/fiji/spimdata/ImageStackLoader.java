@@ -35,7 +35,7 @@ public abstract class ImageStackLoader implements ImgLoader
 	
 	protected String replaceTimepoints, replaceChannels, replaceIlluminations, replaceAngles;
 	protected int numDigitsTimepoints, numDigitsChannels, numDigitsIlluminations, numDigitsAngles;
-
+	
 	protected < T extends NativeType< T > > Img< T > instantiateImg( final long[] dim, final T type )
 	{
 		Img< T > img;
@@ -77,7 +77,21 @@ public abstract class ImageStackLoader implements ImgLoader
 		
 		return new File( path, fileName );
 	}
-	
+
+	/**
+	 * For a local initialization without the XML
+	 * 
+	 * @param path
+	 * @param fileNamePattern
+	 */
+	public void init( final String path, final File basePath, final String fileNamePattern )
+	{
+		this.path = new File( basePath.getAbsolutePath(), path );
+		this.fileNamePattern = fileNamePattern;
+		
+		this.init();
+	}
+
 	/**
 	 * initialize the loader from a &lt;{@value XmlKeys#IMGLOADER_TAG}&gt; DOM element.
 	 */
@@ -88,39 +102,44 @@ public abstract class ImageStackLoader implements ImgLoader
 		{
 			this.path = loadPath( elem, DIRECTORY_TAG, basePath );
 			this.fileNamePattern = elem.getElementsByTagName( FILE_PATTERN_TAG ).item( 0 ).getTextContent();
-	
-			replaceTimepoints = replaceChannels = replaceIlluminations = replaceAngles = null;
-			numDigitsTimepoints = numDigitsChannels = numDigitsIlluminations = numDigitsAngles = -1;
 			
-			replaceTimepoints = IntegerPattern.getReplaceString( fileNamePattern, StackList.TIMEPOINT_PATTERN );
-			replaceChannels = IntegerPattern.getReplaceString( fileNamePattern, StackList.CHANNEL_PATTERN );
-			replaceIlluminations = IntegerPattern.getReplaceString( fileNamePattern, StackList.ILLUMINATION_PATTERN );
-			replaceAngles = IntegerPattern.getReplaceString( fileNamePattern, StackList.ANGLE_PATTERN );
-
-			if ( replaceTimepoints != null )
-				numDigitsTimepoints = replaceTimepoints.length() - 2;
-
-			if ( replaceChannels != null )
-				numDigitsChannels = replaceChannels.length() - 2;
-			
-			if ( replaceIlluminations != null )
-				numDigitsIlluminations = replaceIlluminations.length() - 2;
-			
-			if ( replaceAngles != null )
-				numDigitsAngles = replaceAngles.length() - 2;
-			
-			System.out.println( replaceTimepoints );
-			System.out.println( replaceChannels );
-			System.out.println( replaceIlluminations );
-			System.out.println( replaceAngles );
-			
-			System.out.println( path );
-			System.out.println( fileNamePattern );
+			this.init();
 		}
 		catch ( final Exception e )
 		{
 			throw new RuntimeException( e );
 		}
+	}
+	
+	protected void init()
+	{
+		replaceTimepoints = replaceChannels = replaceIlluminations = replaceAngles = null;
+		numDigitsTimepoints = numDigitsChannels = numDigitsIlluminations = numDigitsAngles = -1;
+		
+		replaceTimepoints = IntegerPattern.getReplaceString( fileNamePattern, StackList.TIMEPOINT_PATTERN );
+		replaceChannels = IntegerPattern.getReplaceString( fileNamePattern, StackList.CHANNEL_PATTERN );
+		replaceIlluminations = IntegerPattern.getReplaceString( fileNamePattern, StackList.ILLUMINATION_PATTERN );
+		replaceAngles = IntegerPattern.getReplaceString( fileNamePattern, StackList.ANGLE_PATTERN );
+
+		if ( replaceTimepoints != null )
+			numDigitsTimepoints = replaceTimepoints.length() - 2;
+
+		if ( replaceChannels != null )
+			numDigitsChannels = replaceChannels.length() - 2;
+		
+		if ( replaceIlluminations != null )
+			numDigitsIlluminations = replaceIlluminations.length() - 2;
+		
+		if ( replaceAngles != null )
+			numDigitsAngles = replaceAngles.length() - 2;
+		
+		System.out.println( replaceTimepoints );
+		System.out.println( replaceChannels );
+		System.out.println( replaceIlluminations );
+		System.out.println( replaceAngles );
+		
+		System.out.println( path );
+		System.out.println( fileNamePattern );		
 	}
 
 	/**
@@ -128,7 +147,7 @@ public abstract class ImageStackLoader implements ImgLoader
 	 */
 	@Override
 	public Element toXml( final Document doc, final File basePath )
-	{
+	{		
 		final Element elem = doc.createElement( "ImageLoader" );
 		elem.setAttribute( "class", getClass().getCanonicalName() );
 		elem.appendChild( XmlHelpers.pathElement( doc, DIRECTORY_TAG, path, basePath ) );

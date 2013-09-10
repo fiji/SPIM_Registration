@@ -1,7 +1,6 @@
 package fiji.datasetmanager;
 
 import static mpicbg.spim.data.sequence.XmlKeys.TIMEPOINTS_PATTERN_STRING;
-import fiji.spimdata.ImageStackLoaderIJ;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.gui.GenericDialog;
@@ -52,7 +51,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	
 	public static boolean showDebugFileNames = true;
 	
-	public static String defaultTimepoints = "20-50";
+	public static String defaultTimepoints = "18-20";
 	public static String defaultChannels = "1,2";
 	public static String defaultIlluminations = "0,1";
 	public static String defaultAngles = "0-315:45";
@@ -70,7 +69,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	public static int defaultCalibration = 0;
 	public int calibation;
 	
-	public static String defaultDirectory = "";
+	public static String defaultDirectory = "/Users/preibischs/Documents/Microscopy/SPIM/HisYFP-SPIM";
 	public static String defaultFileNamePattern = null;
 
 	protected String directory, fileNamePattern;
@@ -109,7 +108,14 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		return true;
 	}
 
-	protected abstract ImgLoader createImgLoader();
+	/**
+	 * Instantiate the {@link ImgLoader}
+	 * 
+	 * @param path - The path relative to the basepath
+	 * @param basePath - The base path, where XML will be and the image stack are
+	 * @return
+	 */
+	protected abstract ImgLoader createAndInitImgLoader( final String path, final File basePath );
 	
 	@Override
 	public SpimData< TimePoint, ViewSetup > createDataset()
@@ -122,7 +128,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		final TimePoints< TimePoint > timepoints = this.createTimePoints();
 		final ArrayList< ViewSetup > setups = this.createViewSetups();
 		final MissingViews missingViews = this.createMissingViews();
-		final ImgLoader imgLoader = createImgLoader();
+		final ImgLoader imgLoader = createAndInitImgLoader( ".", new File( directory ) );
 		
 		// instantiate the sequencedescription
 		final SequenceDescription< TimePoint, ViewSetup > sequenceDescription = new SequenceDescription< TimePoint, ViewSetup >( timepoints, setups, missingViews, imgLoader );
@@ -147,10 +153,13 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	{
 		final ArrayList< ViewRegistration > viewRegistrationList = new ArrayList< ViewRegistration >();
 		
-		
 		for ( final ViewDescription< TimePoint, ViewSetup > viewDescription : viewDescriptionList )
+		{
+			System.out.println( viewDescription.getTimePointId() + " " + viewDescription.getViewSetupId() );
+			
 			if ( viewDescription.isPresent() )
 				viewRegistrationList.add( new ViewRegistration( viewDescription.getTimePointId(), viewDescription.getViewSetupId() ) );
+		}
 		
 		return new ViewRegistrations( viewRegistrationList );
 	}
@@ -242,7 +251,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		final TimePoints< TimePoint > timepoints = new TimePoints< TimePoint >( timepointList );
 		
 		// remember the pattern
-		timepoints.getHashMap().put( TIMEPOINTS_PATTERN_STRING, fileNamePattern );
+		timepoints.getHashMap().put( TIMEPOINTS_PATTERN_STRING, this.timepoints );
 		
 		return timepoints;
 	}

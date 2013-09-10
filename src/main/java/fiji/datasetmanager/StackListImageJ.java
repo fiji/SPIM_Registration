@@ -7,16 +7,8 @@ import ij.io.Opener;
 import ij.measure.Calibration;
 
 import java.io.File;
-import java.util.ArrayList;
 
-import mpicbg.spim.data.SpimData;
-import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.ImgLoader;
-import mpicbg.spim.data.sequence.MissingViews;
-import mpicbg.spim.data.sequence.SequenceDescription;
-import mpicbg.spim.data.sequence.TimePoint;
-import mpicbg.spim.data.sequence.TimePoints;
-import mpicbg.spim.data.sequence.ViewSetup;
 
 public class StackListImageJ extends StackList
 {
@@ -79,5 +71,12 @@ public class StackListImageJ extends StackList
 	}
 
 	@Override
-	protected ImgLoader createImgLoader() { return new ImageStackLoaderIJ(); }
+	protected ImgLoader createAndInitImgLoader( final String path, final File basePath )
+	{
+		final ImageStackLoaderIJ imgLoader = new ImageStackLoaderIJ();
+		
+		imgLoader.init( path, basePath, fileNamePattern );
+		
+		return imgLoader;
+	}
 }

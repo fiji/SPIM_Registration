@@ -15,6 +15,7 @@ import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.XmlHelpers;
 import mpicbg.spim.data.XmlIoSpimData;
 import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewSetup;
 
 import org.w3c.dom.Document;
@@ -24,10 +25,10 @@ public class SpimDataExample
 	public static void main( final String[] args ) throws Exception
 	{
 		// load SpimData from xml file
-		final String xmlFilename = "/Users/preibischs/workspace/fiji/src-plugins/SPIM_Registration/src/main/resources/example_new.xml";
+		final String xmlFilename = "/Users/preibischs/workspace/fiji/src-plugins/SPIM_Registration/src/main/resources/example_fromdialog.xml";
 		final XmlIoSpimData< TimePoint, ViewSetup > io = XmlIoSpimData.createDefault();
-		final SpimData< TimePoint, ViewSetup > spimData = io.load( xmlFilename );
-
+		final SpimData< TimePoint, ViewSetup > spimData = io.load( xmlFilename );	
+		
 		// save SpimData to xml file
 		io.save( spimData, "example_new2.xml" );
 
