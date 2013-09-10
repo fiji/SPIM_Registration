@@ -154,12 +154,8 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		final ArrayList< ViewRegistration > viewRegistrationList = new ArrayList< ViewRegistration >();
 		
 		for ( final ViewDescription< TimePoint, ViewSetup > viewDescription : viewDescriptionList )
-		{
-			System.out.println( viewDescription.getTimePointId() + " " + viewDescription.getViewSetupId() );
-			
 			if ( viewDescription.isPresent() )
 				viewRegistrationList.add( new ViewRegistration( viewDescription.getTimePointId(), viewDescription.getViewSetupId() ) );
-		}
 		
 		return new ViewRegistrations( viewRegistrationList );
 	}
@@ -172,11 +168,11 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	 */
 	protected MissingViews createMissingViews()
 	{
-		final ArrayList< ViewId > missingViews = new ArrayList< ViewId >();
-		
 		if ( exceptionIds.size() == 0 )
-			return new MissingViews( missingViews );
-		
+			return null;
+
+		final ArrayList< ViewId > missingViews = new ArrayList< ViewId >();
+				
 		for ( int t = 0; t < timepointList.size(); ++t )
 		{			
 			// assemble a subset of exceptions for the current timepoint
@@ -186,7 +182,6 @@ public abstract class StackList implements MultiViewDatasetDefinition
 				if ( exceptions[ 0 ] == t )
 					tmp.add( exceptions );
 		
-			
 			if ( tmp.size() > 0 )
 			{
 				int setupId = 0;
