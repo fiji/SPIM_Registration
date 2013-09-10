@@ -6,6 +6,7 @@ import fiji.datasetmanager.StackListImageJ;
 import fiji.datasetmanager.StackListLOCI;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
+import ij.ImageJ;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
@@ -18,6 +19,8 @@ import java.awt.Label;
 import java.awt.event.ItemEvent;
 import java.io.File;
 import java.util.ArrayList;
+
+import net.imglib2.img.display.imagej.ImageJFunctions;
 
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.XmlIoSpimData;
@@ -107,6 +110,10 @@ public class Create_Multi_View_Dataset implements PlugIn
 				System.out.println( "Could not save xml '" + xml + "': " + e );
 				e.printStackTrace();
 			}
+
+			// show the first image
+			new ImageJ();
+			ImageJFunctions.show( spimData.getSequenceDescription().getImgLoader().getImage( spimData.getSequenceDescription().getViewDescription( 0, 0 ), false ) );
 		}
 	}
 	
@@ -176,6 +183,6 @@ public class Create_Multi_View_Dataset implements PlugIn
 		//new ImageJ();
 		new Create_Multi_View_Dataset().run( null );
 		
-		System.exit( 0 );
+		//System.exit( 0 );
 	}
 }
