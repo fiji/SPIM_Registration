@@ -51,7 +51,13 @@ public class StackListLOCI extends StackList
 	protected boolean loadCalibration( final File file )
 	{
 		System.out.println( "Loading calibration for: " + file.getAbsolutePath() );
-		
+				
+		if ( !file.exists() )
+		{
+			IJ.log( "File '" + file + "' does not exist. Stopping." );
+			return false;
+		}
+
 		final IFormatReader r = new ChannelSeparator();
 
 		if ( !createOMEXMLMetadata( r ) ) 

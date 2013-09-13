@@ -2,7 +2,7 @@ package fiji.datasetmanager;
 
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.sequence.TimePoint;
-import mpicbg.spim.data.sequence.ViewSetup;
+import fiji.spimdata.sequence.ViewSetupBeads;
 
 public interface MultiViewDatasetDefinition
 {
@@ -30,5 +30,5 @@ public interface MultiViewDatasetDefinition
 	 * 
 	 * @return - the saved {@link SpimData} object
 	 */
-	public SpimData<TimePoint, ViewSetup> createDataset();
+	public SpimData< TimePoint, ViewSetupBeads > createDataset();
 }

@@ -43,6 +43,12 @@ public class StackListImageJ extends StackList
 		{
 			IJ.log( "Loading calibration for: " + file.getAbsolutePath() );
 			
+			if ( !file.exists() )
+			{
+				IJ.log( "File '" + file + "' does not exist. Stopping." );
+				return false;
+			}
+			
 			final ImagePlus imp = new Opener().openImage( file.getAbsolutePath() );
 
 			if ( imp == null )

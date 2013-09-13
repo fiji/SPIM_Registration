@@ -4,6 +4,9 @@ import fiji.datasetmanager.LightSheetZ1;
 import fiji.datasetmanager.MultiViewDatasetDefinition;
 import fiji.datasetmanager.StackListImageJ;
 import fiji.datasetmanager.StackListLOCI;
+import fiji.spimdata.XmlIo;
+import fiji.spimdata.sequence.ViewSetupBeads;
+import fiji.spimdata.sequence.XmlIoViewSetupsBeads;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.ImageJ;
@@ -24,8 +27,13 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.XmlIoSpimData;
+import mpicbg.spim.data.registration.XmlIoViewRegistrations;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewSetup;
+import mpicbg.spim.data.sequence.XmlIoImgLoader;
+import mpicbg.spim.data.sequence.XmlIoMissingViews;
+import mpicbg.spim.data.sequence.XmlIoSequenceDescription;
+import mpicbg.spim.data.sequence.XmlIoTimePoints;
 
 public class Create_Multi_View_Dataset implements PlugIn
 {
@@ -89,7 +97,7 @@ public class Create_Multi_View_Dataset implements PlugIn
 		
 		System.out.println( defaultDatasetDef );
 		
-		final SpimData< TimePoint, ViewSetup > spimData = def.createDataset();
+		final SpimData< TimePoint, ViewSetupBeads > spimData = def.createDataset();
 		
 		if ( spimData == null )
 		{
@@ -98,7 +106,9 @@ public class Create_Multi_View_Dataset implements PlugIn
 		}
 		else
 		{
-			final XmlIoSpimData< TimePoint, ViewSetup > io = XmlIoSpimData.createDefault();
+			//final XmlIoSpimData< TimePoint, ViewSetupBeads > io = XmlIoSpimData.createDefault();
+			final XmlIoSpimData< TimePoint, ViewSetupBeads > io = XmlIo.createDefaultIo();
+			
 			final String xml = new File( spimData.getBasePath(), "example_fromdialog.xml" ).getAbsolutePath();
 			try 
 			{

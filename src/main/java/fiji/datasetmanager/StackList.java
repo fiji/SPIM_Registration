@@ -1,6 +1,7 @@
 package fiji.datasetmanager;
 
 import static mpicbg.spim.data.sequence.XmlKeys.TIMEPOINTS_PATTERN_STRING;
+import fiji.spimdata.sequence.ViewSetupBeads;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.gui.GenericDialog;
@@ -118,7 +119,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	protected abstract ImgLoader createAndInitImgLoader( final String path, final File basePath );
 	
 	@Override
-	public SpimData< TimePoint, ViewSetup > createDataset()
+	public SpimData< TimePoint, ViewSetupBeads > createDataset()
 	{
 		// collect all the information
 		if ( !queryInformation() )
@@ -126,19 +127,19 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		
 		// assemble timepints, viewsetups, missingviews and the imgloader
 		final TimePoints< TimePoint > timepoints = this.createTimePoints();
-		final ArrayList< ViewSetup > setups = this.createViewSetups();
+		final ArrayList< ViewSetupBeads > setups = this.createViewSetups();
 		final MissingViews missingViews = this.createMissingViews();
 		final ImgLoader imgLoader = createAndInitImgLoader( ".", new File( directory ) );
 		
 		// instantiate the sequencedescription
-		final SequenceDescription< TimePoint, ViewSetup > sequenceDescription = new SequenceDescription< TimePoint, ViewSetup >( timepoints, setups, missingViews, imgLoader );
+		final SequenceDescription< TimePoint, ViewSetupBeads > sequenceDescription = new SequenceDescription< TimePoint, ViewSetupBeads >( timepoints, setups, missingViews, imgLoader );
 		
 		// create the initial view registrations (they are all the identity transform)
 		final ViewRegistrations viewRegistrations = this.createViewRegistrations( sequenceDescription.getViewDescriptions() );
 		
 		// finally create the SpimData itself based on the sequence description and the view registration
 		// TODO: add beads and other specific metadata
-		final SpimData< TimePoint, ViewSetup > spimData = new SpimData< TimePoint, ViewSetup >( new File( directory ), sequenceDescription, viewRegistrations );
+		final SpimData< TimePoint, ViewSetupBeads > spimData = new SpimData< TimePoint, ViewSetupBeads >( new File( directory ), sequenceDescription, viewRegistrations );
 		
 		return spimData;
 	}
@@ -149,11 +150,11 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	 * @param viewDescriptionList
 	 * @return
 	 */
-	protected ViewRegistrations createViewRegistrations( final List< ViewDescription< TimePoint, ViewSetup > > viewDescriptionList )
+	protected ViewRegistrations createViewRegistrations( final List< ViewDescription< TimePoint, ViewSetupBeads > > viewDescriptionList )
 	{
 		final ArrayList< ViewRegistration > viewRegistrationList = new ArrayList< ViewRegistration >();
 		
-		for ( final ViewDescription< TimePoint, ViewSetup > viewDescription : viewDescriptionList )
+		for ( final ViewDescription< TimePoint, ViewSetupBeads > viewDescription : viewDescriptionList )
 			if ( viewDescription.isPresent() )
 				viewRegistrationList.add( new ViewRegistration( viewDescription.getTimePointId(), viewDescription.getViewSetupId() ) );
 		
@@ -210,22 +211,23 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	 * 
 	 * @return
 	 */
-	protected ArrayList< ViewSetup > createViewSetups()
+	protected ArrayList< ViewSetupBeads > createViewSetups()
 	{
-		final ArrayList< ViewSetup > viewSetups = new ArrayList< ViewSetup >();
+		final ArrayList< ViewSetupBeads > viewSetups = new ArrayList< ViewSetupBeads >();
 		
 		for ( int c = 0; c < channelList.size(); ++c )
 			for ( int i = 0; i < illuminationsList.size(); ++i )
 				for ( int a = 0; a < angleList.size(); ++a )
 				{
 					final int channel = channelList.get( c );
+					final boolean hasBeads = channelHasBeads.get( c );
 					final int illumination = illuminationsList.get( i );
 					final int angle = angleList.get( a );
 					
 					if ( calibation < 2 )
-						viewSetups.add( new ViewSetup( viewSetups.size(), angle, illumination, channel, -1, -1, -1, calUnit, calX, calY, calZ ) );
+						viewSetups.add( new ViewSetupBeads( viewSetups.size(), angle, illumination, channel, -1, -1, -1, calUnit, calX, calY, calZ, hasBeads ) );
 					else
-						viewSetups.add( new ViewSetup( viewSetups.size(), angle, illumination, channel, -1, -1, -1, calUnit, -1, -1, -1 ) );
+						viewSetups.add( new ViewSetupBeads( viewSetups.size(), angle, illumination, channel, -1, -1, -1, calUnit, -1, -1, -1, hasBeads ) );
 				}
 		
 		return viewSetups;
