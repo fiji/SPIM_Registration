@@ -14,6 +14,8 @@ import static mpicbg.spim.data.sequence.XmlKeys.VIEWSETUP_TAG;
 import static mpicbg.spim.data.sequence.XmlKeys.VIEWSETUP_UNIT_TAG;
 import static mpicbg.spim.data.sequence.XmlKeys.VIEWSETUP_WIDTH_TAG;
 
+import static fiji.spimdata.XmlKeysBeads.VIEWSETUP_HASBEADS_TAG;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -26,9 +28,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 public class XmlIoViewSetupsBeads extends XmlIoViewSetupsAbstract< ViewSetupBeads >
-{
-	public static final String VIEWSETUP_HASBEADS_TAG = "hasbeads"; 
-	
+{	
 	@Override
 	public ArrayList< ViewSetupBeads > fromXml( final Element viewSetups )
 	{
@@ -51,8 +51,7 @@ public class XmlIoViewSetupsBeads extends XmlIoViewSetupsAbstract< ViewSetupBead
 			final double pixelDepth = XmlHelpers.getDouble( elem, VIEWSETUP_PIXELDEPTH_TAG, -1 );
 			
 			// by default we assume there are beads (if not stated otherwise)
-			final boolean hasBeads = XmlHelpers.getBoolean( elem, VIEWSETUP_HASBEADS_TAG );
-			System.out.println( hasBeads );
+			final boolean hasBeads = XmlHelpers.getBoolean( elem, VIEWSETUP_HASBEADS_TAG, true );
 
 			setups.add( new ViewSetupBeads( id, angle, illumination, channel, width, height, depth, unit, pixelWidth, pixelHeight, pixelDepth, hasBeads ) );
 		}

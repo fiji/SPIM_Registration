@@ -37,9 +37,13 @@ public class SpimDataExample
 		final String xmlFilename = "/Users/preibischs/workspace/fiji/src-plugins/SPIM_Registration/src/main/resources/example_fromdialog.xml";
 		
 		//final XmlIoSpimData< TimePoint, ViewSetupBeads > io = XmlIoSpimData.createDefault();
-		final XmlIoSpimData< TimePoint, ViewSetupBeads > io = XmlIo.createDefaultIo();
+		//final XmlIoSpimData< TimePoint, ViewSetupBeads > io = XmlIo.createDefaultIo();
 
-		final SpimData< TimePoint, ViewSetupBeads > spimData = io.load( xmlFilename );	
+		//final SpimData< TimePoint, ViewSetupBeads > spimData = io.load( xmlFilename );
+		
+		final XmlIoSpimDataBeads io = XmlIo.createDefaultIo();
+		
+		final SpimDataBeads spimData = io.load( xmlFilename );
 		
 		// save SpimData to xml file
 		io.save( spimData, "example_new2.xml" );

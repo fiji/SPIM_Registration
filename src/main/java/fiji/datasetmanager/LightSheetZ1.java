@@ -1,8 +1,6 @@
 package fiji.datasetmanager;
 
-import mpicbg.spim.data.SpimData;
-import mpicbg.spim.data.sequence.TimePoint;
-import fiji.spimdata.sequence.ViewSetupBeads;
+import fiji.spimdata.SpimDataBeads;
 
 public class LightSheetZ1 implements MultiViewDatasetDefinition
 {
@@ -24,7 +22,7 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 	}
 
 	@Override
-	public SpimData< TimePoint, ViewSetupBeads > createDataset() {
+	public SpimDataBeads createDataset() {
 		// TODO Auto-generated method stub
 		return null;
 	}

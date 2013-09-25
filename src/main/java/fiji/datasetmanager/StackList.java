@@ -1,6 +1,8 @@
 package fiji.datasetmanager;
 
 import static mpicbg.spim.data.sequence.XmlKeys.TIMEPOINTS_PATTERN_STRING;
+import fiji.spimdata.SpimDataBeads;
+import fiji.spimdata.beads.ViewBeads;
 import fiji.spimdata.sequence.ViewSetupBeads;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
@@ -119,7 +121,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	protected abstract ImgLoader createAndInitImgLoader( final String path, final File basePath );
 	
 	@Override
-	public SpimData< TimePoint, ViewSetupBeads > createDataset()
+	public SpimDataBeads createDataset()
 	{
 		// collect all the information
 		if ( !queryInformation() )
@@ -138,8 +140,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		final ViewRegistrations viewRegistrations = this.createViewRegistrations( sequenceDescription.getViewDescriptions() );
 		
 		// finally create the SpimData itself based on the sequence description and the view registration
-		// TODO: add beads and other specific metadata
-		final SpimData< TimePoint, ViewSetupBeads > spimData = new SpimData< TimePoint, ViewSetupBeads >( new File( directory ), sequenceDescription, viewRegistrations );
+		final SpimDataBeads spimData = new SpimDataBeads( new File( directory ), sequenceDescription, viewRegistrations, new ArrayList< ViewBeads >() );
 		
 		return spimData;
 	}
