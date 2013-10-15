@@ -14,6 +14,9 @@ import loci.formats.meta.IMetadata;
 import loci.formats.meta.MetadataRetrieve;
 import loci.formats.services.OMEXMLService;
 import mpicbg.spim.data.sequence.ImgLoader;
+import net.imglib2.img.ImgFactory;
+import net.imglib2.type.NativeType;
+import fiji.spimdata.imgloaders.StackImgLoaderLOCI;
 
 public class StackListLOCI extends StackList
 {
@@ -24,9 +27,13 @@ public class StackListLOCI extends StackList
 	}
 
 	@Override
-	protected ImgLoader createAndInitImgLoader( final String path, final File basePath ) {
-		// TODO Auto-generated method stub
-		return null;
+	protected ImgLoader createAndInitImgLoader( final String path, final File basePath, final ImgFactory< ? extends NativeType< ? > > imgFactory )
+	{
+		final StackImgLoaderLOCI imgLoader = new StackImgLoaderLOCI();
+		
+		imgLoader.init( path, basePath, fileNamePattern, imgFactory );
+		
+		return imgLoader;
 	}
 
 	@Override
@@ -116,7 +123,7 @@ public class StackListLOCI extends StackList
 		return true;
 	}
 
-	private static boolean createOMEXMLMetadata(final IFormatReader r)
+	public static boolean createOMEXMLMetadata(final IFormatReader r)
 	{
 		try 
 		{

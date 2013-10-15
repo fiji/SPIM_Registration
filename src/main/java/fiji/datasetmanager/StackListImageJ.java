@@ -1,12 +1,15 @@
 package fiji.datasetmanager;
 
-import fiji.spimdata.StackImgLoaderIJ;
+import fiji.spimdata.imgloaders.StackImgLoaderIJ;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.io.Opener;
 import ij.measure.Calibration;
 
 import java.io.File;
+
+import net.imglib2.img.ImgFactory;
+import net.imglib2.type.NativeType;
 
 import mpicbg.spim.data.sequence.ImgLoader;
 
@@ -77,11 +80,11 @@ public class StackListImageJ extends StackList
 	}
 
 	@Override
-	protected ImgLoader createAndInitImgLoader( final String path, final File basePath )
+	protected ImgLoader createAndInitImgLoader( final String path, final File basePath, final ImgFactory< ? extends NativeType< ? > > imgFactory )
 	{
 		final StackImgLoaderIJ imgLoader = new StackImgLoaderIJ();
 		
-		imgLoader.init( path, basePath, fileNamePattern );
+		imgLoader.init( path, basePath, fileNamePattern, imgFactory );
 		
 		return imgLoader;
 	}

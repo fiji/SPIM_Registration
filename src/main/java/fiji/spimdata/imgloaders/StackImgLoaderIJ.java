@@ -1,4 +1,4 @@
-package fiji.spimdata;
+package fiji.spimdata.imgloaders;
 
 import ij.IJ;
 import ij.ImagePlus;

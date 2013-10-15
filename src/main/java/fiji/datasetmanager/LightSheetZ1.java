@@ -22,7 +22,8 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 	}
 
 	@Override
-	public SpimDataBeads createDataset() {
+	public SpimDataBeads createDataset()
+	{
 		// TODO Auto-generated method stub
 		return null;
 	}

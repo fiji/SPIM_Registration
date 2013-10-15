@@ -1,7 +1,6 @@
 package fiji.datasetmanager;
 
 import static mpicbg.spim.data.sequence.XmlKeys.TIMEPOINTS_PATTERN_STRING;
-import fiji.plugin.Multi_View_Deconvolution;
 import fiji.spimdata.SpimDataBeads;
 import fiji.spimdata.beads.ViewBeads;
 import fiji.spimdata.sequence.ViewSetupBeads;
@@ -38,6 +37,11 @@ import mpicbg.spim.data.sequence.TimePoints;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
+import net.imglib2.img.ImgFactory;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.cell.CellImgFactory;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.real.FloatType;
 
 public abstract class StackList implements MultiViewDatasetDefinition
 {
@@ -73,7 +77,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	protected String[] imglib2Container = new String[]{ "ArrayImg (faster)", "CellImg (slower, larger files supported)" };
 
 	public static int defaultContainer = 0;
-	public int container;
+	public ImgFactory< ? extends NativeType< ? > > imgFactory;
 	public static int defaultCalibration = 0;
 	public int calibation;
 	
@@ -123,7 +127,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	 * @param basePath - The base path, where XML will be and the image stack are
 	 * @return
 	 */
-	protected abstract ImgLoader createAndInitImgLoader( final String path, final File basePath );
+	protected abstract ImgLoader createAndInitImgLoader( final String path, final File basePath, final ImgFactory< ? extends NativeType< ? > > imgFactory );
 	
 	@Override
 	public SpimDataBeads createDataset()
@@ -136,7 +140,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		final TimePoints< TimePoint > timepoints = this.createTimePoints();
 		final ArrayList< ViewSetupBeads > setups = this.createViewSetups();
 		final MissingViews missingViews = this.createMissingViews();
-		final ImgLoader imgLoader = createAndInitImgLoader( ".", new File( directory ) );
+		final ImgLoader imgLoader = createAndInitImgLoader( ".", new File( directory ), imgFactory );
 		
 		// instantiate the sequencedescription
 		final SequenceDescription< TimePoint, ViewSetupBeads > sequenceDescription = new SequenceDescription< TimePoint, ViewSetupBeads >( timepoints, setups, missingViews, imgLoader );
@@ -447,7 +451,13 @@ public abstract class StackList implements MultiViewDatasetDefinition
 
 		exceptionIds = new ArrayList< int[] >();
 		
-		defaultContainer = container = gd.getNextChoiceIndex();
+		defaultContainer = gd.getNextChoiceIndex();
+		
+		if ( defaultContainer == 0 )
+			imgFactory = new ArrayImgFactory< FloatType >();
+		else
+			imgFactory = new CellImgFactory< FloatType >( 256 );
+		
 		defaultCalibration = calibation = gd.getNextChoiceIndex();
 		showDebugFileNames = gd.getNextBoolean();
 		

@@ -1,4 +1,4 @@
-package fiji.spimdata;
+package fiji.spimdata.imgloaders;
 
 import static mpicbg.spim.data.XmlHelpers.loadPath;
 
@@ -11,11 +11,15 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.XmlKeys;
 import net.imglib2.img.Img;
+import net.imglib2.img.ImgFactory;
+import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.real.FloatType;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 import fiji.datasetmanager.StackList;
 
@@ -23,13 +27,14 @@ public abstract class StackImgLoader extends AbstractImgLoader
 {
 	public static final String DIRECTORY_TAG = "imagedirectory";
 	public static final String FILE_PATTERN_TAG = "filePattern";
+	public static final String IMGLIB2CONTAINER_PATTERN_TAG = "imglib2container";
 	
 	protected File path = null;
 	protected String fileNamePattern = null;
 	
 	protected String replaceTimepoints, replaceChannels, replaceIlluminations, replaceAngles;
 	protected int numDigitsTimepoints, numDigitsChannels, numDigitsIlluminations, numDigitsAngles;
-	
+		
 	protected < T extends NativeType< T > > Img< T > instantiateImg( final long[] dim, final T type )
 	{
 		Img< T > img;
@@ -75,13 +80,14 @@ public abstract class StackImgLoader extends AbstractImgLoader
 	 * 
 	 * @param path
 	 * @param fileNamePattern
+	 * @param imgFactory
 	 */
-	public void init( final String path, final File basePath, final String fileNamePattern )
+	public void init( final String path, final File basePath, final String fileNamePattern, final ImgFactory< ? extends NativeType< ? > > imgFactory )
 	{
 		this.path = new File( basePath.getAbsolutePath(), path );
 		this.fileNamePattern = fileNamePattern;
 		
-		this.init();
+		this.init( imgFactory );
 	}
 
 	/**
@@ -95,7 +101,38 @@ public abstract class StackImgLoader extends AbstractImgLoader
 			this.path = loadPath( elem, DIRECTORY_TAG, basePath );
 			this.fileNamePattern = elem.getElementsByTagName( FILE_PATTERN_TAG ).item( 0 ).getTextContent();
 			
-			this.init();
+			final NodeList nd = elem.getElementsByTagName( IMGLIB2CONTAINER_PATTERN_TAG );
+			ImgFactory< ? extends NativeType< ? > > imgFactory = null;
+			
+			if ( nd.getLength() == 0 )
+			{
+				System.out.println( "WARNING: No Img implementation defined, using ArrayImg." );
+				
+				// if no factory is defined we define an ArrayImgFactory
+				imgFactory = new ArrayImgFactory< FloatType >();
+			}
+			else
+			{
+				final String container = nd.item( 0 ).getTextContent();
+				
+				if ( container.toLowerCase().contains( "cellimg" ) )
+				{
+					imgFactory = new CellImgFactory< FloatType >( 256 );
+				}
+				else if ( container.toLowerCase().contains( "arrayimg" ) )
+				{
+					imgFactory = new ArrayImgFactory< FloatType >();
+				}
+				else
+				{
+					// if factory is unknown we define an ArrayImgFactory
+					imgFactory = new ArrayImgFactory< FloatType >();
+					
+					System.out.println( "WARNING: Unknown Img implementation '" + container + "', using ArrayImg." );
+				}
+			}
+			
+			this.init( imgFactory );
 		}
 		catch ( final Exception e )
 		{
@@ -103,8 +140,10 @@ public abstract class StackImgLoader extends AbstractImgLoader
 		}
 	}
 	
-	protected void init()
+	protected void init( final ImgFactory< ? extends NativeType< ? > > imgFactory )
 	{
+		setImgFactory( imgFactory );
+		
 		replaceTimepoints = replaceChannels = replaceIlluminations = replaceAngles = null;
 		numDigitsTimepoints = numDigitsChannels = numDigitsIlluminations = numDigitsAngles = -1;
 		
@@ -144,11 +183,14 @@ public abstract class StackImgLoader extends AbstractImgLoader
 		elem.setAttribute( "class", getClass().getCanonicalName() );
 		elem.appendChild( XmlHelpers.pathElement( doc, DIRECTORY_TAG, path, basePath ) );
 		
-		final Element e = doc.createElement( FILE_PATTERN_TAG );
-		e.appendChild( doc.createTextNode( fileNamePattern ) );
-		
-		elem.appendChild( e );
-		
+		final Element e1 = doc.createElement( FILE_PATTERN_TAG );
+		e1.appendChild( doc.createTextNode( fileNamePattern ) );
+		elem.appendChild( e1 );
+
+		final Element e2 = doc.createElement( IMGLIB2CONTAINER_PATTERN_TAG );
+		e2.appendChild( doc.createTextNode( getImgFactory().getClass().getSimpleName() ) );
+		elem.appendChild( e2 );
+
 		return elem;
 	}
 }
