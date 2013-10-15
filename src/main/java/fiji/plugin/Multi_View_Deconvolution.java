@@ -263,7 +263,7 @@ public class Multi_View_Deconvolution implements PlugIn
 	public static int defaultBlockSizeIndex = 0, defaultBlockSizeX = 256, defaultBlockSizeY = 256, defaultBlockSizeZ = 256;
 	
 	public static String[] iterationTypeString = new String[]{ "Efficient Bayesian - Optimization II (very fast, imprecise)", "Efficient Bayesian - Optimization I (fast, precise)", "Efficient Bayesian (less fast, more precise)", "Independent (slow, very precise)" };
-	public static String[] imglibContainer = new String[]{ "Array container", "Planar container", "Cell container" };
+	public static String[] imglibContainer = new String[]{ "Array container (input files smaller ~2048x2048x450 px)", "Cell container (input files larger ~2048x2048x450 px)" };
 	public static String[] computationOn = new String[]{ "CPU (Java)", "GPU (Nvidia CUDA via JNA)" };
 	public static String[] extractPSFs = new String[]{ "Extract from beads", "Provide file with PSF" };
 	public static String[] blocks = new String[]{ "Entire image at once", "in 64x64x64 blocks", "in 128x128x128 blocks", "in 256x256x256 blocks", "in 512x512x512 blocks", "specify maximal blocksize manually" };
@@ -299,6 +299,9 @@ public class Multi_View_Deconvolution implements PlugIn
 		gd.addStringField( "Angles to process", Bead_Registration.angles );
 		
 		gd.addMessage("");
+		gd.addChoice( "ImgLib_container", imglibContainer, imglibContainer[ defaultContainer ] );
+
+		gd.addMessage("");
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
 
 		MultiLineLabel text = (MultiLineLabel) gd.getMessage();
@@ -313,6 +316,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		Bead_Registration.fileNamePattern = gd.getNextString();
 		Bead_Registration.timepoints = gd.getNextString();
 		Bead_Registration.angles = gd.getNextString();
+		container = defaultContainer = gd.getNextChoiceIndex();
 
 		int numViews = -1;
 		
@@ -492,7 +496,6 @@ public class Multi_View_Deconvolution implements PlugIn
 		gd2.addNumericField( "Number_of_iterations", defaultNumIterations, 0 );
 		gd2.addCheckbox( "Use_Tikhonov_regularization", defaultUseTikhonovRegularization );
 		gd2.addNumericField( "Tikhonov_parameter", defaultLambda, 4 );
-		gd2.addChoice( "ImgLib_container", imglibContainer, imglibContainer[ defaultContainer ] );
 		gd2.addChoice( "Compute", blocks, blocks[ defaultBlockSizeIndex ] );
 		gd2.addChoice( "Compute_on", computationOn, computationOn[ defaultComputationIndex ] );
 		gd2.addChoice( "PSF_estimation", extractPSFs, extractPSFs[ defaultExtractPSF ] );
@@ -615,7 +618,6 @@ public class Multi_View_Deconvolution implements PlugIn
 		numIterations = defaultNumIterations = (int)Math.round( gd2.getNextNumber() );
 		useTikhonovRegularization = defaultUseTikhonovRegularization = gd2.getNextBoolean();
 		lambda = defaultLambda = gd2.getNextNumber();
-		container = defaultContainer = gd2.getNextChoiceIndex();
 		blockSizeIndex = defaultBlockSizeIndex = gd2.getNextChoiceIndex();
 		computationType = defaultComputationIndex = gd2.getNextChoiceIndex();
 		defaultExtractPSF = gd2.getNextChoiceIndex();
@@ -966,12 +968,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		
 		if ( container == 1 )
 		{
-			conf.outputImageFactory = new PlanarContainerFactory();
-			conf.imageFactory = new PlanarContainerFactory();
-		}
-		else if ( container == 2 )
-		{
-			conf.outputImageFactory = new CellContainerFactory( 256 );
+			conf.outputImageFactory = new ArrayContainerFactory();
 			conf.imageFactory = new CellContainerFactory( 256 );
 		}
 		else
