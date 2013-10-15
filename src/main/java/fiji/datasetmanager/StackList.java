@@ -325,7 +325,21 @@ public abstract class StackList implements MultiViewDatasetDefinition
 					for ( int a = 0; a < angleList.size(); ++a )
 					{
 						String fileName = getFileNameFor( t, c, i, a );
+						
+						String ext = "";
+						
+						if ( hasMultipleChannels && numDigitsChannels == 0 )
+							ext +=  "c = " + c;
 
+						if ( hasMultipleTimePoints && numDigitsTimepoints == 0 )
+							if ( ext.length() > 0 )
+								ext += ", t = " + t;
+							else
+								ext += "t = " + t;
+						
+						if ( ext.length() > 1 )
+							fileName += "   >> [" + ext + "]";
+						
 						gd.addCheckbox( fileName, true );
 						
 						// otherwise underscores are gone ...
@@ -401,10 +415,16 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			replaceTimepoints = IntegerPattern.getReplaceString( fileNamePattern, TIMEPOINT_PATTERN );
 			
 			if ( replaceTimepoints == null )
-				throw new ParseException( "Pattern {" + TIMEPOINT_PATTERN + "} not present in " + fileNamePattern + 
-						" although you indicated there would be several timepoints.", 0 );
-			
-			numDigitsTimepoints = replaceTimepoints.length() - 2;
+			{
+				IJ.log( "WARNING: Pattern {" + TIMEPOINT_PATTERN + "} not present in " + fileNamePattern + 
+						" although you indicated there would be several timepoints. . There need to be several timepoints in each file!" );
+				
+				numDigitsTimepoints = 0;
+			}
+			else
+			{
+				numDigitsTimepoints = replaceTimepoints.length() - 2;
+			}
 		}
 
 		if ( hasMultipleChannels )
@@ -413,10 +433,16 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			replaceChannels = IntegerPattern.getReplaceString( fileNamePattern, CHANNEL_PATTERN );
 			
 			if ( replaceChannels == null )
-				throw new ParseException( "Pattern {" + CHANNEL_PATTERN + "} not present in " + fileNamePattern + 
-						" although you indicated there would be several channels.", 0 );
-			
-			numDigitsChannels = replaceChannels.length() - 2;
+			{
+				IJ.log( "WARNING: Pattern {" + CHANNEL_PATTERN + "} not present in " + fileNamePattern + 
+						" although you indicated there would be several channels. There need to be several channels in each file!" );
+				
+				numDigitsChannels = 0;
+			}
+			else
+			{
+				numDigitsChannels = replaceChannels.length() - 2;
+			}
 		}
 
 		if ( hasMultipleIlluminations )

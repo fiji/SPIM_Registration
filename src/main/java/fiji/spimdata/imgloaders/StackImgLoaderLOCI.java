@@ -195,14 +195,14 @@ public class StackImgLoaderLOCI extends StackImgLoader
 			
 			if ( timepoints > 1 )
 			{
-				System.out.println( "StackImgLoaderLOCI.openLOCI(): File has more than one timepoint, trying to open the right one (by name): " + 
+				System.out.println( "StackImgLoaderLOCI.openLOCI(): File has more than one timepoint, trying to open the right one (by name functioning as id): " + 
 									((TimePoint)view.getTimePoint()).getName() );
 				t = Integer.parseInt( ((TimePoint)view.getTimePoint()).getName() );
 			}
 			
 			if ( channels > 1 )
 			{
-				System.out.println( "StackImgLoaderLOCI.openLOCI(): File has more than one channel, trying to open the right one (by id): " + 
+				System.out.println( "StackImgLoaderLOCI.openLOCI(): File has more than one channel, trying to open the right one (by name functioning as id): " + 
 									((ViewSetup)view.getViewSetup()).getChannel() );
 				c = ((ViewSetup)view.getViewSetup()).getChannel();
 			}
