@@ -51,12 +51,28 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	final public static char ILLUMINATION_PATTERN = 'i';
 	final public static char ANGLE_PATTERN = 'a';
 	
-	public static boolean defaultHasMultipleAngles = true;
-	public static boolean defaultHasMultipleTimePoints = true;
-	public static boolean defaultHasMultipleChannels = false;
-	public static boolean defaultHasMultipleIlluminations = false;
-	
-	protected boolean hasMultipleAngles, hasMultipleTimePoints, hasMultipleChannels, hasMultipleIlluminations;
+	protected String[] dimensionChoiceTimePointsTrue = new String[] { "NO, just one time-point", "YES, one file per time-point", "YES, all time-points in one file" }; 
+	protected String[] dimensionChoiceTimePointsFalse = new String[] { dimensionChoiceTimePointsTrue[ 0 ], dimensionChoiceTimePointsTrue[ 1 ] }; 
+
+	protected String[] dimensionChoiceChannelsTrue = new String[] { "NO, just one channel", "YES, one file per channel", "YES, all channels in one file" }; 
+	protected String[] dimensionChoiceChannelsFalse = new String[] { dimensionChoiceChannelsTrue[ 0 ], dimensionChoiceChannelsTrue[ 1 ] }; 
+
+	protected String[] dimensionChoiceIlluminationsTrue = new String[] { "NO, just one illumination direction", "YES, one file per illumination direction", "YES, all illumination directions in one file" }; 
+	protected String[] dimensionChoiceIlluminationsFalse = new String[] { dimensionChoiceIlluminationsTrue[ 0 ], dimensionChoiceIlluminationsTrue[ 1 ] }; 
+
+	protected String[] dimensionChoiceAnglesTrue = new String[] { "NO, just one angle", "YES, one file per angle", "YES, all angles in one file" }; 
+	protected String[] dimensionChoiceAnglesFalse = new String[] { dimensionChoiceAnglesTrue[ 0 ], dimensionChoiceAnglesTrue[ 1 ] }; 
+
+	protected abstract int getDefaultMultipleAngles();
+	protected abstract int getDefaultMultipleTimepoints();
+	protected abstract int getDefaultMultipleChannels();
+	protected abstract int getDefaultMultipleIlluminations();
+	protected abstract void setDefaultMultipleAngles( int defaultAngleChoice );
+	protected abstract void setDefaultMultipleTimepoints( int defaultTimepointChoice );
+	protected abstract void setDefaultMultipleChannels( int defaultChannelChoice );
+	protected abstract void setDefaultMultipleIlluminations( int defaultIlluminationChoice );
+		
+	protected int hasMultipleAngles, hasMultipleTimePoints, hasMultipleChannels, hasMultipleIlluminations;
 	
 	public static boolean showDebugFileNames = true;
 	
@@ -334,22 +350,22 @@ public abstract class StackList implements MultiViewDatasetDefinition
 						
 						String ext = "";
 						
-						if ( hasMultipleChannels && numDigitsChannels == 0 )
+						if ( hasMultipleChannels > 0 && numDigitsChannels == 0 )
 							ext +=  "c = " + c;
 
-						if ( hasMultipleTimePoints && numDigitsTimepoints == 0 )
+						if ( hasMultipleTimePoints > 0 && numDigitsTimepoints == 0 )
 							if ( ext.length() > 0 )
 								ext += ", t = " + t;
 							else
 								ext += "t = " + t;
 
-						if ( hasMultipleAngles && numDigitsAngles == 0 )
+						if ( hasMultipleAngles > 0 && numDigitsAngles == 0 )
 							if ( ext.length() > 0 )
 								ext += ", a = " + a;
 							else
 								ext += "a = " + a;
 
-						if ( hasMultipleIlluminations && numDigitsIlluminations == 0 )
+						if ( hasMultipleIlluminations > 0 && numDigitsIlluminations == 0 )
 							if ( ext.length() > 0 )
 								ext += ", i = " + i;
 							else
@@ -391,16 +407,16 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		gd.addDirectoryOrFileField( "Image_File_directory", defaultDirectory );
 		gd.addStringField( "Image_File_Pattern", defaultFileNamePattern, 40 );
 
-		if ( hasMultipleTimePoints )
+		if ( hasMultipleTimePoints > 0 )
 			gd.addStringField( "Timepoints", defaultTimepoints );
 		
-		if ( hasMultipleChannels )
+		if ( hasMultipleChannels > 0 )
 			gd.addStringField( "Channels", defaultChannels );
 
-		if ( hasMultipleIlluminations )
+		if ( hasMultipleIlluminations > 0 )
 			gd.addStringField( "Illumination_directions", defaultIlluminations );
 		
-		if ( hasMultipleAngles )
+		if ( hasMultipleAngles > 0 )
 			gd.addStringField( "Acquisition_angles", defaultAngles );
 		
 		gd.addChoice( "Calibration", calibrationChoice, calibrationChoice[ defaultCalibration ] );
@@ -427,107 +443,86 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		
 		// get the String patterns and verify that the corresponding pattern, 
 		// e.g. {t} or {tt} exists in the pattern
-		if ( hasMultipleTimePoints )
+		if ( hasMultipleTimePoints > 0 )
 		{
 			defaultTimepoints = timepoints = gd.getNextString();
-			replaceTimepoints = IntegerPattern.getReplaceString( fileNamePattern, TIMEPOINT_PATTERN );
 			
-			if ( replaceTimepoints == null )
+			if ( hasMultipleTimePoints == 1 )
 			{
-				if ( supportsMultipleTimepointsPerFile() )
-				{
-					IJ.log( "WARNING: Pattern {" + TIMEPOINT_PATTERN + "} not present in " + fileNamePattern + 
-							" although you indicated there would be several timepoints. There need to be several timepoints in each file!" );
-					
-					numDigitsTimepoints = 0;
-				}
-				else
-				{
+				replaceTimepoints = IntegerPattern.getReplaceString( fileNamePattern, TIMEPOINT_PATTERN );
+				
+				if ( replaceTimepoints == null )
 					throw new ParseException( "Pattern {" + TIMEPOINT_PATTERN + "} not present in " + fileNamePattern + 
-							" although you indicated there would be several timepoints. Stopping.", 0 );
-				}
+							" although you indicated there would be several timepoints. Stopping.", 0 );					
+				else
+					numDigitsTimepoints = replaceTimepoints.length() - 2;
 			}
-			else
+			else 
 			{
-				numDigitsTimepoints = replaceTimepoints.length() - 2;
+				replaceTimepoints = null;
+				numDigitsTimepoints = 0;
 			}
 		}
 
-		if ( hasMultipleChannels )
+		if ( hasMultipleChannels > 0 )
 		{
 			defaultChannels = channels = gd.getNextString();
-			replaceChannels = IntegerPattern.getReplaceString( fileNamePattern, CHANNEL_PATTERN );
 			
-			if ( replaceChannels == null )
-			{
-				if ( supportsMultipleChannelsPerFile() )
-				{
-					IJ.log( "WARNING: Pattern {" + CHANNEL_PATTERN + "} not present in " + fileNamePattern + 
-							" although you indicated there would be several channels. There need to be several channels in each file!" );
-					
-					numDigitsChannels = 0;
-				}
+			if ( hasMultipleChannels == 1 )
+			{			
+				replaceChannels = IntegerPattern.getReplaceString( fileNamePattern, CHANNEL_PATTERN );
+				if ( replaceChannels == null )
+						throw new ParseException( "Pattern {" + CHANNEL_PATTERN + "} not present in " + fileNamePattern + 
+								" although you indicated there would be several channels. Stopping.", 0 );					
 				else
-				{
-					throw new ParseException( "Pattern {" + CHANNEL_PATTERN + "} not present in " + fileNamePattern + 
-							" although you indicated there would be several channels. Stopping.", 0 );					
-				}
+					numDigitsChannels = replaceChannels.length() - 2;
 			}
 			else
 			{
-				numDigitsChannels = replaceChannels.length() - 2;
+				replaceChannels = null;
+				numDigitsChannels = 0;
 			}
 		}
 
-		if ( hasMultipleIlluminations )
+		if ( hasMultipleIlluminations > 0 )
 		{
 			defaultIlluminations = illuminations = gd.getNextString();
-			replaceIlluminations = IntegerPattern.getReplaceString( fileNamePattern, ILLUMINATION_PATTERN );
 			
-			if ( replaceIlluminations == null )
+			if ( hasMultipleIlluminations == 1 )
 			{
-				if ( supportsMultipleIlluminationsPerFile() )
-				{
-					IJ.log( "WARNING: Pattern {" + ILLUMINATION_PATTERN + "} not present in " + fileNamePattern + 
-							" although you indicated there would be several illumination directions. There need to be several illumination directions in each file!" );
-					
-					numDigitsIlluminations = 0;
-				}
-				else
-				{
+				replaceIlluminations = IntegerPattern.getReplaceString( fileNamePattern, ILLUMINATION_PATTERN );
+				
+				if ( replaceIlluminations == null )
 					throw new ParseException( "Pattern {" + ILLUMINATION_PATTERN + "} not present in " + fileNamePattern + 
 						" although you indicated there would be several illumination directions. Stopping.", 0 );
-				}
+				else
+					numDigitsIlluminations = replaceIlluminations.length() - 2;
 			}
 			else
 			{
-				numDigitsIlluminations = replaceIlluminations.length() - 2;
+				replaceIlluminations = null;
+				numDigitsIlluminations = 0;				
 			}
 		}
 
-		if ( hasMultipleAngles )
+		if ( hasMultipleAngles > 0 )
 		{
 			defaultAngles = angles = gd.getNextString();
-			replaceAngles = IntegerPattern.getReplaceString( fileNamePattern, ANGLE_PATTERN );
 			
-			if ( replaceAngles == null )
+			if ( hasMultipleAngles == 1 )
 			{
-				if ( supportsMultipleAnglesPerFile() )
-				{
-					IJ.log( "WARNING: Pattern {" + ANGLE_PATTERN + "} not present in " + fileNamePattern + 
-							" although you indicated there would be several angles. There need to be several angles in each file!" );
-					
-					numDigitsAngles = 0;					
-				}
-				else
-				{
+				replaceAngles = IntegerPattern.getReplaceString( fileNamePattern, ANGLE_PATTERN );
+
+				if ( replaceAngles == null )
 					throw new ParseException( "Pattern {" + ANGLE_PATTERN + "} not present in " + fileNamePattern + 
 						" although you indicated there would be several angles.", 0 );
-				}
+				else
+					numDigitsAngles = replaceAngles.length() - 2;
 			}
 			else
 			{
-				numDigitsAngles = replaceAngles.length() - 2;
+				replaceAngles = null;
+				numDigitsAngles = 0;									
 			}
 		}
 
@@ -627,16 +622,16 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	{
 		String pattern = "spim";
 		
-		if ( hasMultipleTimePoints )
+		if ( hasMultipleTimePoints == 1 )
 			pattern += "_TL{t}";
 		
-		if ( hasMultipleChannels )
+		if ( hasMultipleChannels == 1 )
 			pattern += "_Channel{c}";
 		
-		if ( hasMultipleIlluminations )
+		if ( hasMultipleIlluminations == 1 )
 			pattern += "_Illum{i}";
 		
-		if ( hasMultipleAngles )
+		if ( hasMultipleAngles == 1 )
 			pattern += "_Angle{a}";
 		
 		return pattern + ".tif";
@@ -650,43 +645,81 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		final Color red = Color.RED;
 		
 		gd.addMessage( "File reader: " + getTitle(), new Font( Font.SANS_SERIF, Font.BOLD, 14 ) );
-				
+
+		gd.addMessage( "" );		
+		
 		if ( supportsMultipleTimepointsPerFile() )
 			gd.addMessage( "Supports multiple timepoints per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), green );
 		else
 			gd.addMessage( "NO support for multiple timepoints per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), red );
-		
+
+		if ( supportsMultipleTimepointsPerFile() )
+			gd.addChoice( "Dataset_with_multiple_timepoints", dimensionChoiceTimePointsTrue, dimensionChoiceTimePointsTrue[ getDefaultMultipleTimepoints() ] );
+		else
+			gd.addChoice( "Dataset_with_multiple_timepoints", dimensionChoiceTimePointsFalse, dimensionChoiceTimePointsTrue[ getDefaultMultipleTimepoints() ] );
+
+		gd.addMessage( "" );
+
 		if ( supportsMultipleChannelsPerFile() )
 			gd.addMessage( "Supports multiple channels per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), green );
 		else
 			gd.addMessage( "NO support for multiple channels per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), red );
+
+		if ( supportsMultipleChannelsPerFile() )
+			gd.addChoice( "Dataset_with_multiple_channels", dimensionChoiceChannelsTrue, dimensionChoiceChannelsTrue[ getDefaultMultipleChannels() ] );
+		else
+			gd.addChoice( "Dataset_with_multiple_channels", dimensionChoiceChannelsFalse, dimensionChoiceChannelsTrue[ getDefaultMultipleChannels() ] );
+
+		gd.addMessage( "" );
 
 		if ( supportsMultipleIlluminationsPerFile() )
 			gd.addMessage( "Supports multiple illumination directions per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), green );
 		else
 			gd.addMessage( "NO support for multiple illumination directions per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), red );
 
+		if ( supportsMultipleIlluminationsPerFile() )
+			gd.addChoice( "     Dataset_with_multiple_illumination_directions", dimensionChoiceIlluminationsTrue, dimensionChoiceIlluminationsTrue[ getDefaultMultipleIlluminations() ] );
+		else
+			gd.addChoice( "     Dataset_with_multiple_illumination_directions", dimensionChoiceIlluminationsFalse, dimensionChoiceIlluminationsTrue[ getDefaultMultipleIlluminations() ] );
+
+		gd.addMessage( "" );
+		
 		if ( supportsMultipleAnglesPerFile() )
 			gd.addMessage( "Supports multiple angles per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), green );
 		else
 			gd.addMessage( "NO support for multiple angles per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), red );
-		
-		
+
+		if ( supportsMultipleAnglesPerFile() )
+			gd.addChoice( "Dataset_with_multiple_angles", dimensionChoiceAnglesTrue, dimensionChoiceAnglesTrue[ getDefaultMultipleAngles() ] );
+		else
+			gd.addChoice( "Dataset_with_multiple_angles", dimensionChoiceAnglesFalse, dimensionChoiceAnglesTrue[ getDefaultMultipleAngles() ] );
+		/*
 		gd.addCheckbox( "Dataset_with_multiple_timepoints", defaultHasMultipleTimePoints );
 		gd.addCheckbox( "Dataset_with_multiple_channels", defaultHasMultipleChannels );
 		gd.addCheckbox( "Dataset_with_multiple_illumination_directions", defaultHasMultipleIlluminations );
 		gd.addCheckbox( "Dataset_with_multiple_angles", defaultHasMultipleAngles );
-			
+		*/
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
 			return false;
+
+		hasMultipleTimePoints = gd.getNextChoiceIndex();
+		hasMultipleChannels = gd.getNextChoiceIndex();
+		hasMultipleIlluminations = gd.getNextChoiceIndex();
+		hasMultipleAngles = gd.getNextChoiceIndex();
+
+		setDefaultMultipleTimepoints( hasMultipleTimePoints );
+		setDefaultMultipleChannels( hasMultipleChannels );
+		setDefaultMultipleIlluminations( hasMultipleIlluminations );
+		setDefaultMultipleAngles( hasMultipleAngles );
 		
+		/*
 		hasMultipleTimePoints = defaultHasMultipleTimePoints = gd.getNextBoolean();
 		hasMultipleChannels = defaultHasMultipleChannels = gd.getNextBoolean();
 		hasMultipleIlluminations = defaultHasMultipleIlluminations = gd.getNextBoolean();
 		hasMultipleAngles = defaultHasMultipleAngles = gd.getNextBoolean();
-		
+		*/
 		return true;
 	}
 	

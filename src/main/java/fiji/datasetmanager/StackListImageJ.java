@@ -15,10 +15,15 @@ import mpicbg.spim.data.sequence.ImgLoader;
 
 public class StackListImageJ extends StackList
 {
+	public static int defaultAngleChoice = 1;
+	public static int defaultTimePointChoice = 1;
+	public static int defaultChannelleChoice = 0;
+	public static int defaultIlluminationChoice = 0;
+
 	@Override
 	public String getTitle() 
 	{
-		return "Image Stacks (ImageJ Opener, only 3d)";
+		return "Image Stacks (ImageJ Opener)";
 	}
 
 	@Override
@@ -84,7 +89,7 @@ public class StackListImageJ extends StackList
 	{
 		final StackImgLoaderIJ imgLoader = new StackImgLoaderIJ();
 		
-		imgLoader.init( path, basePath, fileNamePattern, imgFactory );
+		imgLoader.init( path, basePath, fileNamePattern, imgFactory, hasMultipleTimePoints, hasMultipleChannels, hasMultipleIlluminations, hasMultipleAngles );
 		
 		return imgLoader;
 	}
@@ -100,4 +105,28 @@ public class StackListImageJ extends StackList
 
 	@Override
 	protected boolean supportsMultipleIlluminationsPerFile() { return false; }
+
+	@Override
+	protected int getDefaultMultipleAngles() { return defaultAngleChoice; }
+
+	@Override
+	protected int getDefaultMultipleTimepoints() { return defaultTimePointChoice; }
+
+	@Override
+	protected int getDefaultMultipleChannels() { return defaultChannelleChoice; }
+
+	@Override
+	protected int getDefaultMultipleIlluminations() { return defaultIlluminationChoice; }
+
+	@Override
+	protected void setDefaultMultipleAngles( final int a ) { defaultAngleChoice = a; }
+
+	@Override
+	protected void setDefaultMultipleTimepoints( final int t ) { defaultTimePointChoice = t; }
+
+	@Override
+	protected void setDefaultMultipleChannels( final int c ) { defaultChannelleChoice = c; }
+
+	@Override
+	protected void setDefaultMultipleIlluminations( final int i ) { defaultIlluminationChoice = i; }
 }

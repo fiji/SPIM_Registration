@@ -28,12 +28,18 @@ public abstract class StackImgLoader extends AbstractImgLoader
 	public static final String DIRECTORY_TAG = "imagedirectory";
 	public static final String FILE_PATTERN_TAG = "filePattern";
 	public static final String IMGLIB2CONTAINER_PATTERN_TAG = "imglib2container";
-	
+
+	public static final String LAYOUT_TP_TAG = "layoutTimepoints";
+	public static final String LAYOUT_CHANNEL_TAG = "layoutChannels";
+	public static final String LAYOUT_ILLUMINATION_TAG = "layoutIlluminations";
+	public static final String LAYOUT_ANGLE_TAG = "layoutAngles";
+
 	protected File path = null;
 	protected String fileNamePattern = null;
 	
 	protected String replaceTimepoints, replaceChannels, replaceIlluminations, replaceAngles;
 	protected int numDigitsTimepoints, numDigitsChannels, numDigitsIlluminations, numDigitsAngles;
+	protected int layoutTP, layoutChannels, layoutIllum, layoutAngles; // 0 == one, 1 == one per file, 2 == all in one file
 		
 	protected < T extends NativeType< T > > Img< T > instantiateImg( final long[] dim, final T type )
 	{
@@ -81,11 +87,20 @@ public abstract class StackImgLoader extends AbstractImgLoader
 	 * @param path
 	 * @param fileNamePattern
 	 * @param imgFactory
+	 * @param layoutTP - 0 == one, 1 == one per file, 2 == all in one file
+	 * @param layoutChannels - 0 == one, 1 == one per file, 2 == all in one file
+	 * @param layoutIllum - 0 == one, 1 == one per file, 2 == all in one file
+	 * @param layoutAngles - 0 == one, 1 == one per file, 2 == all in one file
 	 */
-	public void init( final String path, final File basePath, final String fileNamePattern, final ImgFactory< ? extends NativeType< ? > > imgFactory )
+	public void init( final String path, final File basePath, final String fileNamePattern, final ImgFactory< ? extends NativeType< ? > > imgFactory,
+					  final int layoutTP, final int layoutChannels, final int layoutIllum, final int layoutAngles )
 	{
 		this.path = new File( basePath.getAbsolutePath(), path );
 		this.fileNamePattern = fileNamePattern;
+		this.layoutTP = layoutTP;
+		this.layoutChannels = layoutChannels;
+		this.layoutIllum = layoutIllum;
+		this.layoutAngles = layoutAngles;
 		
 		this.init( imgFactory );
 	}
@@ -100,7 +115,12 @@ public abstract class StackImgLoader extends AbstractImgLoader
 		{
 			this.path = loadPath( elem, DIRECTORY_TAG, basePath );
 			this.fileNamePattern = elem.getElementsByTagName( FILE_PATTERN_TAG ).item( 0 ).getTextContent();
-			
+
+			this.layoutTP = Integer.parseInt( elem.getElementsByTagName( LAYOUT_TP_TAG ).item( 0 ).getTextContent() );
+			this.layoutChannels = Integer.parseInt( elem.getElementsByTagName( LAYOUT_CHANNEL_TAG ).item( 0 ).getTextContent() );
+			this.layoutIllum = Integer.parseInt( elem.getElementsByTagName( LAYOUT_ILLUMINATION_TAG ).item( 0 ).getTextContent() );
+			this.layoutAngles = Integer.parseInt( elem.getElementsByTagName( LAYOUT_ANGLE_TAG ).item( 0 ).getTextContent() );
+
 			final NodeList nd = elem.getElementsByTagName( IMGLIB2CONTAINER_PATTERN_TAG );
 			ImgFactory< ? extends NativeType< ? > > imgFactory = null;
 			
@@ -183,13 +203,29 @@ public abstract class StackImgLoader extends AbstractImgLoader
 		elem.setAttribute( "class", getClass().getCanonicalName() );
 		elem.appendChild( XmlHelpers.pathElement( doc, DIRECTORY_TAG, path, basePath ) );
 		
-		final Element e1 = doc.createElement( FILE_PATTERN_TAG );
-		e1.appendChild( doc.createTextNode( fileNamePattern ) );
-		elem.appendChild( e1 );
+		Element e = doc.createElement( FILE_PATTERN_TAG );
+		e.appendChild( doc.createTextNode( fileNamePattern ) );
+		elem.appendChild( e );
 
-		final Element e2 = doc.createElement( IMGLIB2CONTAINER_PATTERN_TAG );
-		e2.appendChild( doc.createTextNode( getImgFactory().getClass().getSimpleName() ) );
-		elem.appendChild( e2 );
+		e = doc.createElement( LAYOUT_TP_TAG );
+		e.appendChild( doc.createTextNode( Integer.toString( layoutTP ) ) );
+		elem.appendChild( e );
+
+		e = doc.createElement( LAYOUT_CHANNEL_TAG );
+		e.appendChild( doc.createTextNode( Integer.toString( layoutChannels ) ) );
+		elem.appendChild( e );
+
+		e = doc.createElement( LAYOUT_ILLUMINATION_TAG );
+		e.appendChild( doc.createTextNode( Integer.toString( layoutIllum ) ) );
+		elem.appendChild( e );
+
+		e = doc.createElement( LAYOUT_ANGLE_TAG );
+		e.appendChild( doc.createTextNode( Integer.toString( layoutAngles ) ) );
+		elem.appendChild( e );
+
+		e = doc.createElement( IMGLIB2CONTAINER_PATTERN_TAG );
+		e.appendChild( doc.createTextNode( getImgFactory().getClass().getSimpleName() ) );
+		elem.appendChild( e );
 
 		return elem;
 	}

@@ -192,23 +192,25 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		final int bytesPerPixel = FormatTools.getBytesPerPixel( pixelType ); 
 		final String pixelTypeString = FormatTools.getPixelTypeString( pixelType );
 		
+		// which channel and timepoint to load from this file
 		int t = 0;
 		int c = 0;
 		
-		if ( timepoints > 1 )
+		if ( layoutTP == 2 )
 		{
-			IJ.log( "StackImgLoaderLOCI.openLOCI(): " + path + " has more than one timepoint, trying to open the right one (by name functioning as id): " + 
-					((TimePoint)view.getTimePoint()).getName() );
 			t = Integer.parseInt( ((TimePoint)view.getTimePoint()).getName() );
+			
+			if ( t >= timepoints )
+				throw new RuntimeException( "File '" + path + "' has only timepoints [0 ... + " + (timepoints-1) + "], but you want to open timepoint " + t + ". Stopping.");
 		}
 		
-		if ( channels > 1 )
-		{
-			IJ.log( "StackImgLoaderLOCI.openLOCI(): " + path + " has more than one channel, trying to open the right one (by name functioning as id): " + 
-					((ViewSetup)view.getViewSetup()).getChannel() );
+		if ( layoutChannels == 2 )
+		{ 
 			c = ((ViewSetup)view.getViewSetup()).getChannel();
+			
+			if ( c >= channels )
+				throw new RuntimeException( "File '" + path + "' has only channels [0 ... + " + (channels-1) + "], but you want to open channel " + c + ". Stopping.");
 		}
-		
 		if (!(pixelType == FormatTools.UINT8 || pixelType == FormatTools.UINT16 || pixelType == FormatTools.UINT32 || pixelType == FormatTools.FLOAT))
 		{
 			IJ.log( "StackImgLoaderLOCI.openLOCI(): PixelType " + pixelTypeString + " not supported by " + 
