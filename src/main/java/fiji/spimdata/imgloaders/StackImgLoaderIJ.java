@@ -12,8 +12,11 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImg;
+import net.imglib2.img.planar.PlanarImg;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
 
 public class StackImgLoaderIJ extends StackImgLoader
 {
@@ -57,44 +60,95 @@ public class StackImgLoaderIJ extends StackImgLoader
 			IJ.log( "Opening '" + path + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] + " image=" + img.getClass().getSimpleName() + "<FloatType>]" );			
 			
 		final ImageStack stack = imp.getStack();
-		final Cursor< FloatType > cursor = img.cursor();
-		final int sizeXY = imp.getWidth() * imp.getHeight();
 		final int sizeZ = imp.getNSlices();
-		
-		if ( normalize )
-		{
-			float min = Float.MAX_VALUE;
-			float max = -Float.MAX_VALUE;
-			
-			for ( int z = 0; z < sizeZ; ++z )
-			{
-				final ImageProcessor ip = stack.getProcessor( z + 1 );
 
-				for ( int i = 0; i < sizeXY; ++i )
+		if ( img instanceof ArrayImg || img instanceof PlanarImg )
+		{
+			final Cursor< FloatType > cursor = img.cursor();
+			final int sizeXY = imp.getWidth() * imp.getHeight();
+
+			if ( normalize )
+			{
+				float min = Float.MAX_VALUE;
+				float max = -Float.MAX_VALUE;
+				
+				for ( int z = 0; z < sizeZ; ++z )
+				{				
+					final ImageProcessor ip = stack.getProcessor( z + 1 );
+	
+					for ( int i = 0; i < sizeXY; ++i )
+					{
+						final float v = ip.getf( i );
+						
+						if ( v < min )
+							min = v;
+						
+						if ( v > max )
+							max = v;
+						
+						cursor.next().set( v );
+					}
+				}
+				
+				for ( final FloatType t : img )
+					t.set( ( t.get() - min ) / ( max - min ) );
+			}
+			else
+			{			
+				for ( int z = 0; z < sizeZ; ++z )
 				{
-					final float v = ip.getf( i );
-					
-					if ( v < min )
-						min = v;
-					
-					if ( v > max )
-						max = v;
-					
-					cursor.next().set( v );
+					final ImageProcessor ip = stack.getProcessor( z + 1 );
+	
+					for ( int i = 0; i < sizeXY; ++i )
+						cursor.next().set( ip.getf( i ) );
 				}
 			}
-			
-			for ( final FloatType t : img )
-				t.set( (t.get() - min) / ( max - min ) );
 		}
 		else
-		{			
-			for ( int z = 0; z < sizeZ; ++z )
-			{
-				final ImageProcessor ip = stack.getProcessor( z + 1 );
+		{
+			final int width = imp.getWidth();
 
-				for ( int i = 0; i < sizeXY; ++i )
-					cursor.next().set( ip.getf( i ) );
+			if ( normalize )
+			{
+				float min = Float.MAX_VALUE;
+				float max = -Float.MAX_VALUE;
+				
+				for ( int z = 0; z < sizeZ; ++z )
+				{
+					final Cursor< FloatType > cursor = Views.iterable( Views.hyperSlice( img, 2, z ) ).localizingCursor();
+					final ImageProcessor ip = stack.getProcessor( z + 1 );
+					
+					while ( cursor.hasNext() )
+					{
+						cursor.fwd();
+						final float v = ip.getf( cursor.getIntPosition( 0 ) + cursor.getIntPosition( 1 ) * width );
+
+						if ( v < min )
+							min = v;
+						
+						if ( v > max )
+							max = v;
+						
+						cursor.get().set( v );
+					}
+				}
+				
+				for ( final FloatType t : img )
+					t.set( ( t.get() - min ) / ( max - min ) );
+			}
+			else
+			{				
+				for ( int z = 0; z < sizeZ; ++z )
+				{
+					final Cursor< FloatType > cursor = Views.iterable( Views.hyperSlice( img, 2, z ) ).localizingCursor();
+					final ImageProcessor ip = stack.getProcessor( z + 1 );
+					
+					while ( cursor.hasNext() )
+					{
+						cursor.fwd();
+						cursor.get().set( ip.getf( cursor.getIntPosition( 0 ) + cursor.getIntPosition( 1 ) * width ) );
+					}
+				}				
 			}
 		}
 		
@@ -128,16 +182,36 @@ public class StackImgLoaderIJ extends StackImgLoader
 			IJ.log( "Opening '" + path + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] + " image=" + img.getClass().getSimpleName() + "<FloatType>]" );			
 
 		final ImageStack stack = imp.getStack();
-		final Cursor< UnsignedShortType > cursor = img.cursor();
-		final int sizeXY = imp.getWidth() * imp.getHeight();
 		final int sizeZ = imp.getNSlices();
 
-		for ( int z = 0; z < sizeZ; ++z )
+		if ( img instanceof ArrayImg || img instanceof PlanarImg )
 		{
-			final ImageProcessor ip = stack.getProcessor( z + 1 );
+			final Cursor< UnsignedShortType > cursor = img.cursor();
+			final int sizeXY = imp.getWidth() * imp.getHeight();
 			
-			for ( int i = 0; i < sizeXY; ++i )
-				cursor.next().set( ip.get( i ) );
+			for ( int z = 0; z < sizeZ; ++z )
+			{
+				final ImageProcessor ip = stack.getProcessor( z + 1 );
+				
+				for ( int i = 0; i < sizeXY; ++i )
+					cursor.next().set( ip.get( i ) );
+			}
+		}
+		else
+		{
+			final int width = imp.getWidth();
+			
+			for ( int z = 0; z < sizeZ; ++z )
+			{
+				final Cursor< UnsignedShortType > cursor = Views.iterable( Views.hyperSlice( img, 2, z ) ).localizingCursor();
+				final ImageProcessor ip = stack.getProcessor( z + 1 );
+				
+				while ( cursor.hasNext() )
+				{
+					cursor.fwd();
+					cursor.get().set( ip.get( cursor.getIntPosition( 0 ) + cursor.getIntPosition( 1 ) * width ) );
+				}
+			}
 		}
 		
 		imp.close();

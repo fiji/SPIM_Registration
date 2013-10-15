@@ -10,6 +10,7 @@ import ij.gui.GenericDialog;
 
 import java.awt.BorderLayout;
 import java.awt.Checkbox;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -88,7 +89,12 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	
 	protected double calX = 1, calY = 1, calZ = 1;
 	protected String calUnit = "µm";
-
+	
+	protected abstract boolean supportsMultipleTimepointsPerFile();
+	protected abstract boolean supportsMultipleChannelsPerFile();
+	protected abstract boolean supportsMultipleAnglesPerFile();
+	protected abstract boolean supportsMultipleIlluminationsPerFile();
+	
 	protected boolean queryInformation()
 	{		
 		try 
@@ -336,7 +342,19 @@ public abstract class StackList implements MultiViewDatasetDefinition
 								ext += ", t = " + t;
 							else
 								ext += "t = " + t;
-						
+
+						if ( hasMultipleAngles && numDigitsAngles == 0 )
+							if ( ext.length() > 0 )
+								ext += ", a = " + a;
+							else
+								ext += "a = " + a;
+
+						if ( hasMultipleIlluminations && numDigitsIlluminations == 0 )
+							if ( ext.length() > 0 )
+								ext += ", i = " + i;
+							else
+								ext += "i = " + i;
+
 						if ( ext.length() > 1 )
 							fileName += "   >> [" + ext + "]";
 						
@@ -416,10 +434,18 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			
 			if ( replaceTimepoints == null )
 			{
-				IJ.log( "WARNING: Pattern {" + TIMEPOINT_PATTERN + "} not present in " + fileNamePattern + 
-						" although you indicated there would be several timepoints. There need to be several timepoints in each file!" );
-				
-				numDigitsTimepoints = 0;
+				if ( supportsMultipleTimepointsPerFile() )
+				{
+					IJ.log( "WARNING: Pattern {" + TIMEPOINT_PATTERN + "} not present in " + fileNamePattern + 
+							" although you indicated there would be several timepoints. There need to be several timepoints in each file!" );
+					
+					numDigitsTimepoints = 0;
+				}
+				else
+				{
+					throw new ParseException( "Pattern {" + TIMEPOINT_PATTERN + "} not present in " + fileNamePattern + 
+							" although you indicated there would be several timepoints. Stopping.", 0 );
+				}
 			}
 			else
 			{
@@ -434,10 +460,18 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			
 			if ( replaceChannels == null )
 			{
-				IJ.log( "WARNING: Pattern {" + CHANNEL_PATTERN + "} not present in " + fileNamePattern + 
-						" although you indicated there would be several channels. There need to be several channels in each file!" );
-				
-				numDigitsChannels = 0;
+				if ( supportsMultipleChannelsPerFile() )
+				{
+					IJ.log( "WARNING: Pattern {" + CHANNEL_PATTERN + "} not present in " + fileNamePattern + 
+							" although you indicated there would be several channels. There need to be several channels in each file!" );
+					
+					numDigitsChannels = 0;
+				}
+				else
+				{
+					throw new ParseException( "Pattern {" + CHANNEL_PATTERN + "} not present in " + fileNamePattern + 
+							" although you indicated there would be several channels. Stopping.", 0 );					
+				}
 			}
 			else
 			{
@@ -451,10 +485,24 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			replaceIlluminations = IntegerPattern.getReplaceString( fileNamePattern, ILLUMINATION_PATTERN );
 			
 			if ( replaceIlluminations == null )
-				throw new ParseException( "Pattern {" + ILLUMINATION_PATTERN + "} not present in " + fileNamePattern + 
-						" although you indicated there would be several illumination directions.", 0 );
-
-			numDigitsIlluminations = replaceIlluminations.length() - 2;
+			{
+				if ( supportsMultipleIlluminationsPerFile() )
+				{
+					IJ.log( "WARNING: Pattern {" + ILLUMINATION_PATTERN + "} not present in " + fileNamePattern + 
+							" although you indicated there would be several illumination directions. There need to be several illumination directions in each file!" );
+					
+					numDigitsIlluminations = 0;
+				}
+				else
+				{
+					throw new ParseException( "Pattern {" + ILLUMINATION_PATTERN + "} not present in " + fileNamePattern + 
+						" although you indicated there would be several illumination directions. Stopping.", 0 );
+				}
+			}
+			else
+			{
+				numDigitsIlluminations = replaceIlluminations.length() - 2;
+			}
 		}
 
 		if ( hasMultipleAngles )
@@ -463,10 +511,24 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			replaceAngles = IntegerPattern.getReplaceString( fileNamePattern, ANGLE_PATTERN );
 			
 			if ( replaceAngles == null )
-				throw new ParseException( "Pattern {" + ANGLE_PATTERN + "} not present in " + fileNamePattern + 
+			{
+				if ( supportsMultipleAnglesPerFile() )
+				{
+					IJ.log( "WARNING: Pattern {" + ANGLE_PATTERN + "} not present in " + fileNamePattern + 
+							" although you indicated there would be several angles. There need to be several angles in each file!" );
+					
+					numDigitsAngles = 0;					
+				}
+				else
+				{
+					throw new ParseException( "Pattern {" + ANGLE_PATTERN + "} not present in " + fileNamePattern + 
 						" although you indicated there would be several angles.", 0 );
-			
-			numDigitsAngles = replaceAngles.length() - 2;
+				}
+			}
+			else
+			{
+				numDigitsAngles = replaceAngles.length() - 2;
+			}
 		}
 
 		// get the list of integers
@@ -584,11 +646,37 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	{
 		final GenericDialogPlus gd = new GenericDialogPlus( "Define dataset (1/3)" );
 		
+		final Color green = new Color( 0, 139, 14 );
+		final Color red = Color.RED;
+		
+		gd.addMessage( "File reader: " + getTitle(), new Font( Font.SANS_SERIF, Font.BOLD, 14 ) );
+				
+		if ( supportsMultipleTimepointsPerFile() )
+			gd.addMessage( "Supports multiple timepoints per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), green );
+		else
+			gd.addMessage( "NO support for multiple timepoints per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), red );
+		
+		if ( supportsMultipleChannelsPerFile() )
+			gd.addMessage( "Supports multiple channels per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), green );
+		else
+			gd.addMessage( "NO support for multiple channels per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), red );
+
+		if ( supportsMultipleIlluminationsPerFile() )
+			gd.addMessage( "Supports multiple illumination directions per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), green );
+		else
+			gd.addMessage( "NO support for multiple illumination directions per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), red );
+
+		if ( supportsMultipleAnglesPerFile() )
+			gd.addMessage( "Supports multiple angles per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), green );
+		else
+			gd.addMessage( "NO support for multiple angles per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), red );
+		
+		
 		gd.addCheckbox( "Dataset_with_multiple_timepoints", defaultHasMultipleTimePoints );
 		gd.addCheckbox( "Dataset_with_multiple_channels", defaultHasMultipleChannels );
 		gd.addCheckbox( "Dataset_with_multiple_illumination_directions", defaultHasMultipleIlluminations );
 		gd.addCheckbox( "Dataset_with_multiple_angles", defaultHasMultipleAngles );
-		
+			
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )

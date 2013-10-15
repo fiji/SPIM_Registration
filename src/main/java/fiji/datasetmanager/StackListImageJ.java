@@ -18,7 +18,7 @@ public class StackListImageJ extends StackList
 	@Override
 	public String getTitle() 
 	{
-		return "3d Image Stacks (ImageJ Opener)";
+		return "Image Stacks (ImageJ Opener, only 3d)";
 	}
 
 	@Override
@@ -88,4 +88,16 @@ public class StackListImageJ extends StackList
 		
 		return imgLoader;
 	}
+
+	@Override
+	protected boolean supportsMultipleTimepointsPerFile() { return false; }
+
+	@Override
+	protected boolean supportsMultipleChannelsPerFile() { return false; }
+
+	@Override
+	protected boolean supportsMultipleAnglesPerFile() { return false; }
+
+	@Override
+	protected boolean supportsMultipleIlluminationsPerFile() { return false; }
 }

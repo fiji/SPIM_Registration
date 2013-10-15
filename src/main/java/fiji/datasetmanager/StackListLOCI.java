@@ -145,4 +145,16 @@ public class StackListLOCI extends StackList
 		
 		return true;
 	}
+
+	@Override
+	protected boolean supportsMultipleTimepointsPerFile() { return true; }
+
+	@Override
+	protected boolean supportsMultipleChannelsPerFile() { return true; }
+
+	@Override
+	protected boolean supportsMultipleAnglesPerFile() { return false; }
+
+	@Override
+	protected boolean supportsMultipleIlluminationsPerFile() { return false; }
 }
