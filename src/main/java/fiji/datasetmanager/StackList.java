@@ -351,25 +351,25 @@ public abstract class StackList implements MultiViewDatasetDefinition
 						String ext = "";
 						
 						if ( hasMultipleChannels > 0 && numDigitsChannels == 0 )
-							ext +=  "c = " + c;
+							ext +=  "c = " + channelList.get( c );
 
 						if ( hasMultipleTimePoints > 0 && numDigitsTimepoints == 0 )
 							if ( ext.length() > 0 )
-								ext += ", t = " + t;
+								ext += ", t = " + timepointList.get( t );
 							else
-								ext += "t = " + t;
-
-						if ( hasMultipleAngles > 0 && numDigitsAngles == 0 )
-							if ( ext.length() > 0 )
-								ext += ", a = " + a;
-							else
-								ext += "a = " + a;
+								ext += "t = " + timepointList.get( t );
 
 						if ( hasMultipleIlluminations > 0 && numDigitsIlluminations == 0 )
 							if ( ext.length() > 0 )
-								ext += ", i = " + i;
+								ext += ", i = " + illuminationsList.get( i );
 							else
-								ext += "i = " + i;
+								ext += "i = " + illuminationsList.get( i );
+
+						if ( hasMultipleAngles > 0 && numDigitsAngles == 0 )
+							if ( ext.length() > 0 )
+								ext += ", a = " + angleList.get( a );
+							else
+								ext += "a = " + angleList.get( a );
 
 						if ( ext.length() > 1 )
 							fileName += "   >> [" + ext + "]";

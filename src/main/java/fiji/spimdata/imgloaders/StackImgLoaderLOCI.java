@@ -75,7 +75,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		} 
 		catch ( Exception e )
 		{
-			throw new RuntimeException( "Could not load '" + file + "': " + e );
+			throw new RuntimeException( "Could not load '" + file + "':\n" + e );
 		}
 	}
 
@@ -201,7 +201,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 			t = Integer.parseInt( ((TimePoint)view.getTimePoint()).getName() );
 			
 			if ( t >= timepoints )
-				throw new RuntimeException( "File '" + path + "' has only timepoints [0 ... + " + (timepoints-1) + "], but you want to open timepoint " + t + ". Stopping.");
+				throw new RuntimeException( "File '" + path + "' has only timepoints [0 ... " + (timepoints-1) + "], but you want to open timepoint " + t + ". Stopping.");
 		}
 		
 		if ( layoutChannels == 2 )
@@ -209,7 +209,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 			c = ((ViewSetup)view.getViewSetup()).getChannel();
 			
 			if ( c >= channels )
-				throw new RuntimeException( "File '" + path + "' has only channels [0 ... + " + (channels-1) + "], but you want to open channel " + c + ". Stopping.");
+				throw new RuntimeException( "File '" + path + "' has only channels [0 ... " + (channels-1) + "], but you want to open channel " + c + ". Stopping.");
 		}
 		if (!(pixelType == FormatTools.UINT8 || pixelType == FormatTools.UINT16 || pixelType == FormatTools.UINT32 || pixelType == FormatTools.FLOAT))
 		{
@@ -225,7 +225,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		if ( img == null )
 			throw new RuntimeException( "Could not instantiate " + getImgFactory().getClass().getSimpleName() + " for '" + path + "', most likely out of memory." );
 		else
-			IJ.log( "Opening '" + path + "' [" + width + "x" + height + "x" + depth + " type=" + pixelTypeString + " image=" + img.getClass().getSimpleName() + "<" + type.getClass().getSimpleName() + ">]" );
+			IJ.log( "Opening '" + path + "' [" + width + "x" + height + "x" + depth + " ch=" + c + " tp=" + t + " type=" + pixelTypeString + " image=" + img.getClass().getSimpleName() + "<" + type.getClass().getSimpleName() + ">]" );
 				
 		final byte[] b = new byte[width * height * bytesPerPixel];
 		
