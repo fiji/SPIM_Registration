@@ -118,19 +118,24 @@ public class StackListLOCI extends StackList
 
 	private static boolean createOMEXMLMetadata(final IFormatReader r)
 	{
-		try {
+		try 
+		{
 			final ServiceFactory serviceFactory = new ServiceFactory();
-			final OMEXMLService service = serviceFactory
-					.getInstance(OMEXMLService.class);
+			final OMEXMLService service = serviceFactory.getInstance(OMEXMLService.class);
 			final IMetadata omexmlMeta = service.createOMEXMLMetadata();
 			r.setMetadataStore(omexmlMeta);
-		} catch (final ServiceException e) {
-			e.printStackTrace();
-			return false;
-		} catch (final DependencyException e) {
+		}
+		catch (final ServiceException e)
+		{
 			e.printStackTrace();
 			return false;
 		}
+		catch (final DependencyException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+		
 		return true;
 	}
 }

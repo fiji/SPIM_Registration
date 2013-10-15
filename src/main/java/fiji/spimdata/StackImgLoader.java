@@ -5,28 +5,22 @@ import static mpicbg.spim.data.XmlHelpers.loadPath;
 import java.io.File;
 
 import mpicbg.spim.data.XmlHelpers;
-import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.IntegerPattern;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.XmlKeys;
 import net.imglib2.img.Img;
-import net.imglib2.img.ImgFactory;
-import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.real.FloatType;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import fiji.datasetmanager.StackList;
 
-public abstract class ImageStackLoader implements ImgLoader
+public abstract class StackImgLoader extends AbstractImgLoader
 {
-	public static ImgFactory< FloatType > preferredFactory = new ArrayImgFactory< FloatType >();
-	
 	public static final String DIRECTORY_TAG = "imagedirectory";
 	public static final String FILE_PATTERN_TAG = "filePattern";
 	
@@ -42,15 +36,13 @@ public abstract class ImageStackLoader implements ImgLoader
 		
 		try
 		{
-			img = preferredFactory.imgFactory( type ).create( dim, type );
+			img = getImgFactory().imgFactory( type ).create( dim, type );
 		}
 		catch ( Exception e1 )
 		{
 			try
 			{
-				preferredFactory = new CellImgFactory< FloatType >( 256 );
-				img = preferredFactory.imgFactory( type ).create( dim, type );
-				 
+				img = new CellImgFactory< T >( 256 ).create( dim, type );				 
 			}
 			catch ( Exception e2 )
 			{

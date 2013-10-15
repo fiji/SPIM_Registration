@@ -1,6 +1,6 @@
 package fiji.datasetmanager;
 
-import fiji.spimdata.ImageStackLoaderIJ;
+import fiji.spimdata.StackImgLoaderIJ;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.io.Opener;
@@ -79,7 +79,7 @@ public class StackListImageJ extends StackList
 	@Override
 	protected ImgLoader createAndInitImgLoader( final String path, final File basePath )
 	{
-		final ImageStackLoaderIJ imgLoader = new ImageStackLoaderIJ();
+		final StackImgLoaderIJ imgLoader = new StackImgLoaderIJ();
 		
 		imgLoader.init( path, basePath, fileNamePattern );
 		

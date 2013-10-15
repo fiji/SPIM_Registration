@@ -15,7 +15,7 @@ import net.imglib2.img.Img;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 
-public class ImageStackLoaderIJ extends ImageStackLoader
+public class StackImgLoaderIJ extends StackImgLoader
 {
 	protected ImagePlus open( File file )
 	{
@@ -49,7 +49,7 @@ public class ImageStackLoaderIJ extends ImageStackLoader
 			throw new RuntimeException( "Could not load '" + file + "'." );
 
 		final long[] dim = new long[]{ imp.getWidth(), imp.getHeight(), imp.getNSlices() };
-		final Img< FloatType > img = instantiateImg( dim, new FloatType() );
+		final Img< FloatType > img = this.instantiateImg( dim, new FloatType() );
 		
 		if ( img == null )
 			throw new RuntimeException( "Could not instantiate Img for '" + file + "', most likely out of memory." );

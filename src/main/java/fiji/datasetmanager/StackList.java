@@ -1,6 +1,7 @@
 package fiji.datasetmanager;
 
 import static mpicbg.spim.data.sequence.XmlKeys.TIMEPOINTS_PATTERN_STRING;
+import fiji.plugin.Multi_View_Deconvolution;
 import fiji.spimdata.SpimDataBeads;
 import fiji.spimdata.beads.ViewBeads;
 import fiji.spimdata.sequence.ViewSetupBeads;
@@ -69,6 +70,10 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	protected ArrayList< int[] > exceptionIds;
 	
 	protected String[] calibrationChoice = new String[]{ "Same calibration for all files (load from first file)", "Same calibration for all files (user defined)", "Load calibration for each file individually" };
+	protected String[] imglib2Container = new String[]{ "ArrayImg (faster)", "CellImg (slower, larger files supported)" };
+
+	public static int defaultContainer = 0;
+	public int container;
 	public static int defaultCalibration = 0;
 	public int calibation;
 	
@@ -364,6 +369,12 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		
 		gd.addChoice( "Calibration", calibrationChoice, calibrationChoice[ defaultCalibration ] );
 		
+		gd.addChoice( "ImgLib2_data_container", imglib2Container, imglib2Container[ defaultContainer ] );
+		gd.addMessage( "Use ArrayImg if -ALL- input views are smaller than ~2048x2048x500 px (2^31 px), or if the\n" +
+					   "program throws an OutOfMemory exception while processing.  CellImg is slower, but more\n" +
+				       "memory efficient and supports much larger file sizes only limited by the RAM of the machine.", 
+				       new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
+		
 		gd.addCheckbox( "Show_list of filenames (to debug and it allows to deselect individual files)", showDebugFileNames );
 		gd.addMessage( "Note: this might take a few seconds if thousands of files are present", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
 		
@@ -436,6 +447,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 
 		exceptionIds = new ArrayList< int[] >();
 		
+		defaultContainer = container = gd.getNextChoiceIndex();
 		defaultCalibration = calibation = gd.getNextChoiceIndex();
 		showDebugFileNames = gd.getNextBoolean();
 		
