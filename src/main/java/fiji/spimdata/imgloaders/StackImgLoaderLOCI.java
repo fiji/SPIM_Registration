@@ -1,6 +1,7 @@
 package fiji.spimdata.imgloaders;
 
 import fiji.datasetmanager.StackListLOCI;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.io.Opener;
 import ij.process.ImageProcessor;
@@ -105,7 +106,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		}
 	}
 
-	protected < T extends RealType< T > & NativeType< T > > Img< T > openLOCIFloatType( final File path, final T type, final ViewDescription<?, ?> view )
+	protected < T extends RealType< T > & NativeType< T > > Img< T > openLOCIFloatType( final File path, final T type, final ViewDescription<?, ?> view ) throws Exception
 	{						
 		// read many 2d-images if it is a directory
 		if ( path.isDirectory() )
@@ -133,16 +134,19 @@ public class StackImgLoaderLOCI extends StackImgLoader
 
 			if ( imp2d.getStack().getSize() > 1 )
 			{
-				System.out.println( "This is not a two-dimensional file: '" + path + "'" );
+				IJ.log( "This is not a two-dimensional file: '" + path + "'" );
 				imp2d.close();
 				return null;
 			}
 			
-			System.out.println( "Opening '" + path + "' [" + imp2d.getWidth() + "x" + imp2d.getHeight() + "x" + depth + " type=" + 
-								imp2d.getProcessor().getClass().getSimpleName() + " image=Img<" + type.getClass().getSimpleName() + ">]" );
-
 			final Img< T > output = instantiateImg( new long[] { imp2d.getWidth(), imp2d.getHeight(), depth }, type ); 
 			
+			if ( output == null )
+				throw new RuntimeException( "Could not instantiate " + getImgFactory().getClass().getSimpleName() + " for '" + path + "', most likely out of memory." );
+			
+			IJ.log( "Opening '" + path + "' [" + imp2d.getWidth() + "x" + imp2d.getHeight() + "x" + depth + " type=" + 
+					imp2d.getProcessor().getClass().getSimpleName() + " image=" + output.getClass().getSimpleName() + "<" + type.getClass().getSimpleName() + ">]" );
+
 			for ( int z = 0; z < depth; ++z )
 			{
 				imp2d = io.openImage( path.getAbsolutePath() + File.separator + files[ z ] );
@@ -176,126 +180,106 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		
 		final String id = path.getAbsolutePath();
 		
-		try 
+		r.setId( id );
+					
+		final boolean isLittleEndian = r.isLittleEndian();			
+		final int width = r.getSizeX();
+		final int height = r.getSizeY();
+		final int depth = r.getSizeZ();				
+		int timepoints = r.getSizeT();
+		int channels = r.getSizeC();
+		final int pixelType = r.getPixelType();
+		final int bytesPerPixel = FormatTools.getBytesPerPixel( pixelType ); 
+		final String pixelTypeString = FormatTools.getPixelTypeString( pixelType );
+		
+		int t = 0;
+		int c = 0;
+		
+		if ( timepoints > 1 )
 		{
-			r.setId( id );
-						
-			final boolean isLittleEndian = r.isLittleEndian();			
-			final int width = r.getSizeX();
-			final int height = r.getSizeY();
-			final int depth = r.getSizeZ();				
-			int timepoints = r.getSizeT();
-			int channels = r.getSizeC();
-			final int pixelType = r.getPixelType();
-			final int bytesPerPixel = FormatTools.getBytesPerPixel( pixelType ); 
-			final String pixelTypeString = FormatTools.getPixelTypeString( pixelType );
-			
-			int t = 0;
-			int c = 0;
-			
-			if ( timepoints > 1 )
-			{
-				System.out.println( "StackImgLoaderLOCI.openLOCI(): File has more than one timepoint, trying to open the right one (by name functioning as id): " + 
-									((TimePoint)view.getTimePoint()).getName() );
-				t = Integer.parseInt( ((TimePoint)view.getTimePoint()).getName() );
-			}
-			
-			if ( channels > 1 )
-			{
-				System.out.println( "StackImgLoaderLOCI.openLOCI(): File has more than one channel, trying to open the right one (by name functioning as id): " + 
-									((ViewSetup)view.getViewSetup()).getChannel() );
-				c = ((ViewSetup)view.getViewSetup()).getChannel();
-			}
-			
-			if (!(pixelType == FormatTools.UINT8 || pixelType == FormatTools.UINT16 || pixelType == FormatTools.UINT32 || pixelType == FormatTools.FLOAT))
-			{
-				System.out.println( "StackImgLoaderLOCI.openLOCI(): PixelType " + pixelTypeString + " not supported by " + 
-									type.getClass().getSimpleName() + ", returning. ");
-				return null;
-			}
-
-			final Img< T > img;		
-			
-			img = instantiateImg( new long[] { width, height, depth }, type );
-
-			if ( img == null )
-			{
-				System.out.println("StackImgLoaderLOCI.openLOCI():  - Could not create image.");
-				return null;
-			}
-			else
-			{
-				System.out.println( "Opening '" + path + "' [" + width + "x" + height + "x" + depth + " type=" + pixelTypeString + 
-									" image=Img<" + type.getClass().getSimpleName() + ">]" );
-			}
-					
-			final byte[][] b = new byte[channels][width * height * bytesPerPixel];
-			
-			final int planeX = 0;
-			final int planeY = 1;
-									
-			for ( int z = 0; z < depth; ++z )
-			{	
-				//System.out.println((z+1) + "/" + (end));				
-				final Cursor< T > cursor = Views.iterable( Views.hyperSlice( img, 2, z ) ).localizingCursor();
-				
-				// read the data from LOCI
-				for ( int channel = 0; channel < channels; ++channel )
-				{
-					final int index = r.getIndex( z, channel, t );
-					r.openBytes( index, b[ channel ] );	
-				}
-				
-				// write data for that plane into the Image structure using the cursor
-				if ( pixelType == FormatTools.UINT8 )
-				{						
-					while( cursor.hasNext() )
-					{
-						cursor.fwd();
-						cursor.get().setReal( b[ c ][ cursor.getIntPosition( planeX )+ cursor.getIntPosition( planeY )*width ] & 0xff );
-					}
-					
-				}	
-				else if ( pixelType == FormatTools.UINT16 )
-				{
-					while( cursor.hasNext() )
-					{
-						cursor.fwd();
-						cursor.get().setReal( getShortValueInt( b[ c ], ( cursor.getIntPosition( planeX )+ cursor.getIntPosition( planeY )*width ) * 2, isLittleEndian ) );
-					}
-				}						
-				else if ( pixelType == FormatTools.INT16 )
-				{
-					while( cursor.hasNext() )
-					{
-						cursor.fwd();
-						cursor.get().setReal( getShortValue( b[ c ], ( cursor.getIntPosition( planeX )+ cursor.getIntPosition( planeY )*width ) * 2, isLittleEndian ) );
-					}
-				}						
-				else if ( pixelType == FormatTools.UINT32 )
-				{
-					//TODO: Untested
-					while( cursor.hasNext() )
-					{
-						cursor.fwd();
-						cursor.get().setReal( getIntValue( b[ c ], ( cursor.getIntPosition( planeX )+ cursor.getIntPosition( planeY )*width )*4, isLittleEndian ) );
-					}
-				}
-				else if ( pixelType == FormatTools.FLOAT )
-				{
-					while( cursor.hasNext() )
-					{
-						cursor.fwd();
-						cursor.get().setReal( getFloatValue( b[ c ], ( cursor.getIntPosition( planeX )+ cursor.getIntPosition( planeY )*width )*4, isLittleEndian ) );
-					}
-				}
-			}				
-			
-			return img;			
-			
+			IJ.log( "StackImgLoaderLOCI.openLOCI(): " + path + " has more than one timepoint, trying to open the right one (by name functioning as id): " + 
+					((TimePoint)view.getTimePoint()).getName() );
+			t = Integer.parseInt( ((TimePoint)view.getTimePoint()).getName() );
 		}
-		catch (IOException exc) { exc.printStackTrace(); System.out.println("StackImgLoaderLOCI.openLOCI(): Sorry, an error occurred: " + exc.getMessage()); return null;}
-		catch (FormatException exc) { exc.printStackTrace(); System.out.println("StackImgLoaderLOCI.openLOCI(): Sorry, an error occurred: " + exc.getMessage()); return null;}		
+		
+		if ( channels > 1 )
+		{
+			IJ.log( "StackImgLoaderLOCI.openLOCI(): " + path + " has more than one channel, trying to open the right one (by name functioning as id): " + 
+					((ViewSetup)view.getViewSetup()).getChannel() );
+			c = ((ViewSetup)view.getViewSetup()).getChannel();
+		}
+		
+		if (!(pixelType == FormatTools.UINT8 || pixelType == FormatTools.UINT16 || pixelType == FormatTools.UINT32 || pixelType == FormatTools.FLOAT))
+		{
+			IJ.log( "StackImgLoaderLOCI.openLOCI(): PixelType " + pixelTypeString + " not supported by " + 
+					type.getClass().getSimpleName() + ", returning. ");
+			return null;
+		}
+
+		final Img< T > img;		
+		
+		img = instantiateImg( new long[] { width, height, depth }, type );
+
+		if ( img == null )
+			throw new RuntimeException( "Could not instantiate " + getImgFactory().getClass().getSimpleName() + " for '" + path + "', most likely out of memory." );
+		else
+			IJ.log( "Opening '" + path + "' [" + width + "x" + height + "x" + depth + " type=" + pixelTypeString + " image=" + img.getClass().getSimpleName() + "<" + type.getClass().getSimpleName() + ">]" );
+				
+		final byte[] b = new byte[width * height * bytesPerPixel];
+		
+		final int planeX = 0;
+		final int planeY = 1;
+								
+		for ( int z = 0; z < depth; ++z )
+		{	
+			final Cursor< T > cursor = Views.iterable( Views.hyperSlice( img, 2, z ) ).localizingCursor();
+			
+			r.openBytes( r.getIndex( z, c, t ), b );	
+			
+			if ( pixelType == FormatTools.UINT8 )
+			{						
+				while( cursor.hasNext() )
+				{
+					cursor.fwd();
+					cursor.get().setReal( b[ cursor.getIntPosition( planeX )+ cursor.getIntPosition( planeY )*width ] & 0xff );
+				}					
+			}	
+			else if ( pixelType == FormatTools.UINT16 )
+			{
+				while( cursor.hasNext() )
+				{
+					cursor.fwd();
+					cursor.get().setReal( getShortValueInt( b, ( cursor.getIntPosition( planeX )+ cursor.getIntPosition( planeY )*width ) * 2, isLittleEndian ) );
+				}
+			}						
+			else if ( pixelType == FormatTools.INT16 )
+			{
+				while( cursor.hasNext() )
+				{
+					cursor.fwd();
+					cursor.get().setReal( getShortValue( b, ( cursor.getIntPosition( planeX )+ cursor.getIntPosition( planeY )*width ) * 2, isLittleEndian ) );
+				}
+			}						
+			else if ( pixelType == FormatTools.UINT32 )
+			{
+				//TODO: Untested
+				while( cursor.hasNext() )
+				{
+					cursor.fwd();
+					cursor.get().setReal( getIntValue( b, ( cursor.getIntPosition( planeX )+ cursor.getIntPosition( planeY )*width )*4, isLittleEndian ) );
+				}
+			}
+			else if ( pixelType == FormatTools.FLOAT )
+			{
+				while( cursor.hasNext() )
+				{
+					cursor.fwd();
+					cursor.get().setReal( getFloatValue( b, ( cursor.getIntPosition( planeX )+ cursor.getIntPosition( planeY )*width )*4, isLittleEndian ) );
+				}
+			}
+		}				
+		
+		return img;			
 	}
 
 	private static final float getFloatValue( final byte[] b, final int i, final boolean isLittleEndian )

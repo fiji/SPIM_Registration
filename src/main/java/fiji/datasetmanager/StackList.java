@@ -417,7 +417,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			if ( replaceTimepoints == null )
 			{
 				IJ.log( "WARNING: Pattern {" + TIMEPOINT_PATTERN + "} not present in " + fileNamePattern + 
-						" although you indicated there would be several timepoints. . There need to be several timepoints in each file!" );
+						" although you indicated there would be several timepoints. There need to be several timepoints in each file!" );
 				
 				numDigitsTimepoints = 0;
 			}
@@ -477,6 +477,8 @@ public abstract class StackList implements MultiViewDatasetDefinition
 
 		exceptionIds = new ArrayList< int[] >();
 		
+		defaultCalibration = calibation = gd.getNextChoiceIndex();
+
 		defaultContainer = gd.getNextChoiceIndex();
 		
 		if ( defaultContainer == 0 )
@@ -484,7 +486,6 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		else
 			imgFactory = new CellImgFactory< FloatType >( 256 );
 		
-		defaultCalibration = calibation = gd.getNextChoiceIndex();
 		showDebugFileNames = gd.getNextBoolean();
 		
 		return true;		

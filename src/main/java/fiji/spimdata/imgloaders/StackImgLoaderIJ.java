@@ -23,7 +23,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 
 		if ( imp == null )
 		{
-			IJ.log( "Could not open file: '" + file.getAbsolutePath() + "'" );
+			IJ.log( "Could not open file with ImageJ TIFF reader: '" + file.getAbsolutePath() + "'" );
 			return null;				
 		}
 		
@@ -52,7 +52,9 @@ public class StackImgLoaderIJ extends StackImgLoader
 		final Img< FloatType > img = this.instantiateImg( dim, new FloatType() );
 		
 		if ( img == null )
-			throw new RuntimeException( "Could not instantiate Img for '" + file + "', most likely out of memory." );
+			throw new RuntimeException( "Could not instantiate " + getImgFactory().getClass().getSimpleName() + " for '" + file + "', most likely out of memory." );
+		else
+			IJ.log( "Opening '" + path + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] + " image=" + img.getClass().getSimpleName() + "<FloatType>]" );			
 			
 		final ImageStack stack = imp.getStack();
 		final Cursor< FloatType > cursor = img.cursor();
@@ -121,8 +123,10 @@ public class StackImgLoaderIJ extends StackImgLoader
 		final Img< UnsignedShortType > img = instantiateImg( dim, new UnsignedShortType() );
 		
 		if ( img == null )
-			throw new RuntimeException( "Could not instantiate Img for '" + file + "', most likely out of memory." );
-		
+			throw new RuntimeException( "Could not instantiate " + getImgFactory().getClass().getSimpleName() + " for '" + file + "', most likely out of memory." );
+		else
+			IJ.log( "Opening '" + path + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] + " image=" + img.getClass().getSimpleName() + "<FloatType>]" );			
+
 		final ImageStack stack = imp.getStack();
 		final Cursor< UnsignedShortType > cursor = img.cursor();
 		final int sizeXY = imp.getWidth() * imp.getHeight();
