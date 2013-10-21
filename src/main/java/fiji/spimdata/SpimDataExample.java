@@ -34,7 +34,7 @@ public class SpimDataExample
 	public static void main( final String[] args ) throws Exception
 	{
 		// load SpimData from xml file
-		final String xmlFilename = "/Users/preibischs/workspace/fiji/src-plugins/SPIM_Registration/src/main/resources/example_fromdialog.xml";
+		final String xmlFilename = "/Users/preibischs/Documents/Microscopy/SPIM/HisYFP-SPIM/example_fromdialog.xml";
 		
 		//final XmlIoSpimData< TimePoint, ViewSetupBeads > io = XmlIoSpimData.createDefault();
 		//final XmlIoSpimData< TimePoint, ViewSetupBeads > io = XmlIo.createDefaultIo();
@@ -46,7 +46,7 @@ public class SpimDataExample
 		final SpimDataBeads spimData = io.load( xmlFilename );
 		
 		// save SpimData to xml file
-		io.save( spimData, "example_new2.xml" );
+		io.save( spimData, "/Users/preibischs/Documents/Microscopy/SPIM/HisYFP-SPIM/example_fromdialog2.xml" );
 
 		// write SpimData into a xml Document
 		final Document doc = XmlHelpers.newXmlDocument();

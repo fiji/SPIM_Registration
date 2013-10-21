@@ -189,6 +189,11 @@ public abstract class StackImgLoader extends AbstractImgLoader
 		System.out.println( replaceIlluminations );
 		System.out.println( replaceAngles );
 		
+		System.out.println( layoutTP );
+		System.out.println( layoutChannels );
+		System.out.println( layoutIllum );
+		System.out.println( layoutAngles );
+		
 		System.out.println( path );
 		System.out.println( fileNamePattern );		
 	}

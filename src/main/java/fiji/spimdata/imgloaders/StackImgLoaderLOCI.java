@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import loci.formats.ChannelSeparator;
-import loci.formats.FormatException;
 import loci.formats.FormatTools;
 import loci.formats.IFormatReader;
 import mpicbg.spim.data.sequence.TimePoint;
