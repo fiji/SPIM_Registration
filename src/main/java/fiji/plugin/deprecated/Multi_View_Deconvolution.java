@@ -1,5 +1,6 @@
 package fiji.plugin.deprecated;
 
+import fiji.plugin.GUIHelper;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.gui.GenericDialog;
@@ -13,7 +14,6 @@ import java.util.Date;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.container.cell.CellContainerFactory;
-import mpicbg.imglib.container.planar.PlanarContainerFactory;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.real.FloatType;
@@ -305,7 +305,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
 
 		MultiLineLabel text = (MultiLineLabel) gd.getMessage();
-		Bead_Registration.addHyperLinkListener(text, myURL);
+		GUIHelper.addHyperLinkListener(text, myURL);
 		
 		gd.showDialog();
 		
@@ -511,7 +511,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		gd2.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
 
 		text = (MultiLineLabel) gd2.getMessage();
-		Bead_Registration.addHyperLinkListener(text, myURL);
+		GUIHelper.addHyperLinkListener(text, myURL);
 
 		gd2.showDialog();
 		
