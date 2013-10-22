@@ -64,7 +64,13 @@ public class LoadParseQueryXML
 		public ArrayList< Integer > timepointindices;
 	}
 	
-	public XMLParseResult queryXML()
+	/**
+	 * Asks the user for a valid XML (real time parsing)
+	 * 
+	 * @param askForTimepoints - ask the user if he/she wants to select a subset of timepoints, otherwise all timepoints are selected
+	 * @return
+	 */
+	public XMLParseResult queryXML( final boolean askForTimepoints )
 	{
 		// try parsing if it ends with XML
 		XMLParseResult xmlResult = tryParsing( defaultXMLfilename, false );
@@ -74,8 +80,12 @@ public class LoadParseQueryXML
 		gd.addFileField( "Select_XML", defaultXMLfilename, 65 );
 		gd.addMessage( xmlResult.message, font, xmlResult.color );
 		addListeners( gd, (TextField)gd.getStringFields().lastElement(), (Label)gd.getMessage() );
-		gd.addMessage( "" );
-		gd.addChoice( "Process", tpChoice, tpChoice[ defaultTPChoice ] );
+		
+		if ( askForTimepoints )
+		{
+			gd.addMessage( "" );
+			gd.addChoice( "Process", tpChoice, tpChoice[ defaultTPChoice ] );
+		}
 		
 		gd.showDialog();
 		
@@ -87,8 +97,14 @@ public class LoadParseQueryXML
 		// try to parse the file anyways
 		xmlResult = tryParsing( xmlFilename, true );
 
-		xmlResult.timepointChoiceIndex = defaultTPChoice = gd.getNextChoiceIndex();
-		
+		if ( askForTimepoints )
+			xmlResult.timepointChoiceIndex = defaultTPChoice = gd.getNextChoiceIndex();
+		else
+			xmlResult.timepointChoiceIndex = 0; // all timepoints
+
+		// fill up timepoints (if all there is no further dialog)
+		queryTimepoints( xmlResult );
+
 		return xmlResult;
 	}
 	
@@ -334,8 +350,7 @@ public class LoadParseQueryXML
 		IOFunctions.printIJLog = true;
 	
 		final LoadParseQueryXML lpq = new LoadParseQueryXML();
-		final XMLParseResult xmlResult = lpq.queryXML();
-		lpq.queryTimepoints( xmlResult );
+		final XMLParseResult xmlResult = lpq.queryXML( true );
 		
 		for ( final int i : xmlResult.timepointindices )
 			System.out.println( i );

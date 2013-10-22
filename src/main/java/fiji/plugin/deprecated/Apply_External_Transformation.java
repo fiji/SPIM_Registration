@@ -1,4 +1,4 @@
-package fiji.plugin;
+package fiji.plugin.deprecated;
 
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;

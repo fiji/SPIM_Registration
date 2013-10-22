@@ -1,4 +1,4 @@
-package fiji.plugin;
+package fiji.plugin.deprecated;
 
 import fiji.Debug;
 import fiji.plugin.timelapsedisplay.GraphFrame;
