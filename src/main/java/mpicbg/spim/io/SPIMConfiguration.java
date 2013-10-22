@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 
-import fiji.plugin.Multi_View_Deconvolution;
+import fiji.plugin.deprecated.Multi_View_Deconvolution;
 
 import mpicbg.imglib.container.ContainerFactory;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
