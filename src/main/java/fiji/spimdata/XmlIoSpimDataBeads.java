@@ -20,6 +20,7 @@ import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.registration.XmlIoViewRegistrations;
 import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.XmlIoSequenceDescription;
 
 import org.w3c.dom.Document;
@@ -29,13 +30,12 @@ import org.xml.sax.SAXException;
 
 import fiji.spimdata.beads.ViewBeads;
 import fiji.spimdata.beads.XmlIoViewBeads;
-import fiji.spimdata.sequence.ViewSetupBeads;
 
-public class XmlIoSpimDataBeads extends XmlIoSpimData< TimePoint, ViewSetupBeads >
+public class XmlIoSpimDataBeads extends XmlIoSpimData< TimePoint, ViewSetup >
 {
 	final XmlIoViewBeads xmlViewBeads;
 	
-	public XmlIoSpimDataBeads( final XmlIoSequenceDescription< TimePoint, ViewSetupBeads > xmlSequenceDescription,
+	public XmlIoSpimDataBeads( final XmlIoSequenceDescription< TimePoint, ViewSetup > xmlSequenceDescription,
 			final XmlIoViewRegistrations xmlViewRegistrations, final XmlIoViewBeads xmlViewBeads )
 	{
 		super( xmlSequenceDescription, xmlViewRegistrations );
@@ -69,7 +69,7 @@ public class XmlIoSpimDataBeads extends XmlIoSpimData< TimePoint, ViewSetupBeads
 		NodeList nodes = root.getElementsByTagName( xmlSequenceDescription.getTagName() );
 		if ( nodes.getLength() == 0 )
 			throw new IllegalArgumentException( "no <" + xmlSequenceDescription.getTagName() + "> element found." );
-		final SequenceDescription< TimePoint, ViewSetupBeads > seq = xmlSequenceDescription.fromXml( ( Element ) nodes.item( 0 ), basePath );
+		final SequenceDescription< TimePoint, ViewSetup > seq = xmlSequenceDescription.fromXml( ( Element ) nodes.item( 0 ), basePath );
 
 		nodes = root.getElementsByTagName( xmlViewRegistrations.getTagName() );
 		if ( nodes.getLength() == 0 )

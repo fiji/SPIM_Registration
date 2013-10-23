@@ -1,26 +1,16 @@
 package fiji.datasetmanager;
 
 import static mpicbg.spim.data.sequence.XmlKeys.TIMEPOINTS_PATTERN_STRING;
+import fiji.plugin.GUIHelper;
 import fiji.spimdata.SpimDataBeads;
 import fiji.spimdata.beads.ViewBeads;
-import fiji.spimdata.sequence.ViewSetupBeads;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.gui.GenericDialog;
 
-import java.awt.BorderLayout;
 import java.awt.Checkbox;
 import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Frame;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Panel;
-import java.awt.ScrollPane;
-import java.awt.Toolkit;
 import java.io.File;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -29,6 +19,9 @@ import java.util.List;
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
+import mpicbg.spim.data.sequence.Angle;
+import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.IntegerPattern;
 import mpicbg.spim.data.sequence.MissingViews;
@@ -82,8 +75,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	public static String defaultAngles = "0-315:45";
 
 	protected String timepoints, channels, illuminations, angles;
-	protected ArrayList< Integer > timepointList, channelList, illuminationsList, angleList;
-	protected ArrayList< Boolean > channelHasBeads;
+	protected ArrayList< String > timepointNameList, channelNameList, illuminationsNameList, angleNameList;
 	protected String replaceTimepoints, replaceChannels, replaceIlluminations, replaceAngles;
 	protected int numDigitsTimepoints, numDigitsChannels, numDigitsIlluminations, numDigitsAngles;
 	
@@ -160,12 +152,12 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		
 		// assemble timepints, viewsetups, missingviews and the imgloader
 		final TimePoints< TimePoint > timepoints = this.createTimePoints();
-		final ArrayList< ViewSetupBeads > setups = this.createViewSetups();
+		final ArrayList< ViewSetup > setups = this.createViewSetups();
 		final MissingViews missingViews = this.createMissingViews();
 		final ImgLoader imgLoader = createAndInitImgLoader( ".", new File( directory ), imgFactory );
 		
 		// instantiate the sequencedescription
-		final SequenceDescription< TimePoint, ViewSetupBeads > sequenceDescription = new SequenceDescription< TimePoint, ViewSetupBeads >( timepoints, setups, missingViews, imgLoader );
+		final SequenceDescription< TimePoint, ViewSetup > sequenceDescription = new SequenceDescription< TimePoint, ViewSetup >( timepoints, setups, missingViews, imgLoader );
 		
 		// create the initial view registrations (they are all the identity transform)
 		final ViewRegistrations viewRegistrations = this.createViewRegistrations( sequenceDescription.getViewDescriptions() );
@@ -182,11 +174,11 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	 * @param viewDescriptionList
 	 * @return
 	 */
-	protected ViewRegistrations createViewRegistrations( final List< ViewDescription< TimePoint, ViewSetupBeads > > viewDescriptionList )
+	protected ViewRegistrations createViewRegistrations( final List< ViewDescription< TimePoint, ViewSetup > > viewDescriptionList )
 	{
 		final ArrayList< ViewRegistration > viewRegistrationList = new ArrayList< ViewRegistration >();
 		
-		for ( final ViewDescription< TimePoint, ViewSetupBeads > viewDescription : viewDescriptionList )
+		for ( final ViewDescription< TimePoint, ViewSetup > viewDescription : viewDescriptionList )
 			if ( viewDescription.isPresent() )
 				viewRegistrationList.add( new ViewRegistration( viewDescription.getTimePointId(), viewDescription.getViewSetupId() ) );
 		
@@ -206,7 +198,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 
 		final ArrayList< ViewId > missingViews = new ArrayList< ViewId >();
 				
-		for ( int t = 0; t < timepointList.size(); ++t )
+		for ( int t = 0; t < timepointNameList.size(); ++t )
 		{			
 			// assemble a subset of exceptions for the current timepoint
 			final ArrayList< int[] > tmp = new ArrayList< int[] >();
@@ -219,9 +211,9 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			{
 				int setupId = 0;
 
-				for ( int c = 0; c < channelList.size(); ++c )
-					for ( int i = 0; i < illuminationsList.size(); ++i )
-						for ( int a = 0; a < angleList.size(); ++a )
+				for ( int c = 0; c < channelNameList.size(); ++c )
+					for ( int i = 0; i < illuminationsNameList.size(); ++i )
+						for ( int a = 0; a < angleNameList.size(); ++a )
 						{
 							for ( int[] exceptions : exceptionIds )
 								if ( exceptions[ 1 ] == c && exceptions[ 2 ] == i && exceptions[ 3 ] == a )
@@ -243,23 +235,22 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	 * 
 	 * @return
 	 */
-	protected ArrayList< ViewSetupBeads > createViewSetups()
+	protected ArrayList< ViewSetup > createViewSetups()
 	{
-		final ArrayList< ViewSetupBeads > viewSetups = new ArrayList< ViewSetupBeads >();
+		final ArrayList< ViewSetup > viewSetups = new ArrayList< ViewSetup >();
 		
-		for ( int c = 0; c < channelList.size(); ++c )
-			for ( int i = 0; i < illuminationsList.size(); ++i )
-				for ( int a = 0; a < angleList.size(); ++a )
+		for ( int c = 0; c < channelNameList.size(); ++c )
+			for ( int i = 0; i < illuminationsNameList.size(); ++i )
+				for ( int a = 0; a < angleNameList.size(); ++a )
 				{
-					final int channel = channelList.get( c );
-					final boolean hasBeads = channelHasBeads.get( c );
-					final int illumination = illuminationsList.get( i );
-					final int angle = angleList.get( a );
+					final Channel channel = new Channel( c, channelNameList.get( c ) );
+					final Illumination illumination = new Illumination( i, illuminationsNameList.get( i ) );
+					final Angle angle = new Angle( a, angleNameList.get( a ) );
 					
 					if ( calibation < 2 )
-						viewSetups.add( new ViewSetupBeads( viewSetups.size(), angle, illumination, channel, -1, -1, -1, calUnit, calX, calY, calZ, hasBeads ) );
+						viewSetups.add( new ViewSetup( viewSetups.size(), angle, illumination, channel, -1, -1, -1, calUnit, calX, calY, calZ ) );
 					else
-						viewSetups.add( new ViewSetupBeads( viewSetups.size(), angle, illumination, channel, -1, -1, -1, calUnit, -1, -1, -1, hasBeads ) );
+						viewSetups.add( new ViewSetup( viewSetups.size(), angle, illumination, channel, -1, -1, -1, calUnit, -1, -1, -1 ) );
 				}
 		
 		return viewSetups;
@@ -274,8 +265,8 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	{
 		final ArrayList< TimePoint > timepointList = new ArrayList< TimePoint >();
 		
-		for ( final int timepoint : this.timepointList )
-			timepointList.add( new TimePoint( timepointList.size(), Integer.toString( timepoint ) ) );
+		for ( final String timepoint : this.timepointNameList )
+			timepointList.add( new TimePoint( timepointList.size(), timepoint ) );
 		
 		final TimePoints< TimePoint > timepoints = new TimePoints< TimePoint >( timepointList );
 		
@@ -287,17 +278,10 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		
 	protected boolean queryDetails()
 	{
-		final GenericDialog gd = new GenericDialog( "Define dataset (3/3)" );
-		
-		gd.addMessage( "Channel definitions", new Font( Font.SANS_SERIF, Font.BOLD, 14 ) );
-		gd.addMessage( "" );
-		
-		for ( int c = 0; c < channelList.size(); ++c )
-			gd.addCheckbox( "Beads_visible_in_channel_" + channelList.get( c ), true );
-
 		if ( calibation < 2 )
 		{
-			gd.addMessage( "" );
+			final GenericDialog gd = new GenericDialog( "Define dataset (3/3)" );
+		
 			gd.addMessage( "Calibration", new Font( Font.SANS_SERIF, Font.BOLD, 14 ) );			
 			if ( calibation == 1 )
 				gd.addMessage( "(read from file)", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
@@ -307,23 +291,12 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			gd.addNumericField( "Pixel_distance_y", calY, 5 );
 			gd.addNumericField( "Pixel_distance_z", calZ, 5 );
 			gd.addStringField( "Pixel_unit", calUnit );
-		}
-
-		gd.showDialog();
-
-		for ( int c = 0; c < channelList.size(); ++c )
-			gd.addCheckbox( "Beads_visible_in_channel_" + channelList.get( c ), true );
-
-		if ( gd.wasCanceled() )
-			return false;
 		
-		channelHasBeads = new ArrayList<Boolean>( channelList.size() );
+			gd.showDialog();
+	
+			if ( gd.wasCanceled() )
+				return false;
 
-		for ( int c = 0; c < channelList.size(); ++c )
-			channelHasBeads.add( gd.getNextBoolean() );
-
-		if ( calibation < 2 )
-		{
 			calX = gd.getNextNumber();
 			calY = gd.getNextNumber();
 			calZ = gd.getNextNumber();
@@ -341,35 +314,35 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		gd.addMessage( "" );
 		gd.addMessage( "Path: " + directory + "   " );
 
-		for ( int t = 0; t < timepointList.size(); ++t )
-			for ( int c = 0; c < channelList.size(); ++c )
-				for ( int i = 0; i < illuminationsList.size(); ++i )
-					for ( int a = 0; a < angleList.size(); ++a )
+		for ( int t = 0; t < timepointNameList.size(); ++t )
+			for ( int c = 0; c < channelNameList.size(); ++c )
+				for ( int i = 0; i < illuminationsNameList.size(); ++i )
+					for ( int a = 0; a < angleNameList.size(); ++a )
 					{
 						String fileName = getFileNameFor( t, c, i, a );
 						
 						String ext = "";
 						
 						if ( hasMultipleChannels > 0 && numDigitsChannels == 0 )
-							ext +=  "c = " + channelList.get( c );
+							ext +=  "c = " + channelNameList.get( c );
 
 						if ( hasMultipleTimePoints > 0 && numDigitsTimepoints == 0 )
 							if ( ext.length() > 0 )
-								ext += ", t = " + timepointList.get( t );
+								ext += ", t = " + timepointNameList.get( t );
 							else
-								ext += "t = " + timepointList.get( t );
+								ext += "t = " + timepointNameList.get( t );
 
 						if ( hasMultipleIlluminations > 0 && numDigitsIlluminations == 0 )
 							if ( ext.length() > 0 )
-								ext += ", i = " + illuminationsList.get( i );
+								ext += ", i = " + illuminationsNameList.get( i );
 							else
-								ext += "i = " + illuminationsList.get( i );
+								ext += "i = " + illuminationsNameList.get( i );
 
 						if ( hasMultipleAngles > 0 && numDigitsAngles == 0 )
 							if ( ext.length() > 0 )
-								ext += ", a = " + angleList.get( a );
+								ext += ", a = " + angleNameList.get( a );
 							else
-								ext += "a = " + angleList.get( a );
+								ext += "a = " + angleNameList.get( a );
 
 						if ( ext.length() > 1 )
 							fileName += "   >> [" + ext + "]";
@@ -380,7 +353,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 						((Checkbox)gd.getCheckboxes().lastElement()).setLabel( fileName );
 					}
 				
-		addScrollBars( gd );
+		GUIHelper.addScrollBars( gd );
 		
 		gd.showDialog();
 		
@@ -390,10 +363,10 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		exceptionIds = new ArrayList<int[]>();
 
 		// collect exceptions to the definitions
-		for ( int t = 0; t < timepointList.size(); ++t )
-			for ( int c = 0; c < channelList.size(); ++c )
-				for ( int i = 0; i < illuminationsList.size(); ++i )
-					for ( int a = 0; a < angleList.size(); ++a )
+		for ( int t = 0; t < timepointNameList.size(); ++t )
+			for ( int c = 0; c < channelNameList.size(); ++c )
+				for ( int i = 0; i < illuminationsNameList.size(); ++i )
+					for ( int a = 0; a < angleNameList.size(); ++a )
 						if ( gd.getNextBoolean() == false )
 							exceptionIds.add( new int[]{ t, c, i, a } );					
 				
@@ -527,10 +500,10 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		}
 
 		// get the list of integers
-		timepointList = IntegerPattern.parseIntegerString( timepoints );
-		channelList = IntegerPattern.parseIntegerString( channels );
-		illuminationsList = IntegerPattern.parseIntegerString( illuminations );
-		angleList = IntegerPattern.parseIntegerString( angles );
+		timepointNameList = convertIntegerList( IntegerPattern.parseIntegerString( timepoints ) );
+		channelNameList = convertIntegerList( IntegerPattern.parseIntegerString( channels ) );
+		illuminationsNameList = convertIntegerList( IntegerPattern.parseIntegerString( illuminations ) );
+		angleNameList = convertIntegerList( IntegerPattern.parseIntegerString( angles ) );
 
 		exceptionIds = new ArrayList< int[] >();
 		
@@ -548,6 +521,16 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		return true;		
 	}
 	
+	public static ArrayList< String > convertIntegerList( final List< Integer > list )
+	{
+		final ArrayList< String > stringList = new ArrayList< String >();
+		
+		for ( final int i : list )
+			stringList.add( Integer.toString( i ) );
+		
+		return stringList;
+	}
+	
 	/**
 	 * Assemble the filename for the corresponding file based on the indices for time, channel, illumination and angle
 	 * 
@@ -560,25 +543,25 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	protected String getFileNameFor( final int tpID, final int chID, final int illID, final int angleID )
 	{
 		return getFileNameFor( fileNamePattern, replaceTimepoints, replaceChannels, replaceIlluminations, replaceAngles, 
-				timepointList.get( tpID ), channelList.get( chID ), illuminationsList.get( illID ), angleList.get( angleID ) );
+				timepointNameList.get( tpID ), channelNameList.get( chID ), illuminationsNameList.get( illID ), angleNameList.get( angleID ) );
 	}
 
 	public static String getFileNameFor( String fileName, 
 			final String replaceTimepoints, final String replaceChannels, 
 			final String replaceIlluminations, final String replaceAngles, 
-			final int tp, final int ch, final int ill, final int angle )
+			final String tpName, final String chName, final String illName, final String angleName )
 	{
 		if ( replaceTimepoints != null )
-			fileName = fileName.replace( replaceTimepoints, "" + tp );
+			fileName = fileName.replace( replaceTimepoints, tpName );
 
 		if ( replaceChannels != null )
-			fileName = fileName.replace( replaceChannels, "" + ch );
+			fileName = fileName.replace( replaceChannels, chName );
 
 		if ( replaceIlluminations != null )
-			fileName = fileName.replace( replaceIlluminations, "" + ill );
+			fileName = fileName.replace( replaceIlluminations, illName );
 
 		if ( replaceAngles != null )
-			fileName = fileName.replace( replaceAngles, "" + angle );
+			fileName = fileName.replace( replaceAngles, angleName );
 		
 		return fileName;
 	}
@@ -590,10 +573,10 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	 */
 	protected boolean loadFirstCalibration()
 	{
-		for ( int t = 0; t < timepointList.size(); ++t )
-			for ( int c = 0; c < channelList.size(); ++c )
-				for ( int i = 0; i < illuminationsList.size(); ++i )
-					for ( int a = 0; a < angleList.size(); ++a )
+		for ( int t = 0; t < timepointNameList.size(); ++t )
+			for ( int c = 0; c < channelNameList.size(); ++c )
+				for ( int i = 0; i < illuminationsNameList.size(); ++i )
+					for ( int a = 0; a < angleNameList.size(); ++a )
 					{
 						if ( exceptionIds.size() > 0 && 
 							 exceptionIds.get( 0 )[ 0 ] == t && exceptionIds.get( 0 )[ 1 ] == c && 
@@ -721,86 +704,5 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		hasMultipleAngles = defaultHasMultipleAngles = gd.getNextBoolean();
 		*/
 		return true;
-	}
-	
-	/**
-	 * A copy of Curtis's method
-	 * 
-	 * https://github.com/openmicroscopy/bioformats/blob/v4.4.8/components/loci-plugins/src/loci/plugins/util/WindowTools.java#L72
-	 * 
-	 * <dependency>
-     * <groupId>${bio-formats.groupId}</groupId>
-     * <artifactId>loci_plugins</artifactId>
-     * <version>${bio-formats.version}</version>
-     * </dependency>
-	 * 
-	 * @param pane
-	 */
-	public static void addScrollBars(Container pane) {
-		GridBagLayout layout = (GridBagLayout) pane.getLayout();
-
-		// extract components
-		int count = pane.getComponentCount();
-		Component[] c = new Component[count];
-		GridBagConstraints[] gbc = new GridBagConstraints[count];
-		for (int i = 0; i < count; i++) {
-			c[i] = pane.getComponent(i);
-			gbc[i] = layout.getConstraints(c[i]);
-		}
-
-		// clear components
-		pane.removeAll();
-		layout.invalidateLayout(pane);
-
-		// create new container panel
-		Panel newPane = new Panel();
-		GridBagLayout newLayout = new GridBagLayout();
-		newPane.setLayout(newLayout);
-		for (int i = 0; i < count; i++) {
-			newLayout.setConstraints(c[i], gbc[i]);
-			newPane.add(c[i]);
-		}
-
-		// HACK - get preferred size for container panel
-		// NB: don't know a better way:
-		// - newPane.getPreferredSize() doesn't work
-		// - newLayout.preferredLayoutSize(newPane) doesn't work
-		Frame f = new Frame();
-		f.setLayout(new BorderLayout());
-		f.add(newPane, BorderLayout.CENTER);
-		f.pack();
-		final Dimension size = newPane.getSize();
-		f.remove(newPane);
-		f.dispose();
-
-		// compute best size for scrollable viewport
-		size.width += 25;
-		size.height += 15;
-		Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
-		int maxWidth = 7 * screen.width / 8;
-		int maxHeight = 3 * screen.height / 4;
-		if (size.width > maxWidth)
-			size.width = maxWidth;
-		if (size.height > maxHeight)
-			size.height = maxHeight;
-
-		// create scroll pane
-		ScrollPane scroll = new ScrollPane() {
-			private static final long serialVersionUID = 1L;
-
-			public Dimension getPreferredSize() {
-				return size;
-			}
-		};
-		scroll.add(newPane);
-
-		// add scroll pane to original container
-		GridBagConstraints constraints = new GridBagConstraints();
-		constraints.gridwidth = GridBagConstraints.REMAINDER;
-		constraints.fill = GridBagConstraints.BOTH;
-		constraints.weightx = 1.0;
-		constraints.weighty = 1.0;
-		layout.setConstraints(scroll, constraints);
-		pane.add(scroll);
 	}	
 }

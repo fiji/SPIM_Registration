@@ -25,7 +25,7 @@ import java.util.ArrayList;
 
 import net.imglib2.img.display.imagej.ImageJFunctions;
 
-public class Create_Multi_View_Dataset implements PlugIn
+public class Define_Multi_View_Dataset implements PlugIn
 {
 	final public static ArrayList< MultiViewDatasetDefinition > datasetDefinitions = new ArrayList< MultiViewDatasetDefinition >();
 	public static int defaultDatasetDef = 0;
@@ -59,7 +59,7 @@ public class Create_Multi_View_Dataset implements PlugIn
 			titles[ i ] = datasetDefinitions.get( i ).getTitle();
 		
 		// query the dataset definition to use
-		final GenericDialogPlus gd1 = new GenericDialogPlus( "Select_type_of_multi-view dataset" );
+		final GenericDialogPlus gd1 = new GenericDialogPlus( "Select type of multi-view dataset" );
 
 		if ( defaultDatasetDef >= numDatasetDefinitions )
 			defaultDatasetDef = 0;
@@ -75,6 +75,8 @@ public class Create_Multi_View_Dataset implements PlugIn
 		label.setText( formatEntry( datasetDefinitions.get( defaultDatasetDef ).getExtendedDescription(), numCharacters, numLinesDocumentation ) );
 		
 		addListeners( gd1, choice, label, datasetDefinitions );
+		
+		GUIHelper.addWebsite( gd1 );
 		
 		gd1.showDialog();
 		if ( gd1.wasCanceled() )
@@ -182,7 +184,7 @@ public class Create_Multi_View_Dataset implements PlugIn
 	public static void main( String args[] )
 	{
 		//new ImageJ();
-		new Create_Multi_View_Dataset().run( null );
+		new Define_Multi_View_Dataset().run( null );
 		
 		//System.exit( 0 );
 	}

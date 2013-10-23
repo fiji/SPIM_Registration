@@ -11,23 +11,9 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.XmlHelpers;
-import mpicbg.spim.data.XmlIoSpimData;
-import mpicbg.spim.data.registration.XmlIoViewRegistrations;
-import mpicbg.spim.data.sequence.TimePoint;
-import mpicbg.spim.data.sequence.ViewDescription;
-import mpicbg.spim.data.sequence.ViewSetup;
-import mpicbg.spim.data.sequence.XmlIoImgLoader;
-import mpicbg.spim.data.sequence.XmlIoMissingViews;
-import mpicbg.spim.data.sequence.XmlIoSequenceDescription;
-import mpicbg.spim.data.sequence.XmlIoTimePoints;
-import mpicbg.spim.data.sequence.XmlIoViewSetups;
 
 import org.w3c.dom.Document;
-
-import fiji.spimdata.sequence.ViewSetupBeads;
-import fiji.spimdata.sequence.XmlIoViewSetupsBeads;
 
 public class SpimDataExample
 {

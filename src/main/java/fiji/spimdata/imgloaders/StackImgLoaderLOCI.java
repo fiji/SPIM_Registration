@@ -205,11 +205,12 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		
 		if ( layoutChannels == 2 )
 		{ 
-			c = ((ViewSetup)view.getViewSetup()).getChannel();
+			c = Integer.parseInt( ((ViewSetup)view.getViewSetup()).getChannel().getName() );
 			
 			if ( c >= channels )
 				throw new RuntimeException( "File '" + path + "' has only channels [0 ... " + (channels-1) + "], but you want to open channel " + c + ". Stopping.");
 		}
+		
 		if (!(pixelType == FormatTools.UINT8 || pixelType == FormatTools.UINT16 || pixelType == FormatTools.UINT32 || pixelType == FormatTools.FLOAT))
 		{
 			IJ.log( "StackImgLoaderLOCI.openLOCI(): PixelType " + pixelTypeString + " not supported by " + 

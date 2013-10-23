@@ -69,11 +69,10 @@ public abstract class StackImgLoader extends AbstractImgLoader
 		final TimePoint tp = view.getTimePoint();
 		final ViewSetup vs = view.getViewSetup();
 
-		// only integers are allowed as timepoint names
-		final int timepoint = Integer.parseInt( tp.getName() );
-		final int angle = vs.getAngle();
-		final int channel = vs.getChannel();
-		final int illum = vs.getIllumination();
+		final String timepoint = tp.getName();
+		final String angle = vs.getAngle().getName();
+		final String channel = vs.getChannel().getName();
+		final String illum = vs.getIllumination().getName();
 		
 		String fileName = StackList.getFileNameFor( fileNamePattern, replaceTimepoints, replaceChannels, 
 				replaceIlluminations, replaceAngles, timepoint, channel, illum, angle );

@@ -24,7 +24,6 @@ import mpicbg.spim.io.IOFunctions;
 
 import org.xml.sax.SAXException;
 
-import fiji.datasetmanager.StackList;
 import fiji.spimdata.SpimDataBeads;
 import fiji.spimdata.XmlIo;
 import fiji.spimdata.XmlIoSpimDataBeads;
@@ -32,7 +31,7 @@ import fiji.util.gui.GenericDialogPlus;
 
 public class LoadParseQueryXML 
 {
-	public static String defaultXMLfilename = "/Users/preibischs/Documents/Microscopy/SPIM/HisYFP-SPIM/example_fromdialog_old.xml";
+	public static String defaultXMLfilename = "/Users/preibischs/Documents/Microscopy/SPIM/HisYFP-SPIM/example_fromdialog_3tp.xml";
 	
 	public static Color good = new Color( 0, 139, 14 );
 	public static Color warning = new Color( 255, 100, 0 );
@@ -55,13 +54,30 @@ public class LoadParseQueryXML
 	
 	public class XMLParseResult
 	{
+		// local variables for LoadParseQueryXML
 		String message;
 		Color color;
+		int timepointChoiceIndex;
 		
-		public SpimDataBeads data;
-		public String xmlfilename;
-		public int timepointChoiceIndex;
-		public ArrayList< Integer > timepointindices;
+		// global variables
+		private SpimDataBeads data;
+		private String xmlfilename;
+		private ArrayList< Integer > timepointindices;
+		
+		/**
+		 * @return the SpimDataBeads object parsed from the xml
+		 */
+		public SpimDataBeads getData() { return data; }
+		
+		/**
+		 * @return The location of the xml file
+		 */
+		public String getXMLFileName() { return xmlfilename; }
+		
+		/**
+		 * @return All timepoints that should be processed
+		 */
+		public ArrayList< Integer > getTimePointIndicies() { return timepointindices; }
 	}
 	
 	/**
@@ -103,7 +119,8 @@ public class LoadParseQueryXML
 			xmlResult.timepointChoiceIndex = 0; // all timepoints
 
 		// fill up timepoints (if all there is no further dialog)
-		queryTimepoints( xmlResult );
+		if ( !queryTimepoints( xmlResult ) )
+			return null;
 
 		return xmlResult;
 	}
@@ -111,6 +128,7 @@ public class LoadParseQueryXML
 	public boolean queryTimepoints( final XMLParseResult xmlResult )
 	{	
 		final List< TimePoint > tpList = xmlResult.data.getSequenceDescription().getTimePoints().getTimePointList();
+		xmlResult.timepointindices = new ArrayList< Integer >();
 		
 		if ( xmlResult.timepointChoiceIndex == 1 )
 		{
@@ -129,7 +147,6 @@ public class LoadParseQueryXML
 			if ( gd.wasCanceled() )
 				return false;
 			
-			xmlResult.timepointindices = new ArrayList< Integer >();
 			xmlResult.timepointindices.add( tpList.get( defaultTimePointIndex = gd.getNextChoiceIndex() ).getId() );
 		}
 		else if ( xmlResult.timepointChoiceIndex == 2 )
@@ -153,13 +170,12 @@ public class LoadParseQueryXML
 				gd.addCheckbox( timepoints[ i ], defaultTimePointIndices[ i ] );
 			gd.addMessage( "" );
 
-			StackList.addScrollBars( gd );			
+			GUIHelper.addScrollBars( gd );			
 			gd.showDialog();
 			
 			if ( gd.wasCanceled() )
 				return false;
 
-			xmlResult.timepointindices = new ArrayList< Integer >();
 			for ( int i = 0; i < timepoints.length; ++i )
 			{
 				if ( gd.getNextBoolean() )
@@ -199,7 +215,7 @@ public class LoadParseQueryXML
 			
 			gd.addMessage( allTps, smallFont );
 			
-			StackList.addScrollBars( gd );
+			GUIHelper.addScrollBars( gd );
 			gd.showDialog();
 			
 			if ( gd.wasCanceled() )
@@ -208,7 +224,6 @@ public class LoadParseQueryXML
 			try 
 			{
 				final ArrayList< Integer > timepointList = IntegerPattern.parseIntegerString( defaultTimePointString = gd.getNextString() );
-				xmlResult.timepointindices = new ArrayList< Integer >();
 				
 				for ( final int tp : timepointList )
 				{
@@ -231,13 +246,11 @@ public class LoadParseQueryXML
 			{
 				IOFunctions.println( "Cannot parse pattern '" + defaultTimePointString + "': " + e );
 				defaultTimePointString = null;
-				return false;
+				xmlResult.timepointindices.clear();
 			}
 		} 
 		else
 		{
-			xmlResult.timepointindices = new ArrayList< Integer >();
-			
 			for ( int i = 0; i < tpList.size(); ++i )
 				xmlResult.timepointindices.add( tpList.get( i ).getId() );				
 		}
