@@ -30,4 +30,9 @@ public interface MultiViewDatasetDefinition
 	 * @return - the saved {@link SpimData} object
 	 */
 	public SpimDataBeads createDataset();
+	
+	/**
+	 * @return - a new instance of this implementation
+	 */
+	public MultiViewDatasetDefinition newInstance();
 }

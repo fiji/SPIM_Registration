@@ -28,4 +28,6 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		return null;
 	}
 
+	@Override
+	public LightSheetZ1 newInstance() { return new LightSheetZ1(); }
 }

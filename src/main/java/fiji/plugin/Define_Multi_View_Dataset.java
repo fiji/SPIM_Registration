@@ -27,7 +27,7 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 
 public class Define_Multi_View_Dataset implements PlugIn
 {
-	final public static ArrayList< MultiViewDatasetDefinition > datasetDefinitions = new ArrayList< MultiViewDatasetDefinition >();
+	final public static ArrayList< MultiViewDatasetDefinition > staticDatasetDefinitions = new ArrayList< MultiViewDatasetDefinition >();
 	public static int defaultDatasetDef = 0;
 
 	final int numLinesDocumentation = 15;
@@ -35,14 +35,19 @@ public class Define_Multi_View_Dataset implements PlugIn
 	
 	static
 	{
-		datasetDefinitions.add( new StackListLOCI() );
-		datasetDefinitions.add( new StackListImageJ() );
-		datasetDefinitions.add( new LightSheetZ1() );
+		staticDatasetDefinitions.add( new StackListLOCI() );
+		staticDatasetDefinitions.add( new StackListImageJ() );
+		staticDatasetDefinitions.add( new LightSheetZ1() );
 	}
 	
 	@Override
 	public void run( String arg0 ) 
 	{
+		final ArrayList< MultiViewDatasetDefinition > datasetDefinitions = new ArrayList< MultiViewDatasetDefinition >();
+		
+		for ( final MultiViewDatasetDefinition mvd : staticDatasetDefinitions )
+			datasetDefinitions.add( mvd.newInstance() );
+		
 		// verify that there are definitions
 		final int numDatasetDefinitions = datasetDefinitions.size();
 		
@@ -70,7 +75,7 @@ public class Define_Multi_View_Dataset implements PlugIn
 				
 		// first add an empty label so that it is not a MultiLineLabel,
 		// then add the correct text
-		gd1.addMessage( "", new Font( Font.MONOSPACED, Font.ITALIC, 11 ), Color.BLACK );
+		gd1.addMessage( "", new Font( Font.MONOSPACED, Font.PLAIN, 11 ), Color.BLACK );
 		Label label = (Label)gd1.getMessage();
 		label.setText( formatEntry( datasetDefinitions.get( defaultDatasetDef ).getExtendedDescription(), numCharacters, numLinesDocumentation ) );
 		

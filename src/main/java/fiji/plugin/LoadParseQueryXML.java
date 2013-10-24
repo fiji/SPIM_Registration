@@ -31,23 +31,15 @@ import fiji.util.gui.GenericDialogPlus;
 
 public class LoadParseQueryXML 
 {
-	public static String defaultXMLfilename = "/Users/preibischs/Documents/Microscopy/SPIM/HisYFP-SPIM/example_fromdialog_3tp.xml";
-	
-	public static Color good = new Color( 0, 139, 14 );
-	public static Color warning = new Color( 255, 100, 0 );
-	public static Color error = new Color( 255, 0, 0 );
-	public static Color neutral = new Color( 0, 0, 0 );
-	
-	public static Font font = new Font( Font.SANS_SERIF, Font.BOLD + Font.ITALIC, 14 );
-	public static Font smallFont = new Font( Font.SANS_SERIF, Font.ITALIC, 11 );
-	
+	public static String defaultXMLfilename = "/Users/preibischs/Documents/Microscopy/SPIM/HisYFP-SPIM/example_fromdialog.xml";
+		
 	public static String goodMsg = "The selected XML file was parsed successfully";
 	public static String warningMsg = "The selected file does not appear to be an xml. Press OK to try to parse anyways.";
 	public static String errorMsg = "An ERROR occured parsing this XML file! Please select a different XML (see log)";
 	public static String neutralMsg = "No XML file selected.";
 	
 	public static String[] tpChoice = new String[]{ "All Timepoints", "Single Timepoint (Select from List)", "Multiple Timepoints (Select from List)", "Range of Timepoints (Specify by Name)" };
-	public static int defaultTPChoice = 1;
+	public static int defaultTPChoice = 0;
 	public static int defaultTimePointIndex = 0;
 	public static boolean[] defaultTimePointIndices = null;
 	public static String defaultTimePointString = null;
@@ -94,7 +86,7 @@ public class LoadParseQueryXML
 		final GenericDialogPlus gd = new GenericDialogPlus( "Select Dataset" );
 		
 		gd.addFileField( "Select_XML", defaultXMLfilename, 65 );
-		gd.addMessage( xmlResult.message, font, xmlResult.color );
+		gd.addMessage( xmlResult.message, GUIHelper.largestatusfont, xmlResult.color );
 		addListeners( gd, (TextField)gd.getStringFields().lastElement(), (Label)gd.getMessage() );
 		
 		if ( askForTimepoints )
@@ -213,7 +205,7 @@ public class LoadParseQueryXML
 			for ( int i = 1; i < timepoints.length; ++i )
 				allTps += "\n" + timepoints[ i ];
 			
-			gd.addMessage( allTps, smallFont );
+			gd.addMessage( allTps, GUIHelper.smallStatusFont );
 			
 			GUIHelper.addScrollBars( gd );
 			gd.showDialog();
@@ -288,7 +280,7 @@ public class LoadParseQueryXML
 		
 		xml.xmlfilename = xmlfile;
 		xml.message = neutralMsg;
-		xml.color = neutral;
+		xml.color = GUIHelper.neutral;
 		xml.data = null;
 		
 		if ( parseAllTypes || ( !parseAllTypes && xmlfile.endsWith( ".xml" ) ) )
@@ -306,12 +298,12 @@ public class LoadParseQueryXML
 				xml.message = goodMsg + " [" + xml.data.getSequenceDescription().numTimePoints() + " timepoints, " + 
 											   xml.data.getSequenceDescription().numViewSetups() + " viewsetups, " + 
 											   countMissingViews + " missing views]";
-				xml.color = good;
+				xml.color = GUIHelper.good;
 			}
 			catch ( final Exception e )
 			{
 				xml.message = errorMsg;
-				xml.color = error;
+				xml.color = GUIHelper.error;
 
 				IOFunctions.println( "Cannot parse '" + xmlfile + "': " + e );
 			}
@@ -319,7 +311,7 @@ public class LoadParseQueryXML
 		else if ( xmlfile.length() > 0 )
 		{
 			xml.message = warningMsg;
-			xml.color = warning;
+			xml.color = GUIHelper.warning;
 		}	
 		
 		return xml;

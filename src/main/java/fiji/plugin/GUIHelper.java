@@ -11,6 +11,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -22,6 +23,15 @@ import java.awt.event.MouseEvent;
 
 public class GUIHelper
 {
+	public static Color good = new Color( 0, 139, 14 );
+	public static Color warning = new Color( 255, 100, 0 );
+	public static Color error = new Color( 255, 0, 0 );
+	public static Color neutral = new Color( 0, 0, 0 );
+	
+	public static Font largestatusfont = new Font( Font.SANS_SERIF, Font.BOLD + Font.ITALIC, 14 );
+	public static Font largefont = new Font( Font.SANS_SERIF, Font.BOLD, 14 );
+	public static Font smallStatusFont = new Font( Font.SANS_SERIF, Font.ITALIC, 11 );
+
 	final public static String myURL = "http://www.preibisch.net/";
 	final public static String paperURL = "http://www.nature.com/nmeth/journal/v7/n6/full/nmeth0610-418.html";
 	final public static String messagePaper = "Please note that the SPIM Registration is based on a publication.\n" +
@@ -38,7 +48,7 @@ public class GUIHelper
 	
 	public static final void addHyperLink( final GenericDialog gd, final String msg, final String url )
 	{
-		gd.addMessage( msg );
+		gd.addMessage( msg, new Font( Font.SANS_SERIF, Font.ITALIC + Font.BOLD, 12 ) );
 		MultiLineLabel text =  (MultiLineLabel) gd.getMessage();
 		GUIHelper.addHyperLinkListener( text, url );		
 	}

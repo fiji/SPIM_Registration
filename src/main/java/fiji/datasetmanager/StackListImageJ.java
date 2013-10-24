@@ -129,4 +129,7 @@ public class StackListImageJ extends StackList
 
 	@Override
 	protected void setDefaultMultipleIlluminations( final int i ) { defaultIlluminationChoice = i; }
+
+	@Override
+	public StackListImageJ newInstance() { return new StackListImageJ(); }
 }

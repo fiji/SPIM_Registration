@@ -186,4 +186,7 @@ public class StackListLOCI extends StackList
 
 	@Override
 	protected void setDefaultMultipleIlluminations( final int i ) { defaultIlluminationChoice = i; }
+
+	@Override
+	public StackListLOCI newInstance() { return new StackListLOCI(); }
 }
