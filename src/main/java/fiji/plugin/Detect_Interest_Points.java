@@ -2,7 +2,7 @@ package fiji.plugin;
 
 import fiji.plugin.LoadParseQueryXML.XMLParseResult;
 import fiji.plugin.interestpoints.DifferenceOfMean;
-import fiji.plugin.interestpoints.DifferencOfGaussian;
+import fiji.plugin.interestpoints.DifferenceOfGaussian;
 import fiji.plugin.interestpoints.InterestPointDetection;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
@@ -24,7 +24,7 @@ public class Detect_Interest_Points implements PlugIn
 	static
 	{
 		staticAlgorithms.add( new DifferenceOfMean() );
-		staticAlgorithms.add( new DifferencOfGaussian() );
+		staticAlgorithms.add( new DifferenceOfGaussian() );
 	}
 	
 	@Override
@@ -35,7 +35,7 @@ public class Detect_Interest_Points implements PlugIn
 		if ( result == null )
 			return;
 		
-		final ArrayList< Channel > channels = result.getData().getSequenceDescription().getAllChannels( );
+		final ArrayList< Channel > channels = result.getData().getSequenceDescription().getAllChannels();
 		final ArrayList< Angle > angles = result.getData().getSequenceDescription().getAllAngles();
 		final ArrayList< Illumination > illuminations = result.getData().getSequenceDescription().getAllIlluminations();
 		
@@ -81,9 +81,10 @@ public class Detect_Interest_Points implements PlugIn
 		if ( gd.wasCanceled() )
 			return;
 		
-		final InterestPointDetection ipd = algorithms.get( defaultAlgorithm = gd.getNextChoiceIndex() );
+		final InterestPointDetection ipd = algorithms.get( defaultAlgorithm = gd.getNextChoiceIndex() );		
 		final String label = defaultLabel = gd.getNextString();
-		final boolean[] processChannels = new boolean[ channels.size() ];
+		//final boolean[] processChannels = new boolean[ channels.size() ];
+		final ArrayList< Channel> channelsToProcess = new ArrayList< Channel >();
 		
 		if ( channels.size() > 1 )
 		{
@@ -91,12 +92,15 @@ public class Detect_Interest_Points implements PlugIn
 			
 			for ( i = 0; i < channels.size(); ++i )
 			{
-				processChannels[ i ] = defaultChannelChoice[ i ] = gd.getNextBoolean();
-				if ( processChannels[ i ] )
-					++count;
+				/*processChannels[ i ] = */defaultChannelChoice[ i ] = gd.getNextBoolean();
+				//if ( processChannels[ i ] )
+				//	++count;
+				
+				if ( defaultChannelChoice[ i ] )
+					channelsToProcess.add( channels.get( i ) );
 			}
 			
-			if ( count == 0 )
+			if ( channelsToProcess.size() == 0 )
 			{
 				IOFunctions.println( "No channels selected. Quitting." );
 				return;
@@ -104,11 +108,11 @@ public class Detect_Interest_Points implements PlugIn
 		}
 		else
 		{
-			processChannels[ 0 ] = true;
+			channelsToProcess.add( channels.get( 0 ) );
 		}
 
 		// the interest point detection should query its parameters
-		ipd.queryParameters( result.getData(), processChannels, result.getTimePointIndicies() );
+		ipd.queryParameters( result.getData(), channelsToProcess, result.getTimePointsToProcess() );
 		
 		// now extract all the detections
 	}

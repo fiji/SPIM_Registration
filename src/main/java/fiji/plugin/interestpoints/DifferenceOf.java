@@ -4,29 +4,54 @@ import ij.gui.GenericDialog;
 
 import java.util.ArrayList;
 
+import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
-
+import mpicbg.spim.data.sequence.Illumination;
+import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewId;
 import fiji.spimdata.SpimDataBeads;
 
 public abstract class DifferenceOf implements InterestPointDetection
 {
-	public static String[] localizationChoice = { "None", "3-dimensional quadratic fit (all detections)", "Gauss fit (true correspondences)", "Gauss fit (all detections)" };	
+	public static String[] localizationChoice = { "None", "3-dimensional quadratic fit", "Gaussian mask localization fit" };	
 	public static String[] brightnessChoice = { "Very weak & small (beads)", "Weak & small (beads)", "Comparable to Sample & small (beads)", "Strong & small (beads)", "Advanced ...", "Interactive ..." };
 	
 	public static int defaultLocalization = 1;
 	public static int[] defaultBrightness = null;
 	
+	public static int defaultTimepointChoice = 0;
+	public static int defaultAngleChoice = 0;
+	public static int defaultIlluminationChoice = 0;
+	
+	/**
+	 * which channels to process, set in queryParameters
+	 */
+	protected ArrayList< Channel> channelsToProcess;
+	
+	/**
+	 * which timepoints to process, set in queryParameters
+	 */
+	protected ArrayList< TimePoint > timepointsToProcess;
+	
 	protected int localization;
-	protected int[] brightness;
+	protected SpimDataBeads spimData;
 	
 	@Override
-	public boolean queryParameters( final SpimDataBeads spimData, final boolean[] channelIds, final ArrayList< Integer > timepointindices )
+	public boolean queryParameters( final SpimDataBeads spimData, final ArrayList< Channel> channelsToProcess, final ArrayList< TimePoint > timepointsToProcess )
 	{
-		final GenericDialog gd = new GenericDialog( getDescription() );
-		gd.addChoice( "Subpixel_localization", localizationChoice, localizationChoice[ defaultLocalization ] );
+		this.spimData = spimData;
+		this.timepointsToProcess = timepointsToProcess;
+		this.channelsToProcess = channelsToProcess;
 
 		final ArrayList< Channel > channels = spimData.getSequenceDescription().getAllChannels();
+
+		// tell the implementing classes the total number of channels
+		init( channels.size() );
 		
+		final GenericDialog gd = new GenericDialog( getDescription() );
+		gd.addChoice( "Subpixel_localization", localizationChoice, localizationChoice[ defaultLocalization ] );
+		
+		// there are as many channel presets as there are total channels
 		if ( defaultBrightness == null || defaultBrightness.length != channels.size() )
 		{
 			defaultBrightness = new int[ channels.size() ];
@@ -34,9 +59,8 @@ public abstract class DifferenceOf implements InterestPointDetection
 				defaultBrightness[ i ] = 1;
 		}
 		
-		for ( int c = 0; c < channelIds.length; ++c )
-			if ( channelIds[ c ] )
-				gd.addChoice( "Interest_point_specification_(channel_" + channels.get( c ).getName() + ")", brightnessChoice, brightnessChoice[ defaultBrightness[ c ] ] );
+		for ( int c = 0; c < channelsToProcess.size(); ++c )
+			gd.addChoice( "Interest_point_specification_(channel_" + channelsToProcess.get( c ).getName() + ")", brightnessChoice, brightnessChoice[ defaultBrightness[ channelsToProcess.get( c ).getId() ] ] );
 
 		gd.showDialog();
 		
@@ -44,13 +68,75 @@ public abstract class DifferenceOf implements InterestPointDetection
 			return false;
 		
 		this.localization = defaultLocalization = gd.getNextChoiceIndex();
-		this.brightness = new int[ channels.size() ];
-		
-		for ( int c = 0; c < channelIds.length; ++c )
-			if ( channelIds[ c ] )
-				brightness[ c ] = defaultBrightness[ c ] = gd.getNextChoiceIndex();
+
+		for ( int c = 0; c < channelsToProcess.size(); ++c )
+		{
+			final Channel channel = channelsToProcess.get( c );
+			final int brightness = defaultBrightness[ channel.getId() ] = gd.getNextChoiceIndex();
+			
+			if ( brightness <= 3 )
+			{
+				if ( !setDefaultValues( channel, brightness ) )
+					return false;
+			}
+			else if ( brightness == 4 )
+			{
+				if ( !setAdvancedValues( channel ) )
+					return false;
+			}
+			else
+			{
+				if ( !setInteractiveValues( channel ) )
+					return false;
+			}
+		}
 		
 		return true;
 	}
+	
+	protected ViewId getViewSelection( final String dialogHeader, final String text, final Channel channel )
+	{
+		final GenericDialog gd = new GenericDialog( dialogHeader );
+		
+		final String[] timepointNames = new String[ timepointsToProcess.size() ];
+		for ( int i = 0; i < timepointNames.length; ++i )
+			timepointNames[ i ] = timepointsToProcess.get( i ).getName();
+		
+		final ArrayList< Angle > angles = spimData.getSequenceDescription().getAllAngles();
+		final String[] angleNames = new String[ angles.size() ];
+		for ( int i = 0; i < angles.size(); ++i )
+			angleNames[ i ] = angles.get( i ).getName();
+		
+		final ArrayList< Illumination > illuminations = spimData.getSequenceDescription().getAllIlluminations();
+		final String[] illuminationNames = new String[ illuminations.size() ];
+		for ( int i = 0; i < illuminations.size(); ++i )
+			illuminationNames[ i ] = illuminations.get( i ).getName();
+		
+		gd.addMessage( text );
+		gd.addChoice( "Timepoint", timepointNames, timepointNames[ defaultTimepointChoice ] );
+		gd.addChoice( "Angle", angleNames, angleNames[ defaultAngleChoice ] );
+		gd.addChoice( "Illumination", illuminationNames, illuminationNames[ defaultIlluminationChoice ] );
 
+		gd.showDialog();
+		
+		if ( gd.wasCanceled() )
+			return null;
+		
+		final TimePoint tp = timepointsToProcess.get( defaultTimepointChoice = gd.getNextChoiceIndex() );
+		final Angle angle = angles.get( defaultAngleChoice = gd.getNextChoiceIndex() );
+		final Illumination illumination = illuminations.get( defaultIlluminationChoice = gd.getNextChoiceIndex() );
+		
+		// TODO: make ViewId
+		
+		return null;
+	}
+	
+	/**
+	 * @param numChannels - the TOTAL number of channels (not only the ones to process)
+	 */
+	protected abstract void init( final int numChannels );
+	
+	protected abstract boolean setDefaultValues( final Channel channel, final int brightness );
+	protected abstract boolean setAdvancedValues( final Channel channel );
+	protected abstract boolean setInteractiveValues( final Channel channel );
 }

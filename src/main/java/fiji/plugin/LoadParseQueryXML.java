@@ -6,7 +6,6 @@ import ij.gui.GenericDialog;
 
 import java.awt.AWTEvent;
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.Label;
 import java.awt.TextField;
 import java.awt.event.TextEvent;
@@ -54,7 +53,7 @@ public class LoadParseQueryXML
 		// global variables
 		private SpimDataBeads data;
 		private String xmlfilename;
-		private ArrayList< Integer > timepointindices;
+		private ArrayList< TimePoint > timepoints;
 		
 		/**
 		 * @return the SpimDataBeads object parsed from the xml
@@ -69,7 +68,7 @@ public class LoadParseQueryXML
 		/**
 		 * @return All timepoints that should be processed
 		 */
-		public ArrayList< Integer > getTimePointIndicies() { return timepointindices; }
+		public ArrayList< TimePoint > getTimePointsToProcess() { return timepoints; }
 	}
 	
 	/**
@@ -120,7 +119,7 @@ public class LoadParseQueryXML
 	public boolean queryTimepoints( final XMLParseResult xmlResult )
 	{	
 		final List< TimePoint > tpList = xmlResult.data.getSequenceDescription().getTimePoints().getTimePointList();
-		xmlResult.timepointindices = new ArrayList< Integer >();
+		xmlResult.timepoints = new ArrayList< TimePoint >();
 		
 		if ( xmlResult.timepointChoiceIndex == 1 )
 		{
@@ -139,7 +138,7 @@ public class LoadParseQueryXML
 			if ( gd.wasCanceled() )
 				return false;
 			
-			xmlResult.timepointindices.add( tpList.get( defaultTimePointIndex = gd.getNextChoiceIndex() ).getId() );
+			xmlResult.timepoints.add( tpList.get( defaultTimePointIndex = gd.getNextChoiceIndex() ) );
 		}
 		else if ( xmlResult.timepointChoiceIndex == 2 )
 		{
@@ -172,7 +171,7 @@ public class LoadParseQueryXML
 			{
 				if ( gd.getNextBoolean() )
 				{
-					xmlResult.timepointindices.add( tpList.get( i ).getId() );
+					xmlResult.timepoints.add( tpList.get( i ) );
 					defaultTimePointIndices[ i ] = true;
 				}
 				else
@@ -225,7 +224,7 @@ public class LoadParseQueryXML
 					{
 						if ( tp == Integer.parseInt( tpList.get( i ).getName() ) )
 						{
-							xmlResult.timepointindices.add( tpList.get( i ).getId() );
+							xmlResult.timepoints.add( tpList.get( i ) );
 							found = true;
 						}
 					}
@@ -238,33 +237,33 @@ public class LoadParseQueryXML
 			{
 				IOFunctions.println( "Cannot parse pattern '" + defaultTimePointString + "': " + e );
 				defaultTimePointString = null;
-				xmlResult.timepointindices.clear();
+				xmlResult.timepoints.clear();
 			}
 		} 
 		else
 		{
 			for ( int i = 0; i < tpList.size(); ++i )
-				xmlResult.timepointindices.add( tpList.get( i ).getId() );				
+				xmlResult.timepoints.add( tpList.get( i ) );				
 		}
 		
-		if ( xmlResult.timepointindices.size() == 0 )
+		if ( xmlResult.timepoints.size() == 0 )
 		{
 			IOFunctions.println( "List of timepoints is empty. Stopping." );
-			xmlResult.timepointindices = null;
+			xmlResult.timepoints = null;
 			return false;
 		}
 
-		String allTp = tpList.get( xmlResult.timepointindices.get( 0 ) ).getName();
+		String allTp = xmlResult.timepoints.get( 0 ).getName();
 		
-		for ( int i = 1; i < xmlResult.timepointindices.size(); ++i )
-			allTp += "," + tpList.get( xmlResult.timepointindices.get( i ) ).getName();
+		for ( int i = 1; i < xmlResult.timepoints.size(); ++i )
+			allTp += "," + xmlResult.timepoints.get( i ).getName();
 		
 		IOFunctions.println( "Timepoints selected: " + allTp );
 		
 		return true;
 	}
 	
-	protected String[] buildTimepointList( final List< TimePoint > tpList )
+	public static String[] buildTimepointList( final List< TimePoint > tpList )
 	{
 		final String[] timepoints = new String[ tpList.size() ];
 		
@@ -357,8 +356,8 @@ public class LoadParseQueryXML
 		final LoadParseQueryXML lpq = new LoadParseQueryXML();
 		final XMLParseResult xmlResult = lpq.queryXML( true );
 		
-		for ( final int i : xmlResult.timepointindices )
-			System.out.println( i );
+		for ( final TimePoint i : xmlResult.timepoints )
+			System.out.println( i.getId() );
 	
 	}
 }
