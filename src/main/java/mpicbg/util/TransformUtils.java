@@ -2,6 +2,7 @@ package mpicbg.util;
 
 import javax.media.j3d.Transform3D;
 import javax.vecmath.Matrix4f;
+import javax.vecmath.Vector3d;
 
 import mpicbg.imglib.util.Util;
 import mpicbg.models.AbstractAffineModel3D;
@@ -172,6 +173,16 @@ public class TransformUtils
 		model.set( m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8], m[9], m[10], m[11] );
 
 		return model;
+	}
+	
+	public static void main( String[] args )
+	{
+		AffineModel3D m = new AffineModel3D();
+		m.set( 0.87912226f, 0.425894f, 0.21391234f, -169.3024f, -0.47269103f, 0.836501f, 0.2771809f, 42.627777f, -0.0608882f, -0.34479034f, 0.93670285f, 246.59639f );
+		Transform3D t = TransformUtils.getTransform3D1( m );
+		Vector3d s = new Vector3d();
+		t.getScale( s );
+		System.out.println( s );
 	}
 
 }
