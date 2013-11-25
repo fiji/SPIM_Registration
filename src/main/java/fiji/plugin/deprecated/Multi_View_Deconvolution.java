@@ -3,6 +3,7 @@ package fiji.plugin.deprecated;
 import fiji.plugin.GUIHelper;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
+import ij.ImagePlus;
 import ij.gui.GenericDialog;
 import ij.gui.MultiLineLabel;
 import ij.plugin.PlugIn;
@@ -88,6 +89,15 @@ public class Multi_View_Deconvolution implements PlugIn
 		final FusionControl fusionControl = viewStructure.getFusionControl();
 		final PreDeconvolutionFusionInterface fusion = (PreDeconvolutionFusionInterface)fusionControl.getFusion();
 		
+		if ( conf.deconvolutionJustShowOverlap )
+		{
+			fusion.getOverlapImage().getDisplay().setMinMax();
+			ImagePlus overlap = ImageJFunctions.copyToImagePlus( fusion.getOverlapImage() );
+			overlap.setTitle( "overlap for each pixel [" + viewStructure.getSPIMConfiguration().inputFilePattern + "]" );
+			overlap.show();
+			return;
+		}
+		
 		final int numViews = viewStructure.getNumViews();
 		
 		// extract the beads
@@ -131,9 +141,23 @@ public class Multi_View_Deconvolution implements PlugIn
 				final String title = "PSF for " + viewStructure.getViews().get( i ).getName();
 				
 				if ( makeAllPSFSameSize )
-					ImageJFunctions.show( psf ).setTitle( title );
+				{
+					psf.getDisplay().setMinMax();
+					ImagePlus imp = ImageJFunctions.copyToImagePlus( psf );
+					imp.setTitle( title );
+					imp.show();
+					//ImageJFunctions.show( psf ).setTitle( title );
+				}
 				else
-					ImageJFunctions.show( ExtractPSF.makeSameSize( psf, size ) ).setTitle( title );			
+				{
+					Image<FloatType> tmp = ExtractPSF.makeSameSize( psf, size );
+					tmp.getDisplay().setMinMax();
+					ImagePlus imp = ImageJFunctions.copyToImagePlus( tmp );
+					imp.setTitle( title );
+					imp.show();
+					
+					//ImageJFunctions.show( ExtractPSF.makeSameSize( psf, size ) ).setTitle( title );
+				}
 			}
 		}
 		else if ( conf.deconvolutionDisplayPSF == 5 )
@@ -141,7 +165,13 @@ public class Multi_View_Deconvolution implements PlugIn
 			for ( int i = 0; i < viewStructure.getNumViews(); ++i )
 			{
 				final Image< FloatType > psf = fusion.getExtractPSFInstance().getPSFsInInputCalibration().get( i );
-				ImageJFunctions.show( psf ).setTitle( "(original scale) PSF for " + viewStructure.getViews().get( i ).getName() );			
+				
+				psf.getDisplay().setMinMax();
+				ImagePlus imp = ImageJFunctions.copyToImagePlus( psf );
+				imp.setTitle( "(original scale) PSF for " + viewStructure.getViews().get( i ).getName() );
+				imp.show();
+				
+				//ImageJFunctions.show( psf ).setTitle( "(original scale) PSF for " + viewStructure.getViews().get( i ).getName() );			
 			}
 		}
 		
@@ -201,9 +231,9 @@ public class Multi_View_Deconvolution implements PlugIn
 		*/
 		
 		if ( useTikhonovRegularization )
-			deconvolved = new BayesMVDeconvolution( deconvolutionData, iterationType, numIterations, lambda, "deconvolved" ).getPsi();
+			deconvolved = new BayesMVDeconvolution( deconvolutionData, iterationType, numIterations, lambda, osemspeedup, osemspeedupIndex, "deconvolved" ).getPsi();
 		else
-			deconvolved = new BayesMVDeconvolution( deconvolutionData, iterationType, numIterations, 0, "deconvolved" ).getPsi();
+			deconvolved = new BayesMVDeconvolution( deconvolutionData, iterationType, numIterations, 0, osemspeedup, osemspeedupIndex, "deconvolved" ).getPsi();
 		
 		if ( conf.writeOutputImage > 0 || conf.showOutputImage )
 		{
@@ -251,6 +281,8 @@ public class Multi_View_Deconvolution implements PlugIn
 	public static int defaultExtractPSF = 0;
 	public static boolean defaultLoadImagesSequentially = true;
 	public static int defaultOutputType = 1;
+	public static int defaultOSEMspeedupIndex = 0;
+	public static double defaultOSEMspeedup = 1;
 	public static int defaultNumIterations = 10;
 	public static boolean defaultUseTikhonovRegularization = true;
 	public static double defaultLambda = 0.006;
@@ -262,15 +294,22 @@ public class Multi_View_Deconvolution implements PlugIn
 	public static int defaultComputationIndex = 0;
 	public static int defaultBlockSizeIndex = 0, defaultBlockSizeX = 256, defaultBlockSizeY = 256, defaultBlockSizeZ = 256;
 	
-	public static String[] iterationTypeString = new String[]{ "Efficient Bayesian - Optimization II (very fast, imprecise)", "Efficient Bayesian - Optimization I (fast, precise)", "Efficient Bayesian (less fast, more precise)", "Independent (slow, very precise)" };
+	public static String[] iterationTypeString = new String[]{ 
+		"Efficient Bayesian - Optimization II (very fast, imprecise)", 
+		"Efficient Bayesian - Optimization I (fast, precise)", 
+		"Efficient Bayesian (less fast, more precise)", 
+		"Independent (slow, very precise)",
+		"Illustrate overlap of views per pixel (do not deconvolve)" };
 	public static String[] imglibContainer = new String[]{ "Array container (input files smaller ~2048x2048x450 px)", "Cell container (input files larger ~2048x2048x450 px)" };
 	public static String[] computationOn = new String[]{ "CPU (Java)", "GPU (Nvidia CUDA via JNA)" };
+	public static String[] osemspeedupChoice = new String[]{ "1 (balanced)", "minimal number of overlapping views", "average number of overlapping views", "specify manually" };
 	public static String[] extractPSFs = new String[]{ "Extract from beads", "Provide file with PSF" };
 	public static String[] blocks = new String[]{ "Entire image at once", "in 64x64x64 blocks", "in 128x128x128 blocks", "in 256x256x256 blocks", "in 512x512x512 blocks", "specify maximal blocksize manually" };
 	public static String[] displayPSF = new String[]{ "Do not show PSFs", "Show MIP of combined PSF's", "Show combined PSF's", "Show individual PSF's", "Show combined PSF's (original scale)", "Show individual PSF's (original scale)" };
 	
 	PSFTYPE iterationType;
-	int numIterations, container, computationType, blockSizeIndex, debugInterval = 1;
+	int numIterations, container, computationType, osemspeedupIndex, blockSizeIndex, debugInterval = 1;
+	double osemspeedup;
 	int[] blockSize = null;
 	boolean useTikhonovRegularization = true, useBlocks = false, useCUDA = false, debugMode = false, loadImagesSequentially = false, extractPSF = true;
 	
@@ -493,6 +532,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		gd2.addNumericField( "Crop_output_image_size_z", Multi_View_Fusion.cropSizeZStatic, 0 );
 		gd2.addMessage( "" );	
 		gd2.addChoice( "Type_of_iteration", iterationTypeString, iterationTypeString[ defaultIterationType ] );
+		gd2.addChoice( "OSEM_acceleration", osemspeedupChoice, osemspeedupChoice[ defaultOSEMspeedupIndex ] );
 		gd2.addNumericField( "Number_of_iterations", defaultNumIterations, 0 );
 		gd2.addCheckbox( "Use_Tikhonov_regularization", defaultUseTikhonovRegularization );
 		gd2.addNumericField( "Tikhonov_parameter", defaultLambda, 4 );
@@ -606,15 +646,21 @@ public class Multi_View_Deconvolution implements PlugIn
 		
 		defaultIterationType = gd2.getNextChoiceIndex();
 		
+		conf.deconvolutionJustShowOverlap = false;
+		
 		if ( defaultIterationType == 0 )
 			iterationType = PSFTYPE.OPTIMIZATION_II;
 		else if ( defaultIterationType == 1 )
 			iterationType = PSFTYPE.OPTIMIZATION_I;
-		else if ( defaultIterationType == 1 )
+		else if ( defaultIterationType == 2 )
 			iterationType = PSFTYPE.EFFICIENT_BAYESIAN;
-		else
+		else if ( defaultIterationType == 3 )
 			iterationType = PSFTYPE.INDEPENDENT;
+		else
+			conf.deconvolutionJustShowOverlap = true; // just show the overlap
 		
+		osemspeedupIndex = defaultOSEMspeedupIndex = gd2.getNextChoiceIndex();
+				
 		numIterations = defaultNumIterations = (int)Math.round( gd2.getNextNumber() );
 		useTikhonovRegularization = defaultUseTikhonovRegularization = gd2.getNextBoolean();
 		lambda = defaultLambda = gd2.getNextNumber();
@@ -936,6 +982,22 @@ public class Multi_View_Deconvolution implements PlugIn
 				return null;
 			
 			defaultDebugInterval = debugInterval = (int)Math.round( gdDebug.getNextNumber() );
+		}
+		
+		if ( osemspeedupIndex == 0 )
+		{
+			defaultOSEMspeedup = osemspeedup = 1;
+		}
+		else if ( osemspeedupIndex == 3 )
+		{
+			GenericDialog gdOSEM = new GenericDialog( "OSEM options" );
+			gdOSEM.addNumericField( "Additional_acceleration = ", defaultOSEMspeedup, 2 );
+			gdOSEM.showDialog();
+			
+			if ( gdOSEM.wasCanceled() )
+				return null;
+			
+			defaultOSEMspeedup = osemspeedup = gdOSEM.getNextNumber();			
 		}
 		
 		conf.paralellFusion = false;
