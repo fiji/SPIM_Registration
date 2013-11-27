@@ -89,8 +89,9 @@ public class DifferenceOfMean extends DifferenceOf
 						//
 						// compute Difference-of-Mean
 						//
-						interestPoints.put( viewId, ProcessDOM.compute( img, radius1[ c.getId() ], radius2[ c.getId() ], (float)threshold[ c.getId() ], localization ) );
-						
+						interestPoints.put( viewId, ProcessDOM.compute( img, radius1[ c.getId() ], radius2[ c.getId() ], (float)threshold[ c.getId() ], localization, findMin[ c.getId() ], findMax[ c.getId() ] ) );
+						img.close();
+
 				        benchmark.computation += System.currentTimeMillis() - time2;
 					}
 

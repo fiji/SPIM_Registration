@@ -8,17 +8,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import mpicbg.models.Point;
+import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
 import spim.fiji.plugin.interestpoints.DifferenceOfGaussian;
 import spim.fiji.plugin.interestpoints.DifferenceOfMean;
 import spim.fiji.plugin.interestpoints.InterestPointDetection;
-
-import mpicbg.models.Point;
-import mpicbg.spim.data.sequence.Angle;
-import mpicbg.spim.data.sequence.Channel;
-import mpicbg.spim.data.sequence.Illumination;
-import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.io.IOFunctions;
 
 public class Detect_Interest_Points implements PlugIn
 {
@@ -110,6 +107,8 @@ public class Detect_Interest_Points implements PlugIn
 		
 		// now extract all the detections
 		final HashMap< ViewId, List< Point > > points = ipd.findInterestPoints( result.getData(), channelsToProcess, result.getTimePointsToProcess() );
+		
+		// TODO: save the file and the path in the XML	
 	}
 	
 	public static void main( final String[] args )

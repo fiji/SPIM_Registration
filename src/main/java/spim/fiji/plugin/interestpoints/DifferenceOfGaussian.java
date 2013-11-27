@@ -85,8 +85,9 @@ public class DifferenceOfGaussian extends DifferenceOf
 						//
 						// compute Difference-of-Mean
 						//
-						interestPoints.put( viewId, ProcessDOG.compute( img, (float)sigma[ c.getId() ], (float)threshold[ c.getId() ], localization ) );
-						
+						interestPoints.put( viewId, ProcessDOG.compute( img, (float)sigma[ c.getId() ], (float)threshold[ c.getId() ], localization, findMin[ c.getId() ], findMax[ c.getId() ] ) );
+						img.close();
+
 				        benchmark.computation += System.currentTimeMillis() - time2;
 					}
 

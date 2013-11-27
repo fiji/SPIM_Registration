@@ -16,7 +16,14 @@ import spim.fiji.plugin.interestpoints.DifferenceOf;
 
 public class ProcessDOM 
 {
-	public static ArrayList< Point > compute( final Image< FloatType > img, final int radius1, final int radius2, final float threshold, final int localization )
+	public static ArrayList< Point > compute( 
+			final Image< FloatType > img, 
+			final int radius1, 
+			final int radius2, 
+			final float threshold, 
+			final int localization,
+			final boolean findMin, 
+			final boolean findMax )
 	{
 		final Image< LongType > integralImg = IntegralImage3d.compute( img );
 		
@@ -67,11 +74,11 @@ public class ProcessDOM
 		final ArrayList< Point > finalPeaks;
 		
 		if ( localization == 0 )
-			finalPeaks = Localization.noLocalization( peaks );
+			finalPeaks = Localization.noLocalization( peaks, findMin, findMax );
 		else if ( localization == 1 )
-			finalPeaks = Localization.computeQuadraticLocalization( peaks, domImg );
+			finalPeaks = Localization.computeQuadraticLocalization( peaks, domImg, findMin, findMax );
 		else
-			finalPeaks = Localization.computeGaussLocalization( peaks, domImg, ( radius2 + radius1 )/2.0 );
+			finalPeaks = Localization.computeGaussLocalization( peaks, domImg, ( radius2 + radius1 )/2.0, findMin, findMax );
 
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Found " + finalPeaks.size() + " peaks." );
 		
