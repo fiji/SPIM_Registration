@@ -1,27 +1,44 @@
 package fiji.plugin.interestpoints;
 
+import ij.ImagePlus;
 import ij.gui.GenericDialog;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.multithreading.SimpleMultiThreading;
+import net.imglib2.type.numeric.real.FloatType;
+
 import mpicbg.models.Point;
+import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.Illumination;
+import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.ViewSetup;
+import mpicbg.spim.io.IOFunctions;
+import mpicbg.spim.segmentation.InteractiveIntegral;
 import fiji.spimdata.SpimDataBeads;
 
 
 public class DifferenceOfMean extends DifferenceOf
 {
+	public static int defaultR1 = 2;
+	public static int defaultR2 = 3;
+	public static double defaultT = 0.02;
+	
 	public static int defaultRadius1[];
 	public static int defaultRadius2[];
 	public static double defaultThreshold[];
 	public static boolean defaultFindMin[];
 	public static boolean defaultFindMax[];
 	
-	int[] smallRadius;
-	int[] largeRadius;
+	int[] radius1;
+	int[] radius2;
 	double[] threshold;
 	boolean[] findMin;
 	boolean[] findMax;
@@ -33,8 +50,11 @@ public class DifferenceOfMean extends DifferenceOf
 	public DifferenceOfMean newInstance() { return new DifferenceOfMean(); }
 
 	@Override
-	public HashMap< ViewId, List<Point> > findInterestPoints( final SpimDataBeads spimData, final boolean[] channelIds, final ArrayList<Integer> timepointindices )
+	public HashMap< ViewId, List<Point> > findInterestPoints( final SpimDataBeads spimData, final ArrayList< Channel> channelsToProcess, final ArrayList< TimePoint > timepointsToProcess )
 	{
+		final ArrayList< Angle > angles = spimData.getSequenceDescription().getAllAngles();
+		final ArrayList< Illumination > illuminations = spimData.getSequenceDescription().getAllIlluminations();
+
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -44,8 +64,8 @@ public class DifferenceOfMean extends DifferenceOf
 	{
 		final int channelId = channel.getId();
 		
-		this.smallRadius[ channelId ] = 2;
-		this.largeRadius[ channelId ] = 3;
+		this.radius1[ channelId ] = defaultR1;
+		this.radius2[ channelId ] = defaultR2;
 		this.findMin[ channelId ] = false;
 		this.findMax[ channelId ] = true;
 		
@@ -70,6 +90,7 @@ public class DifferenceOfMean extends DifferenceOf
 		
 		final GenericDialog gd = new GenericDialog( "Advanced values for channel " + channel.getName() );
 		
+		gd.addMessage( "Advanced values for channel " + channel.getName() );
 		gd.addNumericField( "Radius_1", defaultRadius1[ channelId ], 0 );
 		gd.addNumericField( "Radius_2", defaultRadius2[ channelId ], 0 );
 		gd.addNumericField( "Threshold", defaultThreshold[ channelId ], 4 );
@@ -81,8 +102,8 @@ public class DifferenceOfMean extends DifferenceOf
 		if ( gd.wasCanceled() )
 			return false;
 		
-		this.smallRadius[ channelId ] = defaultRadius1[ channelId ] = (int)Math.round( gd.getNextNumber() );
-		this.largeRadius[ channelId ] = defaultRadius2[ channelId ] = (int)Math.round( gd.getNextNumber() );
+		this.radius1[ channelId ] = defaultRadius1[ channelId ] = (int)Math.round( gd.getNextNumber() );
+		this.radius2[ channelId ] = defaultRadius2[ channelId ] = (int)Math.round( gd.getNextNumber() );
 		this.threshold[ channelId ] = defaultThreshold[ channelId ] = gd.getNextNumber();
 		this.findMin[ channelId ] = defaultFindMin[ channelId ] = gd.getNextBoolean();
 		this.findMax[ channelId ] = defaultFindMax[ channelId ] = gd.getNextBoolean();
@@ -93,17 +114,57 @@ public class DifferenceOfMean extends DifferenceOf
 	@Override
 	protected boolean setInteractiveValues( final Channel channel )
 	{
+		final ViewId view = getViewSelection( "Interactive Difference-of-Mean", "Please select view to use for channel " + channel.getName(), channel );
 		
-		// TODO Auto-generated method stub		
-		return false;
+		if ( view == null )
+			return false;
+
+		final ViewDescription<TimePoint, ViewSetup > viewDescription = spimData.getSequenceDescription().getViewDescription( view.getTimePointId(), view.getViewSetupId() );
+		RandomAccessibleInterval< FloatType > img = spimData.getSequenceDescription().getImgLoader().getImage( viewDescription, false );
+		
+		if ( img == null )
+		{
+			IOFunctions.println( "View not found: " + viewDescription );
+			return false;
+		}
+		
+		final ImagePlus imp = ImageJFunctions.wrapFloat( img, "" ).duplicate();
+		img = null;
+		imp.setDimensions( 1, imp.getStackSize(), 1 );
+		imp.setTitle( "tp: " + viewDescription.getTimePoint().getName() + " viewSetup: " + viewDescription.getViewSetupId() );		
+		imp.show();		
+		imp.setSlice( imp.getStackSize() / 2 );	
+		
+		final InteractiveIntegral ii = new InteractiveIntegral();
+		final int channelId = channel.getId();	
+		
+		ii.setInitialRadius( Math.round( defaultRadius1[ channelId ] ) );
+		ii.setThreshold( (float)defaultThreshold[ channelId ] );
+		ii.setLookForMinima( defaultFindMin[ channelId ] );
+		ii.setLookForMaxima( defaultFindMax[ channelId ] );
+		
+		ii.run( null );
+		
+		while ( !ii.isFinished() )
+			SimpleMultiThreading.threadWait( 100 );
+		
+		imp.close();
+			
+		this.radius1[ channelId ] = defaultRadius1[ channelId ] = ii.getRadius1();
+		this.radius2[ channelId ] = defaultRadius2[ channelId ] = ii.getRadius2();
+		this.threshold[ channelId ] = defaultThreshold[ channelId ] = ii.getThreshold();
+		this.findMin[ channelId ] = defaultFindMin[ channelId ] = ii.getLookForMinima();
+		this.findMax[ channelId ] = defaultFindMax[ channelId ] = ii.getLookForMaxima();
+
+		return true;
 	}
 	
 
 	@Override
 	protected void init( final int numChannels )
 	{
-		smallRadius = new int[ numChannels ];
-		largeRadius = new int[ numChannels ];
+		radius1 = new int[ numChannels ];
+		radius2 = new int[ numChannels ];
 		threshold = new double[ numChannels ];
 		findMin = new boolean[ numChannels ];
 		findMax = new boolean[ numChannels ];
@@ -118,9 +179,9 @@ public class DifferenceOfMean extends DifferenceOf
 			
 			for ( int c = 0; c < numChannels; ++c )
 			{
-				defaultRadius1[ c ] = 2;
-				defaultRadius2[ c ] = 3;
-				defaultThreshold[ c ] = 0.02;
+				defaultRadius1[ c ] = defaultR1;
+				defaultRadius2[ c ] = defaultR2;
+				defaultThreshold[ c ] = defaultT;
 				defaultFindMin[ c ] = false;
 				defaultFindMax[ c ] = true;
 			}

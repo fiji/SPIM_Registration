@@ -1,5 +1,6 @@
 package fiji.plugin.interestpoints;
 
+import ij.IJ;
 import ij.gui.GenericDialog;
 
 import java.util.ArrayList;
@@ -9,6 +10,7 @@ import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.ViewSetup;
 import fiji.spimdata.SpimDataBeads;
 
 public abstract class DifferenceOf implements InterestPointDetection
@@ -42,7 +44,7 @@ public abstract class DifferenceOf implements InterestPointDetection
 		this.spimData = spimData;
 		this.timepointsToProcess = timepointsToProcess;
 		this.channelsToProcess = channelsToProcess;
-
+		
 		final ArrayList< Channel > channels = spimData.getSequenceDescription().getAllChannels();
 
 		// tell the implementing classes the total number of channels
@@ -94,6 +96,14 @@ public abstract class DifferenceOf implements InterestPointDetection
 		return true;
 	}
 	
+	/**
+	 * Figure out which view to use for the interactive preview
+	 * 
+	 * @param dialogHeader
+	 * @param text
+	 * @param channel
+	 * @return
+	 */
 	protected ViewId getViewSelection( final String dialogHeader, final String text, final Channel channel )
 	{
 		final GenericDialog gd = new GenericDialog( dialogHeader );
@@ -126,12 +136,25 @@ public abstract class DifferenceOf implements InterestPointDetection
 		final Angle angle = angles.get( defaultAngleChoice = gd.getNextChoiceIndex() );
 		final Illumination illumination = illuminations.get( defaultIlluminationChoice = gd.getNextChoiceIndex() );
 		
-		// TODO: make ViewId
-		
+		for ( ViewSetup viewSetup : spimData.getSequenceDescription().getViewSetups() )
+		{
+			if ( viewSetup.getAngle().getId() == angle.getId() && 
+				 viewSetup.getChannel().getId() == channel.getId() && 
+				 viewSetup.getIllumination().getId() == illumination.getId() )
+			{
+				return new ViewId( tp.getId(), viewSetup.getId() );
+			}
+		}
+
+		// this should not happen
+		IJ.log( "An error occured. Count not find the corresponding ViewSetup for angle: " + angle.getId() + " channel: " + channel.getId() + " illum: " + illumination.getId() );
 		return null;
 	}
 	
 	/**
+	 * This is only necessary to make static objects so that the ImageJ dialog remembers choices
+	 * for the right channel
+	 * 
 	 * @param numChannels - the TOTAL number of channels (not only the ones to process)
 	 */
 	protected abstract void init( final int numChannels );

@@ -12,7 +12,7 @@ import fiji.spimdata.SpimDataBeads;
 
 public interface InterestPointDetection 
 {
-	public HashMap< ViewId, List< Point > > findInterestPoints( final SpimDataBeads spimData, final boolean[] channelIds, final ArrayList< Integer > timepointindices );
+	public HashMap< ViewId, List< Point > > findInterestPoints( final SpimDataBeads spimData, final ArrayList< Channel> channelsToProcess, final ArrayList< TimePoint > timepointsToProcess );
 	
 	/**
 	 * @param spimData

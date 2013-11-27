@@ -4,14 +4,19 @@ import fiji.plugin.LoadParseQueryXML.XMLParseResult;
 import fiji.plugin.interestpoints.DifferenceOfMean;
 import fiji.plugin.interestpoints.DifferenceOfGaussian;
 import fiji.plugin.interestpoints.InterestPointDetection;
+import ij.ImageJ;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
+import mpicbg.models.Point;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 
 public class Detect_Interest_Points implements PlugIn
@@ -35,19 +40,14 @@ public class Detect_Interest_Points implements PlugIn
 		if ( result == null )
 			return;
 		
+		// ask which channels have the objects we are searching for
 		final ArrayList< Channel > channels = result.getData().getSequenceDescription().getAllChannels();
-		final ArrayList< Angle > angles = result.getData().getSequenceDescription().getAllAngles();
-		final ArrayList< Illumination > illuminations = result.getData().getSequenceDescription().getAllIlluminations();
 		
-		final ArrayList< InterestPointDetection > algorithms = new ArrayList< InterestPointDetection >();
+		// the GenericDialog needs a list[] of String
 		final String[] descriptions = new String[ staticAlgorithms.size() ];
 		
-		int i = 0;
-		for ( final InterestPointDetection ipd : staticAlgorithms )
-		{
-			algorithms.add( ipd.newInstance() );
-			descriptions[ i ] = algorithms.get( i++ ).getDescription();
-		}
+		for ( int i = 0; i < staticAlgorithms.size(); ++i )
+			descriptions[ i ] = staticAlgorithms.get( i ).getDescription();
 		
 		if ( defaultAlgorithm >= descriptions.length )
 			defaultAlgorithm = 0;
@@ -62,14 +62,14 @@ public class Detect_Interest_Points implements PlugIn
 			if ( defaultChannelChoice == null || defaultChannelChoice.length != channels.size() )
 			{
 				defaultChannelChoice = new boolean[ channels.size() ];
-				for ( i = 0; i < channels.size(); ++i )
+				for ( int i = 0; i < channels.size(); ++i )
 					defaultChannelChoice[ i ] = true;
 			}
 			
 			gd.addMessage( "" );
 			gd.addMessage( "Choose channels to detect interest points in", GUIHelper.largefont );
 			
-			for ( i = 0; i < channels.size(); ++i )
+			for ( int i = 0; i < channels.size(); ++i )
 				gd.addCheckbox( "Channel_" + channels.get( i ).getName(), defaultChannelChoice[ i ] );
 		}
 		
@@ -81,24 +81,17 @@ public class Detect_Interest_Points implements PlugIn
 		if ( gd.wasCanceled() )
 			return;
 		
-		final InterestPointDetection ipd = algorithms.get( defaultAlgorithm = gd.getNextChoiceIndex() );		
+		final InterestPointDetection ipd = staticAlgorithms.get( defaultAlgorithm = gd.getNextChoiceIndex() ).newInstance();
+		
+		// how are the detections called (e.g. beads, nuclei, ...)
 		final String label = defaultLabel = gd.getNextString();
-		//final boolean[] processChannels = new boolean[ channels.size() ];
 		final ArrayList< Channel> channelsToProcess = new ArrayList< Channel >();
 		
 		if ( channels.size() > 1 )
 		{
-			int count = 0;
-			
-			for ( i = 0; i < channels.size(); ++i )
-			{
-				/*processChannels[ i ] = */defaultChannelChoice[ i ] = gd.getNextBoolean();
-				//if ( processChannels[ i ] )
-				//	++count;
-				
-				if ( defaultChannelChoice[ i ] )
+			for ( int i = 0; i < channels.size(); ++i )
+				if ( defaultChannelChoice[ i ] = gd.getNextBoolean() )
 					channelsToProcess.add( channels.get( i ) );
-			}
 			
 			if ( channelsToProcess.size() == 0 )
 			{
@@ -115,12 +108,12 @@ public class Detect_Interest_Points implements PlugIn
 		ipd.queryParameters( result.getData(), channelsToProcess, result.getTimePointsToProcess() );
 		
 		// now extract all the detections
+		final HashMap< ViewId, List< Point > > points = ipd.findInterestPoints( result.getData(), channelsToProcess, result.getTimePointsToProcess() );
 	}
-	
-	
 	
 	public static void main( final String[] args )
 	{
+		new ImageJ();
 		new Detect_Interest_Points().run( null );
 	}
 }
