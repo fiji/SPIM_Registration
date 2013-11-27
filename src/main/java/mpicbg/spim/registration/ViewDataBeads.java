@@ -1,6 +1,6 @@
 package mpicbg.spim.registration;
 
-import fiji.plugin.deprecated.Multi_View_Deconvolution;
+import fiji.plugin.Multi_View_Deconvolution;
 import ij.IJ;
 import ij.ImagePlus;
 

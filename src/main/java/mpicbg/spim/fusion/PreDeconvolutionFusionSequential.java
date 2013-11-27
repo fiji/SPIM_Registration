@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.vecmath.Point3f;
 
-import fiji.plugin.deprecated.Multi_View_Deconvolution;
+import fiji.plugin.Multi_View_Deconvolution;
 
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
