@@ -76,7 +76,7 @@ public abstract class StackImgLoader extends AbstractImgLoader
 		
 		String fileName = StackList.getFileNameFor( fileNamePattern, replaceTimepoints, replaceChannels, 
 				replaceIlluminations, replaceAngles, timepoint, channel, illum, angle );
-		
+				
 		return new File( path, fileName );
 	}
 

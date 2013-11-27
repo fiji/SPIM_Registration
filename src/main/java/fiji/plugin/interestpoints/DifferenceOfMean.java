@@ -4,14 +4,14 @@ import ij.ImagePlus;
 import ij.gui.GenericDialog;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.multithreading.SimpleMultiThreading;
-import net.imglib2.type.numeric.real.FloatType;
-
+import mpicbg.imglib.image.Image;
+import mpicbg.imglib.type.numeric.integer.LongType;
+import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.imglib.wrapper.ImgLib2;
 import mpicbg.models.Point;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
@@ -21,7 +21,14 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
+import mpicbg.spim.segmentation.DOM;
+import mpicbg.spim.segmentation.IntegralImage3d;
 import mpicbg.spim.segmentation.InteractiveIntegral;
+import mpicbg.spim.segmentation.SimplePeak;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.img.Img;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.multithreading.SimpleMultiThreading;
 import fiji.spimdata.SpimDataBeads;
 
 
@@ -52,11 +59,99 @@ public class DifferenceOfMean extends DifferenceOf
 	@Override
 	public HashMap< ViewId, List<Point> > findInterestPoints( final SpimDataBeads spimData, final ArrayList< Channel> channelsToProcess, final ArrayList< TimePoint > timepointsToProcess )
 	{
-		final ArrayList< Angle > angles = spimData.getSequenceDescription().getAllAngles();
-		final ArrayList< Illumination > illuminations = spimData.getSequenceDescription().getAllIlluminations();
+		final HashMap< ViewId, List< Point > > interestPoints = new HashMap< ViewId, List< Point > >();
+		
+		for ( final TimePoint t : timepointsToProcess )
+			for ( final Angle a : spimData.getSequenceDescription().getAllAngles() )
+				for ( final Illumination i : spimData.getSequenceDescription().getAllIlluminations() )
+					for ( final Channel c : channelsToProcess )
+					{
+						//
+						// open the corresponding image (if present at this timepoint)
+						//
+						long time1 = System.currentTimeMillis();
+						final ViewId viewId = DifferenceOf.getViewId( spimData.getSequenceDescription(), t, c, a, i );
 
-		// TODO Auto-generated method stub
-		return null;
+						if ( viewId == null )
+							IOFunctions.println( "An error occured. Count not find the corresponding ViewSetup for angle: " + 
+								a.getId() + " channel: " + c.getId() + " illum: " + i.getId() );
+
+						final ViewDescription< TimePoint, ViewSetup > viewDescription = spimData.getSequenceDescription().getViewDescription( 
+								viewId.getTimePointId(), viewId.getViewSetupId() );
+
+						if ( !viewDescription.isPresent() )
+							continue;
+						
+						final Image< FloatType > img = ImgLib2.wrapFloatToImgLib1( 
+							(Img<net.imglib2.type.numeric.real.FloatType>)
+								spimData.getSequenceDescription().getImgLoader().getImage( viewDescription, false ) );
+						
+						long time2 = System.currentTimeMillis();
+						benchmark.openFiles += time2 - time1;
+						
+						//
+						// compute Difference-of-Mean
+						//
+						final Image< LongType > integralImg = IntegralImage3d.compute( img );
+						
+						final FloatType min = new FloatType();
+						final FloatType max = new FloatType();
+						
+						if ( DifferenceOf.minmaxset == null )
+						{
+							DOM.computeMinMax( img, min, max );
+						}
+						else
+						{
+							min.set( DifferenceOf.minmaxset[ 0 ] );
+							max.set( DifferenceOf.minmaxset[ 1 ] );
+						}
+
+						IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): min intensity = " + min.get() + ", max intensity = " + max.get() );
+						
+						// in-place
+						final int s1 = radius1[ c.getId() ]*2 + 1;
+						final int s2 = radius2[ c.getId() ]*2 + 1;
+
+						IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Computing Difference-of-Mean");					
+
+						// in-place overwriting img if no adjacent Gauss fit is required
+						final Image< FloatType > domImg;
+						
+						if ( localization == 2 )
+						{
+							domImg = img.createNewImage();
+						}
+						else
+						{
+							domImg = img;
+							for ( final FloatType tt : img )
+								tt.setZero();
+						}
+						
+						DOM.computeDifferencOfMean3d( integralImg, domImg, s1, s1, s1, s2, s2, s2, min.get(), max.get() );
+
+						// close integral img
+						integralImg.close();
+						
+						IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Extracting peaks (radius=" + radius1[ c.getId() ] + ", threshold=" + threshold[ c.getId() ] + ")");					
+
+						// compute the maxima/minima
+						final ArrayList< SimplePeak > peaks = InteractiveIntegral.findPeaks( domImg, (float)threshold[ c.getId() ] );
+						
+						if ( localization == 0 )
+							interestPoints.put( viewId, noLocalization( peaks ) );
+						else if ( localization == 1 )
+							interestPoints.put( viewId, computeQuadraticLocalization( peaks, domImg ) );
+						else
+							interestPoints.put( viewId, computeGaussLocalization( peaks, domImg, ( radius2[ c.getId() ] + radius1[ c.getId() ] )/2.0 ) );
+
+						IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Found " + interestPoints.get( viewId ).size() + " peaks." );
+
+				        benchmark.computation += System.currentTimeMillis() - time2;
+					}
+
+		return interestPoints;
 	}
 	
 	@Override
@@ -119,8 +214,19 @@ public class DifferenceOfMean extends DifferenceOf
 		if ( view == null )
 			return false;
 
-		final ViewDescription<TimePoint, ViewSetup > viewDescription = spimData.getSequenceDescription().getViewDescription( view.getTimePointId(), view.getViewSetupId() );
-		RandomAccessibleInterval< FloatType > img = spimData.getSequenceDescription().getImgLoader().getImage( viewDescription, false );
+		final ViewDescription< TimePoint, ViewSetup > viewDescription = spimData.getSequenceDescription().getViewDescription( view.getTimePointId(), view.getViewSetupId() );
+		
+		if ( !viewDescription.isPresent() )
+		{
+			IOFunctions.println( "You defined the view you selected as not present at this timepoint." );
+			IOFunctions.println( "timepoint: " + viewDescription.getTimePoint().getName() + 
+								 " angle: " + viewDescription.getViewSetup().getAngle().getName() + 
+								 " channel: " + viewDescription.getViewSetup().getChannel().getName() + 
+								 " illum: " + viewDescription.getViewSetup().getIllumination().getName() );
+			return false;
+		}
+		
+		RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > img = spimData.getSequenceDescription().getImgLoader().getImage( viewDescription, false );
 		
 		if ( img == null )
 		{

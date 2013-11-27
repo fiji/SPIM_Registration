@@ -113,6 +113,17 @@ public class DifferenceOfGaussian extends DifferenceOf
 			return false;
 		
 		final ViewDescription<TimePoint, ViewSetup > viewDescription = spimData.getSequenceDescription().getViewDescription( view.getTimePointId(), view.getViewSetupId() );
+		
+		if ( !viewDescription.isPresent() )
+		{
+			IOFunctions.println( "You defined the view you selected as not present at this timepoint." );
+			IOFunctions.println( "timepoint: " + viewDescription.getTimePoint().getName() + 
+								 " angle: " + viewDescription.getViewSetup().getAngle().getName() + 
+								 " channel: " + viewDescription.getViewSetup().getChannel().getName() + 
+								 " illum: " + viewDescription.getViewSetup().getIllumination().getName() );
+			return false;
+		}
+
 		RandomAccessibleInterval< FloatType > img = spimData.getSequenceDescription().getImgLoader().getImage( viewDescription, false );
 		
 		if ( img == null )
