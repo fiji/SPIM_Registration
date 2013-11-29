@@ -1,19 +1,19 @@
-package spim.fiji.spimdata.beads;
+package spim.fiji.spimdata.interestpoints;
 
 import java.io.File;
 
 import mpicbg.spim.data.sequence.ViewId;
 
-public class ViewBeads extends ViewId
+public class ViewInterestPoints extends ViewId
 {
 	protected File beadFile = null;
 	
-	public ViewBeads( final int timepointId, final int setupId )
+	public ViewInterestPoints( final int timepointId, final int setupId )
 	{
 		this( timepointId, setupId, null );
 	}
 
-	public ViewBeads( final int timepointId, final int setupId, final File beadFile )
+	public ViewInterestPoints( final int timepointId, final int setupId, final File beadFile )
 	{
 		super( timepointId, setupId );
 		

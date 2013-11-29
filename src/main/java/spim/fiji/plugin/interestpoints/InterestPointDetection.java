@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import spim.fiji.spimdata.SpimDataBeads;
+import spim.fiji.spimdata.SpimDataInterestPoints;
 
 import mpicbg.models.Point;
 import mpicbg.spim.data.sequence.Channel;
@@ -13,7 +13,7 @@ import mpicbg.spim.data.sequence.ViewId;
 
 public interface InterestPointDetection 
 {
-	public HashMap< ViewId, List< Point > > findInterestPoints( final SpimDataBeads spimData, final ArrayList< Channel> channelsToProcess, final ArrayList< TimePoint > timepointsToProcess );
+	public HashMap< ViewId, List< Point > > findInterestPoints( final SpimDataInterestPoints spimData, final ArrayList< Channel> channelsToProcess, final ArrayList< TimePoint > timepointsToProcess );
 	
 	/**
 	 * @param spimData
@@ -21,7 +21,7 @@ public interface InterestPointDetection
 	 * @param timepointsToProcess - which timepoints were selected
 	 * @return
 	 */
-	public boolean queryParameters( final SpimDataBeads spimData, final ArrayList< Channel> channelsToProcess, final ArrayList< TimePoint > timepointsToProcess );
+	public boolean queryParameters( final SpimDataInterestPoints spimData, final ArrayList< Channel> channelsToProcess, final ArrayList< TimePoint > timepointsToProcess );
 	
 	/**
 	 * @return - a new instance without any special properties

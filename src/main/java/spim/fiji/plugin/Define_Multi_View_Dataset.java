@@ -20,9 +20,9 @@ import spim.fiji.datasetmanager.LightSheetZ1;
 import spim.fiji.datasetmanager.MultiViewDatasetDefinition;
 import spim.fiji.datasetmanager.StackListImageJ;
 import spim.fiji.datasetmanager.StackListLOCI;
-import spim.fiji.spimdata.SpimDataBeads;
+import spim.fiji.spimdata.SpimDataInterestPoints;
 import spim.fiji.spimdata.XmlIo;
-import spim.fiji.spimdata.XmlIoSpimDataBeads;
+import spim.fiji.spimdata.XmlIoSpimDataInterestPoints;
 
 import net.imglib2.img.display.imagej.ImageJFunctions;
 
@@ -95,7 +95,7 @@ public class Define_Multi_View_Dataset implements PlugIn
 		
 		System.out.println( defaultDatasetDef );
 		
-		final SpimDataBeads spimData = def.createDataset();
+		final SpimDataInterestPoints spimData = def.createDataset();
 		
 		if ( spimData == null )
 		{
@@ -105,7 +105,7 @@ public class Define_Multi_View_Dataset implements PlugIn
 		else
 		{
 			//final XmlIoSpimData< TimePoint, ViewSetupBeads > io = XmlIoSpimData.createDefault();
-			final XmlIoSpimDataBeads io = XmlIo.createDefaultIo();
+			final XmlIoSpimDataInterestPoints io = XmlIo.createDefaultIo();
 			
 			final String xml = new File( spimData.getBasePath(), "example_fromdialog.xml" ).getAbsolutePath();
 			try 

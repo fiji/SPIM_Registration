@@ -1,6 +1,6 @@
 package spim.fiji.spimdata;
 
-import spim.fiji.spimdata.beads.XmlIoViewBeads;
+import spim.fiji.spimdata.interestpoints.XmlIoViewInterestPoints;
 import mpicbg.spim.data.registration.XmlIoViewRegistrations;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewSetup;
@@ -24,12 +24,12 @@ public class XmlIo
 	}
 	*/
 	
-	public static XmlIoSpimDataBeads createDefaultIo()
+	public static XmlIoSpimDataInterestPoints createDefaultIo()
 	{
 		final XmlIoSequenceDescription< TimePoint, ViewSetup > seqDesc = 
 				new XmlIoSequenceDescription< TimePoint, ViewSetup >( new XmlIoTimePoints(), new XmlIoViewSetups(), new XmlIoMissingViews(), new XmlIoImgLoader() );
-		final XmlIoSpimDataBeads io = 
-				new XmlIoSpimDataBeads( seqDesc, new XmlIoViewRegistrations(), new XmlIoViewBeads() );
+		final XmlIoSpimDataInterestPoints io = 
+				new XmlIoSpimDataInterestPoints( seqDesc, new XmlIoViewRegistrations(), new XmlIoViewInterestPoints() );
 			
 		return io;
 	}

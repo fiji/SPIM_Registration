@@ -24,7 +24,7 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.multithreading.SimpleMultiThreading;
-import spim.fiji.spimdata.SpimDataBeads;
+import spim.fiji.spimdata.SpimDataInterestPoints;
 import spim.process.interestpoints.ProcessDOM;
 
 
@@ -53,7 +53,7 @@ public class DifferenceOfMean extends DifferenceOf
 	public DifferenceOfMean newInstance() { return new DifferenceOfMean(); }
 
 	@Override
-	public HashMap< ViewId, List<Point> > findInterestPoints( final SpimDataBeads spimData, final ArrayList< Channel> channelsToProcess, final ArrayList< TimePoint > timepointsToProcess )
+	public HashMap< ViewId, List<Point> > findInterestPoints( final SpimDataInterestPoints spimData, final ArrayList< Channel> channelsToProcess, final ArrayList< TimePoint > timepointsToProcess )
 	{
 		final HashMap< ViewId, List< Point > > interestPoints = new HashMap< ViewId, List< Point > >();
 		

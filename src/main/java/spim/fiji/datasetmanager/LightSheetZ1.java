@@ -1,6 +1,6 @@
 package spim.fiji.datasetmanager;
 
-import spim.fiji.spimdata.SpimDataBeads;
+import spim.fiji.spimdata.SpimDataInterestPoints;
 
 public class LightSheetZ1 implements MultiViewDatasetDefinition
 {
@@ -22,7 +22,7 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 	}
 
 	@Override
-	public SpimDataBeads createDataset()
+	public SpimDataInterestPoints createDataset()
 	{
 		// TODO Auto-generated method stub
 		return null;

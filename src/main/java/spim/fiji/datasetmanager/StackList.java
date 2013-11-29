@@ -14,8 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import spim.fiji.plugin.GUIHelper;
-import spim.fiji.spimdata.SpimDataBeads;
-import spim.fiji.spimdata.beads.ViewBeads;
+import spim.fiji.spimdata.SpimDataInterestPoints;
+import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.registration.ViewRegistration;
@@ -145,7 +145,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	protected abstract ImgLoader createAndInitImgLoader( final String path, final File basePath, final ImgFactory< ? extends NativeType< ? > > imgFactory );
 	
 	@Override
-	public SpimDataBeads createDataset()
+	public SpimDataInterestPoints createDataset()
 	{
 		// collect all the information
 		if ( !queryInformation() )
@@ -164,7 +164,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		final ViewRegistrations viewRegistrations = this.createViewRegistrations( sequenceDescription.getViewDescriptions() );
 		
 		// finally create the SpimData itself based on the sequence description and the view registration
-		final SpimDataBeads spimData = new SpimDataBeads( new File( directory ), sequenceDescription, viewRegistrations, new ArrayList< ViewBeads >() );
+		final SpimDataInterestPoints spimData = new SpimDataInterestPoints( new File( directory ), sequenceDescription, viewRegistrations, new ArrayList< ViewInterestPoints >() );
 		
 		return spimData;
 	}
