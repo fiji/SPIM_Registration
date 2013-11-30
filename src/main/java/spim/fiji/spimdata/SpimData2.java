@@ -11,11 +11,11 @@ import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewSetup;
 
-public class SpimDataInterestPoints extends SpimData< TimePoint, ViewSetup >
+public class SpimData2 extends SpimData< TimePoint, ViewSetup >
 {
 	final protected ArrayList< ViewInterestPoints > viewBeads;
 	
-	public SpimDataInterestPoints( final File basePath, final SequenceDescription< TimePoint, ViewSetup > sequenceDescription, 
+	public SpimData2( final File basePath, final SequenceDescription< TimePoint, ViewSetup > sequenceDescription, 
 			final ViewRegistrations viewRegistrations, final ArrayList< ViewInterestPoints > viewBeads )
 	{
 		super( basePath, sequenceDescription, viewRegistrations );

@@ -27,9 +27,9 @@ public class SpimDataExample
 
 		//final SpimData< TimePoint, ViewSetupBeads > spimData = io.load( xmlFilename );
 		
-		final XmlIoSpimDataInterestPoints io = XmlIo.createDefaultIo();
+		final XmlIoSpimData2 io = XmlIo.createDefaultIo();
 		
-		final SpimDataInterestPoints spimData = io.load( xmlFilename );
+		final SpimData2 spimData = io.load( xmlFilename );
 		
 		// save SpimData to xml file
 		io.save( spimData, "/Users/preibischs/Documents/Microscopy/SPIM/HisYFP-SPIM/example_fromdialog2.xml" );

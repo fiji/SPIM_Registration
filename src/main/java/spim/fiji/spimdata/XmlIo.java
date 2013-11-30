@@ -24,12 +24,12 @@ public class XmlIo
 	}
 	*/
 	
-	public static XmlIoSpimDataInterestPoints createDefaultIo()
+	public static XmlIoSpimData2 createDefaultIo()
 	{
 		final XmlIoSequenceDescription< TimePoint, ViewSetup > seqDesc = 
 				new XmlIoSequenceDescription< TimePoint, ViewSetup >( new XmlIoTimePoints(), new XmlIoViewSetups(), new XmlIoMissingViews(), new XmlIoImgLoader() );
-		final XmlIoSpimDataInterestPoints io = 
-				new XmlIoSpimDataInterestPoints( seqDesc, new XmlIoViewRegistrations(), new XmlIoViewInterestPoints() );
+		final XmlIoSpimData2 io = 
+				new XmlIoSpimData2( seqDesc, new XmlIoViewRegistrations(), new XmlIoViewInterestPoints() );
 			
 		return io;
 	}

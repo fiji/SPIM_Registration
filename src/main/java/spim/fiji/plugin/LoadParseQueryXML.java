@@ -23,9 +23,9 @@ import mpicbg.spim.io.IOFunctions;
 
 import org.xml.sax.SAXException;
 
-import spim.fiji.spimdata.SpimDataInterestPoints;
+import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIo;
-import spim.fiji.spimdata.XmlIoSpimDataInterestPoints;
+import spim.fiji.spimdata.XmlIoSpimData2;
 
 import fiji.util.gui.GenericDialogPlus;
 
@@ -52,14 +52,14 @@ public class LoadParseQueryXML
 		int timepointChoiceIndex;
 		
 		// global variables
-		private SpimDataInterestPoints data;
+		private SpimData2 data;
 		private String xmlfilename;
 		private ArrayList< TimePoint > timepoints;
 		
 		/**
 		 * @return the SpimDataBeads object parsed from the xml
 		 */
-		public SpimDataInterestPoints getData() { return data; }
+		public SpimData2 getData() { return data; }
 		
 		/**
 		 * @return The location of the xml file
@@ -317,9 +317,9 @@ public class LoadParseQueryXML
 		return xml;
 	}
 	
-	public SpimDataInterestPoints parseXML( final String xmlFilename ) throws ParserConfigurationException, SAXException, IOException, InstantiationException, IllegalAccessException, ClassNotFoundException
+	public SpimData2 parseXML( final String xmlFilename ) throws ParserConfigurationException, SAXException, IOException, InstantiationException, IllegalAccessException, ClassNotFoundException
 	{
-		final XmlIoSpimDataInterestPoints io = XmlIo.createDefaultIo();
+		final XmlIoSpimData2 io = XmlIo.createDefaultIo();
 		return io.load( xmlFilename );
 	}
 	

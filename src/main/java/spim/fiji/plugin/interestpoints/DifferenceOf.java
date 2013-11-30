@@ -13,7 +13,7 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.registration.bead.SegmentationBenchmark;
-import spim.fiji.spimdata.SpimDataInterestPoints;
+import spim.fiji.spimdata.SpimData2;
 
 public abstract class DifferenceOf implements InterestPointDetection
 {
@@ -46,10 +46,10 @@ public abstract class DifferenceOf implements InterestPointDetection
 	protected ArrayList< TimePoint > timepointsToProcess;
 	
 	protected int localization;
-	protected SpimDataInterestPoints spimData;
+	protected SpimData2 spimData;
 	
 	@Override
-	public boolean queryParameters( final SpimDataInterestPoints spimData, final ArrayList< Channel> channelsToProcess, final ArrayList< TimePoint > timepointsToProcess )
+	public boolean queryParameters( final SpimData2 spimData, final ArrayList< Channel> channelsToProcess, final ArrayList< TimePoint > timepointsToProcess )
 	{
 		this.spimData = spimData;
 		this.timepointsToProcess = timepointsToProcess;

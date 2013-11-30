@@ -1,6 +1,6 @@
 package spim.fiji.datasetmanager;
 
-import spim.fiji.spimdata.SpimDataInterestPoints;
+import spim.fiji.spimdata.SpimData2;
 import mpicbg.spim.data.SpimData;
 
 public interface MultiViewDatasetDefinition
@@ -29,7 +29,7 @@ public interface MultiViewDatasetDefinition
 	 * 
 	 * @return - the saved {@link SpimData} object
 	 */
-	public SpimDataInterestPoints createDataset();
+	public SpimData2 createDataset();
 	
 	/**
 	 * @return - a new instance of this implementation

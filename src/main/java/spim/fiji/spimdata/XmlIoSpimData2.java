@@ -31,11 +31,11 @@ import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.fiji.spimdata.interestpoints.XmlIoViewInterestPoints;
 
 
-public class XmlIoSpimDataInterestPoints extends XmlIoSpimData< TimePoint, ViewSetup >
+public class XmlIoSpimData2 extends XmlIoSpimData< TimePoint, ViewSetup >
 {
 	final XmlIoViewInterestPoints xmlViewInterestPoints;
 	
-	public XmlIoSpimDataInterestPoints( final XmlIoSequenceDescription< TimePoint, ViewSetup > xmlSequenceDescription,
+	public XmlIoSpimData2( final XmlIoSequenceDescription< TimePoint, ViewSetup > xmlSequenceDescription,
 			final XmlIoViewRegistrations xmlViewRegistrations, final XmlIoViewInterestPoints xmlViewBeads )
 	{
 		super( xmlSequenceDescription, xmlViewRegistrations );
@@ -44,7 +44,7 @@ public class XmlIoSpimDataInterestPoints extends XmlIoSpimData< TimePoint, ViewS
 	}
 	
 	@Override
-	public SpimDataInterestPoints load( final String xmlFilename ) throws ParserConfigurationException, SAXException, IOException, InstantiationException, IllegalAccessException, ClassNotFoundException
+	public SpimData2 load( final String xmlFilename ) throws ParserConfigurationException, SAXException, IOException, InstantiationException, IllegalAccessException, ClassNotFoundException
 	{
 		final File xmlFile = new File( xmlFilename );
 
@@ -62,7 +62,7 @@ public class XmlIoSpimDataInterestPoints extends XmlIoSpimData< TimePoint, ViewS
 	}
 
 	@Override
-	public SpimDataInterestPoints fromXml( final Element root, final File basePath ) throws InstantiationException, IllegalAccessException, ClassNotFoundException
+	public SpimData2 fromXml( final Element root, final File basePath ) throws InstantiationException, IllegalAccessException, ClassNotFoundException
 	{
 //		String version = getVersion( root );
 
@@ -84,10 +84,10 @@ public class XmlIoSpimDataInterestPoints extends XmlIoSpimData< TimePoint, ViewS
 		else
 			beads = xmlViewInterestPoints.fromXml( ( Element ) nodes.item( 0 ) );
 		
-		return new SpimDataInterestPoints( basePath, seq, reg, beads );
+		return new SpimData2( basePath, seq, reg, beads );
 	}
 
-	public void save( final SpimDataInterestPoints spimData, final String xmlFilename ) throws ParserConfigurationException, InstantiationException, IllegalAccessException, ClassNotFoundException, FileNotFoundException, TransformerFactoryConfigurationError, TransformerException
+	public void save( final SpimData2 spimData, final String xmlFilename ) throws ParserConfigurationException, InstantiationException, IllegalAccessException, ClassNotFoundException, FileNotFoundException, TransformerFactoryConfigurationError, TransformerException
 	{
 		final Document doc = XmlHelpers.newXmlDocument();
 		final File xmlFileDirectory = new File( xmlFilename ).getParentFile();
@@ -95,7 +95,7 @@ public class XmlIoSpimDataInterestPoints extends XmlIoSpimData< TimePoint, ViewS
 		XmlHelpers.writeXmlDocument( doc, xmlFilename );
 	}
 
-	public Element toXml( final Document doc, final SpimDataInterestPoints spimData, final File xmlFileDirectory ) throws InstantiationException, IllegalAccessException, ClassNotFoundException
+	public Element toXml( final Document doc, final SpimData2 spimData, final File xmlFileDirectory ) throws InstantiationException, IllegalAccessException, ClassNotFoundException
 	{
 		final Element root = super.toXml( doc, spimData, xmlFileDirectory );
 		
