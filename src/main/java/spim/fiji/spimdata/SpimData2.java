@@ -11,6 +11,11 @@ import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewSetup;
 
+/**
+ * Extends the {@link SpimData} class; has additonally detections
+ * 
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de)
+ */
 public class SpimData2 extends SpimData< TimePoint, ViewSetup >
 {
 	final protected ArrayList< ViewInterestPoints > viewBeads;
