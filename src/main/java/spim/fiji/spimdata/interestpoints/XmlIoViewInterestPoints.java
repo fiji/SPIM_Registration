@@ -45,12 +45,12 @@ public class XmlIoViewInterestPoints
 		final Element elem = doc.createElement( VIEWINTERESTPOINTS_TAG );
 		
 		for ( final ViewInterestPoints vb : beadsList )
-			elem.appendChild( viewBeadsToXml( doc, vb ) );
+			elem.appendChild( viewInterestPointsToXml( doc, vb ) );
 		
 		return elem;
 	}
 
-	protected Node viewBeadsToXml( final Document doc, final ViewInterestPoints viewBeads )
+	protected Node viewInterestPointsToXml( final Document doc, final ViewInterestPoints viewBeads )
 	{
 		final Element elem = doc.createElement( VIEWINTERESTPOINTSFILE_TAG );
 		elem.setAttribute( VIEWINTERESTPOINTS_TIMEPOINT_ATTRIBUTE_NAME, Integer.toString( viewBeads.getTimePointId() ) );

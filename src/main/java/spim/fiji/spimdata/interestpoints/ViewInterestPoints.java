@@ -6,20 +6,20 @@ import mpicbg.spim.data.sequence.ViewId;
 
 public class ViewInterestPoints extends ViewId
 {
-	protected File beadFile = null;
+	protected File interestPointFile = null;
 	
 	public ViewInterestPoints( final int timepointId, final int setupId )
 	{
 		this( timepointId, setupId, null );
 	}
 
-	public ViewInterestPoints( final int timepointId, final int setupId, final File beadFile )
+	public ViewInterestPoints( final int timepointId, final int setupId, final File interestPointFile )
 	{
 		super( timepointId, setupId );
 		
-		this.beadFile = beadFile;
+		this.interestPointFile = interestPointFile;
 	}
 	
-	public File getBeadFile() { return beadFile; }
-	public void setBeadFile( final File beadFile ) { this.beadFile = beadFile; }
+	public File getBeadFile() { return interestPointFile; }
+	public void setBeadFile( final File interestPointFile ) { this.interestPointFile = interestPointFile; }
 }
