@@ -146,37 +146,14 @@ public abstract class DifferenceOf implements InterestPointDetection
 		final Angle angle = angles.get( defaultAngleChoice = gd.getNextChoiceIndex() );
 		final Illumination illumination = illuminations.get( defaultIlluminationChoice = gd.getNextChoiceIndex() );
 		
-		final ViewId viewId = getViewId( spimData.getSequenceDescription(), tp, channel, angle, illumination );
+		final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), tp, channel, angle, illumination );
 
 		if ( viewId == null )
 			IOFunctions.println( "An error occured. Count not find the corresponding ViewSetup for angle: " + angle.getId() + " channel: " + channel.getId() + " illum: " + illumination.getId() );
 		
 		return viewId;
 	}
-	
-	/**
-	 * @param seqDesc
-	 * @param t
-	 * @param c
-	 * @param a
-	 * @param i
-	 * @return - the ViewId that fits to timepoint, angle, channel & illumination by ID (or null if it does not exist)
-	 */
-	public static ViewId getViewId( final SequenceDescription<?, ?> seqDesc, final TimePoint t, final Channel c, final Angle a, final Illumination i )
-	{
-		for ( ViewSetup viewSetup : seqDesc.getViewSetups() )
-		{
-			if ( viewSetup.getAngle().getId() == a.getId() && 
-				 viewSetup.getChannel().getId() == c.getId() && 
-				 viewSetup.getIllumination().getId() == i.getId() )
-			{
-				return new ViewId( t.getId(), viewSetup.getId() );
-			}
-		}
 		
-		return null;
-	}
-	
 	/**
 	 * This is only necessary to make static objects so that the ImageJ dialog remembers choices
 	 * for the right channel

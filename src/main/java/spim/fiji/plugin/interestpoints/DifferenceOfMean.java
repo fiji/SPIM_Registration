@@ -66,7 +66,7 @@ public class DifferenceOfMean extends DifferenceOf
 						// open the corresponding image (if present at this timepoint)
 						//
 						long time1 = System.currentTimeMillis();
-						final ViewId viewId = DifferenceOf.getViewId( spimData.getSequenceDescription(), t, c, a, i );
+						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
 
 						if ( viewId == null )
 							IOFunctions.println( "An error occured. Count not find the corresponding ViewSetup for angle: " + 
