@@ -16,6 +16,7 @@ import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
 import spim.fiji.plugin.interestpoints.DifferenceOfGaussian;
 import spim.fiji.plugin.interestpoints.DifferenceOfMean;
 import spim.fiji.plugin.interestpoints.InterestPointDetection;
+import spim.fiji.spimdata.SpimData2;
 
 public class Detect_Interest_Points implements PlugIn
 {
@@ -108,7 +109,15 @@ public class Detect_Interest_Points implements PlugIn
 		// now extract all the detections
 		final HashMap< ViewId, List< Point > > points = ipd.findInterestPoints( result.getData(), channelsToProcess, result.getTimePointsToProcess() );
 		
-		// TODO: save the file and the path in the XML	
+		// TODO: save the file and the path in the XML
+		final SpimData2 data = result.getData();
+		
+		for ( final ViewId viewId : points.keySet() )
+		{
+			final List< Point > pointList = points.get( viewId );
+			data.getSequenceDescription();
+		}
+		
 	}
 	
 	public static void main( final String[] args )

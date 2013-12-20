@@ -5,7 +5,6 @@ import static mpicbg.spim.data.SpimDataXmlKeys.SPIMDATA_TAG;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -27,20 +26,19 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
-import spim.fiji.spimdata.interestpoints.XmlIoViewInterestPoints;
-
+import spim.fiji.spimdata.interestpoints.ViewsInterestPoints;
+import spim.fiji.spimdata.interestpoints.XmlIoViewsInterestPoints;
 
 public class XmlIoSpimData2 extends XmlIoSpimData< TimePoint, ViewSetup >
 {
-	final XmlIoViewInterestPoints xmlViewInterestPoints;
+	final XmlIoViewsInterestPoints xmlViewsInterestPoints;
 	
 	public XmlIoSpimData2( final XmlIoSequenceDescription< TimePoint, ViewSetup > xmlSequenceDescription,
-			final XmlIoViewRegistrations xmlViewRegistrations, final XmlIoViewInterestPoints xmlViewBeads )
+			final XmlIoViewRegistrations xmlViewRegistrations, final XmlIoViewsInterestPoints xmlViewsInterestPoints )
 	{
 		super( xmlSequenceDescription, xmlViewRegistrations );
 	
-		this.xmlViewInterestPoints = xmlViewBeads;
+		this.xmlViewsInterestPoints = xmlViewsInterestPoints;
 	}
 	
 	@Override
@@ -76,15 +74,15 @@ public class XmlIoSpimData2 extends XmlIoSpimData< TimePoint, ViewSetup >
 			throw new IllegalArgumentException( "no <" + xmlViewRegistrations.getTagName() + "> element found." );
 		final ViewRegistrations reg = xmlViewRegistrations.fromXml( ( Element ) nodes.item( 0 ) );
 		
-		final ArrayList< ViewInterestPoints > beads;
-		nodes = root.getElementsByTagName( xmlViewInterestPoints.getTagName() );
+		final ViewsInterestPoints viewsInterestPoints;
+		nodes = root.getElementsByTagName( xmlViewsInterestPoints.getTagName() );
 		
 		if ( nodes.getLength() == 0 )
-			beads = new ArrayList< ViewInterestPoints >();
+			viewsInterestPoints = ViewsInterestPoints.createViewInterestPoints( seq.getViewDescriptions() );
 		else
-			beads = xmlViewInterestPoints.fromXml( ( Element ) nodes.item( 0 ) );
+			viewsInterestPoints = xmlViewsInterestPoints.fromXml( ( Element ) nodes.item( 0 ), seq.getViewDescriptions() );
 		
-		return new SpimData2( basePath, seq, reg, beads );
+		return new SpimData2( basePath, seq, reg, viewsInterestPoints );
 	}
 
 	public void save( final SpimData2 spimData, final String xmlFilename ) throws ParserConfigurationException, InstantiationException, IllegalAccessException, ClassNotFoundException, FileNotFoundException, TransformerFactoryConfigurationError, TransformerException
@@ -99,7 +97,7 @@ public class XmlIoSpimData2 extends XmlIoSpimData< TimePoint, ViewSetup >
 	{
 		final Element root = super.toXml( doc, spimData, xmlFileDirectory );
 		
-		root.appendChild( xmlViewInterestPoints.toXml( doc, spimData.getViewInterestPoints() ) );
+		root.appendChild( xmlViewsInterestPoints.toXml( doc, spimData.getViewsInterestPoints() ) );
 		
 		return root;
 	}

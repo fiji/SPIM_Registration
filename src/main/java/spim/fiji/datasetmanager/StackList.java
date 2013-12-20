@@ -13,10 +13,6 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
-import spim.fiji.plugin.GUIHelper;
-import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
-
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
@@ -37,6 +33,9 @@ import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.real.FloatType;
+import spim.fiji.plugin.GUIHelper;
+import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.interestpoints.ViewsInterestPoints;
 
 public abstract class StackList implements MultiViewDatasetDefinition
 {
@@ -163,14 +162,17 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		// create the initial view registrations (they are all the identity transform)
 		final ViewRegistrations viewRegistrations = this.createViewRegistrations( sequenceDescription.getViewDescriptions() );
 		
+		// create the initial view interest point object
+		final ViewsInterestPoints viewInterestPoints = ViewsInterestPoints.createViewInterestPoints( sequenceDescription.getViewDescriptions() );
+		
 		// finally create the SpimData itself based on the sequence description and the view registration
-		final SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, new ArrayList< ViewInterestPoints >() );
+		final SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints );
 		
 		return spimData;
 	}
 
 	/**
-	 * Assembles the list of {@link ViewRegistration}s for all {@link ViewDescription}s that are present
+	 * Assembles the {@link ViewRegistration} object consisting of a list of {@link ViewRegistration}s for all {@link ViewDescription}s that are present
 	 * 
 	 * @param viewDescriptionList
 	 * @return

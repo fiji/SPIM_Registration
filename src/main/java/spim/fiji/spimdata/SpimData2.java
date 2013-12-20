@@ -1,9 +1,6 @@
 package spim.fiji.spimdata;
 
 import java.io.File;
-import java.util.ArrayList;
-
-import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.registration.ViewRegistrations;
@@ -14,6 +11,7 @@ import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
+import spim.fiji.spimdata.interestpoints.ViewsInterestPoints;
 
 /**
  * Extends the {@link SpimData} class; has additonally detections
@@ -22,20 +20,17 @@ import mpicbg.spim.data.sequence.ViewSetup;
  */
 public class SpimData2 extends SpimData< TimePoint, ViewSetup >
 {
-	final protected ArrayList< ViewInterestPoints > viewBeads;
+	final protected ViewsInterestPoints viewsInterestPoints;
 	
 	public SpimData2( final File basePath, final SequenceDescription< TimePoint, ViewSetup > sequenceDescription, 
-			final ViewRegistrations viewRegistrations, final ArrayList< ViewInterestPoints > viewBeads )
+			final ViewRegistrations viewRegistrations, final ViewsInterestPoints viewsInterestPoints )
 	{
 		super( basePath, sequenceDescription, viewRegistrations );
 
-		if ( viewBeads == null )
-			this.viewBeads = new ArrayList< ViewInterestPoints >();
-		else
-			this.viewBeads = viewBeads;
+		this.viewsInterestPoints = viewsInterestPoints;
 	}
 
-	public ArrayList< ViewInterestPoints > getViewInterestPoints() { return viewBeads; }
+	public ViewsInterestPoints getViewsInterestPoints() { return viewsInterestPoints; }
 	
 	/**
 	 * @param seqDesc
