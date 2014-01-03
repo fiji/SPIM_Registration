@@ -16,11 +16,9 @@ public class InterestPoint extends Point
 
 	public InterestPoint( final int id, final float[] l )
 	{
-		super( l );
-		
+		super( l );		
 		this.id = id;
 	}
 	
 	public int getId() { return id; }
-
 }

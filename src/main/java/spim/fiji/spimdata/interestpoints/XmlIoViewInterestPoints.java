@@ -47,7 +47,7 @@ public class XmlIoViewInterestPoints
 			
 			// we add a null entry for the List< Point >, we just load them once it is requested
 			// do not try to save the null value
-			collection.addInterestPoints( new InterestPointList( label, viewId, null, new File( interestPointFileName ), false ) );
+			collection.addInterestPoints( label, new InterestPointList( new File( interestPointFileName ) ) );
 		}
 
 		return viewsInterestPoints;
