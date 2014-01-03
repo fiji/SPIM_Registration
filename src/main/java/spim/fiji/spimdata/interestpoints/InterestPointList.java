@@ -1,17 +1,21 @@
 package spim.fiji.spimdata.interestpoints;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 
-import mpicbg.models.Point;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.TextFileAccess;
-import mpicbg.spim.registration.bead.Bead;
-import mpicbg.spim.registration.bead.BeadIdentification;
 
+/**
+ * A list of interest points for a certain label, can save and load from textfile as specified in the XML
+ * 
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de)
+ *
+ */
 public class InterestPointList
 {
 	File file;
@@ -65,12 +69,6 @@ public class InterestPointList
 	public void setFile( final File file ) { this.file = file; }
 	public void setLabel( final String label ) { this.label = label; }
 	
-	public boolean loadInterestPointList()
-	{
-		// TODO
-		return false;
-	}
-	
 	public boolean saveInterestPointList()
 	{
 		final List< InterestPoint > list = getPointList();
@@ -80,46 +78,48 @@ public class InterestPointList
 		
 		try
 		{
-			PrintWriter out = TextFileAccess.openFileWriteEx( getFile() );
+			final PrintWriter out = TextFileAccess.openFileWriteEx( getFile() );
 			
-			out.println( "ViewSetupId=" + viewId.getViewSetupId() );
-			out.println( "TimePointId=" + viewId.getTimePointId() );
-			out.println( "label=" + label );
-
-			out.println( "id" + "\t" + "Lx" + "\t" + "Ly" + "\t" + "Lz" + "\t" + "Wx" + "\t" + "Wy" + "\t" + "Wz" + "\t" + "DescriptorCorrespondences"+ "\t" + "RansacCorrespondences" );
+			out.println( "id" + "\t" + "Lx" + "\t" + "Ly" + "\t" + "Lz" + "\t" + "Wx" + "\t" + "Wy" + "\t" + "Wz" + "\t" + "Correspondences" );
 			
 			for ( final InterestPoint p : list )
 			{
 				out.print( p.getId() + "\t" );
 				out.print( p.getL()[0] + "\t" + p.getL()[1] + "\t" + p.getL()[2] + "\t" );
-				out.print( p.getW()[0] + "\t" + p.getW()[1] + "\t" + p.getW()[2] + "\t" );
-				/*
-				for ( final BeadIdentification descBead : bead.getDescriptorCorrespondence() )
-					out.print( descBead.getBeadID() + ":" + descBead.getViewID() + ";" );
+				out.print( p.getW()[0] + "\t" + p.getW()[1] + "\t" + p.getW()[2] );
 
-				if (bead.getDescriptorCorrespondence().size() == 0)
-					out.print( "0\t" );
-				else
-					out.print( "\t" );
-				
-				for ( final BeadIdentification ransacBead : bead.getRANSACCorrespondence() )
-					out.print( ransacBead.getBeadID() + ":" + ransacBead.getViewID() + ";" );
-
-				if (bead.getRANSACCorrespondence().size() == 0)
-					out.print( "0" );
-				*/
 				out.println();
 			}
 						
 			out.close();
+			
+			return true;
 		}
 		catch (IOException e)
 		{
-			IOFunctions.println( "InterestPointList(): " + e );
+			IOFunctions.println( "InterestPointList.saveInterestPointList(): " + e );
 			e.printStackTrace();
 			return false;
-		}		
-		
-		return true;
+		}				
+	}
+
+	public boolean loadInterestPointList()
+	{
+		try 
+		{
+			final BufferedReader in = TextFileAccess.openFileReadEx( getFile() );
+						
+			
+			
+			in.close();
+			
+			return true;
+		} 
+		catch ( final IOException e )
+		{
+			IOFunctions.println( "InterestPointList.loadInterestPointList(): " + e );
+			e.printStackTrace();
+			return false;
+		}
 	}
 }
