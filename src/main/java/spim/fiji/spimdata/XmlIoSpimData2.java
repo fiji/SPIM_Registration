@@ -26,15 +26,15 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import spim.fiji.spimdata.interestpoints.ViewsInterestPoints;
-import spim.fiji.spimdata.interestpoints.XmlIoViewsInterestPoints;
+import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.fiji.spimdata.interestpoints.XmlIoViewInterestPoints;
 
 public class XmlIoSpimData2 extends XmlIoSpimData< TimePoint, ViewSetup >
 {
-	final XmlIoViewsInterestPoints xmlViewsInterestPoints;
+	final XmlIoViewInterestPoints xmlViewsInterestPoints;
 	
 	public XmlIoSpimData2( final XmlIoSequenceDescription< TimePoint, ViewSetup > xmlSequenceDescription,
-			final XmlIoViewRegistrations xmlViewRegistrations, final XmlIoViewsInterestPoints xmlViewsInterestPoints )
+			final XmlIoViewRegistrations xmlViewRegistrations, final XmlIoViewInterestPoints xmlViewsInterestPoints )
 	{
 		super( xmlSequenceDescription, xmlViewRegistrations );
 	
@@ -74,11 +74,11 @@ public class XmlIoSpimData2 extends XmlIoSpimData< TimePoint, ViewSetup >
 			throw new IllegalArgumentException( "no <" + xmlViewRegistrations.getTagName() + "> element found." );
 		final ViewRegistrations reg = xmlViewRegistrations.fromXml( ( Element ) nodes.item( 0 ) );
 		
-		final ViewsInterestPoints viewsInterestPoints;
+		final ViewInterestPoints viewsInterestPoints;
 		nodes = root.getElementsByTagName( xmlViewsInterestPoints.getTagName() );
 		
 		if ( nodes.getLength() == 0 )
-			viewsInterestPoints = ViewsInterestPoints.createViewInterestPoints( seq.getViewDescriptions() );
+			viewsInterestPoints = ViewInterestPoints.createViewInterestPoints( seq.getViewDescriptions() );
 		else
 			viewsInterestPoints = xmlViewsInterestPoints.fromXml( ( Element ) nodes.item( 0 ), seq.getViewDescriptions() );
 		

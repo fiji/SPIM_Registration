@@ -4,11 +4,17 @@ import java.util.HashMap;
 
 import mpicbg.spim.data.sequence.ViewId;
 
-public class ViewInterestPointCollection extends ViewId
+/**
+ * Maps from a String label to a list of interest points for a specific viewid
+ * 
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de)
+ *
+ */
+public class ViewInterestPointLists extends ViewId
 {
 	protected final HashMap< String, InterestPointList > lookup;
 	
-	public ViewInterestPointCollection( final int timepointId, final int setupId )
+	public ViewInterestPointLists( final int timepointId, final int setupId )
 	{
 		super( timepointId, setupId );
 		

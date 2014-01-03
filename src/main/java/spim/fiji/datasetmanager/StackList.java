@@ -35,7 +35,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.interestpoints.ViewsInterestPoints;
+import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
 public abstract class StackList implements MultiViewDatasetDefinition
 {
@@ -163,7 +163,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		final ViewRegistrations viewRegistrations = this.createViewRegistrations( sequenceDescription.getViewDescriptions() );
 		
 		// create the initial view interest point object
-		final ViewsInterestPoints viewInterestPoints = ViewsInterestPoints.createViewInterestPoints( sequenceDescription.getViewDescriptions() );
+		final ViewInterestPoints viewInterestPoints = ViewInterestPoints.createViewInterestPoints( sequenceDescription.getViewDescriptions() );
 		
 		// finally create the SpimData itself based on the sequence description and the view registration
 		final SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints );

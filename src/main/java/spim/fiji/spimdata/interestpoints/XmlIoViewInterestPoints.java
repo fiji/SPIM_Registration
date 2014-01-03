@@ -19,16 +19,16 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-public class XmlIoViewsInterestPoints
+public class XmlIoViewInterestPoints
 {
 	public String getTagName()
 	{
 		return VIEWINTERESTPOINTS_TAG;
 	}
 	
-	public ViewsInterestPoints fromXml( final Element allViewBeads, final List< ViewDescription< TimePoint, ViewSetup > > viewDescriptionList ) throws InstantiationException, IllegalAccessException, ClassNotFoundException
+	public ViewInterestPoints fromXml( final Element allViewBeads, final List< ViewDescription< TimePoint, ViewSetup > > viewDescriptionList ) throws InstantiationException, IllegalAccessException, ClassNotFoundException
 	{
-		final ViewsInterestPoints viewsInterestPoints = ViewsInterestPoints.createViewInterestPoints( viewDescriptionList );
+		final ViewInterestPoints viewsInterestPoints = ViewInterestPoints.createViewInterestPoints( viewDescriptionList );
 
 		final NodeList nodes = allViewBeads.getElementsByTagName( VIEWINTERESTPOINTSFILE_TAG );
 
@@ -43,7 +43,7 @@ public class XmlIoViewsInterestPoints
 			final String interestPointFileName = viewInterestPointsElement.getTextContent();
 			
 			final ViewId viewId = new ViewId( timepointId, setupId );
-			final ViewInterestPointCollection collection = viewsInterestPoints.getViewInterestPointCollection( viewId );
+			final ViewInterestPointLists collection = viewsInterestPoints.getViewInterestPointCollection( viewId );
 			
 			// we add a null entry for the List< Point >, we just load them once it is requested
 			// do not try to save the null value
@@ -53,7 +53,7 @@ public class XmlIoViewsInterestPoints
 		return viewsInterestPoints;
 	}
 
-	public Element toXml( final Document doc, final ViewsInterestPoints viewsInterestPoints ) throws InstantiationException, IllegalAccessException, ClassNotFoundException
+	public Element toXml( final Document doc, final ViewInterestPoints viewsInterestPoints ) throws InstantiationException, IllegalAccessException, ClassNotFoundException
 	{
 		// TODO: export
 		
@@ -65,7 +65,7 @@ public class XmlIoViewsInterestPoints
 		return elem;
 	}
 
-	protected Node viewInterestPointsToXml( final Document doc, final ViewInterestPointCollection viewInterestPointCollection )
+	protected Node viewInterestPointsToXml( final Document doc, final ViewInterestPointLists viewInterestPointCollection )
 	{
 		// TODO: export
 		final Element elem = doc.createElement( VIEWINTERESTPOINTSFILE_TAG );

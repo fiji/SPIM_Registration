@@ -11,7 +11,7 @@ import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
-import spim.fiji.spimdata.interestpoints.ViewsInterestPoints;
+import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
 /**
  * Extends the {@link SpimData} class; has additonally detections
@@ -20,17 +20,17 @@ import spim.fiji.spimdata.interestpoints.ViewsInterestPoints;
  */
 public class SpimData2 extends SpimData< TimePoint, ViewSetup >
 {
-	final protected ViewsInterestPoints viewsInterestPoints;
+	final protected ViewInterestPoints viewsInterestPoints;
 	
 	public SpimData2( final File basePath, final SequenceDescription< TimePoint, ViewSetup > sequenceDescription, 
-			final ViewRegistrations viewRegistrations, final ViewsInterestPoints viewsInterestPoints )
+			final ViewRegistrations viewRegistrations, final ViewInterestPoints viewsInterestPoints )
 	{
 		super( basePath, sequenceDescription, viewRegistrations );
 
 		this.viewsInterestPoints = viewsInterestPoints;
 	}
 
-	public ViewsInterestPoints getViewsInterestPoints() { return viewsInterestPoints; }
+	public ViewInterestPoints getViewsInterestPoints() { return viewsInterestPoints; }
 	
 	/**
 	 * @param seqDesc
