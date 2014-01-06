@@ -2,6 +2,7 @@ package spim.fiji.spimdata.interestpoints;
 
 import static spim.fiji.spimdata.XmlKeysInterestPoints.VIEWINTERESTPOINTSFILE_TAG;
 import static spim.fiji.spimdata.XmlKeysInterestPoints.VIEWINTERESTPOINTS_LABEL_ATTRIBUTE_NAME;
+import static spim.fiji.spimdata.XmlKeysInterestPoints.VIEWINTERESTPOINTS_PARAMETERS_ATTRIBUTE_NAME;
 import static spim.fiji.spimdata.XmlKeysInterestPoints.VIEWINTERESTPOINTS_SETUP_ATTRIBUTE_NAME;
 import static spim.fiji.spimdata.XmlKeysInterestPoints.VIEWINTERESTPOINTS_TAG;
 import static spim.fiji.spimdata.XmlKeysInterestPoints.VIEWINTERESTPOINTS_TIMEPOINT_ATTRIBUTE_NAME;
@@ -39,15 +40,15 @@ public class XmlIoViewInterestPoints
 			final int timepointId = Integer.parseInt( viewInterestPointsElement.getAttribute( VIEWINTERESTPOINTS_TIMEPOINT_ATTRIBUTE_NAME ) );
 			final int setupId = Integer.parseInt( viewInterestPointsElement.getAttribute( VIEWINTERESTPOINTS_SETUP_ATTRIBUTE_NAME ) );
 			final String label = viewInterestPointsElement.getAttribute( VIEWINTERESTPOINTS_LABEL_ATTRIBUTE_NAME );
+			final String parameters = viewInterestPointsElement.getAttribute( VIEWINTERESTPOINTS_PARAMETERS_ATTRIBUTE_NAME );
 			
 			final String interestPointFileName = viewInterestPointsElement.getTextContent();
 			
 			final ViewId viewId = new ViewId( timepointId, setupId );
 			final ViewInterestPointLists collection = viewsInterestPoints.getViewInterestPointCollection( viewId );
 			
-			// we add a null entry for the List< Point >, we just load them once it is requested
-			// do not try to save the null value
-			collection.addInterestPoints( label, new InterestPointList( new File( interestPointFileName ) ) );
+			// we do not add an entry for the List< Point >, we just load them once it is requested
+			collection.addInterestPoints( label, new InterestPointList( new File( interestPointFileName ), parameters ) );
 		}
 
 		return viewsInterestPoints;
@@ -55,23 +56,27 @@ public class XmlIoViewInterestPoints
 
 	public Element toXml( final Document doc, final ViewInterestPoints viewsInterestPoints ) throws InstantiationException, IllegalAccessException, ClassNotFoundException
 	{
-		// TODO: export
-		
 		final Element elem = doc.createElement( VIEWINTERESTPOINTS_TAG );
-		/*
-		for ( final ViewInterestPointCollection vb : beadsList )
-			elem.appendChild( viewInterestPointsToXml( doc, vb ) );
-		*/
+		
+		for ( final ViewInterestPointLists v : viewsInterestPoints.getViewInterestPoints().values() )
+		{
+			for ( final String label : v.getHashMap().keySet() )
+			{
+				final InterestPointList list = v.getInterestPoints( label );
+				elem.appendChild( viewInterestPointsToXml( doc, list, v.getTimePointId(), v.getViewSetupId(), label ) );
+			}
+		}
 		return elem;
 	}
 
-	protected Node viewInterestPointsToXml( final Document doc, final ViewInterestPointLists viewInterestPointCollection )
+	protected Node viewInterestPointsToXml( final Document doc, final InterestPointList interestPointList, final int tpId, final int viewId, final String label )
 	{
-		// TODO: export
 		final Element elem = doc.createElement( VIEWINTERESTPOINTSFILE_TAG );
-		elem.setAttribute( VIEWINTERESTPOINTS_TIMEPOINT_ATTRIBUTE_NAME, Integer.toString( viewInterestPointCollection.getTimePointId() ) );
-		elem.setAttribute( VIEWINTERESTPOINTS_SETUP_ATTRIBUTE_NAME, Integer.toString( viewInterestPointCollection.getViewSetupId() ) );
-		//elem.setTextContent( viewInterestPointCollection.getBeadFile().toString() );
+		elem.setAttribute( VIEWINTERESTPOINTS_TIMEPOINT_ATTRIBUTE_NAME, Integer.toString( tpId ) );
+		elem.setAttribute( VIEWINTERESTPOINTS_SETUP_ATTRIBUTE_NAME, Integer.toString( viewId ) );
+		elem.setAttribute( VIEWINTERESTPOINTS_LABEL_ATTRIBUTE_NAME, label );
+		elem.setAttribute( VIEWINTERESTPOINTS_PARAMETERS_ATTRIBUTE_NAME, interestPointList.getParameters() );
+		elem.setTextContent( interestPointList.getFile().toString() );
 		
 		return elem;
 	}

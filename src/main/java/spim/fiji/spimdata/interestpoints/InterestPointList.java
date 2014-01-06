@@ -20,6 +20,7 @@ public class InterestPointList
 {
 	File file;
 	List< InterestPoint > interestPoints;
+	String parameters;
 	
 	/**
 	 * Instantiates a new {@link InterestPointList}
@@ -27,11 +28,13 @@ public class InterestPointList
 	 * @param file - the file to load/save the list from
 	 * @param interestPoints - the list of interest points
 	 * @param savePointList - if the list should be saved upon instantiation of the {@link InterestPointList} object
+	 * @param parameters - which parameters have been used to identify those points
 	 */
-	public InterestPointList( final File file, final List< InterestPoint > interestPoints, final boolean savePointList )
+	public InterestPointList( final File file, final List< InterestPoint > interestPoints, final String parameters, final boolean savePointList )
 	{
 		this.file = file;
 		this.interestPoints = interestPoints;
+		this.parameters = parameters;
 		
 		if ( savePointList )
 			saveInterestPointList();
@@ -41,10 +44,12 @@ public class InterestPointList
 	 * Instantiates a new {@link InterestPointList}
 	 * 
 	 * @param file - the file to load/save the list from
+	 * @param parameters - which parameters have been used to identify those points
 	 */
-	public InterestPointList( final File file )
+	public InterestPointList( final File file, final String parameters )
 	{
 		this.file = file;
+		this.parameters = parameters;
 	}
 
 	/**
@@ -68,6 +73,8 @@ public class InterestPointList
 	}
 	
 	public File getFile() { return file; }
+	public String getParameters() { return parameters; }
+	public void setParameters( final String parameters ) { this.parameters = parameters; }
 	
 	public void setPointList( final List< InterestPoint > list, final boolean savePointList )
 	{ 
