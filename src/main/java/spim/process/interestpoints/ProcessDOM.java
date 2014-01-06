@@ -6,17 +6,17 @@ import java.util.Date;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.integer.LongType;
 import mpicbg.imglib.type.numeric.real.FloatType;
-import mpicbg.models.Point;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.segmentation.DOM;
 import mpicbg.spim.segmentation.IntegralImage3d;
 import mpicbg.spim.segmentation.InteractiveIntegral;
 import mpicbg.spim.segmentation.SimplePeak;
 import spim.fiji.plugin.interestpoints.DifferenceOf;
+import spim.fiji.spimdata.interestpoints.InterestPoint;
 
 public class ProcessDOM 
 {
-	public static ArrayList< Point > compute( 
+	public static ArrayList< InterestPoint > compute( 
 			final Image< FloatType > img, 
 			final int radius1, 
 			final int radius2, 
@@ -71,7 +71,7 @@ public class ProcessDOM
 
 		// compute the maxima/minima
 		final ArrayList< SimplePeak > peaks = InteractiveIntegral.findPeaks( domImg, threshold );
-		final ArrayList< Point > finalPeaks;
+		final ArrayList< InterestPoint > finalPeaks;
 		
 		if ( localization == 0 )
 			finalPeaks = Localization.noLocalization( peaks, findMin, findMax );

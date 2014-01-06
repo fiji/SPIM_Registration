@@ -4,16 +4,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import spim.fiji.spimdata.SpimData2;
-
-import mpicbg.models.Point;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
+import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.interestpoints.InterestPoint;
 
 public interface InterestPointDetection 
 {
-	public HashMap< ViewId, List< Point > > findInterestPoints( final SpimData2 spimData, final ArrayList< Channel> channelsToProcess, final ArrayList< TimePoint > timepointsToProcess );
+	public HashMap< ViewId, List< InterestPoint > > findInterestPoints( final SpimData2 spimData, final ArrayList< Channel> channelsToProcess, final ArrayList< TimePoint > timepointsToProcess );
 	
 	/**
 	 * @param spimData

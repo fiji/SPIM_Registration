@@ -8,16 +8,16 @@ import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianReal1;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
-import mpicbg.models.Point;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.registration.bead.laplace.LaPlaceFunctions;
 import mpicbg.spim.segmentation.DOM;
 import mpicbg.spim.segmentation.SimplePeak;
 import spim.fiji.plugin.interestpoints.DifferenceOf;
+import spim.fiji.spimdata.interestpoints.InterestPoint;
 
 public class ProcessDOG
 {
-	public static ArrayList< Point > compute( 
+	public static ArrayList< InterestPoint > compute( 
 			final Image< FloatType > img, 
 			final float sigma, 
 			final float threshold, 
@@ -92,7 +92,7 @@ public class ProcessDOG
         	}
         }
 
-		final ArrayList< Point > finalPeaks;
+		final ArrayList< InterestPoint > finalPeaks;
 
 		if ( localization == 0 )
 		{

@@ -10,7 +10,6 @@ import java.util.List;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.wrapper.ImgLib2;
-import mpicbg.models.Point;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
@@ -25,6 +24,7 @@ import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.interestpoints.ProcessDOM;
 
 
@@ -53,46 +53,56 @@ public class DifferenceOfMean extends DifferenceOf
 	public DifferenceOfMean newInstance() { return new DifferenceOfMean(); }
 
 	@Override
-	public HashMap< ViewId, List<Point> > findInterestPoints( final SpimData2 spimData, final ArrayList< Channel> channelsToProcess, final ArrayList< TimePoint > timepointsToProcess )
+	public HashMap< ViewId, List< InterestPoint > > findInterestPoints( final SpimData2 spimData, final ArrayList< Channel> channelsToProcess, final ArrayList< TimePoint > timepointsToProcess )
 	{
-		final HashMap< ViewId, List< Point > > interestPoints = new HashMap< ViewId, List< Point > >();
+		final HashMap< ViewId, List< InterestPoint > > interestPoints = new HashMap< ViewId, List< InterestPoint > >();
 		
 		for ( final TimePoint t : timepointsToProcess )
 			for ( final Angle a : spimData.getSequenceDescription().getAllAngles() )
 				for ( final Illumination i : spimData.getSequenceDescription().getAllIlluminations() )
 					for ( final Channel c : channelsToProcess )
 					{
-						//
-						// open the corresponding image (if present at this timepoint)
-						//
-						long time1 = System.currentTimeMillis();
-						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
-
-						if ( viewId == null )
-							IOFunctions.println( "An error occured. Count not find the corresponding ViewSetup for angle: " + 
-								a.getId() + " channel: " + c.getId() + " illum: " + i.getId() );
-
-						final ViewDescription< TimePoint, ViewSetup > viewDescription = spimData.getSequenceDescription().getViewDescription( 
-								viewId.getTimePointId(), viewId.getViewSetupId() );
-
-						if ( !viewDescription.isPresent() )
-							continue;
-						
-						final Image< FloatType > img = ImgLib2.wrapFloatToImgLib1( 
-							(Img<net.imglib2.type.numeric.real.FloatType>)
-								spimData.getSequenceDescription().getImgLoader().getImage( viewDescription, false ) );
-						
-						long time2 = System.currentTimeMillis();
-						
-						benchmark.openFiles += time2 - time1;
-						
-						//
-						// compute Difference-of-Mean
-						//
-						interestPoints.put( viewId, ProcessDOM.compute( img, radius1[ c.getId() ], radius2[ c.getId() ], (float)threshold[ c.getId() ], localization, findMin[ c.getId() ], findMax[ c.getId() ] ) );
-						img.close();
-
-				        benchmark.computation += System.currentTimeMillis() - time2;
+						// make sure not everything crashes if one file is missing
+						try
+						{
+							//
+							// open the corresponding image (if present at this timepoint)
+							//
+							long time1 = System.currentTimeMillis();
+							final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
+	
+							if ( viewId == null )
+								IOFunctions.println( "An error occured. Count not find the corresponding ViewSetup for angle: " + 
+									a.getId() + " channel: " + c.getId() + " illum: " + i.getId() );
+	
+							final ViewDescription< TimePoint, ViewSetup > viewDescription = spimData.getSequenceDescription().getViewDescription( 
+									viewId.getTimePointId(), viewId.getViewSetupId() );
+	
+							if ( !viewDescription.isPresent() )
+								continue;
+							
+							final Image< FloatType > img = ImgLib2.wrapFloatToImgLib1( 
+								(Img<net.imglib2.type.numeric.real.FloatType>)
+									spimData.getSequenceDescription().getImgLoader().getImage( viewDescription, false ) );
+							
+							long time2 = System.currentTimeMillis();
+							
+							benchmark.openFiles += time2 - time1;
+							
+							//
+							// compute Difference-of-Mean
+							//
+							interestPoints.put( viewId, ProcessDOM.compute( img, radius1[ c.getId() ], radius2[ c.getId() ], (float)threshold[ c.getId() ], localization, findMin[ c.getId() ], findMax[ c.getId() ] ) );
+							img.close();
+	
+					        benchmark.computation += System.currentTimeMillis() - time2;
+						}
+						catch ( Exception  e )
+						{
+							IOFunctions.println( "An error occured. Failed to segment angle: " + 
+									a.getId() + " channel: " + c.getId() + " illum: " + i.getId() + ". Continuing with next one." );
+							e.printStackTrace();
+						}
 					}
 
 		return interestPoints;

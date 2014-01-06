@@ -13,10 +13,12 @@ import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
+import spim.fiji.plugin.interestpoints.DifferenceOf;
 import spim.fiji.plugin.interestpoints.DifferenceOfGaussian;
 import spim.fiji.plugin.interestpoints.DifferenceOfMean;
 import spim.fiji.plugin.interestpoints.InterestPointDetection;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.interestpoints.InterestPoint;
 
 public class Detect_Interest_Points implements PlugIn
 {
@@ -107,14 +109,20 @@ public class Detect_Interest_Points implements PlugIn
 		ipd.queryParameters( result.getData(), channelsToProcess, result.getTimePointsToProcess() );
 		
 		// now extract all the detections
-		final HashMap< ViewId, List< Point > > points = ipd.findInterestPoints( result.getData(), channelsToProcess, result.getTimePointsToProcess() );
+		final HashMap< ViewId, List< InterestPoint > > points = ipd.findInterestPoints( result.getData(), channelsToProcess, result.getTimePointsToProcess() );
+		
+		if ( ipd instanceof DifferenceOf )
+		{
+			IOFunctions.println( "Opening of files took: " + ((DifferenceOf)ipd).getBenchmark().openFiles/1000 + " sec." );
+			IOFunctions.println( "Detecting interest points took: " + ((DifferenceOf)ipd).getBenchmark().computation/1000 + " sec." );
+		}
 		
 		// TODO: save the file and the path in the XML
 		final SpimData2 data = result.getData();
 		
 		for ( final ViewId viewId : points.keySet() )
 		{
-			final List< Point > pointList = points.get( viewId );
+			final List< InterestPoint > pointList = points.get( viewId );
 			data.getSequenceDescription();
 		}
 		

@@ -7,10 +7,8 @@ import java.util.ArrayList;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
-import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.registration.bead.SegmentationBenchmark;
 import spim.fiji.spimdata.SpimData2;
@@ -47,6 +45,8 @@ public abstract class DifferenceOf implements InterestPointDetection
 	
 	protected int localization;
 	protected SpimData2 spimData;
+	
+	public SegmentationBenchmark getBenchmark() { return benchmark; }
 	
 	@Override
 	public boolean queryParameters( final SpimData2 spimData, final ArrayList< Channel> channelsToProcess, final ArrayList< TimePoint > timepointsToProcess )
