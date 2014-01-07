@@ -8,6 +8,8 @@ import static spim.fiji.spimdata.XmlKeysInterestPoints.VIEWINTERESTPOINTS_TAG;
 import static spim.fiji.spimdata.XmlKeysInterestPoints.VIEWINTERESTPOINTS_TIMEPOINT_ATTRIBUTE_NAME;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import mpicbg.spim.data.sequence.TimePoint;
@@ -27,11 +29,11 @@ public class XmlIoViewInterestPoints
 		return VIEWINTERESTPOINTS_TAG;
 	}
 	
-	public ViewInterestPoints fromXml( final Element allViewBeads, final List< ViewDescription< TimePoint, ViewSetup > > viewDescriptionList ) throws InstantiationException, IllegalAccessException, ClassNotFoundException
+	public ViewInterestPoints fromXml( final Element allInterestPointLists, final List< ViewDescription< TimePoint, ViewSetup > > viewDescriptionList ) throws InstantiationException, IllegalAccessException, ClassNotFoundException
 	{
 		final ViewInterestPoints viewsInterestPoints = ViewInterestPoints.createViewInterestPoints( viewDescriptionList );
 
-		final NodeList nodes = allViewBeads.getElementsByTagName( VIEWINTERESTPOINTSFILE_TAG );
+		final NodeList nodes = allInterestPointLists.getElementsByTagName( VIEWINTERESTPOINTSFILE_TAG );
 
 		for ( int i = 0; i < nodes.getLength(); ++i )
 		{
@@ -58,9 +60,19 @@ public class XmlIoViewInterestPoints
 	{
 		final Element elem = doc.createElement( VIEWINTERESTPOINTS_TAG );
 		
-		for ( final ViewInterestPointLists v : viewsInterestPoints.getViewInterestPoints().values() )
+		// sort all entries by timepoint and viewsetupid so that it is possible to edit XML by hand
+		final ArrayList< ViewInterestPointLists > viewIPlist = new ArrayList< ViewInterestPointLists >();
+		viewIPlist.addAll( viewsInterestPoints.getViewInterestPoints().values() );
+		Collections.sort( viewIPlist );
+
+		for ( final ViewInterestPointLists v : viewIPlist )
 		{
-			for ( final String label : v.getHashMap().keySet() )
+			// sort all entries by label so that it is possible to edit XML by hand
+			final ArrayList< String > labelList = new ArrayList< String >();
+			labelList.addAll( v.getHashMap().keySet() );
+			Collections.sort( labelList );
+
+			for ( final String label : labelList )
 			{
 				final InterestPointList list = v.getInterestPoints( label );
 				elem.appendChild( viewInterestPointsToXml( doc, list, v.getTimePointId(), v.getViewSetupId(), label ) );
