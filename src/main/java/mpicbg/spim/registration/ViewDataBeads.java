@@ -298,7 +298,7 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	 */
 	public Image<FloatType> getImage( final boolean normalize )
 	{
-		return getImage( getViewStructure().getSPIMConfiguration().imageFactory, normalize );
+		return getImage( getViewStructure().getSPIMConfiguration().inputImageFactory, normalize );
 	}
 
 	/**
@@ -442,8 +442,8 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 						else
 						{
 							// use the same factory next time
-							getViewStructure().getSPIMConfiguration().imageFactory = image.getContainerFactory();
-							Multi_View_Deconvolution.defaultContainer = 1;
+							getViewStructure().getSPIMConfiguration().inputImageFactory = image.getContainerFactory();
+							Multi_View_Deconvolution.defaultContainerInput = 1;
 						}
 					}
 					else

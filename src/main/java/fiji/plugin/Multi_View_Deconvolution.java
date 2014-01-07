@@ -195,8 +195,8 @@ public class Multi_View_Deconvolution implements PlugIn
 		if ( debugMode )
 			IJ.log( "Debugging every " + debugInterval + " iterations." );
 		
-		IJ.log( "ImgLib container (input): " + conf.outputImageFactory.getClass().getSimpleName() );
-		IJ.log( "ImgLib container (output): " + conf.imageFactory.getClass().getSimpleName() );
+		IJ.log( "ImgLib container (input files): " + conf.inputImageFactory.getClass().getSimpleName() );
+		IJ.log( "ImgLib container (deconvolved): " + conf.processImageFactory.getClass().getSimpleName() );
 		
 		if ( useTikhonovRegularization )
 			IJ.log( "Using Tikhonov regularization (lambda = " + lambda + ")" );
@@ -291,7 +291,8 @@ public class Multi_View_Deconvolution implements PlugIn
 	public static boolean defaultDebugMode = false;
 	public static int defaultDebugInterval = 1;
 	public static int defaultIterationType = 1;
-	public static int defaultContainer = 0;
+	public static int defaultContainerInput = 0;
+	public static int defaultContainerProcess = 0;
 	public static int defaultComputationIndex = 0;
 	public static int defaultBlockSizeIndex = 0, defaultBlockSizeX = 256, defaultBlockSizeY = 256, defaultBlockSizeZ = 256;
 	
@@ -301,7 +302,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		"Efficient Bayesian (less fast, more precise)", 
 		"Independent (slow, very precise)",
 		"Illustrate overlap of views per pixel (do not deconvolve)" };
-	public static String[] imglibContainer = new String[]{ "Array container (input files smaller ~2048x2048x450 px)", "Cell container (input files larger ~2048x2048x450 px)" };
+	public static String[] imglibContainer = new String[]{ "Array container (images smaller ~2048x2048x450 px)", "Cell container (images larger ~2048x2048x450 px)" };
 	public static String[] computationOn = new String[]{ "CPU (Java)", "GPU (Nvidia CUDA via JNA)" };
 	public static String[] osemspeedupChoice = new String[]{ "1 (balanced)", "minimal number of overlapping views", "average number of overlapping views", "specify manually" };
 	public static String[] extractPSFs = new String[]{ "Extract from beads", "Provide file with PSF" };
@@ -309,7 +310,7 @@ public class Multi_View_Deconvolution implements PlugIn
 	public static String[] displayPSF = new String[]{ "Do not show PSFs", "Show MIP of combined PSF's", "Show combined PSF's", "Show individual PSF's", "Show combined PSF's (original scale)", "Show individual PSF's (original scale)" };
 	
 	PSFTYPE iterationType;
-	int numIterations, container, computationType, osemspeedupIndex, blockSizeIndex, debugInterval = 1;
+	int numIterations, containerInput, containerProcess, computationType, osemspeedupIndex, blockSizeIndex, debugInterval = 1;
 	double osemspeedup;
 	int[] blockSize = null;
 	boolean useTikhonovRegularization = true, useBlocks = false, useCUDA = false, debugMode = false, loadImagesSequentially = false, extractPSF = true;
@@ -339,7 +340,8 @@ public class Multi_View_Deconvolution implements PlugIn
 		gd.addStringField( "Angles to process", Bead_Registration.angles );
 		
 		gd.addMessage("");
-		gd.addChoice( "ImgLib_container", imglibContainer, imglibContainer[ defaultContainer ] );
+		gd.addChoice( "ImgLib_container_(input files)", imglibContainer, imglibContainer[ defaultContainerInput ] );
+		gd.addChoice( "ImgLib_container_(processing)", imglibContainer, imglibContainer[ defaultContainerProcess ] );
 
 		gd.addMessage("");
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
@@ -356,7 +358,8 @@ public class Multi_View_Deconvolution implements PlugIn
 		Bead_Registration.fileNamePattern = gd.getNextString();
 		Bead_Registration.timepoints = gd.getNextString();
 		Bead_Registration.angles = gd.getNextString();
-		container = defaultContainer = gd.getNextChoiceIndex();
+		containerInput = defaultContainerInput = gd.getNextChoiceIndex();
+		containerProcess = defaultContainerProcess = gd.getNextChoiceIndex();
 
 		int numViews = -1;
 		
@@ -1029,16 +1032,15 @@ public class Multi_View_Deconvolution implements PlugIn
 		conf.cropSizeY = Multi_View_Fusion.cropSizeYStatic;
 		conf.cropSizeZ = Multi_View_Fusion.cropSizeZStatic;
 		
-		if ( container == 1 )
-		{
-			conf.outputImageFactory = new ArrayContainerFactory();
-			conf.imageFactory = new CellContainerFactory( 256 );
-		}
+		if ( containerInput == 1 )
+			conf.inputImageFactory = new CellContainerFactory( 128 );
 		else
-		{
-			conf.outputImageFactory = new ArrayContainerFactory();
-			conf.imageFactory = new ArrayContainerFactory();
-		}
+			conf.inputImageFactory = new ArrayContainerFactory();
+
+		if ( containerProcess == 1 )
+			conf.processImageFactory = new CellContainerFactory( 128 );
+		else
+			conf.processImageFactory = new ArrayContainerFactory();
 		
 		conf.overrideImageZStretching = true;
 

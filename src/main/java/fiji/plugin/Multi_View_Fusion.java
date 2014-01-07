@@ -121,7 +121,7 @@ public class Multi_View_Fusion implements PlugIn
 			tfChannels = null;
 
 		gd.addMessage( "" );
-		gd.addChoice( "ImgLib_container", Multi_View_Deconvolution.imglibContainer, Multi_View_Deconvolution.imglibContainer[ Multi_View_Deconvolution.defaultContainer ] );
+		gd.addChoice( "ImgLib_container_(input files)", Multi_View_Deconvolution.imglibContainer, Multi_View_Deconvolution.imglibContainer[ Multi_View_Deconvolution.defaultContainerInput ] );
 
 		gd.addMessage("");
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
@@ -220,7 +220,7 @@ public class Multi_View_Fusion implements PlugIn
 			Bead_Registration.fileNamePattern = gd.getNextString();
 		Bead_Registration.timepoints = gd.getNextString();
 		Bead_Registration.angles = gd.getNextString();
-		Multi_View_Deconvolution.defaultContainer = gd.getNextChoiceIndex();
+		Multi_View_Deconvolution.defaultContainerInput = gd.getNextChoiceIndex();
 		
 		int numViews = 0;
 		
@@ -269,10 +269,10 @@ public class Multi_View_Fusion implements PlugIn
 		// create the configuration object
 		final SPIMConfiguration conf = new SPIMConfiguration();
 
-		if ( Multi_View_Deconvolution.defaultContainer == 1 )
-			conf.imageFactory = new CellContainerFactory( 256 );
+		if ( Multi_View_Deconvolution.defaultContainerInput == 1 )
+			conf.inputImageFactory = new CellContainerFactory( 256 );
 		else
-			conf.imageFactory = new ArrayContainerFactory();
+			conf.inputImageFactory = new ArrayContainerFactory();
 
 		conf.timepointPattern = Bead_Registration.timepoints;
 		conf.anglePattern = Bead_Registration.angles;
@@ -595,7 +595,7 @@ public class Multi_View_Fusion implements PlugIn
 		conf.cropSizeX = cropSizeXStatic;
 		conf.cropSizeY = cropSizeYStatic;
 		conf.cropSizeZ = cropSizeZStatic;
-		conf.outputImageFactory = new CellContainerFactory( 256 );
+		conf.processImageFactory = new CellContainerFactory( 256 );
 		
 		conf.overrideImageZStretching = true;
 

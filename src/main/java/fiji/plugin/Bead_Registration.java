@@ -206,9 +206,8 @@ public class Bead_Registration implements PlugIn
 		gd.addChoice( "Select_reference timepoint", timeLapseRegistrationTypes, timeLapseRegistrationTypes[ defaultTimeLapseRegistration ] );
 
 		gd.addMessage( "" );
-		gd.addChoice( "ImgLib_container", Multi_View_Deconvolution.imglibContainer, Multi_View_Deconvolution.imglibContainer[ Multi_View_Deconvolution.defaultContainer ] );
+		gd.addChoice( "ImgLib_container", Multi_View_Deconvolution.imglibContainer, Multi_View_Deconvolution.imglibContainer[ Multi_View_Deconvolution.defaultContainerInput ] );
 
-		
 		gd.addMessage("");
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
 
@@ -314,14 +313,14 @@ public class Bead_Registration implements PlugIn
 		timeLapseRegistration = gd.getNextBoolean();
 		defaultTimeLapseRegistration = gd.getNextChoiceIndex();
 		
-		Multi_View_Deconvolution.defaultContainer = gd.getNextChoiceIndex();
+		Multi_View_Deconvolution.defaultContainerInput = gd.getNextChoiceIndex();
 
 		SPIMConfiguration conf = new SPIMConfiguration();
 
-		if ( Multi_View_Deconvolution.defaultContainer == 1 )
-			conf.imageFactory = new CellContainerFactory( 256 );
+		if ( Multi_View_Deconvolution.defaultContainerInput == 1 )
+			conf.inputImageFactory = new CellContainerFactory( 256 );
 		else
-			conf.imageFactory = new ArrayContainerFactory();
+			conf.inputImageFactory = new ArrayContainerFactory();
 
 		if ( conf.initialSigma == null || conf.initialSigma.length != 1 || conf.minPeakValue == null || conf.minPeakValue.length != 1 )
 		{
@@ -548,7 +547,7 @@ public class Bead_Registration implements PlugIn
 		gd.addChoice( "Select_reference timepoint", timeLapseRegistrationTypes, timeLapseRegistrationTypes[ defaultTimeLapseRegistration ] );
 
 		gd.addMessage( "" );
-		gd.addChoice( "ImgLib_container", Multi_View_Deconvolution.imglibContainer, Multi_View_Deconvolution.imglibContainer[ Multi_View_Deconvolution.defaultContainer ] );
+		gd.addChoice( "ImgLib_container", Multi_View_Deconvolution.imglibContainer, Multi_View_Deconvolution.imglibContainer[ Multi_View_Deconvolution.defaultContainerInput ] );
 
 		gd.addMessage("");
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
@@ -662,7 +661,7 @@ public class Bead_Registration implements PlugIn
 		timeLapseRegistration = gd.getNextBoolean();
 		defaultTimeLapseRegistration = gd.getNextChoiceIndex();
 
-		Multi_View_Deconvolution.defaultContainer = gd.getNextChoiceIndex();
+		Multi_View_Deconvolution.defaultContainerInput = gd.getNextChoiceIndex();
 
 		// check if channels are more or less ok
 		int numChannels = 0;
@@ -687,10 +686,10 @@ public class Bead_Registration implements PlugIn
 		// create the configuration object
 		final SPIMConfiguration conf = new SPIMConfiguration();
 
-		if ( Multi_View_Deconvolution.defaultContainer == 1 )
-			conf.imageFactory = new CellContainerFactory( 256 );
+		if ( Multi_View_Deconvolution.defaultContainerInput == 1 )
+			conf.inputImageFactory = new CellContainerFactory( 256 );
 		else
-			conf.imageFactory = new ArrayContainerFactory();
+			conf.inputImageFactory = new ArrayContainerFactory();
 
 		if ( conf.initialSigma == null || conf.initialSigma.length != numChannels )
 		{
