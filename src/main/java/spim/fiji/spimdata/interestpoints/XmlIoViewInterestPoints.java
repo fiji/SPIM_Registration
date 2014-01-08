@@ -29,7 +29,7 @@ public class XmlIoViewInterestPoints
 		return VIEWINTERESTPOINTS_TAG;
 	}
 	
-	public ViewInterestPoints fromXml( final Element allInterestPointLists, final List< ViewDescription< TimePoint, ViewSetup > > viewDescriptionList ) throws InstantiationException, IllegalAccessException, ClassNotFoundException
+	public ViewInterestPoints fromXml( final Element allInterestPointLists, final File basePath, final List< ViewDescription< TimePoint, ViewSetup > > viewDescriptionList ) throws InstantiationException, IllegalAccessException, ClassNotFoundException
 	{
 		final ViewInterestPoints viewsInterestPoints = ViewInterestPoints.createViewInterestPoints( viewDescriptionList );
 
@@ -47,10 +47,10 @@ public class XmlIoViewInterestPoints
 			final String interestPointFileName = viewInterestPointsElement.getTextContent();
 			
 			final ViewId viewId = new ViewId( timepointId, setupId );
-			final ViewInterestPointLists collection = viewsInterestPoints.getViewInterestPointCollection( viewId );
+			final ViewInterestPointLists collection = viewsInterestPoints.getViewInterestPointLists( viewId );
 			
 			// we do not add an entry for the List< Point >, we just load them once it is requested
-			collection.addInterestPoints( label, new InterestPointList( new File( interestPointFileName ), parameters ) );
+			collection.addInterestPoints( label, new InterestPointList( basePath, new File( interestPointFileName ), parameters ) );
 		}
 
 		return viewsInterestPoints;

@@ -31,4 +31,9 @@ public interface InterestPointDetection
 	 * @return - to be displayed in the generic dialog
 	 */
 	public String getDescription();
+	
+	/**
+	 * @return - stored in the XML so that it is reproducible how the points were segmented
+	 */
+	public String getParameters( final int channelId );
 }

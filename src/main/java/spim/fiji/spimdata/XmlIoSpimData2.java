@@ -80,7 +80,7 @@ public class XmlIoSpimData2 extends XmlIoSpimData< TimePoint, ViewSetup >
 		if ( nodes.getLength() == 0 )
 			viewsInterestPoints = ViewInterestPoints.createViewInterestPoints( seq.getViewDescriptions() );
 		else
-			viewsInterestPoints = xmlViewsInterestPoints.fromXml( ( Element ) nodes.item( 0 ), seq.getViewDescriptions() );
+			viewsInterestPoints = xmlViewsInterestPoints.fromXml( ( Element ) nodes.item( 0 ), basePath, seq.getViewDescriptions() );
 		
 		return new SpimData2( basePath, seq, reg, viewsInterestPoints );
 	}

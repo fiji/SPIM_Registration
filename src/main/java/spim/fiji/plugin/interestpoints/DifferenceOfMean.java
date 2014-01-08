@@ -221,6 +221,12 @@ public class DifferenceOfMean extends DifferenceOf
 	}
 	
 
+	/**
+	 * This is only necessary to make static objects so that the ImageJ dialog remembers choices
+	 * for the right channel
+	 * 
+	 * @param numChannels - the TOTAL number of channels (not only the ones to process)
+	 */
 	@Override
 	protected void init( final int numChannels )
 	{
@@ -247,5 +253,11 @@ public class DifferenceOfMean extends DifferenceOf
 				defaultFindMax[ c ] = true;
 			}
 		}
+	}
+	
+	@Override
+	public String getParameters( final int channelId )
+	{
+		return "DOM r1=" + radius1[ channelId ] + " t=" + threshold[ channelId ] + " min=" + findMin[ channelId ] + " max=" + findMax[ channelId ];
 	}
 }

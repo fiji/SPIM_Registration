@@ -18,20 +18,22 @@ import mpicbg.spim.io.TextFileAccess;
  */
 public class InterestPointList
 {
-	File file;
+	File baseDir, file;
 	List< InterestPoint > interestPoints;
 	String parameters;
 	
 	/**
 	 * Instantiates a new {@link InterestPointList}
 	 * 
-	 * @param file - the file to load/save the list from
+	 * @param baseDir - the path where the xml is
+	 * @param file - relative path to the file to load/save the list from
 	 * @param interestPoints - the list of interest points
 	 * @param savePointList - if the list should be saved upon instantiation of the {@link InterestPointList} object
 	 * @param parameters - which parameters have been used to identify those points
 	 */
-	public InterestPointList( final File file, final List< InterestPoint > interestPoints, final String parameters, final boolean savePointList )
+	public InterestPointList( final File baseDir, final File file, final List< InterestPoint > interestPoints, final String parameters, final boolean savePointList )
 	{
+		this.baseDir = baseDir;
 		this.file = file;
 		this.interestPoints = interestPoints;
 		this.parameters = parameters;
@@ -43,11 +45,13 @@ public class InterestPointList
 	/**
 	 * Instantiates a new {@link InterestPointList}
 	 * 
-	 * @param file - the file to load/save the list from
+	 * @param baseDir - the path where the xml is
+	 * @param file - relative path to the file to load/save the list from
 	 * @param parameters - which parameters have been used to identify those points
 	 */
-	public InterestPointList( final File file, final String parameters )
+	public InterestPointList( final File baseDir, final File file, final String parameters )
 	{
+		this.baseDir = baseDir;
 		this.file = file;
 		this.parameters = parameters;
 	}
@@ -72,6 +76,7 @@ public class InterestPointList
 		return this.interestPoints;
 	}
 	
+	public File getBaseDir() { return baseDir; }
 	public File getFile() { return file; }
 	public String getParameters() { return parameters; }
 	public void setParameters( final String parameters ) { this.parameters = parameters; }
@@ -85,6 +90,7 @@ public class InterestPointList
 	}
 	
 	public void setFile( final File file ) { this.file = file; }
+	public void setBaseDir( final File baseDir ) { this.baseDir = baseDir; }
 	
 	public boolean saveInterestPointList()
 	{
@@ -95,7 +101,15 @@ public class InterestPointList
 		
 		try
 		{
-			final PrintWriter out = TextFileAccess.openFileWriteEx( getFile() );
+			final File dir = new File( getBaseDir(), getFile().getParent() );
+			
+			if ( !dir.exists() )
+			{
+				IOFunctions.println( "Creating directory: " + dir );
+				dir.mkdirs();
+			}
+			
+			final PrintWriter out = TextFileAccess.openFileWriteEx( new File( getBaseDir(), getFile().toString() ) );
 			
 			out.println( "id" + "\t" + "x" + "\t" + "y" + "\t" + "z" + "\t" + "Correspondences" );
 			
@@ -129,7 +143,7 @@ public class InterestPointList
 	{
 		try 
 		{
-			final BufferedReader in = TextFileAccess.openFileReadEx( getFile() );			
+			final BufferedReader in = TextFileAccess.openFileReadEx( new File( getBaseDir(), getFile().toString() ) );			
 			this.interestPoints = new ArrayList< InterestPoint >();
 			
 			// the header

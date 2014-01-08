@@ -4,13 +4,18 @@ import ij.ImageJ;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 import mpicbg.models.Point;
 import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.SequenceDescription;
+import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
 import spim.fiji.plugin.interestpoints.DifferenceOf;
@@ -19,6 +24,8 @@ import spim.fiji.plugin.interestpoints.DifferenceOfMean;
 import spim.fiji.plugin.interestpoints.InterestPointDetection;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.fiji.spimdata.interestpoints.InterestPointList;
+import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 
 public class Detect_Interest_Points implements PlugIn
 {
@@ -119,13 +126,22 @@ public class Detect_Interest_Points implements PlugIn
 		
 		// TODO: save the file and the path in the XML
 		final SpimData2 data = result.getData();
+		final SequenceDescription< TimePoint, ViewSetup > seqDesc = data.getSequenceDescription();
 		
 		for ( final ViewId viewId : points.keySet() )
 		{
-			final List< InterestPoint > pointList = points.get( viewId );
-			data.getSequenceDescription();
+			final ViewDescription< TimePoint, ViewSetup > viewDesc = seqDesc.getViewDescription( viewId.getTimePointId(), viewId.getViewSetupId() );
+			final int channelId = viewDesc.getViewSetup().getChannel().getId();		
+			
+			final InterestPointList list = new InterestPointList(
+					data.getBasePath(),
+					new File( "interestpoints", "tpId_" + viewId.getTimePointId() + "_viewSetupId_" + viewId.getViewSetupId() + "." + label + ".txt" ),
+					points.get( viewId ),
+					ipd.getParameters( channelId ),
+					true ); 
+			final ViewInterestPointLists vipl = data.getViewsInterestPoints().getViewInterestPointLists( viewId );
+			vipl.addInterestPoints( label, list );
 		}
-		
 	}
 	
 	public static void main( final String[] args )

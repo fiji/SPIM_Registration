@@ -35,12 +35,12 @@ public class ViewInterestPoints
 	
 	public HashMap< ViewId, ViewInterestPointLists > getViewInterestPoints() { return interestPointCollectionLookup; }
 	
-	public ViewInterestPointLists getViewInterestPointCollection( final int tp, final int setupId )
+	public ViewInterestPointLists getViewInterestPointLists( final int tp, final int setupId )
 	{
-		return getViewInterestPointCollection( new ViewId( tp, setupId ) );
+		return getViewInterestPointLists( new ViewId( tp, setupId ) );
 	}
 
-	public ViewInterestPointLists getViewInterestPointCollection( final ViewId viewId )
+	public ViewInterestPointLists getViewInterestPointLists( final ViewId viewId )
 	{
 		return interestPointCollectionLookup.get( viewId );
 	}
