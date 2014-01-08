@@ -1,14 +1,15 @@
 package spim.fiji.spimdata.imgloaders;
 
-import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.io.Opener;
 import ij.process.ImageProcessor;
 
 import java.io.File;
+import java.util.Date;
 
 import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
@@ -26,7 +27,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 
 		if ( imp == null )
 		{
-			IJ.log( "Could not open file with ImageJ TIFF reader: '" + file.getAbsolutePath() + "'" );
+			IOFunctions.println( "Could not open file with ImageJ TIFF reader: '" + file.getAbsolutePath() + "'" );
 			return null;				
 		}
 		
@@ -57,7 +58,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 		if ( img == null )
 			throw new RuntimeException( "Could not instantiate " + getImgFactory().getClass().getSimpleName() + " for '" + file + "', most likely out of memory." );
 		else
-			IJ.log( "Opening '" + file + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] + " image=" + img.getClass().getSimpleName() + "<FloatType>]" );
+			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Opening '" + file + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] + " image=" + img.getClass().getSimpleName() + "<FloatType>]" );
 
 		final ImageStack stack = imp.getStack();
 		final int sizeZ = imp.getNSlices();
@@ -179,7 +180,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 		if ( img == null )
 			throw new RuntimeException( "Could not instantiate " + getImgFactory().getClass().getSimpleName() + " for '" + file + "', most likely out of memory." );
 		else
-			IJ.log( "Opening '" + path + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] + " image=" + img.getClass().getSimpleName() + "<FloatType>]" );			
+			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Opening '" + path + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] + " image=" + img.getClass().getSimpleName() + "<UnsignedShortType>]" );			
 
 		final ImageStack stack = imp.getStack();
 		final int sizeZ = imp.getNSlices();

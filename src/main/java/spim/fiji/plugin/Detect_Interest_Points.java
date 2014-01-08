@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import mpicbg.models.Point;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
@@ -23,6 +22,8 @@ import spim.fiji.plugin.interestpoints.DifferenceOfGaussian;
 import spim.fiji.plugin.interestpoints.DifferenceOfMean;
 import spim.fiji.plugin.interestpoints.InterestPointDetection;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.XmlIo;
+import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
@@ -124,7 +125,7 @@ public class Detect_Interest_Points implements PlugIn
 			IOFunctions.println( "Detecting interest points took: " + ((DifferenceOf)ipd).getBenchmark().computation/1000 + " sec." );
 		}
 		
-		// TODO: save the file and the path in the XML
+		// save the file and the path in the XML
 		final SpimData2 data = result.getData();
 		final SequenceDescription< TimePoint, ViewSetup > seqDesc = data.getSequenceDescription();
 		
@@ -142,6 +143,22 @@ public class Detect_Interest_Points implements PlugIn
 			final ViewInterestPointLists vipl = data.getViewsInterestPoints().getViewInterestPointLists( viewId );
 			vipl.addInterestPoints( label, list );
 		}
+		
+		// save the xml
+		final XmlIoSpimData2 io = XmlIo.createDefaultIo();
+		
+		final String xml = new File( data.getBasePath(), new File( result.getXMLFileName() ).getName() ).getAbsolutePath();
+		try 
+		{
+			io.save( data, xml );
+			IOFunctions.println( "Saved xml '" + xml + "'." );
+		}
+		catch ( Exception e )
+		{
+			IOFunctions.println( "Could not save xml '" + xml + "': " + e );
+			e.printStackTrace();
+		}
+
 	}
 	
 	public static void main( final String[] args )

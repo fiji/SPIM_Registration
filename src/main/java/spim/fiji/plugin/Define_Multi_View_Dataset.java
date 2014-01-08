@@ -2,7 +2,6 @@ package spim.fiji.plugin;
 
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
-import ij.ImageJ;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
@@ -16,6 +15,8 @@ import java.awt.event.ItemEvent;
 import java.io.File;
 import java.util.ArrayList;
 
+import mpicbg.spim.io.IOFunctions;
+
 import spim.fiji.datasetmanager.LightSheetZ1;
 import spim.fiji.datasetmanager.MultiViewDatasetDefinition;
 import spim.fiji.datasetmanager.StackListImageJ;
@@ -23,8 +24,6 @@ import spim.fiji.datasetmanager.StackListLOCI;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIo;
 import spim.fiji.spimdata.XmlIoSpimData2;
-
-import net.imglib2.img.display.imagej.ImageJFunctions;
 
 public class Define_Multi_View_Dataset implements PlugIn
 {
@@ -93,7 +92,7 @@ public class Define_Multi_View_Dataset implements PlugIn
 		// run the definition
 		final MultiViewDatasetDefinition def = datasetDefinitions.get( defaultDatasetDef );
 		
-		System.out.println( defaultDatasetDef );
+		IOFunctions.println( defaultDatasetDef );
 		
 		final SpimData2 spimData = def.createDataset();
 		
@@ -111,18 +110,18 @@ public class Define_Multi_View_Dataset implements PlugIn
 			try 
 			{
 				io.save( spimData, xml );
-				System.out.println( "Saved xml '" + xml + "'." );
+				IOFunctions.println( "Saved xml '" + xml + "'." );
 			}
 			catch ( Exception e )
 			{
-				System.out.println( "Could not save xml '" + xml + "': " + e );
+				IOFunctions.println( "Could not save xml '" + xml + "': " + e );
 				e.printStackTrace();
 			}
 
 			// show the first image
-			new ImageJ();
-			ImageJFunctions.show( spimData.getSequenceDescription().getImgLoader().getImage( spimData.getSequenceDescription().getViewDescription( 0, 0 ), true ) );
-			ImageJFunctions.show( spimData.getSequenceDescription().getImgLoader().getUnsignedShortImage( spimData.getSequenceDescription().getViewDescription( 0, 0 ) ) );
+			//new ImageJ();
+			//ImageJFunctions.show( spimData.getSequenceDescription().getImgLoader().getImage( spimData.getSequenceDescription().getViewDescription( 0, 0 ), true ) );
+			//ImageJFunctions.show( spimData.getSequenceDescription().getImgLoader().getUnsignedShortImage( spimData.getSequenceDescription().getViewDescription( 0, 0 ) ) );
 		}
 	}
 	

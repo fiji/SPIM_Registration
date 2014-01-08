@@ -1,6 +1,5 @@
 package spim.fiji.spimdata.imgloaders;
 
-import ij.IJ;
 import ij.ImagePlus;
 import ij.io.Opener;
 import ij.process.ImageProcessor;
@@ -9,6 +8,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Date;
 
 import spim.fiji.datasetmanager.StackListLOCI;
 
@@ -18,6 +18,7 @@ import loci.formats.IFormatReader;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewSetup;
+import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
@@ -134,7 +135,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 
 			if ( imp2d.getStack().getSize() > 1 )
 			{
-				IJ.log( "This is not a two-dimensional file: '" + path + "'" );
+				IOFunctions.println( "This is not a two-dimensional file: '" + path + "'" );
 				imp2d.close();
 				return null;
 			}
@@ -144,7 +145,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 			if ( output == null )
 				throw new RuntimeException( "Could not instantiate " + getImgFactory().getClass().getSimpleName() + " for '" + path + "', most likely out of memory." );
 			
-			IJ.log( "Opening '" + path + "' [" + imp2d.getWidth() + "x" + imp2d.getHeight() + "x" + depth + " type=" + 
+			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Opening '" + path + "' [" + imp2d.getWidth() + "x" + imp2d.getHeight() + "x" + depth + " type=" + 
 					imp2d.getProcessor().getClass().getSimpleName() + " image=" + output.getClass().getSimpleName() + "<" + type.getClass().getSimpleName() + ">]" );
 
 			for ( int z = 0; z < depth; ++z )
@@ -214,7 +215,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		
 		if (!(pixelType == FormatTools.UINT8 || pixelType == FormatTools.UINT16 || pixelType == FormatTools.UINT32 || pixelType == FormatTools.FLOAT))
 		{
-			IJ.log( "StackImgLoaderLOCI.openLOCI(): PixelType " + pixelTypeString + " not supported by " + 
+			IOFunctions.println( "StackImgLoaderLOCI.openLOCI(): PixelType " + pixelTypeString + " not supported by " + 
 					type.getClass().getSimpleName() + ", returning. ");
 			return null;
 		}
@@ -226,7 +227,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		if ( img == null )
 			throw new RuntimeException( "Could not instantiate " + getImgFactory().getClass().getSimpleName() + " for '" + path + "', most likely out of memory." );
 		else
-			IJ.log( "Opening '" + path + "' [" + width + "x" + height + "x" + depth + " ch=" + c + " tp=" + t + " type=" + pixelTypeString + " image=" + img.getClass().getSimpleName() + "<" + type.getClass().getSimpleName() + ">]" );
+			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Opening '" + path + "' [" + width + "x" + height + "x" + depth + " ch=" + c + " tp=" + t + " type=" + pixelTypeString + " image=" + img.getClass().getSimpleName() + "<" + type.getClass().getSimpleName() + ">]" );
 				
 		final byte[] b = new byte[width * height * bytesPerPixel];
 		

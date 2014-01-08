@@ -1,7 +1,5 @@
 package spim.fiji.datasetmanager;
 
-import ij.IJ;
-
 import java.io.File;
 import java.io.IOException;
 
@@ -16,6 +14,7 @@ import loci.formats.meta.IMetadata;
 import loci.formats.meta.MetadataRetrieve;
 import loci.formats.services.OMEXMLService;
 import mpicbg.spim.data.sequence.ImgLoader;
+import mpicbg.spim.io.IOFunctions;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.type.NativeType;
 
@@ -63,11 +62,11 @@ public class StackListLOCI extends StackList
 	@Override
 	protected boolean loadCalibration( final File file )
 	{
-		System.out.println( "Loading calibration for: " + file.getAbsolutePath() );
+		IOFunctions.println( "Loading calibration for: " + file.getAbsolutePath() );
 				
 		if ( !file.exists() )
 		{
-			IJ.log( "File '" + file + "' does not exist. Stopping." );
+			IOFunctions.println( "File '" + file + "' does not exist. Stopping." );
 			return false;
 		}
 
@@ -97,7 +96,7 @@ public class StackListLOCI extends StackList
 			if ( cal == 0 )
 			{
 				cal = 1;
-				System.out.println( "StackListLOCI: Warning, calibration for dimension X seems corrupted, setting to 1." );
+				IOFunctions.println( "StackListLOCI: Warning, calibration for dimension X seems corrupted, setting to 1." );
 			}
 			calX = cal;
 
@@ -105,7 +104,7 @@ public class StackListLOCI extends StackList
 			if ( cal == 0 )
 			{
 				cal = 1;
-				System.out.println( "StackListLOCI: Warning, calibration for dimension Y seems corrupted, setting to 1." );
+				IOFunctions.println( "StackListLOCI: Warning, calibration for dimension Y seems corrupted, setting to 1." );
 			}
 			calY = cal;
 
@@ -113,7 +112,7 @@ public class StackListLOCI extends StackList
 			if ( cal == 0 )
 			{
 				cal = 1;
-				System.out.println( "StackListLOCI: Warning, calibration for dimension Z seems corrupted, setting to 1." );
+				IOFunctions.println( "StackListLOCI: Warning, calibration for dimension Z seems corrupted, setting to 1." );
 			}
 			calZ = cal;
 			
@@ -121,7 +120,7 @@ public class StackListLOCI extends StackList
 		} 
 		catch ( Exception e) 
 		{
-			IJ.log( "Could not open file: '" + file.getAbsolutePath() + "'" );
+			IOFunctions.println( "Could not open file: '" + file.getAbsolutePath() + "'" );
 			e.printStackTrace();
 			return false;
 		}

@@ -1,18 +1,16 @@
 package spim.fiji.datasetmanager;
 
-import ij.IJ;
 import ij.ImagePlus;
 import ij.io.Opener;
 import ij.measure.Calibration;
 
 import java.io.File;
 
-import spim.fiji.spimdata.imgloaders.StackImgLoaderIJ;
-
+import mpicbg.spim.data.sequence.ImgLoader;
+import mpicbg.spim.io.IOFunctions;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.type.NativeType;
-
-import mpicbg.spim.data.sequence.ImgLoader;
+import spim.fiji.spimdata.imgloaders.StackImgLoaderIJ;
 
 public class StackListImageJ extends StackList
 {
@@ -50,11 +48,11 @@ public class StackListImageJ extends StackList
 	{
 		try
 		{
-			IJ.log( "Loading calibration for: " + file.getAbsolutePath() );
+			IOFunctions.println( "Loading calibration for: " + file.getAbsolutePath() );
 			
 			if ( !file.exists() )
 			{
-				IJ.log( "File '" + file + "' does not exist. Stopping." );
+				IOFunctions.println( "File '" + file + "' does not exist. Stopping." );
 				return false;
 			}
 			
@@ -62,7 +60,7 @@ public class StackListImageJ extends StackList
 
 			if ( imp == null )
 			{
-				IJ.log( "Could not open file: '" + file.getAbsolutePath() + "'" );
+				IOFunctions.println( "Could not open file: '" + file.getAbsolutePath() + "'" );
 				return false;				
 			}
 			
@@ -80,7 +78,7 @@ public class StackListImageJ extends StackList
 		}
 		catch ( Exception e )
 		{
-			IJ.log( "Could not open file: '" + file.getAbsolutePath() + "'" );
+			IOFunctions.println( "Could not open file: '" + file.getAbsolutePath() + "'" );
 			return false;
 		}
 	}

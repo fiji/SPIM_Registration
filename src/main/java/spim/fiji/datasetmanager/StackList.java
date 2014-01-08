@@ -2,7 +2,6 @@ package spim.fiji.datasetmanager;
 
 import static mpicbg.spim.data.sequence.XmlKeys.TIMEPOINTS_PATTERN_STRING;
 import fiji.util.gui.GenericDialogPlus;
-import ij.IJ;
 import ij.gui.GenericDialog;
 
 import java.awt.Checkbox;
@@ -28,6 +27,7 @@ import mpicbg.spim.data.sequence.TimePoints;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
+import mpicbg.spim.io.IOFunctions;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.cell.CellImgFactory;
@@ -127,7 +127,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		} 
 		catch ( ParseException e )
 		{
-			IJ.log( e.toString() );
+			IOFunctions.println( e.toString() );
 			return false;
 		}
 				

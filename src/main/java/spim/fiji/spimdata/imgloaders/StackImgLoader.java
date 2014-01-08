@@ -10,6 +10,7 @@ import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.XmlKeys;
+import mpicbg.spim.io.IOFunctions;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
@@ -184,18 +185,18 @@ public abstract class StackImgLoader extends AbstractImgLoader
 		if ( replaceAngles != null )
 			numDigitsAngles = replaceAngles.length() - 2;
 		
-		System.out.println( replaceTimepoints );
-		System.out.println( replaceChannels );
-		System.out.println( replaceIlluminations );
-		System.out.println( replaceAngles );
+		IOFunctions.println( replaceTimepoints );
+		IOFunctions.println( replaceChannels );
+		IOFunctions.println( replaceIlluminations );
+		IOFunctions.println( replaceAngles );
 		
-		System.out.println( layoutTP );
-		System.out.println( layoutChannels );
-		System.out.println( layoutIllum );
-		System.out.println( layoutAngles );
+		IOFunctions.println( layoutTP );
+		IOFunctions.println( layoutChannels );
+		IOFunctions.println( layoutIllum );
+		IOFunctions.println( layoutAngles );
 		
-		System.out.println( path );
-		System.out.println( fileNamePattern );		
+		IOFunctions.println( path );
+		IOFunctions.println( fileNamePattern );		
 	}
 
 	/**
