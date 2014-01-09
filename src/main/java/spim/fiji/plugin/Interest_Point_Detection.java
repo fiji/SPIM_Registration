@@ -28,6 +28,15 @@ import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 
+/**
+ * Plugin to detect interest points, store them on disk, and link them into the XML
+ * 
+ * Different plugins to detect interest points are supported, needs to implement the
+ * {@link InterestPointDetection} interface
+ * 
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de)
+ *
+ */
 public class Interest_Point_Detection implements PlugIn
 {
 	public static ArrayList< InterestPointDetection > staticAlgorithms = new ArrayList< InterestPointDetection >();
