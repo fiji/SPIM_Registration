@@ -28,7 +28,7 @@ import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 
-public class Detect_Interest_Points implements PlugIn
+public class Interest_Point_Detection implements PlugIn
 {
 	public static ArrayList< InterestPointDetection > staticAlgorithms = new ArrayList< InterestPointDetection >();
 	public static int defaultAlgorithm = 0;
@@ -164,6 +164,6 @@ public class Detect_Interest_Points implements PlugIn
 	public static void main( final String[] args )
 	{
 		new ImageJ();
-		new Detect_Interest_Points().run( null );
+		new Interest_Point_Detection().run( null );
 	}
 }
