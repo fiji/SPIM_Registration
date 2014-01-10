@@ -3,7 +3,6 @@ package spim.fiji.spimdata.interestpoints;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
@@ -51,11 +50,11 @@ public class ViewInterestPoints
 	 * @param viewDescriptionList
 	 * @return
 	 */
-	public static ViewInterestPoints createViewInterestPoints( final List< ViewDescription< TimePoint, ViewSetup > > viewDescriptionList )
+	public static ViewInterestPoints createViewInterestPoints( final HashMap< ViewId, ViewDescription< TimePoint, ViewSetup > > viewDescriptionList )
 	{
 		final ArrayList< ViewInterestPointLists > viewInterestPointsList = new ArrayList< ViewInterestPointLists >();
 		
-		for ( final ViewDescription< TimePoint, ViewSetup > viewDescription : viewDescriptionList )
+		for ( final ViewDescription< TimePoint, ViewSetup > viewDescription : viewDescriptionList.values() )
 			if ( viewDescription.isPresent() )
 				viewInterestPointsList.add( new ViewInterestPointLists( viewDescription.getTimePointId(), viewDescription.getViewSetupId() ) );
 		

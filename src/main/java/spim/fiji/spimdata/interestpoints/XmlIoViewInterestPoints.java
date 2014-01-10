@@ -10,6 +10,7 @@ import static spim.fiji.spimdata.XmlKeysInterestPoints.VIEWINTERESTPOINTS_TIMEPO
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import mpicbg.spim.data.sequence.TimePoint;
@@ -29,7 +30,7 @@ public class XmlIoViewInterestPoints
 		return VIEWINTERESTPOINTS_TAG;
 	}
 	
-	public ViewInterestPoints fromXml( final Element allInterestPointLists, final File basePath, final List< ViewDescription< TimePoint, ViewSetup > > viewDescriptionList ) throws InstantiationException, IllegalAccessException, ClassNotFoundException
+	public ViewInterestPoints fromXml( final Element allInterestPointLists, final File basePath, final HashMap< ViewId, ViewDescription< TimePoint, ViewSetup > > viewDescriptionList ) throws InstantiationException, IllegalAccessException, ClassNotFoundException
 	{
 		final ViewInterestPoints viewsInterestPoints = ViewInterestPoints.createViewInterestPoints( viewDescriptionList );
 

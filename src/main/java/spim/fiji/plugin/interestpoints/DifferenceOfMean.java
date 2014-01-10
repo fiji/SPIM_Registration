@@ -72,9 +72,13 @@ public class DifferenceOfMean extends DifferenceOf
 							final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
 	
 							if ( viewId == null )
+							{
 								IOFunctions.println( "An error occured. Count not find the corresponding ViewSetup for angle: " + 
 									a.getId() + " channel: " + c.getId() + " illum: " + i.getId() );
-	
+							
+								continue;
+							}
+							
 							final ViewDescription< TimePoint, ViewSetup > viewDescription = spimData.getSequenceDescription().getViewDescription( 
 									viewId.getTimePointId(), viewId.getViewSetupId() );
 	

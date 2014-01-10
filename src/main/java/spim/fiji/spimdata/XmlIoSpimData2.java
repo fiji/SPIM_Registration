@@ -97,7 +97,7 @@ public class XmlIoSpimData2 extends XmlIoSpimData< TimePoint, ViewSetup >
 	{
 		final Element root = super.toXml( doc, spimData, xmlFileDirectory );
 		
-		root.appendChild( xmlViewsInterestPoints.toXml( doc, spimData.getViewsInterestPoints() ) );
+		root.appendChild( xmlViewsInterestPoints.toXml( doc, spimData.getViewInterestPoints() ) );
 		
 		return root;
 	}

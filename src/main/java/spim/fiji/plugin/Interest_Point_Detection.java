@@ -99,6 +99,8 @@ public class Interest_Point_Detection implements PlugIn
 		if ( gd.wasCanceled() )
 			return;
 
+		final InterestPointDetection ipd = staticAlgorithms.get( defaultAlgorithm = gd.getNextChoiceIndex() ).newInstance();
+
 		// how are the detections called (e.g. beads, nuclei, ...)
 		final String label = defaultLabel = gd.getNextString();
 		final ArrayList< Channel> channelsToProcess = new ArrayList< Channel >();
@@ -119,8 +121,6 @@ public class Interest_Point_Detection implements PlugIn
 		{
 			channelsToProcess.add( channels.get( 0 ) );
 		}
-
-		final InterestPointDetection ipd = staticAlgorithms.get( defaultAlgorithm = gd.getNextChoiceIndex() ).newInstance();
 
 		// the interest point detection should query its parameters
 		ipd.queryParameters( result.getData(), channelsToProcess, result.getTimePointsToProcess() );
@@ -149,7 +149,7 @@ public class Interest_Point_Detection implements PlugIn
 					points.get( viewId ),
 					ipd.getParameters( channelId ),
 					true ); 
-			final ViewInterestPointLists vipl = data.getViewsInterestPoints().getViewInterestPointLists( viewId );
+			final ViewInterestPointLists vipl = data.getViewInterestPoints().getViewInterestPointLists( viewId );
 			vipl.addInterestPoints( label, list );
 		}
 		

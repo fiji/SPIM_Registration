@@ -30,7 +30,7 @@ public class SpimData2 extends SpimData< TimePoint, ViewSetup >
 		this.viewsInterestPoints = viewsInterestPoints;
 	}
 
-	public ViewInterestPoints getViewsInterestPoints() { return viewsInterestPoints; }
+	public ViewInterestPoints getViewInterestPoints() { return viewsInterestPoints; }
 	
 	/**
 	 * @param seqDesc

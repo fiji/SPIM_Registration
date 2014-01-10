@@ -76,7 +76,7 @@ public class LoadParseQueryXML
 	 * Asks the user for a valid XML (real time parsing)
 	 * 
 	 * @param askForTimepoints - ask the user if he/she wants to select a subset of timepoints, otherwise all timepoints are selected
-	 * @return
+	 * @return null if cancelled or timepointlistsize = 0
 	 */
 	public XMLParseResult queryXML( final boolean askForTimepoints )
 	{
@@ -291,7 +291,7 @@ public class LoadParseQueryXML
 				
 				int countMissingViews = 0;
 				
-				for ( final ViewDescription<?, ?> v : xml.data.getSequenceDescription().getViewDescriptions() )
+				for ( final ViewDescription<?, ?> v : xml.data.getSequenceDescription().getViewDescriptions().values() )
 					if ( !v.isPresent() )
 						++countMissingViews;
 

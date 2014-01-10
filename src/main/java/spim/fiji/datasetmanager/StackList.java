@@ -10,6 +10,7 @@ import java.awt.Font;
 import java.io.File;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import mpicbg.spim.data.SpimData;
@@ -177,13 +178,16 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	 * @param viewDescriptionList
 	 * @return
 	 */
-	protected ViewRegistrations createViewRegistrations( final List< ViewDescription< TimePoint, ViewSetup > > viewDescriptionList )
+	protected ViewRegistrations createViewRegistrations( final HashMap< ViewId, ViewDescription< TimePoint, ViewSetup > > viewDescriptionList )
 	{
-		final ArrayList< ViewRegistration > viewRegistrationList = new ArrayList< ViewRegistration >();
+		final HashMap< ViewId, ViewRegistration > viewRegistrationList = new HashMap< ViewId, ViewRegistration >();
 		
-		for ( final ViewDescription< TimePoint, ViewSetup > viewDescription : viewDescriptionList )
+		for ( final ViewDescription< TimePoint, ViewSetup > viewDescription : viewDescriptionList.values() )
 			if ( viewDescription.isPresent() )
-				viewRegistrationList.add( new ViewRegistration( viewDescription.getTimePointId(), viewDescription.getViewSetupId() ) );
+			{
+				final ViewRegistration viewRegistration = new ViewRegistration( viewDescription.getTimePointId(), viewDescription.getViewSetupId() ); 
+				viewRegistrationList.put( viewRegistration, viewRegistration );
+			}
 		
 		return new ViewRegistrations( viewRegistrationList );
 	}

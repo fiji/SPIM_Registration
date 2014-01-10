@@ -98,7 +98,7 @@ public class Define_Multi_View_Dataset implements PlugIn
 		
 		if ( spimData == null )
 		{
-			IJ.log( "Defining multi-view dataset failed." );
+			IOFunctions.println( "Defining multi-view dataset failed." );
 			return;
 		}
 		else
