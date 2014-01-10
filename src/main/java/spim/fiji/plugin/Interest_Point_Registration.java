@@ -165,12 +165,10 @@ public class Interest_Point_Registration implements PlugIn
 		if ( gd.wasCanceled() )
 			return;
 
-		final int inputTransform = defaultTransformInputChoice = gd.getNextChoiceIndex();
+		ipr.setInitialTransformType( defaultTransformInputChoice = gd.getNextChoiceIndex() );
 		final boolean displayOnly = defaultDisplayTransformOnly = gd.getNextBoolean();
 		
-		ipr.parseDialog( gd, false );
-		
-		ipr.prepareInputPoints( inputTransform );
+		ipr.parseDialog( gd, false );		
 	}
 
 	protected void registerTimeSeries( final InterestPointRegistration ipr )
