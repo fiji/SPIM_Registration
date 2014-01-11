@@ -13,8 +13,8 @@
 
 	<artifactId>SPIM_Registration</artifactId>
 
-	<name>plugins/SPIM_Registration.jar</name>
-	<description></description>
+	<name>SPIM Registration</name>
+	<description>Software for the reconstruction of multi-view microscopic acquisitions like Selective Plane Illumination Microscopy (SPIM) Data.</description>
 
 	<properties>
 		<!-- Prevent the plugin from being copied to ./plugins/ by default -->
