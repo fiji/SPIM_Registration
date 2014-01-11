@@ -127,6 +127,21 @@
 		</dependency>
 	</dependencies>
 
+	<developers>
+		<developer>
+			<id>StephanPreibisch</id>
+			<name>Stephan Preibisch</name>
+			<email>stephan.preibisch@einstein.yu.edu</email>
+			<url>http://www.preibisch.net/</url>
+			<organization>Albert Einstein College of Medicine</organization>
+			<roles>
+				<role>architect</role>
+				<role>developer</role>
+			</roles>
+			<timezone>-5</timezone>
+		</developer>
+	</developers>
+
 	<scm>
 		<connection>scm:git:git://github.com/fiji/spimreconstruction</connection>
 		<developerConnection>scm:git:git@github.com:fiji/spimreconstruction</developerConnection>
