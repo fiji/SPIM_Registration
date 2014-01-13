@@ -3,6 +3,7 @@ package spim.fiji.plugin.interestpointregistration;
 import ij.gui.GenericDialog;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -45,6 +46,35 @@ public abstract class InterestPointRegistration
 	 * @param inputTransform type of input transform ( 0 == calibration, 1 == current transform, including calibration )
 	 */
 	public void setInitialTransformType( final int inputTransform ) { this.inputTransform = inputTransform; }
+	
+	/**
+	 * @param timepoint
+	 * @return - all pairs of views for a specific timepoint
+	 */
+	public ArrayList< ListPair > getAllViewPairs( final TimePoint timepoint )
+	{
+		final HashMap< ViewId, List< InterestPoint > > pointLists = this.getInterestPoints( timepoint );
+		
+		final ArrayList< ViewId > views = new ArrayList< ViewId >();
+		views.addAll( pointLists.keySet() );
+		Collections.sort( views );
+		
+		final ArrayList< ListPair > viewPairs = new ArrayList< ListPair >();
+		
+		for ( int a = 0; a < views.size() - 1; ++a )
+			for ( int b = a + 1; b < views.size(); ++b )
+			{
+				final ViewId viewIdA = views.get( a );
+				final ViewId viewIdB = views.get( b );
+				
+				final List< InterestPoint > listA = pointLists.get( viewIdA );
+				final List< InterestPoint > listB = pointLists.get( viewIdB );
+				
+				viewPairs.add( new ListPair( viewIdA, viewIdB, listA, listB ) );
+			}
+		
+		return viewPairs;
+	}
 	
 	/**
 	 * Creates lists of input points for the registration, depending if the input is the current transformation or just the calibration

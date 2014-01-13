@@ -25,7 +25,7 @@ import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.process.interestpoints.ProcessDOG;
+import spim.process.interestpointdetection.ProcessDOG;
 
 public class DifferenceOfGaussian extends DifferenceOf
 {

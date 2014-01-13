@@ -25,7 +25,7 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.process.interestpoints.ProcessDOM;
+import spim.process.interestpointdetection.ProcessDOM;
 
 
 public class DifferenceOfMean extends DifferenceOf

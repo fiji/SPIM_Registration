@@ -149,6 +149,7 @@ public class Interest_Point_Registration implements PlugIn
 	
 	protected void registerIndividualTimePoints( final InterestPointRegistration ipr )
 	{
+		final boolean isTimeSeries = false;
 		final GenericDialog gd = new GenericDialog( "Register several timepoints individually" );
 		
 		gd.addChoice( "Register_based_on", inputChoice, inputChoice[ defaultTransformInputChoice ] );
@@ -158,7 +159,7 @@ public class Interest_Point_Registration implements PlugIn
 		gd.addMessage( "Algorithm parameters [" + ipr.getDescription() + "]", new Font( Font.SANS_SERIF, Font.BOLD, 12 ) );
 		gd.addMessage( "" );
 		
-		ipr.addQuery( gd, false );
+		ipr.addQuery( gd, isTimeSeries );
 		
 		gd.showDialog();
 		
@@ -168,7 +169,9 @@ public class Interest_Point_Registration implements PlugIn
 		ipr.setInitialTransformType( defaultTransformInputChoice = gd.getNextChoiceIndex() );
 		final boolean displayOnly = defaultDisplayTransformOnly = gd.getNextBoolean();
 		
-		ipr.parseDialog( gd, false );		
+		ipr.parseDialog( gd, isTimeSeries );
+		
+		ipr.register( isTimeSeries );
 	}
 
 	protected void registerTimeSeries( final InterestPointRegistration ipr )
