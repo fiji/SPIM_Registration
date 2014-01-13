@@ -10,11 +10,15 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
 
-import spim.fiji.datasetmanager.StackListLOCI;
-
+import loci.common.services.DependencyException;
+import loci.common.services.ServiceException;
+import loci.common.services.ServiceFactory;
 import loci.formats.ChannelSeparator;
 import loci.formats.FormatTools;
 import loci.formats.IFormatReader;
+import loci.formats.meta.IMetadata;
+import loci.formats.meta.MetadataRetrieve;
+import loci.formats.services.OMEXMLService;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewSetup;
@@ -46,7 +50,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		
 		try
 		{
-			final Img< FloatType > img = openLOCIFloatType( file, new FloatType(), view );
+			final CalibratedImg< FloatType > img = openLOCI( file, new FloatType(), view );
 			
 			if ( img == null )
 				throw new RuntimeException( "Could not load '" + file + "'" );
@@ -56,7 +60,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 				float min = Float.MAX_VALUE;
 				float max = -Float.MAX_VALUE;
 
-				for ( final FloatType t : img )
+				for ( final FloatType t : img.getImg() )
 				{
 					final float v = t.get();
 					
@@ -67,12 +71,16 @@ public class StackImgLoaderLOCI extends StackImgLoader
 						max = v;					
 				}
 				
-				for ( final FloatType t : img )
+				for ( final FloatType t : img.getImg() )
 					t.set( ( t.get() - min ) / ( max - min ) );
 	
 			}
 			
-			return img;
+			// update the MetaData
+			updateXMLMetaData( view, (int)img.getImg().dimension( 0 ), (int)img.getImg().dimension( 1 ), (int)img.getImg().dimension( 2 ), 
+					img.getCalX(), img.getCalY(), img.getCalZ(), false );
+
+			return img.getImg();
 		} 
 		catch ( Exception e )
 		{
@@ -94,12 +102,16 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		
 		try
 		{
-			final Img< UnsignedShortType > img = openLOCIFloatType( file, new UnsignedShortType(), view );
+			final CalibratedImg< UnsignedShortType > img = openLOCI( file, new UnsignedShortType(), view );
 			
 			if ( img == null )
 				throw new RuntimeException( "Could not load '" + file + "'" );
 			
-			return img;
+			// update the MetaData
+			updateXMLMetaData( view, (int)img.getImg().dimension( 0 ), (int)img.getImg().dimension( 1 ), (int)img.getImg().dimension( 2 ), 
+					img.getCalX(), img.getCalY(), img.getCalZ(), false );
+
+			return img.getImg();
 		} 
 		catch ( Exception e )
 		{
@@ -107,7 +119,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		}
 	}
 
-	protected < T extends RealType< T > & NativeType< T > > Img< T > openLOCIFloatType( final File path, final T type, final ViewDescription<?, ?> view ) throws Exception
+	protected < T extends RealType< T > & NativeType< T > > CalibratedImg< T > openLOCI( final File path, final T type, final ViewDescription<?, ?> view ) throws Exception
 	{						
 		// read many 2d-images if it is a directory
 		if ( path.isDirectory() )
@@ -161,12 +173,12 @@ public class StackImgLoaderLOCI extends StackImgLoader
 					cursor.get().setReal( ip.getPixelValue( cursor.getIntPosition( 0 ), cursor.getIntPosition( 1 ) ) );
 				}
 			}			
-			return output;
+			return new CalibratedImg<T>( output );
 		}
 
 		final IFormatReader r = new ChannelSeparator();
 
-		if ( !StackListLOCI.createOMEXMLMetadata( r ) )
+		if ( !createOMEXMLMetadata( r ) )
 		{
 			try
 			{
@@ -193,6 +205,32 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		final int bytesPerPixel = FormatTools.getBytesPerPixel( pixelType ); 
 		final String pixelTypeString = FormatTools.getPixelTypeString( pixelType );
 		
+		final MetadataRetrieve retrieve = (MetadataRetrieve)r.getMetadataStore();
+		
+		float cal = retrieve.getPixelsPhysicalSizeX( 0 ).getValue().floatValue();
+		if ( cal == 0 )
+		{
+			cal = 1;
+			IOFunctions.println( "StackListLOCI: Warning, calibration for dimension X seems corrupted, setting to 1." );
+		}
+		final double calX = cal;
+
+		cal = retrieve.getPixelsPhysicalSizeY( 0 ).getValue().floatValue();
+		if ( cal == 0 )
+		{
+			cal = 1;
+			IOFunctions.println( "StackListLOCI: Warning, calibration for dimension Y seems corrupted, setting to 1." );
+		}
+		final double calY = cal;
+
+		cal = retrieve.getPixelsPhysicalSizeZ( 0 ).getValue().floatValue();
+		if ( cal == 0 )
+		{
+			cal = 1;
+			IOFunctions.println( "StackListLOCI: Warning, calibration for dimension Z seems corrupted, setting to 1." );
+		}
+		final double calZ = cal;
+
 		// which channel and timepoint to load from this file
 		int t = 0;
 		int c = 0;
@@ -283,7 +321,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 			}
 		}				
 		
-		return img;			
+		return new CalibratedImg<T>( img, calX, calY, calZ );			
 	}
 
 	private static final float getFloatValue( final byte[] b, final int i, final boolean isLittleEndian )
@@ -325,5 +363,107 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		}
 		
 		return path;
+	}
+	
+	public static boolean createOMEXMLMetadata( final IFormatReader r )
+	{
+		try 
+		{
+			final ServiceFactory serviceFactory = new ServiceFactory();
+			final OMEXMLService service = serviceFactory.getInstance( OMEXMLService.class );
+			final IMetadata omexmlMeta = service.createOMEXMLMetadata();
+			r.setMetadataStore(omexmlMeta);
+		}
+		catch (final ServiceException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+		catch (final DependencyException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+		
+		return true;
+	}
+
+	@Override
+	public boolean loadMetaData( final ViewDescription< ?, ? > view )
+	{
+		final File file = getFile( view );
+
+		final Calibration cal = loadMetaData( file );
+		
+		if ( cal == null )
+			return false;
+		
+		// update the MetaData
+		updateXMLMetaData( view, cal.getWidth(), cal.getHeight(), cal.getDepth(), 
+				cal.getCalX(), cal.getCalY(), cal.getCalZ(), true );
+
+		return true;
+	}
+	
+	public static Calibration loadMetaData( final File file )
+	{
+		final IFormatReader r = new ChannelSeparator();
+
+		if ( !StackImgLoaderLOCI.createOMEXMLMetadata( r ) ) 
+		{
+			try 
+			{
+				r.close();
+			} 
+			catch (IOException e) 
+			{
+				e.printStackTrace();
+			}
+			return null;
+		}
+		
+		
+		try 
+		{
+			r.setId( file.getAbsolutePath() );
+		
+			final MetadataRetrieve retrieve = (MetadataRetrieve)r.getMetadataStore();
+			
+			float cal = retrieve.getPixelsPhysicalSizeX( 0 ).getValue().floatValue();
+			if ( cal == 0 )
+			{
+				cal = 1;
+				IOFunctions.println( "StackListLOCI: Warning, calibration for dimension X seems corrupted, setting to 1." );
+			}
+			final double calX = cal;
+
+			cal = retrieve.getPixelsPhysicalSizeY( 0 ).getValue().floatValue();
+			if ( cal == 0 )
+			{
+				cal = 1;
+				IOFunctions.println( "StackListLOCI: Warning, calibration for dimension Y seems corrupted, setting to 1." );
+			}
+			final double calY = cal;
+
+			cal = retrieve.getPixelsPhysicalSizeZ( 0 ).getValue().floatValue();
+			if ( cal == 0 )
+			{
+				cal = 1;
+				IOFunctions.println( "StackListLOCI: Warning, calibration for dimension Z seems corrupted, setting to 1." );
+			}
+			final double calZ = cal;
+			
+			r.close();
+			
+			final Calibration calibration = new Calibration( r.getSizeX(), r.getSizeY(), r.getSizeZ(), calX, calY, calZ );
+
+			return calibration;
+		} 
+		catch ( Exception e) 
+		{
+			IOFunctions.println( "Could not open file: '" + file.getAbsolutePath() + "'" );
+			e.printStackTrace();
+			return null;
+		}
 	}
 }

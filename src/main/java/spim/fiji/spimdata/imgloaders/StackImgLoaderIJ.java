@@ -152,9 +152,13 @@ public class StackImgLoaderIJ extends StackImgLoader
 				}				
 			}
 		}
-		
+
+		// update the MetaData
+		updateXMLMetaData( view, imp.getWidth(), imp.getHeight(), imp.getNSlices(), 
+				imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight, imp.getCalibration().pixelDepth, false );
+
 		imp.close();
-		
+	
 		return img;
 	}
 
@@ -215,8 +219,30 @@ public class StackImgLoaderIJ extends StackImgLoader
 			}
 		}
 		
+		// update the MetaData
+		updateXMLMetaData( view, imp.getWidth(), imp.getHeight(), imp.getNSlices(), 
+				imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight, imp.getCalibration().pixelDepth, false );
+
 		imp.close();
 
 		return img;
+	}
+
+	@Override
+	public boolean loadMetaData( final ViewDescription<?, ?> view )
+	{
+		final File file = getFile( view );
+		final ImagePlus imp = open( file );
+		
+		if ( imp == null )
+			throw new RuntimeException( "Could not load '" + file + "'." );
+		
+		// update the MetaData
+		updateXMLMetaData( view, imp.getWidth(), imp.getHeight(), imp.getNSlices(), 
+				imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight, imp.getCalibration().pixelDepth, true );
+
+		imp.close();
+		
+		return true;
 	}
 }

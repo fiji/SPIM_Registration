@@ -1,22 +1,13 @@
 package spim.fiji.datasetmanager;
 
 import java.io.File;
-import java.io.IOException;
 
-import spim.fiji.spimdata.imgloaders.StackImgLoaderLOCI;
-
-import loci.common.services.DependencyException;
-import loci.common.services.ServiceException;
-import loci.common.services.ServiceFactory;
-import loci.formats.ChannelSeparator;
-import loci.formats.IFormatReader;
-import loci.formats.meta.IMetadata;
-import loci.formats.meta.MetadataRetrieve;
-import loci.formats.services.OMEXMLService;
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.type.NativeType;
+import spim.fiji.spimdata.imgloaders.Calibration;
+import spim.fiji.spimdata.imgloaders.StackImgLoaderLOCI;
 
 public class StackListLOCI extends StackList
 {
@@ -70,84 +61,15 @@ public class StackListLOCI extends StackList
 			return false;
 		}
 
-		final IFormatReader r = new ChannelSeparator();
-
-		if ( !createOMEXMLMetadata( r ) ) 
-		{
-			try 
-			{
-				r.close();
-			} 
-			catch (IOException e) 
-			{
-				e.printStackTrace();
-			}
-			return false;
-		}
+		final Calibration cal = StackImgLoaderLOCI.loadMetaData( file );
 		
-		
-		try 
-		{
-			r.setId( file.getAbsolutePath() );
-			
-			final MetadataRetrieve retrieve = (MetadataRetrieve)r.getMetadataStore();
-			
-			float cal = retrieve.getPixelsPhysicalSizeX( 0 ).getValue().floatValue();
-			if ( cal == 0 )
-			{
-				cal = 1;
-				IOFunctions.println( "StackListLOCI: Warning, calibration for dimension X seems corrupted, setting to 1." );
-			}
-			calX = cal;
-
-			cal = retrieve.getPixelsPhysicalSizeY( 0 ).getValue().floatValue();
-			if ( cal == 0 )
-			{
-				cal = 1;
-				IOFunctions.println( "StackListLOCI: Warning, calibration for dimension Y seems corrupted, setting to 1." );
-			}
-			calY = cal;
-
-			cal = retrieve.getPixelsPhysicalSizeZ( 0 ).getValue().floatValue();
-			if ( cal == 0 )
-			{
-				cal = 1;
-				IOFunctions.println( "StackListLOCI: Warning, calibration for dimension Z seems corrupted, setting to 1." );
-			}
-			calZ = cal;
-			
-			r.close();
-		} 
-		catch ( Exception e) 
-		{
-			IOFunctions.println( "Could not open file: '" + file.getAbsolutePath() + "'" );
-			e.printStackTrace();
+		if ( cal == null )
 			return false;
-		}
 		
-		return true;
-	}
+		calX = cal.getCalX();
+		calY = cal.getCalY();
+		calZ = cal.getCalZ();
 
-	public static boolean createOMEXMLMetadata(final IFormatReader r)
-	{
-		try 
-		{
-			final ServiceFactory serviceFactory = new ServiceFactory();
-			final OMEXMLService service = serviceFactory.getInstance(OMEXMLService.class);
-			final IMetadata omexmlMeta = service.createOMEXMLMetadata();
-			r.setMetadataStore(omexmlMeta);
-		}
-		catch (final ServiceException e)
-		{
-			e.printStackTrace();
-			return false;
-		}
-		catch (final DependencyException e)
-		{
-			e.printStackTrace();
-			return false;
-		}
-		
 		return true;
 	}
 
