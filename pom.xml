@@ -7,14 +7,14 @@
 
 	<parent>
 		<groupId>sc.fiji</groupId>
-		<artifactId>pom-fiji-plugins</artifactId>
+		<artifactId>pom-fiji</artifactId>
 		<version>2.0.0-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>SPIM_Registration</artifactId>
 
-	<name>plugins/SPIM_Registration.jar</name>
-	<description></description>
+	<name>SPIM Registration</name>
+	<description>Software for the reconstruction of multi-view microscopic acquisitions like Selective Plane Illumination Microscopy (SPIM) Data.</description>
 
 	<properties>
 		<!-- Prevent the plugin from being copied to ./plugins/ by default -->
@@ -136,6 +136,21 @@
 			<version>2.0.0-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
+
+	<developers>
+		<developer>
+			<id>StephanPreibisch</id>
+			<name>Stephan Preibisch</name>
+			<email>stephan.preibisch@einstein.yu.edu</email>
+			<url>http://www.preibisch.net/</url>
+			<organization>Albert Einstein College of Medicine</organization>
+			<roles>
+				<role>architect</role>
+				<role>developer</role>
+			</roles>
+			<timezone>-5</timezone>
+		</developer>
+	</developers>
 
 	<scm>
 		<connection>scm:git:git://github.com/fiji/spimreconstruction</connection>
