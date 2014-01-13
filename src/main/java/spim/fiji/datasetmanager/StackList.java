@@ -83,7 +83,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	/* new int[]{ t, c, i, a } - indices */
 	protected ArrayList< int[] > exceptionIds;
 	
-	protected String[] calibrationChoice = new String[]{ "Same calibration for all files (load from first file)", "Same calibration for all files (user defined)" };
+	protected String[] calibrationChoice = new String[]{ "Same calibration for all files (load from first file)", "Same calibration for all files (user defined)", "Load calibration for each file individually" };
 	protected String[] imglib2Container = new String[]{ "ArrayImg (faster)", "CellImg (slower, larger files supported)" };
 
 	public static int defaultContainer = 0;
@@ -254,7 +254,10 @@ public abstract class StackList implements MultiViewDatasetDefinition
 					final Illumination illumination = new Illumination( i, illuminationsNameList.get( i ) );
 					final Angle angle = new Angle( a, angleNameList.get( a ) );
 					
-					viewSetups.add( new ViewSetup( viewSetups.size(), angle, illumination, channel, -1, -1, -1, calUnit, calX, calY, calZ ) );
+					if ( calibation < 2 )
+						viewSetups.add( new ViewSetup( viewSetups.size(), angle, illumination, channel, -1, -1, -1, calUnit, calX, calY, calZ ) );
+					else
+						viewSetups.add( new ViewSetup( viewSetups.size(), angle, illumination, channel, -1, -1, -1, calUnit, -1, -1, -1 ) );
 				}
 		
 		return viewSetups;
@@ -282,28 +285,31 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		
 	protected boolean queryDetails()
 	{
-		final GenericDialog gd = new GenericDialog( "Define dataset (3/3)" );
-	
-		gd.addMessage( "Calibration", new Font( Font.SANS_SERIF, Font.BOLD, 14 ) );			
-		if ( calibation == 1 )
-			gd.addMessage( "(read from file)", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
-		gd.addMessage( "" );
+		if ( calibation < 2 )
+		{
+			final GenericDialog gd = new GenericDialog( "Define dataset (3/3)" );
 		
-		gd.addNumericField( "Pixel_distance_x", calX, 5 );
-		gd.addNumericField( "Pixel_distance_y", calY, 5 );
-		gd.addNumericField( "Pixel_distance_z", calZ, 5 );
-		gd.addStringField( "Pixel_unit", calUnit );
-	
-		gd.showDialog();
-
-		if ( gd.wasCanceled() )
-			return false;
-
-		calX = gd.getNextNumber();
-		calY = gd.getNextNumber();
-		calZ = gd.getNextNumber();
+			gd.addMessage( "Calibration", new Font( Font.SANS_SERIF, Font.BOLD, 14 ) );			
+			if ( calibation == 1 )
+				gd.addMessage( "(read from file)", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
+			gd.addMessage( "" );
+			
+			gd.addNumericField( "Pixel_distance_x", calX, 5 );
+			gd.addNumericField( "Pixel_distance_y", calY, 5 );
+			gd.addNumericField( "Pixel_distance_z", calZ, 5 );
+			gd.addStringField( "Pixel_unit", calUnit );
 		
-		calUnit = gd.getNextString();
+			gd.showDialog();
+	
+			if ( gd.wasCanceled() )
+				return false;
+
+			calX = gd.getNextNumber();
+			calY = gd.getNextNumber();
+			calZ = gd.getNextNumber();
+			
+			calUnit = gd.getNextString();
+		}
 		
 		return true;
 	}
