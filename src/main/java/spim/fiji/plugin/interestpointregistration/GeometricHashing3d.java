@@ -25,7 +25,7 @@ public class GeometricHashing3d extends InterestPointRegistration
 	}
 
 	@Override
-	public String getDescription() { return "Fast 3d geometric hashing";}
+	public String getDescription() { return "Fast 3d geometric hashing (rotation invariant)";}
 
 	@Override
 	public void addQuery( final GenericDialog gd, final boolean isTimeSeriesRegistration )
