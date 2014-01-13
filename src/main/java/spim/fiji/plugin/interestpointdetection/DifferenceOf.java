@@ -1,4 +1,4 @@
-package spim.fiji.plugin.interestpoints;
+package spim.fiji.plugin.interestpointdetection;
 
 import ij.gui.GenericDialog;
 

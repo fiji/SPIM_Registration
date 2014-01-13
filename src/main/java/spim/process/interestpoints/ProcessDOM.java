@@ -11,7 +11,7 @@ import mpicbg.spim.segmentation.DOM;
 import mpicbg.spim.segmentation.IntegralImage3d;
 import mpicbg.spim.segmentation.InteractiveIntegral;
 import mpicbg.spim.segmentation.SimplePeak;
-import spim.fiji.plugin.interestpoints.DifferenceOf;
+import spim.fiji.plugin.interestpointdetection.DifferenceOf;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 
 public class ProcessDOM 

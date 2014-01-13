@@ -17,10 +17,10 @@ import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 
 import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
+import spim.fiji.plugin.interestpointdetection.InterestPointDetection;
 import spim.fiji.plugin.interestpointregistration.ChannelProcess;
 import spim.fiji.plugin.interestpointregistration.GeometricHashing3d;
 import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
-import spim.fiji.plugin.interestpoints.InterestPointDetection;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;

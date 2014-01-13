@@ -1,4 +1,4 @@
-package spim.fiji.plugin.interestpoints;
+package spim.fiji.plugin.interestpointdetection;
 
 import java.util.ArrayList;
 import java.util.HashMap;

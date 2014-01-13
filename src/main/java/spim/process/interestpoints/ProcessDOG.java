@@ -12,7 +12,7 @@ import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.registration.bead.laplace.LaPlaceFunctions;
 import mpicbg.spim.segmentation.DOM;
 import mpicbg.spim.segmentation.SimplePeak;
-import spim.fiji.plugin.interestpoints.DifferenceOf;
+import spim.fiji.plugin.interestpointdetection.DifferenceOf;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 
 public class ProcessDOG
