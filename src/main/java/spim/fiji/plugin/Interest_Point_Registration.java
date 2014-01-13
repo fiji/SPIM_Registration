@@ -143,7 +143,7 @@ public class Interest_Point_Registration implements PlugIn
 			registerTimeSeries( ipr );
 	}
 	
-	public static String[] inputChoice = new String[]{ "Calibration only", "Current view transformations" };	
+	public static String[] inputChoice = new String[]{ "Calibration only (resets existing transform)", "Current view transformations (appends to current transform)" };	
 	public static int defaultTransformInputChoice = 0;
 	public static boolean defaultDisplayTransformOnly = false;
 	

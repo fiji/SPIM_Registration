@@ -1,9 +1,13 @@
 package spim.fiji.plugin.interestpointregistration;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.interestpoints.InterestPoint;
 import ij.gui.GenericDialog;
 
 public class GeometricHashing3d extends InterestPointRegistration
@@ -17,7 +21,19 @@ public class GeometricHashing3d extends InterestPointRegistration
 	{
 		super( spimData, timepointsToProcess, channelsToProcess );
 	}
-	
+
+	@Override
+	public boolean register( final boolean isTimeSeriesRegistration )
+	{
+		for ( final TimePoint t : timepointsToProcess )
+		{
+			final HashMap< ViewId, List< InterestPoint > > pointLists = this.getInterestPoints( t );
+			
+		}
+		
+		return true;
+	}
+
 	@Override
 	public GeometricHashing3d newInstance( final SpimData2 spimData, final ArrayList< TimePoint > timepointsToProcess, final ArrayList< ChannelProcess > channelsToProcess )
 	{

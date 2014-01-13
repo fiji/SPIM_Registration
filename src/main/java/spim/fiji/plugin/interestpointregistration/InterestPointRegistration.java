@@ -1,15 +1,27 @@
 package spim.fiji.plugin.interestpointregistration;
 
+import ij.gui.GenericDialog;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
+import mpicbg.spim.data.registration.ViewTransform;
+import mpicbg.spim.data.registration.ViewTransformAffine;
+import mpicbg.spim.data.sequence.Angle;
+import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.ViewSetup;
+import mpicbg.spim.io.IOFunctions;
+import net.imglib2.realtransform.AffineTransform3D;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
-import ij.gui.GenericDialog;
+import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
+import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
 public abstract class InterestPointRegistration
 {
@@ -43,9 +55,111 @@ public abstract class InterestPointRegistration
 	{
 		final HashMap< ViewId, List< InterestPoint > > interestPoints = new HashMap< ViewId, List< InterestPoint > >();
 		final ViewRegistrations registrations = spimData.getViewRegistrations();
+		final ViewInterestPoints interestpoints = spimData.getViewInterestPoints();
+		
+		for ( final Angle a : spimData.getSequenceDescription().getAllAngles() )
+			for ( final Illumination i : spimData.getSequenceDescription().getAllIlluminations() )
+				for ( final ChannelProcess c : channelsToProcess )
+			{
+				// bureaucracy
+				final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), timepoint, c.getChannel(), a, i );
+				
+				if ( viewId == null )
+				{
+					IOFunctions.println( "An error occured. Could not find the corresponding ViewSetup for timepoint: " + timepoint.getId() + " angle: " + 
+							a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
+				
+					return null;
+				}
+				
+				final ViewDescription< TimePoint, ViewSetup > viewDescription = spimData.getSequenceDescription().getViewDescription( 
+						viewId.getTimePointId(), viewId.getViewSetupId() );
 
-		return null;
+				if ( !viewDescription.isPresent() )
+					continue;
+
+				// update the registrations if required
+				if ( inputTransform == 0 )
+				{
+					// only use calibration as defined in the metadata
+					if ( viewDescription.getViewSetup().getPixelWidth() <= 0 ||
+						 viewDescription.getViewSetup().getPixelHeight() <= 0 ||
+						 viewDescription.getViewSetup().getPixelDepth() <= 0 )
+					{
+						if ( !spimData.getSequenceDescription().getImgLoader().loadMetaData( viewDescription ) )
+						{
+							IOFunctions.println( "An error occured. Cannot load calibration for timepoint: " + timepoint.getId() + " angle: " + 
+									a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
+							
+							IOFunctions.println( "Quitting. Please set it manually when defining the dataset or by modifying the XML" );
+							
+							return null;
+						}						
+					}
+					
+					final ViewRegistration r = registrations.getViewRegistration( viewId );
+					r.identity();
+					
+					final double calX = viewDescription.getViewSetup().getPixelWidth();
+					final double calY = viewDescription.getViewSetup().getPixelHeight();
+					final double calZ = viewDescription.getViewSetup().getPixelDepth();
+					
+					final AffineTransform3D m = new AffineTransform3D();
+					m.set( calX, 0.0f, 0.0f, 0.0f, 
+						   0.0f, calY, 0.0f, 0.0f,
+						   0.0f, 0.0f, calZ, 0.0f );
+					final ViewTransform vt = new ViewTransformAffine( "calibration", m );
+					r.preconcatenateTransform( vt );
+				}
+
+				// assemble a new list
+				final ArrayList< InterestPoint > list = new ArrayList< InterestPoint >();
+
+				// check the existing lists of points
+				final ViewInterestPointLists lists = interestpoints.getViewInterestPointLists( viewId );
+
+				if ( !lists.contains( c.getLabel() ) )
+				{
+					IOFunctions.println( "Interest points for label '' not found for timepoint: " + timepoint.getId() + " angle: " + 
+							a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
+					
+					continue;
+				}
+				
+				final List< InterestPoint > ptList = lists.getInterestPoints( c.getLabel() ).getInterestPointList();
+				
+				if ( ptList == null )
+				{
+					IOFunctions.println( "Interest points for label '' could not be loaded for timepoint: " + timepoint.getId() + " angle: " + 
+							a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
+					
+					continue;					
+				}
+				
+				final ViewRegistration r = registrations.getViewRegistration( viewId );
+				final AffineTransform3D m = r.getModel();
+				
+				for ( final InterestPoint p : ptList )
+				{
+					final float[] l = new float[ 3 ];
+					m.apply( p.getL(), l );
+					
+					list.add( new InterestPoint( p.getId(), l ) );
+				}
+				
+				interestPoints.put( viewId, list );
+			}
+		
+		return interestPoints;
 	}
+	
+	/**
+	 * Registers all timepoints
+	 * 
+	 * @param isTimeSeriesRegistration
+	 * @return
+	 */
+	public abstract boolean register( final boolean isTimeSeriesRegistration );
 
 	/**
 	 * adds the questions this registration wants to ask
