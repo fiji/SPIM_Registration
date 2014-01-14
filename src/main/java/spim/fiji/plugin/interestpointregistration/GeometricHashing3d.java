@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.Model;
 import mpicbg.models.RigidModel3D;
+import mpicbg.models.Tile;
 import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
@@ -63,6 +64,9 @@ public class GeometricHashing3d extends InterestPointRegistration
 				IOFunctions.println( "Failed to compute registrations for timepoint: " + timepoint.getName() + "(id=" + timepoint.getId() + ")" );
 				e.printStackTrace();
 			}
+			
+			Tile< ? > a = new Tile( null );
+
 		}
 		
 		return true;
