@@ -177,8 +177,10 @@ public class Interest_Point_Registration implements PlugIn
 		
 		ipr.parseDialog( gd, isTimeSeries );
 		
+		// perform the actual registration(s)
 		ipr.register( isTimeSeries );
 		
+		// save the XML including transforms and correspondences
 		if ( !displayOnly )
 		{
 			// save the xml

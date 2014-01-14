@@ -55,6 +55,18 @@ public class GeometricHashing3d extends InterestPointRegistration
 	@Override
 	public boolean register( final boolean isTimeSeriesRegistration )
 	{
+		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Assembling metadata for all views involved" );
+
+		if ( !assembleAllMetaData() )
+		{
+			IOFunctions.println( "Could not assemble metadata. Stopping." );
+			return false;
+		}
+		
+		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Assembling metadata done, resolution of world coordinates is " + min + " " + unit + "/px."  );
+
+		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Starting registration" );
+
 		for ( final TimePoint timepoint : timepointsToProcess )
 		{
 			final ArrayList< ListPair > pairs = this.getAllViewPairs( timepoint );
@@ -125,7 +137,7 @@ public class GeometricHashing3d extends InterestPointRegistration
 			final AffineTransform3D t = new AffineTransform3D();
 			t.set( m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8], m[9], m[10], m[11] );
 			final ViewTransform vt = new ViewTransformAffine( "Geometric Hasing on " + channelList, t );
-			vr.getTransformList().add( vt );
+			vr.concatenateTransform( vt );
 		}
 	}
 		

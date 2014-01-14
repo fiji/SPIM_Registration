@@ -35,13 +35,22 @@ public abstract class InterestPointRegistration
 	 */
 	int inputTransform = 0;
 	
+	/*
+	 * ensure that the resolution of the world coordinates corresponds to the finest resolution
+	 * of any dimension, i.e. if the scaling is (x=0.73 / y=0.5 / z=2 ), one pixel will be 0.5um/px.
+	 * 
+	 * This only applies if the transformation is based on the calibration only!
+	 */
+	double min = Double.MAX_VALUE;
+	String unit = "";
+		
 	public InterestPointRegistration( final SpimData2 spimData, final ArrayList< TimePoint > timepointsToProcess, final ArrayList< ChannelProcess > channelsToProcess )
 	{
 		this.spimData = spimData;
 		this.timepointsToProcess = timepointsToProcess;
-		this.channelsToProcess = channelsToProcess;
+		this.channelsToProcess = channelsToProcess;		
 	}
-	
+		
 	/**
 	 * @param inputTransform type of input transform ( 0 == calibration, 1 == current transform, including calibration )
 	 */
@@ -77,6 +86,76 @@ public abstract class InterestPointRegistration
 	}
 	
 	/**
+	 * Should be called before registration to make sure all metadata is right
+	 * 
+	 * @return
+	 */
+	protected boolean assembleAllMetaData()
+	{		
+		for ( final TimePoint t : timepointsToProcess )
+			for ( final Angle a : spimData.getSequenceDescription().getAllAngles() )
+				for ( final Illumination i : spimData.getSequenceDescription().getAllIlluminations() )
+					for ( final ChannelProcess c : channelsToProcess )
+				{
+						// bureaucracy
+						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c.getChannel(), a, i );
+						
+						if ( viewId == null )
+						{
+							IOFunctions.println( "An error occured. Could not find the corresponding ViewSetup for timepoint: " + t.getId() + " angle: " + 
+									a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
+						
+							return false;
+						}
+						
+						final ViewDescription< TimePoint, ViewSetup > viewDescription = spimData.getSequenceDescription().getViewDescription( 
+								viewId.getTimePointId(), viewId.getViewSetupId() );
+
+						if ( !viewDescription.isPresent() )
+							continue;
+						
+						// load metadata to update the registrations if required
+						if ( inputTransform == 0 )
+						{
+							// only use calibration as defined in the metadata
+							if ( !calibrationAvailable( viewDescription.getViewSetup() ) )
+							{
+								if ( !spimData.getSequenceDescription().getImgLoader().loadMetaData( viewDescription ) )
+								{
+									IOFunctions.println( "An error occured. Cannot load calibration for timepoint: " + t.getId() + " angle: " + 
+											a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
+									
+									IOFunctions.println( "Quitting. Please set it manually when defining the dataset or by modifying the XML" );
+									
+									return false;
+								}						
+							}
+
+							if ( !calibrationAvailable( viewDescription.getViewSetup() ) )
+							{
+								IOFunctions.println( "An error occured. No calibration available for timepoint: " + t.getId() + " angle: " + 
+										a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
+								
+								IOFunctions.println( "Quitting. Please set it manually when defining the dataset or by modifying the XML" );							
+							}
+							
+							final double calX = viewDescription.getViewSetup().getPixelWidth();
+							final double calY = viewDescription.getViewSetup().getPixelHeight();
+							final double calZ = viewDescription.getViewSetup().getPixelDepth();
+							
+							min = Math.min( min, calX );
+							min = Math.min( min, calY );
+							min = Math.min( min, calZ );
+							
+							if ( viewDescription.getViewSetup().getPixelSizeUnit() != null )
+								unit = viewDescription.getViewSetup().getPixelSizeUnit();
+						}
+				}
+		
+		return true;
+	}
+
+	/**
 	 * Creates lists of input points for the registration, depending if the input is the current transformation or just the calibration
 	 * 
 	 * @param timepoint
@@ -94,14 +173,6 @@ public abstract class InterestPointRegistration
 				// bureaucracy
 				final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), timepoint, c.getChannel(), a, i );
 				
-				if ( viewId == null )
-				{
-					IOFunctions.println( "An error occured. Could not find the corresponding ViewSetup for timepoint: " + timepoint.getId() + " angle: " + 
-							a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
-				
-					return null;
-				}
-				
 				final ViewDescription< TimePoint, ViewSetup > viewDescription = spimData.getSequenceDescription().getViewDescription( 
 						viewId.getTimePointId(), viewId.getViewSetupId() );
 
@@ -111,34 +182,12 @@ public abstract class InterestPointRegistration
 				// update the registrations if required
 				if ( inputTransform == 0 )
 				{
-					// only use calibration as defined in the metadata
-					if ( !calibrationAvailable( viewDescription.getViewSetup() ) )
-					{
-						if ( !spimData.getSequenceDescription().getImgLoader().loadMetaData( viewDescription ) )
-						{
-							IOFunctions.println( "An error occured. Cannot load calibration for timepoint: " + timepoint.getId() + " angle: " + 
-									a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
-							
-							IOFunctions.println( "Quitting. Please set it manually when defining the dataset or by modifying the XML" );
-							
-							return null;
-						}						
-					}
-
-					if ( !calibrationAvailable( viewDescription.getViewSetup() ) )
-					{
-						IOFunctions.println( "An error occured. No calibration available for timepoint: " + timepoint.getId() + " angle: " + 
-								a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
-						
-						IOFunctions.println( "Quitting. Please set it manually when defining the dataset or by modifying the XML" );							
-					}
-					
 					final ViewRegistration r = registrations.getViewRegistration( viewId );
 					r.identity();
 					
-					final double calX = viewDescription.getViewSetup().getPixelWidth();
-					final double calY = viewDescription.getViewSetup().getPixelHeight();
-					final double calZ = viewDescription.getViewSetup().getPixelDepth();
+					final double calX = viewDescription.getViewSetup().getPixelWidth() / min;
+					final double calY = viewDescription.getViewSetup().getPixelHeight() / min;
+					final double calZ = viewDescription.getViewSetup().getPixelDepth() / min;
 					
 					final AffineTransform3D m = new AffineTransform3D();
 					m.set( calX, 0.0f, 0.0f, 0.0f, 
