@@ -1,10 +1,13 @@
 package spim.fiji.plugin;
 
+import ij.ImageJ;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
 import java.awt.Font;
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 
 import mpicbg.spim.data.sequence.Angle;
@@ -15,13 +18,13 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
-
 import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
-import spim.fiji.plugin.interestpointdetection.InterestPointDetection;
 import spim.fiji.plugin.interestpointregistration.ChannelProcess;
 import spim.fiji.plugin.interestpointregistration.GeometricHashing3d;
 import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.XmlIo;
+import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
@@ -43,12 +46,15 @@ public class Interest_Point_Registration implements PlugIn
 	
 	static
 	{
+		IOFunctions.printIJLog = true;
 		staticAlgorithms.add( new GeometricHashing3d( null, null, null ) );
 	}
 
 	@Override
 	public void run( final String arg )
 	{
+		new ImageJ();
+		
 		final XMLParseResult result = new LoadParseQueryXML().queryXML( true );
 
 		if ( result == null )
@@ -138,16 +144,16 @@ public class Interest_Point_Registration implements PlugIn
 		final InterestPointRegistration ipr = staticAlgorithms.get( algorithm ).newInstance( result.getData(), result.getTimePointsToProcess(), channelsToProcess );
 
 		if ( registrationType == 0 )
-			registerIndividualTimePoints( ipr );
+			registerIndividualTimePoints( ipr, result );
 		else
-			registerTimeSeries( ipr );
+			registerTimeSeries( ipr, result );
 	}
 	
 	public static String[] inputChoice = new String[]{ "Calibration only (resets existing transform)", "Current view transformations (appends to current transform)" };	
 	public static int defaultTransformInputChoice = 0;
 	public static boolean defaultDisplayTransformOnly = false;
 	
-	protected void registerIndividualTimePoints( final InterestPointRegistration ipr )
+	protected void registerIndividualTimePoints( final InterestPointRegistration ipr, final XMLParseResult result )
 	{
 		final boolean isTimeSeries = false;
 		final GenericDialog gd = new GenericDialog( "Register several timepoints individually" );
@@ -172,9 +178,28 @@ public class Interest_Point_Registration implements PlugIn
 		ipr.parseDialog( gd, isTimeSeries );
 		
 		ipr.register( isTimeSeries );
+		
+		if ( !displayOnly )
+		{
+			// save the xml
+			final XmlIoSpimData2 io = XmlIo.createDefaultIo();
+			final SpimData2 data = result.getData();
+			
+			final String xml = new File( data.getBasePath(), new File( result.getXMLFileName() ).getName() ).getAbsolutePath();
+			try 
+			{
+				io.save( data, xml );
+				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + xml + "'." );
+			}
+			catch ( Exception e )
+			{
+				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + xml + "': " + e );
+				e.printStackTrace();
+			}			
+		}
 	}
 
-	protected void registerTimeSeries( final InterestPointRegistration ipr )
+	protected void registerTimeSeries( final InterestPointRegistration ipr, final XMLParseResult result )
 	{
 		IOFunctions.println( "Not implemented yet." );
 	}

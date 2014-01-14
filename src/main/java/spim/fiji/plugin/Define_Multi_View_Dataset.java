@@ -35,6 +35,7 @@ public class Define_Multi_View_Dataset implements PlugIn
 	
 	static
 	{
+		IOFunctions.printIJLog = true;
 		staticDatasetDefinitions.add( new StackListLOCI() );
 		staticDatasetDefinitions.add( new StackListImageJ() );
 		staticDatasetDefinitions.add( new LightSheetZ1() );

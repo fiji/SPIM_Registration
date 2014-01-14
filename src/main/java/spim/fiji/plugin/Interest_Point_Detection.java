@@ -6,6 +6,7 @@ import ij.plugin.PlugIn;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -46,6 +47,7 @@ public class Interest_Point_Detection implements PlugIn
 	
 	static
 	{
+		IOFunctions.printIJLog = true;
 		staticAlgorithms.add( new DifferenceOfMean() );
 		staticAlgorithms.add( new DifferenceOfGaussian() );
 	}
@@ -160,14 +162,13 @@ public class Interest_Point_Detection implements PlugIn
 		try 
 		{
 			io.save( data, xml );
-			IOFunctions.println( "Saved xml '" + xml + "'." );
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + xml + "'." );
 		}
 		catch ( Exception e )
 		{
-			IOFunctions.println( "Could not save xml '" + xml + "': " + e );
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + xml + "': " + e );
 			e.printStackTrace();
 		}
-
 	}
 	
 	public static void main( final String[] args )
