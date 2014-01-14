@@ -137,7 +137,7 @@ public class GeometricHashing3d extends InterestPointRegistration
 			final AffineTransform3D t = new AffineTransform3D();
 			t.set( m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8], m[9], m[10], m[11] );
 			final ViewTransform vt = new ViewTransformAffine( "Geometric Hasing on " + channelList, t );
-			vr.concatenateTransform( vt );
+			vr.preconcatenateTransform( vt );
 		}
 	}
 		
