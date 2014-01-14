@@ -3,20 +3,31 @@ package spim.fiji.plugin.interestpointregistration;
 import ij.gui.GenericDialog;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.AffineModel3D;
+import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.Model;
+import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.RigidModel3D;
 import mpicbg.models.Tile;
+import mpicbg.models.TileConfiguration;
 import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
+import mpicbg.spim.mpicbg.TileConfigurationSPIM;
+import mpicbg.spim.registration.ViewDataBeads;
+import mpicbg.spim.registration.ViewStructure;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 
@@ -64,12 +75,73 @@ public class GeometricHashing3d extends InterestPointRegistration
 				IOFunctions.println( "Failed to compute registrations for timepoint: " + timepoint.getName() + "(id=" + timepoint.getId() + ")" );
 				e.printStackTrace();
 			}
-			
-			Tile< ? > a = new Tile( null );
 
+			final HashMap< ViewId, List< InterestPoint > > pointLists = this.getInterestPoints( timepoint );
+			
+			final ArrayList< ViewId > views = new ArrayList< ViewId >();
+			views.addAll( pointLists.keySet() );
+			Collections.sort( views );
+			
+    		if ( model == 0 )
+    			globalOptimization( new TranslationModel3D(), views, pairs );
+    		else if ( model == 1 )
+    			globalOptimization( new RigidModel3D(), views, pairs );
+    		else
+    			globalOptimization( new AffineModel3D(), views, pairs );
+    		
 		}
 		
 		return true;
+	}
+	
+	protected < M extends Model< M > > void globalOptimization( final M model, final ArrayList< ViewId > views, final ArrayList< ListPair > pairs )
+	{
+		// remember the Tiles
+		final HashMap< ViewId, Tile< M > > map = new HashMap<ViewId, Tile< M > >();
+		
+		for ( final ViewId viewId : views )
+			map.put( viewId, new Tile<M>( model.copy() ) );
+
+		for ( final ListPair pair : pairs )
+			GlobalOpt.addPointMatches( pair.getCandidates(), map.get( pair.getViewIdA() ), map.get( pair.getViewIdA() ) );
+		
+		final TileConfiguration tc = new TileConfiguration();
+		int fixedTiles = 0;
+		
+		// fix the first one if possible
+		for ( final ViewId viewId : views )
+		{
+			final Tile< M > tile = map.get( viewId );
+			
+			if ( tile.getConnectedTiles().size() > 0)
+			{
+				tc.addTile( tile );
+				if ( fixedTiles == 0 )
+				{					
+					IOFunctions.println( "Fixing tile (viewSetupId = " + viewId.getViewSetupId() ); 
+					tc.fixTile( tile );
+					++fixedTiles;
+				}
+			}
+		}
+		
+		try 
+		{
+			int unaligned = tc.preAlign().size();
+			if ( unaligned > 0 )
+				IOFunctions.println( "pre-aligned all tiles but " + unaligned );
+			else
+				IOFunctions.println( "prealigned all tiles" );
+			
+			tc.optimize( 10, 10000, 200 );
+			
+		} catch (NotEnoughDataPointsException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllDefinedDataPointsException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
 	}
 	
 	public class PairwiseRegistration implements Callable< ListPair >
@@ -104,10 +176,10 @@ public class GeometricHashing3d extends InterestPointRegistration
     				ratioOfDistance, 
     				useAssociatedBeads );
         	
-    		pair.setNumCandidates( candidates.size() );
+    		pair.setCandidates( candidates );
     		
         	// compute ransac and remove inconsistent candidates
-        	final ArrayList< PointMatchGeneric< Detection > > correspondences = new ArrayList< PointMatchGeneric< Detection > >();
+        	final ArrayList< PointMatchGeneric< Detection > > inliers = new ArrayList< PointMatchGeneric< Detection > >();
 
     		final Model<?> m;
     		
@@ -118,10 +190,10 @@ public class GeometricHashing3d extends InterestPointRegistration
     		else
     			m = new AffineModel3D();
     		
-    		String result = RANSAC.computeRANSAC( candidates, correspondences, m, max_epsilon, min_inlier_ratio, minInlierFactor, numIterations );
+    		String result = RANSAC.computeRANSAC( candidates, inliers, m, max_epsilon, min_inlier_ratio, minInlierFactor, numIterations );
 
-   			pair.setNumCorrespondences( correspondences.size() );
-    		
+    		pair.setInliers( inliers );
+
         	final ViewDescription<TimePoint, ViewSetup> viewA = spimData.getSequenceDescription().getViewDescription( pair.getViewIdA() );
         	final ViewDescription<TimePoint, ViewSetup> viewB = spimData.getSequenceDescription().getViewDescription( pair.getViewIdB() );
         	
