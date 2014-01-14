@@ -112,9 +112,7 @@ public abstract class InterestPointRegistration
 				if ( inputTransform == 0 )
 				{
 					// only use calibration as defined in the metadata
-					if ( viewDescription.getViewSetup().getPixelWidth() <= 0 ||
-						 viewDescription.getViewSetup().getPixelHeight() <= 0 ||
-						 viewDescription.getViewSetup().getPixelDepth() <= 0 )
+					if ( !calibrationAvailable( viewDescription.getViewSetup() ) )
 					{
 						if ( !spimData.getSequenceDescription().getImgLoader().loadMetaData( viewDescription ) )
 						{
@@ -125,6 +123,14 @@ public abstract class InterestPointRegistration
 							
 							return null;
 						}						
+					}
+
+					if ( !calibrationAvailable( viewDescription.getViewSetup() ) )
+					{
+						IOFunctions.println( "An error occured. No calibration available for timepoint: " + timepoint.getId() + " angle: " + 
+								a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
+						
+						IOFunctions.println( "Quitting. Please set it manually when defining the dataset or by modifying the XML" );							
 					}
 					
 					final ViewRegistration r = registrations.getViewRegistration( viewId );
@@ -181,6 +187,14 @@ public abstract class InterestPointRegistration
 			}
 		
 		return interestPoints;
+	}
+	
+	protected boolean calibrationAvailable( final ViewSetup viewSetup )
+	{
+		if ( viewSetup.getPixelWidth() <= 0 || viewSetup.getPixelHeight() <= 0 || viewSetup.getPixelDepth() <= 0 )
+			return false;
+		else
+			return true;
 	}
 	
 	/**
