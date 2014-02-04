@@ -50,7 +50,9 @@ public class XmlIoViewInterestPoints
 			final ViewInterestPointLists collection = viewsInterestPoints.getViewInterestPointLists( viewId );
 			
 			// we do not add an entry for the List< Point >, we just load them once it is requested
-			collection.addInterestPoints( label, new InterestPointList( basePath, new File( interestPointFileName ), parameters ) );
+			final InterestPointList list = new InterestPointList( basePath, new File( interestPointFileName ) );
+			list.setParameters( parameters );
+			collection.addInterestPoints( label, list );
 		}
 
 		return viewsInterestPoints;

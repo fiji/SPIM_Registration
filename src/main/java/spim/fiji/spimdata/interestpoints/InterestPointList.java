@@ -26,34 +26,14 @@ public class InterestPointList
 	 * Instantiates a new {@link InterestPointList}
 	 * 
 	 * @param baseDir - the path where the xml is
-	 * @param file - relative path to the file to load/save the list from
-	 * @param interestPoints - the list of interest points
-	 * @param savePointList - if the list should be saved upon instantiation of the {@link InterestPointList} object
-	 * @param parameters - which parameters have been used to identify those points
+	 * @param file - relative path to the file to load/save the list from, an extension is added automatically (.det.txt && .corr.txt)
+	 * for detections and correspondences
 	 */
-	public InterestPointList( final File baseDir, final File file, final List< InterestPoint > interestPoints, final String parameters, final boolean savePointList )
+	public InterestPointList( final File baseDir, final File file )
 	{
 		this.baseDir = baseDir;
 		this.file = file;
-		this.interestPoints = interestPoints;
-		this.parameters = parameters;
-		
-		if ( savePointList )
-			saveInterestPointList();
-	}
-
-	/**
-	 * Instantiates a new {@link InterestPointList}
-	 * 
-	 * @param baseDir - the path where the xml is
-	 * @param file - relative path to the file to load/save the list from
-	 * @param parameters - which parameters have been used to identify those points
-	 */
-	public InterestPointList( final File baseDir, final File file, final String parameters )
-	{
-		this.baseDir = baseDir;
-		this.file = file;
-		this.parameters = parameters;
+		this.parameters = "";
 	}
 
 	/**

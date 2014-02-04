@@ -147,10 +147,11 @@ public class Interest_Point_Detection implements PlugIn
 			
 			final InterestPointList list = new InterestPointList(
 					data.getBasePath(),
-					new File( "interestpoints", "tpId_" + viewId.getTimePointId() + "_viewSetupId_" + viewId.getViewSetupId() + "." + label + ".txt" ),
-					points.get( viewId ),
-					ipd.getParameters( channelId ),
-					true ); 
+					new File( "interestpoints", "tpId_" + viewId.getTimePointId() + "_viewSetupId_" + viewId.getViewSetupId() + "." + label ) );
+			
+			list.setParameters( ipd.getParameters( channelId ) );
+			list.setPointList( points.get( viewId ), true );
+			
 			final ViewInterestPointLists vipl = data.getViewInterestPoints().getViewInterestPointLists( viewId );
 			vipl.addInterestPoints( label, list );
 		}
