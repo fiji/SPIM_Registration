@@ -1,3 +1,7 @@
+.DS_STORE
+/jars/
+/plugins/
+
 # Eclipse #
 /.classpath
 /.project
