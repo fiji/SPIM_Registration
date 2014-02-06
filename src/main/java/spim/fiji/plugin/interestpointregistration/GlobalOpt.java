@@ -16,7 +16,7 @@ import mpicbg.spim.mpicbg.PointMatchGeneric;
 
 public class GlobalOpt
 {
-	public static < M extends Model< M > > HashMap< ViewId, Tile< M > > globalOptimization( final M model, final ArrayList< ViewId > views, final ArrayList< PairOfInterestPointLists > pairs )
+	public static < M extends Model< M > > HashMap< ViewId, Tile< M > > globalOptimization( final M model, final ArrayList< ViewId > views, final ArrayList< ChannelInterestPointListPair > pairs )
 	{
 		// remember the Tiles
 		final HashMap< ViewId, Tile< M > > map = new HashMap< ViewId, Tile< M > >();
@@ -24,7 +24,7 @@ public class GlobalOpt
 		for ( final ViewId viewId : views )
 			map.put( viewId, new Tile<M>( model.copy() ) );
 
-		for ( final PairOfInterestPointLists pair : pairs )
+		for ( final ChannelInterestPointListPair pair : pairs )
 			GlobalOpt.addPointMatches( pair.getInliers(), map.get( pair.getViewIdA() ), map.get( pair.getViewIdB() ) );
 		
 		final TileConfiguration tc = new TileConfiguration();

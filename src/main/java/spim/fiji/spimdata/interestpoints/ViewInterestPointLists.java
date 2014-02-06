@@ -23,6 +23,6 @@ public class ViewInterestPointLists extends ViewId
 	
 	public boolean contains( final String label ) { return lookup.containsKey( label ); }
 	public HashMap< String, InterestPointList > getHashMap() { return lookup; }
-	public InterestPointList getInterestPoints( final String label ) { return lookup.get( label ); }
-	public void addInterestPoints( final String label, final InterestPointList pointList ) { lookup.put( label, pointList ); }
+	public InterestPointList getInterestPointList( final String label ) { return lookup.get( label ); }
+	public void addInterestPointList( final String label, final InterestPointList pointList ) { lookup.put( label, pointList ); }
 }

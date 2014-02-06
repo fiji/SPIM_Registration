@@ -159,7 +159,7 @@ public class Interest_Point_Detection implements PlugIn
 			}
 			
 			final ViewInterestPointLists vipl = data.getViewInterestPoints().getViewInterestPointLists( viewId );
-			vipl.addInterestPoints( label, list );
+			vipl.addInterestPointList( label, list );
 		}
 		
 		// save the xml

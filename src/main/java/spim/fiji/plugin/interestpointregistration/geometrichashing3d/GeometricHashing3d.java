@@ -1,33 +1,23 @@
-package spim.fiji.plugin.interestpointregistration;
+package spim.fiji.plugin.interestpointregistration.geometrichashing3d;
 
 import ij.gui.GenericDialog;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.AffineModel3D;
-import mpicbg.models.Model;
 import mpicbg.models.RigidModel3D;
-import mpicbg.models.Tile;
 import mpicbg.models.TranslationModel3D;
-import mpicbg.spim.data.registration.ViewRegistration;
-import mpicbg.spim.data.registration.ViewRegistrations;
-import mpicbg.spim.data.registration.ViewTransform;
-import mpicbg.spim.data.registration.ViewTransformAffine;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
-import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
-import net.imglib2.realtransform.AffineTransform3D;
+import spim.fiji.plugin.interestpointregistration.ChannelInterestPointListPair;
+import spim.fiji.plugin.interestpointregistration.ChannelProcess;
+import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.interestpoints.InterestPoint;
 
 public class GeometricHashing3d extends InterestPointRegistration
 {
@@ -43,6 +33,9 @@ public class GeometricHashing3d extends InterestPointRegistration
 	@Override
 	public boolean register( final boolean isTimeSeriesRegistration )
 	{
+		final SpimData2 spimData = getSpimData();
+		final ArrayList< TimePoint > timepointsToProcess = getTimepointsToProcess(); 
+
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Assembling metadata for all views involved" );
 
 		if ( !assembleAllMetaData() )
@@ -51,22 +44,22 @@ public class GeometricHashing3d extends InterestPointRegistration
 			return false;
 		}
 		
-		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Assembling metadata done, resolution of world coordinates is " + min + " " + unit + "/px."  );
+		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Assembling metadata done, resolution of world coordinates is " + getMinResolution() + " " + getUnit() + "/px."  );
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Starting registration" );
 
 		for ( final TimePoint timepoint : timepointsToProcess )
 		{
-			final ArrayList< PairOfInterestPointLists > pairs = this.getAllViewPairs( timepoint );
+			final ArrayList< ChannelInterestPointListPair > pairs = this.getAllViewPairs( timepoint );
 			
 			final ExecutorService taskExecutor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
 			final ArrayList< GeometricHashing3dPairwise > tasks = new ArrayList< GeometricHashing3dPairwise >(); // your tasks
 			
-			for ( final PairOfInterestPointLists pair : pairs )
+			for ( final ChannelInterestPointListPair pair : pairs )
 			{
 				// just for logging the names and results of pairwise comparison
-				final ViewDescription<TimePoint, ViewSetup> viewA = spimData.getSequenceDescription().getViewDescription( pair.getViewIdA() );
-		    	final ViewDescription<TimePoint, ViewSetup> viewB = spimData.getSequenceDescription().getViewDescription( pair.getViewIdB() );
+				final ViewDescription< TimePoint, ViewSetup > viewA = spimData.getSequenceDescription().getViewDescription( pair.getViewIdA() );
+		    	final ViewDescription< TimePoint, ViewSetup > viewB = spimData.getSequenceDescription().getViewDescription( pair.getViewIdB() );
 		    	
 				final String comp = "[TP=" + viewA.getTimePoint().getName() + 
 		    			" angle=" + viewA.getViewSetup().getAngle().getName() + ", ch=" + viewA.getViewSetup().getChannel().getName() +
@@ -87,16 +80,31 @@ public class GeometricHashing3d extends InterestPointRegistration
 				e.printStackTrace();
 			}
 			
+			
+			// some statistics
 			int sumCandidates = 0;
 			int sumInliers = 0;
-			for ( final PairOfInterestPointLists pair : pairs )
+			for ( final ChannelInterestPointListPair pair : pairs )
 			{
 				sumCandidates += pair.getCandidates().size();
 				sumInliers += pair.getInliers().size();
 			}
 			
 			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Number of Candidates: " + sumCandidates );
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Number of Inliers: " + sumInliers );			
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Number of Inliers: " + sumInliers );
+			
+			//
+			// set and store correspondences
+			//
+			
+			// first remove existing correspondences
+			clearExistingCorrespondences( pairs );
+
+			// now add all corresponding interest points
+			addCorrespondences( pairs );
+			
+			// save the files
+			saveCorrespondences( pairs );
 			
     		if ( model == 0 )
     			computeGlobalOpt( new TranslationModel3D(), pairs, timepoint );
@@ -107,37 +115,6 @@ public class GeometricHashing3d extends InterestPointRegistration
 		}
 		
 		return true;
-	}
-	
-	protected < M extends Model< M > > void computeGlobalOpt( final M model, final ArrayList< PairOfInterestPointLists > pairs, final TimePoint timepoint )
-	{
-		// a sorted list of all views
-		final HashMap< ViewId, List< InterestPoint > > pointLists = this.getInterestPoints( timepoint );
-		final ArrayList< ViewId > views = new ArrayList< ViewId >();
-		views.addAll( pointLists.keySet() );
-		Collections.sort( views );
-
-		final HashMap< ViewId, Tile< M > > tiles = GlobalOpt.globalOptimization( model, views, pairs );
-		final ViewRegistrations viewRegistrations = spimData.getViewRegistrations();
-
-		String channelList = "[";
-		for ( final ChannelProcess c : channelsToProcess )
-			channelList += c.getLabel() + " (c=" + c.getChannel().getName() + "), ";
-		channelList = channelList.substring( 0, channelList.length() - 2 ) + "]";
-		
-		// update the view registrations
-		for ( final ViewId viewId : views )
-		{
-			final Tile< M > tile = tiles.get( viewId );
-			final AbstractAffineModel3D<?> tilemodel = (AbstractAffineModel3D<?>)tile.getModel();
-			final float[] m = tilemodel.getMatrix( null );
-			final ViewRegistration vr = viewRegistrations.getViewRegistration( viewId );
-			
-			final AffineTransform3D t = new AffineTransform3D();
-			t.set( m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8], m[9], m[10], m[11] );
-			final ViewTransform vt = new ViewTransformAffine( "Geometric Hasing on " + channelList, t );
-			vr.preconcatenateTransform( vt );
-		}
 	}
 
 	@Override

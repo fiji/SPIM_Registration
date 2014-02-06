@@ -1,4 +1,4 @@
-package spim.fiji.plugin.interestpointregistration;
+package spim.fiji.plugin.interestpointregistration.geometrichashing3d;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -10,17 +10,21 @@ import mpicbg.models.RigidModel3D;
 import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
+import spim.fiji.plugin.interestpointregistration.ChannelInterestPointListPair;
+import spim.fiji.plugin.interestpointregistration.Detection;
+import spim.fiji.plugin.interestpointregistration.RANSAC;
+import spim.fiji.plugin.interestpointregistration.RANSACParameters;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 
-public class GeometricHashing3dPairwise implements Callable< PairOfInterestPointLists >
+public class GeometricHashing3dPairwise implements Callable< ChannelInterestPointListPair >
 {
-	final PairOfInterestPointLists pair;
+	final ChannelInterestPointListPair pair;
 	final int model;
 	final RANSACParameters rp;
 	final GeometricHashing3dParameters gp;
 	final String comparison;
 	
-	public GeometricHashing3dPairwise( final PairOfInterestPointLists pair, final int model, final String comparison, final RANSACParameters rp, final GeometricHashing3dParameters gp )
+	public GeometricHashing3dPairwise( final ChannelInterestPointListPair pair, final int model, final String comparison, final RANSACParameters rp, final GeometricHashing3dParameters gp )
 	{ 
 		this.pair = pair;
 		this.rp = rp;
@@ -29,13 +33,13 @@ public class GeometricHashing3dPairwise implements Callable< PairOfInterestPoint
 		this.comparison = comparison;
 	}
 	
-	public GeometricHashing3dPairwise( final PairOfInterestPointLists pair, final int model, final String comparison )
+	public GeometricHashing3dPairwise( final ChannelInterestPointListPair pair, final int model, final String comparison )
 	{
 		this( pair, model, comparison, new RANSACParameters(), new GeometricHashing3dParameters() );
 	}
 	
 	@Override
-	public PairOfInterestPointLists call() throws Exception 
+	public ChannelInterestPointListPair call() throws Exception 
 	{
 		final GeometricHasher3d hasher = new GeometricHasher3d();
 		

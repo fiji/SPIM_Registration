@@ -52,7 +52,7 @@ public class XmlIoViewInterestPoints
 			// we do not load the interestpoints nor the correspondinginterestpoints, we just do that once it is requested
 			final InterestPointList list = new InterestPointList( basePath, new File( interestPointFileName ) );
 			list.setParameters( parameters );
-			collection.addInterestPoints( label, list );
+			collection.addInterestPointList( label, list );
 		}
 
 		return viewsInterestPoints;
@@ -76,7 +76,7 @@ public class XmlIoViewInterestPoints
 
 			for ( final String label : labelList )
 			{
-				final InterestPointList list = v.getInterestPoints( label );
+				final InterestPointList list = v.getInterestPointList( label );
 				elem.appendChild( viewInterestPointsToXml( doc, list, v.getTimePointId(), v.getViewSetupId(), label ) );
 			}
 		}

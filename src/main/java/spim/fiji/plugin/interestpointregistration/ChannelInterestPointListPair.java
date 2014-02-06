@@ -8,15 +8,15 @@ import mpicbg.spim.mpicbg.PointMatchGeneric;
 
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 
-public class PairOfInterestPointLists
+public class ChannelInterestPointListPair
 {
-	final List< InterestPoint > listA, listB;
+	final ChannelInterestPointList listA, listB;
 	final ViewId viewIdA, viewIdB;
 	
-	float error = 0;
-	ArrayList<PointMatchGeneric<Detection>> candidates, inliers;
+	float error = -1;
+	ArrayList< PointMatchGeneric< Detection > > candidates, inliers;
 	
-	public PairOfInterestPointLists( final ViewId viewIdA, final ViewId viewIdB, final List< InterestPoint > listA, final List< InterestPoint > listB )
+	public ChannelInterestPointListPair( final ViewId viewIdA, final ViewId viewIdB, final ChannelInterestPointList listA, final ChannelInterestPointList listB )
 	{
 		this.listA = listA;
 		this.listB = listB;
@@ -24,8 +24,12 @@ public class PairOfInterestPointLists
 		this.viewIdB = viewIdB;
 	}
 	
-	public List< InterestPoint > getListA() { return listA; }
-	public List< InterestPoint > getListB() { return listB; }
+	public ChannelInterestPointList getChannelInterestPointListA() { return listA; }
+	public ChannelInterestPointList getChannelInterestPointListB() { return listB; }
+	public ChannelProcess getChannelProcessedA() { return listA.getChannelProcessed(); }
+	public ChannelProcess getChannelProcessedB() { return listB.getChannelProcessed(); }
+	public List< InterestPoint > getListA() { return listA.getInterestpointList(); }
+	public List< InterestPoint > getListB() { return listB.getInterestpointList(); }
 	public ViewId getViewIdA() { return viewIdA; }
 	public ViewId getViewIdB() { return viewIdB; }
 	public int getNumInliers() { return inliers.size(); }
@@ -33,7 +37,15 @@ public class PairOfInterestPointLists
 	public float getError() { return error; }
 	public ArrayList< PointMatchGeneric< Detection > > getCandidates() { return candidates; }
 	public ArrayList< PointMatchGeneric< Detection > > getInliers() { return inliers; }
-	
+
+	public ArrayList< ViewId > getBothViewIds()
+	{
+		final ArrayList< ViewId > l = new ArrayList< ViewId >();
+		l.add( viewIdA );
+		l.add( viewIdB );
+		return l;
+	}
+
 	public void setError( final float e ) { this.error = e; }
 	public void setCandidates( final ArrayList<PointMatchGeneric<Detection>> candidates ) { this.candidates = candidates; }
 	public void setInliers(ArrayList<PointMatchGeneric<Detection>> inliers) { this.inliers = inliers; }

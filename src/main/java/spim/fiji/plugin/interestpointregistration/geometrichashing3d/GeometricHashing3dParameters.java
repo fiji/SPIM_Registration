@@ -1,4 +1,4 @@
-package spim.fiji.plugin.interestpointregistration;
+package spim.fiji.plugin.interestpointregistration.geometrichashing3d;
 
 public class GeometricHashing3dParameters
 {

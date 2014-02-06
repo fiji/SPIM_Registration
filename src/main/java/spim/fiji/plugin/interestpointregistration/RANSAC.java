@@ -47,11 +47,11 @@ public class RANSAC
 			final Detection detectionA = correspondence.getPoint1();
 			final Detection detectionB = correspondence.getPoint2();
 			
-			final LinkedPoint< Detection > p1 = new LinkedPoint< Detection >( detectionA.getL(), detectionA.getW(), detectionA );
-			final LinkedPoint< Detection > p2 = new LinkedPoint< Detection >( detectionB.getL(), detectionB.getW(), detectionB );
+			final LinkedPoint< Detection > pA = new LinkedPoint< Detection >( detectionA.getL(), detectionA.getW(), detectionA );
+			final LinkedPoint< Detection > pB = new LinkedPoint< Detection >( detectionB.getL(), detectionB.getW(), detectionB );
 			final float weight = correspondence.getWeight(); 
 
-			candidates.add( new PointMatchGeneric< LinkedPoint< Detection > >( p1, p2, weight ) );
+			candidates.add( new PointMatchGeneric< LinkedPoint< Detection > >( pA, pB, weight ) );
 		}
 		
 		boolean modelFound = false;

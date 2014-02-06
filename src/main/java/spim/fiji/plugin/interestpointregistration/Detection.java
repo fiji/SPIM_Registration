@@ -11,7 +11,7 @@ public class Detection extends Point implements Leaf< Detection >
 	 */
 	private static final long serialVersionUID = -1512879446587557778L;
 	
-	final protected long id;
+	final protected int id;
 	protected double weight;
 	protected boolean useW = false;
 
@@ -36,7 +36,7 @@ public class Detection extends Point implements Leaf< Detection >
 
 	public void setWeight( final double weight ){ this.weight = weight; }
 	public double getWeight(){ return weight; }
-	public long getID() { return id; }
+	public int getId() { return id; }
 	public void setDistance( float distance )  { this.distance = distance; }
 	public float getDistance() { return distance; }
 	public boolean isUsed() { return isUsed; }
@@ -118,7 +118,7 @@ public class Detection extends Point implements Leaf< Detection >
 	@Override
 	public String toString()
 	{
-		String desc = "Detection " + getID() + " l"+ Util.printCoordinates( getL() ) + "; w"+ Util.printCoordinates( getW() );
+		String desc = "Detection " + getId() + " l"+ Util.printCoordinates( getL() ) + "; w"+ Util.printCoordinates( getW() );
 		return desc;
 	}
 

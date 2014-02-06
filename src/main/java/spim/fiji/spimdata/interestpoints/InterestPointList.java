@@ -35,50 +35,20 @@ public class InterestPointList
 	{
 		this.baseDir = baseDir;
 		this.file = file;
-		this.interestPoints = null;
-		this.correspondingInterestPoints = null;
+		this.interestPoints = new ArrayList< InterestPoint >();
+		this.correspondingInterestPoints = new ArrayList< CorrespondingInterestPoints >();
 		this.parameters = "";
 	}
 
 	/**
 	 * @return - the list of interest points, tries to load it from disk if not available
 	 */
-	public List< InterestPoint > getInterestPoints()
-	{ 
-		// do we need to load it?
-		if ( this.interestPoints == null )
-		{
-			// ok, file does not exist
-			if ( getFile() == null )
-				return null;
-			
-			// load list from file
-			if ( !loadInterestPoints() )
-				return null;
-		}
-
-		return this.interestPoints;
-	}
+	public List< InterestPoint > getInterestPoints() { return this.interestPoints; }
 
 	/**
 	 * @return - the list of corresponding interest points, tries to load it from disk if not available
 	 */
-	public List< CorrespondingInterestPoints > getCorrespondingInterestPoints()
-	{ 
-		// do we need to load it?
-		if ( this.correspondingInterestPoints == null )
-		{
-			// ok, file does not exist
-			if ( getFile() == null )
-				return null;
-			
-			// load list from file
-			if ( !loadCorrespondingInterestPoints() )
-				return null;
-		}
-
-		return this.correspondingInterestPoints;
-	}
+	public List< CorrespondingInterestPoints > getCorrespondingInterestPoints() { return this.correspondingInterestPoints; }
 
 	public File getBaseDir() { return baseDir; }
 	public File getFile() { return file; }
