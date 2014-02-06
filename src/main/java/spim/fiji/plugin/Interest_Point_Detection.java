@@ -150,7 +150,13 @@ public class Interest_Point_Detection implements PlugIn
 					new File( "interestpoints", "tpId_" + viewId.getTimePointId() + "_viewSetupId_" + viewId.getViewSetupId() + "." + label ) );
 			
 			list.setParameters( ipd.getParameters( channelId ) );
-			list.setPointList( points.get( viewId ), true );
+			list.setInterestPoints( points.get( viewId ) );
+			
+			if ( !list.saveInterestPoints() )
+			{
+				IOFunctions.println( "Error saving interest point list: " + new File( list.getBaseDir(), list.getFile().toString() + list.getInterestPointsExt() ) );
+				return;
+			}
 			
 			final ViewInterestPointLists vipl = data.getViewInterestPoints().getViewInterestPointLists( viewId );
 			vipl.addInterestPoints( label, list );
