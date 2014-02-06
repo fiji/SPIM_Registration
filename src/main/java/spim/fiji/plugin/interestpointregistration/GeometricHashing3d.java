@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -26,7 +25,6 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
-import mpicbg.spim.mpicbg.PointMatchGeneric;
 import net.imglib2.realtransform.AffineTransform3D;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
@@ -34,17 +32,7 @@ import spim.fiji.spimdata.interestpoints.InterestPoint;
 public class GeometricHashing3d extends InterestPointRegistration
 {
 	final String modelChoice[] = new String[] { "Translation", "Rigid", "Affine" };
-	public static int defaultModel = 2;
-	
-	public static float differenceThreshold = 50; 
-	public static float ratioOfDistance = 10; 
-	public static boolean useAssociatedBeads = false;
-	
-    public static float max_epsilon = 5;
-    public static float min_inlier_ratio = 0.1f;
-    public static int numIterations = 1000;
-    public static float minInlierFactor = 3f;
-
+	public static int defaultModel = 2;	
 	protected int model = 2;
 
 	public GeometricHashing3d( final SpimData2 spimData, final ArrayList< TimePoint > timepointsToProcess, final ArrayList< ChannelProcess > channelsToProcess )
@@ -69,14 +57,25 @@ public class GeometricHashing3d extends InterestPointRegistration
 
 		for ( final TimePoint timepoint : timepointsToProcess )
 		{
-			final ArrayList< ListPair > pairs = this.getAllViewPairs( timepoint );
+			final ArrayList< PairOfInterestPointLists > pairs = this.getAllViewPairs( timepoint );
 			
 			final ExecutorService taskExecutor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
-			final ArrayList< PairwiseRegistration > tasks = new ArrayList< PairwiseRegistration >(); // your tasks
+			final ArrayList< GeometricHashing3dPairwise > tasks = new ArrayList< GeometricHashing3dPairwise >(); // your tasks
 			
-			for ( final ListPair pair : pairs )
-				tasks.add( new PairwiseRegistration( pair, timepoint ) );
-			
+			for ( final PairOfInterestPointLists pair : pairs )
+			{
+				// just for logging the names and results of pairwise comparison
+				final ViewDescription<TimePoint, ViewSetup> viewA = spimData.getSequenceDescription().getViewDescription( pair.getViewIdA() );
+		    	final ViewDescription<TimePoint, ViewSetup> viewB = spimData.getSequenceDescription().getViewDescription( pair.getViewIdB() );
+		    	
+				final String comp = "[TP=" + viewA.getTimePoint().getName() + 
+		    			" angle=" + viewA.getViewSetup().getAngle().getName() + ", ch=" + viewA.getViewSetup().getChannel().getName() +
+		    			", illum=" + viewA.getViewSetup().getIllumination().getName() + " >>> TP=" + viewB.getTimePoint().getName() +
+		    			" angle=" + viewB.getViewSetup().getAngle().getName() + ", ch=" + viewB.getViewSetup().getChannel().getName() +
+		    			", illum=" + viewB.getViewSetup().getIllumination().getName() + "]";
+				
+				tasks.add( new GeometricHashing3dPairwise( pair, model, comp ) );
+			}
 			try
 			{
 				// invokeAll() returns when all tasks are complete
@@ -90,7 +89,7 @@ public class GeometricHashing3d extends InterestPointRegistration
 			
 			int sumCandidates = 0;
 			int sumInliers = 0;
-			for ( final ListPair pair : pairs )
+			for ( final PairOfInterestPointLists pair : pairs )
 			{
 				sumCandidates += pair.getCandidates().size();
 				sumInliers += pair.getInliers().size();
@@ -110,7 +109,7 @@ public class GeometricHashing3d extends InterestPointRegistration
 		return true;
 	}
 	
-	protected < M extends Model< M > > void computeGlobalOpt( final M model, final ArrayList< ListPair > pairs, final TimePoint timepoint )
+	protected < M extends Model< M > > void computeGlobalOpt( final M model, final ArrayList< PairOfInterestPointLists > pairs, final TimePoint timepoint )
 	{
 		// a sorted list of all views
 		final HashMap< ViewId, List< InterestPoint > > pointLists = this.getInterestPoints( timepoint );
@@ -138,70 +137,6 @@ public class GeometricHashing3d extends InterestPointRegistration
 			t.set( m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8], m[9], m[10], m[11] );
 			final ViewTransform vt = new ViewTransformAffine( "Geometric Hasing on " + channelList, t );
 			vr.preconcatenateTransform( vt );
-		}
-	}
-		
-	public class PairwiseRegistration implements Callable< ListPair >
-	{
-		final ListPair pair;
-		final TimePoint timepoint;
-		
-		public PairwiseRegistration( final ListPair pair, final TimePoint timepoint )
-		{ 
-			this.pair = pair;
-			this.timepoint = timepoint;
-		}
-		
-		@Override
-		public ListPair call() throws Exception 
-		{
-			final GeometricHasher hasher = new GeometricHasher();
-			
-			final ArrayList< Detection > listA = new ArrayList< Detection >();
-			final ArrayList< Detection > listB = new ArrayList< Detection >();
-			
-			for ( final InterestPoint i : pair.getListA() )
-				listA.add( new Detection( i.getId(), i.getL() ) );
-
-			for ( final InterestPoint i : pair.getListB() )
-				listB.add( new Detection( i.getId(), i.getL() ) );
-
-    		final ArrayList< PointMatchGeneric< Detection > > candidates = hasher.extractCorrespondenceCandidates( 
-    				listA, 
-    				listB, 
-    				differenceThreshold, 
-    				ratioOfDistance, 
-    				useAssociatedBeads );
-        	
-    		pair.setCandidates( candidates );
-    		
-        	// compute ransac and remove inconsistent candidates
-        	final ArrayList< PointMatchGeneric< Detection > > inliers = new ArrayList< PointMatchGeneric< Detection > >();
-
-    		final Model<?> m;
-    		
-    		if ( model == 0 )
-    			m = new TranslationModel3D();
-    		else if ( model == 1 )
-    			m = new RigidModel3D();
-    		else
-    			m = new AffineModel3D();
-    		
-    		String result = RANSAC.computeRANSAC( candidates, inliers, m, max_epsilon, min_inlier_ratio, minInlierFactor, numIterations );
-
-    		pair.setInliers( inliers );
-
-        	final ViewDescription<TimePoint, ViewSetup> viewA = spimData.getSequenceDescription().getViewDescription( pair.getViewIdA() );
-        	final ViewDescription<TimePoint, ViewSetup> viewB = spimData.getSequenceDescription().getViewDescription( pair.getViewIdB() );
-        	
-        	IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): TP=" + timepoint.getName() + 
-        			" (angle=" + viewA.getViewSetup().getAngle().getName() + ", ch=" + viewA.getViewSetup().getChannel().getName() +
-        			", illum=" + viewA.getViewSetup().getIllumination().getName() + " >>> " +
-        			"angle=" + viewB.getViewSetup().getAngle().getName() + ", ch=" + viewB.getViewSetup().getChannel().getName() +
-        			", illum=" + viewB.getViewSetup().getIllumination().getName() + "): " +
-        			result );
-			
-			return pair;
 		}
 	}
 

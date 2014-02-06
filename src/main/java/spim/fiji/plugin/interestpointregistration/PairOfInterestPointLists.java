@@ -8,7 +8,7 @@ import mpicbg.spim.mpicbg.PointMatchGeneric;
 
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 
-public class ListPair
+public class PairOfInterestPointLists
 {
 	final List< InterestPoint > listA, listB;
 	final ViewId viewIdA, viewIdB;
@@ -16,7 +16,7 @@ public class ListPair
 	float error = 0;
 	ArrayList<PointMatchGeneric<Detection>> candidates, inliers;
 	
-	public ListPair( final ViewId viewIdA, final ViewId viewIdB, final List< InterestPoint > listA, final List< InterestPoint > listB )
+	public PairOfInterestPointLists( final ViewId viewIdA, final ViewId viewIdB, final List< InterestPoint > listA, final List< InterestPoint > listB )
 	{
 		this.listA = listA;
 		this.listB = listB;

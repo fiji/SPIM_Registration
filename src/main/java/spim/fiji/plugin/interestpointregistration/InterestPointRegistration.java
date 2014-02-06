@@ -60,7 +60,7 @@ public abstract class InterestPointRegistration
 	 * @param timepoint
 	 * @return - all pairs of views for a specific timepoint
 	 */
-	public ArrayList< ListPair > getAllViewPairs( final TimePoint timepoint )
+	public ArrayList< PairOfInterestPointLists > getAllViewPairs( final TimePoint timepoint )
 	{
 		final HashMap< ViewId, List< InterestPoint > > pointLists = this.getInterestPoints( timepoint );
 		
@@ -68,7 +68,7 @@ public abstract class InterestPointRegistration
 		views.addAll( pointLists.keySet() );
 		Collections.sort( views );
 		
-		final ArrayList< ListPair > viewPairs = new ArrayList< ListPair >();
+		final ArrayList< PairOfInterestPointLists > viewPairs = new ArrayList< PairOfInterestPointLists >();
 		
 		for ( int a = 0; a < views.size() - 1; ++a )
 			for ( int b = a + 1; b < views.size(); ++b )
@@ -79,7 +79,7 @@ public abstract class InterestPointRegistration
 				final List< InterestPoint > listA = pointLists.get( viewIdA );
 				final List< InterestPoint > listB = pointLists.get( viewIdB );
 				
-				viewPairs.add( new ListPair( viewIdA, viewIdB, listA, listB ) );
+				viewPairs.add( new PairOfInterestPointLists( viewIdA, viewIdB, listA, listB ) );
 			}
 		
 		return viewPairs;

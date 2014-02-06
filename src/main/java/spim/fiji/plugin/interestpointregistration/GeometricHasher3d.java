@@ -10,8 +10,13 @@ import fiji.util.KDTree;
 import fiji.util.NNearestNeighborSearch;
 import fiji.util.node.Leaf;
 
-
-public class GeometricHasher
+/**
+ * Class that actually computes the geometric hashing
+ * 
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de)
+ *
+ */
+public class GeometricHasher3d
 {
 	public ArrayList< PointMatchGeneric< Detection > > extractCorrespondenceCandidates( 
 			final ArrayList< Detection > nodeListA, 
@@ -21,10 +26,6 @@ public class GeometricHasher
 			final boolean useAssociatedBeads ) 
 	{
 		final int numNeighbors = 3;
-		
-		// this is slightly less expressive
-		//ratioOfDistance /= 1.25;
-		//differenceThreshold *= 1.25;
 		
 		final KDTree< Detection > tree1 = new KDTree< Detection >( nodeListA );
 		final KDTree< Detection > tree2 = new KDTree< Detection >( nodeListB );
