@@ -205,17 +205,17 @@ public abstract class InterestPointRegistration
 
 				if ( !lists.contains( c.getLabel() ) )
 				{
-					IOFunctions.println( "Interest points for label '' not found for timepoint: " + timepoint.getId() + " angle: " + 
+					IOFunctions.println( "Interest points for label '" + c.getLabel() + "' not found for timepoint: " + timepoint.getId() + " angle: " + 
 							a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
 					
 					continue;
 				}
 				
-				final List< InterestPoint > ptList = lists.getInterestPoints( c.getLabel() ).getInterestPointList();
+				final List< InterestPoint > ptList = lists.getInterestPoints( c.getLabel() ).getInterestPoints();
 				
 				if ( ptList == null )
 				{
-					IOFunctions.println( "Interest points for label '' could not be loaded for timepoint: " + timepoint.getId() + " angle: " + 
+					IOFunctions.println( "Interest points for label '" + c.getLabel() + "' could not be loaded for timepoint: " + timepoint.getId() + " angle: " + 
 							a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
 					
 					continue;					
