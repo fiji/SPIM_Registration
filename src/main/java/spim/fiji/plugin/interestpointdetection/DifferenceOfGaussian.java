@@ -42,20 +42,39 @@ public class DifferenceOfGaussian extends DifferenceOf
 	boolean[] findMin;
 	boolean[] findMax;	
 
+	public DifferenceOfGaussian(
+			final SpimData2 spimData,
+			final ArrayList<Angle> anglesToProcess,
+			final ArrayList<Channel> channelsToProcess,
+			final ArrayList<Illumination> illumsToProcess,
+			final ArrayList<TimePoint> timepointsToProcess )
+	{
+		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+	}
+
 	@Override
 	public String getDescription() { return "Difference-of-Gaussian"; }
 
 	@Override
-	public DifferenceOfGaussian newInstance() { return new DifferenceOfGaussian(); }
+	public DifferenceOfGaussian newInstance(
+			final SpimData2 spimData,
+			final ArrayList<Angle> anglesToProcess,
+			final ArrayList<Channel> channelsToProcess,
+			final ArrayList<Illumination> illumsToProcess,
+			final ArrayList<TimePoint> timepointsToProcess ) 
+	{ 
+		return new DifferenceOfGaussian( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+	}
+
 
 	@Override
-	public HashMap< ViewId, List< InterestPoint > > findInterestPoints( final SpimData2 spimData, final ArrayList< Channel> channelsToProcess, final ArrayList< TimePoint > timepointsToProcess )
+	public HashMap< ViewId, List< InterestPoint > > findInterestPoints()
 	{
 		final HashMap< ViewId, List< InterestPoint > > interestPoints = new HashMap< ViewId, List< InterestPoint > >();
 		
 		for ( final TimePoint t : timepointsToProcess )
-			for ( final Angle a : spimData.getSequenceDescription().getAllAngles() )
-				for ( final Illumination i : spimData.getSequenceDescription().getAllIlluminations() )
+			for ( final Angle a : anglesToProcess )
+				for ( final Illumination i : illumsToProcess )
 					for ( final Channel c : channelsToProcess )
 					{
 						// make sure not everything crashes if one file is missing

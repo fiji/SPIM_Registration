@@ -10,11 +10,10 @@ import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
-import mpicbg.spim.registration.bead.SegmentationBenchmark;
 import spim.fiji.spimdata.SpimData2;
 
-public abstract class DifferenceOf implements InterestPointDetection
-{
+public abstract class DifferenceOf extends InterestPointDetection
+{	
 	/**
 	 * Can be used to manually set min (minmaxset[0]) and max (minmaxset[1]) value for all views
 	 * that are opened. Otherwise min and max will be read from the images 
@@ -30,31 +29,22 @@ public abstract class DifferenceOf implements InterestPointDetection
 	public static int defaultTimepointChoice = 0;
 	public static int defaultAngleChoice = 0;
 	public static int defaultIlluminationChoice = 0;
-	
-	public SegmentationBenchmark benchmark = new SegmentationBenchmark();
-
-	/**
-	 * which channels to process, set in queryParameters
-	 */
-	protected ArrayList< Channel> channelsToProcess;
-	
-	/**
-	 * which timepoints to process, set in queryParameters
-	 */
-	protected ArrayList< TimePoint > timepointsToProcess;
-	
-	protected int localization;
-	protected SpimData2 spimData;
-	
-	public SegmentationBenchmark getBenchmark() { return benchmark; }
-	
-	@Override
-	public boolean queryParameters( final SpimData2 spimData, final ArrayList< Channel> channelsToProcess, final ArrayList< TimePoint > timepointsToProcess )
-	{
-		this.spimData = spimData;
-		this.timepointsToProcess = timepointsToProcess;
-		this.channelsToProcess = channelsToProcess;
 		
+	protected int localization;
+
+	public DifferenceOf(
+			final SpimData2 spimData,
+			final ArrayList<Angle> anglesToProcess,
+			final ArrayList<Channel> channelsToProcess,
+			final ArrayList<Illumination> illumsToProcess,
+			final ArrayList<TimePoint> timepointsToProcess)
+	{
+		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+	}
+
+	@Override
+	public boolean queryParameters()
+	{		
 		final ArrayList< Channel > channels = spimData.getSequenceDescription().getAllChannels();
 
 		// tell the implementing classes the total number of channels

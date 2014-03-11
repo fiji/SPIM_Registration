@@ -16,6 +16,9 @@ import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
 
+import mpicbg.spim.data.sequence.Angle;
+import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.IntegerPattern;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
@@ -43,7 +46,25 @@ public class LoadParseQueryXML
 	public static int defaultTimePointIndex = 0;
 	public static boolean[] defaultTimePointIndices = null;
 	public static String defaultTimePointString = null;
-	
+
+	public static String[] angleChoice = new String[]{ "All Angles", "Single Angle (Select from List)", "Multiple Angles (Select from List)", "Range of Angles (Specify by Name)" };
+	public static int defaultAngleChoice = 0;
+	public static int defaultAngleIndex = 0;
+	public static boolean[] defaultAngleIndices = null;
+	public static String defaultAngleString = null;
+
+	public static String[] channelChoice = new String[]{ "All Channels", "Single Channel (Select from List)", "Multiple Channels (Select from List)", "Range of Channels (Specify by Name)" };
+	public static int defaultChannelChoice = 0;
+	public static int defaultChannelIndex = 0;
+	public static boolean[] defaultChannelIndices = null;
+	public static String defaultChannelString = null;
+
+	public static String[] illumChoice = new String[]{ "All Illumination Directions", "Single Illumination Directions (Select from List)", "Multiple Illumination Directions (Select from List)", "Range of Illumination Directions (Specify by Name)" };
+	public static int defaultIllumChoice = 0;
+	public static int defaultIllumIndex = 0;
+	public static boolean[] defaultIllumIndices = null;
+	public static String defaultIllumString = null;
+
 	public class XMLParseResult
 	{
 		// local variables for LoadParseQueryXML
@@ -55,6 +76,11 @@ public class LoadParseQueryXML
 		private SpimData2 data;
 		private String xmlfilename;
 		private ArrayList< TimePoint > timepoints;
+		private ArrayList< Angle > angles;
+		private ArrayList< Channel > channels;
+		private ArrayList< Illumination > illums;
+		
+		public int timepointAngleIndex, channelChoiceIndex, illumChoiceIndex, angleChoiceIndex;
 		
 		/**
 		 * @return the SpimDataBeads object parsed from the xml
@@ -70,6 +96,21 @@ public class LoadParseQueryXML
 		 * @return All timepoints that should be processed
 		 */
 		public ArrayList< TimePoint > getTimePointsToProcess() { return timepoints; }
+		
+		/**
+		 * @return All angles that should be processed
+		 */
+		public ArrayList< Angle > getAnglesToProcess() { return angles; }
+
+		/**
+		 * @return All channels that should be processed
+		 */
+		public ArrayList< Channel > getChannelsToProcess() { return channels; }
+
+		/**
+		 * @return All illumination directions that should be processed
+		 */
+		public ArrayList< Illumination > getIlluminationsToProcess() { return illums; }
 	}
 	
 	/**
@@ -78,7 +119,7 @@ public class LoadParseQueryXML
 	 * @param askForTimepoints - ask the user if he/she wants to select a subset of timepoints, otherwise all timepoints are selected
 	 * @return null if cancelled or timepointlistsize = 0
 	 */
-	public XMLParseResult queryXML( final boolean askForTimepoints )
+	public XMLParseResult queryXML( final boolean askForAngles, final boolean askForChannels, final boolean askForIllum, final boolean askForTimepoints )
 	{
 		// try parsing if it ends with XML
 		XMLParseResult xmlResult = tryParsing( defaultXMLfilename, false );
@@ -89,11 +130,20 @@ public class LoadParseQueryXML
 		gd.addMessage( xmlResult.message, GUIHelper.largestatusfont, xmlResult.color );
 		addListeners( gd, (TextField)gd.getStringFields().lastElement(), (Label)gd.getMessage() );
 		
-		if ( askForTimepoints )
-		{
+		if ( askForAngles || askForChannels || askForIllum || askForTimepoints  )
 			gd.addMessage( "" );
+		
+		if ( askForAngles )
+			gd.addChoice( "Process", angleChoice, angleChoice[ defaultAngleChoice ] );
+		
+		if ( askForChannels )
+			gd.addChoice( "Process", channelChoice, channelChoice[ defaultChannelChoice ] );
+		
+		if ( askForIllum )
+			gd.addChoice( "Process", illumChoice, illumChoice[ defaultIllumChoice ] );
+		
+		if ( askForTimepoints )
 			gd.addChoice( "Process", tpChoice, tpChoice[ defaultTPChoice ] );
-		}
 		
 		gd.showDialog();
 		
@@ -105,142 +155,394 @@ public class LoadParseQueryXML
 		// try to parse the file anyways
 		xmlResult = tryParsing( xmlFilename, true );
 
+		if ( askForAngles )
+			xmlResult.angleChoiceIndex = defaultAngleChoice = gd.getNextChoiceIndex();
+		else
+			xmlResult.angleChoiceIndex = 0; // all timepoints
+
+		if ( askForChannels )
+			xmlResult.channelChoiceIndex = defaultChannelChoice = gd.getNextChoiceIndex();
+		else
+			xmlResult.channelChoiceIndex = 0; // all timepoints
+
+		if ( askForIllum )
+			xmlResult.illumChoiceIndex = defaultIllumChoice = gd.getNextChoiceIndex();
+		else
+			xmlResult.illumChoiceIndex = 0; // all timepoints
+
 		if ( askForTimepoints )
 			xmlResult.timepointChoiceIndex = defaultTPChoice = gd.getNextChoiceIndex();
 		else
 			xmlResult.timepointChoiceIndex = 0; // all timepoints
 
-		// fill up timepoints (if all there is no further dialog)
-		if ( !queryTimepoints( xmlResult ) )
+		// fill up angles, channels, illuminations, timepoints (all, if there is no further dialog)
+		if ( !queryDetails( xmlResult ) )
 			return null;
 
 		return xmlResult;
 	}
 	
-	public boolean queryTimepoints( final XMLParseResult xmlResult )
+	/**
+	 * Querys a single element from the list
+	 * 
+	 * @param name - type of elements (e.g. "Timepoint")
+	 * @param list - list of available elements
+	 * @param defaultSelection - default selection
+	 * @return the selection or -1 if cancelled
+	 */
+	protected int queryIndividualEntry( final String name, final String[] list, int defaultSelection )
+	{
+		if ( defaultSelection >= list.length )
+			defaultSelection = 0;
+		
+		final GenericDialog gd = new GenericDialog( "Select Single " + name );
+		gd.addChoice( "Process", list, list[ defaultSelection ] );
+		
+		gd.showDialog();
+		
+		if ( gd.wasCanceled() )
+			return -1;
+		
+		return gd.getNextChoiceIndex();
+	}
+	
+	/**
+	 * Querys a multiple element from the list
+	 * 
+	 * @param name - type of elements (e.g. "Timepoints")
+	 * @param list - list of available elements
+	 * @param defaultSelection - default selection
+	 * @return the selection or null if cancelled
+	 */
+	protected boolean[] queryMultipleEntries( final String name, final String[] list, boolean[] defaultSelection )
+	{
+		if ( defaultSelection == null || defaultSelection.length != list.length )
+		{
+			defaultSelection = new boolean[ list.length ];
+			defaultSelection[ 0 ] = true;
+			for ( int i = 1; i < list.length; ++i )
+				defaultSelection[ i ] = false;
+		}
+		
+		final GenericDialog gd = new GenericDialog( "Select Multiple " + name );
+		
+		gd.addMessage( "" );
+		for ( int i = 0; i < list.length; ++i )
+			gd.addCheckbox( list[ i ], defaultSelection[ i ] );
+		gd.addMessage( "" );
+
+		GUIHelper.addScrollBars( gd );			
+		gd.showDialog();
+		
+		if ( gd.wasCanceled() )
+			return null;
+
+		for ( int i = 0; i < list.length; ++i )
+		{
+			if ( gd.getNextBoolean() )
+				defaultSelection[ i ] = true;
+			else
+				defaultSelection[ i ] = false;					
+		}
+
+		return defaultSelection;
+	}
+	
+	/**
+	 * Querys a pattern of element from the list
+	 * 
+	 * @param name - type of elements (e.g. "Timepoints")
+	 * @param list - list of available elements
+	 * @param defaultSelection - default selection (array of size 1 to be able to return it)
+	 * @return the selection or null if cancelled
+	 */
+	protected boolean[] queryPattern( final String name, final String[] list, final String[] defaultSelectionArray )
+	{
+		String defaultSelection = defaultSelectionArray[ 0 ];
+
+		if ( defaultSelection == null || defaultSelection.length() == 0 )
+		{
+			defaultSelection = list[ 0 ];
+			
+			for ( int i = 1; i < Math.min( list.length, 3 ); ++i )
+				defaultSelection += "," + list[ i ];
+		}
+		
+		final GenericDialog gd = new GenericDialog( "Select Range of " + name );
+		
+		gd.addMessage( "" );
+		gd.addStringField( "Process_" + name, defaultSelection, 30 );
+		gd.addMessage( "" );
+		gd.addMessage( "Available " + name + ":" );
+		
+		final String singular = name.substring( 0, name.length() - 1 ) + " ";
+		String allTps = singular + list[ 0 ];
+		
+		for ( int i = 1; i < list.length; ++i )
+			allTps += "\n" + singular + list[ i ];
+		
+		gd.addMessage( allTps, GUIHelper.smallStatusFont );
+		
+		GUIHelper.addScrollBars( gd );
+		gd.showDialog();
+		
+		if ( gd.wasCanceled() )
+			return null;
+		
+		// the result
+		final boolean[] selected = new boolean[ list.length ];
+		
+		for ( int i = 0; i < list.length; ++i )
+			selected[ i ] = false;
+		
+		try 
+		{
+			final ArrayList< Integer > timepointList = IntegerPattern.parseIntegerString( defaultTimePointString = gd.getNextString() );
+			
+			for ( final int tp : timepointList )
+			{
+				boolean found = false;
+				
+				for ( int i = 0; i < list.length && !found; ++i )
+				{
+					if ( tp == Integer.parseInt( list[ i ] ) )
+					{
+						selected[ i ] = true;
+						found = true;
+					}
+				}
+				
+				if ( !found )
+					IOFunctions.println( "Timepoint " + tp + " not part of the list of timepoints. Ignoring it." );
+			}				
+		} 
+		catch ( final ParseException e ) 
+		{
+			IOFunctions.println( "Cannot parse pattern '" + defaultTimePointString + "': " + e );
+			return null;
+		}
+		
+		defaultSelectionArray[ 0 ] = defaultSelection;
+		
+		return selected;
+	}
+	
+	public boolean queryDetails( final XMLParseResult xmlResult )
 	{	
 		final List< TimePoint > tpList = xmlResult.data.getSequenceDescription().getTimePoints().getTimePointList();
-		xmlResult.timepoints = new ArrayList< TimePoint >();
+		final List< Angle > angleList = xmlResult.data.getSequenceDescription().getAllAngles();
+		final List< Channel > channelList = xmlResult.data.getSequenceDescription().getAllChannels();
+		final List< Illumination > illumList = xmlResult.data.getSequenceDescription().getAllIlluminations();
 		
-		if ( xmlResult.timepointChoiceIndex == 1 )
+		xmlResult.timepoints = new ArrayList< TimePoint >();
+		xmlResult.angles = new ArrayList< Angle >();
+		xmlResult.channels = new ArrayList< Channel >();
+		xmlResult.illums = new ArrayList< Illumination >();
+		
+		//
+		// ANGLES
+		//
+		if ( xmlResult.angleChoiceIndex == 1 ) // choose a single angle
 		{
-			// choose a single timepoint
+			final int selection = queryIndividualEntry( "Angles", buildAngleList( angleList, true ), defaultAngleIndex );
 			
-			final String[] timepoints = buildTimepointList( tpList );
-			
-			if ( defaultTimePointIndex >= timepoints.length )
-				defaultTimePointIndex = 0;
-			
-			final GenericDialog gd = new GenericDialog( "Select Single Timepoint" );
-			gd.addChoice( "Process", timepoints, timepoints[ defaultTimePointIndex ] );
-			
-			gd.showDialog();
-			
-			if ( gd.wasCanceled() )
+			if ( selection >= 0 )
+				xmlResult.angles.add( angleList.get( defaultAngleIndex = selection ) );
+			else
 				return false;
-			
-			xmlResult.timepoints.add( tpList.get( defaultTimePointIndex = gd.getNextChoiceIndex() ) );
 		}
-		else if ( xmlResult.timepointChoiceIndex == 2 )
+		else if ( xmlResult.angleChoiceIndex == 2 || xmlResult.angleChoiceIndex == 3 ) // choose multiple angles or angles defined by pattern
 		{
-			// choose multiple timepoints
+			final boolean[] selection;
+			String[] defaultAngle = new String[]{ defaultAngleString };
 			
-			final String[] timepoints = buildTimepointList( tpList );
+			if ( xmlResult.angleChoiceIndex == 2 )
+				selection = queryMultipleEntries( "Angles", buildAngleList( angleList, true ), defaultAngleIndices );
+			else
+				selection = queryPattern( "Angles", buildAngleList( angleList, false ), defaultAngle );
 			
-			if ( defaultTimePointIndices == null || defaultTimePointIndices.length != timepoints.length )
-			{
-				defaultTimePointIndices = new boolean[ timepoints.length ];
-				defaultTimePointIndices[ 0 ] = true;
-				for ( int i = 1; i < timepoints.length; ++i )
-					defaultTimePointIndices[ i ] = false;
-			}
-			
-			final GenericDialog gd = new GenericDialog( "Select Multiple Timepoints" );
-			
-			gd.addMessage( "" );
-			for ( int i = 0; i < timepoints.length; ++i )
-				gd.addCheckbox( timepoints[ i ], defaultTimePointIndices[ i ] );
-			gd.addMessage( "" );
-
-			GUIHelper.addScrollBars( gd );			
-			gd.showDialog();
-			
-			if ( gd.wasCanceled() )
+			if ( selection == null )
 				return false;
-
-			for ( int i = 0; i < timepoints.length; ++i )
+			else
 			{
-				if ( gd.getNextBoolean() )
-				{
-					xmlResult.timepoints.add( tpList.get( i ) );
-					defaultTimePointIndices[ i ] = true;
-				}
-				else
-				{
-					defaultTimePointIndices[ i ] = false;					
-				}
+				defaultAngleIndices = selection;
+				
+				if ( xmlResult.angleChoiceIndex == 3 )
+					defaultAngleString = defaultAngle[ 0 ];
+				
+				for ( int i = 0; i < selection.length; ++i )
+					if ( selection[ i ] )
+						xmlResult.angles.add( angleList.get( i ) );
 			}
-		} 
-		else if ( xmlResult.timepointChoiceIndex == 3 )
+		}
+		else
 		{
-			final String[] timepoints = buildTimepointList( tpList );
+			for ( int i = 0; i < angleList.size(); ++i )
+				xmlResult.angles.add( angleList.get( i ) );				
+		}
+		
+		if ( xmlResult.angles.size() == 0 )
+		{
+			IOFunctions.println( "List of angles is empty. Stopping." );
+			xmlResult.angles = null;
+			return false;
+		}
+		else
+		{
+			String allAngles = xmlResult.angles.get( 0 ).getName();		
+			for ( int i = 1; i < xmlResult.angles.size(); ++i )
+				allAngles += "," + xmlResult.angles.get( i ).getName();
+			IOFunctions.println( "Angles selected: " + allAngles );
+		}
+
+		//
+		// CHANNELS
+		//
+		if ( xmlResult.channelChoiceIndex == 1 ) // choose a single channel
+		{
+			final int selection = queryIndividualEntry( "Channels", buildChannelList( channelList, true ), defaultChannelIndex );
 			
-			if ( defaultTimePointString == null || defaultTimePointString.length() == 0 )
-			{
-				defaultTimePointString = tpList.get( 0 ).getName();
-				
-				for ( int i = 1; i < Math.min( timepoints.length, 3 ); ++i )
-					defaultTimePointString += "," + tpList.get( i ).getName();
-			}
-			
-			final GenericDialog gd = new GenericDialog( "Select Range of Timepoints" );
-			
-			gd.addMessage( "" );
-			gd.addStringField( "Process_Timepoints", defaultTimePointString, 30 );
-			gd.addMessage( "" );
-			gd.addMessage( "Available Timepoints:" );
-			
-			String allTps = timepoints[ 0 ];
-			
-			for ( int i = 1; i < timepoints.length; ++i )
-				allTps += "\n" + timepoints[ i ];
-			
-			gd.addMessage( allTps, GUIHelper.smallStatusFont );
-			
-			GUIHelper.addScrollBars( gd );
-			gd.showDialog();
-			
-			if ( gd.wasCanceled() )
+			if ( selection >= 0 )
+				xmlResult.channels.add( channelList.get( defaultChannelIndex = selection ) );
+			else
 				return false;
+		}
+		else if ( xmlResult.channelChoiceIndex == 2 || xmlResult.channelChoiceIndex == 3 ) // choose multiple channels or channels defined by pattern
+		{
+			final boolean[] selection;
+			String[] defaultChannel = new String[]{ defaultChannelString };
 			
-			try 
+			if ( xmlResult.channelChoiceIndex == 2 )
+				selection = queryMultipleEntries( "Channels", buildChannelList( channelList, true ), defaultChannelIndices );
+			else
+				selection = queryPattern( "Channels", buildChannelList( channelList, false ), defaultChannel );
+			
+			if ( selection == null )
+				return false;
+			else
 			{
-				final ArrayList< Integer > timepointList = IntegerPattern.parseIntegerString( defaultTimePointString = gd.getNextString() );
+				defaultChannelIndices = selection;
 				
-				for ( final int tp : timepointList )
-				{
-					boolean found = false;
-					
-					for ( int i = 0; i < tpList.size() && !found; ++i )
-					{
-						if ( tp == Integer.parseInt( tpList.get( i ).getName() ) )
-						{
-							xmlResult.timepoints.add( tpList.get( i ) );
-							found = true;
-						}
-					}
-					
-					if ( !found )
-						IOFunctions.println( "Timepoint " + tp + " not part of the list of timepoints. Ignoring it." );
-				}				
-			} 
-			catch (ParseException e) 
-			{
-				IOFunctions.println( "Cannot parse pattern '" + defaultTimePointString + "': " + e );
-				defaultTimePointString = null;
-				xmlResult.timepoints.clear();
+				if ( xmlResult.channelChoiceIndex == 3 )
+					defaultChannelString = defaultChannel[ 0 ];
+				
+				for ( int i = 0; i < selection.length; ++i )
+					if ( selection[ i ] )
+						xmlResult.channels.add( channelList.get( i ) );
 			}
-		} 
+		}
+		else
+		{
+			for ( int i = 0; i < channelList.size(); ++i )
+				xmlResult.channels.add( channelList.get( i ) );				
+		}
+		
+		if ( xmlResult.channels.size() == 0 )
+		{
+			IOFunctions.println( "List of channels is empty. Stopping." );
+			xmlResult.channels = null;
+			return false;
+		}
+		else
+		{
+			String allChannels = xmlResult.channels.get( 0 ).getName();		
+			for ( int i = 1; i < xmlResult.channels.size(); ++i )
+				allChannels += "," + xmlResult.channels.get( i ).getName();
+			IOFunctions.println( "Channels selected: " + allChannels );
+		}
+
+		//
+		// ILLUMINATION DIRECTIONS
+		//
+		if ( xmlResult.illumChoiceIndex == 1 ) // choose a single illumination direction
+		{
+			final int selection = queryIndividualEntry( "Illumination Directions", buildIllumList( illumList, true ), defaultIllumIndex );
+			
+			if ( selection >= 0 )
+				xmlResult.illums.add( illumList.get( defaultIllumIndex = selection ) );
+			else
+				return false;
+		}
+		else if ( xmlResult.illumChoiceIndex == 2 || xmlResult.illumChoiceIndex == 3 ) // choose multiple illumination directions or illumination directions defined by pattern
+		{
+			final boolean[] selection;
+			String[] defaultIllum = new String[]{ defaultIllumString };
+			
+			if ( xmlResult.illumChoiceIndex == 2 )
+				selection = queryMultipleEntries( "Illumination Directions", buildIllumList( illumList, true ), defaultIllumIndices );
+			else
+				selection = queryPattern( "Illumination Directions", buildIllumList( illumList, false ), defaultIllum );
+			
+			if ( selection == null )
+				return false;
+			else
+			{
+				defaultIllumIndices = selection;
+				
+				if ( xmlResult.illumChoiceIndex == 3 )
+					defaultIllumString = defaultIllum[ 0 ];
+				
+				for ( int i = 0; i < selection.length; ++i )
+					if ( selection[ i ] )
+						xmlResult.illums.add( illumList.get( i ) );
+			}
+		}
+		else
+		{
+			for ( int i = 0; i < illumList.size(); ++i )
+				xmlResult.illums.add( illumList.get( i ) );				
+		}
+		
+		if ( xmlResult.illums.size() == 0 )
+		{
+			IOFunctions.println( "List of illumination directions is empty. Stopping." );
+			xmlResult.illums = null;
+			return false;
+		}
+		else
+		{
+			String allIllums = xmlResult.illums.get( 0 ).getName();		
+			for ( int i = 1; i < xmlResult.illums.size(); ++i )
+				allIllums += "," + xmlResult.illums.get( i ).getName();
+			IOFunctions.println( "Illumination directions selected: " + allIllums );
+		}
+
+		//
+		// TIMEPOINTS
+		//
+		if ( xmlResult.timepointChoiceIndex == 1 ) // choose a single timepoint
+		{
+			final int selection = queryIndividualEntry( "Timepoint", buildTimepointList( tpList, true ), defaultTimePointIndex );
+			
+			if ( selection >= 0 )
+				xmlResult.timepoints.add( tpList.get( defaultTimePointIndex = selection ) );
+			else
+				return false;
+		}
+		else if ( xmlResult.timepointChoiceIndex == 2 || xmlResult.timepointChoiceIndex == 3 ) // choose multiple timepoints or timepoints defined by pattern
+		{
+			final boolean[] selection;
+			String[] defaultTimePoint = new String[]{ defaultTimePointString };
+			
+			if ( xmlResult.timepointChoiceIndex == 2 )
+				selection = queryMultipleEntries( "Timepoints", buildTimepointList( tpList, true ), defaultTimePointIndices );
+			else
+				selection = queryPattern( "Timepoints", buildTimepointList( tpList, false ), defaultTimePoint );
+			
+			if ( selection == null )
+				return false;
+			else
+			{
+				defaultTimePointIndices = selection;
+				
+				if ( xmlResult.timepointChoiceIndex == 3 )
+					defaultTimePointString = defaultTimePoint[ 0 ];
+				
+				for ( int i = 0; i < selection.length; ++i )
+					if ( selection[ i ] )
+						xmlResult.timepoints.add( tpList.get( i ) );
+			}
+		}
 		else
 		{
 			for ( int i = 0; i < tpList.size(); ++i )
@@ -253,27 +555,69 @@ public class LoadParseQueryXML
 			xmlResult.timepoints = null;
 			return false;
 		}
-
-		String allTp = xmlResult.timepoints.get( 0 ).getName();
-		
-		for ( int i = 1; i < xmlResult.timepoints.size(); ++i )
-			allTp += "," + xmlResult.timepoints.get( i ).getName();
-		
-		IOFunctions.println( "Timepoints selected: " + allTp );
+		else
+		{
+			String allTp = xmlResult.timepoints.get( 0 ).getName();		
+			for ( int i = 1; i < xmlResult.timepoints.size(); ++i )
+				allTp += "," + xmlResult.timepoints.get( i ).getName();
+			IOFunctions.println( "Timepoints selected: " + allTp );
+		}
 		
 		return true;
 	}
 	
-	public static String[] buildTimepointList( final List< TimePoint > tpList )
+	public static String[] buildTimepointList( final List< TimePoint > tpList, final boolean addTitle )
 	{
 		final String[] timepoints = new String[ tpList.size() ];
 		
 		for ( int i = 0; i < timepoints.length; ++i )
-			timepoints[ i ] = "Timepoint " + tpList.get( i ).getName();
+			if ( addTitle )
+				timepoints[ i ] = "Timepoint " + tpList.get( i ).getName();
+			else
+				timepoints[ i ] = tpList.get( i ).getName();
 		
 		return timepoints;
 	}
-	
+
+	public static String[] buildAngleList( final List< Angle > angleList, final boolean addTitle )
+	{
+		final String[] angles = new String[ angleList.size() ];
+		
+		for ( int i = 0; i < angles.length; ++i )
+			if ( addTitle )
+				angles[ i ] = "Angles " + angleList.get( i ).getName();
+			else
+				angles[ i ] = angleList.get( i ).getName();
+		
+		return angles;
+	}
+
+	public static String[] buildChannelList( final List< Channel > channelList, final boolean addTitle )
+	{
+		final String[] channels = new String[ channelList.size() ];
+		
+		for ( int i = 0; i < channels.length; ++i )
+			if ( addTitle )
+				channels[ i ] = "Channels " + channelList.get( i ).getName();
+			else
+				channels[ i ] = channelList.get( i ).getName();
+		
+		return channels;
+	}
+
+	public static String[] buildIllumList( final List< Illumination > illumList, final boolean addTitle )
+	{
+		final String[] illums = new String[ illumList.size() ];
+		
+		for ( int i = 0; i < illums.length; ++i )
+			if ( addTitle )
+				illums[ i ] = "Illumination Directions " + illumList.get( i ).getName();
+			else
+				illums[ i ] = illumList.get( i ).getName();
+		
+		return illums;
+	}
+
 	public XMLParseResult tryParsing( final String xmlfile, final boolean parseAllTypes )
 	{
 		final XMLParseResult xml = new XMLParseResult();
@@ -355,7 +699,7 @@ public class LoadParseQueryXML
 		IOFunctions.printIJLog = true;
 	
 		final LoadParseQueryXML lpq = new LoadParseQueryXML();
-		final XMLParseResult xmlResult = lpq.queryXML( true );
+		final XMLParseResult xmlResult = lpq.queryXML( true, true, true, true );
 		
 		for ( final TimePoint i : xmlResult.timepoints )
 			System.out.println( i.getId() );

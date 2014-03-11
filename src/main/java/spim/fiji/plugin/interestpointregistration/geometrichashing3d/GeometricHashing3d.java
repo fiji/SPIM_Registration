@@ -10,6 +10,8 @@ import java.util.concurrent.Executors;
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.RigidModel3D;
 import mpicbg.models.TranslationModel3D;
+import mpicbg.spim.data.sequence.Angle;
+import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewSetup;
@@ -25,9 +27,14 @@ public class GeometricHashing3d extends InterestPointRegistration
 	public static int defaultModel = 2;	
 	protected int model = 2;
 
-	public GeometricHashing3d( final SpimData2 spimData, final ArrayList< TimePoint > timepointsToProcess, final ArrayList< ChannelProcess > channelsToProcess )
+	public GeometricHashing3d(
+			final SpimData2 spimData,
+			final ArrayList< Angle > anglesToProcess,
+			final ArrayList< ChannelProcess > channelsToProcess,
+			final ArrayList< Illumination > illumsToProcess,
+			final ArrayList< TimePoint > timepointsToProcess )
 	{
-		super( spimData, timepointsToProcess, channelsToProcess );
+		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
 	}
 
 	@Override
@@ -118,9 +125,14 @@ public class GeometricHashing3d extends InterestPointRegistration
 	}
 
 	@Override
-	public GeometricHashing3d newInstance( final SpimData2 spimData, final ArrayList< TimePoint > timepointsToProcess, final ArrayList< ChannelProcess > channelsToProcess )
+	public GeometricHashing3d newInstance(
+			final SpimData2 spimData,
+			final ArrayList< Angle > anglesToProcess,
+			final ArrayList< ChannelProcess > channelsToProcess,
+			final ArrayList< Illumination > illumsToProcess,
+			final ArrayList< TimePoint > timepointsToProcess )
 	{
-		return new GeometricHashing3d( spimData, timepointsToProcess, channelsToProcess );
+		return new GeometricHashing3d( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
 	}
 
 	@Override

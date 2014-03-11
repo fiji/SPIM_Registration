@@ -48,20 +48,21 @@ public class Interest_Point_Detection implements PlugIn
 	static
 	{
 		IOFunctions.printIJLog = true;
-		staticAlgorithms.add( new DifferenceOfMean() );
-		staticAlgorithms.add( new DifferenceOfGaussian() );
+		staticAlgorithms.add( new DifferenceOfMean( null, null, null, null, null ) );
+		staticAlgorithms.add( new DifferenceOfGaussian( null, null, null, null, null ) );
 	}
 	
 	@Override
 	public void run( final String arg )
 	{
-		final XMLParseResult result = new LoadParseQueryXML().queryXML( true );
+		// ask for everything but the channels
+		final XMLParseResult result = new LoadParseQueryXML().queryXML( true, false, true, true );
 		
 		if ( result == null )
 			return;
 		
 		// ask which channels have the objects we are searching for
-		final ArrayList< Channel > channels = result.getData().getSequenceDescription().getAllChannels();
+		final ArrayList< Channel > channels = result.getChannelsToProcess(); //result.getData().getSequenceDescription().getAllChannels();
 		
 		// the GenericDialog needs a list[] of String
 		final String[] descriptions = new String[ staticAlgorithms.size() ];
@@ -101,7 +102,7 @@ public class Interest_Point_Detection implements PlugIn
 		if ( gd.wasCanceled() )
 			return;
 
-		final InterestPointDetection ipd = staticAlgorithms.get( defaultAlgorithm = gd.getNextChoiceIndex() ).newInstance();
+		final int algorithm = defaultAlgorithm = gd.getNextChoiceIndex();
 
 		// how are the detections called (e.g. beads, nuclei, ...)
 		final String label = defaultLabel = gd.getNextString();
@@ -124,11 +125,18 @@ public class Interest_Point_Detection implements PlugIn
 			channelsToProcess.add( channels.get( 0 ) );
 		}
 
+		final InterestPointDetection ipd = staticAlgorithms.get( algorithm ).newInstance(
+				result.getData(),
+				result.getAnglesToProcess(),
+				channelsToProcess,
+				result.getIlluminationsToProcess(),
+				result.getTimePointsToProcess() );
+		
 		// the interest point detection should query its parameters
-		ipd.queryParameters( result.getData(), channelsToProcess, result.getTimePointsToProcess() );
+		ipd.queryParameters();
 		
 		// now extract all the detections
-		final HashMap< ViewId, List< InterestPoint > > points = ipd.findInterestPoints( result.getData(), channelsToProcess, result.getTimePointsToProcess() );
+		final HashMap< ViewId, List< InterestPoint > > points = ipd.findInterestPoints();
 		
 		if ( ipd instanceof DifferenceOf )
 		{

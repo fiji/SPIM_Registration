@@ -46,20 +46,38 @@ public class DifferenceOfMean extends DifferenceOf
 	boolean[] findMin;
 	boolean[] findMax;
 	
+	public DifferenceOfMean(
+			final SpimData2 spimData,
+			final ArrayList<Angle> anglesToProcess,
+			final ArrayList<Channel> channelsToProcess,
+			final ArrayList<Illumination> illumsToProcess,
+			final ArrayList<TimePoint> timepointsToProcess )
+	{
+		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+	}
+
 	@Override
 	public String getDescription() { return "Difference-of-Mean (Integral image based)"; }
 
 	@Override
-	public DifferenceOfMean newInstance() { return new DifferenceOfMean(); }
+	public DifferenceOfMean newInstance(
+			final SpimData2 spimData,
+			final ArrayList<Angle> anglesToProcess,
+			final ArrayList<Channel> channelsToProcess,
+			final ArrayList<Illumination> illumsToProcess,
+			final ArrayList<TimePoint> timepointsToProcess ) 
+	{ 
+		return new DifferenceOfMean( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+	}
 
 	@Override
-	public HashMap< ViewId, List< InterestPoint > > findInterestPoints( final SpimData2 spimData, final ArrayList< Channel> channelsToProcess, final ArrayList< TimePoint > timepointsToProcess )
+	public HashMap< ViewId, List< InterestPoint > > findInterestPoints()
 	{
 		final HashMap< ViewId, List< InterestPoint > > interestPoints = new HashMap< ViewId, List< InterestPoint > >();
 		
 		for ( final TimePoint t : timepointsToProcess )
-			for ( final Angle a : spimData.getSequenceDescription().getAllAngles() )
-				for ( final Illumination i : spimData.getSequenceDescription().getAllIlluminations() )
+			for ( final Angle a : anglesToProcess )
+				for ( final Illumination i : illumsToProcess )
 					for ( final Channel c : channelsToProcess )
 					{
 						// make sure not everything crashes if one file is missing

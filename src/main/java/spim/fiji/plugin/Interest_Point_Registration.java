@@ -47,7 +47,7 @@ public class Interest_Point_Registration implements PlugIn
 	static
 	{
 		IOFunctions.printIJLog = true;
-		staticAlgorithms.add( new GeometricHashing3d( null, null, null ) );
+		staticAlgorithms.add( new GeometricHashing3d( null, null, null, null, null ) );
 	}
 
 	@Override
@@ -55,7 +55,8 @@ public class Interest_Point_Registration implements PlugIn
 	{
 		new ImageJ();
 		
-		final XMLParseResult result = new LoadParseQueryXML().queryXML( true );
+		// ask for everything but the channels
+		final XMLParseResult result = new LoadParseQueryXML().queryXML( true, false, true, true );
 
 		if ( result == null )
 			return;
@@ -141,7 +142,12 @@ public class Interest_Point_Registration implements PlugIn
 		for ( final ChannelProcess c : channelsToProcess )
 			IOFunctions.println( "registering channel: " + c.getChannel().getId()  + " label: '" + c.getLabel() + "'" );
 		
-		final InterestPointRegistration ipr = staticAlgorithms.get( algorithm ).newInstance( result.getData(), result.getTimePointsToProcess(), channelsToProcess );
+		final InterestPointRegistration ipr = staticAlgorithms.get( algorithm ).newInstance(
+				result.getData(),
+				result.getAnglesToProcess(),
+				channelsToProcess,
+				result.getIlluminationsToProcess(),
+				result.getTimePointsToProcess());
 
 		if ( registrationType == 0 )
 			registerIndividualTimePoints( ipr, result );
