@@ -36,10 +36,12 @@ public class LoadParseQueryXML
 {
 	public static String defaultXMLfilename = "/Users/preibischs/Documents/Microscopy/SPIM/HisYFP-SPIM/example_fromdialog.xml";
 		
-	public static String goodMsg = "The selected XML file was parsed successfully";
-	public static String warningMsg = "The selected file does not appear to be an xml. Press OK to try to parse anyways.";
-	public static String errorMsg = "An ERROR occured parsing this XML file! Please select a different XML (see log)";
-	public static String neutralMsg = "No XML file selected.";
+	public static String goodMsg1 = "The selected XML file was parsed successfully";
+	public static String warningMsg1 = "The selected file does not appear to be an xml. Press OK to try to parse anyways.";
+	public static String errorMsg1 = "An ERROR occured parsing this XML file! Please select a different XML (see log)";
+	public static String neutralMsg1 = "No XML file selected.";
+	
+	public static String noMsg2 = " \n ";
 	
 	public static String[] tpChoice = new String[]{ "All Timepoints", "Single Timepoint (Select from List)", "Multiple Timepoints (Select from List)", "Range of Timepoints (Specify by Name)" };
 	public static int defaultTPChoice = 0;
@@ -68,7 +70,7 @@ public class LoadParseQueryXML
 	public class XMLParseResult
 	{
 		// local variables for LoadParseQueryXML
-		String message;
+		String message1, message2;
 		Color color;
 		int timepointChoiceIndex;
 		
@@ -127,8 +129,14 @@ public class LoadParseQueryXML
 		final GenericDialogPlus gd = new GenericDialogPlus( "Select Dataset" );
 		
 		gd.addFileField( "Select_XML", defaultXMLfilename, 65 );
-		gd.addMessage( xmlResult.message, GUIHelper.largestatusfont, xmlResult.color );
-		addListeners( gd, (TextField)gd.getStringFields().lastElement(), (Label)gd.getMessage() );
+		gd.addMessage( xmlResult.message1, GUIHelper.largestatusfont, xmlResult.color );
+		Label l1 = (Label)gd.getMessage();
+		
+		// first set an empty text so that it does not become a multilinelabel
+		gd.addMessage( "", GUIHelper.smallStatusFont, xmlResult.color );
+		Label l2 = (Label)gd.getMessage();
+		l2.setText( xmlResult.message2 );
+		addListeners( gd, (TextField)gd.getStringFields().lastElement(), l1, l2 );
 		
 		if ( askForAngles || askForChannels || askForIllum || askForTimepoints  )
 			gd.addMessage( "" );
@@ -623,7 +631,8 @@ public class LoadParseQueryXML
 		final XMLParseResult xml = new XMLParseResult();
 		
 		xml.xmlfilename = xmlfile;
-		xml.message = neutralMsg;
+		xml.message1 = neutralMsg1;
+		xml.message2 = noMsg2;
 		xml.color = GUIHelper.neutral;
 		xml.data = null;
 		
@@ -638,15 +647,21 @@ public class LoadParseQueryXML
 				for ( final ViewDescription<?, ?> v : xml.data.getSequenceDescription().getViewDescriptions().values() )
 					if ( !v.isPresent() )
 						++countMissingViews;
-
-				xml.message = goodMsg + " [" + xml.data.getSequenceDescription().numTimePoints() + " timepoints, " + 
-											   xml.data.getSequenceDescription().numViewSetups() + " viewsetups, " + 
-											   countMissingViews + " missing views]";
+				
+				final int angles = xml.data.getSequenceDescription().getAllAngles().size();
+				final int channels = xml.data.getSequenceDescription().getAllChannels().size();
+				final int illums = xml.data.getSequenceDescription().getAllIlluminations().size();
+				final int timepoints = xml.data.getSequenceDescription().numTimePoints();
+				
+				xml.message1 = goodMsg1;
+				xml.message2 = angles + " angles, " + channels + " channels, " + illums + " illumination directions, " + timepoints + " timepoints, " + countMissingViews + " missing views\n" +
+						"ImgLoader: " + xml.data.getSequenceDescription().getImgLoader().getClass().getName();
 				xml.color = GUIHelper.good;
 			}
 			catch ( final Exception e )
 			{
-				xml.message = errorMsg;
+				xml.message1 = errorMsg1;
+				xml.message2 = noMsg2;
 				xml.color = GUIHelper.error;
 
 				IOFunctions.println( "Cannot parse '" + xmlfile + "': " + e );
@@ -654,7 +669,8 @@ public class LoadParseQueryXML
 		}
 		else if ( xmlfile.length() > 0 )
 		{
-			xml.message = warningMsg;
+			xml.message1 = warningMsg1;
+			xml.message2 = noMsg2;
 			xml.color = GUIHelper.warning;
 		}	
 		
@@ -667,7 +683,7 @@ public class LoadParseQueryXML
 		return io.load( xmlFilename );
 	}
 	
-	protected void addListeners( final GenericDialog gd, final TextField tf, final Label label )
+	protected void addListeners( final GenericDialog gd, final TextField tf, final Label label1, final Label label2  )
 	{
 		gd.addDialogListener( new DialogListener()
 		{
@@ -681,11 +697,12 @@ public class LoadParseQueryXML
 					// try parsing if it ends with XML
 					final XMLParseResult xmlResult = tryParsing( xmlFilename, false );
 					
-					if ( label.getText() != xmlResult.message )
+					if ( label1.getText() != xmlResult.message1 )
 					{
-						System.out.println( "setting" );
-						label.setText( xmlResult.message );
-						label.setForeground( xmlResult.color );
+						label1.setText( xmlResult.message1 );
+						label2.setText( xmlResult.message2 );
+						label1.setForeground( xmlResult.color );
+						label2.setForeground( xmlResult.color );
 					}
 				}
 				return true;
