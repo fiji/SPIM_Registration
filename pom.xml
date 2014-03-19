@@ -16,10 +16,10 @@
 	<name>SPIM Registration</name>
 	<description>Software for the reconstruction of multi-view microscopic acquisitions like Selective Plane Illumination Microscopy (SPIM) Data.</description>
 
-        <properties>
-                <!-- Prevent the plugin from being copied to ./plugins/ by default -->
-                <imagej.app.directory>path/to/Fiji.app/</imagej.app.directory>
-        </properties>
+	<properties>
+		<!-- Prevent the plugin from being copied to ./plugins/ by default -->
+		<imagej.app.directory>path/to/Fiji.app/</imagej.app.directory>
+	</properties>
 
 	<dependencies>
 		<dependency>
@@ -63,11 +63,6 @@
 			<version>${mpicbg.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>nz.ac.waikato.cms.weka</groupId>
-			<artifactId>weka-dev</artifactId>
-			<version>${weka.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>java3d</groupId>
 			<artifactId>j3d-core</artifactId>
 			<version>${java3d.version}</version>
@@ -101,24 +96,9 @@
 			<version>${fiji.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>${bio-formats.groupId}</groupId>
-			<artifactId>scifio</artifactId>
-			<version>${bio-formats.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>net.java.dev.jna</groupId>
 			<artifactId>jna</artifactId>
 			<version>${jna.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>net.imglib2</groupId>
-			<artifactId>imglib2-algorithms</artifactId>
-			<version>${imglib2.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>net.imglib2</groupId>
-			<artifactId>imglib2-ij</artifactId>
-			<version>${imglib2.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imglib2</groupId>
@@ -149,15 +129,11 @@
 		<url>https://github.com/fiji/spimreconstruction</url>
 	</scm>
 
-	<!-- NB: for project parent -->
 	<repositories>
+		<!-- NB: for project parent -->
 		<repository>
-			<id>imagej.releases</id>
-			<url>http://maven.imagej.net/content/repositories/releases</url>
-		</repository>
-		<repository>
-			<id>imagej.snapshots</id>
-			<url>http://maven.imagej.net/content/repositories/snapshots</url>
+			<id>imagej.public</id>
+			<url>http://maven.imagej.net/content/groups/public</url>
 		</repository>
 	</repositories>
 
