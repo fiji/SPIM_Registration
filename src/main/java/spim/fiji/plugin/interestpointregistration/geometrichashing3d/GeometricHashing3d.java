@@ -38,7 +38,7 @@ public class GeometricHashing3d extends InterestPointRegistration
 	}
 
 	@Override
-	public boolean register( final boolean isTimeSeriesRegistration )
+	public boolean register( final int registrationType )
 	{
 		final SpimData2 spimData = getSpimData();
 		final ArrayList< TimePoint > timepointsToProcess = getTimepointsToProcess(); 
@@ -139,13 +139,13 @@ public class GeometricHashing3d extends InterestPointRegistration
 	public String getDescription() { return "Fast 3d geometric hashing";}
 
 	@Override
-	public void addQuery( final GenericDialog gd, final boolean isTimeSeriesRegistration )
+	public void addQuery( final GenericDialog gd, final int registrationType )
 	{
 		gd.addChoice( "Transformation model", modelChoice, modelChoice[ defaultModel ] );
 	}
 
 	@Override
-	public boolean parseDialog( final GenericDialog gd, final boolean isTimeSeriesRegistration )
+	public boolean parseDialog( final GenericDialog gd, final int registrationType )
 	{
 		model = defaultModel = gd.getNextChoiceIndex();
 		return true;

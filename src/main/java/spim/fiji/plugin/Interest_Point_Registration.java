@@ -14,6 +14,7 @@ import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.TimePoints;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
@@ -36,11 +37,13 @@ import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 public class Interest_Point_Registration implements PlugIn
 {
 	public static ArrayList< InterestPointRegistration > staticAlgorithms = new ArrayList< InterestPointRegistration >();
-	public static String[] registrationChoices = new String[]{ "Register several timepoints individually", "Register a time-series (all to one reference)" };
+	public static String[] registrationChoices = { "Register timepoints individually", "Match all against one reference timepoint (no global optimization)", "All-to-all timepoints matching (global optimization)", "All-to-all timepoints matching with range ('reasonable' global optimization)" };
 	
 	public static int defaultAlgorithm = 0;
 	public static int defaultRegistration = 0;
 	public static int[] defaultChannelLabels = null;
+	public static int defaultRange = 5;
+	public static int defaultReferenceTimepoint = -1;
 	
 	final protected String warningLabel = " (WARNING: Only available for "; 
 	
@@ -78,9 +81,17 @@ public class Interest_Point_Registration implements PlugIn
 		
 		gd.addChoice( "Registration_algorithm", descriptions, descriptions[ defaultAlgorithm ] );
 		
+		final String[] choicesGlobal;
 		if ( result.getTimePointsToProcess().size() > 1 )
-			gd.addChoice( "Type_of_registration", registrationChoices, registrationChoices[ defaultRegistration ] );
-
+			choicesGlobal = registrationChoices.clone();
+		else
+			choicesGlobal = new String[]{ registrationChoices[ 0 ], registrationChoices[ 1 ] };
+		
+		if ( defaultRegistration >= choicesGlobal.length )
+			defaultRegistration = 0;
+		
+		gd.addChoice( "Type_of_registration", choicesGlobal, choicesGlobal[ defaultRegistration ] );
+		
 		if ( defaultChannelLabels == null || defaultChannelLabels.length != channels.size() )
 			defaultChannelLabels = new int[ channels.size() ];
 		
@@ -107,12 +118,7 @@ public class Interest_Point_Registration implements PlugIn
 			return;
 		
 		final int algorithm = defaultAlgorithm = gd.getNextChoiceIndex();
-		final int registrationType;
-		
-		if ( result.getTimePointsToProcess().size() > 1 )
-			defaultRegistration = registrationType = gd.getNextChoiceIndex();
-		else
-			defaultRegistration = registrationType = 0;
+		final int registrationType = defaultRegistration = gd.getNextChoiceIndex();
 
 		// assemble which channels have been selected with with label
 		final ArrayList< ChannelProcess > channelsToProcess = new ArrayList< ChannelProcess >();
@@ -149,20 +155,45 @@ public class Interest_Point_Registration implements PlugIn
 				result.getIlluminationsToProcess(),
 				result.getTimePointsToProcess());
 
-		if ( registrationType == 0 )
-			registerIndividualTimePoints( ipr, result );
-		else
-			registerTimeSeries( ipr, result );
+		register( ipr, result, registrationType );
 	}
 	
 	public static String[] inputChoice = new String[]{ "Calibration only (resets existing transform)", "Current view transformations (appends to current transform)" };	
 	public static int defaultTransformInputChoice = 0;
 	public static boolean defaultDisplayTransformOnly = false;
 	
-	protected void registerIndividualTimePoints( final InterestPointRegistration ipr, final XMLParseResult result )
+	protected String[] assembleTimepoints( final TimePoints< TimePoint > timepoints )
 	{
-		final boolean isTimeSeries = false;
-		final GenericDialog gd = new GenericDialog( "Register several timepoints individually" );
+		final String[] tps = new String[ timepoints.getTimePointList().size() ];
+		
+		for ( int t = 0; t < tps.length; ++t )
+			tps[ t ] = timepoints.getTimePointList().get( t ).getName();
+		
+		return tps;
+	}
+	
+	protected void register( final InterestPointRegistration ipr, final XMLParseResult result, final int registrationType )
+	{
+		final GenericDialog gd = new GenericDialog( "Register: " + registrationChoices[ registrationType ] );
+		
+		if ( registrationType == 1 )
+		{
+			final String[] tpList = assembleTimepoints( result.getData().getSequenceDescription().getTimePoints() );
+			
+			// by default, the reference timepoint is the first one the ones to process
+			if ( defaultReferenceTimepoint < 0 || defaultReferenceTimepoint >= tpList.length )
+				defaultReferenceTimepoint = result.getIlluminationsToProcess().get( 0 ).getId();
+
+			// if that goes wrong by any chance (should not), set it to 0
+			if ( defaultReferenceTimepoint >= tpList.length )
+				defaultReferenceTimepoint = 0;
+			
+			gd.addChoice( "Reference timepoint", tpList, tpList[ defaultReferenceTimepoint ] );
+		}
+		else if ( registrationType == 3 )
+		{
+			gd.addSlider( "Range for all-to-all timepoint matching", 2, 10, defaultRange );
+		}
 		
 		gd.addChoice( "Register_based_on", inputChoice, inputChoice[ defaultTransformInputChoice ] );
 		gd.addCheckbox( "Display final transformation only (do not edit XML)", defaultDisplayTransformOnly );
@@ -171,20 +202,30 @@ public class Interest_Point_Registration implements PlugIn
 		gd.addMessage( "Algorithm parameters [" + ipr.getDescription() + "]", new Font( Font.SANS_SERIF, Font.BOLD, 12 ) );
 		gd.addMessage( "" );
 		
-		ipr.addQuery( gd, isTimeSeries );
+		ipr.addQuery( gd, registrationType );
 		
+		// display the dialog
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
 			return;
 
+		int referenceTimePoint = defaultReferenceTimepoint;
+		int range = defaultRange;
+		
+		if ( registrationType == 1 )
+			referenceTimePoint = defaultReferenceTimepoint = gd.getNextChoiceIndex();
+		
+		if ( registrationType == 3 )
+			range = defaultRange = (int)Math.round( gd.getNextNumber() );
+		
 		ipr.setInitialTransformType( defaultTransformInputChoice = gd.getNextChoiceIndex() );
 		final boolean displayOnly = defaultDisplayTransformOnly = gd.getNextBoolean();
 		
-		ipr.parseDialog( gd, isTimeSeries );
+		ipr.parseDialog( gd, registrationType );
 		
 		// perform the actual registration(s)
-		ipr.register( isTimeSeries );
+		ipr.register( registrationType );
 		
 		// save the XML including transforms and correspondences
 		if ( !displayOnly )
@@ -205,11 +246,6 @@ public class Interest_Point_Registration implements PlugIn
 				e.printStackTrace();
 			}			
 		}
-	}
-
-	protected void registerTimeSeries( final InterestPointRegistration ipr, final XMLParseResult result )
-	{
-		IOFunctions.println( "Not implemented yet." );
 	}
 
 	/**

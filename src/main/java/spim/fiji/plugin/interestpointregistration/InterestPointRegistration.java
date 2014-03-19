@@ -396,27 +396,27 @@ public abstract class InterestPointRegistration
 	/**
 	 * Registers all timepoints
 	 * 
-	 * @param isTimeSeriesRegistration
+	 * @param registrationType - which kind of timeseries registration
 	 * @return
 	 */
-	public abstract boolean register( final boolean isTimeSeriesRegistration );
+	public abstract boolean register( final int registrationType );
 
 	/**
 	 * adds the questions this registration wants to ask
 	 * 
 	 * @param gd
-	 * @param isTimeSeriesRegistration
+	 * @param registrationType - which kind of timeseries registration
 	 */
-	public abstract void addQuery( final GenericDialog gd, final boolean isTimeSeriesRegistration );
+	public abstract void addQuery( final GenericDialog gd, final int registrationType );
 	
 	/**
 	 * queries the questions asked before
 	 * 
 	 * @param gd
-	 * @param isTimeSeriesRegistration
+	 * @param registrationType - which kind of timeseries registration
 	 * @return
 	 */
-	public abstract boolean parseDialog( final GenericDialog gd, final boolean isTimeSeriesRegistration );
+	public abstract boolean parseDialog( final GenericDialog gd, final int registrationType );
 	
 	/**
 	 * @return - a new instance without any special properties
