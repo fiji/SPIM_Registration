@@ -16,6 +16,13 @@
 	<name>SPIM Registration</name>
 	<description>Software for the reconstruction of multi-view microscopic acquisitions like Selective Plane Illumination Microscopy (SPIM) Data.</description>
 
+	<licenses>
+		<license>
+			<name>GNU Public License v2</name>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+	
 	<properties>
 		<!-- Prevent the plugin from being copied to ./plugins/ by default -->
 		<imagej.app.directory>path/to/Fiji.app/</imagej.app.directory>
