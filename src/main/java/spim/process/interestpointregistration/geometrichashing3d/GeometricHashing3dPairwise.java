@@ -1,4 +1,4 @@
-package spim.fiji.plugin.interestpointregistration.geometrichashing3d;
+package spim.process.interestpointregistration.geometrichashing3d;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -10,11 +10,11 @@ import mpicbg.models.RigidModel3D;
 import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
-import spim.fiji.plugin.interestpointregistration.ChannelInterestPointListPair;
-import spim.fiji.plugin.interestpointregistration.Detection;
-import spim.fiji.plugin.interestpointregistration.RANSAC;
-import spim.fiji.plugin.interestpointregistration.RANSACParameters;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.process.interestpointregistration.ChannelInterestPointListPair;
+import spim.process.interestpointregistration.Detection;
+import spim.process.interestpointregistration.RANSAC;
+import spim.process.interestpointregistration.RANSACParameters;
 
 public class GeometricHashing3dPairwise implements Callable< ChannelInterestPointListPair >
 {

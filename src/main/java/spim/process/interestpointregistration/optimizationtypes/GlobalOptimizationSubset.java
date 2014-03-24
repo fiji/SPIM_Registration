@@ -1,4 +1,4 @@
-package spim.fiji.plugin.interestpointregistration.optimizationtypes;
+package spim.process.interestpointregistration.optimizationtypes;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,10 +17,10 @@ import mpicbg.spim.data.registration.ViewTransform;
 import mpicbg.spim.data.registration.ViewTransformAffine;
 import mpicbg.spim.data.sequence.ViewId;
 
-import spim.fiji.plugin.interestpointregistration.ChannelInterestPointListPair;
-import spim.fiji.plugin.interestpointregistration.ChannelProcess;
-import spim.fiji.plugin.interestpointregistration.GlobalOpt;
 import spim.fiji.spimdata.SpimData2;
+import spim.process.interestpointregistration.ChannelInterestPointListPair;
+import spim.process.interestpointregistration.ChannelProcess;
+import spim.process.interestpointregistration.GlobalOpt;
 
 /**
  * Defines a subset of views that need to be matched and then a global optimization

@@ -1,4 +1,4 @@
-package spim.fiji.plugin.interestpointregistration;
+package spim.process.interestpointregistration;
 
 import java.util.ArrayList;
 import java.util.List;

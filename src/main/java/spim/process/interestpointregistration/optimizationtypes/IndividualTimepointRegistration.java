@@ -1,14 +1,14 @@
-package spim.fiji.plugin.interestpointregistration.optimizationtypes;
+package spim.process.interestpointregistration.optimizationtypes;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import spim.fiji.plugin.interestpointregistration.ChannelInterestPointList;
-import spim.fiji.plugin.interestpointregistration.ChannelInterestPointListPair;
-import spim.fiji.plugin.interestpointregistration.ChannelProcess;
 import spim.fiji.spimdata.SpimData2;
+import spim.process.interestpointregistration.ChannelInterestPointList;
+import spim.process.interestpointregistration.ChannelInterestPointListPair;
+import spim.process.interestpointregistration.ChannelProcess;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;

@@ -1,4 +1,4 @@
-package spim.fiji.plugin.interestpointregistration.optimizationtypes;
+package spim.process.interestpointregistration.optimizationtypes;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -6,16 +6,16 @@ import java.util.List;
 
 import net.imglib2.realtransform.AffineTransform3D;
 
-import spim.fiji.plugin.interestpointregistration.ChannelInterestPointList;
-import spim.fiji.plugin.interestpointregistration.ChannelInterestPointListPair;
-import spim.fiji.plugin.interestpointregistration.ChannelProcess;
-import spim.fiji.plugin.interestpointregistration.Detection;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.process.interestpointregistration.ChannelInterestPointList;
+import spim.process.interestpointregistration.ChannelInterestPointListPair;
+import spim.process.interestpointregistration.ChannelProcess;
+import spim.process.interestpointregistration.Detection;
 
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;

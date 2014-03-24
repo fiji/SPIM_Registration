@@ -1,4 +1,4 @@
-package spim.fiji.plugin.interestpointregistration;
+package spim.process.interestpointregistration;
 
 import mpicbg.spim.data.sequence.Channel;
 

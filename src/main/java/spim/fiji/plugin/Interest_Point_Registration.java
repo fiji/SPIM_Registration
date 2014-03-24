@@ -20,17 +20,19 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
-import spim.fiji.plugin.interestpointregistration.ChannelProcess;
 import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
-import spim.fiji.plugin.interestpointregistration.geometrichashing3d.GeometricHashing3d;
-import spim.fiji.plugin.interestpointregistration.optimizationtypes.GlobalOptimizationType;
-import spim.fiji.plugin.interestpointregistration.optimizationtypes.IndividualTimepointRegistration;
-import spim.fiji.plugin.interestpointregistration.optimizationtypes.ReferenceTimepointRegistration;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIo;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.process.interestpointregistration.ChannelProcess;
+import spim.process.interestpointregistration.geometrichashing3d.GeometricHashing3d;
+import spim.process.interestpointregistration.optimizationtypes.AllToAllRegistration;
+import spim.process.interestpointregistration.optimizationtypes.AllToAllRegistrationWithRange;
+import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationType;
+import spim.process.interestpointregistration.optimizationtypes.IndividualTimepointRegistration;
+import spim.process.interestpointregistration.optimizationtypes.ReferenceTimepointRegistration;
 
 /**
  *
@@ -278,6 +280,10 @@ public class Interest_Point_Registration implements PlugIn
 					ipr.getIllumsToProcess(),
 					result.getData().getSequenceDescription().getTimePoints().getTimePointList().get( referenceTimePoint ),
 					!displayOnly );
+		else if ( registrationType == 2 )
+			type = new AllToAllRegistration( !displayOnly );
+		else if ( registrationType == 3 )
+			type = new AllToAllRegistrationWithRange( range, !displayOnly );
 		else
 			type = null;
 		

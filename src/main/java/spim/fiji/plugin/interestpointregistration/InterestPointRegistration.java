@@ -11,8 +11,9 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
-import spim.fiji.plugin.interestpointregistration.optimizationtypes.GlobalOptimizationType;
 import spim.fiji.spimdata.SpimData2;
+import spim.process.interestpointregistration.ChannelProcess;
+import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationType;
 
 /**
  * 

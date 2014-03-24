@@ -1,4 +1,4 @@
-package spim.fiji.plugin.interestpointregistration.geometrichashing3d;
+package spim.process.interestpointregistration.geometrichashing3d;
 
 import ij.gui.GenericDialog;
 
@@ -17,12 +17,12 @@ import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
-import spim.fiji.plugin.interestpointregistration.ChannelInterestPointListPair;
-import spim.fiji.plugin.interestpointregistration.ChannelProcess;
 import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
-import spim.fiji.plugin.interestpointregistration.optimizationtypes.GlobalOptimizationSubset;
-import spim.fiji.plugin.interestpointregistration.optimizationtypes.GlobalOptimizationType;
 import spim.fiji.spimdata.SpimData2;
+import spim.process.interestpointregistration.ChannelInterestPointListPair;
+import spim.process.interestpointregistration.ChannelProcess;
+import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationSubset;
+import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationType;
 
 public class GeometricHashing3d extends InterestPointRegistration
 {

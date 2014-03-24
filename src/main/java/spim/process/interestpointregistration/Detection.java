@@ -1,4 +1,4 @@
-package spim.fiji.plugin.interestpointregistration;
+package spim.process.interestpointregistration;
 
 import mpicbg.imglib.util.Util;
 import mpicbg.models.Point;

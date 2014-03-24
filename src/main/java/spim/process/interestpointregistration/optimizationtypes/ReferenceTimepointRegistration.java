@@ -1,4 +1,4 @@
-package spim.fiji.plugin.interestpointregistration.optimizationtypes;
+package spim.process.interestpointregistration.optimizationtypes;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,10 +12,10 @@ import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
-import spim.fiji.plugin.interestpointregistration.ChannelInterestPointList;
-import spim.fiji.plugin.interestpointregistration.ChannelInterestPointListPair;
-import spim.fiji.plugin.interestpointregistration.ChannelProcess;
 import spim.fiji.spimdata.SpimData2;
+import spim.process.interestpointregistration.ChannelInterestPointList;
+import spim.process.interestpointregistration.ChannelInterestPointListPair;
+import spim.process.interestpointregistration.ChannelProcess;
 
 public class ReferenceTimepointRegistration extends GlobalOptimizationType
 {

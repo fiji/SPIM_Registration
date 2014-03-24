@@ -1,8 +1,8 @@
-package spim.fiji.plugin.interestpointregistration.geometrichashing3d;
+package spim.process.interestpointregistration.geometrichashing3d;
 
 import java.util.ArrayList;
 
-import spim.fiji.plugin.interestpointregistration.Detection;
+import spim.process.interestpointregistration.Detection;
 
 import mpicbg.models.Point;
 import mpicbg.pointdescriptor.LocalCoordinateSystemPointDescriptor;

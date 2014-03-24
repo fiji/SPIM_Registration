@@ -1,11 +1,11 @@
-package spim.fiji.plugin.interestpointregistration;
+package spim.process.interestpointregistration;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
-import spim.fiji.plugin.interestpointregistration.optimizationtypes.GlobalOptimizationSubset;
-import spim.fiji.plugin.interestpointregistration.optimizationtypes.GlobalOptimizationType;
+import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationSubset;
+import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationType;
 
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.Model;
