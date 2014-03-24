@@ -8,7 +8,9 @@ import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.spimdata.SpimData2;
 
@@ -139,7 +141,7 @@ public abstract class DifferenceOf extends InterestPointDetection
 		final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), tp, channel, angle, illumination );
 
 		if ( viewId == null )
-			IOFunctions.println( "An error occured. Count not find the corresponding ViewSetup for angle: " + angle.getId() + " channel: " + channel.getId() + " illum: " + illumination.getId() );
+			IOFunctions.println( "An error occured. Count not find the corresponding ViewSetup for angle: " + angle.getName() + " channel: " + channel.getName() + " illum: " + illumination.getName() + " timepoint: " + tp.getName() );
 		
 		return viewId;
 	}
