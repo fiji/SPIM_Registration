@@ -3,17 +3,7 @@ package spim.fiji.plugin.interestpointregistration;
 import ij.gui.GenericDialog;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
 
-import mpicbg.models.AbstractAffineModel3D;
-import mpicbg.models.Model;
-import mpicbg.models.Tile;
-import mpicbg.spim.data.registration.ViewRegistration;
-import mpicbg.spim.data.registration.ViewRegistrations;
-import mpicbg.spim.data.registration.ViewTransform;
-import mpicbg.spim.data.registration.ViewTransformAffine;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
@@ -21,16 +11,8 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
-import mpicbg.spim.mpicbg.PointMatchGeneric;
-import net.imglib2.realtransform.AffineTransform3D;
-import spim.fiji.plugin.interestpointregistration.optimizationtypes.GlobalOptimizationSubset;
 import spim.fiji.plugin.interestpointregistration.optimizationtypes.GlobalOptimizationType;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
-import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.fiji.spimdata.interestpoints.InterestPointList;
-import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
-import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
 /**
  * 
@@ -146,7 +128,7 @@ public abstract class InterestPointRegistration
 			for ( final Angle a : anglesToProcess )
 				for ( final Illumination i : illumsToProcess )
 					for ( final ChannelProcess c : channelsToProcess )
-				{
+					{
 						// bureaucracy
 						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c.getChannel(), a, i );
 						
@@ -200,7 +182,7 @@ public abstract class InterestPointRegistration
 							if ( viewDescription.getViewSetup().getPixelSizeUnit() != null )
 								setUnit( viewDescription.getViewSetup().getPixelSizeUnit() );
 						}
-				}
+					}
 		
 		return true;
 	}
