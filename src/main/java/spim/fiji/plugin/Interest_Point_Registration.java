@@ -10,8 +10,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
-import org.jruby.ext.posix.FreeBSDHeapFileStat.time_t;
-
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
@@ -27,6 +25,7 @@ import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
 import spim.fiji.plugin.interestpointregistration.geometrichashing3d.GeometricHashing3d;
 import spim.fiji.plugin.interestpointregistration.optimizationtypes.GlobalOptimizationType;
 import spim.fiji.plugin.interestpointregistration.optimizationtypes.IndividualTimepointRegistration;
+import spim.fiji.plugin.interestpointregistration.optimizationtypes.ReferenceTimepointRegistration;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIo;
 import spim.fiji.spimdata.XmlIoSpimData2;
@@ -271,7 +270,15 @@ public class Interest_Point_Registration implements PlugIn
 		
 		if ( registrationType == 0 )
 			type = new IndividualTimepointRegistration( !displayOnly );
-		else 
+		else if ( registrationType == 1 )
+			type = new ReferenceTimepointRegistration(
+					result.getData(),
+					ipr.getAnglesToProcess(),
+					ipr.getChannelsToProcess(),
+					ipr.getIllumsToProcess(),
+					result.getData().getSequenceDescription().getTimePoints().getTimePointList().get( referenceTimePoint ),
+					!displayOnly );
+		else
 			type = null;
 		
 		if ( !ipr.register( type ) )
