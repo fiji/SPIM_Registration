@@ -26,7 +26,7 @@ import spim.fiji.spimdata.SpimData2;
  * Defines a subset of views that need to be matched and then a global optimization
  * be computed on.
  * 
- * In case of a registration of indidivdual timepoints, each timepoint would be one
+ * In case of a registration of individual timepoints, each timepoint would be one
  * {@link GlobalOptimizationSubset}, for an all-to-all matching there is only one object.
  * 
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)

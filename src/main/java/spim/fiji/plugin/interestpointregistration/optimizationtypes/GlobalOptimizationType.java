@@ -7,9 +7,13 @@ import java.util.List;
 import net.imglib2.realtransform.AffineTransform3D;
 
 import spim.fiji.plugin.interestpointregistration.ChannelInterestPointList;
+import spim.fiji.plugin.interestpointregistration.ChannelInterestPointListPair;
 import spim.fiji.plugin.interestpointregistration.ChannelProcess;
+import spim.fiji.plugin.interestpointregistration.Detection;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
@@ -24,6 +28,7 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
+import mpicbg.spim.mpicbg.PointMatchGeneric;
 
 /**
  * A certain type of global optimization, must be able to define all view pairs
@@ -152,4 +157,72 @@ public abstract class GlobalOptimizationType
 		
 		return interestPoints;
 	}
+
+	/**
+	 * Add all correspondences the list for those that are compared here
+	 * 
+	 * This method can be overwritten if saving, adding & clearing of correspondences is different for a certain type of registration
+	 * 
+	 * @param pairs
+	 */
+	public void addCorrespondences( final SpimData2 spimData, final ArrayList< ChannelInterestPointListPair > pairs )
+	{
+		for ( final ChannelInterestPointListPair pair : pairs )
+		{
+			final ArrayList< PointMatchGeneric< Detection > > correspondences = pair.getInliers();
+			
+			final String labelA = pair.getChannelProcessedA().getLabel();
+			final String labelB = pair.getChannelProcessedB().getLabel();
+			
+			final ViewId viewA = pair.getViewIdA();
+			final ViewId viewB = pair.getViewIdB();
+			
+			final InterestPointList listA = spimData.getViewInterestPoints().getViewInterestPointLists( viewA ).getInterestPointList( labelA );				
+			final InterestPointList listB = spimData.getViewInterestPoints().getViewInterestPointLists( viewB ).getInterestPointList( labelB );
+			
+			final List< CorrespondingInterestPoints > corrListA = listA.getCorrespondingInterestPoints();
+			final List< CorrespondingInterestPoints > corrListB = listB.getCorrespondingInterestPoints();
+			
+			for ( final PointMatchGeneric< Detection > d : correspondences )
+			{
+				final Detection dA = d.getPoint1();
+				final Detection dB = d.getPoint2();
+				
+				final CorrespondingInterestPoints correspondingToA = new CorrespondingInterestPoints( dA.getId(), viewB, labelB, dB.getId() );
+				final CorrespondingInterestPoints correspondingToB = new CorrespondingInterestPoints( dB.getId(), viewA, labelA, dA.getId() );
+				
+				corrListA.add( correspondingToA );
+				corrListB.add( correspondingToB );
+			}
+		}		
+	}
+	
+	/**
+	 * Save all lists of existing correspondences for those that are compared here
+	 * 
+	 * This method can be overwritten if saving, adding & clearing of correspondences is different for a certain type of registration
+	 *
+	 * @param set
+	 */
+	public void saveCorrespondences( final SpimData2 spimData, final ArrayList< ChannelProcess > channelsToProcess, final GlobalOptimizationSubset set )
+	{
+		for ( final ViewId id : set.getViews() )
+			for ( final ChannelProcess c : channelsToProcess )
+				spimData.getViewInterestPoints().getViewInterestPointLists( id ).getInterestPointList( c.getLabel() ).saveCorrespondingInterestPoints();		
+	}
+	
+	/**
+	 * Clear all lists of existing correspondences for those that are compared here
+	 * 
+	 * This method can be overwritten if saving, adding & clearing of correspondences is different for a certain type of registration
+	 *
+	 * @param set
+	 */
+	public void clearExistingCorrespondences( final SpimData2 spimData, final ArrayList< ChannelProcess > channelsToProcess, final GlobalOptimizationSubset set )
+	{
+		for ( final ViewId id : set.getViews() )
+			for ( final ChannelProcess c : channelsToProcess )
+				spimData.getViewInterestPoints().getViewInterestPointLists( id ).getInterestPointList( c.getLabel() ).getCorrespondingInterestPoints().clear();		
+	}
+
 }

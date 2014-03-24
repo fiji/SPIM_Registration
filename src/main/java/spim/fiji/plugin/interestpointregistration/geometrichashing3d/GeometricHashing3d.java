@@ -117,14 +117,14 @@ public class GeometricHashing3d extends InterestPointRegistration
 			//
 			
 			// first remove existing correspondences
-			clearExistingCorrespondences( subset );
+			registrationType.clearExistingCorrespondences( spimData, getChannelsToProcess(), subset );
 
 			// now add all corresponding interest points
-			addCorrespondences( pairs );
+			registrationType.addCorrespondences( spimData, pairs );
 			
 			// save the files
 			if ( registrationType.save() )
-				saveCorrespondences( subset );
+				registrationType.saveCorrespondences( spimData, getChannelsToProcess(), subset );
 			
     		if ( model == 0 )
     			subset.computeGlobalOpt( new TranslationModel3D(), registrationType, spimData, getChannelsToProcess() );
