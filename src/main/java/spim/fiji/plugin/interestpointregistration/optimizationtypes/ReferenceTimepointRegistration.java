@@ -100,13 +100,22 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 			final double minResolution )
 	{
 		final ArrayList< GlobalOptimizationSubset > list = new ArrayList< GlobalOptimizationSubset >();
-		
+
+		final HashMap< ViewId, ChannelInterestPointList > pointListsReferenceTimepoint = this.getInterestPoints(
+				spimData,
+				anglesToProcess,
+				channelsToProcess,
+				illumsToProcess,
+				referenceTimepoint,
+				1, // always based on the current registration of the reference timepoint
+				minResolution );
+
 		for ( final TimePoint timepoint : timepointsToProcess )
 		{
 			if ( timepoint == referenceTimepoint )
 				continue;
 			
-			final HashMap< ViewId, ChannelInterestPointList > pointLists = this.getInterestPoints(
+			final HashMap< ViewId, ChannelInterestPointList > pointListsTimepoint = this.getInterestPoints(
 					spimData,
 					anglesToProcess,
 					channelsToProcess,
@@ -116,7 +125,7 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 					minResolution );
 			
 			final ArrayList< ViewId > views = new ArrayList< ViewId >();
-			views.addAll( pointLists.keySet() );
+			views.addAll( pointListsTimepoint.keySet() );
 			Collections.sort( views );
 			
 			final ArrayList< ChannelInterestPointListPair > viewPairs = new ArrayList< ChannelInterestPointListPair >();
@@ -125,11 +134,11 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 			for ( int a = 0; a < views.size(); ++a )
 			{
 				final ViewId viewIdA = views.get( a );
-				final ChannelInterestPointList listA = pointLists.get( viewIdA );
+				final ChannelInterestPointList listA = pointListsTimepoint.get( viewIdA );
 				
 				for ( final ViewId viewIdB : fixedTiles )
 				{
-					final ChannelInterestPointList listB = pointLists.get( viewIdB );
+					final ChannelInterestPointList listB = pointListsReferenceTimepoint.get( viewIdB );
 					viewPairs.add( new ChannelInterestPointListPair( viewIdA, viewIdB, listA, listB ) );					
 				}
 			}
@@ -141,8 +150,8 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 					final ViewId viewIdA = views.get( a );
 					final ViewId viewIdB = views.get( b );
 					
-					final ChannelInterestPointList listA = pointLists.get( viewIdA );
-					final ChannelInterestPointList listB = pointLists.get( viewIdB );
+					final ChannelInterestPointList listA = pointListsTimepoint.get( viewIdA );
+					final ChannelInterestPointList listB = pointListsTimepoint.get( viewIdB );
 					
 					viewPairs.add( new ChannelInterestPointListPair( viewIdA, viewIdB, listA, listB ) );
 				}
