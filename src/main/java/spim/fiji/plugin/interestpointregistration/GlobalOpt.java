@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
+import spim.fiji.plugin.interestpointregistration.optimizationtypes.GlobalOptimizationSubset;
+import spim.fiji.plugin.interestpointregistration.optimizationtypes.GlobalOptimizationType;
+
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.Model;
 import mpicbg.models.NotEnoughDataPointsException;
@@ -14,21 +17,31 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 
+/**
+ * 
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de)
+ *
+ */
 public class GlobalOpt
 {
-	public static < M extends Model< M > > HashMap< ViewId, Tile< M > > globalOptimization( final M model, final ArrayList< ViewId > views, final ArrayList< ChannelInterestPointListPair > pairs )
+	public static < M extends Model< M > > HashMap< ViewId, Tile< M > > globalOptimization(
+			final M model,
+			final GlobalOptimizationType registrationType,
+			final GlobalOptimizationSubset set )
 	{
+		final ArrayList< ChannelInterestPointListPair > pairs = set.getViewPairs();
+		final ArrayList< ViewId > views = set.getViews();
+
 		// remember the Tiles
 		final HashMap< ViewId, Tile< M > > map = new HashMap< ViewId, Tile< M > >();
 		
 		for ( final ViewId viewId : views )
-			map.put( viewId, new Tile<M>( model.copy() ) );
+			map.put( viewId, new Tile< M >( model.copy() ) );
 
 		for ( final ChannelInterestPointListPair pair : pairs )
 			GlobalOpt.addPointMatches( pair.getInliers(), map.get( pair.getViewIdA() ), map.get( pair.getViewIdB() ) );
 		
 		final TileConfiguration tc = new TileConfiguration();
-		int fixedTiles = 0;
 		
 		// fix the first one if possible
 		for ( final ViewId viewId : views )
@@ -38,11 +51,11 @@ public class GlobalOpt
 			if ( tile.getConnectedTiles().size() > 0 )
 			{
 				tc.addTile( tile );
-				if ( fixedTiles == 0 )
-				{					
+				
+				if ( registrationType.isFixedTile( viewId, set ) )
+				{
 					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Fixing tile (viewSetupId = " + viewId.getViewSetupId() + ")" ); 
 					tc.fixTile( tile );
-					++fixedTiles;
 				}
 			}
 		}

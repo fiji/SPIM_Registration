@@ -4,11 +4,13 @@ import mpicbg.imglib.util.Util;
 import mpicbg.models.Point;
 import fiji.util.node.Leaf;
 
+/**
+ * 
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de)
+ *
+ */
 public class Detection extends Point implements Leaf< Detection >
 {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -1512879446587557778L;
 	
 	final protected int id;

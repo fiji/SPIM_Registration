@@ -1,5 +1,10 @@
 package spim.fiji.plugin.interestpointregistration;
 
+/**
+ * 
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de)
+ *
+ */
 public class RANSACParameters
 {
     public static float max_epsilon = 5;

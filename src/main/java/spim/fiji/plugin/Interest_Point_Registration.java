@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
+import org.jruby.ext.posix.FreeBSDHeapFileStat.time_t;
+
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
@@ -23,6 +25,8 @@ import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
 import spim.fiji.plugin.interestpointregistration.ChannelProcess;
 import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
 import spim.fiji.plugin.interestpointregistration.geometrichashing3d.GeometricHashing3d;
+import spim.fiji.plugin.interestpointregistration.optimizationtypes.GlobalOptimizationType;
+import spim.fiji.plugin.interestpointregistration.optimizationtypes.IndividualTimepointRegistration;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIo;
 import spim.fiji.spimdata.XmlIoSpimData2;
@@ -37,13 +41,14 @@ import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 public class Interest_Point_Registration implements PlugIn
 {
 	public static ArrayList< InterestPointRegistration > staticAlgorithms = new ArrayList< InterestPointRegistration >();
-	public static String[] registrationChoices = { "Register timepoints individually", "Match all against one reference timepoint (no global optimization)", "All-to-all timepoints matching (global optimization)", "All-to-all timepoints matching with range ('reasonable' global optimization)" };
+	public static String[] registrationChoices = { "Register timepoints individually", "Match against one reference timepoint (no global optimization)", "All-to-all timepoints matching (global optimization)", "All-to-all timepoints matching with range ('reasonable' global optimization)" };
 	
 	public static int defaultAlgorithm = 0;
 	public static int defaultRegistration = 0;
 	public static int[] defaultChannelLabels = null;
 	public static int defaultRange = 5;
 	public static int defaultReferenceTimepoint = -1;
+	public static boolean defaultRegisterReferenceFirst = false;
 	
 	final protected String warningLabel = " (WARNING: Only available for "; 
 	
@@ -155,6 +160,7 @@ public class Interest_Point_Registration implements PlugIn
 				result.getIlluminationsToProcess(),
 				result.getTimePointsToProcess());
 
+		// call the next dialog that asks for specific details
 		register( ipr, result, registrationType );
 	}
 	
@@ -187,8 +193,9 @@ public class Interest_Point_Registration implements PlugIn
 			// if that goes wrong by any chance (should not), set it to 0
 			if ( defaultReferenceTimepoint >= tpList.length )
 				defaultReferenceTimepoint = 0;
-			
+
 			gd.addChoice( "Reference timepoint", tpList, tpList[ defaultReferenceTimepoint ] );
+			gd.addCheckbox( "Register reference timepoint first", defaultRegisterReferenceFirst );
 		}
 		else if ( registrationType == 3 )
 		{
@@ -210,12 +217,16 @@ public class Interest_Point_Registration implements PlugIn
 		if ( gd.wasCanceled() )
 			return;
 
+		boolean registerReferenceFirst = defaultRegisterReferenceFirst;
 		int referenceTimePoint = defaultReferenceTimepoint;
 		int range = defaultRange;
 		
 		if ( registrationType == 1 )
+		{
 			referenceTimePoint = defaultReferenceTimepoint = gd.getNextChoiceIndex();
-		
+			registerReferenceFirst = defaultRegisterReferenceFirst = gd.getNextBoolean();
+		}
+
 		if ( registrationType == 3 )
 			range = defaultRange = (int)Math.round( gd.getNextNumber() );
 		
@@ -224,28 +235,70 @@ public class Interest_Point_Registration implements PlugIn
 		
 		ipr.parseDialog( gd, registrationType );
 		
-		// perform the actual registration(s)
-		ipr.register( registrationType );
+		// first register only the reference timepoint if wanted
+		if ( registrationType == 1 && registerReferenceFirst )
+		{
+			if ( displayOnly )
+			{
+				IOFunctions.println( "Not writing the results and registering the reference timepoint first is not possible." );
+				IOFunctions.println( "The result of the reference timepoint registration must be written to disc in order to take effect" );
+				return;
+			}
+			else
+			{
+				IOFunctions.println( "Registering reference timepoint: " + 
+						result.getData().getSequenceDescription().getTimePoints().getTimePointList().get( referenceTimePoint ).getName() +
+						", id: " + referenceTimePoint );
+			}
+
+			// save all timepoints that need to be processed
+			final ArrayList< TimePoint > tps = new ArrayList< TimePoint >();
+			tps.addAll( ipr.getTimepointsToProcess() );
+			ipr.getTimepointsToProcess().clear();
+			ipr.getTimepointsToProcess().add( result.getData().getSequenceDescription().getTimePoints().getTimePointList().get( referenceTimePoint ) );
+			
+			// only individually register the reference timepoint
+			ipr.register( new IndividualTimepointRegistration( !displayOnly ) );
+			
+			// restore the timepoints and save XML
+			ipr.getTimepointsToProcess().clear();
+			ipr.getTimepointsToProcess().addAll( tps );
+			saveXML( result );
+		}
 		
+		// perform the actual registration(s)
+		final GlobalOptimizationType type;
+		
+		if ( registrationType == 0 )
+			type = new IndividualTimepointRegistration( !displayOnly );
+		else 
+			type = null;
+		
+		if ( !ipr.register( type ) )
+			return;
+				
 		// save the XML including transforms and correspondences
 		if ( !displayOnly )
+			saveXML( result );
+	}
+	
+	protected void saveXML( final XMLParseResult result )
+	{
+		// save the xml
+		final XmlIoSpimData2 io = XmlIo.createDefaultIo();
+		final SpimData2 data = result.getData();
+		
+		final String xml = new File( data.getBasePath(), new File( result.getXMLFileName() ).getName() ).getAbsolutePath();
+		try 
 		{
-			// save the xml
-			final XmlIoSpimData2 io = XmlIo.createDefaultIo();
-			final SpimData2 data = result.getData();
-			
-			final String xml = new File( data.getBasePath(), new File( result.getXMLFileName() ).getName() ).getAbsolutePath();
-			try 
-			{
-				io.save( data, xml );
-				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + xml + "'." );
-			}
-			catch ( Exception e )
-			{
-				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + xml + "': " + e );
-				e.printStackTrace();
-			}			
+			io.save( data, xml );
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + xml + "'." );
 		}
+		catch ( Exception e )
+		{
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + xml + "': " + e );
+			e.printStackTrace();
+		}		
 	}
 
 	/**

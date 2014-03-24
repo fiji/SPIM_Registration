@@ -4,6 +4,7 @@ import ij.gui.GenericDialog;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -19,6 +20,8 @@ import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.interestpointregistration.ChannelInterestPointListPair;
 import spim.fiji.plugin.interestpointregistration.ChannelProcess;
 import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
+import spim.fiji.plugin.interestpointregistration.optimizationtypes.GlobalOptimizationSubset;
+import spim.fiji.plugin.interestpointregistration.optimizationtypes.GlobalOptimizationType;
 import spim.fiji.spimdata.SpimData2;
 
 public class GeometricHashing3d extends InterestPointRegistration
@@ -38,12 +41,11 @@ public class GeometricHashing3d extends InterestPointRegistration
 	}
 
 	@Override
-	public boolean register( final int registrationType )
+	public boolean register( final GlobalOptimizationType registrationType )
 	{
 		final SpimData2 spimData = getSpimData();
-		final ArrayList< TimePoint > timepointsToProcess = getTimepointsToProcess(); 
 
-		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Assembling metadata for all views involved" );
+		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Assembling metadata for all views involved in the registration" );
 
 		if ( !assembleAllMetaData() )
 		{
@@ -55,9 +57,19 @@ public class GeometricHashing3d extends InterestPointRegistration
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Starting registration" );
 
-		for ( final TimePoint timepoint : timepointsToProcess )
+		// get a list of all pairs for this specific GlobalOptimizationType
+		final List< GlobalOptimizationSubset > list = registrationType.getAllViewPairs(
+				spimData,
+				getAnglesToProcess(),
+				getChannelsToProcess(),
+				getIllumsToProcess(),
+				getTimepointsToProcess(),
+				inputTransform,
+				getMinResolution() );
+		
+		for ( final GlobalOptimizationSubset subset : list )
 		{
-			final ArrayList< ChannelInterestPointListPair > pairs = this.getAllViewPairs( timepoint );
+			final ArrayList< ChannelInterestPointListPair > pairs = subset.getViewPairs();
 			
 			final ExecutorService taskExecutor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
 			final ArrayList< GeometricHashing3dPairwise > tasks = new ArrayList< GeometricHashing3dPairwise >(); // your tasks
@@ -83,7 +95,7 @@ public class GeometricHashing3d extends InterestPointRegistration
 			}
 			catch ( final InterruptedException e )
 			{
-				IOFunctions.println( "Failed to compute registrations for timepoint: " + timepoint.getName() + "(id=" + timepoint.getId() + ")" );
+				IOFunctions.println( "Failed to compute registrations for " + subset.getDescription() );
 				e.printStackTrace();
 			}
 			
@@ -105,20 +117,21 @@ public class GeometricHashing3d extends InterestPointRegistration
 			//
 			
 			// first remove existing correspondences
-			clearExistingCorrespondences( pairs );
+			clearExistingCorrespondences( subset );
 
 			// now add all corresponding interest points
 			addCorrespondences( pairs );
 			
 			// save the files
-			saveCorrespondences( pairs );
+			if ( registrationType.save() )
+				saveCorrespondences( subset );
 			
     		if ( model == 0 )
-    			computeGlobalOpt( new TranslationModel3D(), pairs, timepoint );
+    			subset.computeGlobalOpt( new TranslationModel3D(), registrationType, spimData, getChannelsToProcess() );
     		else if ( model == 1 )
-    			computeGlobalOpt( new RigidModel3D(), pairs, timepoint );
+    			subset.computeGlobalOpt( new RigidModel3D(), registrationType, spimData, getChannelsToProcess() );
     		else
-    			computeGlobalOpt( new AffineModel3D(), pairs, timepoint );	
+    			subset.computeGlobalOpt( new AffineModel3D(), registrationType, spimData, getChannelsToProcess() );	
 		}
 		
 		return true;

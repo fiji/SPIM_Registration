@@ -9,6 +9,11 @@ import mpicbg.models.PointMatch;
 import mpicbg.pointdescriptor.LinkedPoint;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 
+/**
+ * 
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de)
+ *
+ */
 public class RANSAC
 {
 	public static String computeRANSAC( 
