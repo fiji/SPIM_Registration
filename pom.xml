@@ -106,7 +106,7 @@
 			<version>${imglib2.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>fiji.sc</groupId>
+			<groupId>sc.fiji</groupId>
 			<artifactId>spim_data</artifactId>
 			<version>1.0.0-SNAPSHOT</version>
 		</dependency>
