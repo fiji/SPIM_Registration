@@ -32,7 +32,12 @@ public class GeometricHashing3dPairwise implements Callable< ChannelInterestPoin
 		this.model = model;
 		this.comparison = comparison;
 	}
-	
+
+	public GeometricHashing3dPairwise( final ChannelInterestPointListPair pair, final int model, final String comparison, final RANSACParameters rp )
+	{
+		this( pair, model, comparison, rp, new GeometricHashing3dParameters() );
+	}
+
 	public GeometricHashing3dPairwise( final ChannelInterestPointListPair pair, final int model, final String comparison )
 	{
 		this( pair, model, comparison, new RANSACParameters(), new GeometricHashing3dParameters() );

@@ -2,6 +2,7 @@ package spim.fiji.plugin;
 
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
+import ij.ImageJ;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
@@ -14,6 +15,8 @@ import java.awt.Label;
 import java.awt.event.ItemEvent;
 import java.io.File;
 import java.util.ArrayList;
+
+import net.imglib2.img.display.imagej.ImageJFunctions;
 
 import mpicbg.spim.io.IOFunctions;
 
@@ -120,8 +123,8 @@ public class Define_Multi_View_Dataset implements PlugIn
 			}
 
 			// show the first image
-			//new ImageJ();
-			//ImageJFunctions.show( spimData.getSequenceDescription().getImgLoader().getImage( spimData.getSequenceDescription().getViewDescription( 0, 0 ), true ) );
+			new ImageJ();
+			ImageJFunctions.show( spimData.getSequenceDescription().getImgLoader().getImage( spimData.getSequenceDescription().getViewDescription( 0, 0 ), true ) );
 			//ImageJFunctions.show( spimData.getSequenceDescription().getImgLoader().getUnsignedShortImage( spimData.getSequenceDescription().getViewDescription( 0, 0 ) ) );
 		}
 	}

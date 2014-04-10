@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
 
+import ome.xml.model.primitives.PositiveFloat;
+
 import loci.common.services.DependencyException;
 import loci.common.services.ServiceException;
 import loci.common.services.ServiceFactory;
@@ -429,7 +431,12 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		
 			final MetadataRetrieve retrieve = (MetadataRetrieve)r.getMetadataStore();
 			
-			float cal = retrieve.getPixelsPhysicalSizeX( 0 ).getValue().floatValue();
+			float cal = 0;
+			
+			PositiveFloat f = retrieve.getPixelsPhysicalSizeX( 0 );
+			if ( f != null )
+				cal = f.getValue().floatValue();
+			
 			if ( cal == 0 )
 			{
 				cal = 1;
@@ -437,7 +444,10 @@ public class StackImgLoaderLOCI extends StackImgLoader
 			}
 			final double calX = cal;
 
-			cal = retrieve.getPixelsPhysicalSizeY( 0 ).getValue().floatValue();
+			f = retrieve.getPixelsPhysicalSizeY( 0 );
+			if ( f != null )
+				cal = f.getValue().floatValue();
+			
 			if ( cal == 0 )
 			{
 				cal = 1;
@@ -445,13 +455,18 @@ public class StackImgLoaderLOCI extends StackImgLoader
 			}
 			final double calY = cal;
 
-			cal = retrieve.getPixelsPhysicalSizeZ( 0 ).getValue().floatValue();
+			f = retrieve.getPixelsPhysicalSizeZ( 0 );
+			if ( f != null )
+				cal = f.getValue().floatValue();
+			
 			if ( cal == 0 )
 			{
 				cal = 1;
 				IOFunctions.println( "StackListLOCI: Warning, calibration for dimension Z seems corrupted, setting to 1." );
 			}
 			final double calZ = cal;
+			
+			IOFunctions.println( "Image stack size of first stack: " + r.getSizeX() + "x" + r.getSizeY() + "x" + r.getSizeZ() );
 			
 			final Calibration calibration = new Calibration( r.getSizeX(), r.getSizeY(), r.getSizeZ(), calX, calY, calZ );
 			

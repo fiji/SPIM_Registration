@@ -1,8 +1,10 @@
-package spim.process.interestpointregistration.geometrichashing3d;
+package spim.process.interestpointregistration.geometricdescriptor;
 
 import ij.gui.GenericDialog;
 
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.RigidModel3D;
@@ -10,23 +12,33 @@ import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.io.IOFunctions;
+import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
 import spim.fiji.plugin.interestpointregistration.PairwiseGloballyOptimalRegistration;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.interestpointregistration.ChannelInterestPointListPair;
 import spim.process.interestpointregistration.ChannelProcess;
 import spim.process.interestpointregistration.RANSACParameters;
+import spim.process.interestpointregistration.geometrichashing3d.GeometricHashing3dPairwise;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationSubset;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationType;
 
-public class GeometricHashing3d extends PairwiseGloballyOptimalRegistration< GeometricHashing3dPairwise >
+/**
+ * Redundant Geometric Local Descriptor Matching (RGLDM)
+ * 
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de)
+ *
+ */
+public class RGLDM extends PairwiseGloballyOptimalRegistration< RGLDMPairwise >
 {
 	final String modelChoice[] = new String[] { "Translation", "Rigid", "Affine" };
 	public static int defaultModel = 2;	
 	protected int model = 2;
-
+	
+	protected RGLDMParameters parameters;
 	protected RANSACParameters ransacParams;
 
-	public GeometricHashing3d(
+	public RGLDM(
 			final SpimData2 spimData,
 			final ArrayList< Angle > anglesToProcess,
 			final ArrayList< ChannelProcess > channelsToProcess,
@@ -37,9 +49,9 @@ public class GeometricHashing3d extends PairwiseGloballyOptimalRegistration< Geo
 	}
 
 	@Override
-	protected GeometricHashing3dPairwise getPairwiseMatching( final ChannelInterestPointListPair pair, final String description )
+	protected RGLDMPairwise getPairwiseMatching( final ChannelInterestPointListPair pair, final String description )
 	{
-		return new GeometricHashing3dPairwise( pair, model, description, ransacParams );
+		return new RGLDMPairwise();
 	}
 
 	@Override
@@ -57,23 +69,27 @@ public class GeometricHashing3d extends PairwiseGloballyOptimalRegistration< Geo
 	}
 
 	@Override
-	public GeometricHashing3d newInstance(
+	public InterestPointRegistration newInstance(
 			final SpimData2 spimData,
 			final ArrayList< Angle > anglesToProcess,
 			final ArrayList< ChannelProcess > channelsToProcess,
 			final ArrayList< Illumination > illumsToProcess,
 			final ArrayList< TimePoint > timepointsToProcess )
 	{
-		return new GeometricHashing3d( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+		return new RGLDM( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
 	}
 
+
 	@Override
-	public String getDescription() { return "Fast 3d geometric hashing";}
+	public String getDescription() { return "Redundant geometric local descriptor matching";}
 
 	@Override
 	public void addQuery( final GenericDialog gd, final int registrationType )
 	{
 		gd.addChoice( "Transformation model", modelChoice, modelChoice[ defaultModel ] );
+		gd.addSlider( "Number_of_neighbors for the descriptors", 3, 10, RGLDMParameters.numNeighbors );
+		gd.addSlider( "Redundancy for descriptor matching", 0, 10, RGLDMParameters.redundancy );		
+		gd.addSlider( "Significance required for a descriptor match", 1.0, 10.0, RGLDMParameters.ratioOfDistance );
 		gd.addSlider( "Allowed_error_for_RANSAC (px)", 0.5, 20.0, RANSACParameters.max_epsilon );
 	}
 
@@ -81,10 +97,15 @@ public class GeometricHashing3d extends PairwiseGloballyOptimalRegistration< Geo
 	public boolean parseDialog( final GenericDialog gd, final int registrationType )
 	{
 		model = defaultModel = gd.getNextChoiceIndex();
+		
+		final int numNeighbors = RGLDMParameters.numNeighbors = (int)Math.round( gd.getNextNumber() );
+		final int redundancy = RGLDMParameters.redundancy = (int)Math.round( gd.getNextNumber() );
+		final float significance = RGLDMParameters.ratioOfDistance = (float)gd.getNextNumber();
 		final float maxEpsilon = RANSACParameters.max_epsilon = (float)gd.getNextNumber();
 		
+		this.parameters = new RGLDMParameters( RGLDMParameters.differenceThreshold, significance, numNeighbors, redundancy );
 		this.ransacParams = new RANSACParameters( maxEpsilon, RANSACParameters.min_inlier_ratio, RANSACParameters.min_inlier_factor, RANSACParameters.num_iterations );
-
+		
 		return true;
 	}
 }
