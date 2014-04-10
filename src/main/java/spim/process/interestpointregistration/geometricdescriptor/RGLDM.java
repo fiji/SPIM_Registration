@@ -3,8 +3,6 @@ package spim.process.interestpointregistration.geometricdescriptor;
 import ij.gui.GenericDialog;
 
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.RigidModel3D;
@@ -12,14 +10,12 @@ import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
-import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
 import spim.fiji.plugin.interestpointregistration.PairwiseGloballyOptimalRegistration;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.interestpointregistration.ChannelInterestPointListPair;
 import spim.process.interestpointregistration.ChannelProcess;
 import spim.process.interestpointregistration.RANSACParameters;
-import spim.process.interestpointregistration.geometrichashing3d.GeometricHashing3dPairwise;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationSubset;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationType;
 

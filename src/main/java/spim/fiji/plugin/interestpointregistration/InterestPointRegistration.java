@@ -188,7 +188,6 @@ public abstract class InterestPointRegistration
 		return true;
 	}
 
-
 	protected boolean calibrationAvailable( final ViewSetup viewSetup )
 	{
 		if ( viewSetup.getPixelWidth() <= 0 || viewSetup.getPixelHeight() <= 0 || viewSetup.getPixelDepth() <= 0 )
