@@ -453,10 +453,10 @@ public class StackImgLoaderLOCI extends StackImgLoader
 			}
 			final double calZ = cal;
 			
+			final Calibration calibration = new Calibration( r.getSizeX(), r.getSizeY(), r.getSizeZ(), calX, calY, calZ );
+			
 			r.close();
 			
-			final Calibration calibration = new Calibration( r.getSizeX(), r.getSizeY(), r.getSizeZ(), calX, calY, calZ );
-
 			return calibration;
 		} 
 		catch ( Exception e) 
