@@ -28,10 +28,10 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 			final ArrayList< ChannelProcess > channelsToProcess,
 			final ArrayList< Illumination > illumsToProcess,
 			final TimePoint referenceTimepoint,
-			final boolean save )
+			final boolean remove, final boolean add, final boolean save )
 	{ 
-		super( save );
-		
+		super( remove, add, save );
+
 		this.referenceTimepoint = referenceTimepoint;
 		this.fixedTiles = assembleFixedTiles( spimData, anglesToProcess, channelsToProcess, illumsToProcess, referenceTimepoint );
 	}

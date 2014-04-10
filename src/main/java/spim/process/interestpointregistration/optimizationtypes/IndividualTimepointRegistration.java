@@ -22,7 +22,10 @@ import mpicbg.spim.data.sequence.ViewId;
  */
 public class IndividualTimepointRegistration extends GlobalOptimizationType
 {
-	public IndividualTimepointRegistration( final boolean save ) { super( save ); }
+	public IndividualTimepointRegistration( final boolean remove, final boolean add, final boolean save )
+	{ 
+		super( remove, add, save );
+	}
 
 	@Override
 	public boolean isFixedTile( final ViewId viewId, final GlobalOptimizationSubset set )

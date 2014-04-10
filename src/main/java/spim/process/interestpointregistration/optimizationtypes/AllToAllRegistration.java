@@ -16,7 +16,10 @@ import spim.process.interestpointregistration.ChannelProcess;
 
 public class AllToAllRegistration extends GlobalOptimizationType
 {
-	public AllToAllRegistration( final boolean save ) { super( save ); }
+	public AllToAllRegistration( final boolean remove, final boolean add, final boolean save )
+	{ 
+		super( remove, add, save );
+	}
 
 	public List< GlobalOptimizationSubset > getAllViewPairs(
 			final SpimData2 spimData,

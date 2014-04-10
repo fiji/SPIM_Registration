@@ -18,9 +18,9 @@ public class AllToAllRegistrationWithRange extends GlobalOptimizationType
 {
 	final int range;
 	
-	public AllToAllRegistrationWithRange( final int range, final boolean save )
+	public AllToAllRegistrationWithRange( final int range, final boolean remove, final boolean add, final boolean save )
 	{ 
-		super( save );
+		super( remove, add, save );
 		
 		this.range = range;
 	}

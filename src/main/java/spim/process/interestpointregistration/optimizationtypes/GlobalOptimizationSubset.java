@@ -49,7 +49,8 @@ public class GlobalOptimizationSubset
 			final M model,
 			final GlobalOptimizationType type,
 			final SpimData2 spimData,
-			final ArrayList< ChannelProcess > channelsToProcess )
+			final ArrayList< ChannelProcess > channelsToProcess,
+			final String description )
 	{
 		final HashMap< ViewId, Tile< M > > tiles = GlobalOpt.globalOptimization( model, type, this );
 		final ViewRegistrations viewRegistrations = spimData.getViewRegistrations();
@@ -69,7 +70,7 @@ public class GlobalOptimizationSubset
 			
 			final AffineTransform3D t = new AffineTransform3D();
 			t.set( m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8], m[9], m[10], m[11] );
-			final ViewTransform vt = new ViewTransformAffine( "Geometric Hasing on " + channelList, t );
+			final ViewTransform vt = new ViewTransformAffine( description + " on " + channelList, t );
 			vr.preconcatenateTransform( vt );
 		}
 	}

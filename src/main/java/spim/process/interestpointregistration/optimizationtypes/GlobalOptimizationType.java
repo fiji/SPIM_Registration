@@ -38,9 +38,14 @@ import mpicbg.spim.mpicbg.PointMatchGeneric;
  */
 public abstract class GlobalOptimizationType
 {
-	protected boolean save;
+	protected boolean save, remove, add;
 	
-	public GlobalOptimizationType( final boolean save ) { this.save = save; }
+	public GlobalOptimizationType( final boolean remove, final boolean add, final boolean save )
+	{ 
+		this.remove = remove;
+		this.add = add;
+		this.save = save; 
+	}
 		
 	public abstract List< GlobalOptimizationSubset > getAllViewPairs(
 			final SpimData2 spimData,
@@ -57,7 +62,17 @@ public abstract class GlobalOptimizationType
 	 * @return - true if a certain tile is fixed for global optimization, otherwise false
 	 */
 	public abstract boolean isFixedTile( final ViewId viewId, final GlobalOptimizationSubset set );
-	
+
+	/** 
+	 * @return - true if previous correspondences should be removed
+	 */
+	public boolean remove() { return remove; }
+
+	/** 
+	 * @return - true if new correspondences should be added
+	 */
+	public boolean add() { return add; }
+
 	/** 
 	 * @return - true if any of the data should be saved
 	 */

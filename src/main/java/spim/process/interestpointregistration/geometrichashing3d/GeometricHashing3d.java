@@ -117,21 +117,23 @@ public class GeometricHashing3d extends InterestPointRegistration
 			//
 			
 			// first remove existing correspondences
-			registrationType.clearExistingCorrespondences( spimData, getChannelsToProcess(), subset );
+			if ( registrationType.remove() )
+				registrationType.clearExistingCorrespondences( spimData, getChannelsToProcess(), subset );
 
 			// now add all corresponding interest points
-			registrationType.addCorrespondences( spimData, pairs );
+			if ( registrationType.add() )
+				registrationType.addCorrespondences( spimData, pairs );
 			
 			// save the files
 			if ( registrationType.save() )
 				registrationType.saveCorrespondences( spimData, getChannelsToProcess(), subset );
 			
     		if ( model == 0 )
-    			subset.computeGlobalOpt( new TranslationModel3D(), registrationType, spimData, getChannelsToProcess() );
+    			subset.computeGlobalOpt( new TranslationModel3D(), registrationType, spimData, getChannelsToProcess(), getDescription() );
     		else if ( model == 1 )
-    			subset.computeGlobalOpt( new RigidModel3D(), registrationType, spimData, getChannelsToProcess() );
+    			subset.computeGlobalOpt( new RigidModel3D(), registrationType, spimData, getChannelsToProcess(), getDescription() );
     		else
-    			subset.computeGlobalOpt( new AffineModel3D(), registrationType, spimData, getChannelsToProcess() );	
+    			subset.computeGlobalOpt( new AffineModel3D(), registrationType, spimData, getChannelsToProcess(), getDescription() );	
 		}
 		
 		return true;

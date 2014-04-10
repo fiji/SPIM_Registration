@@ -167,6 +167,8 @@ public class Interest_Point_Registration implements PlugIn
 	
 	public static String[] inputChoice = new String[]{ "Calibration only (resets existing transform)", "Current view transformations (appends to current transform)" };	
 	public static int defaultTransformInputChoice = 0;
+	public static boolean defaultRemoveExistingCorrespondences = true;
+	public static boolean defaultAddNewCorrespondences = true;
 	public static boolean defaultDisplayTransformOnly = false;
 	
 	protected String[] assembleTimepoints( final TimePoints< TimePoint > timepoints )
@@ -204,6 +206,8 @@ public class Interest_Point_Registration implements PlugIn
 		}
 		
 		gd.addChoice( "Register_based_on", inputChoice, inputChoice[ defaultTransformInputChoice ] );
+		gd.addCheckbox( "Remove_existing_correspondences (from previous registrations)", defaultRemoveExistingCorrespondences );
+		gd.addCheckbox( "Add_new_correspondences (as identified by this registration run)", defaultAddNewCorrespondences );
 		gd.addCheckbox( "Display final transformation only (do not edit XML)", defaultDisplayTransformOnly );
 		
 		gd.addMessage( "" );
@@ -232,6 +236,8 @@ public class Interest_Point_Registration implements PlugIn
 			range = defaultRange = (int)Math.round( gd.getNextNumber() );
 		
 		ipr.setInitialTransformType( defaultTransformInputChoice = gd.getNextChoiceIndex() );
+		final boolean removeCorrespondences = defaultRemoveExistingCorrespondences = gd.getNextBoolean();
+		final boolean addNewCorrespondences = defaultAddNewCorrespondences = gd.getNextBoolean();
 		final boolean displayOnly = defaultDisplayTransformOnly = gd.getNextBoolean();
 		
 		ipr.parseDialog( gd, registrationType );
@@ -259,19 +265,21 @@ public class Interest_Point_Registration implements PlugIn
 			ipr.getTimepointsToProcess().add( result.getData().getSequenceDescription().getTimePoints().getTimePointList().get( referenceTimePoint ) );
 			
 			// only individually register the reference timepoint
-			ipr.register( new IndividualTimepointRegistration( !displayOnly ) );
+			ipr.register( new IndividualTimepointRegistration( removeCorrespondences, addNewCorrespondences, !displayOnly ) );
 			
 			// restore the timepoints and save XML
 			ipr.getTimepointsToProcess().clear();
 			ipr.getTimepointsToProcess().addAll( tps );
-			saveXML( result );
+			
+			if ( !displayOnly )
+				saveXML( result );
 		}
 		
 		// perform the actual registration(s)
 		final GlobalOptimizationType type;
 		
 		if ( registrationType == 0 )
-			type = new IndividualTimepointRegistration( !displayOnly );
+			type = new IndividualTimepointRegistration( removeCorrespondences, addNewCorrespondences, !displayOnly );
 		else if ( registrationType == 1 )
 			type = new ReferenceTimepointRegistration(
 					result.getData(),
@@ -279,11 +287,11 @@ public class Interest_Point_Registration implements PlugIn
 					ipr.getChannelsToProcess(),
 					ipr.getIllumsToProcess(),
 					result.getData().getSequenceDescription().getTimePoints().getTimePointList().get( referenceTimePoint ),
-					!displayOnly );
+					removeCorrespondences, addNewCorrespondences, !displayOnly );
 		else if ( registrationType == 2 )
-			type = new AllToAllRegistration( !displayOnly );
+			type = new AllToAllRegistration( removeCorrespondences, addNewCorrespondences, !displayOnly );
 		else if ( registrationType == 3 )
-			type = new AllToAllRegistrationWithRange( range, !displayOnly );
+			type = new AllToAllRegistrationWithRange( range, removeCorrespondences, addNewCorrespondences, !displayOnly );
 		else
 			type = null;
 		
