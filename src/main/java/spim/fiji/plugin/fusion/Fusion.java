@@ -13,24 +13,24 @@ public abstract class Fusion
 	/**
 	 * which angles to process, set in queryParameters
 	 */
-	final ArrayList< Angle > anglesToProcess;
+	final protected ArrayList< Angle > anglesToProcess;
 
 	/**
 	 * which channels to process, set in queryParameters
 	 */
-	final ArrayList< Channel> channelsToProcess;
+	final protected ArrayList< Channel> channelsToProcess;
 
 	/**
 	 * which illumination directions to process, set in queryParameters
 	 */
-	final ArrayList< Illumination > illumsToProcess;
+	final protected ArrayList< Illumination > illumsToProcess;
 
 	/**
 	 * which timepoints to process, set in queryParameters
 	 */
-	final ArrayList< TimePoint > timepointsToProcess;
+	final protected ArrayList< TimePoint > timepointsToProcess;
 
-	final SpimData2 spimData;
+	final protected SpimData2 spimData;
 
 	/**
 	 * @param spimData
@@ -52,6 +52,14 @@ public abstract class Fusion
 		this.illumsToProcess = illumsToProcess;
 		this.timepointsToProcess = timepointsToProcess;
 	}
+	
+	/**
+	 * Fuses and saves/displays
+	 * 
+	 * @param bb
+	 * @return
+	 */
+	public abstract boolean fuseData( final BoundingBox bb );
 	
 	/**
 	 * Query the necessary parameters for the fusion

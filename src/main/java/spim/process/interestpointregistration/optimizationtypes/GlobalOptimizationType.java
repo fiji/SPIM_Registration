@@ -111,7 +111,7 @@ public abstract class GlobalOptimizationType
 				if ( !viewDescription.isPresent() )
 					continue;
 
-				// update the registrations if required
+				// reset the registrations if required
 				if ( inputTransform == 0 )
 				{
 					final ViewRegistration r = registrations.getViewRegistration( viewId );

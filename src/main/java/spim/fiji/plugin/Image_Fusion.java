@@ -6,6 +6,9 @@ import ij.plugin.PlugIn;
 
 import java.util.ArrayList;
 
+import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
 import spim.fiji.plugin.fusion.BoundingBox;
@@ -34,6 +37,8 @@ public class Image_Fusion implements PlugIn
 	@Override
 	public void run( final String arg )
 	{
+		ImageJFunctions.show( ArrayImgs.floats( new long[]{ 300, 100, 200} ) );
+		
 		// ask for everything
 		final XMLParseResult result = new LoadParseQueryXML().queryXML( true, true, true, true );
 		
@@ -87,6 +92,10 @@ public class Image_Fusion implements PlugIn
 				result.getIlluminationsToProcess(),
 				result.getTimePointsToProcess() );
 
+		if ( !fusion.queryParameters() )
+			return;
+		
+		fusion.fuseData( boundingBox );
 	}
 
 	public static void main( final String[] args )
