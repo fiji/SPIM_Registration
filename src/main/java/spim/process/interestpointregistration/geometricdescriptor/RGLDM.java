@@ -47,7 +47,7 @@ public class RGLDM extends PairwiseGloballyOptimalRegistration< RGLDMPairwise >
 	@Override
 	protected RGLDMPairwise getPairwiseMatching( final ChannelInterestPointListPair pair, final String description )
 	{
-		return new RGLDMPairwise();
+		return new RGLDMPairwise( pair, model, description, ransacParams, parameters );
 	}
 
 	@Override

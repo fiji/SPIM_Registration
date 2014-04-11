@@ -201,6 +201,7 @@ public class Interest_Point_Registration implements PlugIn
 
 			gd.addChoice( "Reference timepoint", tpList, tpList[ defaultReferenceTimepoint ] );
 			gd.addCheckbox( "Register reference timepoint first", defaultRegisterReferenceFirst );
+			gd.addMessage( "" );
 		}
 		else if ( registrationType == 3 )
 		{

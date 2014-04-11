@@ -29,7 +29,6 @@ import org.xml.sax.SAXException;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIo;
 import spim.fiji.spimdata.XmlIoSpimData2;
-
 import fiji.util.gui.GenericDialogPlus;
 
 public class LoadParseQueryXML 
@@ -697,13 +696,10 @@ public class LoadParseQueryXML
 					// try parsing if it ends with XML
 					final XMLParseResult xmlResult = tryParsing( xmlFilename, false );
 					
-					if ( label1.getText() != xmlResult.message1 )
-					{
-						label1.setText( xmlResult.message1 );
-						label2.setText( xmlResult.message2 );
-						label1.setForeground( xmlResult.color );
-						label2.setForeground( xmlResult.color );
-					}
+					label1.setText( xmlResult.message1 );
+					label2.setText( xmlResult.message2 );
+					label1.setForeground( xmlResult.color );
+					label2.setForeground( xmlResult.color );
 				}
 				return true;
 			}
