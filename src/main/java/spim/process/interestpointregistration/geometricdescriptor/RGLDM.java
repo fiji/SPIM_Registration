@@ -51,7 +51,8 @@ public class RGLDM extends PairwiseGloballyOptimalRegistration< RGLDMPairwise >
 	}
 
 	@Override
-	protected void runGlobalOpt(final GlobalOptimizationSubset subset, 
+	protected void runGlobalOpt(
+			final GlobalOptimizationSubset subset, 
 			final GlobalOptimizationType registrationType,
 			final SpimData2 spimData,
 			final ArrayList< ChannelProcess > channelsToProcess )
@@ -77,7 +78,7 @@ public class RGLDM extends PairwiseGloballyOptimalRegistration< RGLDMPairwise >
 
 
 	@Override
-	public String getDescription() { return "Redundant geometric local descriptor matching";}
+	public String getDescription() { return "Redundant geometric local descriptor matching (translation invariant)";}
 
 	@Override
 	public void addQuery( final GenericDialog gd, final int registrationType )

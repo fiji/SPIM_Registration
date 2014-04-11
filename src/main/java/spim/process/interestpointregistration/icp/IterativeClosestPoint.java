@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.geometrichashing3d;
+package spim.process.interestpointregistration.icp;
 
 import ij.gui.GenericDialog;
 
@@ -10,23 +10,29 @@ import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
+import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
 import spim.fiji.plugin.interestpointregistration.PairwiseGloballyOptimalRegistration;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.interestpointregistration.ChannelInterestPointListPair;
 import spim.process.interestpointregistration.ChannelProcess;
-import spim.process.interestpointregistration.RANSACParameters;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationSubset;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationType;
 
-public class GeometricHashing3d extends PairwiseGloballyOptimalRegistration< GeometricHashing3dPairwise >
+/**
+ * Iterative closest point implementation
+ * 
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de)
+ *
+ */
+public class IterativeClosestPoint extends PairwiseGloballyOptimalRegistration< IterativeClosestPointPairwise >
 {
 	final String modelChoice[] = new String[] { "Translation", "Rigid", "Affine" };
 	public static int defaultModel = 2;	
 	protected int model = 2;
+	
+	protected IterativeClosestPointParameters parameters;
 
-	protected RANSACParameters ransacParams;
-
-	public GeometricHashing3d(
+	public IterativeClosestPoint(
 			final SpimData2 spimData,
 			final ArrayList< Angle > anglesToProcess,
 			final ArrayList< ChannelProcess > channelsToProcess,
@@ -37,13 +43,14 @@ public class GeometricHashing3d extends PairwiseGloballyOptimalRegistration< Geo
 	}
 
 	@Override
-	protected GeometricHashing3dPairwise getPairwiseMatching( final ChannelInterestPointListPair pair, final String description )
+	protected IterativeClosestPointPairwise getPairwiseMatching( final ChannelInterestPointListPair pair, final String description)
 	{
-		return new GeometricHashing3dPairwise( pair, model, description, ransacParams );
+		return new IterativeClosestPointPairwise( pair, model, description, parameters );
 	}
 
 	@Override
-	protected void runGlobalOpt(final GlobalOptimizationSubset subset, 
+	protected void runGlobalOpt(
+			final GlobalOptimizationSubset subset, 
 			final GlobalOptimizationType registrationType,
 			final SpimData2 spimData,
 			final ArrayList< ChannelProcess > channelsToProcess )
@@ -57,34 +64,37 @@ public class GeometricHashing3d extends PairwiseGloballyOptimalRegistration< Geo
 	}
 
 	@Override
-	public GeometricHashing3d newInstance(
-			final SpimData2 spimData,
-			final ArrayList< Angle > anglesToProcess,
-			final ArrayList< ChannelProcess > channelsToProcess,
-			final ArrayList< Illumination > illumsToProcess,
-			final ArrayList< TimePoint > timepointsToProcess )
-	{
-		return new GeometricHashing3d( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
-	}
-
-	@Override
-	public String getDescription() { return "Fast 3d geometric hashing (rotation invariant)";}
-
-	@Override
 	public void addQuery( final GenericDialog gd, final int registrationType )
 	{
 		gd.addChoice( "Transformation model", modelChoice, modelChoice[ defaultModel ] );
-		gd.addSlider( "Allowed_error_for_RANSAC (px)", 0.5, 20.0, RANSACParameters.max_epsilon );
+		gd.addSlider( "Maximal_distance for correspondence (px)", 0.25, 40.0, IterativeClosestPointParameters.maxDistance );
+		gd.addNumericField( "Maximal_number of iterations", IterativeClosestPointParameters.maxIterations, 0 );
 	}
 
 	@Override
 	public boolean parseDialog( final GenericDialog gd, final int registrationType )
 	{
 		model = defaultModel = gd.getNextChoiceIndex();
-		final float maxEpsilon = RANSACParameters.max_epsilon = (float)gd.getNextNumber();
 		
-		this.ransacParams = new RANSACParameters( maxEpsilon, RANSACParameters.min_inlier_ratio, RANSACParameters.min_inlier_factor, RANSACParameters.num_iterations );
-
+		final double maxDistance = IterativeClosestPointParameters.maxDistance = gd.getNextNumber();
+		final int maxIterations = IterativeClosestPointParameters.maxIterations = (int)Math.round( gd.getNextNumber() );
+		
+		this.parameters = new IterativeClosestPointParameters( maxDistance, maxIterations );
+		
 		return true;
 	}
+
+	@Override
+	public InterestPointRegistration newInstance(
+			final SpimData2 spimData,
+			final ArrayList< Angle > anglesToProcess,
+			final ArrayList< ChannelProcess > channelsToProcess,
+			final ArrayList< Illumination > illumsToProcess,
+			final ArrayList< TimePoint > timepointsToProcess )
+	{
+		return new IterativeClosestPoint( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+	}
+
+	@Override
+	public String getDescription() { return "Iterative closest-point (ICP, no invariance)";}
 }

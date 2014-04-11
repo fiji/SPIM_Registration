@@ -148,41 +148,38 @@ public abstract class InterestPointRegistration
 							continue;
 						
 						// load metadata to update the registrations if required
-						if ( inputTransform == 0 )
+						// only use calibration as defined in the metadata
+						if ( !calibrationAvailable( viewDescription.getViewSetup() ) )
 						{
-							// only use calibration as defined in the metadata
-							if ( !calibrationAvailable( viewDescription.getViewSetup() ) )
+							if ( !spimData.getSequenceDescription().getImgLoader().loadMetaData( viewDescription ) )
 							{
-								if ( !spimData.getSequenceDescription().getImgLoader().loadMetaData( viewDescription ) )
-								{
-									IOFunctions.println( "An error occured. Cannot load calibration for timepoint: " + t.getId() + " angle: " + 
-											a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
-									
-									IOFunctions.println( "Quitting. Please set it manually when defining the dataset or by modifying the XML" );
-									
-									return false;
-								}						
-							}
-
-							if ( !calibrationAvailable( viewDescription.getViewSetup() ) )
-							{
-								IOFunctions.println( "An error occured. No calibration available for timepoint: " + t.getId() + " angle: " + 
+								IOFunctions.println( "An error occured. Cannot load calibration for timepoint: " + t.getId() + " angle: " + 
 										a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
 								
-								IOFunctions.println( "Quitting. Please set it manually when defining the dataset or by modifying the XML" );							
-							}
-							
-							final double calX = viewDescription.getViewSetup().getPixelWidth();
-							final double calY = viewDescription.getViewSetup().getPixelHeight();
-							final double calZ = viewDescription.getViewSetup().getPixelDepth();
-							
-							setMinResolution( Math.min( getMinResolution(), calX ) );
-							setMinResolution( Math.min( getMinResolution(), calY ) );
-							setMinResolution( Math.min( getMinResolution(), calZ ) );
-							
-							if ( viewDescription.getViewSetup().getPixelSizeUnit() != null )
-								setUnit( viewDescription.getViewSetup().getPixelSizeUnit() );
+								IOFunctions.println( "Quitting. Please set it manually when defining the dataset or by modifying the XML" );
+								
+								return false;
+							}						
 						}
+
+						if ( !calibrationAvailable( viewDescription.getViewSetup() ) )
+						{
+							IOFunctions.println( "An error occured. No calibration available for timepoint: " + t.getId() + " angle: " + 
+									a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
+							
+							IOFunctions.println( "Quitting. Please set it manually when defining the dataset or by modifying the XML" );							
+						}
+						
+						final double calX = viewDescription.getViewSetup().getPixelWidth();
+						final double calY = viewDescription.getViewSetup().getPixelHeight();
+						final double calZ = viewDescription.getViewSetup().getPixelDepth();
+						
+						setMinResolution( Math.min( getMinResolution(), calX ) );
+						setMinResolution( Math.min( getMinResolution(), calY ) );
+						setMinResolution( Math.min( getMinResolution(), calZ ) );
+						
+						if ( viewDescription.getViewSetup().getPixelSizeUnit() != null )
+							setUnit( viewDescription.getViewSetup().getPixelSizeUnit() );
 					}
 		
 		return true;
