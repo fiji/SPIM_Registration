@@ -129,6 +129,11 @@
 		</developer>
 	</developers>
 
+	<ciManagement>
+		<system>Jenkins</system>
+		<url>http://jenkins.imagej.net/job/spimreconstruction/</url>
+	</ciManagement>
+
 	<scm>
 		<connection>scm:git:git://github.com/fiji/spimreconstruction</connection>
 		<developerConnection>scm:git:git@github.com:fiji/spimreconstruction</developerConnection>
