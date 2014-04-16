@@ -85,7 +85,6 @@ public abstract class PairwiseGloballyOptimalRegistration< T extends Callable< C
 		    			", illum=" + viewB.getViewSetup().getIllumination().getName() + "]";
 				
 				tasks.add( getPairwiseMatching( pair, description ) );
-				//new GeometricHashing3dPairwise( pair, model, comp, ransacParams )
 			}
 			try
 			{

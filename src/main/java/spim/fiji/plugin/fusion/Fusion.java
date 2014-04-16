@@ -1,5 +1,7 @@
 package spim.fiji.plugin.fusion;
 
+import ij.gui.GenericDialog;
+
 import java.util.ArrayList;
 
 import mpicbg.spim.data.sequence.Angle;
@@ -7,9 +9,14 @@ import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import spim.fiji.spimdata.SpimData2;
+import spim.process.fusion.export.ImgExport;
 
 public abstract class Fusion
 {
+	public static String[] interpolationTypes = new String[]{ "Nearest Neighbor", "Linear Interpolation" };
+	public static int defaultInterpolation = 1;
+	protected int interpolation = 1;
+
 	/**
 	 * which angles to process, set in queryParameters
 	 */
@@ -53,21 +60,44 @@ public abstract class Fusion
 		this.timepointsToProcess = timepointsToProcess;
 	}
 	
+	public int getInterpolation() { return interpolation; }
+	
 	/**
 	 * Fuses and saves/displays
 	 * 
 	 * @param bb
 	 * @return
 	 */
-	public abstract boolean fuseData( final BoundingBox bb );
+	public abstract boolean fuseData( final BoundingBox bb, final ImgExport exporter );
+	
+	public abstract boolean supports16BitUnsigned();
+	public abstract boolean supportsDownsampling();
 	
 	/**
-	 * Query the necessary parameters for the fusion
+	 * compress the bounding box dialog as much as possible to let more space for extra parameters
+	 * @return
+	 */
+	public abstract boolean compressBoundingBoxDialog();
+	
+	/**
+	 * Query the necessary parameters for the fusion (new dialog has to be made)
 	 * 
 	 * @return
 	 */
 	public abstract boolean queryParameters();
 	
+	/**
+	 * Query additional parameters within the bounding box dialog
+	 */
+	public abstract void queryAdditionalParameters( final GenericDialog gd );
+
+	/**
+	 * Parse the additional parameters added before within the bounding box dialog
+	 * @param gd
+	 * @return
+	 */
+	public abstract boolean parseAdditionalParameters( final GenericDialog gd );
+
 	/**
 	 * @param spimData
 	 * @param anglesToPrcoess - which angles to segment

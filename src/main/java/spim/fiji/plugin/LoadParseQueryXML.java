@@ -229,6 +229,10 @@ public class LoadParseQueryXML
 			defaultSelection[ 0 ] = true;
 			for ( int i = 1; i < list.length; ++i )
 				defaultSelection[ i ] = false;
+			
+			// by default select first two
+			if ( defaultSelection.length > 1 )
+				defaultSelection[ 1 ] = true;
 		}
 		
 		final GenericDialog gd = new GenericDialog( "Select Multiple " + name );

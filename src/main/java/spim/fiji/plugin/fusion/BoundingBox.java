@@ -2,7 +2,6 @@ package spim.fiji.plugin.fusion;
 
 import java.util.ArrayList;
 
-import spim.fiji.spimdata.SpimData2;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
@@ -10,6 +9,14 @@ import mpicbg.spim.data.sequence.TimePoint;
 import net.imglib2.Interval;
 import net.imglib2.Positionable;
 import net.imglib2.RealPositionable;
+import net.imglib2.img.ImgFactory;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.cell.CellImgFactory;
+import net.imglib2.img.imageplus.ImagePlusImgFactory;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+import spim.fiji.spimdata.SpimData2;
+import spim.process.fusion.export.ImgExport;
 
 public abstract class BoundingBox implements Interval
 {
@@ -17,28 +24,37 @@ public abstract class BoundingBox implements Interval
 	
 	public static int minStatic[] = { 0, 0, 0 };
 	public static int maxStatic[] = { 0, 0, 0 };
+	
+	public static String[] pixelTypesFull = new String[]{ "32-bit floating point", "16-bit unsigned integer" };
+	public static String[] pixelTypesHalf = new String[]{ "32-bit floating point" };
+	public static int defaultPixelType = 0;
+	protected int pixelType = 0;
+
+	public static String[] imgTypes = new String[]{ "ArrayImg", "PlanarImg (large images, easy to display)", "CellImg (large images)" };
+	public static int defaultImgType = 1;
+	protected int imgtype = 1;
 
 	/**
 	 * which angles to process, set in queryParameters
 	 */
-	final ArrayList< Angle > anglesToProcess;
+	protected final ArrayList< Angle > anglesToProcess;
 
 	/**
 	 * which channels to process, set in queryParameters
 	 */
-	final ArrayList< Channel> channelsToProcess;
+	protected final ArrayList< Channel> channelsToProcess;
 
 	/**
 	 * which illumination directions to process, set in queryParameters
 	 */
-	final ArrayList< Illumination > illumsToProcess;
+	protected final ArrayList< Illumination > illumsToProcess;
 
 	/**
 	 * which timepoints to process, set in queryParameters
 	 */
-	final ArrayList< TimePoint > timepointsToProcess;
+	protected final ArrayList< TimePoint > timepointsToProcess;
 
-	final SpimData2 spimData;
+	protected final SpimData2 spimData;
 	
 	protected int[] min, max;
 	protected int downsampling;
@@ -73,7 +89,7 @@ public abstract class BoundingBox implements Interval
 	 * 
 	 * @return
 	 */
-	public abstract boolean queryParameters();
+	public abstract boolean queryParameters( final Fusion fusion, final ImgExport imgExport );
 
 	/**
 	 * @param spimData
@@ -94,6 +110,40 @@ public abstract class BoundingBox implements Interval
 	 * @return - to be displayed in the generic dialog
 	 */
 	public abstract String getDescription();	
+	
+	public int getDownSampling() { return downsampling; }
+	
+	public int getPixelType() { return pixelType; }
+	
+	public int getImgType() { return imgtype; }
+	
+	public < T extends RealType< T > & NativeType < T > > ImgFactory< T > getImgFactory( final T type )
+	{
+		final ImgFactory< T > imgFactory;
+		
+		if ( this.getImgType() == 0 )
+			imgFactory = new ArrayImgFactory<T>();
+		else if ( this.getImgType() == 1 )
+			imgFactory = new ImagePlusImgFactory<T>();
+		else
+			imgFactory = new CellImgFactory<T>( 256 );
+
+		return imgFactory;
+	}
+	
+	/**
+	 * @return - the final dimensions including downsampling of this bounding box (to instantiate an img)
+	 */
+	public long[] getDimensions()
+	{
+		final long[] dim = new long[ this.numDimensions() ];
+		this.dimensions( dim );
+		
+		for ( int d = 0; d < this.numDimensions(); ++d )
+			dim[ d ] /= this.getDownSampling();
+		
+		return dim;
+	}
 	
 	@Override
 	public long min( final int d ) { return min[ d ]; }
