@@ -15,6 +15,7 @@ import spim.process.fusion.boundingbox.ManualBoundingBox;
 import spim.process.fusion.export.DisplayImage;
 import spim.process.fusion.export.ImgExport;
 import spim.process.fusion.weightedavg.WeightedAverageFusion;
+import spim.process.fusion.weightedavg.WeightedAverageFusion.WeightedAvgFusionType;
 
 public class Image_Fusion implements PlugIn
 {
@@ -30,7 +31,9 @@ public class Image_Fusion implements PlugIn
 	static
 	{
 		IOFunctions.printIJLog = true;
-		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, null, null, null ) );
+		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, null, null, null, WeightedAvgFusionType.PARALELL ) );
+		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, null, null, null, WeightedAvgFusionType.SEQUENTIAL ) );
+		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, null, null, null, WeightedAvgFusionType.INDEPENDENT ) );
 		
 		staticBoundingBoxAlgorithms.add( new ManualBoundingBox( null, null, null, null, null ) );
 		staticBoundingBoxAlgorithms.add( new CompleteBoundingBox( null, null, null, null, null ) );

@@ -86,8 +86,6 @@ public class ContentBased< T extends RealType< T > > implements RealRandomAccess
 			final float diff = c.get().get() - r.get().get();
 			c.get().set( diff * diff );
 		}
-
-		ImageJFunctions.show( conv );
 		
 		// compute ( ( I - I*sigma1 )^2 ) * sigma2
 		fftConv = new FFTConvolution<FloatType>( conv, createGaussianKernel( sigma2 ), imgFactory );

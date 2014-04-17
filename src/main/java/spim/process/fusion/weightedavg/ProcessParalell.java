@@ -15,6 +15,7 @@ import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.RealRandomAccessible;
 import net.imglib2.img.Img;
 import net.imglib2.interpolation.InterpolatorFactory;
 import net.imglib2.type.NativeType;
@@ -32,9 +33,11 @@ public class ProcessParalell extends ProcessFusion
 			final SpimData2 spimData,
 			final ArrayList<Angle> anglesToProcess,
 			final ArrayList<Illumination> illumsToProcess,
-			final BoundingBox bb )
+			final BoundingBox bb,
+			final boolean useBlending,
+			final boolean useContentBased )
 	{
-		super( spimData, anglesToProcess, illumsToProcess, bb );
+		super( spimData, anglesToProcess, illumsToProcess, bb, useBlending, useContentBased );
 	}
 
 	/** 
@@ -73,6 +76,12 @@ public class ProcessParalell extends ProcessFusion
 		for ( int i = 0; i < inputData.size(); ++i )
 			imgs.add( getImage( type, spimData, inputData.get( i ) ) );
 		
+		// get all weighting methods
+		final ArrayList< ArrayList< RealRandomAccessible< FloatType > > > weights = new ArrayList< ArrayList< RealRandomAccessible< FloatType > > >();
+		
+		for ( int i = 0; i < inputData.size(); ++i )
+			weights.add( getAllWeights( imgs.get( i ), inputData.get( i ) ) );
+		
 		// split up into many parts for multithreading
 		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( fusedImg.size(), Runtime.getRuntime().availableProcessors() * 4 );
 
@@ -80,9 +89,27 @@ public class ProcessParalell extends ProcessFusion
 		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
 		final ArrayList< ProcessParalellPortion< T > > tasks = new ArrayList< ProcessParalellPortion< T > >();
 
-		for ( final ImagePortion portion : portions )
-			tasks.add( new ProcessParalellPortion< T >( portion, imgs, interpolatorFactory, getTransforms( inputData ), fusedImg, bb ) );
-	
+		if ( weights.get( 0 ).size() == 0 ) // no weights
+		{		
+			for ( final ImagePortion portion : portions )
+				tasks.add( new ProcessParalellPortion< T >( portion, imgs, interpolatorFactory, getTransforms( inputData ), fusedImg, bb ) );
+		}
+		else if ( weights.get( 0 ).size() > 1 ) // many weights
+		{
+			for ( final ImagePortion portion : portions )
+				tasks.add( new ProcessParalellPortionWeights< T >( portion, imgs, weights, interpolatorFactory, getTransforms( inputData ), fusedImg, bb ) );
+		}
+		else // one weight
+		{
+			final ArrayList< RealRandomAccessible< FloatType > > singleWeight = new ArrayList< RealRandomAccessible< FloatType > >();
+			
+			for ( int i = 0; i < inputData.size(); ++i )
+				singleWeight.add( weights.get( i ).get( 0 ) );
+			
+			for ( final ImagePortion portion : portions )
+				tasks.add( new ProcessParalellPortionWeight< T >( portion, imgs, singleWeight, interpolatorFactory, getTransforms( inputData ), fusedImg, bb ) );
+		}
+		
 		try
 		{
 			// invokeAll() returns when all tasks are complete

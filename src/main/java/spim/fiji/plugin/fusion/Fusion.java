@@ -16,6 +16,12 @@ public abstract class Fusion
 	public static String[] interpolationTypes = new String[]{ "Nearest Neighbor", "Linear Interpolation" };
 	public static int defaultInterpolation = 1;
 	protected int interpolation = 1;
+	
+	public static boolean defaultUseBlending = true;
+	protected boolean useBlending = true;
+
+	public static boolean defaultUseContentBased = false;
+	protected boolean useContentBased = false;
 
 	/**
 	 * which angles to process, set in queryParameters

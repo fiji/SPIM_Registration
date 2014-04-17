@@ -14,7 +14,7 @@ import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.img.imageplus.ImagePlusImgFactory;
 import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.ComplexType;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.export.ImgExport;
 
@@ -117,7 +117,7 @@ public abstract class BoundingBox implements Interval
 	
 	public int getImgType() { return imgtype; }
 	
-	public < T extends RealType< T > & NativeType < T > > ImgFactory< T > getImgFactory( final T type )
+	public < T extends ComplexType< T > & NativeType < T > > ImgFactory< T > getImgFactory( final T type )
 	{
 		final ImgFactory< T > imgFactory;
 		

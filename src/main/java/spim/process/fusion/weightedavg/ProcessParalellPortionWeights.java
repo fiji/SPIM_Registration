@@ -1,69 +1,55 @@
 package spim.process.fusion.weightedavg;
 
 import java.util.ArrayList;
-import java.util.concurrent.Callable;
 
+import spim.fiji.plugin.fusion.BoundingBox;
+import spim.process.fusion.FusionHelper;
+import spim.process.fusion.ImagePortion;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccess;
+import net.imglib2.RealRandomAccessible;
 import net.imglib2.img.Img;
 import net.imglib2.interpolation.InterpolatorFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
-import spim.fiji.plugin.fusion.BoundingBox;
-import spim.process.fusion.FusionHelper;
-import spim.process.fusion.ImagePortion;
 
 /**
- * Fuse one portion of a paralell fusion, supports no weights
+ * Fuse one portion of a paralell fusion, supports many weight functions
  * 
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  * @param <T>
  */
-public class ProcessParalellPortion< T extends RealType< T > > implements Callable< String >
+public class ProcessParalellPortionWeights< T extends RealType< T > > extends ProcessParalellPortion< T >
 {
-	final ImagePortion portion;
-	final ArrayList< RandomAccessibleInterval< T > > imgs;
-	final InterpolatorFactory<T, RandomAccessible< T > > interpolatorFactory;
-	final AffineTransform3D[] transforms;
-	final Img< T > fusedImg;
-	final BoundingBox bb;
+	final ArrayList< ArrayList< RealRandomAccessible< FloatType > > > weights;
 	
-	final boolean doDownSampling;
-	final int downSampling;
-	
-	public ProcessParalellPortion(
+	public ProcessParalellPortionWeights(
 			final ImagePortion portion,
 			final ArrayList< RandomAccessibleInterval< T > > imgs,
-			final InterpolatorFactory<T, RandomAccessible< T > > interpolatorFactory,
+			final ArrayList< ArrayList< RealRandomAccessible< FloatType > > > weights,
+			final InterpolatorFactory< T, RandomAccessible< T > > interpolatorFactory,
 			final AffineTransform3D[] transforms,
 			final Img< T > fusedImg,
 			final BoundingBox bb )
 	{
-		this.portion = portion;
-		this.imgs = imgs;
-		this.interpolatorFactory = interpolatorFactory;
-		this.transforms = transforms;
-		this.fusedImg = fusedImg;
-		this.bb = bb;
-		this.downSampling = bb.getDownSampling();
+		super( portion, imgs, interpolatorFactory, transforms, fusedImg, bb );
 		
-		if ( downSampling == 1 )
-			doDownSampling = false;
-		else
-			doDownSampling = true;
+		this.weights = weights;
 	}
-	
+
 	@Override
 	public String call() throws Exception 
 	{
 		final int numViews = imgs.size();
 		
-		// make the interpolators and get the transformations
+		// make the interpolators, weights and get the transformations
 		final ArrayList< RealRandomAccess< T > > interpolators = new ArrayList< RealRandomAccess< T > >( numViews );
+		final ArrayList< ArrayList< RealRandomAccess< FloatType > > > weightAccess = new ArrayList< ArrayList< RealRandomAccess< FloatType > > >();
 		final int[][] imgSizes = new int[ numViews ][ 3 ];
 		
 		for ( int i = 0; i < numViews; ++i )
@@ -72,6 +58,13 @@ public class ProcessParalellPortion< T extends RealType< T > > implements Callab
 			imgSizes[ i ] = new int[]{ (int)img.dimension( 0 ), (int)img.dimension( 1 ), (int)img.dimension( 2 ) };
 			
 			interpolators.add( Views.interpolate( Views.extendMirrorSingle( img ), interpolatorFactory ).realRandomAccess() );
+			
+			final ArrayList< RealRandomAccess< FloatType > > list = new ArrayList< RealRandomAccess< FloatType > >();
+
+			for ( final RealRandomAccessible< FloatType > rra : weights.get( i ) )
+				list.add( rra.realRandomAccess() );
+			
+			weightAccess.add( list );
 		}
 
 		final Cursor< T > cursor = fusedImg.localizingCursor();
@@ -107,8 +100,17 @@ public class ProcessParalellPortion< T extends RealType< T > > implements Callab
 				{
 					final RealRandomAccess< T > r = interpolators.get( i );
 					r.setPosition( t );
-					sum += r.get().getRealDouble();
-					++sumW;
+					
+					double w = 1;
+					
+					for ( final RealRandomAccess< FloatType > weight : weightAccess.get( i ) )
+					{
+						weight.setPosition( t );
+						w *= weight.get().get();
+					}
+					
+					sum += r.get().getRealDouble() * w;
+					sumW += w;
 				}
 			}
 			
@@ -116,6 +118,7 @@ public class ProcessParalellPortion< T extends RealType< T > > implements Callab
 				cursor.get().setReal( sum / sumW );
 		}
 		
-		return portion + " finished successfully (no weights).";
+		return portion + " finished successfully (many weights).";
 	}
+
 }
