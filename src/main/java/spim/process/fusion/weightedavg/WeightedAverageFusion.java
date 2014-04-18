@@ -112,7 +112,7 @@ public class WeightedAverageFusion extends Fusion
 		else if ( type == WeightedAvgFusionType.SEQUENTIAL )
 			return "Weighted-average based image fusion (process views sequentially)";
 		else
-			return "Create individually registered views (no fusion)";
+			return "Create individually registered views (no fusion, create separate images)";
 	}
 
 	@Override
