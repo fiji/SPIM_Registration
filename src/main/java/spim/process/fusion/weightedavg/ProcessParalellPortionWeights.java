@@ -75,7 +75,8 @@ public class ProcessParalellPortionWeights< T extends RealType< T > > extends Pr
 		
 		for ( int j = 0; j < portion.getLoopSize(); ++j )
 		{
-			cursor.fwd();
+			// move img cursor forward any get the value (saves one access)
+			final T v = cursor.next();
 			cursor.localize( s );
 			
 			if ( doDownSampling )
@@ -115,7 +116,7 @@ public class ProcessParalellPortionWeights< T extends RealType< T > > extends Pr
 			}
 			
 			if ( sumW > 0 )
-				cursor.get().setReal( sum / sumW );
+				v.setReal( sum / sumW );
 		}
 		
 		return portion + " finished successfully (many weights).";

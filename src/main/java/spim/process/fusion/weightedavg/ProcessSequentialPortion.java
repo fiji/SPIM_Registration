@@ -1,7 +1,6 @@
 package spim.process.fusion.weightedavg;
 
 import java.util.ArrayList;
-import java.util.concurrent.Callable;
 
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessible;
@@ -11,50 +10,36 @@ import net.imglib2.img.Img;
 import net.imglib2.interpolation.InterpolatorFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
 
 /**
- * Fuse one portion of a paralell fusion, supports no weights
+ * Fuse one portion of a sequential fusion, supports no weights
+ * This is basically identical to the parallel fusion except it does store the weights
  * 
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  * @param <T>
  */
-public class ProcessParalellPortion< T extends RealType< T > > implements Callable< String >
+public class ProcessSequentialPortion< T extends RealType< T > > extends ProcessParalellPortion< T >
 {
-	final ImagePortion portion;
-	final ArrayList< RandomAccessibleInterval< T > > imgs;
-	final InterpolatorFactory<T, RandomAccessible< T > > interpolatorFactory;
-	final AffineTransform3D[] transforms;
-	final Img< T > fusedImg;
-	final BoundingBox bb;
+	final Img< FloatType > weightImg;
 	
-	final boolean doDownSampling;
-	final int downSampling;
-	
-	public ProcessParalellPortion(
+	public ProcessSequentialPortion(
 			final ImagePortion portion,
 			final ArrayList< RandomAccessibleInterval< T > > imgs,
 			final InterpolatorFactory<T, RandomAccessible< T > > interpolatorFactory,
 			final AffineTransform3D[] transforms,
 			final Img< T > fusedImg,
+			final Img< FloatType > weightImg,
 			final BoundingBox bb )
 	{
-		this.portion = portion;
-		this.imgs = imgs;
-		this.interpolatorFactory = interpolatorFactory;
-		this.transforms = transforms;
-		this.fusedImg = fusedImg;
-		this.bb = bb;
-		this.downSampling = bb.getDownSampling();
+		super( portion, imgs, interpolatorFactory, transforms, fusedImg, bb );
 		
-		if ( downSampling == 1 )
-			doDownSampling = false;
-		else
-			doDownSampling = true;
+		this.weightImg = weightImg;
 	}
 	
 	@Override
@@ -75,16 +60,22 @@ public class ProcessParalellPortion< T extends RealType< T > > implements Callab
 		}
 
 		final Cursor< T > cursor = fusedImg.localizingCursor();
+		final Cursor< FloatType > cursorW = weightImg.cursor();
+		
 		final float[] s = new float[ 3 ];
 		final float[] t = new float[ 3 ];
 		
 		cursor.jumpFwd( portion.getStartPosition() );
+		cursorW.jumpFwd( portion.getStartPosition() );
 		
 		for ( int j = 0; j < portion.getLoopSize(); ++j )
 		{
 			// move img cursor forward any get the value (saves one access)
 			final T v = cursor.next();
 			cursor.localize( s );
+			
+			// move weight cursor forward and get the value 
+			final FloatType w = cursorW.next();
 			
 			if ( doDownSampling )
 			{
@@ -114,7 +105,10 @@ public class ProcessParalellPortion< T extends RealType< T > > implements Callab
 			}
 			
 			if ( sumW > 0 )
-				v.setReal( sum / sumW );
+			{
+				v.setReal( v.getRealFloat() + sum );
+				w.set( w.get() + sumW );
+			}
 		}
 		
 		return portion + " finished successfully (no weights).";
