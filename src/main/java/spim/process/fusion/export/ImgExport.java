@@ -5,11 +5,17 @@ import net.imglib2.img.Img;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import spim.fiji.plugin.fusion.BoundingBox;
-import spim.fiji.plugin.fusion.Fusion;
 
 public interface ImgExport
 {
-	public < T extends RealType< T > & NativeType< T > > void exportImage( final Img< T > img, final BoundingBox bb, final Fusion fusion, final String title );
+	/**
+	 * Exports the image
+	 * 
+	 * @param img - Note, in rare cases this can be null (i.e. do nothing)
+	 * @param bb
+	 * @param title
+	 */
+	public < T extends RealType< T > & NativeType< T > > void exportImage( final Img< T > img, final BoundingBox bb, final String title );
 	
 	/**
 	 * Query the necessary parameters for the fusion (new dialog has to be made)

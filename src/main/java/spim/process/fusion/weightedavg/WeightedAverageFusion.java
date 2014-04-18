@@ -55,9 +55,15 @@ public class WeightedAverageFusion extends Fusion
 	@Override
 	public boolean fuseData( final BoundingBox bb, final ImgExport exporter ) 
 	{
-		//TODO: ask for which one
-		final ProcessFusion process = new ProcessParalell( spimData, anglesToProcess, illumsToProcess, bb, useBlending, useContentBased );
-
+		final ProcessFusion process;
+		
+		if ( getFusionType() == WeightedAvgFusionType.PARALELL )
+			process = new ProcessParalell( spimData, anglesToProcess, illumsToProcess, bb, useBlending, useContentBased );
+		else if ( getFusionType() == WeightedAvgFusionType.SEQUENTIAL )
+			process = new ProcessSequential( spimData, anglesToProcess, illumsToProcess, bb, useBlending, useContentBased, numParalellViews );
+		else
+			process = new ProcessIndependent( spimData, anglesToProcess, illumsToProcess, bb, exporter );
+		
 		for ( final TimePoint t : timepointsToProcess )
 			for ( final Channel c : channelsToProcess )
 			{
@@ -67,7 +73,6 @@ public class WeightedAverageFusion extends Fusion
 					exporter.exportImage(
 							process.fuseStack( new FloatType(), getInterpolatorFactory( new FloatType() ), t , c ),
 							bb,
-							this,
 							title );
 				}
 				else
@@ -75,7 +80,6 @@ public class WeightedAverageFusion extends Fusion
 					exporter.exportImage(
 							process.fuseStack( new UnsignedShortType(), getInterpolatorFactory( new UnsignedShortType() ), t , c ),
 							bb,
-							this,
 							title );
 				}
 			}
@@ -86,7 +90,6 @@ public class WeightedAverageFusion extends Fusion
 	@Override
 	public boolean queryParameters()
 	{
-		// TODO Auto-generated method stub
 		return true;
 	}
 

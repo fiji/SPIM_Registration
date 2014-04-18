@@ -125,17 +125,19 @@ public abstract class ProcessFusion
 	{
 		return Math.min( setup.getPixelWidth(), Math.min( setup.getPixelHeight(), setup.getPixelDepth() ) );
 	}
-	
+
+	protected AffineTransform3D getTransform( final ViewDescription< TimePoint, ViewSetup > inputData )
+	{
+		return spimData.getViewRegistrations().getViewRegistration( inputData ).getModel();
+	}
+
 	protected AffineTransform3D[] getTransforms( final ArrayList< ViewDescription< TimePoint, ViewSetup > > inputData )
 	{
 		final int numViews = inputData.size();
 		final AffineTransform3D[] transforms = new AffineTransform3D[ numViews ];
 
 		for ( int i = 0; i < numViews; ++i )
-		{
-			final ViewDescription< TimePoint, ViewSetup > view = inputData.get( i );
-			transforms[ i ] = spimData.getViewRegistrations().getViewRegistration( view ).getModel(); 			
-		}
+			transforms[ i ] = getTransform( inputData.get( i ) );
 		
 		return transforms;
 	}

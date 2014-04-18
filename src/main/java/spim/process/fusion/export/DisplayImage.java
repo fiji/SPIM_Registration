@@ -9,12 +9,11 @@ import net.imglib2.img.imageplus.ImagePlusImg;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import spim.fiji.plugin.fusion.BoundingBox;
-import spim.fiji.plugin.fusion.Fusion;
 
 public class DisplayImage implements ImgExport
 {
 	@SuppressWarnings("unchecked")
-	public < T extends RealType< T > & NativeType< T > > void exportImage( final Img< T > img, final BoundingBox bb, final Fusion fusion, final String title )
+	public < T extends RealType< T > & NativeType< T > > void exportImage( final Img< T > img, final BoundingBox bb, final String title )
 	{
 		ImagePlus imp = null;
 		

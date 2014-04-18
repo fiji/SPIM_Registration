@@ -3,6 +3,7 @@ package spim.process.fusion.weightedavg;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Vector;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -13,6 +14,7 @@ import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.Cursor;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccessible;
@@ -153,8 +155,59 @@ public class ProcessSequential extends ProcessFusion
 			taskExecutor.shutdown();			
 		}
 		
+		// compute final image from intensities and weights
+		mergeFinalImage( fusedImg, weightImg );
 		
 		return fusedImg;
+	}
+	
+	protected < T extends RealType< T > > void mergeFinalImage( final Img< T > img, final Img< FloatType > weights )
+	{
+		// split up into many parts for multithreading
+		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( img.size(), Runtime.getRuntime().availableProcessors() * 4 );
+
+		// set up executor service
+		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
+		final ArrayList< Callable< String > > tasks = new ArrayList< Callable< String > >();
+
+		for ( final ImagePortion portion : portions )
+		{
+			tasks.add( new Callable< String >() 
+					{
+						@Override
+						public String call() throws Exception
+						{
+							final Cursor< T > cursor = img.localizingCursor();
+							final Cursor< FloatType > cursorW = weights.cursor();
+							
+							cursor.jumpFwd( portion.getStartPosition() );
+							cursorW.jumpFwd( portion.getStartPosition() );
+							
+							for ( int j = 0; j < portion.getLoopSize(); ++j )
+							{
+								final T type = cursor.next();
+								type.setReal( type.getRealFloat() / cursorW.next().get() );
+							}
+							
+							return "";
+						}
+					});
+		}
+		
+		try
+		{
+			// invokeAll() returns when all tasks are complete
+			taskExecutor.invokeAll( tasks );
+		}
+		catch ( final InterruptedException e )
+		{
+			IOFunctions.println( "Failed to merge final image: " + e );
+			e.printStackTrace();
+			return;
+		}
+
+		taskExecutor.shutdown();
+		
 	}
 	
 	protected int numBatches( final int numViews, final int sequentialViews )
