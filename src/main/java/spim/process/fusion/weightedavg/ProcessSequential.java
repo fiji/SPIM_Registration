@@ -117,17 +117,17 @@ public class ProcessSequential extends ProcessFusion
 
 			// set up executor service
 			final ExecutorService taskExecutor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
-			final ArrayList< ProcessParalellPortion< T > > tasks = new ArrayList< ProcessParalellPortion< T > >();
+			final ArrayList< ProcessSequentialPortion< T > > tasks = new ArrayList< ProcessSequentialPortion< T > >();
 
 			if ( weights.get( 0 ).size() == 0 ) // no weights
 			{		
 				for ( final ImagePortion portion : portions )
-					tasks.add( new ProcessParalellPortion< T >( portion, imgs, interpolatorFactory, getTransforms( inputData ), fusedImg, bb ) );
+					tasks.add( new ProcessSequentialPortion< T >( portion, imgs, interpolatorFactory, getTransforms( inputData ), fusedImg, weightImg, bb ) );
 			}
 			else if ( weights.get( 0 ).size() > 1 ) // many weights
 			{
 				for ( final ImagePortion portion : portions )
-					tasks.add( new ProcessParalellPortionWeights< T >( portion, imgs, weights, interpolatorFactory, getTransforms( inputData ), fusedImg, bb ) );
+					tasks.add( new ProcessSequentialPortionWeights< T >( portion, imgs, weights, interpolatorFactory, getTransforms( inputData ), fusedImg, weightImg, bb ) );
 			}
 			else // one weight
 			{
@@ -137,7 +137,7 @@ public class ProcessSequential extends ProcessFusion
 					singleWeight.add( weights.get( i ).get( 0 ) );
 				
 				for ( final ImagePortion portion : portions )
-					tasks.add( new ProcessParalellPortionWeight< T >( portion, imgs, singleWeight, interpolatorFactory, getTransforms( inputData ), fusedImg, bb ) );
+					tasks.add( new ProcessSequentialPortionWeight< T >( portion, imgs, singleWeight, interpolatorFactory, getTransforms( inputData ), fusedImg, weightImg, bb ) );
 			}
 			
 			try
@@ -185,8 +185,12 @@ public class ProcessSequential extends ProcessFusion
 							
 							for ( int j = 0; j < portion.getLoopSize(); ++j )
 							{
-								final T type = cursor.next();
-								type.setReal( type.getRealFloat() / cursorW.next().get() );
+								final float w = cursorW.next().get();
+								if ( w > 0 )
+								{
+									final T type = cursor.next();
+									type.setReal( type.getRealFloat() / w );
+								}
 							}
 							
 							return "";
