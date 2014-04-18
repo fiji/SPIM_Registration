@@ -15,6 +15,10 @@ public class DisplayImage implements ImgExport
 	@SuppressWarnings("unchecked")
 	public < T extends RealType< T > & NativeType< T > > void exportImage( final Img< T > img, final BoundingBox bb, final String title )
 	{
+		// do nothing in case the image is null
+		if ( img == null )
+			return;
+
 		ImagePlus imp = null;
 		
 		if ( img instanceof ImagePlusImg )
