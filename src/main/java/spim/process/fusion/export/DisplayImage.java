@@ -9,6 +9,7 @@ import net.imglib2.img.imageplus.ImagePlusImg;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import spim.fiji.plugin.fusion.BoundingBox;
+import spim.process.fusion.FusionHelper;
 
 public class DisplayImage implements ImgExport
 {
@@ -18,6 +19,9 @@ public class DisplayImage implements ImgExport
 		// do nothing in case the image is null
 		if ( img == null )
 			return;
+		
+		// determine min and max
+		final float[] minmax = FusionHelper.minMax( img );
 
 		ImagePlus imp = null;
 		
@@ -36,6 +40,8 @@ public class DisplayImage implements ImgExport
 				imp.getCalibration().pixelDepth = bb.getDownSampling();
 		
 		imp.setDimensions( 1, (int)img.dimension( 2 ), 1 );
+		
+		imp.setDisplayRange( minmax[ 0 ], minmax[ 1 ] );
 		
 		imp.updateAndDraw();
 		imp.show();
