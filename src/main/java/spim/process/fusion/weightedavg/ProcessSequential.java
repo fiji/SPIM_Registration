@@ -154,7 +154,7 @@ public class ProcessSequential extends ProcessFusion
 
 			taskExecutor.shutdown();			
 		}
-		
+
 		// compute final image from intensities and weights
 		mergeFinalImage( fusedImg, weightImg );
 		
@@ -177,7 +177,7 @@ public class ProcessSequential extends ProcessFusion
 						@Override
 						public String call() throws Exception
 						{
-							final Cursor< T > cursor = img.localizingCursor();
+							final Cursor< T > cursor = img.cursor();
 							final Cursor< FloatType > cursorW = weights.cursor();
 							
 							cursor.jumpFwd( portion.getStartPosition() );
@@ -186,11 +186,10 @@ public class ProcessSequential extends ProcessFusion
 							for ( int j = 0; j < portion.getLoopSize(); ++j )
 							{
 								final float w = cursorW.next().get();
+								final T type = cursor.next();
+
 								if ( w > 0 )
-								{
-									final T type = cursor.next();
 									type.setReal( type.getRealFloat() / w );
-								}
 							}
 							
 							return "";
