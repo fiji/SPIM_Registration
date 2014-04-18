@@ -108,11 +108,11 @@ public class WeightedAverageFusion extends Fusion
 	public String getDescription()
 	{
 		if ( type == WeightedAvgFusionType.PARALELL )
-			return "Weighted-average based image fusion (process all views in paralell)";
+			return "Weighted-average fusion (process all views in paralell)";
 		else if ( type == WeightedAvgFusionType.SEQUENTIAL )
-			return "Weighted-average based image fusion (process views sequentially)";
+			return "Weighted-average fusion (process views sequentially)";
 		else
-			return "Create individually registered views (no fusion, create separate images)";
+			return "No fusion, create individual registered images";
 	}
 
 	@Override
