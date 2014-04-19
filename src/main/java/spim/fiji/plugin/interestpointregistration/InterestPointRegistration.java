@@ -167,7 +167,11 @@ public abstract class InterestPointRegistration
 							IOFunctions.println( "An error occured. No calibration available for timepoint: " + t.getId() + " angle: " + 
 									a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
 							
-							IOFunctions.println( "Quitting. Please set it manually when defining the dataset or by modifying the XML" );							
+							IOFunctions.println( "Quitting. Please set it manually when defining the dataset or by modifying the XML." );
+							IOFunctions.println( "Note: if you selected to load calibration independently for each image, it should." );
+							IOFunctions.println( "      have been loaded during interest point detection." );
+							
+							return false;
 						}
 						
 						final double calX = viewDescription.getViewSetup().getPixelWidth();
