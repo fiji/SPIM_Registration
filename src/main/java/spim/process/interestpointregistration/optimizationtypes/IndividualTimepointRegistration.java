@@ -24,7 +24,7 @@ public class IndividualTimepointRegistration extends GlobalOptimizationType
 {
 	public IndividualTimepointRegistration( final boolean remove, final boolean add, final boolean save )
 	{ 
-		super( remove, add, save );
+		super( remove, add, save, false );
 	}
 
 	@Override
@@ -66,18 +66,23 @@ public class IndividualTimepointRegistration extends GlobalOptimizationType
 			
 			final ArrayList< ChannelInterestPointListPair > viewPairs = new ArrayList< ChannelInterestPointListPair >();
 			
-			for ( int a = 0; a < views.size() - 1; ++a )
-				for ( int b = a + 1; b < views.size(); ++b )
-				{
-					final ViewId viewIdA = views.get( a );
-					final ViewId viewIdB = views.get( b );
-					
-					final ChannelInterestPointList listA = pointLists.get( viewIdA );
-					final ChannelInterestPointList listB = pointLists.get( viewIdB );
-					
-					viewPairs.add( new ChannelInterestPointListPair( viewIdA, viewIdB, listA, listB ) );
-				}
-			
+			// the views of the timepoint that is processed
+			// add this only if we do not consider timepoints to be units
+			// Note: if considerTimePointsAsUnits == true, there are no pairs
+			if ( !considerTimePointsAsUnit )
+			{
+				for ( int a = 0; a < views.size() - 1; ++a )
+					for ( int b = a + 1; b < views.size(); ++b )
+					{
+						final ViewId viewIdA = views.get( a );
+						final ViewId viewIdB = views.get( b );
+						
+						final ChannelInterestPointList listA = pointLists.get( viewIdA );
+						final ChannelInterestPointList listB = pointLists.get( viewIdB );
+						
+						viewPairs.add( new ChannelInterestPointListPair( viewIdA, viewIdB, listA, listB ) );
+					}
+			}
 			list.add( new GlobalOptimizationSubset( viewPairs, "individual timepoint registration: " + timepoint.getName() + "(id=" + timepoint.getId() + ")" ) );
 		}
 		

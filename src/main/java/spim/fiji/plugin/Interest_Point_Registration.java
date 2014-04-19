@@ -44,15 +44,29 @@ import spim.process.interestpointregistration.optimizationtypes.ReferenceTimepoi
 public class Interest_Point_Registration implements PlugIn
 {
 	public static ArrayList< InterestPointRegistration > staticAlgorithms = new ArrayList< InterestPointRegistration >();
-	public static String[] registrationChoices = { "Register timepoints individually", "Match against one reference timepoint (no global optimization)", "All-to-all timepoints matching (global optimization)", "All-to-all timepoints matching with range ('reasonable' global optimization)" };
-	
+
+	public static String[] registrationTypes = {
+		"Register timepoints individually", 
+		"Match against one reference timepoint (no global optimization)", 
+		"All-to-all timepoints matching (global optimization)", 
+		"All-to-all timepoints matching with range ('reasonable' global optimization)" };
+
+	public static String[] inputChoice = new String[]{
+		"Calibration only (resets existing transform)",
+		"Current view transformations (appends to current transform)" };	
+
 	public static int defaultAlgorithm = 0;
-	public static int defaultRegistration = 0;
+	public static int defaultRegistrationType = 0;
 	public static int[] defaultChannelLabels = null;
 	public static int defaultRange = 5;
 	public static int defaultReferenceTimepoint = -1;
 	public static boolean defaultRegisterReferenceFirst = false;
-	
+	public static int defaultTransformInputChoice = 0;
+	public static boolean defaultConsiderTimepointAsUnit = false;
+	public static boolean defaultRemoveExistingCorrespondences = true;
+	public static boolean defaultAddNewCorrespondences = true;
+	public static boolean defaultDisplayTransformOnly = false;
+
 	final protected String warningLabel = " (WARNING: Only available for "; 
 	
 	static
@@ -93,7 +107,7 @@ public class Interest_Point_Registration implements PlugIn
 		
 		final String[] choicesGlobal;
 		if ( result.getTimePointsToProcess().size() > 1 )
-			choicesGlobal = registrationChoices.clone();
+			choicesGlobal = registrationTypes.clone();
 		else
 		{
 			final int globalAmountTimepoints = 
@@ -102,15 +116,15 @@ public class Interest_Point_Registration implements PlugIn
 			// suggest a registration to a reference timepoint (that we do not process here)
 			// if there the entire dataset description has more than one timepoint
 			if ( globalAmountTimepoints > 1 )
-				choicesGlobal = new String[]{ registrationChoices[ 0 ], registrationChoices[ 1 ] };
+				choicesGlobal = new String[]{ registrationTypes[ 0 ], registrationTypes[ 1 ] };
 			else
-				choicesGlobal = new String[]{ registrationChoices[ 0 ] };
+				choicesGlobal = new String[]{ registrationTypes[ 0 ] };
 		}
 		
-		if ( defaultRegistration >= choicesGlobal.length )
-			defaultRegistration = 0;
+		if ( defaultRegistrationType >= choicesGlobal.length )
+			defaultRegistrationType = 0;
 		
-		gd.addChoice( "Type_of_registration", choicesGlobal, choicesGlobal[ defaultRegistration ] );
+		gd.addChoice( "Type_of_registration", choicesGlobal, choicesGlobal[ defaultRegistrationType ] );
 		
 		if ( defaultChannelLabels == null || defaultChannelLabels.length != channels.size() )
 			defaultChannelLabels = new int[ channels.size() ];
@@ -138,7 +152,7 @@ public class Interest_Point_Registration implements PlugIn
 			return;
 		
 		final int algorithm = defaultAlgorithm = gd.getNextChoiceIndex();
-		final int registrationType = defaultRegistration = gd.getNextChoiceIndex();
+		final int registrationType = defaultRegistrationType = gd.getNextChoiceIndex();
 
 		// assemble which channels have been selected with with label
 		final ArrayList< ChannelProcess > channelsToProcess = new ArrayList< ChannelProcess >();
@@ -179,25 +193,9 @@ public class Interest_Point_Registration implements PlugIn
 		queryDetailedParameters( result, ipr, registrationType );
 	}
 	
-	public static String[] inputChoice = new String[]{ "Calibration only (resets existing transform)", "Current view transformations (appends to current transform)" };	
-	public static int defaultTransformInputChoice = 0;
-	public static boolean defaultRemoveExistingCorrespondences = true;
-	public static boolean defaultAddNewCorrespondences = true;
-	public static boolean defaultDisplayTransformOnly = false;
-	
-	protected String[] assembleTimepoints( final TimePoints< TimePoint > timepoints )
-	{
-		final String[] tps = new String[ timepoints.getTimePointList().size() ];
-		
-		for ( int t = 0; t < tps.length; ++t )
-			tps[ t ] = timepoints.getTimePointList().get( t ).getName();
-		
-		return tps;
-	}
-	
 	protected void queryDetailedParameters( final XMLParseResult result, final InterestPointRegistration ipr, final int registrationType )
 	{
-		final GenericDialog gd = new GenericDialog( "Register: " + registrationChoices[ registrationType ] );
+		final GenericDialog gd = new GenericDialog( "Register: " + registrationTypes[ registrationType ] );
 		
 		if ( registrationType == 1 )
 		{
@@ -221,6 +219,16 @@ public class Interest_Point_Registration implements PlugIn
 		}
 		
 		gd.addChoice( "Register_based_on", inputChoice, inputChoice[ defaultTransformInputChoice ] );
+		
+		// for all registrations that include multiple timepointss
+		if ( registrationType > 0 )
+		{
+			gd.addCheckbox( "Consider_each_timepoint_as_rigid_unit", defaultConsiderTimepointAsUnit );
+			gd.addMessage( "Note: This option applies the same transformation model to all views of one timepoint. This makes for example\n" +
+					"sense if all timepoints are individually pre-registered using an affine transformation model, and for the timeseries\n" +
+					"stabilization a translation model should be used.\n ", GUIHelper.smallStatusFont );
+		}
+		
 		gd.addCheckbox( "Remove_existing_correspondences (from previous registrations)", defaultRemoveExistingCorrespondences );
 		gd.addCheckbox( "Add_new_correspondences (as identified by this registration run)", defaultAddNewCorrespondences );
 		gd.addCheckbox( "Display final transformation only (do not edit XML)", defaultDisplayTransformOnly );
@@ -251,6 +259,11 @@ public class Interest_Point_Registration implements PlugIn
 			range = defaultRange = (int)Math.round( gd.getNextNumber() );
 		
 		ipr.setInitialTransformType( defaultTransformInputChoice = gd.getNextChoiceIndex() );
+		final boolean considerTimepointsAsUnit;
+		if ( registrationType > 0 )
+			considerTimepointsAsUnit = defaultConsiderTimepointAsUnit = gd.getNextBoolean();
+		else
+			considerTimepointsAsUnit = false;
 		final boolean removeCorrespondences = defaultRemoveExistingCorrespondences = gd.getNextBoolean();
 		final boolean addNewCorrespondences = defaultAddNewCorrespondences = gd.getNextBoolean();
 		final boolean displayOnly = defaultDisplayTransformOnly = gd.getNextBoolean();
@@ -302,11 +315,12 @@ public class Interest_Point_Registration implements PlugIn
 					ipr.getChannelsToProcess(),
 					ipr.getIllumsToProcess(),
 					result.getData().getSequenceDescription().getTimePoints().getTimePointList().get( referenceTimePoint ),
-					removeCorrespondences, addNewCorrespondences, !displayOnly );
+					removeCorrespondences, addNewCorrespondences, !displayOnly,
+					considerTimepointsAsUnit );
 		else if ( registrationType == 2 )
-			type = new AllToAllRegistration( removeCorrespondences, addNewCorrespondences, !displayOnly );
+			type = new AllToAllRegistration( removeCorrespondences, addNewCorrespondences, !displayOnly, considerTimepointsAsUnit  );
 		else if ( registrationType == 3 )
-			type = new AllToAllRegistrationWithRange( range, removeCorrespondences, addNewCorrespondences, !displayOnly );
+			type = new AllToAllRegistrationWithRange( range, removeCorrespondences, addNewCorrespondences, !displayOnly, considerTimepointsAsUnit  );
 		else
 			type = null;
 		
@@ -409,6 +423,16 @@ public class Interest_Point_Registration implements PlugIn
 		allLabels[ i ] = "[DO NOT register this channel]";
 		
 		return allLabels;
+	}
+
+	protected String[] assembleTimepoints( final TimePoints< TimePoint > timepoints )
+	{
+		final String[] tps = new String[ timepoints.getTimePointList().size() ];
+		
+		for ( int t = 0; t < tps.length; ++t )
+			tps[ t ] = timepoints.getTimePointList().get( t ).getName();
+		
+		return tps;
 	}
 
 	public static void main( String[] args )

@@ -16,11 +16,12 @@ import spim.process.interestpointregistration.ChannelProcess;
 
 public class AllToAllRegistration extends GlobalOptimizationType
 {
-	public AllToAllRegistration( final boolean remove, final boolean add, final boolean save )
+	public AllToAllRegistration( final boolean remove, final boolean add, final boolean save, final boolean considerTimePointsAsUnit  )
 	{ 
-		super( remove, add, save );
+		super( remove, add, save, considerTimePointsAsUnit );
 	}
 
+	@Override
 	public List< GlobalOptimizationSubset > getAllViewPairs(
 			final SpimData2 spimData,
 			final ArrayList< Angle > anglesToProcess,
@@ -64,7 +65,10 @@ public class AllToAllRegistration extends GlobalOptimizationType
 				final ChannelInterestPointList listA = allPointLists.get( viewIdA );
 				final ChannelInterestPointList listB = allPointLists.get( viewIdB );
 				
-				viewPairs.add( new ChannelInterestPointListPair( viewIdA, viewIdB, listA, listB ) );
+				// in case we consider timepoints as units and the pair has the same timepoint, do not add;
+				// i.e. add the pair always if the above statement is false
+				if ( !( considerTimePointsAsUnit && ( viewIdA.getTimePointId() == viewIdB.getTimePointId() ) ) )
+					viewPairs.add( new ChannelInterestPointListPair( viewIdA, viewIdB, listA, listB ) );
 			}
 
 		final ArrayList< GlobalOptimizationSubset > list = new ArrayList< GlobalOptimizationSubset >();

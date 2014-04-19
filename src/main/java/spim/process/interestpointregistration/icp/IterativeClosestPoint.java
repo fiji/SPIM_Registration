@@ -53,14 +53,15 @@ public class IterativeClosestPoint extends PairwiseGloballyOptimalRegistration< 
 			final GlobalOptimizationSubset subset, 
 			final GlobalOptimizationType registrationType,
 			final SpimData2 spimData,
-			final ArrayList< ChannelProcess > channelsToProcess )
+			final ArrayList< ChannelProcess > channelsToProcess,
+			final boolean considerTimePointsAsUnit )
 	{
 		if ( model == 0 )
-			subset.computeGlobalOpt( new TranslationModel3D(), registrationType, spimData, getChannelsToProcess(), getDescription() );
+			subset.computeGlobalOpt( new TranslationModel3D(), registrationType, spimData, getChannelsToProcess(), getDescription(), considerTimePointsAsUnit );
 		else if ( model == 1 )
-			subset.computeGlobalOpt( new RigidModel3D(), registrationType, spimData, getChannelsToProcess(), getDescription() );
+			subset.computeGlobalOpt( new RigidModel3D(), registrationType, spimData, getChannelsToProcess(), getDescription(), considerTimePointsAsUnit );
 		else
-			subset.computeGlobalOpt( new AffineModel3D(), registrationType, spimData, getChannelsToProcess(), getDescription() );	
+			subset.computeGlobalOpt( new AffineModel3D(), registrationType, spimData, getChannelsToProcess(), getDescription(), considerTimePointsAsUnit );	
 	}
 
 	@Override

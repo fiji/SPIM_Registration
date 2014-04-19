@@ -36,7 +36,8 @@ public abstract class PairwiseGloballyOptimalRegistration< T extends Callable< C
 			final GlobalOptimizationSubset subset, 
 			final GlobalOptimizationType registrationType,
 			final SpimData2 spimData,
-			final ArrayList< ChannelProcess > channelsToProcess );
+			final ArrayList< ChannelProcess > channelsToProcess,
+			final boolean considerTimePointsAsUnit );
 
 	@Override
 	public boolean register( final GlobalOptimizationType registrationType )
@@ -126,7 +127,7 @@ public abstract class PairwiseGloballyOptimalRegistration< T extends Callable< C
 			if ( registrationType.save() )
 				registrationType.saveCorrespondences( spimData, getChannelsToProcess(), subset );
 			
-			runGlobalOpt( subset, registrationType, spimData, getChannelsToProcess() );
+			runGlobalOpt( subset, registrationType, spimData, getChannelsToProcess(), registrationType.considerTimePointsAsUnit() );
 		}
 		
 		return true;

@@ -50,9 +50,10 @@ public class GlobalOptimizationSubset
 			final GlobalOptimizationType type,
 			final SpimData2 spimData,
 			final ArrayList< ChannelProcess > channelsToProcess,
-			final String description )
+			final String description,
+			final boolean considerTimePointsAsUnit )
 	{
-		final HashMap< ViewId, Tile< M > > tiles = GlobalOpt.globalOptimization( model, type, this );
+		final HashMap< ViewId, Tile< M > > tiles = GlobalOpt.compute( model, type, this, considerTimePointsAsUnit );
 		final ViewRegistrations viewRegistrations = spimData.getViewRegistrations();
 
 		String channelList = "[";

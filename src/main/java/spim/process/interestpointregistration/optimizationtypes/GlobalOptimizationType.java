@@ -39,12 +39,14 @@ import mpicbg.spim.mpicbg.PointMatchGeneric;
 public abstract class GlobalOptimizationType
 {
 	protected boolean save, remove, add;
+	final protected boolean considerTimePointsAsUnit;
 	
-	public GlobalOptimizationType( final boolean remove, final boolean add, final boolean save )
+	public GlobalOptimizationType( final boolean remove, final boolean add, final boolean save, final boolean considerTimePointsAsUnit )
 	{ 
 		this.remove = remove;
 		this.add = add;
-		this.save = save; 
+		this.save = save;
+		this.considerTimePointsAsUnit = considerTimePointsAsUnit;
 	}
 		
 	public abstract List< GlobalOptimizationSubset > getAllViewPairs(
@@ -77,6 +79,11 @@ public abstract class GlobalOptimizationType
 	 * @return - true if any of the data should be saved
 	 */
 	public boolean save() { return save; }
+	
+	/** 
+	 * @return - true if timepoints should be considered as one unit
+	 */
+	public boolean considerTimePointsAsUnit() { return considerTimePointsAsUnit; }
 
 	/**
 	 * Creates lists of input points for the registration, depending if the input is the current transformation or just the calibration

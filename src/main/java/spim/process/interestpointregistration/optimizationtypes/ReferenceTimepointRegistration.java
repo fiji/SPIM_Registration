@@ -28,9 +28,10 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 			final ArrayList< ChannelProcess > channelsToProcess,
 			final ArrayList< Illumination > illumsToProcess,
 			final TimePoint referenceTimepoint,
-			final boolean remove, final boolean add, final boolean save )
+			final boolean remove, final boolean add, final boolean save,
+			final boolean considerTimePointsAsUnit )
 	{ 
-		super( remove, add, save );
+		super( remove, add, save, considerTimePointsAsUnit );
 
 		this.referenceTimepoint = referenceTimepoint;
 		this.fixedTiles = assembleFixedTiles( spimData, anglesToProcess, channelsToProcess, illumsToProcess, referenceTimepoint );
@@ -144,17 +145,21 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 			}
 			
 			// the views of the timepoint that is processed
-			for ( int a = 0; a < views.size() - 1; ++a )
-				for ( int b = a + 1; b < views.size(); ++b )
-				{
-					final ViewId viewIdA = views.get( a );
-					final ViewId viewIdB = views.get( b );
-					
-					final ChannelInterestPointList listA = pointListsTimepoint.get( viewIdA );
-					final ChannelInterestPointList listB = pointListsTimepoint.get( viewIdB );
-					
-					viewPairs.add( new ChannelInterestPointListPair( viewIdA, viewIdB, listA, listB ) );
-				}
+			// add this only if we do not consider timepoints to be units
+			if ( !considerTimePointsAsUnit )
+			{
+				for ( int a = 0; a < views.size() - 1; ++a )
+					for ( int b = a + 1; b < views.size(); ++b )
+					{
+						final ViewId viewIdA = views.get( a );
+						final ViewId viewIdB = views.get( b );
+						
+						final ChannelInterestPointList listA = pointListsTimepoint.get( viewIdA );
+						final ChannelInterestPointList listB = pointListsTimepoint.get( viewIdB );
+						
+						viewPairs.add( new ChannelInterestPointListPair( viewIdA, viewIdB, listA, listB ) );
+					}
+			}
 			
 			list.add( new GlobalOptimizationSubset( viewPairs, "reference timepoint ( " + referenceTimepoint.getName() + ", id=" + referenceTimepoint.getId() + 
 					") registration: " + timepoint.getName() + "(id=" + timepoint.getId() + ")" ) );

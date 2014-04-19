@@ -59,7 +59,7 @@ public abstract class InterestPointRegistration
 	/**
 	 * Registers all timepoints
 	 * 
-	 * @param registrationType - which kind of timeseries registration
+	 * @param registrationType - which kind of registration
 	 * @return
 	 */
 	public abstract boolean register( final GlobalOptimizationType registrationType );
@@ -68,7 +68,7 @@ public abstract class InterestPointRegistration
 	 * adds the questions this registration wants to ask
 	 * 
 	 * @param gd
-	 * @param registrationType - which kind of timeseries registration
+	 * @param registrationType - which kind of registration
 	 */
 	public abstract void addQuery( final GenericDialog gd, final int registrationType );
 	

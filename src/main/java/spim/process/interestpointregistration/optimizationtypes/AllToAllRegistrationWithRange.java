@@ -18,9 +18,9 @@ public class AllToAllRegistrationWithRange extends GlobalOptimizationType
 {
 	final int range;
 	
-	public AllToAllRegistrationWithRange( final int range, final boolean remove, final boolean add, final boolean save )
+	public AllToAllRegistrationWithRange( final int range, final boolean remove, final boolean add, final boolean save, final boolean considerTimePointsAsUnit  )
 	{ 
-		super( remove, add, save );
+		super( remove, add, save, considerTimePointsAsUnit );
 		
 		this.range = range;
 	}
@@ -70,7 +70,10 @@ public class AllToAllRegistrationWithRange extends GlobalOptimizationType
 					final ChannelInterestPointList listA = allPointLists.get( viewIdA );
 					final ChannelInterestPointList listB = allPointLists.get( viewIdB );
 					
-					viewPairs.add( new ChannelInterestPointListPair( viewIdA, viewIdB, listA, listB ) );
+					// in case we consider timepoints as units and the pair has the same timepoint, do not add;
+					// i.e. add the pair always if the above statement is false
+					if ( !( considerTimePointsAsUnit && ( viewIdA.getTimePointId() == viewIdB.getTimePointId() ) ) )
+						viewPairs.add( new ChannelInterestPointListPair( viewIdA, viewIdB, listA, listB ) );
 				}
 			}
 
