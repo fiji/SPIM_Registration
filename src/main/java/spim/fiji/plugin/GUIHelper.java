@@ -30,6 +30,7 @@ public class GUIHelper
 	
 	public static Font largestatusfont = new Font( Font.SANS_SERIF, Font.BOLD + Font.ITALIC, 14 );
 	public static Font largefont = new Font( Font.SANS_SERIF, Font.BOLD, 14 );
+	public static Font mediumstatusfont = new Font( Font.SANS_SERIF, Font.BOLD + Font.ITALIC, 12 );
 	public static Font smallStatusFont = new Font( Font.SANS_SERIF, Font.ITALIC, 11 );
 
 	final public static String myURL = "http://www.preibisch.net/";
