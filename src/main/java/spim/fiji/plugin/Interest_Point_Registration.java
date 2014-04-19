@@ -176,7 +176,7 @@ public class Interest_Point_Registration implements PlugIn
 				result.getTimePointsToProcess());
 
 		// call the next dialog that asks for specific details
-		register( ipr, result, registrationType );
+		queryDetailedParameters( result, ipr, registrationType );
 	}
 	
 	public static String[] inputChoice = new String[]{ "Calibration only (resets existing transform)", "Current view transformations (appends to current transform)" };	
@@ -195,7 +195,7 @@ public class Interest_Point_Registration implements PlugIn
 		return tps;
 	}
 	
-	protected void register( final InterestPointRegistration ipr, final XMLParseResult result, final int registrationType )
+	protected void queryDetailedParameters( final XMLParseResult result, final InterestPointRegistration ipr, final int registrationType )
 	{
 		final GenericDialog gd = new GenericDialog( "Register: " + registrationChoices[ registrationType ] );
 		
