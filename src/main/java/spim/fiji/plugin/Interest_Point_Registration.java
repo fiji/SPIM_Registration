@@ -95,7 +95,17 @@ public class Interest_Point_Registration implements PlugIn
 		if ( result.getTimePointsToProcess().size() > 1 )
 			choicesGlobal = registrationChoices.clone();
 		else
-			choicesGlobal = new String[]{ registrationChoices[ 0 ], registrationChoices[ 1 ] };
+		{
+			final int globalAmountTimepoints = 
+					result.getData().getSequenceDescription().getTimePoints().getTimePointList().size();
+			
+			// suggest a registration to a reference timepoint (that we do not process here)
+			// if there the entire dataset description has more than one timepoint
+			if ( globalAmountTimepoints > 1 )
+				choicesGlobal = new String[]{ registrationChoices[ 0 ], registrationChoices[ 1 ] };
+			else
+				choicesGlobal = new String[]{ registrationChoices[ 0 ] };
+		}
 		
 		if ( defaultRegistration >= choicesGlobal.length )
 			defaultRegistration = 0;
