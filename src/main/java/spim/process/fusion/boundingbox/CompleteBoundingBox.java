@@ -23,7 +23,7 @@ public class CompleteBoundingBox extends ManualBoundingBox
 			final ArrayList<Angle> anglesToProcess,
 			final ArrayList<Channel> channelsToProcess,
 			final ArrayList<Illumination> illumsToProcess,
-			final ArrayList<TimePoint> timepointsToProcess)
+			final ArrayList<TimePoint> timepointsToProcess )
 	{
 		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
 	}
@@ -33,6 +33,31 @@ public class CompleteBoundingBox extends ManualBoundingBox
 	{
 		final double[] minBB = new double[ 3 ];
 		final double[] maxBB = new double[ 3 ];
+		
+		computeMaximalBoundingBox( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess, minBB, maxBB );
+		
+		for ( int d = 0; d < minBB.length; ++d )
+		{
+			BoundingBox.minStatic[ d ] = (int)Math.floor( minBB[ d ] );
+			BoundingBox.maxStatic[ d ] = (int)Math.floor( maxBB[ d ] );
+		}
+		
+		return super.queryParameters( fusion, imgExport );
+	}
+
+	public static void computeMaximalBoundingBox(
+			final SpimData2 spimData,
+			final ArrayList<Angle> anglesToProcess,
+			final ArrayList<Channel> channelsToProcess,
+			final ArrayList<Illumination> illumsToProcess,
+			final ArrayList<TimePoint> timepointsToProcess,
+			final double[] minBB, final double[] maxBB )
+	{
+		for ( int d = 0; d < minBB.length; ++d )
+		{
+			minBB[ d ] = Double.MAX_VALUE;
+			maxBB[ d ] = -Double.MAX_VALUE;
+		}
 		
 		for ( final TimePoint t: timepointsToProcess )
 			for ( final Channel c : channelsToProcess )
@@ -63,17 +88,8 @@ public class CompleteBoundingBox extends ManualBoundingBox
 							minBB[ d ] = Math.min( minBB[ d ], interval.realMin( d ) );
 							maxBB[ d ] = Math.max( maxBB[ d ], interval.realMax( d ) );
 						}
-					}
-
-		for ( int d = 0; d < minBB.length; ++d )
-		{
-			BoundingBox.minStatic[ d ] = (int)Math.floor( minBB[ d ] );
-			BoundingBox.maxStatic[ d ] = (int)Math.floor( maxBB[ d ] );
-		}
-		
-		return super.queryParameters( fusion, imgExport );
+					}		
 	}
-
 
 	@Override
 	public CompleteBoundingBox newInstance(
@@ -87,5 +103,5 @@ public class CompleteBoundingBox extends ManualBoundingBox
 	}
 
 	@Override
-	public String getDescription() { return "Complete Bounding Box including all data"; }
+	public String getDescription() { return "Entire dataset"; }
 }

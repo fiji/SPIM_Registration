@@ -10,6 +10,7 @@ import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
+import spim.process.fusion.boundingbox.AutomaticBoundingBox;
 import spim.process.fusion.boundingbox.CompleteBoundingBox;
 import spim.process.fusion.boundingbox.ManualBoundingBox;
 import spim.process.fusion.export.DisplayImage;
@@ -37,6 +38,7 @@ public class Image_Fusion implements PlugIn
 		
 		staticBoundingBoxAlgorithms.add( new ManualBoundingBox( null, null, null, null, null ) );
 		staticBoundingBoxAlgorithms.add( new CompleteBoundingBox( null, null, null, null, null ) );
+		staticBoundingBoxAlgorithms.add( new AutomaticBoundingBox( null, null, null, null, null ) );
 		
 		staticImgExportAlgorithms.add( new DisplayImage() );
 	}
@@ -72,7 +74,7 @@ public class Image_Fusion implements PlugIn
 		final GenericDialog gd = new GenericDialog( "Image Fusion" );
 		
 		gd.addChoice( "Type_of_image_fusion", fusionDescriptions, fusionDescriptions[ defaultFusionAlgorithm ] );
-		gd.addChoice( "Bounding_Box defined by", boundingBoxDescriptions, boundingBoxDescriptions[ defaultBoundingBoxAlgorithm ] );
+		gd.addChoice( "Bounding_Box", boundingBoxDescriptions, boundingBoxDescriptions[ defaultBoundingBoxAlgorithm ] );
 		gd.addChoice( "Fused_image", imgExportDescriptions, imgExportDescriptions[ defaultImgExportAlgorithm ] );
 		
 		gd.addMessage( "" );

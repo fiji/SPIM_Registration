@@ -236,5 +236,5 @@ public class ManualBoundingBox extends BoundingBox
 	}
 
 	@Override
-	public String getDescription() { return "Manually define Bounding Box"; }
+	public String getDescription() { return "Define manually"; }
 }

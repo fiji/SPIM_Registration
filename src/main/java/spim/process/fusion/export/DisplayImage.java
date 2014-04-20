@@ -61,5 +61,5 @@ public class DisplayImage implements ImgExport
 	public ImgExport newInstance() { return new DisplayImage(); }
 
 	@Override
-	public String getDescription() { return "Display image using ImageJ"; }
+	public String getDescription() { return "Display using ImageJ"; }
 }
