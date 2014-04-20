@@ -13,10 +13,11 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
-import net.imglib2.img.display.imagej.ImageJFunctions;
 import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.spimdata.SpimData2;
+import spim.process.fusion.export.DisplayImage;
+import spim.process.fusion.export.ImgExport;
 
 public class Display_View implements PlugIn
 {
@@ -26,6 +27,7 @@ public class Display_View implements PlugIn
 	public static int defaultTimepointChoice = 0;
 	
 	public static int defaultPixelType = 0;
+	public static boolean defaultVirtual = true;
 	
 	@Override
 	public void run(String arg0)
@@ -64,7 +66,8 @@ public class Display_View implements PlugIn
 		gd.addChoice( "Timepoint", timepointNames, timepointNames[ defaultTimepointChoice ] );
 		gd.addMessage( "" );
 		gd.addChoice( "Pixel_type", BoundingBox.pixelTypesFull, BoundingBox.pixelTypesFull[ defaultPixelType ] );
-
+		gd.addCheckbox( "Virtual_displaying (otherwise copy to ImageJ image)", defaultVirtual );
+		
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
@@ -75,14 +78,15 @@ public class Display_View implements PlugIn
 		final Illumination illumination = illuminations.get( defaultIlluminationChoice = gd.getNextChoiceIndex() );
 		final TimePoint tp = timepoints.get( defaultTimepointChoice = gd.getNextChoiceIndex() );
 		final int pixelType = defaultPixelType = gd.getNextChoiceIndex();
+		final boolean virtual = defaultVirtual = gd.getNextBoolean();
 		
 		// get the corresponding viewid
 		final ViewId viewId = SpimData2.getViewId( result.getData().getSequenceDescription(), tp, channel, angle, illumination );
-
+		final String name = "angle: " + angle.getName() + " channel: " + channel.getName() + " illum: " + illumination.getName() + " timepoint: " + tp.getName();
+		
 		if ( viewId == null )
 		{
-			IOFunctions.println( "An error occured. Count not find the corresponding ViewSetup for angle: " + angle.getName() + 
-					" channel: " + channel.getName() + " illum: " + illumination.getName() + " timepoint: " + tp.getName() );
+			IOFunctions.println( "An error occured. Count not find the corresponding ViewSetup for " + name );
 			
 			return;
 		}
@@ -93,14 +97,15 @@ public class Display_View implements PlugIn
 
 		// check if this viewid is present in the current timepoint
 		if ( !viewDescription.isPresent() )
-			IOFunctions.println( "This ViewSetup is not present for this timepoint: angle: " + angle.getId() + 
-					" channel: " + channel.getId() + " illum: " + illumination.getId() + " timepoint: " + tp.getName() );
+			IOFunctions.println( "This ViewSetup is not present for this timepoint: angle: " + name );
 		
 		// display it
+		ImgExport export = new DisplayImage( virtual );
+		
 		if ( pixelType == 0 )
-			ImageJFunctions.show( result.getData().getSequenceDescription().getImgLoader().getImage( viewDescription, false ) );
+			export.exportImage( result.getData().getSequenceDescription().getImgLoader().getImage( viewDescription, false ), null, name );
 		else
-			ImageJFunctions.show( result.getData().getSequenceDescription().getImgLoader().getUnsignedShortImage( viewDescription ) );
+			export.exportImage( result.getData().getSequenceDescription().getImgLoader().getUnsignedShortImage( viewDescription ), null, name );
 	}
 
 	public static void main( String[] args )

@@ -1,7 +1,7 @@
 package spim.process.fusion.export;
 
 import ij.gui.GenericDialog;
-import net.imglib2.img.Img;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import spim.fiji.plugin.fusion.BoundingBox;
@@ -15,7 +15,7 @@ public interface ImgExport
 	 * @param bb
 	 * @param title
 	 */
-	public < T extends RealType< T > & NativeType< T > > void exportImage( final Img< T > img, final BoundingBox bb, final String title );
+	public < T extends RealType< T > & NativeType< T > > void exportImage( final RandomAccessibleInterval< T > img, final BoundingBox bb, final String title );
 	
 	/**
 	 * Query the necessary parameters for the fusion (new dialog has to be made)
