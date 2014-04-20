@@ -1,9 +1,9 @@
 package spim.fiji.plugin;
 
-import java.util.ArrayList;
+import ij.gui.GenericDialog;
+import ij.plugin.PlugIn;
 
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.img.display.imagej.ImageJFunctions;
+import java.util.ArrayList;
 
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
@@ -13,10 +13,10 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
+import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.spimdata.SpimData2;
-import ij.gui.GenericDialog;
-import ij.plugin.PlugIn;
 
 public class Display_View implements PlugIn
 {
@@ -24,6 +24,8 @@ public class Display_View implements PlugIn
 	public static int defaultChannelChoice = 0;
 	public static int defaultIlluminationChoice = 0;
 	public static int defaultTimepointChoice = 0;
+	
+	public static int defaultPixelType = 0;
 	
 	@Override
 	public void run(String arg0)
@@ -60,6 +62,8 @@ public class Display_View implements PlugIn
 		gd.addChoice( "Channel", channelNames, channelNames[ defaultChannelChoice ] );
 		gd.addChoice( "Illumination", illuminationNames, illuminationNames[ defaultIlluminationChoice ] );
 		gd.addChoice( "Timepoint", timepointNames, timepointNames[ defaultTimepointChoice ] );
+		gd.addMessage( "" );
+		gd.addChoice( "Pixel_type", BoundingBox.pixelTypesFull, BoundingBox.pixelTypesFull[ defaultPixelType ] );
 
 		gd.showDialog();
 		
@@ -70,6 +74,7 @@ public class Display_View implements PlugIn
 		final Channel channel = channels.get( defaultAngleChoice = gd.getNextChoiceIndex() );
 		final Illumination illumination = illuminations.get( defaultIlluminationChoice = gd.getNextChoiceIndex() );
 		final TimePoint tp = timepoints.get( defaultTimepointChoice = gd.getNextChoiceIndex() );
+		final int pixelType = defaultPixelType = gd.getNextChoiceIndex();
 		
 		// get the corresponding viewid
 		final ViewId viewId = SpimData2.getViewId( result.getData().getSequenceDescription(), tp, channel, angle, illumination );
@@ -92,10 +97,10 @@ public class Display_View implements PlugIn
 					" channel: " + channel.getId() + " illum: " + illumination.getId() + " timepoint: " + tp.getName() );
 		
 		// display it
-		final RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > img = 
-				result.getData().getSequenceDescription().getImgLoader().getImage( viewDescription, false );
-		
-		ImageJFunctions.show( img );
+		if ( pixelType == 0 )
+			ImageJFunctions.show( result.getData().getSequenceDescription().getImgLoader().getImage( viewDescription, false ) );
+		else
+			ImageJFunctions.show( result.getData().getSequenceDescription().getImgLoader().getUnsignedShortImage( viewDescription ) );
 	}
 
 	public static void main( String[] args )
