@@ -35,9 +35,7 @@ import spim.process.fusion.weightedavg.ProcessParalell;
 import spim.process.fusion.weightedavg.ProcessSequential;
 
 public class MinFilterThreshold
-{
-	public static int defaultRadiusMin = 12;
-	
+{	
 	final ArrayList< Angle > anglesToProcess;
 	final ArrayList< Illumination > illumsToProcess;
 	final Channel channel;
@@ -45,7 +43,9 @@ public class MinFilterThreshold
 	final SpimData2 spimData;
 	final BoundingBox bb;
 	final double background;
+	final int radiusMin;
 	final boolean loadSequentially;
+	final boolean displaySegmentationImage;
 	
 	int[] min, max;
 
@@ -57,7 +57,9 @@ public class MinFilterThreshold
 			final TimePoint timepoint,
 			final BoundingBox bb,
 			final double background,
-			final boolean loadSequentially )
+			final int discardedObjectSize,
+			final boolean loadSequentially,
+			final boolean displaySegmentationImage )
 	{
 		this.spimData = spimData;
 		this.anglesToProcess = anglesToProcess;
@@ -66,7 +68,9 @@ public class MinFilterThreshold
 		this.timepoint = timepoint;
 		this.bb = bb;
 		this.background = background;
+		this.radiusMin = discardedObjectSize / 2;
 		this.loadSequentially = loadSequentially;
+		this.displaySegmentationImage = displaySegmentationImage;
 	}
 	
 	public int[] getMin() { return min; }
@@ -85,7 +89,7 @@ public class MinFilterThreshold
 		Img< FloatType > img = process.fuseStack( new FloatType(), new NearestNeighborInterpolatorFactory<FloatType>(), timepoint, channel );
 		
 		final float[] minmax = FusionHelper.minMax( img );
-		final int effR = Math.max( defaultRadiusMin / bb.getDownSampling(), 1 );
+		final int effR = Math.max( radiusMin / bb.getDownSampling(), 1 );
 		final double threshold = (minmax[ 1 ] - minmax[ 0 ]) * ( background / 100.0 ) + minmax[ 0 ];
 				
 		IOFunctions.println( "Fused image minimum: " + minmax[ 0 ] );
@@ -96,7 +100,8 @@ public class MinFilterThreshold
 		
 		img = computeLazyMinFilter( img, effR );
 		
-		ImageJFunctions.show( img );
+		if ( displaySegmentationImage )
+			ImageJFunctions.show( img );
 		
 		this.min = new int[ img.numDimensions() ];
 		this.max = new int[ img.numDimensions() ];
@@ -118,8 +123,8 @@ public class MinFilterThreshold
 			max[ d ] += bb.min( d );
 			
 			// effect of the min filter + extra space
-			min[ d ] -= defaultRadiusMin * 3;
-			max[ d ] += defaultRadiusMin * 3;
+			min[ d ] -= radiusMin * 3;
+			max[ d ] += radiusMin * 3;
 		}
 		
 		IOFunctions.println( "Bounding box dim global: [" + Util.printCoordinates( min ) + "] >> [" + Util.printCoordinates( max ) + "]" );

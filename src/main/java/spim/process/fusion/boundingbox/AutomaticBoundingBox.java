@@ -28,7 +28,9 @@ public class AutomaticBoundingBox extends ManualBoundingBox
 	public static int defaultChannelIndex = 0;
 	public static int defaultDownsamplingAutomatic = 4;
 	public static double defaultBackgroundIntensity = 5;
+	public static int defaultDiscardedObjectSize = 25;
 	public static boolean defaultLoadSequentially = true;
+	public static boolean defaultDisplaySegmentationImage = false;
 
 	public AutomaticBoundingBox(
 			final SpimData2 spimData,
@@ -75,13 +77,13 @@ public class AutomaticBoundingBox extends ManualBoundingBox
 		gd.addChoice( "Timepoint", timepoints, timepoints[ defaultTimepointIndex ] );
 		gd.addChoice( "Channel", channels, channels[ defaultChannelIndex ] );
 		gd.addSlider( "Background intensity [%]", 1.0, 99.0, defaultBackgroundIntensity );
+		gd.addSlider( "Size_of_objects to be discarded", 1, 100, defaultDiscardedObjectSize );
+		gd.addMessage( "" );
 		gd.addSlider( "Downsampling", 1.0, 10.0, defaultDownsamplingAutomatic );
 		gd.addCheckbox( "Load_input_images sequentially", defaultLoadSequentially );
-		gd.addMessage( "Image size: ???x???x??? pixels", GUIHelper.smallStatusFont, GUIHelper.good );
+		gd.addCheckbox( "Display_image_used for segmentation", defaultDisplaySegmentationImage );
+		gd.addMessage( "Image size: ???x???x??? pixels", GUIHelper.mediumstatusfont, GUIHelper.good );
 		Label l = (Label)gd.getMessage();
-
-		gd.addMessage( "" );
-		gd.addMessage( "Parameters for final fusion", GUIHelper.mediumstatusfont );
 		
 		// add listeners and update values
 		addListeners( gd, gd.getNumericFields(), l, dim ).dialogItemChanged( gd, new TextEvent( gd, TextEvent.TEXT_VALUE_CHANGED ) );		
@@ -94,8 +96,11 @@ public class AutomaticBoundingBox extends ManualBoundingBox
 		final TimePoint timepoint = timepointsToProcess.get( defaultTimepointIndex = gd.getNextChoiceIndex() );
 		final Channel channel = channelsToProcess.get( defaultChannelIndex = gd.getNextChoiceIndex() );
 		final double background = defaultBackgroundIntensity = gd.getNextNumber();
+		final int discardedObjectSize = defaultDiscardedObjectSize = (int)Math.round( gd.getNextNumber() );
+
 		this.downsampling = defaultDownsamplingAutomatic = (int)Math.round( gd.getNextNumber() );
 		final boolean loadSequentially = defaultLoadSequentially = gd.getNextBoolean();
+		final boolean displaySegmentationImage = defaultDisplaySegmentationImage = gd.getNextBoolean();
 		
 		// compute approx bounding box
 		final MinFilterThreshold automatic = new MinFilterThreshold(
@@ -106,7 +111,9 @@ public class AutomaticBoundingBox extends ManualBoundingBox
 				timepoint,
 				this,
 				background,
-				loadSequentially );
+				discardedObjectSize,
+				loadSequentially,
+				displaySegmentationImage );
 		
 		if ( !automatic.run() )
 		{
@@ -147,7 +154,7 @@ public class AutomaticBoundingBox extends ManualBoundingBox
 			final Label label,
 			final long[] dim )
 	{
-		final TextField downsample = (TextField)tf.get( 1 );
+		final TextField downsample = (TextField)tf.get( 2 );
 				
 		DialogListener d = new DialogListener()
 		{
