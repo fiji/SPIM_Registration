@@ -93,7 +93,7 @@ public class ManualBoundingBox extends BoundingBox
 		gd.addMessage( "???x???x??? pixels", GUIHelper.smallStatusFont, GUIHelper.good );
 		Label l2 = (Label)gd.getMessage();
 
-		DialogListener d = addListeners( gd, gd.getNumericFields(), gd.getChoices(), l1, l2, fusion.supportsDownsampling() );
+		DialogListener d = addListeners( gd, gd.getNumericFields(), gd.getChoices(), l1, l2, fusion.supportsDownsampling(), fusion.supports16BitUnsigned() );
 		d.dialogItemChanged( gd, new TextEvent( gd, TextEvent.TEXT_VALUE_CHANGED ) );
 		
 		gd.showDialog();
@@ -159,7 +159,8 @@ public class ManualBoundingBox extends BoundingBox
 			final Vector<?> choices,
 			final Label label1,
 			final Label label2,
-			final boolean supportsDownsampling )
+			final boolean supportsDownsampling,
+			final boolean supports16bit )
 	{
 		final TextField minX = (TextField)tf.get( 0 );
 		final TextField minY = (TextField)tf.get( 1 );
@@ -169,8 +170,17 @@ public class ManualBoundingBox extends BoundingBox
 		final TextField maxY = (TextField)tf.get( 4 );
 		final TextField maxZ = (TextField)tf.get( 5 );
 		
-		final Choice pixelTypeChoice = (Choice)choices.get( 0 );
-		final Choice imgTypeChoice = (Choice)choices.get( 1 );
+		final Choice pixelTypeChoice, imgTypeChoice;
+		if ( supports16bit )
+		{
+			pixelTypeChoice = (Choice)choices.get( 0 );
+			imgTypeChoice = (Choice)choices.get( 1 );
+		}
+		else
+		{
+			pixelTypeChoice = null;
+			imgTypeChoice = (Choice)choices.get( 0 );
+		}
 		
 		final TextField downsample;
 		if ( supportsDownsampling )
@@ -222,7 +232,12 @@ public class ManualBoundingBox extends BoundingBox
 						downsampling = Integer.parseInt( downsample.getText() );
 					else
 						downsampling = 1;
-					pixelType = pixelTypeChoice.getSelectedIndex();
+					
+					if ( supports16bit )
+						pixelType = pixelTypeChoice.getSelectedIndex();
+					else
+						pixelType = 0;
+					
 					imgtype = imgTypeChoice.getSelectedIndex();
 					
 					
