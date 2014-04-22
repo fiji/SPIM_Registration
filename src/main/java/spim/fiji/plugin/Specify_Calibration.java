@@ -4,6 +4,7 @@ import ij.ImageJ;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
+import java.awt.TextField;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
@@ -90,17 +91,25 @@ public class Specify_Calibration implements PlugIn
 		final GenericDialog gd = new GenericDialog( "Define new calibration" );
 		
 		gd.addNumericField( "Calibration_x", maxCal.getCal()[ 0 ], 40, 20, "" );
+		// ImageJ cuts of part of the number otherwise
+		((TextField)gd.getNumericFields().lastElement()).setText( "" + maxCal.getCal()[ 0 ] );
 		gd.addNumericField( "Calibration_y", maxCal.getCal()[ 1 ], 40, 20, "" );
+		// ImageJ cuts of part of the number otherwise
+		((TextField)gd.getNumericFields().lastElement()).setText( "" + maxCal.getCal()[ 1 ] );
 		gd.addNumericField( "Calibration_z", maxCal.getCal()[ 2 ], 40, 20, "" );
+		// ImageJ cuts of part of the number otherwise
+		((TextField)gd.getNumericFields().lastElement()).setText( "" + maxCal.getCal()[ 2 ] );
 
-		if ( calibrations.size() > 0 )
-			gd.addMessage( "WARNING: Calibrations are not the same for all view setups\n" +
-					"will be overwritten for all view setups if defined here.",
-					GUIHelper.mediumstatusfont, GUIHelper.warning );
+		if ( calibrations.size() > 1 )
+			gd.addMessage( "WARNING: Calibrations are not the same for all\n" +
+						   "view setups! All calibrations will be overwritten\n" +
+						   "for all view setups if defined here.",
+						   GUIHelper.mediumstatusfont, GUIHelper.warning );
 
-		gd.addMessage( "Note: These values will be applied to all view setups as chosen before, existing\n" +
-				"registration are not affected and need to be recomputed if necessary.",
-				GUIHelper.mediumstatusfont );
+		gd.addMessage( "Note: These values will be applied to selected view\n" +
+					   "setups, existing registration are not affected and\n" +
+					   "will need to be recomputed if necessary.",
+					   GUIHelper.mediumstatusfont );
 
 		gd.showDialog();
 		
