@@ -71,61 +71,60 @@ public class DifferenceOfMean extends DifferenceOf
 	}
 
 	@Override
-	public HashMap< ViewId, List< InterestPoint > > findInterestPoints()
+	public HashMap< ViewId, List< InterestPoint > > findInterestPoints( final TimePoint t )
 	{
 		final HashMap< ViewId, List< InterestPoint > > interestPoints = new HashMap< ViewId, List< InterestPoint > >();
 		
-		for ( final TimePoint t : timepointsToProcess )
-			for ( final Angle a : anglesToProcess )
-				for ( final Illumination i : illumsToProcess )
-					for ( final Channel c : channelsToProcess )
+		for ( final Angle a : anglesToProcess )
+			for ( final Illumination i : illumsToProcess )
+				for ( final Channel c : channelsToProcess )
+				{
+					// make sure not everything crashes if one file is missing
+					try
 					{
-						// make sure not everything crashes if one file is missing
-						try
+						//
+						// open the corresponding image (if present at this timepoint)
+						//
+						long time1 = System.currentTimeMillis();
+						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
+
+						if ( viewId == null )
 						{
-							//
-							// open the corresponding image (if present at this timepoint)
-							//
-							long time1 = System.currentTimeMillis();
-							final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
-	
-							if ( viewId == null )
-							{
-								IOFunctions.println( "An error occured. Count not find the corresponding ViewSetup for angle: " + 
-									a.getId() + " channel: " + c.getId() + " illum: " + i.getId() );
-							
-								continue;
-							}
-							
-							final ViewDescription< TimePoint, ViewSetup > viewDescription = spimData.getSequenceDescription().getViewDescription( 
-									viewId.getTimePointId(), viewId.getViewSetupId() );
-	
-							if ( !viewDescription.isPresent() )
-								continue;
-							
-							final Image< FloatType > img = ImgLib2.wrapFloatToImgLib1( 
-								(Img<net.imglib2.type.numeric.real.FloatType>)
-									spimData.getSequenceDescription().getImgLoader().getImage( viewDescription, false ) );
-							
-							long time2 = System.currentTimeMillis();
-							
-							benchmark.openFiles += time2 - time1;
-							
-							//
-							// compute Difference-of-Mean
-							//
-							interestPoints.put( viewId, ProcessDOM.compute( img, radius1[ c.getId() ], radius2[ c.getId() ], (float)threshold[ c.getId() ], localization, findMin[ c.getId() ], findMax[ c.getId() ] ) );
-							img.close();
-	
-					        benchmark.computation += System.currentTimeMillis() - time2;
+							IOFunctions.println( "An error occured. Count not find the corresponding ViewSetup for angle: " + 
+								a.getId() + " channel: " + c.getId() + " illum: " + i.getId() );
+						
+							continue;
 						}
-						catch ( Exception  e )
-						{
-							IOFunctions.println( "An error occured. Failed to segment angle: " + 
-									a.getId() + " channel: " + c.getId() + " illum: " + i.getId() + ". Continuing with next one." );
-							e.printStackTrace();
-						}
+						
+						final ViewDescription< TimePoint, ViewSetup > viewDescription = spimData.getSequenceDescription().getViewDescription( 
+								viewId.getTimePointId(), viewId.getViewSetupId() );
+
+						if ( !viewDescription.isPresent() )
+							continue;
+						
+						final Image< FloatType > img = ImgLib2.wrapFloatToImgLib1( 
+							(Img<net.imglib2.type.numeric.real.FloatType>)
+								spimData.getSequenceDescription().getImgLoader().getImage( viewDescription, false ) );
+						
+						long time2 = System.currentTimeMillis();
+						
+						benchmark.openFiles += time2 - time1;
+						
+						//
+						// compute Difference-of-Mean
+						//
+						interestPoints.put( viewId, ProcessDOM.compute( img, radius1[ c.getId() ], radius2[ c.getId() ], (float)threshold[ c.getId() ], localization, findMin[ c.getId() ], findMax[ c.getId() ] ) );
+						img.close();
+
+				        benchmark.computation += System.currentTimeMillis() - time2;
 					}
+					catch ( Exception  e )
+					{
+						IOFunctions.println( "An error occured. Failed to segment angle: " + 
+								a.getId() + " channel: " + c.getId() + " illum: " + i.getId() + ". Continuing with next one." );
+						e.printStackTrace();
+					}
+				}
 
 		return interestPoints;
 	}

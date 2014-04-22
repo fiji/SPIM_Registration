@@ -66,11 +66,11 @@ public abstract class InterestPointDetection
 	public SegmentationBenchmark getBenchmark() { return benchmark; }
 	
 	/**
-	 * Perform the interestpoint detection
+	 * Perform the interestpoint detection for one timepoint
 	 * 
 	 * @return
 	 */
-	public abstract HashMap< ViewId, List< InterestPoint > > findInterestPoints();
+	public abstract HashMap< ViewId, List< InterestPoint > > findInterestPoints( final TimePoint tp );
 	
 	/**
 	 * Query the necessary parameters for the interestpoint detection

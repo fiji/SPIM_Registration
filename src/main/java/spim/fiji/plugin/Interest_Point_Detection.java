@@ -136,53 +136,56 @@ public class Interest_Point_Detection implements PlugIn
 		ipd.queryParameters();
 		
 		// now extract all the detections
-		final HashMap< ViewId, List< InterestPoint > > points = ipd.findInterestPoints();
-		
-		if ( ipd instanceof DifferenceOf )
+		for ( final TimePoint tp : result.getTimePointsToProcess() )
 		{
-			IOFunctions.println( "Opening of files took: " + ((DifferenceOf)ipd).getBenchmark().openFiles/1000 + " sec." );
-			IOFunctions.println( "Detecting interest points took: " + ((DifferenceOf)ipd).getBenchmark().computation/1000 + " sec." );
-		}
-		
-		// save the file and the path in the XML
-		final SpimData2 data = result.getData();
-		final SequenceDescription< TimePoint, ViewSetup > seqDesc = data.getSequenceDescription();
-		
-		for ( final ViewId viewId : points.keySet() )
-		{
-			final ViewDescription< TimePoint, ViewSetup > viewDesc = seqDesc.getViewDescription( viewId.getTimePointId(), viewId.getViewSetupId() );
-			final int channelId = viewDesc.getViewSetup().getChannel().getId();		
+			final HashMap< ViewId, List< InterestPoint > > points = ipd.findInterestPoints( tp );
 			
-			final InterestPointList list = new InterestPointList(
-					data.getBasePath(),
-					new File( "interestpoints", "tpId_" + viewId.getTimePointId() + "_viewSetupId_" + viewId.getViewSetupId() + "." + label ) );
-			
-			list.setParameters( ipd.getParameters( channelId ) );
-			list.setInterestPoints( points.get( viewId ) );
-			
-			if ( !list.saveInterestPoints() )
+			if ( ipd instanceof DifferenceOf )
 			{
-				IOFunctions.println( "Error saving interest point list: " + new File( list.getBaseDir(), list.getFile().toString() + list.getInterestPointsExt() ) );
-				return;
+				IOFunctions.println( "Opening of files took: " + ((DifferenceOf)ipd).getBenchmark().openFiles/1000 + " sec." );
+				IOFunctions.println( "Detecting interest points took: " + ((DifferenceOf)ipd).getBenchmark().computation/1000 + " sec." );
 			}
 			
-			final ViewInterestPointLists vipl = data.getViewInterestPoints().getViewInterestPointLists( viewId );
-			vipl.addInterestPointList( label, list );
-		}
-		
-		// save the xml
-		final XmlIoSpimData2 io = XmlIo.createDefaultIo();
-		
-		final String xml = new File( data.getBasePath(), new File( result.getXMLFileName() ).getName() ).getAbsolutePath();
-		try 
-		{
-			io.save( data, xml );
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + xml + "'." );
-		}
-		catch ( Exception e )
-		{
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + xml + "': " + e );
-			e.printStackTrace();
+			// save the file and the path in the XML
+			final SpimData2 data = result.getData();
+			final SequenceDescription< TimePoint, ViewSetup > seqDesc = data.getSequenceDescription();
+			
+			for ( final ViewId viewId : points.keySet() )
+			{
+				final ViewDescription< TimePoint, ViewSetup > viewDesc = seqDesc.getViewDescription( viewId.getTimePointId(), viewId.getViewSetupId() );
+				final int channelId = viewDesc.getViewSetup().getChannel().getId();		
+				
+				final InterestPointList list = new InterestPointList(
+						data.getBasePath(),
+						new File( "interestpoints", "tpId_" + viewId.getTimePointId() + "_viewSetupId_" + viewId.getViewSetupId() + "." + label ) );
+				
+				list.setParameters( ipd.getParameters( channelId ) );
+				list.setInterestPoints( points.get( viewId ) );
+				
+				if ( !list.saveInterestPoints() )
+				{
+					IOFunctions.println( "Error saving interest point list: " + new File( list.getBaseDir(), list.getFile().toString() + list.getInterestPointsExt() ) );
+					return;
+				}
+				
+				final ViewInterestPointLists vipl = data.getViewInterestPoints().getViewInterestPointLists( viewId );
+				vipl.addInterestPointList( label, list );
+			}
+			
+			// save the xml
+			final XmlIoSpimData2 io = XmlIo.createDefaultIo();
+			
+			final String xml = new File( data.getBasePath(), new File( result.getXMLFileName() ).getName() ).getAbsolutePath();
+			try 
+			{
+				io.save( data, xml );
+				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + xml + "'." );
+			}
+			catch ( Exception e )
+			{
+				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + xml + "': " + e );
+				e.printStackTrace();
+			}
 		}
 	}
 	
