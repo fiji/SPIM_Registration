@@ -11,7 +11,6 @@ import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.process.fusion.boundingbox.AutomaticBoundingBox;
-import spim.process.fusion.boundingbox.CompleteBoundingBox;
 import spim.process.fusion.boundingbox.ManualBoundingBox;
 import spim.process.fusion.export.DisplayImage;
 import spim.process.fusion.export.ImgExport;
@@ -24,7 +23,7 @@ public class Image_Fusion implements PlugIn
 	public static int defaultFusionAlgorithm = 0;
 
 	public static ArrayList< BoundingBox > staticBoundingBoxAlgorithms = new ArrayList< BoundingBox >();
-	public static int defaultBoundingBoxAlgorithm = 1;
+	public static int defaultBoundingBoxAlgorithm = 0;
 
 	public static ArrayList< ImgExport > staticImgExportAlgorithms = new ArrayList< ImgExport >();
 	public static int defaultImgExportAlgorithm = 0;
@@ -37,7 +36,6 @@ public class Image_Fusion implements PlugIn
 		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, null, null, null, WeightedAvgFusionType.INDEPENDENT ) );
 		
 		staticBoundingBoxAlgorithms.add( new ManualBoundingBox( null, null, null, null, null ) );
-		staticBoundingBoxAlgorithms.add( new CompleteBoundingBox( null, null, null, null, null ) );
 		staticBoundingBoxAlgorithms.add( new AutomaticBoundingBox( null, null, null, null, null ) );
 		
 		staticImgExportAlgorithms.add( new DisplayImage() );

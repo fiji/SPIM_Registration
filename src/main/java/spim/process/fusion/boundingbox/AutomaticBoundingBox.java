@@ -49,7 +49,7 @@ public class AutomaticBoundingBox extends ManualBoundingBox
 		final double[] minBB = new double[ 3 ];
 		final double[] maxBB = new double[ 3 ];
 		
-		CompleteBoundingBox.computeMaximalBoundingBox( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess, minBB, maxBB );
+		ManualBoundingBox.computeMaximalBoundingBox( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess, minBB, maxBB );
 	
 		// compute dimensions and update size for this instance
 		final long[] dim = new long[ maxBB.length ];

@@ -12,10 +12,16 @@ import java.awt.event.TextEvent;
 import java.util.ArrayList;
 import java.util.Vector;
 
+import net.imglib2.FinalRealInterval;
+
+import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.GUIHelper;
 import spim.fiji.plugin.fusion.BoundingBox;
@@ -38,6 +44,18 @@ public class ManualBoundingBox extends BoundingBox
 	@Override
 	public boolean queryParameters( final Fusion fusion, final ImgExport imgExport )
 	{
+		final double[] minBB = new double[ 3 ];
+		final double[] maxBB = new double[ 3 ];
+		
+		computeMaximalBoundingBox( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess, minBB, maxBB );
+
+		for ( int d = 0; d < minBB.length; ++d )
+			if ( BoundingBox.minStatic[ d ] == 0 && BoundingBox.minStatic[ d ] == 0 )
+			{
+				BoundingBox.minStatic[ d ] = (int)Math.floor( minBB[ d ] );
+				BoundingBox.maxStatic[ d ] = (int)Math.floor( maxBB[ d ] );
+			}
+
 		final GenericDialog gd = new GenericDialog( "Manually define Bounding Box" );
 
 		gd.addMessage( "Note: Coordinates are in global coordinates as shown " +
@@ -46,16 +64,16 @@ public class ManualBoundingBox extends BoundingBox
 		if ( !fusion.compressBoundingBoxDialog() )
 			gd.addMessage( "", GUIHelper.smallStatusFont );
 		
-		gd.addNumericField( "Minimal_X", BoundingBox.minStatic[ 0 ], 0 );
-		gd.addNumericField( "Minimal_Y", BoundingBox.minStatic[ 1 ], 0 );
-		gd.addNumericField( "Minimal_Z", BoundingBox.minStatic[ 2 ], 0 );
+		gd.addSlider( "Minimal_X", BoundingBox.minStatic[ 0 ], BoundingBox.maxStatic[ 0 ], BoundingBox.minStatic[ 0 ] );
+		gd.addSlider( "Minimal_Y", BoundingBox.minStatic[ 1 ], BoundingBox.maxStatic[ 1 ], BoundingBox.minStatic[ 1 ] );
+		gd.addSlider( "Minimal_Z", BoundingBox.minStatic[ 2 ], BoundingBox.maxStatic[ 2 ], BoundingBox.minStatic[ 2 ] );
 
 		if ( !fusion.compressBoundingBoxDialog() )
 			gd.addMessage( "" );
 		
-		gd.addNumericField( "Maximal_X", BoundingBox.maxStatic[ 0 ], 0 );
-		gd.addNumericField( "Maximal_Y", BoundingBox.maxStatic[ 1 ], 0 );
-		gd.addNumericField( "Maximal_Z", BoundingBox.maxStatic[ 2 ], 0 );
+		gd.addSlider( "Maxmal_X", BoundingBox.minStatic[ 0 ], BoundingBox.maxStatic[ 0 ], BoundingBox.maxStatic[ 0 ] );
+		gd.addSlider( "Maxmal_Y", BoundingBox.minStatic[ 1 ], BoundingBox.maxStatic[ 1 ], BoundingBox.maxStatic[ 1 ] );
+		gd.addSlider( "Maxmal_Z", BoundingBox.minStatic[ 2 ], BoundingBox.maxStatic[ 2 ], BoundingBox.maxStatic[ 2 ] );
 
 		if ( !fusion.compressBoundingBoxDialog() )
 			gd.addMessage( "" );
@@ -173,6 +191,7 @@ public class ManualBoundingBox extends BoundingBox
 			@Override
 			public boolean dialogItemChanged( final GenericDialog dialog, final AWTEvent e )
 			{
+				//System.out.println( e.g );
 				if ( ( e instanceof TextEvent || e instanceof ItemEvent) && (e.getID() == TextEvent.TEXT_VALUE_CHANGED || e.getID() == ItemEvent.ITEM_STATE_CHANGED ) )
 				{
 					min[ 0 ] = Long.parseLong( minX.getText() );
@@ -182,7 +201,26 @@ public class ManualBoundingBox extends BoundingBox
 					max[ 0 ] = Long.parseLong( maxX.getText() );
 					max[ 1 ] = Long.parseLong( maxY.getText() );
 					max[ 2 ] = Long.parseLong( maxZ.getText() );
+
+					// update sliders if necessary
+					if ( min[ 0 ] > max[ 0 ] )
+						if ( e.getSource() == minX )
+							maxX.setText( "" + min[ 0 ] );
+						else
+							minX.setText( "" + max[ 0 ] );
 					
+					if ( min[ 1 ] > max[ 1 ] )
+						if ( e.getSource() == minY )
+							maxY.setText( "" + min[ 1 ] );
+						else
+							minY.setText( "" + max[ 1 ] );
+
+					if ( min[ 2 ] > max[ 2 ] )
+						if ( e.getSource() == minZ )
+							maxZ.setText( "" + min[ 2 ] );
+						else
+							minZ.setText( "" + max[ 2 ] );
+
 					if ( supportsDownsampling )
 						downsampling = Integer.parseInt( downsample.getText() );
 					else
@@ -211,9 +249,9 @@ public class ManualBoundingBox extends BoundingBox
 					}
 						
 					label2.setText( "Dimensions: " + 
-							(max[ 0 ] - min[ 0 ])/downsampling + " x " + 
-							(max[ 1 ] - min[ 1 ])/downsampling + " x " + 
-							(max[ 2 ] - min[ 2 ])/downsampling + " pixels @ " + BoundingBox.pixelTypesFull[ pixelType ] );
+							(max[ 0 ] - min[ 0 ] + 1)/downsampling + " x " + 
+							(max[ 1 ] - min[ 1 ] + 1)/downsampling + " x " + 
+							(max[ 2 ] - min[ 2 ] + 1)/downsampling + " pixels @ " + BoundingBox.pixelTypesFull[ pixelType ] );
 				}
 				return true;
 			}			
@@ -222,6 +260,52 @@ public class ManualBoundingBox extends BoundingBox
 		gd.addDialogListener( d );
 		
 		return d;
+	}
+
+	public static void computeMaximalBoundingBox(
+			final SpimData2 spimData,
+			final ArrayList<Angle> anglesToProcess,
+			final ArrayList<Channel> channelsToProcess,
+			final ArrayList<Illumination> illumsToProcess,
+			final ArrayList<TimePoint> timepointsToProcess,
+			final double[] minBB, final double[] maxBB )
+	{
+		for ( int d = 0; d < minBB.length; ++d )
+		{
+			minBB[ d ] = Double.MAX_VALUE;
+			maxBB[ d ] = -Double.MAX_VALUE;
+		}
+		
+		for ( final TimePoint t: timepointsToProcess )
+			for ( final Channel c : channelsToProcess )
+				for ( final Illumination i : illumsToProcess )
+					for ( final Angle a : anglesToProcess )
+					{
+						// bureaucracy
+						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
+						
+						final ViewDescription< TimePoint, ViewSetup > viewDescription = spimData.getSequenceDescription().getViewDescription( 
+								viewId.getTimePointId(), viewId.getViewSetupId() );
+		
+						if ( !viewDescription.isPresent() )
+							continue;
+						
+						final double[] min = new double[]{ 0, 0, 0 };
+						final double[] max = new double[]{
+								viewDescription.getViewSetup().getWidth() - 1,
+								viewDescription.getViewSetup().getHeight() - 1,
+								viewDescription.getViewSetup().getDepth() - 1 };
+						
+						final ViewRegistration r = spimData.getViewRegistrations().getViewRegistration( viewId );
+						r.updateModel();
+						final FinalRealInterval interval = r.getModel().estimateBounds( new FinalRealInterval( min, max ) );
+						
+						for ( int d = 0; d < minBB.length; ++d )
+						{
+							minBB[ d ] = Math.min( minBB[ d ], interval.realMin( d ) );
+							maxBB[ d ] = Math.max( maxBB[ d ], interval.realMax( d ) );
+						}
+					}		
 	}
 
 	@Override
