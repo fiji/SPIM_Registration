@@ -81,16 +81,8 @@ public class ManualBoundingBox extends BoundingBox
 		if ( fusion.supportsDownsampling() )
 			gd.addSlider( "Downsample fused dataset", 1.0, 10.0, BoundingBox.staticDownsampling );
 		
-		String[] pixelTypes;
 		if ( fusion.supports16BitUnsigned() )
-			pixelTypes = BoundingBox.pixelTypesFull;
-		else
-			pixelTypes = BoundingBox.pixelTypesHalf;
-		
-		if ( defaultPixelType >= pixelTypes.length )
-			defaultPixelType = 0;
-		
-		gd.addChoice( "Pixel_type", pixelTypes, pixelTypes[ defaultPixelType ] );
+			gd.addChoice( "Pixel_type", pixelTypes, pixelTypes[ defaultPixelType ] );
 		gd.addChoice( "ImgLib2_container", imgTypes, imgTypes[ defaultImgType ] );
 		
 		fusion.queryAdditionalParameters( gd );
@@ -121,7 +113,12 @@ public class ManualBoundingBox extends BoundingBox
 			this.downsampling = BoundingBox.staticDownsampling = (int)Math.round( gd.getNextNumber() );
 		else
 			this.downsampling = 1;
-		this.pixelType = BoundingBox.defaultPixelType = gd.getNextChoiceIndex();
+		
+		if ( fusion.supports16BitUnsigned() )
+			this.pixelType = BoundingBox.defaultPixelType = gd.getNextChoiceIndex();
+		else
+			this.pixelType = BoundingBox.defaultPixelType = 0; //32-bit
+		
 		this.imgtype = BoundingBox.defaultImgType = gd.getNextChoiceIndex();
 		
 		if ( min[ 0 ] > max[ 0 ] || min[ 1 ] > max[ 1 ] || min[ 2 ] > max[ 2 ] )
@@ -251,7 +248,7 @@ public class ManualBoundingBox extends BoundingBox
 					label2.setText( "Dimensions: " + 
 							(max[ 0 ] - min[ 0 ] + 1)/downsampling + " x " + 
 							(max[ 1 ] - min[ 1 ] + 1)/downsampling + " x " + 
-							(max[ 2 ] - min[ 2 ] + 1)/downsampling + " pixels @ " + BoundingBox.pixelTypesFull[ pixelType ] );
+							(max[ 2 ] - min[ 2 ] + 1)/downsampling + " pixels @ " + BoundingBox.pixelTypes[ pixelType ] );
 				}
 				return true;
 			}			

@@ -25,8 +25,7 @@ public abstract class BoundingBox implements Interval
 	public static int minStatic[] = { 0, 0, 0 };
 	public static int maxStatic[] = { 0, 0, 0 };
 	
-	public static String[] pixelTypesFull = new String[]{ "32-bit floating point", "16-bit unsigned integer" };
-	public static String[] pixelTypesHalf = new String[]{ "32-bit floating point" };
+	public static String[] pixelTypes = new String[]{ "32-bit floating point", "16-bit unsigned integer" };
 	public static int defaultPixelType = 0;
 	protected int pixelType = 0;
 
