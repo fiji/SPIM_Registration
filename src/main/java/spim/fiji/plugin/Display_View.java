@@ -65,7 +65,7 @@ public class Display_View implements PlugIn
 		gd.addChoice( "Illumination", illuminationNames, illuminationNames[ defaultIlluminationChoice ] );
 		gd.addChoice( "Timepoint", timepointNames, timepointNames[ defaultTimepointChoice ] );
 		gd.addMessage( "" );
-		gd.addChoice( "Pixel_type", BoundingBox.pixelTypesFull, BoundingBox.pixelTypesFull[ defaultPixelType ] );
+		gd.addChoice( "Pixel_type", BoundingBox.pixelTypes, BoundingBox.pixelTypes[ defaultPixelType ] );
 		gd.addCheckbox( "Virtual_displaying (otherwise copy to ImageJ image)", defaultVirtual );
 		
 		gd.showDialog();
