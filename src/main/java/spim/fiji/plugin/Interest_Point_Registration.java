@@ -83,7 +83,7 @@ public class Interest_Point_Registration implements PlugIn
 		new ImageJ();
 		
 		// ask for everything but the channels
-		final XMLParseResult result = new LoadParseQueryXML().queryXML( true, false, true, true );
+		final XMLParseResult result = new LoadParseQueryXML().queryXML( "for performing interest point registration", true, false, true, true );
 
 		if ( result == null )
 			return;

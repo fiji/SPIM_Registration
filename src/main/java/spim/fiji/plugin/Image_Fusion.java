@@ -47,7 +47,7 @@ public class Image_Fusion implements PlugIn
 	public void run( final String arg )
 	{		
 		// ask for everything
-		final XMLParseResult result = new LoadParseQueryXML().queryXML( true, true, true, true );
+		final XMLParseResult result = new LoadParseQueryXML().queryXML( "image fusion", true, true, true, true );
 		
 		if ( result == null )
 			return;

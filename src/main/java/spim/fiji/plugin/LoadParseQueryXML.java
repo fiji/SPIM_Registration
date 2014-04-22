@@ -142,7 +142,7 @@ public class LoadParseQueryXML
 		final GenericDialogPlus gd;
 		
 		if ( additionalTitle != null && additionalTitle.length() > 0 )
-			gd = new GenericDialogPlus( "Select Dataset for " + additionalTitle );
+			gd = new GenericDialogPlus( "Select dataset for " + additionalTitle );
 		else
 			gd = new GenericDialogPlus( "Select Dataset" );
 		gd.addFileField( "Select_XML", defaultXMLfilename, 65 );
