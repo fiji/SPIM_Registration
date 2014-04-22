@@ -1,7 +1,5 @@
 package mpicbg.spim.postprocessing.deconvolution2;
 
-import ij.IJ;
-
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -15,7 +13,6 @@ import mpicbg.imglib.container.constant.ConstantContainer;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;

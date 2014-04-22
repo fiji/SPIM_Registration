@@ -99,7 +99,7 @@ public class ManualBoundingBox extends BoundingBox
 		gd.addMessage( "???x???x??? pixels", GUIHelper.smallStatusFont, GUIHelper.good );
 		Label l2 = (Label)gd.getMessage();
 
-		DialogListener d = addListeners( gd, gd.getNumericFields(), gd.getChoices(), l1, l2, fusion.supportsDownsampling(), fusion.supports16BitUnsigned() );
+		DialogListener d = addListeners( gd, gd.getNumericFields(), gd.getChoices(), l1, l2, fusion, fusion.supportsDownsampling(), fusion.supports16BitUnsigned() );
 		d.dialogItemChanged( gd, new TextEvent( gd, TextEvent.TEXT_VALUE_CHANGED ) );
 		
 		gd.showDialog();
@@ -165,6 +165,7 @@ public class ManualBoundingBox extends BoundingBox
 			final Vector<?> choices,
 			final Label label1,
 			final Label label2,
+			final Fusion fusion,
 			final boolean supportsDownsampling,
 			final boolean supports16bit )
 	{
@@ -248,12 +249,13 @@ public class ManualBoundingBox extends BoundingBox
 					
 					
 					final long numPixels = numPixels( min, max, downsampling );
-					final long megabytes;
-					
+					final int bytePerPixel;
 					if ( pixelType == 1 )
-						megabytes = (numPixels * 2) / (1024*1024);
+						bytePerPixel = 2;
 					else
-						megabytes = (numPixels * 4) / (1024*1024);				
+						bytePerPixel = 4;
+					
+					final long megabytes = (numPixels * bytePerPixel) / (1024*1024);
 					
 					if ( numPixels > Integer.MAX_VALUE && imgtype == 0 )
 					{
@@ -262,7 +264,7 @@ public class ManualBoundingBox extends BoundingBox
 					}
 					else
 					{
-						label1.setText( "Estimated size: " + megabytes + " MB" );
+						label1.setText( "Fused image: " + megabytes + " MB, required total memory ~" + fusion.totalRAM( megabytes, bytePerPixel ) +  " MB" );
 						label1.setForeground( GUIHelper.good );
 					}
 						

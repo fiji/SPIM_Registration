@@ -2,12 +2,16 @@ package spim.process.fusion.weightedavg;
 
 import ij.gui.GenericDialog;
 
+import java.awt.Choice;
 import java.util.ArrayList;
 
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.ViewSetup;
 import net.imglib2.RandomAccessible;
 import net.imglib2.interpolation.InterpolatorFactory;
 import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
@@ -28,6 +32,9 @@ public class WeightedAverageFusion extends Fusion
 	
 	public static int defaultNumParalellViewsIndex = 0;
 	protected int numParalellViews = 1;
+	
+	final long avgPixels;
+	protected Choice sequentialViews = null;
 
 	public WeightedAverageFusion(
 			final SpimData2 spimData,
@@ -40,6 +47,11 @@ public class WeightedAverageFusion extends Fusion
 		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
 		
 		this.type = type;
+		
+		if ( spimData == null )
+			this.avgPixels = 0;
+		else
+			this.avgPixels = computeAvgImageSize();
 	}
 	
 	public WeightedAvgFusionType getFusionType() { return type; }
@@ -148,6 +160,7 @@ public class WeightedAverageFusion extends Fusion
 				defaultNumParalellViewsIndex = 0;
 			
 			gd.addChoice( "Process_views_in_paralell", views, views[ defaultNumParalellViewsIndex ] );
+			this.sequentialViews = (Choice)gd.getChoices().lastElement();
 		}
 		
 		if ( this.getFusionType() == WeightedAvgFusionType.PARALELL || this.getFusionType() == WeightedAvgFusionType.SEQUENTIAL )
@@ -178,5 +191,43 @@ public class WeightedAverageFusion extends Fusion
 		}
 		this.interpolation = Fusion.defaultInterpolation = gd.getNextChoiceIndex();
 		return true;
+	}
+	
+	protected long computeAvgImageSize()
+	{
+		long avgSize = 0;
+		int countImgs = 0;
+		
+		for ( final TimePoint t : timepointsToProcess )
+			for ( final Channel c : channelsToProcess )
+				for ( final Angle a : anglesToProcess )
+					for ( final Illumination i : illumsToProcess )
+					{
+						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
+						final ViewDescription<TimePoint, ViewSetup> desc = spimData.getSequenceDescription().getViewDescription( viewId );
+						
+						if ( desc.isPresent() )
+						{
+							final ViewSetup viewSetup = desc.getViewSetup();
+							final long numPixel = viewSetup.getWidth() * viewSetup.getHeight() * viewSetup.getDepth();
+							
+							avgSize += numPixel;
+							++countImgs;
+						}
+					}
+		
+		return avgSize / countImgs;
+	}
+
+	@Override
+	public long totalRAM( final long fusedSizeMB, final int bytePerPixel )
+	{
+		if ( type == WeightedAvgFusionType.PARALELL )
+			return fusedSizeMB + (maxNumViews * (avgPixels/ ( 1024*1024 )) * bytePerPixel);
+		else if ( type == WeightedAvgFusionType.SEQUENTIAL )
+			return fusedSizeMB + ((sequentialViews.getSelectedIndex() + 1) * (avgPixels/ ( 1024*1024 )) * bytePerPixel);
+		else
+			return fusedSizeMB + (avgPixels/ ( 1024*1024 )) * bytePerPixel;
+	
 	}
 }

@@ -8,6 +8,9 @@ import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.ViewSetup;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.export.ImgExport;
 
@@ -44,7 +47,8 @@ public abstract class Fusion
 	final protected ArrayList< TimePoint > timepointsToProcess;
 
 	final protected SpimData2 spimData;
-
+	protected final int maxNumViews;
+	
 	/**
 	 * @param spimData
 	 * @param anglesToPrcoess - which angles to segment
@@ -64,7 +68,14 @@ public abstract class Fusion
 		this.channelsToProcess = channelsToProcess;
 		this.illumsToProcess = illumsToProcess;
 		this.timepointsToProcess = timepointsToProcess;
+		
+		if ( spimData == null )
+			maxNumViews = 0;
+		else
+			maxNumViews = computeMaxNumViews();
 	}
+	
+	public abstract long totalRAM( final long fusedSizeMB, final int bytePerPixel );
 	
 	public int getInterpolation() { return interpolation; }
 	
@@ -122,5 +133,30 @@ public abstract class Fusion
 	/**
 	 * @return - to be displayed in the generic dialog
 	 */
-	public abstract String getDescription();	
+	public abstract String getDescription();
+	
+	protected int computeMaxNumViews()
+	{
+		int maxViews = 0;
+		
+		for ( final TimePoint t : timepointsToProcess )
+			for ( final Channel c : channelsToProcess )
+			{
+				int views = 0;
+				
+				for ( final Angle a : anglesToProcess )
+					for ( final Illumination i : illumsToProcess )
+					{
+						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
+						final ViewDescription<TimePoint, ViewSetup> desc = spimData.getSequenceDescription().getViewDescription( viewId );
+						
+						if ( desc.isPresent() )
+							++views;
+					}
+				
+				maxViews = Math.max( maxViews, views );
+			}
+		
+		return maxViews;
+	}
 }
