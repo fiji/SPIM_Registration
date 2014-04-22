@@ -121,8 +121,8 @@ public class AutomaticBoundingBox extends ManualBoundingBox
 		}
 		else
 		{
-			BoundingBox.minStatic = automatic.getMin();
-			BoundingBox.maxStatic = automatic.getMax();
+			BoundingBox.defaultMin = automatic.getMin();
+			BoundingBox.defaultMax = automatic.getMax();
 		}
 				
 		return super.queryParameters( fusion, imgExport );

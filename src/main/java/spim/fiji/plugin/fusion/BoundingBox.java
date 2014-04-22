@@ -22,8 +22,10 @@ public abstract class BoundingBox implements Interval
 {
 	public static int staticDownsampling = 1;
 	
-	public static int minStatic[] = { 0, 0, 0 };
-	public static int maxStatic[] = { 0, 0, 0 };
+	public static int defaultMin[] = { 0, 0, 0 };
+	public static int defaultMax[] = { 0, 0, 0 };
+	public static int defaultRangeMin[] = { 0, 0, 0 };
+	public static int defaultRangeMax[] = { 0, 0, 0 };
 	
 	public static String[] pixelTypes = new String[]{ "32-bit floating point", "16-bit unsigned integer" };
 	public static int defaultPixelType = 0;
@@ -78,8 +80,8 @@ public abstract class BoundingBox implements Interval
 		this.illumsToProcess = illumsToProcess;
 		this.timepointsToProcess = timepointsToProcess;
 		
-		this.min = minStatic.clone();
-		this.max = maxStatic.clone();
+		this.min = defaultMin.clone();
+		this.max = defaultMax.clone();
 		this.downsampling = staticDownsampling;
 	}
 	

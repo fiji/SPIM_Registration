@@ -50,11 +50,17 @@ public class ManualBoundingBox extends BoundingBox
 		computeMaximalBoundingBox( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess, minBB, maxBB );
 
 		for ( int d = 0; d < minBB.length; ++d )
-			if ( BoundingBox.minStatic[ d ] == 0 && BoundingBox.minStatic[ d ] == 0 )
+		{
+			BoundingBox.defaultRangeMin[ d ] = (int)Math.floor( minBB[ d ] );
+			BoundingBox.defaultRangeMax[ d ] = (int)Math.floor( maxBB[ d ] );
+			
+			// not preselected
+			if ( BoundingBox.defaultMin[ d ] == 0 && BoundingBox.defaultMax[ d ] == 0 )
 			{
-				BoundingBox.minStatic[ d ] = (int)Math.floor( minBB[ d ] );
-				BoundingBox.maxStatic[ d ] = (int)Math.floor( maxBB[ d ] );
+				BoundingBox.defaultMin[ d ] = BoundingBox.defaultRangeMin[ d ];
+				BoundingBox.defaultMax[ d ] = BoundingBox.defaultRangeMax[ d ];
 			}
+		}
 
 		final GenericDialog gd = new GenericDialog( "Manually define Bounding Box" );
 
@@ -64,16 +70,16 @@ public class ManualBoundingBox extends BoundingBox
 		if ( !fusion.compressBoundingBoxDialog() )
 			gd.addMessage( "", GUIHelper.smallStatusFont );
 		
-		gd.addSlider( "Minimal_X", BoundingBox.minStatic[ 0 ], BoundingBox.maxStatic[ 0 ], BoundingBox.minStatic[ 0 ] );
-		gd.addSlider( "Minimal_Y", BoundingBox.minStatic[ 1 ], BoundingBox.maxStatic[ 1 ], BoundingBox.minStatic[ 1 ] );
-		gd.addSlider( "Minimal_Z", BoundingBox.minStatic[ 2 ], BoundingBox.maxStatic[ 2 ], BoundingBox.minStatic[ 2 ] );
+		gd.addSlider( "Minimal_X", BoundingBox.defaultRangeMin[ 0 ], BoundingBox.defaultRangeMax[ 0 ], BoundingBox.defaultMin[ 0 ] );
+		gd.addSlider( "Minimal_Y", BoundingBox.defaultRangeMin[ 1 ], BoundingBox.defaultRangeMax[ 1 ], BoundingBox.defaultMin[ 1 ] );
+		gd.addSlider( "Minimal_Z", BoundingBox.defaultRangeMin[ 2 ], BoundingBox.defaultRangeMax[ 2 ], BoundingBox.defaultMin[ 2 ] );
 
 		if ( !fusion.compressBoundingBoxDialog() )
 			gd.addMessage( "" );
 		
-		gd.addSlider( "Maximal_X", BoundingBox.minStatic[ 0 ], BoundingBox.maxStatic[ 0 ], BoundingBox.maxStatic[ 0 ] );
-		gd.addSlider( "Maximal_Y", BoundingBox.minStatic[ 1 ], BoundingBox.maxStatic[ 1 ], BoundingBox.maxStatic[ 1 ] );
-		gd.addSlider( "Maximal_Z", BoundingBox.minStatic[ 2 ], BoundingBox.maxStatic[ 2 ], BoundingBox.maxStatic[ 2 ] );
+		gd.addSlider( "Maximal_X", BoundingBox.defaultRangeMin[ 0 ], BoundingBox.defaultRangeMax[ 0 ], BoundingBox.defaultMax[ 0 ] );
+		gd.addSlider( "Maximal_Y", BoundingBox.defaultRangeMin[ 1 ], BoundingBox.defaultRangeMax[ 1 ], BoundingBox.defaultMax[ 1 ] );
+		gd.addSlider( "Maximal_Z", BoundingBox.defaultRangeMin[ 2 ], BoundingBox.defaultRangeMax[ 2 ], BoundingBox.defaultMax[ 2 ] );
 
 		if ( !fusion.compressBoundingBoxDialog() )
 			gd.addMessage( "" );
@@ -133,12 +139,12 @@ public class ManualBoundingBox extends BoundingBox
 		if ( !imgExport.parseAdditionalParameters( gd ) )
 			return false;
 		
-		BoundingBox.minStatic[ 0 ] = min[ 0 ];
-		BoundingBox.minStatic[ 1 ] = min[ 1 ];
-		BoundingBox.minStatic[ 2 ] = min[ 2 ];
-		BoundingBox.maxStatic[ 0 ] = max[ 0 ];
-		BoundingBox.maxStatic[ 1 ] = max[ 1 ];
-		BoundingBox.maxStatic[ 2 ] = max[ 2 ];
+		BoundingBox.defaultMin[ 0 ] = min[ 0 ];
+		BoundingBox.defaultMin[ 1 ] = min[ 1 ];
+		BoundingBox.defaultMin[ 2 ] = min[ 2 ];
+		BoundingBox.defaultMax[ 0 ] = max[ 0 ];
+		BoundingBox.defaultMax[ 1 ] = max[ 1 ];
+		BoundingBox.defaultMax[ 2 ] = max[ 2 ];
 		
 		return true;
 	}
