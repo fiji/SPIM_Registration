@@ -12,6 +12,7 @@ import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.process.fusion.boundingbox.AutomaticBoundingBox;
 import spim.process.fusion.boundingbox.ManualBoundingBox;
+import spim.process.fusion.deconvolution.EfficientBayesianBased;
 import spim.process.fusion.export.DisplayImage;
 import spim.process.fusion.export.ImgExport;
 import spim.process.fusion.weightedavg.WeightedAverageFusion;
@@ -34,6 +35,7 @@ public class Image_Fusion implements PlugIn
 		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, null, null, null, WeightedAvgFusionType.PARALELL ) );
 		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, null, null, null, WeightedAvgFusionType.SEQUENTIAL ) );
 		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, null, null, null, WeightedAvgFusionType.INDEPENDENT ) );
+		staticFusionAlgorithms.add( new EfficientBayesianBased( null, null, null, null, null ) );
 		
 		staticBoundingBoxAlgorithms.add( new ManualBoundingBox( null, null, null, null, null ) );
 		staticBoundingBoxAlgorithms.add( new AutomaticBoundingBox( null, null, null, null, null ) );
