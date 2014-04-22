@@ -71,9 +71,9 @@ public class ManualBoundingBox extends BoundingBox
 		if ( !fusion.compressBoundingBoxDialog() )
 			gd.addMessage( "" );
 		
-		gd.addSlider( "Maxmal_X", BoundingBox.minStatic[ 0 ], BoundingBox.maxStatic[ 0 ], BoundingBox.maxStatic[ 0 ] );
-		gd.addSlider( "Maxmal_Y", BoundingBox.minStatic[ 1 ], BoundingBox.maxStatic[ 1 ], BoundingBox.maxStatic[ 1 ] );
-		gd.addSlider( "Maxmal_Z", BoundingBox.minStatic[ 2 ], BoundingBox.maxStatic[ 2 ], BoundingBox.maxStatic[ 2 ] );
+		gd.addSlider( "Maximal_X", BoundingBox.minStatic[ 0 ], BoundingBox.maxStatic[ 0 ], BoundingBox.maxStatic[ 0 ] );
+		gd.addSlider( "Maximal_Y", BoundingBox.minStatic[ 1 ], BoundingBox.maxStatic[ 1 ], BoundingBox.maxStatic[ 1 ] );
+		gd.addSlider( "Maximal_Z", BoundingBox.minStatic[ 2 ], BoundingBox.maxStatic[ 2 ], BoundingBox.maxStatic[ 2 ] );
 
 		if ( !fusion.compressBoundingBoxDialog() )
 			gd.addMessage( "" );
