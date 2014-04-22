@@ -113,6 +113,15 @@ public class LoadParseQueryXML
 		 */
 		public ArrayList< Illumination > getIlluminationsToProcess() { return illums; }
 	}
+
+	public XMLParseResult queryXML(
+			final boolean askForAngles,
+			final boolean askForChannels,
+			final boolean askForIllum,
+			final boolean askForTimepoints )
+	{
+		return queryXML( "", askForAngles, askForChannels, askForIllum, askForTimepoints );
+	}
 	
 	/**
 	 * Asks the user for a valid XML (real time parsing)
@@ -120,13 +129,22 @@ public class LoadParseQueryXML
 	 * @param askForTimepoints - ask the user if he/she wants to select a subset of timepoints, otherwise all timepoints are selected
 	 * @return null if cancelled or timepointlistsize = 0
 	 */
-	public XMLParseResult queryXML( final boolean askForAngles, final boolean askForChannels, final boolean askForIllum, final boolean askForTimepoints )
+	public XMLParseResult queryXML(
+			final String additionalTitle,
+			final boolean askForAngles,
+			final boolean askForChannels,
+			final boolean askForIllum,
+			final boolean askForTimepoints )
 	{
 		// try parsing if it ends with XML
 		XMLParseResult xmlResult = tryParsing( defaultXMLfilename, false );
 		
-		final GenericDialogPlus gd = new GenericDialogPlus( "Select Dataset" );
+		final GenericDialogPlus gd;
 		
+		if ( additionalTitle != null && additionalTitle.length() > 0 )
+			gd = new GenericDialogPlus( "Select Dataset for " + additionalTitle );
+		else
+			gd = new GenericDialogPlus( "Select Dataset" );
 		gd.addFileField( "Select_XML", defaultXMLfilename, 65 );
 		gd.addMessage( xmlResult.message1, GUIHelper.largestatusfont, xmlResult.color );
 		Label l1 = (Label)gd.getMessage();

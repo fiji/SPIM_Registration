@@ -33,7 +33,7 @@ public class Display_View implements PlugIn
 	public void run(String arg0)
 	{
 		// ask for everything but the channels
-		final XMLParseResult result = new LoadParseQueryXML().queryXML( false, false, false, false );
+		final XMLParseResult result = new LoadParseQueryXML().queryXML( "displaying a view", false, false, false, false );
 		
 		if ( result == null )
 			return;
