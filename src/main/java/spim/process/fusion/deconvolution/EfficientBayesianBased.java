@@ -267,14 +267,14 @@ public class EfficientBayesianBased extends Fusion
 			final HashMap< Channel, ArrayList< Correspondence > > correspondences = new HashMap< Channel, ArrayList< Correspondence > >();
 			final HashMap< Channel, Integer > viewsPresent = new HashMap< Channel, Integer >();
 
-			assembleAvailableCorrespondences( correspondences, viewsPresent );
+			assembleAvailableCorrespondences( correspondences, viewsPresent, true );
 			
 			final String[] listOfDetections;
 			
 			final GenericDialogPlus gd = new GenericDialogPlus( "Extract PSF's ..." );
 			
-			for ( final Channel c : channelsToProcess )
-				gd.addChoice( "Detections_to_extract_PSF_for_channel_" + c.getName(), arg1, arg2 );
+		//	for ( final Channel c : channelsToProcess )
+		//		gd.addChoice( "Detections_to_extract_PSF_for_channel_" + c.getName(), arg1, arg2 );
 			
 			gd.showDialog();
 			
