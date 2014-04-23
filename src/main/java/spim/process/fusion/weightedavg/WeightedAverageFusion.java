@@ -223,7 +223,7 @@ public class WeightedAverageFusion extends Fusion
 	public long totalRAM( final long fusedSizeMB, final int bytePerPixel )
 	{
 		if ( type == WeightedAvgFusionType.PARALELL )
-			return fusedSizeMB + (maxNumViews * (avgPixels/ ( 1024*1024 )) * bytePerPixel);
+			return fusedSizeMB + (getMaxNumViewsPerTimepoint() * (avgPixels/ ( 1024*1024 )) * bytePerPixel);
 		else if ( type == WeightedAvgFusionType.SEQUENTIAL )
 			return fusedSizeMB + ((sequentialViews.getSelectedIndex() + 1) * (avgPixels/ ( 1024*1024 )) * bytePerPixel);
 		else

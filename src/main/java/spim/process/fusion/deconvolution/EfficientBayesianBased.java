@@ -1,15 +1,22 @@
 package spim.process.fusion.deconvolution;
 
+import fiji.util.gui.GenericDialogPlus;
+import ij.IJ;
 import ij.gui.GenericDialog;
 
 import java.awt.Choice;
 import java.util.ArrayList;
 
+import com.sun.jna.Native;
+
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.postprocessing.deconvolution2.CUDAConvolution;
+import mpicbg.spim.postprocessing.deconvolution2.LRFFT;
 import mpicbg.spim.postprocessing.deconvolution2.LRFFT.PSFTYPE;
+import spim.fiji.plugin.GUIHelper;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.spimdata.SpimData2;
@@ -39,7 +46,12 @@ public class EfficientBayesianBased extends Fusion
 	public static int defaultExtractPSF = 0;
 	public static int defaultDisplayPSF = 1;
 	public static boolean defaultDebugMode = false;
-	
+	public static int defaultDebugInterval = 1;
+	public static double defaultOSEMspeedup = 1;
+	public static boolean defaultOnePSFForAll = true;
+	public static boolean defaultTransformPSFs = true;
+	public static ArrayList< String > defaultPSFFileField = null;
+
 	PSFTYPE iterationType;
 	boolean justShowWeights;
 	int osemspeedupIndex;
@@ -47,11 +59,33 @@ public class EfficientBayesianBased extends Fusion
 	boolean useTikhonovRegularization;
 	double lambda;
 	int blockSizeIndex;
-	int computatioTypenIndex;
-	int extractPSF;
+	int computationTypeIndex;
+	int extractPSFIndex;
 	int displayPSF;
 	boolean debugMode;
 	
+	boolean useBlocks;
+	int[] blockSize;
+	boolean useCUDA;
+	int debugInterval;
+	double osemSpeedUp;
+	boolean extractPSF;
+	boolean transformPSFs;
+	ArrayList< String > psfFiles;
+	
+	/**
+	 * -1 == CPU
+	 * 0 ... n == CUDA device i
+	 */
+	ArrayList< Integer > deviceList = null;
+	
+	/**
+	 * 0 ... n == index for i'th CUDA device
+	 * n + 1 == CPU
+	 */
+	public static ArrayList< Boolean > deviceChoice = null;
+	public static int standardDevice = 10000;
+
 	Choice gpu, block;
 	
 	public EfficientBayesianBased(
@@ -78,9 +112,25 @@ public class EfficientBayesianBased extends Fusion
 	}
 
 	@Override
-	public boolean queryParameters() {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean queryParameters()
+	{
+		// check blocks
+		if ( !getBlocks() )
+			return false;
+		
+		// check CUDA
+		if ( !getCUDA() )
+			return false;
+
+		// check OSEM
+		if ( !getOSEM() )
+			return false;
+		
+		// check debug interval
+		if ( !getDebug() )
+			return false;
+
+		return true;
 	}
 
 	@Override
@@ -124,8 +174,8 @@ public class EfficientBayesianBased extends Fusion
 		useTikhonovRegularization = defaultUseTikhonovRegularization = gd.getNextBoolean();
 		lambda = defaultLambda = gd.getNextNumber();
 		blockSizeIndex = defaultBlockSizeIndex = gd.getNextChoiceIndex();
-		computatioTypenIndex = defaultComputationTypeIndex = gd.getNextChoiceIndex();
-		extractPSF = defaultExtractPSF = gd.getNextChoiceIndex();
+		computationTypeIndex = defaultComputationTypeIndex = gd.getNextChoiceIndex();
+		extractPSFIndex = defaultExtractPSF = gd.getNextChoiceIndex();
 		displayPSF = defaultDisplayPSF = gd.getNextChoiceIndex();
 		debugMode = defaultDebugMode = gd.getNextBoolean();
 
@@ -173,16 +223,16 @@ public class EfficientBayesianBased extends Fusion
 		else
 			blockSize = fusedSizeMB;
 		
-		// weight images + input data
-		long totalRam = fusedSizeMB * maxNumViews * 2;
+		// transformed weight images + input data
+		long totalRam = fusedSizeMB * getMaxNumViewsPerTimepoint() * 2;
 		
 		// fft of psf's
 		if ( gpu.getSelectedIndex() == 0 )
-			totalRam += blockSize * maxNumViews * 1.5; // cpu
+			totalRam += blockSize * getMaxNumViewsPerTimepoint() * 1.5; // cpu
 		else
-			totalRam += (40 * 40 * 100 * bytePerPixel)/(1024*1024) * maxNumViews; // gpu
+			totalRam += (40 * 40 * 100 * bytePerPixel)/(1024*1024) * getMaxNumViewsPerTimepoint(); // gpu
 		
-		// memory estimate for computing fft convolutions in RAM
+		// memory estimate for computing fft convolutions for images in RAM
 		if ( gpu.getSelectedIndex() == 0 )
 			totalRam += blockSize * 6 * 1.5;
 		else
@@ -192,5 +242,349 @@ public class EfficientBayesianBased extends Fusion
 		totalRam += fusedSizeMB;
 		
 		return totalRam;
+	}
+	
+	protected boolean getPSF()
+	{
+		if ( extractPSFIndex == 0 )
+		{
+			extractPSF = true;
+		}
+		else
+		{
+			extractPSF = false;
+
+			final GenericDialogPlus gd = new GenericDialogPlus( "Load PSF File ..." );
+
+			gd.addCheckbox( "Use same PSF for all views", defaultOnePSFForAll );
+			
+			gd.showDialog();
+
+			if ( gd.wasCanceled() )
+				return false;
+
+			defaultOnePSFForAll = gd.getNextBoolean();			
+			
+			final GenericDialogPlus gd2 = new GenericDialogPlus( "Select PSF File ..." );
+			
+			gd2.addCheckbox( "Transform_PSFs", defaultTransformPSFs );
+			gd2.addMessage( "" );
+			gd2.addMessage( "Note: the calibration of the PSF(s) has to match\n" +
+					"the calibration of the input views if you choose\n" +
+					"to transform them according to the registration of\n" +
+					"the views!", GUIHelper.mediumstatusfont );
+
+			int numPSFs;
+			
+			if ( defaultOnePSFForAll )
+				numPSFs = 1;
+			else
+				numPSFs = anglesToProcess.size() * illumsToProcess.size();
+
+			if ( defaultPSFFileField == null )
+				defaultPSFFileField = new ArrayList<String>();
+
+			while( defaultPSFFileField.size() < numPSFs )
+				defaultPSFFileField.add( "" );
+
+			if ( defaultPSFFileField.size() > numPSFs )
+				for ( int i = numPSFs; i < defaultPSFFileField.size(); ++i )
+					defaultPSFFileField.remove( numPSFs );
+
+			if ( defaultOnePSFForAll )
+			{
+				gd2.addFileField( "PSF_file", defaultPSFFileField.get( 0 ) );
+			}
+			else
+			{
+				int j = 0;
+				
+				for ( final Angle a : anglesToProcess )
+					for ( final Illumination i : illumsToProcess )
+						gd2.addFileField( "PSF_file_(angle=" + a.getName() + ", illum=" + i.getName() + ")", defaultPSFFileField.get( j++ ) );
+			}
+			
+			gd2.showDialog();
+			
+			if ( gd2.wasCanceled() )
+				return false;
+
+			transformPSFs = defaultTransformPSFs = gd2.getNextBoolean();
+			
+			defaultPSFFileField.clear();
+			
+			for ( int i = 0; i < numPSFs; ++i )
+				defaultPSFFileField.add( gd2.getNextString() );
+				
+			psfFiles = new ArrayList<String>();
+			if ( defaultOnePSFForAll )
+			{
+				for ( int i = 0; i < numPSFs; ++i )
+					psfFiles.add( defaultPSFFileField.get( 0 ) );
+			}
+			else
+			{
+				psfFiles.addAll( defaultPSFFileField );
+			}	
+		}
+		
+		return true;
+	}
+	
+	protected boolean getOSEM()
+	{
+		if ( osemspeedupIndex == 0 )
+		{
+			defaultOSEMspeedup = osemSpeedUp = 1;
+		}
+		else if ( osemspeedupIndex == 3 )
+		{
+			GenericDialog gdOSEM = new GenericDialog( "OSEM options" );
+			gdOSEM.addNumericField( "Additional_acceleration = ", defaultOSEMspeedup, 2 );
+			gdOSEM.showDialog();
+			
+			if ( gdOSEM.wasCanceled() )
+				return false;
+			
+			defaultOSEMspeedup = osemSpeedUp = gdOSEM.getNextNumber();			
+		}
+		
+		return true;
+	}
+	
+	protected boolean getDebug()
+	{
+		GenericDialog gdDebug = new GenericDialog( "Debug options" );
+		gdDebug.addNumericField( "Show debug output every n'th frame, n = ", defaultDebugInterval, 0 );
+		gdDebug.showDialog();
+		
+		if ( gdDebug.wasCanceled() )
+			return false;
+		
+		defaultDebugInterval = debugInterval = (int)Math.round( gdDebug.getNextNumber() );
+		
+		return true;
+	}
+	
+	protected boolean getBlocks()
+	{
+		if ( blockSizeIndex == 0 )
+		{
+			this.useBlocks = false;
+			this.blockSize = null;
+		}
+		else if ( blockSizeIndex == 1 )
+		{
+			this.useBlocks = true;
+			this.blockSize = new int[]{ 64, 64, 64 };
+		}
+		else if ( blockSizeIndex == 2 )
+		{
+			this.useBlocks = true;
+			this.blockSize = new int[]{ 128, 128, 128 };
+		}
+		else if ( blockSizeIndex == 3 )
+		{
+			this.useBlocks = true;
+			this.blockSize = new int[]{ 256, 256, 256 };
+		}
+		else if ( blockSizeIndex == 4 )
+		{
+			this.useBlocks = true;
+			blockSize = new int[]{ 512, 512, 512 };
+		}
+		if ( blockSizeIndex == 5 )
+		{
+			GenericDialog gd = new GenericDialog( "Define block sizes" );
+			
+			gd.addNumericField( "blocksize_x", defaultBlockSizeX, 0 );
+			gd.addNumericField( "blocksize_y", defaultBlockSizeY, 0 );
+			gd.addNumericField( "blocksize_z", defaultBlockSizeZ, 0 );
+			
+			gd.showDialog();
+			
+			if ( gd.wasCanceled() )
+				return false;
+			
+			defaultBlockSizeX = Math.max( 1, (int)Math.round( gd.getNextNumber() ) );
+			defaultBlockSizeY = Math.max( 1, (int)Math.round( gd.getNextNumber() ) );
+			defaultBlockSizeZ = Math.max( 1, (int)Math.round( gd.getNextNumber() ) );
+
+			this.useBlocks = true;
+			this.blockSize = new int[]{ defaultBlockSizeX, defaultBlockSizeY, defaultBlockSizeZ };
+		}
+
+		return true;
+	}
+	
+	protected boolean getCUDA()
+	{
+		// we need to popluate the deviceList in any case
+		deviceList = new ArrayList<Integer>();
+		
+		if ( computationTypeIndex == 0 )
+		{
+			useCUDA = false;
+			deviceList.add( -1 );
+		}
+		else
+		{
+			// well, do some testing first
+			try
+			{
+		        //String fijiDir = new File( "names.txt" ).getAbsoluteFile().getParentFile().getAbsolutePath();
+		        //IJ.log( "Fiji directory: " + fijiDir );
+				//LRFFT.cuda = (CUDAConvolution) Native.loadLibrary( fijiDir  + File.separator + "libConvolution3D_fftCUDAlib.so", CUDAConvolution.class );
+				
+				// under linux automatically checks lib/linux64
+		        LRFFT.cuda = (CUDAConvolution) Native.loadLibrary( "Convolution3D_fftCUDAlib", CUDAConvolution.class );
+			}
+			catch (UnsatisfiedLinkError e )
+			{
+				IJ.log( "Cannot find CUDA JNA library: " + e );
+				return false;
+			}
+			
+			final int numDevices = LRFFT.cuda.getNumDevicesCUDA();
+			
+			if ( numDevices == 0 )
+			{
+				IJ.log( "No CUDA devices detected, only CPU will be available." );
+			}
+			else
+			{
+				IJ.log( "numdevices = " + numDevices );
+				
+				// yes, CUDA is possible
+				useCUDA = true;
+			}
+			
+			//
+			// get the ID's and functionality of the CUDA GPU's
+			//
+			final String[] devices = new String[ numDevices ];
+			final byte[] name = new byte[ 256 ];
+			int highestComputeCapability = 0;
+			long highestMemory = 0;
+
+			int highestComputeCapabilityDevice = -1;
+			
+			for ( int i = 0; i < numDevices; ++i )
+			{		
+				LRFFT.cuda.getNameDeviceCUDA( i, name );
+				
+				devices[ i ] = "GPU_" + (i+1) + " of " + numDevices  + ": ";
+				for ( final byte b : name )
+					if ( b != 0 )
+						devices[ i ] = devices[ i ] + (char)b;
+				
+				devices[ i ].trim();
+				
+				final long mem = LRFFT.cuda.getMemDeviceCUDA( i );	
+				final int compCap =  10*LRFFT.cuda.getCUDAcomputeCapabilityMajorVersion( i ) + LRFFT.cuda.getCUDAcomputeCapabilityMinorVersion( i );
+				
+				if ( compCap > highestComputeCapability )
+				{
+					highestComputeCapability = compCap;
+				    highestComputeCapabilityDevice = i;
+				}
+				
+				if ( mem > highestMemory )
+				{
+					highestMemory = mem;
+				}
+				
+				devices[ i ] = devices[ i ] + " (" + mem/(1024*1024) + " MB, CUDA capability " + LRFFT.cuda.getCUDAcomputeCapabilityMajorVersion( i )  + "." + LRFFT.cuda.getCUDAcomputeCapabilityMinorVersion( i ) + ")";
+				//devices[ i ] = devices[ i ].replaceAll( " ", "_" );
+			}
+			
+			// get the CPU specs
+			final String cpuSpecs = "CPU (" + Runtime.getRuntime().availableProcessors() + " cores, " + Runtime.getRuntime().maxMemory()/(1024*1024) + " MB RAM available)";
+			
+			// if we use blocks, it makes sense to run more than one device
+			if ( useBlocks )
+			{
+				// make a list where all are checked if there is no previous selection
+				if ( deviceChoice == null || deviceChoice.size() != devices.length + 1 )
+				{
+					deviceChoice = new ArrayList<Boolean>( devices.length + 1 );
+					for ( int i = 0; i < devices.length; ++i )
+						deviceChoice.add( true );
+					
+					// CPU is by default not checked
+					deviceChoice.add( false );
+				}
+				
+				final GenericDialog gdCUDA = new GenericDialog( "Choose CUDA/CPUs devices to use" );
+				
+				for ( int i = 0; i < devices.length; ++i )
+					gdCUDA.addCheckbox( devices[ i ], deviceChoice.get( i ) );
+	
+				gdCUDA.addCheckbox( cpuSpecs, deviceChoice.get( devices.length ) );			
+				gdCUDA.showDialog();
+				
+				if ( gdCUDA.wasCanceled() )
+					return false;
+	
+				// check all CUDA devices
+				for ( int i = 0; i < devices.length; ++i )
+				{
+					if( gdCUDA.getNextBoolean() )
+					{
+						deviceList.add( i );
+						deviceChoice.set( i , true );
+					}
+					else
+					{
+						deviceChoice.set( i , false );
+					}
+				}
+				
+				// check the CPUs
+				if ( gdCUDA.getNextBoolean() )
+				{
+					deviceList.add( -1 );
+					deviceChoice.set( devices.length , true );
+				}
+				else
+				{
+					deviceChoice.set( devices.length , false );				
+				}
+				
+				for ( final int i : deviceList )
+				{
+					if ( i >= 0 )
+						IJ.log( "Using device " + devices[ i ] );
+					else if ( i == -1 )
+						IJ.log( "Using device " + cpuSpecs );
+				}
+				
+				if ( deviceList.size() == 0 )
+				{
+					IJ.log( "You selected no device, quitting." );
+					return false;
+				}
+			}
+			else
+			{
+				// only choose one device to run everything at once				
+				final GenericDialog gdCUDA = new GenericDialog( "Choose CUDA device" );
+
+				if ( standardDevice >= devices.length )
+					standardDevice = highestComputeCapabilityDevice;
+				
+				gdCUDA.addChoice( "Device", devices, devices[ standardDevice ] );
+				
+				gdCUDA.showDialog();
+			
+				if ( gdCUDA.wasCanceled() )
+					return false;
+				
+				deviceList.add( standardDevice = gdCUDA.getNextChoiceIndex() );
+				IJ.log( "Using device " + devices[ deviceList.get( 0 ) ] );
+			}
+		}
+		
+		return true;
 	}
 }

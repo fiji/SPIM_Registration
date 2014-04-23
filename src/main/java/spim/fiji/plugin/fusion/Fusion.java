@@ -47,7 +47,7 @@ public abstract class Fusion
 	final protected ArrayList< TimePoint > timepointsToProcess;
 
 	final protected SpimData2 spimData;
-	protected final int maxNumViews;
+	final int maxNumViews;
 	
 	/**
 	 * @param spimData
@@ -76,6 +76,8 @@ public abstract class Fusion
 	}
 	
 	public abstract long totalRAM( final long fusedSizeMB, final int bytePerPixel );
+	
+	public int getMaxNumViewsPerTimepoint() { return maxNumViews; }
 	
 	public int getInterpolation() { return interpolation; }
 	

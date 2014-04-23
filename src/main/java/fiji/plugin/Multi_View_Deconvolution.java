@@ -796,7 +796,7 @@ public class Multi_View_Deconvolution implements PlugIn
 			
 			gd3.showDialog();
 			
-			if ( gd2.wasCanceled() )
+			if ( gd3.wasCanceled() )
 				return null;
 			
 			defaultBlockSizeX = Math.max( 1, (int)Math.round( gd3.getNextNumber() ) );
