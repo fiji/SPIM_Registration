@@ -14,8 +14,6 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.parsers.ParserConfigurationException;
-
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
@@ -24,7 +22,7 @@ import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.io.IOFunctions;
 
-import org.xml.sax.SAXException;
+import org.jdom2.JDOMException;
 
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIo;
@@ -697,8 +695,8 @@ public class LoadParseQueryXML
 		
 		return xml;
 	}
-	
-	public SpimData2 parseXML( final String xmlFilename ) throws ParserConfigurationException, SAXException, IOException, InstantiationException, IllegalAccessException, ClassNotFoundException
+
+	public SpimData2 parseXML( final String xmlFilename ) throws JDOMException, IOException, InstantiationException, IllegalAccessException, ClassNotFoundException
 	{
 		final XmlIoSpimData2 io = XmlIo.createDefaultIo();
 		return io.load( xmlFilename );
