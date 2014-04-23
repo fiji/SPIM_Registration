@@ -6,13 +6,16 @@ import ij.gui.GenericDialog;
 
 import java.awt.Choice;
 import java.util.ArrayList;
-
-import com.sun.jna.Native;
+import java.util.HashMap;
 
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.ViewSetup;
+import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.postprocessing.deconvolution2.CUDAConvolution;
 import mpicbg.spim.postprocessing.deconvolution2.LRFFT;
 import mpicbg.spim.postprocessing.deconvolution2.LRFFT.PSFTYPE;
@@ -20,7 +23,12 @@ import spim.fiji.plugin.GUIHelper;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.interestpoints.InterestPointList;
+import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
+import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.process.fusion.export.ImgExport;
+
+import com.sun.jna.Native;
 
 public class EfficientBayesianBased extends Fusion
 {
@@ -86,7 +94,7 @@ public class EfficientBayesianBased extends Fusion
 	public static ArrayList< Boolean > deviceChoice = null;
 	public static int standardDevice = 10000;
 
-	Choice gpu, block;
+	Choice gpu, block, it;
 	
 	public EfficientBayesianBased(
 			final SpimData2 spimData,
@@ -122,6 +130,10 @@ public class EfficientBayesianBased extends Fusion
 		if ( !getCUDA() )
 			return false;
 
+		// check PSF
+		if ( !getPSF() )
+			return false;
+		
 		// check OSEM
 		if ( !getOSEM() )
 			return false;
@@ -137,6 +149,7 @@ public class EfficientBayesianBased extends Fusion
 	public void queryAdditionalParameters( final GenericDialog gd )
 	{
 		gd.addChoice( "Type_of_iteration", iterationTypeString, iterationTypeString[ defaultIterationType ] );
+		it = (Choice)gd.getChoices().lastElement();
 		gd.addChoice( "OSEM_acceleration", osemspeedupChoice, osemspeedupChoice[ defaultOSEMspeedupIndex ] );
 		gd.addNumericField( "Number_of_iterations", defaultNumIterations, 0 );
 		gd.addCheckbox( "Use_Tikhonov_regularization", defaultUseTikhonovRegularization );
@@ -207,7 +220,10 @@ public class EfficientBayesianBased extends Fusion
 
 	@Override
 	public long totalRAM( final long fusedSizeMB, final int bytePerPixel )
-	{		
+	{
+		if ( it.getSelectedIndex() == iterationTypeString.length - 1 )
+			return fusedSizeMB;
+		
 		final int blockChoice = block.getSelectedIndex();
 		
 		final long blockSize;
@@ -243,11 +259,25 @@ public class EfficientBayesianBased extends Fusion
 		
 		return totalRam;
 	}
-	
+		
 	protected boolean getPSF()
 	{
 		if ( extractPSFIndex == 0 )
 		{
+			final HashMap< Channel, ArrayList< Correspondence > > correspondences = new HashMap< Channel, ArrayList< Correspondence > >();
+			final HashMap< Channel, Integer > viewsPresent = new HashMap< Channel, Integer >();
+
+			assembleAvailableCorrespondences( correspondences, viewsPresent );
+			
+			final String[] listOfDetections;
+			
+			final GenericDialogPlus gd = new GenericDialogPlus( "Extract PSF's ..." );
+			
+			for ( final Channel c : channelsToProcess )
+				gd.addChoice( "Detections_to_extract_PSF_for_channel_" + c.getName(), arg1, arg2 );
+			
+			gd.showDialog();
+			
 			extractPSF = true;
 		}
 		else
@@ -354,14 +384,17 @@ public class EfficientBayesianBased extends Fusion
 	
 	protected boolean getDebug()
 	{
-		GenericDialog gdDebug = new GenericDialog( "Debug options" );
-		gdDebug.addNumericField( "Show debug output every n'th frame, n = ", defaultDebugInterval, 0 );
-		gdDebug.showDialog();
-		
-		if ( gdDebug.wasCanceled() )
-			return false;
-		
-		defaultDebugInterval = debugInterval = (int)Math.round( gdDebug.getNextNumber() );
+		if ( debugMode )
+		{
+			GenericDialog gdDebug = new GenericDialog( "Debug options" );
+			gdDebug.addNumericField( "Show debug output every n'th frame, n = ", defaultDebugInterval, 0 );
+			gdDebug.showDialog();
+			
+			if ( gdDebug.wasCanceled() )
+				return false;
+			
+			defaultDebugInterval = debugInterval = (int)Math.round( gdDebug.getNextNumber() );
+		}
 		
 		return true;
 	}
@@ -586,5 +619,124 @@ public class EfficientBayesianBased extends Fusion
 		}
 		
 		return true;
+	}
+	/**
+	 * 
+	 * @param correspondences
+	 * @param viewsPresent
+	 * @param onlyValid - only return a list of correspondence labels if all views have correspondences
+	 */
+	protected void assembleAvailableCorrespondences( final HashMap< Channel, ArrayList< Correspondence > > correspondences, final HashMap< Channel, Integer > viewsPresent, final boolean onlyValid )
+	{
+		final ViewInterestPoints vp = spimData.getViewInterestPoints();
+				
+		for ( final Channel c : channelsToProcess )
+		{
+			int countViews = 0;
+			
+			final ArrayList< Correspondence > corrList = new ArrayList< Correspondence >();
+			
+			for ( final TimePoint t : timepointsToProcess )
+				for ( final Angle a : anglesToProcess )
+					for ( final Illumination i : illumsToProcess )
+					{
+						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
+						final ViewDescription<TimePoint, ViewSetup> desc = spimData.getSequenceDescription().getViewDescription( viewId ); 
+						
+						if ( desc.isPresent() )
+						{
+							// how many views with correspondences should be there
+							++countViews;
+
+							// the object with links to all available detections
+							final ViewInterestPointLists vpl = vp.getViewInterestPointLists( viewId );
+							
+							// the list of all available detections
+							for ( final String label : vpl.getHashMap().keySet() )
+							{
+								final InterestPointList ipl = vpl.getInterestPointList( label );
+
+								final String name = label + " --- channel: " + c.getName() + " angle: " + a.getName() + " illum: " + i.getName() + 
+										" timepoint: " + t.getName() + ": ";
+
+								if ( ipl.getInterestPoints().size() == 0 )
+									ipl.loadInterestPoints();
+								
+								if ( ipl.getCorrespondingInterestPoints().size() == 0 )
+									ipl.loadCorrespondingInterestPoints();
+								
+								if ( ipl.getCorrespondingInterestPoints().size() > 0 )
+								{
+									Correspondence corrTmp = new Correspondence( label );
+									boolean foundEntry = false;
+									
+									for ( final Correspondence corr : corrList )
+									{
+										if ( corr.equals( corrTmp ) )
+										{
+											corr.increaseCount();
+											foundEntry = true;
+											break;
+										}
+									}
+									
+									if ( !foundEntry )
+										corrList.add( corrTmp );
+									
+									IOFunctions.println( name + ipl.getCorrespondingInterestPoints().size() + " correspondences." );
+								}
+								else
+								{
+									IOFunctions.println( name + " NO correspondences." );
+								}
+							}
+						}
+					}
+			
+			correspondences.put( c, corrList );
+			viewsPresent.put( c, countViews );
+		}
+		
+		for ( final Channel c : channelsToProcess )
+		{
+			IOFunctions.println();
+			IOFunctions.println( "Found " + correspondences.get( c ).size() + " label(s) with correspondences for channel " + c.getName() + ": " );
+			
+			for ( final Correspondence corr : correspondences.get( c ) )
+			{
+				final int numViews = viewsPresent.get( c );
+				IOFunctions.println( "Label '" + corr.getLabel() + "' (channel " + c.getName() + ") has " + corr.getCount() + "/" + numViews + " views with corresponding detections." );
+				
+				if ( corr.getCount() != numViews )
+					correspondences.remove( corr );
+			}
+			
+		}
+
+	}
+	
+	protected class Correspondence
+	{
+		final String label;
+		int count;
+		
+		public Correspondence( final String label )
+		{
+			this.label = label;
+			this.count = 1;
+		}
+		
+		public void increaseCount() { ++count; }
+		public int getCount() { return count; }
+		public String getLabel() { return label; }
+		
+		@Override
+		public boolean equals( final Object o )
+		{
+			if ( o instanceof Correspondence )
+				return ( (Correspondence)o ).getLabel().equals( this.getLabel() );
+			else
+				return false;
+		}
 	}
 }

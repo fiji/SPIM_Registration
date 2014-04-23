@@ -27,7 +27,7 @@ import spim.process.fusion.export.ImgExport;
 
 public class WeightedAverageFusion extends Fusion
 {
-	public enum WeightedAvgFusionType { PARALELL, SEQUENTIAL, INDEPENDENT };
+	public enum WeightedAvgFusionType { FUSEDATA, INDEPENDENT };
 	final WeightedAvgFusionType type;
 	
 	public static int defaultNumParalellViewsIndex = 0;
@@ -69,9 +69,9 @@ public class WeightedAverageFusion extends Fusion
 	{
 		final ProcessFusion process;
 		
-		if ( getFusionType() == WeightedAvgFusionType.PARALELL )
+		if ( getFusionType() == WeightedAvgFusionType.FUSEDATA && numParalellViews == 0 )
 			process = new ProcessParalell( spimData, anglesToProcess, illumsToProcess, bb, useBlending, useContentBased );
-		else if ( getFusionType() == WeightedAvgFusionType.SEQUENTIAL )
+		else if ( getFusionType() == WeightedAvgFusionType.FUSEDATA )
 			process = new ProcessSequential( spimData, anglesToProcess, illumsToProcess, bb, useBlending, useContentBased, numParalellViews );
 		else
 			process = new ProcessIndependent( spimData, anglesToProcess, illumsToProcess, bb, exporter );
@@ -119,10 +119,8 @@ public class WeightedAverageFusion extends Fusion
 	@Override
 	public String getDescription()
 	{
-		if ( type == WeightedAvgFusionType.PARALELL )
-			return "Weighted-average fusion (process all views in paralell)";
-		else if ( type == WeightedAvgFusionType.SEQUENTIAL )
-			return "Weighted-average fusion (process views sequentially)";
+		if ( type == WeightedAvgFusionType.FUSEDATA )
+			return "Weighted-average fusion";
 		else
 			return "No fusion, create individual registered images";
 	}
@@ -142,7 +140,7 @@ public class WeightedAverageFusion extends Fusion
 		if ( Fusion.defaultInterpolation >= Fusion.interpolationTypes.length )
 			Fusion.defaultInterpolation = Fusion.interpolationTypes.length - 1;
 		
-		if ( this.getFusionType() == WeightedAvgFusionType.SEQUENTIAL )
+		if ( this.getFusionType() == WeightedAvgFusionType.FUSEDATA )
 		{
 			int maxViews = 0;
 			
@@ -151,10 +149,12 @@ public class WeightedAverageFusion extends Fusion
 					maxViews = Math.max( maxViews, FusionHelper.assembleInputData( spimData, t, c, anglesToProcess, illumsToProcess).size() );
 			
 			// any choice but all views
-			final String[] views = new String[ maxViews - 1 ];
+			final String[] views = new String[ maxViews ];
 			
-			for ( int i = 0; i < views.length; ++i )
-				views[ i ] = "" + ( i + 1 );
+			views[ 0 ] = "All";
+			
+			for ( int i = 1; i < views.length; ++i )
+				views[ i ] = "" + i;
 			
 			if ( defaultNumParalellViewsIndex < 0 && defaultNumParalellViewsIndex >= views.length )
 				defaultNumParalellViewsIndex = 0;
@@ -163,7 +163,7 @@ public class WeightedAverageFusion extends Fusion
 			this.sequentialViews = (Choice)gd.getChoices().lastElement();
 		}
 		
-		if ( this.getFusionType() == WeightedAvgFusionType.PARALELL || this.getFusionType() == WeightedAvgFusionType.SEQUENTIAL )
+		if ( this.getFusionType() == WeightedAvgFusionType.FUSEDATA )
 		{
 			gd.addCheckbox( "Blend images smoothly", Fusion.defaultUseBlending );
 			gd.addCheckbox( "Content-based fusion", Fusion.defaultUseContentBased );
@@ -174,14 +174,10 @@ public class WeightedAverageFusion extends Fusion
 	@Override
 	public boolean parseAdditionalParameters( final GenericDialog gd )
 	{
-		if ( this.getFusionType() == WeightedAvgFusionType.SEQUENTIAL )
+		if ( this.getFusionType() == WeightedAvgFusionType.FUSEDATA )
 		{
 			defaultNumParalellViewsIndex = gd.getNextChoiceIndex();
-			this.numParalellViews = defaultNumParalellViewsIndex + 1;
-		}
-		
-		if ( this.getFusionType() == WeightedAvgFusionType.PARALELL || this.getFusionType() == WeightedAvgFusionType.SEQUENTIAL )
-		{
+			this.numParalellViews = defaultNumParalellViewsIndex;
 			this.useBlending = Fusion.defaultUseBlending = gd.getNextBoolean();
 			this.useContentBased = Fusion.defaultUseContentBased = gd.getNextBoolean();
 		}
@@ -190,6 +186,7 @@ public class WeightedAverageFusion extends Fusion
 			this.useBlending = this.useContentBased = false;
 		}
 		this.interpolation = Fusion.defaultInterpolation = gd.getNextChoiceIndex();
+
 		return true;
 	}
 	
@@ -222,10 +219,10 @@ public class WeightedAverageFusion extends Fusion
 	@Override
 	public long totalRAM( final long fusedSizeMB, final int bytePerPixel )
 	{
-		if ( type == WeightedAvgFusionType.PARALELL )
+		if ( type == WeightedAvgFusionType.FUSEDATA && sequentialViews.getSelectedIndex() == 0 )
 			return fusedSizeMB + (getMaxNumViewsPerTimepoint() * (avgPixels/ ( 1024*1024 )) * bytePerPixel);
-		else if ( type == WeightedAvgFusionType.SEQUENTIAL )
-			return fusedSizeMB + ((sequentialViews.getSelectedIndex() + 1) * (avgPixels/ ( 1024*1024 )) * bytePerPixel);
+		else if ( type == WeightedAvgFusionType.FUSEDATA )
+			return fusedSizeMB + ((sequentialViews.getSelectedIndex()) * (avgPixels/ ( 1024*1024 )) * bytePerPixel);
 		else
 			return fusedSizeMB + (avgPixels/ ( 1024*1024 )) * bytePerPixel;
 	

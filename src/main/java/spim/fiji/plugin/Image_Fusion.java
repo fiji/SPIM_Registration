@@ -21,7 +21,7 @@ import spim.process.fusion.weightedavg.WeightedAverageFusion.WeightedAvgFusionTy
 public class Image_Fusion implements PlugIn
 {
 	public static ArrayList< Fusion > staticFusionAlgorithms = new ArrayList< Fusion >();
-	public static int defaultFusionAlgorithm = 0;
+	public static int defaultFusionAlgorithm = 1;
 
 	public static ArrayList< BoundingBox > staticBoundingBoxAlgorithms = new ArrayList< BoundingBox >();
 	public static int defaultBoundingBoxAlgorithm = 0;
@@ -32,10 +32,9 @@ public class Image_Fusion implements PlugIn
 	static
 	{
 		IOFunctions.printIJLog = true;
-		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, null, null, null, WeightedAvgFusionType.PARALELL ) );
-		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, null, null, null, WeightedAvgFusionType.SEQUENTIAL ) );
-		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, null, null, null, WeightedAvgFusionType.INDEPENDENT ) );
 		staticFusionAlgorithms.add( new EfficientBayesianBased( null, null, null, null, null ) );
+		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, null, null, null, WeightedAvgFusionType.FUSEDATA ) );
+		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, null, null, null, WeightedAvgFusionType.INDEPENDENT ) );
 		
 		staticBoundingBoxAlgorithms.add( new ManualBoundingBox( null, null, null, null, null ) );
 		staticBoundingBoxAlgorithms.add( new AutomaticBoundingBox( null, null, null, null, null ) );
