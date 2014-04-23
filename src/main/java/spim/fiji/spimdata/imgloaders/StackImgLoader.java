@@ -18,9 +18,7 @@ import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.real.FloatType;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
+import org.jdom2.Element;
 
 import spim.fiji.datasetmanager.StackList;
 
@@ -115,27 +113,23 @@ public abstract class StackImgLoader extends AbstractImgLoader
 		try
 		{
 			this.path = loadPath( elem, DIRECTORY_TAG, basePath );
-			this.fileNamePattern = elem.getElementsByTagName( FILE_PATTERN_TAG ).item( 0 ).getTextContent();
+			this.fileNamePattern = XmlHelpers.getText( elem, FILE_PATTERN_TAG );
 
-			this.layoutTP = Integer.parseInt( elem.getElementsByTagName( LAYOUT_TP_TAG ).item( 0 ).getTextContent() );
-			this.layoutChannels = Integer.parseInt( elem.getElementsByTagName( LAYOUT_CHANNEL_TAG ).item( 0 ).getTextContent() );
-			this.layoutIllum = Integer.parseInt( elem.getElementsByTagName( LAYOUT_ILLUMINATION_TAG ).item( 0 ).getTextContent() );
-			this.layoutAngles = Integer.parseInt( elem.getElementsByTagName( LAYOUT_ANGLE_TAG ).item( 0 ).getTextContent() );
+			this.layoutTP = XmlHelpers.getInt( elem, LAYOUT_TP_TAG );
+			this.layoutChannels = XmlHelpers.getInt( elem, LAYOUT_CHANNEL_TAG );
+			this.layoutIllum = XmlHelpers.getInt( elem, LAYOUT_ILLUMINATION_TAG );
+			this.layoutAngles = XmlHelpers.getInt( elem, LAYOUT_ANGLE_TAG );
 
-			final NodeList nd = elem.getElementsByTagName( IMGLIB2CONTAINER_PATTERN_TAG );
-			ImgFactory< ? extends NativeType< ? > > imgFactory = null;
-			
-			if ( nd.getLength() == 0 )
+			final String container = XmlHelpers.getText( elem, IMGLIB2CONTAINER_PATTERN_TAG );
+			if ( container == null )
 			{
 				System.out.println( "WARNING: No Img implementation defined, using ArrayImg." );
-				
+
 				// if no factory is defined we define an ArrayImgFactory
 				imgFactory = new ArrayImgFactory< FloatType >();
 			}
 			else
 			{
-				final String container = nd.item( 0 ).getTextContent();
-				
 				if ( container.toLowerCase().contains( "cellimg" ) )
 				{
 					imgFactory = new CellImgFactory< FloatType >( 256 );
@@ -203,35 +197,18 @@ public abstract class StackImgLoader extends AbstractImgLoader
 	 * create a &lt;{@value XmlKeys#IMGLOADER_TAG}&gt; DOM element for this loader.
 	 */
 	@Override
-	public Element toXml( final Document doc, final File basePath )
-	{		
-		final Element elem = doc.createElement( "ImageLoader" );
+	public Element toXml( final File basePath )
+	{
+		final Element elem = new Element( "ImageLoader" );
 		elem.setAttribute( "class", getClass().getCanonicalName() );
-		elem.appendChild( XmlHelpers.pathElement( doc, DIRECTORY_TAG, path, basePath ) );
-		
-		Element e = doc.createElement( FILE_PATTERN_TAG );
-		e.appendChild( doc.createTextNode( fileNamePattern ) );
-		elem.appendChild( e );
+		elem.addContent( XmlHelpers.pathElement( DIRECTORY_TAG, path, basePath ) );
 
-		e = doc.createElement( LAYOUT_TP_TAG );
-		e.appendChild( doc.createTextNode( Integer.toString( layoutTP ) ) );
-		elem.appendChild( e );
-
-		e = doc.createElement( LAYOUT_CHANNEL_TAG );
-		e.appendChild( doc.createTextNode( Integer.toString( layoutChannels ) ) );
-		elem.appendChild( e );
-
-		e = doc.createElement( LAYOUT_ILLUMINATION_TAG );
-		e.appendChild( doc.createTextNode( Integer.toString( layoutIllum ) ) );
-		elem.appendChild( e );
-
-		e = doc.createElement( LAYOUT_ANGLE_TAG );
-		e.appendChild( doc.createTextNode( Integer.toString( layoutAngles ) ) );
-		elem.appendChild( e );
-
-		e = doc.createElement( IMGLIB2CONTAINER_PATTERN_TAG );
-		e.appendChild( doc.createTextNode( getImgFactory().getClass().getSimpleName() ) );
-		elem.appendChild( e );
+		elem.addContent( XmlHelpers.textElement( FILE_PATTERN_TAG, fileNamePattern ) );
+		elem.addContent( XmlHelpers.intElement( LAYOUT_TP_TAG, layoutTP ) );
+		elem.addContent( XmlHelpers.intElement( LAYOUT_CHANNEL_TAG, layoutChannels ) );
+		elem.addContent( XmlHelpers.intElement( LAYOUT_ILLUMINATION_TAG, layoutIllum ) );
+		elem.addContent( XmlHelpers.intElement( LAYOUT_ANGLE_TAG, layoutAngles ) );
+		elem.addContent( XmlHelpers.textElement( IMGLIB2CONTAINER_PATTERN_TAG, getImgFactory().getClass().getSimpleName() ) );
 
 		return elem;
 	}
