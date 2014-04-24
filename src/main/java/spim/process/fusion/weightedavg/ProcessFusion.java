@@ -121,7 +121,7 @@ public abstract class ProcessFusion
 		return weigheners;
 	}
 
-	protected double getMinRes( final ViewSetup setup )
+	public static double getMinRes( final ViewSetup setup )
 	{
 		return Math.min( setup.getPixelWidth(), Math.min( setup.getPixelHeight(), setup.getPixelDepth() ) );
 	}

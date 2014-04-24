@@ -13,11 +13,9 @@ import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
-import net.imglib2.RandomAccessible;
+import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
-import net.imglib2.interpolation.InterpolatorFactory;
-import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
@@ -25,9 +23,8 @@ import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
-import spim.process.fusion.export.ImgExport;
 import spim.process.fusion.weightedavg.ProcessFusion;
-import spim.process.fusion.weightedavg.ProcessIndependentPortion;
+import spim.process.fusion.weights.Blending;
 
 /**
  * Fused individual images for each input stack, uses the exporter directly
@@ -37,6 +34,10 @@ import spim.process.fusion.weightedavg.ProcessIndependentPortion;
  */
 public class ProcessForDeconvolution
 {
+	public static float[] defaultBlendingRange = new float[]{ 40, 40, 40 };
+	public static float[] defaultBlendingBorder = new float[]{ 15, 15, 15 };
+	public static boolean defaultAdjustBlendingForAnisotropy = true;
+
 	final protected SpimData2 spimData;
 	final protected ArrayList<Angle> anglesToProcess;
 	final protected ArrayList<Illumination> illumsToProcess;
@@ -63,10 +64,7 @@ public class ProcessForDeconvolution
 	 * @param channel
 	 * @return
 	 */
-	/*@Override
-	public < T extends RealType< T > & NativeType< T > > Img< T > fuseStack(
-			final T type,
-			final InterpolatorFactory< T, RandomAccessible< T > > interpolatorFactory,
+	public boolean fuseStacks(
 			final TimePoint timepoint, 
 			final Channel channel )
 	{				
@@ -78,31 +76,39 @@ public class ProcessForDeconvolution
 		for ( int i = 0; i < allInputData.size(); ++i )
 		{
 			IOFunctions.println( "Fusing view " + i + " of " + (allInputData.size()-1) );
-			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Reserving memory for fused image.");
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Reserving memory for fused & weight image.");
 
 			// try creating the output (type needs to be there to define T)
-			final Img< T > fusedImg = bb.getImgFactory( type ).create( bb.getDimensions(), type );
+			final Img< FloatType > fusedImg = bb.getImgFactory( new FloatType() ).create( bb.getDimensions(), new FloatType() );
+			final Img< FloatType > weightImg = fusedImg.factory().create( bb.getDimensions(), new FloatType() );
 
-			if ( fusedImg == null )
+			if ( fusedImg == null || weightImg == null )
 			{
-				IOFunctions.println( "WeightedAverageFusion: Cannot create output image."  );
-				return null;
+				IOFunctions.println( "ProcessForDeconvolution: Cannot create output images."  );
+				return false;
 			}
 	
 			final ViewDescription< TimePoint, ViewSetup > inputData = allInputData.get( i );
 			
 			// same as in the paralell fusion now more or less
-			final RandomAccessibleInterval< T > img = getImage( type, spimData, inputData );
+			final RandomAccessibleInterval< FloatType > img = getImage( new FloatType(), spimData, inputData );
 						
 			// split up into many parts for multithreading
 			final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( fusedImg.size(), Runtime.getRuntime().availableProcessors() * 4 );
 
 			// set up executor service
 			final ExecutorService taskExecutor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
-			final ArrayList< ProcessIndependentPortion< T > > tasks = new ArrayList< ProcessIndependentPortion< T > >();
+			final ArrayList< ProcessForDeconvolutionPortion > tasks = new ArrayList< ProcessForDeconvolutionPortion >();
 
 			for ( final ImagePortion portion : portions )
-				tasks.add( new ProcessIndependentPortion< T >( portion, img, interpolatorFactory, getTransform( inputData ), fusedImg, bb ) );
+				tasks.add( new ProcessForDeconvolutionPortion(
+						portion,
+						img,
+						getBlending( img, inputData ),
+						spimData.getViewRegistrations().getViewRegistration( inputData ).getModel(),
+						fusedImg,
+						weightImg,
+						bb ) );
 			
 			try
 			{
@@ -113,22 +119,34 @@ public class ProcessForDeconvolution
 			{
 				IOFunctions.println( "Failed to compute fusion: " + e );
 				e.printStackTrace();
-				return null;
+				return false;
 			}
 
 			taskExecutor.shutdown();
-			
-			export.exportImage( fusedImg, bb, "TP: " + timepoint.getName() + ", Ch: " + channel.getName() + 
-					", angle: " + inputData.getViewSetup().getAngle().getName() +
-					", illum: " + inputData.getViewSetup().getIllumination().getName() );
 		}
 		
-		return null;
-	}*/
-	
-	protected int numBatches( final int numViews, final int sequentialViews )
+		return true;
+	}
+
+	protected Blending getBlending( final Interval interval, final ViewDescription< TimePoint, ViewSetup > desc )
 	{
-		return numViews / sequentialViews + Math.min( numViews % sequentialViews, 1 );
+		final float[] blending = defaultBlendingRange.clone();
+		final float[] border = defaultBlendingBorder.clone();
+		
+		final float minRes = (float)ProcessFusion.getMinRes( desc.getViewSetup() );
+		
+		if ( defaultAdjustBlendingForAnisotropy )
+		{
+			blending[ 0 ] /= (float)desc.getViewSetup().getPixelWidth() / minRes;
+			blending[ 1 ] /= (float)desc.getViewSetup().getPixelHeight() / minRes;
+			blending[ 2 ] /= (float)desc.getViewSetup().getPixelDepth() / minRes;
+
+			border[ 0 ] /= (float)desc.getViewSetup().getPixelWidth() / minRes;
+			border[ 1 ] /= (float)desc.getViewSetup().getPixelHeight() / minRes;
+			border[ 2 ] /= (float)desc.getViewSetup().getPixelDepth() / minRes;
+		}
+		
+		return new Blending( interval, border, blending );
 	}
 
 	@SuppressWarnings("unchecked")

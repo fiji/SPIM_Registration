@@ -117,6 +117,8 @@ public class EfficientBayesianBased extends Fusion
 	@Override
 	public boolean fuseData( final BoundingBox bb, final ImgExport exporter )
 	{
+		
+		
 		// TODO Auto-generated method stub
 		return false;
 	}
@@ -359,10 +361,8 @@ public class EfficientBayesianBased extends Fusion
 			
 			gd2.addCheckbox( "Transform_PSFs", defaultTransformPSFs );
 			gd2.addMessage( "" );
-			gd2.addMessage( "Note: the calibration of the PSF(s) has to match\n" +
-					"the calibration of the input views if you choose\n" +
-					"to transform them according to the registration of\n" +
-					"the views!", GUIHelper.mediumstatusfont );
+			gd2.addMessage( "Note: the calibration of the PSF(s) has to match the calibration of the input views\n" +
+					"if you choose to transform them according to the registration of the views!", GUIHelper.mediumstatusfont );
 
 			int numPSFs;
 			
