@@ -59,6 +59,7 @@ public class EfficientBayesianBased extends Fusion
 	public static boolean defaultOnePSFForAll = true;
 	public static boolean defaultTransformPSFs = true;
 	public static ArrayList< String > defaultPSFFileField = null;
+	public static int[] defaultPSFLabelIndex = null;
 
 	PSFTYPE iterationType;
 	boolean justShowWeights;
@@ -80,6 +81,7 @@ public class EfficientBayesianBased extends Fusion
 	boolean extractPSF;
 	boolean transformPSFs;
 	ArrayList< String > psfFiles;
+	HashMap< Channel, ChannelPSF > extractPSFLabels; // should be either a String or another Channel object
 	
 	/**
 	 * -1 == CPU
@@ -265,18 +267,76 @@ public class EfficientBayesianBased extends Fusion
 		if ( extractPSFIndex == 0 )
 		{
 			final HashMap< Channel, ArrayList< Correspondence > > correspondences = new HashMap< Channel, ArrayList< Correspondence > >();
-			final HashMap< Channel, Integer > viewsPresent = new HashMap< Channel, Integer >();
 
-			assembleAvailableCorrespondences( correspondences, viewsPresent, true );
+			// get all interest point labels that have correspondences for all views that are processed
+			assembleAvailableCorrespondences( correspondences, new HashMap< Channel, Integer >(), true );
 			
-			final String[] listOfDetections;
+			// make a list of those labels for the imagej dialog
+			// and set the default selections
+			final String[][] choices = new String[ channelsToProcess.size() ][];
+
+			if ( defaultPSFLabelIndex == null || defaultPSFLabelIndex.length != channelsToProcess.size() )
+				defaultPSFLabelIndex = new int[ channelsToProcess.size() ];
+
+			// remember which choiceindex in the dialog maps to which other channel
+			final ArrayList< HashMap< Integer, Channel > > otherChannels = new ArrayList< HashMap< Integer, Channel > >();
+			
+			for ( int i = 0; i < channelsToProcess.size(); ++i )
+			{
+				final Channel c = channelsToProcess.get( i );
+				final ArrayList< Correspondence > corr = correspondences.get( c ); 
+				choices[ i ] = new String[ corr.size() + channelsToProcess.size() - 1 ];
+				
+				for ( int j = 0; j < corr.size(); ++j )
+					choices[ i ][ j ] = corr.get( j ).getLabel();
+				
+				final HashMap< Integer, Channel > otherChannel = new HashMap< Integer, Channel >();
+				
+				int k = 0;
+				for ( int j = 0; j < channelsToProcess.size(); ++j )
+				{
+					if ( !channelsToProcess.get( j ).equals( c ) )
+					{
+						choices[ i ][ k + corr.size() ] = "Same PSF as channel " + c.getName();
+						otherChannel.put( k + corr.size(), c );
+						++k;
+					}
+				}
+				
+				otherChannels.add( otherChannel );
+				
+				if ( defaultPSFLabelIndex[ i ] < 0 || defaultPSFLabelIndex[ i ] >= choices[ i ].length )
+					defaultPSFLabelIndex[ i ] = 0;
+			}
 			
 			final GenericDialogPlus gd = new GenericDialogPlus( "Extract PSF's ..." );
 			
-		//	for ( final Channel c : channelsToProcess )
-		//		gd.addChoice( "Detections_to_extract_PSF_for_channel_" + c.getName(), arg1, arg2 );
+			for ( int j = 0; j < channelsToProcess.size(); ++j )
+				gd.addChoice( "Detections_to_extract_PSF_for_channel_" + channelsToProcess.get( j ).getName(), choices[ j ], choices[ j ][ defaultPSFLabelIndex[ j ] ] );
 			
 			gd.showDialog();
+			
+			if ( gd.wasCanceled() )
+				return false;
+			
+			this.extractPSFLabels = new HashMap< Channel, ChannelPSF >();
+			
+			for ( int j = 0; j < channelsToProcess.size(); ++j )
+			{
+				final Channel c = channelsToProcess.get( j );
+				final int l = defaultPSFLabelIndex[ j ] = gd.getNextChoiceIndex();
+				
+				if ( l < correspondences.get( c ).size() )
+				{
+					this.extractPSFLabels.put( c, new ChannelPSF( c, choices[ j ][ l ] ) );
+					IOFunctions.println( "Channel " + c.getName() + ": extract PSF from label '" + choices[ j ][ l ] + "'" );
+				}
+				else
+				{
+					this.extractPSFLabels.put( c, new ChannelPSF( c, otherChannels.get( j ).get( l ) ) );
+					IOFunctions.println( "Channel " + c.getName() + ": uses same PSF as channel " + this.extractPSFLabels.get( c ).getOtherChannel().getName() );
+				}
+			}
 			
 			extractPSF = true;
 		}
@@ -636,6 +696,8 @@ public class EfficientBayesianBased extends Fusion
 			
 			final ArrayList< Correspondence > corrList = new ArrayList< Correspondence >();
 			
+			corrList.add( new Correspondence( "nuclei1" ) );
+			
 			for ( final TimePoint t : timepointsToProcess )
 				for ( final Angle a : anglesToProcess )
 					for ( final Illumination i : illumsToProcess )
@@ -693,6 +755,8 @@ public class EfficientBayesianBased extends Fusion
 						}
 					}
 			
+			corrList.add( new Correspondence( "nuclei2" ) );
+			
 			correspondences.put( c, corrList );
 			viewsPresent.put( c, countViews );
 		}
@@ -702,15 +766,19 @@ public class EfficientBayesianBased extends Fusion
 			IOFunctions.println();
 			IOFunctions.println( "Found " + correspondences.get( c ).size() + " label(s) with correspondences for channel " + c.getName() + ": " );
 			
+			final ArrayList< Correspondence > newList = new ArrayList< Correspondence >();
+			
 			for ( final Correspondence corr : correspondences.get( c ) )
 			{
 				final int numViews = viewsPresent.get( c );
 				IOFunctions.println( "Label '" + corr.getLabel() + "' (channel " + c.getName() + ") has " + corr.getCount() + "/" + numViews + " views with corresponding detections." );
 				
-				if ( corr.getCount() != numViews )
-					correspondences.remove( corr );
+				if ( !onlyValid || corr.getCount() == numViews )
+					newList.add( corr );
 			}
 			
+			correspondences.remove( c );
+			correspondences.put( c, newList );
 		}
 
 	}
