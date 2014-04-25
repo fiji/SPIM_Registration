@@ -24,7 +24,6 @@ import net.imglib2.img.Img;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.util.Util;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.FusionHelper;
@@ -390,9 +389,6 @@ public class ProcessForDeconvolution
 		border[ 0 ] = blendingBorder[ 0 ];
 		border[ 1 ] = blendingBorder[ 1 ];
 		border[ 2 ] = blendingBorder[ 2 ];
-	
-		IOFunctions.println( "Blending range: " + Util.printCoordinates( blending ) );
-		IOFunctions.println( "Blending border: " + Util.printCoordinates( border ) );
 
 		return new Blending( interval, border, blending );
 	}
