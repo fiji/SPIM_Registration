@@ -152,6 +152,7 @@ public class EfficientBayesianBased extends Fusion
 		if ( !getOSEM() )
 			return false;
 		
+		// get the blending parameters
 		if ( !getBlending( ) )
 			return false;
 		
@@ -285,22 +286,7 @@ public class EfficientBayesianBased extends Fusion
 			final GenericDialog gd = new GenericDialog( "Adjust blending parameters" );
 			
 			if ( ProcessForDeconvolution.defaultBlendingBorder == null || ProcessForDeconvolution.defaultBlendingBorder.length < 3 )
-			{
-				ProcessForDeconvolution.defaultBlendingBorder = new int[ 3 ];
-				
-				if ( psfSizeX > 0 && psfSizeY > 0 && psfSizeZ > 0 )
-				{
-					ProcessForDeconvolution.defaultBlendingBorder[ 0 ] = psfSizeX/2;
-					ProcessForDeconvolution.defaultBlendingBorder[ 1 ] = psfSizeY/2;
-					ProcessForDeconvolution.defaultBlendingBorder[ 2 ] = psfSizeZ/2;
-				}
-				else
-				{
-					ProcessForDeconvolution.defaultBlendingBorder[ 0 ] = ProcessForDeconvolution.defaultBlendingRangeNumber;
-					ProcessForDeconvolution.defaultBlendingBorder[ 1 ] = ProcessForDeconvolution.defaultBlendingRangeNumber;
-					ProcessForDeconvolution.defaultBlendingBorder[ 2 ] = ProcessForDeconvolution.defaultBlendingRangeNumber;
-				}
-			}
+				ProcessForDeconvolution.defaultBlendingBorder = new int[]{ ProcessForDeconvolution.defaultBlendingBorderNumber, ProcessForDeconvolution.defaultBlendingBorderNumber, ProcessForDeconvolution.defaultBlendingBorderNumber };
 			
 			if ( ProcessForDeconvolution.defaultBlendingRange == null || ProcessForDeconvolution.defaultBlendingRange.length < 3 )
 				ProcessForDeconvolution.defaultBlendingRange =  new int[]{ ProcessForDeconvolution.defaultBlendingRangeNumber, ProcessForDeconvolution.defaultBlendingRangeNumber, ProcessForDeconvolution.defaultBlendingRangeNumber };
@@ -449,9 +435,30 @@ public class EfficientBayesianBased extends Fusion
 				}
 			}
 			
+			final int oldX = defaultPSFSizeX;
+			final int oldY = defaultPSFSizeY;
+			final int oldZ = defaultPSFSizeZ;
+			
 			psfSizeX = defaultPSFSizeX = (int)Math.round( gd.getNextNumber() );
 			psfSizeY = defaultPSFSizeY = (int)Math.round( gd.getNextNumber() );
 			psfSizeZ = defaultPSFSizeZ = (int)Math.round( gd.getNextNumber() );
+			
+			// enforce odd number
+			if ( psfSizeX % 2 == 0 )
+				defaultPSFSizeX = ++psfSizeX;
+
+			if ( psfSizeY % 2 == 0 )
+				defaultPSFSizeY = ++psfSizeY;
+
+			if ( psfSizeZ % 2 == 0 )
+				defaultPSFSizeZ = ++psfSizeZ;
+
+			// update the borders if applicable
+			if ( ProcessForDeconvolution.defaultBlendingBorder == null || ProcessForDeconvolution.defaultBlendingBorder.length < 3 ||
+				 ( oldX/2 == ProcessForDeconvolution.defaultBlendingBorder[ 0 ] && oldY/2 == ProcessForDeconvolution.defaultBlendingBorder[ 1 ] && oldZ/2 == ProcessForDeconvolution.defaultBlendingBorder[ 2 ] ) )
+			{
+				ProcessForDeconvolution.defaultBlendingBorder = new int[]{ psfSizeX/2, psfSizeY/2, psfSizeZ/2 };
+			}
 			
 			extractPSF = true;
 		}
