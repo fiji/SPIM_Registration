@@ -8,6 +8,9 @@ import java.awt.Choice;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import net.imglib2.type.numeric.real.FloatType;
+
+import mpicbg.imglib.util.Util;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
@@ -18,6 +21,7 @@ import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.postprocessing.deconvolution2.CUDAConvolution;
 import mpicbg.spim.postprocessing.deconvolution2.LRFFT;
+import mpicbg.spim.postprocessing.deconvolution2.LRInput;
 import mpicbg.spim.postprocessing.deconvolution2.LRFFT.PSFTYPE;
 import spim.fiji.plugin.GUIHelper;
 import spim.fiji.plugin.fusion.BoundingBox;
@@ -135,15 +139,77 @@ public class EfficientBayesianBased extends Fusion
 				new int[]{ blendingBorderX, blendingBorderY, blendingBorderZ },
 				new int[]{ blendingRangeX, blendingRangeY, blendingRangeZ } );
 		
-		pfd.fuseStacks( timepointsToProcess.get( 0 ), channelsToProcess.get( 0 ), osemspeedupIndex, osemSpeedUp, justShowWeights );
+		int stack = 0;
 		
-		if ( osemspeedupIndex == 1 )
-			osemSpeedUp = pfd.getMinOverlappingViews();
-		else if ( osemspeedupIndex == 2 )
-			osemSpeedUp = pfd.getAvgOverlappingViews();
+		for ( final TimePoint t : timepointsToProcess )
+			for ( final Channel c : channelsToProcess )
+			{
+				// fuse the images, create weights, extract PSFs we need for the deconvolution
+				pfd.fuseStacks( t, c, osemspeedupIndex, osemSpeedUp, justShowWeights );
+				
+				// on the first run update the osemspeedup if necessary
+				if ( stack++ == 0 )
+				{
+					if ( osemspeedupIndex == 1 )
+						osemSpeedUp = pfd.getMinOverlappingViews();
+					else if ( osemspeedupIndex == 2 )
+						osemSpeedUp = pfd.getAvgOverlappingViews();
+				}
+				
+				// setup & run the deconvolution
+				displayParameters( bb );
+
+				final LRInput deconvolutionData = new LRInput();
+
+				
+				
+				// export the final image
+				exporter.exportImage(
+						null,
+						bb,
+						"TP: " + t.getName() + ", Ch: " + c.getName() );
+			}
+
+		return true;
+	}
+	
+	protected void displayParameters( final BoundingBox bb )
+	{
+		IOFunctions.println( "Type of iteration: " + iterationType );
+		IOFunctions.println( "Number iterations: " + numIterations );
+		IOFunctions.println( "OSEM speedup: " + osemSpeedUp );
+		IOFunctions.println( "Using blocks: " + useBlocks );
+		if ( useBlocks )
+			IOFunctions.println( "Block size: " + Util.printCoordinates( blockSize ) );
+		IOFunctions.println( "Using CUDA: " + useCUDA );
+
+		IOFunctions.println( "Blending border: " + blendingBorderX + "x" + blendingBorderY + "x" + blendingBorderZ );
+		IOFunctions.println( "Blending range: " + blendingRangeX + "x" + blendingRangeY + "x" + blendingRangeZ );
+
+		if ( extractPSF)
+		{
+			IOFunctions.println( "PSF size (extracting): " + psfSizeX + "x" + psfSizeY + "x" + psfSizeZ );
+			
+			for ( final ChannelPSF c : extractPSFLabels.values() )
+			{
+				if ( c.getOtherChannel() == null )
+					IOFunctions.println( "Channel " + c.getChannel().getName() + " extracts from label '" + c.getLabel() + "'. " );
+				else
+					IOFunctions.println( "Channel " + c.getChannel().getName() + " uses same PSF as channel '" + c.getOtherChannel().getName() + "'. " );
+			}
+		}
+		else
+			IOFunctions.println( "PSF will be read from disc, number of PSF's to load " + psfFiles.size() );
 		
-		// TODO Auto-generated method stub
-		return false;
+		if ( debugMode )
+			IOFunctions.println( "Debugging every " + debugInterval + " iterations." );
+	
+		IOFunctions.println( "ImgLib container (deconvolved): " + bb.getImgFactory( new FloatType() ).getClass().getSimpleName() );
+		
+		if ( useTikhonovRegularization )
+			IOFunctions.println( "Using Tikhonov regularization (lambda = " + lambda + ")" );
+		else
+			IOFunctions.println( "Not using Tikhonov regularization" );		
 	}
 
 	@Override

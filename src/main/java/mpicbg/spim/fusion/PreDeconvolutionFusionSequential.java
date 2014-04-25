@@ -27,7 +27,7 @@ public class PreDeconvolutionFusionSequential extends SPIMImageFusion implements
 	final Image<FloatType> images[], weights[], overlap;
 	final int numViews;
 	final boolean normalize;
-	final ExtractPSF extractPSF;
+	final ExtractPSF extractPSF1;
 	
 	public PreDeconvolutionFusionSequential( final ViewStructure viewStructure, final ViewStructure referenceViewStructure, 
 								  final ArrayList<IsolatedPixelWeightenerFactory<?>> isolatedWeightenerFactories, 

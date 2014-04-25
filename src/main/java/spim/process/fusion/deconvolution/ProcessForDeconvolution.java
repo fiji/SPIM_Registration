@@ -39,7 +39,7 @@ import spim.process.fusion.weights.Blending;
  */
 public class ProcessForDeconvolution
 {
-	public static int defaultBlendingRangeNumber = 40;
+	public static int defaultBlendingRangeNumber = 25;
 	public static int defaultBlendingBorderNumber = 15;
 	public static int[] defaultBlendingRange = new int[]{ defaultBlendingRangeNumber, defaultBlendingRangeNumber, defaultBlendingRangeNumber };
 	public static int[] defaultBlendingBorder = null;
