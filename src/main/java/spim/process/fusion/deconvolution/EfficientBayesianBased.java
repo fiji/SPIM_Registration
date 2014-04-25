@@ -127,7 +127,15 @@ public class EfficientBayesianBased extends Fusion
 	@Override
 	public boolean fuseData( final BoundingBox bb, final ImgExport exporter )
 	{
+		final ProcessForDeconvolution pfd = new ProcessForDeconvolution(
+				spimData,
+				anglesToProcess,
+				illumsToProcess, 
+				bb, 
+				new int[]{ blendingBorderX, blendingBorderY, blendingBorderZ },
+				new int[]{ blendingRangeX, blendingRangeY, blendingRangeZ } );
 		
+		pfd.fuseStacks( timepointsToProcess.get( 0 ), channelsToProcess.get( 0 ), osemSpeedUp, justShowWeights );
 		
 		// TODO Auto-generated method stub
 		return false;

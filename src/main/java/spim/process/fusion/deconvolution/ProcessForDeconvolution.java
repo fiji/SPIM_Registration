@@ -2,10 +2,12 @@ package spim.process.fusion.deconvolution;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
@@ -27,7 +29,6 @@ import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
 import spim.process.fusion.export.DisplayImage;
-import spim.process.fusion.weightedavg.ProcessFusion;
 import spim.process.fusion.weights.Blending;
 
 /**
@@ -47,16 +48,19 @@ public class ProcessForDeconvolution
 	final protected ArrayList<Angle> anglesToProcess;
 	final protected ArrayList<Illumination> illumsToProcess;
 	final BoundingBox bb;
-	final int blendingBorder;
-	final int blendingRange;
+	final int[] blendingBorder;
+	final int[] blendingRange;
+	
+	int minOverlappingViews;
+	double avgOverlappingViews;
 
 	public ProcessForDeconvolution(
 			final SpimData2 spimData,
 			final ArrayList<Angle> anglesToProcess,
 			final ArrayList<Illumination> illumsToProcess,
 			final BoundingBox bb,
-			final int blendingBorder,
-			final int blendingRange )
+			final int[] blendingBorder,
+			final int[] blendingRange )
 	{
 		this.spimData = spimData;
 		this.anglesToProcess = anglesToProcess;
@@ -65,6 +69,9 @@ public class ProcessForDeconvolution
 		this.blendingBorder = blendingBorder;
 		this.blendingRange = blendingRange;
 	}
+	
+	public int getMinOverlappingViews() { return minOverlappingViews; }
+	public double getAvgOverlappingViews() { return avgOverlappingViews; }
 
 	/** 
 	 * Fuses one stack, i.e. all angles/illuminations for one timepoint and channel
@@ -78,7 +85,7 @@ public class ProcessForDeconvolution
 	public boolean fuseStacks(
 			final TimePoint timepoint, 
 			final Channel channel,
-			final float osemspeedup,
+			final double osemspeedup,
 			final boolean weightsOnly )
 	{				
 		// get all views that are fused
@@ -182,16 +189,19 @@ public class ProcessForDeconvolution
 		}
 		
 		// normalize the weights
-		if ( !normalizeWeights( weights ) )
+		if ( !normalizeWeightsAndComputeMinAvgViews( weights ) )
 			return false;
 		
 		if ( weightsOnly )
 			displayWeights( osemspeedup, weights, overlapImg );
 		
+		IOFunctions.println( "Minimal number of overlapping views: " + getMinOverlappingViews() );
+		IOFunctions.println( "Average number of overlapping views: " + getAvgOverlappingViews() );
+		
 		return true;
 	}
 	
-	protected void displayWeights( final float osemspeedup, final ArrayList< Img< FloatType > > weights, final Img< FloatType > overlapImg )
+	protected void displayWeights( final double osemspeedup, final ArrayList< Img< FloatType > > weights, final Img< FloatType > overlapImg )
 	{
 		final DisplayImage d = new DisplayImage();
 		
@@ -268,21 +278,21 @@ public class ProcessForDeconvolution
 		d.exportImage( wosem, bb, "OSEM=" + osemspeedup + ", sum of weights per pixel" );
 	}
 	
-	protected boolean normalizeWeights( final ArrayList< Img< FloatType > > weights )
+	protected boolean normalizeWeightsAndComputeMinAvgViews( final ArrayList< Img< FloatType > > weights )
 	{
 		// split up into many parts for multithreading
 		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( weights.get( 0 ).size(), Runtime.getRuntime().availableProcessors() * 2 );
 
 		// set up executor service
 		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
-		final ArrayList< Callable< String > > tasks = new ArrayList< Callable< String > >();
-
+		final ArrayList< Callable< double[] > > tasks = new ArrayList< Callable< double[] > >();
+		
 		for ( final ImagePortion portion : portions )
 		{
-			tasks.add( new Callable< String >() 
+			tasks.add( new Callable< double[] >() 
 					{
 						@Override
-						public String call() throws Exception
+						public double[] call() throws Exception
 						{
 							final ArrayList< Cursor< FloatType > > cursors = new ArrayList< Cursor< FloatType > >(); 
 							
@@ -292,20 +302,36 @@ public class ProcessForDeconvolution
 								c.jumpFwd( portion.getStartPosition() );
 								cursors.add( c );
 							}
+						
+							int minNumViews = cursors.size();
+							long countViews = 0;
 							
 							for ( long j = 0; j < portion.getLoopSize(); ++j )
 							{
 								double sumW = 0;
 								
+								int count = 0;
+								
 								for ( final Cursor< FloatType > c : cursors )
-									sumW += c.next().get();
+								{
+									final float w = c.next().get(); 
+									sumW += w;
+									
+									if ( w > 0 )
+										++count;
+								}
+								
+								countViews += count;
+								minNumViews = Math.min( minNumViews, count );
 								
 								if ( sumW > 1 )
 									for ( final Cursor< FloatType > c : cursors )
 										c.get().set( (float)( c.get().get() / sumW ) );
 							}
 							
-							return "done.";
+							final double avgNumViews = (double)countViews / (double)( portion.getLoopSize() * weights.size() );
+							
+							return new double[]{ minNumViews, avgNumViews };
 						}
 					});
 		}
@@ -314,7 +340,20 @@ public class ProcessForDeconvolution
 		try
 		{
 			// invokeAll() returns when all tasks are complete
-			taskExecutor.invokeAll( tasks );			
+			final List< Future< double[] > > futures = taskExecutor.invokeAll( tasks );
+			
+			this.minOverlappingViews = weights.size();
+			this.avgOverlappingViews = 0;
+			
+			for ( final Future< double[] > f : futures )
+			{
+				final double[] minAvg = f.get();
+				
+				this.minOverlappingViews = Math.min( this.minOverlappingViews, (int)Math.round( minAvg[ 0 ] ) );
+				this.avgOverlappingViews += minAvg[ 1 ];
+			}
+			
+			this.avgOverlappingViews /= (double)weights.size();
 		}
 		catch ( final Exception e )
 		{
@@ -328,20 +367,18 @@ public class ProcessForDeconvolution
 		return true;
 	}
 
-	protected Blending getBlending( final Interval interval, final int blendingBorder, final int blendingRange, final ViewDescription< TimePoint, ViewSetup > desc )
+	protected Blending getBlending( final Interval interval, final int[] blendingBorder, final int[] blendingRange, final ViewDescription< TimePoint, ViewSetup > desc )
 	{
 		final float[] blending = new float[ 3 ];
 		final float[] border = new float[ 3 ];
 		
-		final float minRes = (float)ProcessFusion.getMinRes( desc.getViewSetup() );
-		
-		blending[ 0 ] = blendingRange / ((float)desc.getViewSetup().getPixelWidth() / minRes);
-		blending[ 1 ] = blendingRange / ((float)desc.getViewSetup().getPixelHeight() / minRes);
-		blending[ 2 ] = blendingRange / ((float)desc.getViewSetup().getPixelDepth() / minRes);
+		blending[ 0 ] = blendingRange[ 0 ];
+		blending[ 1 ] = blendingRange[ 1 ];
+		blending[ 2 ] = blendingRange[ 2 ];
 
-		border[ 0 ] = blendingBorder / ((float)desc.getViewSetup().getPixelWidth() / minRes);
-		border[ 1 ] = blendingBorder / ((float)desc.getViewSetup().getPixelHeight() / minRes);
-		border[ 2 ] = blendingBorder / ((float)desc.getViewSetup().getPixelDepth() / minRes);
+		border[ 0 ] = blendingBorder[ 0 ];
+		border[ 1 ] = blendingBorder[ 1 ];
+		border[ 2 ] = blendingBorder[ 2 ];
 		
 		return new Blending( interval, border, blending );
 	}
