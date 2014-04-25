@@ -85,7 +85,8 @@ public class ProcessForDeconvolution
 	public boolean fuseStacks(
 			final TimePoint timepoint, 
 			final Channel channel,
-			final double osemspeedup,
+			final int osemIndex,
+			double osemspeedup,
 			final boolean weightsOnly )
 	{				
 		// get all views that are fused
@@ -193,10 +194,17 @@ public class ProcessForDeconvolution
 			return false;
 		
 		if ( weightsOnly )
+		{
+			if ( osemIndex == 1 )
+				osemspeedup = getMinOverlappingViews();
+			else if ( osemIndex == 2 )
+				osemspeedup = getAvgOverlappingViews();
+				
 			displayWeights( osemspeedup, weights, overlapImg );
+		}
 		
-		IOFunctions.println( "Minimal number of overlapping views: " + getMinOverlappingViews() );
-		IOFunctions.println( "Average number of overlapping views: " + getAvgOverlappingViews() );
+		IOFunctions.println( "Minimal number of overlapping views: " + getMinOverlappingViews() + ", using " + (this.minOverlappingViews = Math.max( 1, this.minOverlappingViews ) ) );
+		IOFunctions.println( "Average number of overlapping views: " + getAvgOverlappingViews() + ", using " + (this.avgOverlappingViews = Math.max( 1, this.avgOverlappingViews ) ) );
 		
 		return true;
 	}

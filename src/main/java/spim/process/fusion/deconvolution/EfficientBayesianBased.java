@@ -135,7 +135,7 @@ public class EfficientBayesianBased extends Fusion
 				new int[]{ blendingBorderX, blendingBorderY, blendingBorderZ },
 				new int[]{ blendingRangeX, blendingRangeY, blendingRangeZ } );
 		
-		pfd.fuseStacks( timepointsToProcess.get( 0 ), channelsToProcess.get( 0 ), osemSpeedUp, justShowWeights );
+		pfd.fuseStacks( timepointsToProcess.get( 0 ), channelsToProcess.get( 0 ), osemspeedupIndex, osemSpeedUp, justShowWeights );
 		
 		// TODO Auto-generated method stub
 		return false;
@@ -249,7 +249,7 @@ public class EfficientBayesianBased extends Fusion
 	public long totalRAM( final long fusedSizeMB, final int bytePerPixel )
 	{
 		if ( it.getSelectedIndex() == iterationTypeString.length - 1 )
-			return fusedSizeMB * 2;
+			return fusedSizeMB * 8;
 		
 		final int blockChoice = block.getSelectedIndex();
 		
