@@ -84,7 +84,7 @@ public class ProcessForOverlapOnlyPortion implements Callable< String >
 				wr.setPosition( t );
 				
 				o.set( o.get() + 1 );
-				b.set( b.get() );
+				b.set( wr.get() );
 			}
 		}
 		

@@ -24,6 +24,7 @@ import net.imglib2.img.Img;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Util;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.FusionHelper;
@@ -145,15 +146,17 @@ public class ProcessForDeconvolution
 			for ( final ImagePortion portion : portions )
 				if ( weightsOnly )
 				{
+					final Interval imgInterval = new FinalInterval(
+							new long[]{ 0, 0, 0 },
+							new long[]{ 
+									inputData.getViewSetup().getWidth() - 1,
+									inputData.getViewSetup().getHeight() - 1,
+									inputData.getViewSetup().getDepth() - 1 } );
+					
 					tasks.add( new ProcessForOverlapOnlyPortion(
 							portion,
-							new FinalInterval(
-									new long[]{ 0, 0, 0 },
-									new long[]{ 
-											inputData.getViewSetup().getWidth() - 1,
-											inputData.getViewSetup().getHeight() - 1,
-											inputData.getViewSetup().getDepth() - 1 } ),
-							getBlending( img, blendingBorder, blendingRange, inputData ),
+							imgInterval,
+							getBlending( imgInterval, blendingBorder, blendingRange, inputData ),
 							spimData.getViewRegistrations().getViewRegistration( inputData ).getModel(),
 							overlapImg,
 							weightImg,
@@ -193,6 +196,9 @@ public class ProcessForDeconvolution
 		if ( !normalizeWeightsAndComputeMinAvgViews( weights ) )
 			return false;
 		
+		IOFunctions.println( "Minimal number of overlapping views: " + getMinOverlappingViews() + ", using " + (this.minOverlappingViews = Math.max( 1, this.minOverlappingViews ) ) );
+		IOFunctions.println( "Average number of overlapping views: " + getAvgOverlappingViews() + ", using " + (this.avgOverlappingViews = Math.max( 1, this.avgOverlappingViews ) ) );
+
 		if ( weightsOnly )
 		{
 			if ( osemIndex == 1 )
@@ -202,10 +208,7 @@ public class ProcessForDeconvolution
 				
 			displayWeights( osemspeedup, weights, overlapImg );
 		}
-		
-		IOFunctions.println( "Minimal number of overlapping views: " + getMinOverlappingViews() + ", using " + (this.minOverlappingViews = Math.max( 1, this.minOverlappingViews ) ) );
-		IOFunctions.println( "Average number of overlapping views: " + getAvgOverlappingViews() + ", using " + (this.avgOverlappingViews = Math.max( 1, this.avgOverlappingViews ) ) );
-		
+				
 		return true;
 	}
 	
@@ -376,7 +379,7 @@ public class ProcessForDeconvolution
 	}
 
 	protected Blending getBlending( final Interval interval, final int[] blendingBorder, final int[] blendingRange, final ViewDescription< TimePoint, ViewSetup > desc )
-	{
+	{		
 		final float[] blending = new float[ 3 ];
 		final float[] border = new float[ 3 ];
 		
@@ -387,7 +390,10 @@ public class ProcessForDeconvolution
 		border[ 0 ] = blendingBorder[ 0 ];
 		border[ 1 ] = blendingBorder[ 1 ];
 		border[ 2 ] = blendingBorder[ 2 ];
-		
+	
+		IOFunctions.println( "Blending range: " + Util.printCoordinates( blending ) );
+		IOFunctions.println( "Blending border: " + Util.printCoordinates( border ) );
+
 		return new Blending( interval, border, blending );
 	}
 

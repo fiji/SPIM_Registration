@@ -137,6 +137,11 @@ public class EfficientBayesianBased extends Fusion
 		
 		pfd.fuseStacks( timepointsToProcess.get( 0 ), channelsToProcess.get( 0 ), osemspeedupIndex, osemSpeedUp, justShowWeights );
 		
+		if ( osemspeedupIndex == 1 )
+			osemSpeedUp = pfd.getMinOverlappingViews();
+		else if ( osemspeedupIndex == 2 )
+			osemSpeedUp = pfd.getAvgOverlappingViews();
+		
 		// TODO Auto-generated method stub
 		return false;
 	}
