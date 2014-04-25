@@ -34,25 +34,32 @@ import spim.process.fusion.weights.Blending;
  */
 public class ProcessForDeconvolution
 {
-	public static float[] defaultBlendingRange = new float[]{ 40, 40, 40 };
-	public static float[] defaultBlendingBorder = new float[]{ 15, 15, 15 };
-	public static boolean defaultAdjustBlendingForAnisotropy = true;
+	public static int defaultBlendingRangeNumber = 40;
+	public static int defaultBlendingBorderNumber = 15;
+	public static int[] defaultBlendingRange = new int[]{ defaultBlendingRangeNumber, defaultBlendingRangeNumber, defaultBlendingRangeNumber };
+	public static int[] defaultBlendingBorder = null;
 
 	final protected SpimData2 spimData;
 	final protected ArrayList<Angle> anglesToProcess;
 	final protected ArrayList<Illumination> illumsToProcess;
 	final BoundingBox bb;
+	final int blendingBorder;
+	final int blendingRange;
 
 	public ProcessForDeconvolution(
 			final SpimData2 spimData,
 			final ArrayList<Angle> anglesToProcess,
 			final ArrayList<Illumination> illumsToProcess,
-			final BoundingBox bb )
+			final BoundingBox bb,
+			final int blendingBorder,
+			final int blendingRange )
 	{
 		this.spimData = spimData;
 		this.anglesToProcess = anglesToProcess;
 		this.illumsToProcess = illumsToProcess;
 		this.bb = bb;
+		this.blendingBorder = blendingBorder;
+		this.blendingRange = blendingRange;
 	}
 
 	/** 
@@ -104,7 +111,7 @@ public class ProcessForDeconvolution
 				tasks.add( new ProcessForDeconvolutionPortion(
 						portion,
 						img,
-						getBlending( img, inputData ),
+						getBlending( img, blendingBorder, blendingRange, inputData ),
 						spimData.getViewRegistrations().getViewRegistration( inputData ).getModel(),
 						fusedImg,
 						weightImg,
@@ -128,23 +135,20 @@ public class ProcessForDeconvolution
 		return true;
 	}
 
-	protected Blending getBlending( final Interval interval, final ViewDescription< TimePoint, ViewSetup > desc )
+	protected Blending getBlending( final Interval interval, final int blendingBorder, final int blendingRange, final ViewDescription< TimePoint, ViewSetup > desc )
 	{
-		final float[] blending = defaultBlendingRange.clone();
-		final float[] border = defaultBlendingBorder.clone();
+		final float[] blending = new float[ 3 ];
+		final float[] border = new float[ 3 ];
 		
 		final float minRes = (float)ProcessFusion.getMinRes( desc.getViewSetup() );
 		
-		if ( defaultAdjustBlendingForAnisotropy )
-		{
-			blending[ 0 ] /= (float)desc.getViewSetup().getPixelWidth() / minRes;
-			blending[ 1 ] /= (float)desc.getViewSetup().getPixelHeight() / minRes;
-			blending[ 2 ] /= (float)desc.getViewSetup().getPixelDepth() / minRes;
+		blending[ 0 ] = blendingRange / ((float)desc.getViewSetup().getPixelWidth() / minRes);
+		blending[ 1 ] = blendingRange / ((float)desc.getViewSetup().getPixelHeight() / minRes);
+		blending[ 2 ] = blendingRange / ((float)desc.getViewSetup().getPixelDepth() / minRes);
 
-			border[ 0 ] /= (float)desc.getViewSetup().getPixelWidth() / minRes;
-			border[ 1 ] /= (float)desc.getViewSetup().getPixelHeight() / minRes;
-			border[ 2 ] /= (float)desc.getViewSetup().getPixelDepth() / minRes;
-		}
+		border[ 0 ] = blendingBorder / ((float)desc.getViewSetup().getPixelWidth() / minRes);
+		border[ 1 ] = blendingBorder / ((float)desc.getViewSetup().getPixelHeight() / minRes);
+		border[ 2 ] = blendingBorder / ((float)desc.getViewSetup().getPixelDepth() / minRes);
 		
 		return new Blending( interval, border, blending );
 	}
