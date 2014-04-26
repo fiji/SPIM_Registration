@@ -1,24 +1,22 @@
 package spim.process.fusion.deconvolution;
 
 import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.io.Opener;
+import ij.process.ImageProcessor;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import mpicbg.models.InvertibleBoundable;
-import mpicbg.models.NoninvertibleModelException;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
-import net.imglib2.Interval;
 import net.imglib2.RandomAccess;
-import net.imglib2.RandomAccessible;
-import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealInterval;
 import net.imglib2.RealRandomAccess;
-import net.imglib2.algorithm.transformation.ImageTransform;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
-import net.imglib2.interpolation.InterpolatorFactory;
 import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.Type;
@@ -349,9 +347,7 @@ public class ExtractPSF
 		// create the new output image
 		final Img< T > transformed = image.factory().create( newDim, Views.iterable( image ).firstElement().createVariable() );
 
-		final Cursor<T> transformedIterator = transformed.localizingCursor();
-		final NLinearInterpolatorFactory< T > f = new NLinearInterpolatorFactory<T>();
-		
+		final Cursor<T> transformedIterator = transformed.localizingCursor();		
 		final RealRandomAccess<T> interpolator = Views.interpolate( Views.extendZero( image ), new NLinearInterpolatorFactory<T>() ).realRandomAccess();
 		
 		final float[] tmp = new float[ numDimensions ];
@@ -440,64 +436,76 @@ public class ExtractPSF
 		
 		return size;
 	}
-	/*
-	public static ExtractPSF loadAndTransformPSF( final ArrayList< String > fileName, final boolean transformPSFs, final ViewStructure viewStructure )
+	
+	/**
+	 * 
+	 * @param fileName
+	 * @param model - if model is null, PSFs will not be transformed
+	 * @return
+	 */
+	public static ExtractPSF loadAndTransformPSFs( final ArrayList< File > filenames, final ImgFactory< FloatType > factory, final AffineTransform3D model )
 	{
-		ExtractPSF extractPSF = new ExtractPSF( viewStructure );
+		ExtractPSF extractPSF = new ExtractPSF();
 		
-		final ArrayList<ViewDataBeads > views = viewStructure.getViews();
 		final int numDimensions = 3;
 				
-		final int[] maxSize = new int[ numDimensions ];
+		final long[] maxSize = new long[ numDimensions ];
 		
 		for ( int d = 0; d < numDimensions; ++d )
 			maxSize[ d ] = 0;
 
-		int i = 0;
-		for ( final ViewDataBeads view : views )		
+		for ( final File file : filenames )		
 		{
 	        // extract the PSF for this one	        
-    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-    			IOFunctions.println( "Loading PSF file '" + fileName.get( i ) + "' for " + view.getName() );
+    		IOFunctions.println( "Loading PSF file '" + file.getAbsolutePath() );
 
-			final Image< FloatType > psfImage = LOCI.openLOCIFloatType( fileName.get( i ), viewStructure.getSPIMConfiguration().inputImageFactory );
-			
-			if ( psfImage == null )
+    		final ImagePlus imp = new Opener().openImage( file.getAbsolutePath() );
+
+    		if ( imp == null )
+    			throw new RuntimeException( "Could not load '" + file + "' using ImageJ (should be a TIFF file)." );
+
+    		final ImageStack stack = imp.getStack();
+    		final int width = imp.getWidth();
+    		final int sizeZ = imp.getNSlices();
+
+    		Img< FloatType > psfImage = factory.create( new long[]{ width, imp.getHeight(), sizeZ }, new FloatType() );
+    		
+    		for ( int z = 0; z < sizeZ; ++z )
 			{
-				IJ.log( "Could not find PSF file '" + fileName.get( i ) + "' - quitting." );
-				return null;
+				final Cursor< FloatType > cursor = Views.iterable( Views.hyperSlice( psfImage, 2, z ) ).localizingCursor();
+				final ImageProcessor ip = stack.getProcessor( z + 1 );
+				
+				while ( cursor.hasNext() )
+				{
+					cursor.fwd();
+					cursor.get().set( ip.getf( cursor.getIntPosition( 0 ) + cursor.getIntPosition( 1 ) * width ) );
+				}
 			}
-			
-			++i;
 
-			final Image<FloatType> psf;
-			
-			if ( transformPSFs )
+    		final Img< FloatType > psf;
+    		
+			if ( model != null )
 			{
-				if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-					IOFunctions.println( "Transforming PSF for " + view.getName() );
-
-				psf = transformPSF( psfImage, (AbstractAffineModel3D<?>)view.getTile().getModel() );
+				IOFunctions.println( "Transforming PSF for " + file.getName() );
+				psf = transformPSF( psfImage, model );
 			}
 			else
 			{
-				psf = psfImage.clone();
+				IOFunctions.println( "PSF for " + file.getName() + " will not be transformed." );
+				psf = psfImage.copy();
 			}
-			
-			psf.setName( "PSF_" + view.getName() );
-			
+						
 			for ( int d = 0; d < numDimensions; ++d )
-				if ( psf.getDimension( d ) > maxSize[ d ] )
-					maxSize[ d ] = psf.getDimension( d );
+				if ( psf.dimension( d ) > maxSize[ d ] )
+					maxSize[ d ] = psf.dimension( d );
 			
 			extractPSF.pointSpreadFunctions.add( psf );
 			extractPSF.originalPSFs.add( psfImage );
-			
-			psf.getDisplay().setMinMax();
 		}
 		
-		extractPSF.computeAveragePSF( maxSize );
+		extractPSF.computeAverageTransformedPSF( maxSize, extractPSF.pointSpreadFunctions );
+		extractPSF.computeAveragePSF( extractPSF.originalPSFs );
 		
 		return extractPSF;
-	}*/
+	}
 }
