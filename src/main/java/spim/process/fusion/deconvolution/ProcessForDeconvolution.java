@@ -433,7 +433,7 @@ public class ProcessForDeconvolution
 										c.get().set( (float)( c.get().get() / sumW ) );
 							}
 							
-							final double avgNumViews = (double)countViews / (double)( portion.getLoopSize() * weights.size() );
+							final double avgNumViews = (double)countViews / (double)( portion.getLoopSize() );
 							
 							return new double[]{ minNumViews, avgNumViews };
 						}
