@@ -2,6 +2,7 @@ package spim.process.fusion.deconvolution;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.Callable;
@@ -87,7 +88,9 @@ public class ProcessForDeconvolution
 			final Channel channel,
 			final int osemIndex,
 			double osemspeedup,
-			final boolean weightsOnly )
+			final boolean weightsOnly,
+			final HashMap< Channel, ChannelPSF > extractPSFLabels,
+			final long[] psfSize )
 	{				
 		// get all views that are fused
 		final ArrayList< ViewDescription< TimePoint, ViewSetup > > allInputData =
@@ -102,6 +105,14 @@ public class ProcessForDeconvolution
 			overlapImg = bb.getImgFactory( new FloatType() ).create( bb.getDimensions(), new FloatType() );
 		else
 			overlapImg = null;
+		
+		final ExtractPSF< FloatType > ePSF;		
+		final boolean extractPSFs = extractPSFs( channel, extractPSFLabels ) && !weightsOnly;
+		
+		if ( extractPSFs )
+			ePSF = new ExtractPSF<FloatType>( bb.getImgFactory( new FloatType() ) );
+		else
+			ePSF = null;
 		
 		// we will need to run some batches until all is fused
 		for ( int i = 0; i < allInputData.size(); ++i )
@@ -186,6 +197,18 @@ public class ProcessForDeconvolution
 
 			taskExecutor.shutdown();
 			
+			// extract PSFs if wanted
+			if ( extractPSFs && !weightsOnly )
+			{
+				IOFunctions.println( "Extracting PSF for channel " + channel.getName() + " using label '" + extractPSFLabels.get( channel ).getLabel() + "'" );
+				
+				ePSF.extractNextImg(
+						img, 
+						spimData.getViewRegistrations().getViewRegistration( inputData ).getModel(),
+						getLocationsOfCorrespondingBeads( inputData, extractPSFLabels.get( channel ).getLabel() ),
+						psfSize );
+			}
+			
 			if ( !weightsOnly )
 				imgs.add( fusedImg );
 			weights.add( weightImg );
@@ -209,6 +232,23 @@ public class ProcessForDeconvolution
 		}
 				
 		return true;
+	}
+	
+	protected boolean extractPSFs( final Channel channel, final HashMap<Channel, ChannelPSF> extractPSFLabels )
+	{
+		if ( extractPSFLabels == null )
+			return false;
+		
+		if ( extractPSFLabels.get( channel ).getLabel() == null )
+			return false;
+
+		return true;
+	}
+
+	protected ArrayList< float[] > getLocationsOfCorrespondingBeads( final ViewDescription< TimePoint, ViewSetup > inputData, final String label )
+	{
+		// TODO: get the list
+		return null;
 	}
 	
 	protected void displayWeights( final double osemspeedup, final ArrayList< Img< FloatType > > weights, final Img< FloatType > overlapImg )

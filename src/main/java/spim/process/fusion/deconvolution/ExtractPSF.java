@@ -13,6 +13,7 @@ import java.util.List;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealInterval;
 import net.imglib2.RealRandomAccess;
 import net.imglib2.img.Img;
@@ -209,28 +210,20 @@ public class ExtractPSF< T extends RealType< T > >
 	/**
 	 * 
 	 * @param img
-	 * @param psfFactory
+	 * @param model
 	 * @param locations
-	 * @param maxSize - will be set
+	 * @param size - dimensions of psf to extract
 	 */
 	public void extractNextImg(
-			final Img< T > img,
+			final RandomAccessibleInterval< T > img,
 			final AffineTransform3D model,
-			final ImgFactory< T > psfFactory,
 			final ArrayList< float[] > locations,
-			final long[] psfSize,
-			final long[] maxSize )
+			final long[] psfSize )
 	{
-		final int numDimensions = img.numDimensions();
-				
 		IOFunctions.println( "PSF size: " + Util.printCoordinates( psfSize ) );
 		
 		final Img< T > originalPSF = extractPSFLocal( img, psfFactory, locations, psfSize );
 		final Img< T > psf = transformPSF( originalPSF, model );
-		
-		for ( int d = 0; d < numDimensions; ++d )
-			if ( psf.dimension( d ) > maxSize[ d ] )
-				maxSize[ d ] = psf.dimension( d );
 		
 		pointSpreadFunctions.add( psf );
 		originalPSFs.add( originalPSF );
@@ -294,14 +287,14 @@ public class ExtractPSF< T extends RealType< T > >
 	 * @return - the psf, NOT z-scaling corrected
 	 */
 	protected Img< T > extractPSFLocal(
-			final Img< T > img,
+			final RandomAccessibleInterval< T > img,
 			final ImgFactory< T > psfFactory,
 			final ArrayList< float[] > locations,
 			final long[] size )
 	{
 		final int numDimensions = size.length;
 		
-		final Img< T > psf = psfFactory.create( size, img.firstElement() );
+		final Img< T > psf = psfFactory.create( size, Views.iterable( img ).firstElement() );
 		
 		// Mirror produces some artifacts ... so we use periodic
 		final RealRandomAccess< T > interpolator = 
@@ -497,8 +490,7 @@ public class ExtractPSF< T extends RealType< T > >
 			}
 						
 			for ( int d = 0; d < numDimensions; ++d )
-				if ( psf.dimension( d ) > maxSize[ d ] )
-					maxSize[ d ] = psf.dimension( d );
+				maxSize[ d ] = Math.max( maxSize[ d ], psf.dimension( d ) );
 			
 			extractPSF.pointSpreadFunctions.add( psf );
 			extractPSF.originalPSFs.add( psfImage );
