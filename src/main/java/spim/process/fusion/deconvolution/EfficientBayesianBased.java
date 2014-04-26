@@ -145,7 +145,7 @@ public class EfficientBayesianBased extends Fusion
 			for ( final Channel c : channelsToProcess )
 			{
 				// fuse the images, create weights, extract PSFs we need for the deconvolution
-				pfd.fuseStacks( t, c, osemspeedupIndex, osemSpeedUp, justShowWeights );
+				pfd.fuseStacks( t, c, osemspeedupIndex, osemSpeedUp, justShowWeights, extractPSFLabels, new long[]{ psfSizeX, psfSizeY, psfSizeZ } );
 				
 				// on the first run update the osemspeedup if necessary
 				if ( stack++ == 0 )
@@ -227,6 +227,10 @@ public class EfficientBayesianBased extends Fusion
 		if ( !getPSF() )
 			return false;
 		
+		if ( extractPSF )
+			if ( !reOrderChannels() )
+				return false;
+		
 		// check OSEM
 		if ( !getOSEM() )
 			return false;
@@ -239,6 +243,53 @@ public class EfficientBayesianBased extends Fusion
 		if ( !getDebug() )
 			return false;
 
+		return true;
+	}
+
+	/**
+	 * Order the channels in a way so that those were the beads are extracted from, are first.
+	 * Otherwise, the extracted PSF will not be avaiable for a certain channel that uses PSFs
+	 * from another channel
+	 * 
+	 * @return
+	 */
+	protected boolean reOrderChannels()
+	{
+		final ArrayList< Channel > channelsToExtract = new ArrayList< Channel >();
+		final ArrayList< Channel > channelsUsingAnotherPSF = new ArrayList< Channel >();
+		
+		for ( final Channel c : channelsToProcess )
+		{
+			if ( extractPSFLabels.get( c ).getLabel() == null )
+				channelsUsingAnotherPSF.add( c );
+			else
+				channelsToExtract.add( c );
+		}
+		
+		// check that there is at least one channel that extracts
+		if ( channelsToExtract.size() == 0 )
+		{
+			IOFunctions.println( "At least one channel needs to extract PSFs. Stopping." );
+			return false;
+		}
+		
+		// test that each channel using the PSF from another channel actually links to one that extracts
+		for ( final Channel c : channelsUsingAnotherPSF )
+		{
+			if ( extractPSFLabels.get( extractPSFLabels.get( c ).getOtherChannel() ).getLabel() == null )
+			{
+				IOFunctions.println( "Channel " + c.getName() + " is supposed to use the PSF from channel " +
+								extractPSFLabels.get( c ).getOtherChannel().getName() + ", but this one also does not" +
+								"extract PSFs. Stopping." );
+				return false;
+			}
+		}
+		
+		this.channelsToProcess.clear();
+		
+		this.channelsToProcess.addAll( channelsToExtract );
+		this.channelsToProcess.addAll( channelsUsingAnotherPSF );
+		
 		return true;
 	}
 
