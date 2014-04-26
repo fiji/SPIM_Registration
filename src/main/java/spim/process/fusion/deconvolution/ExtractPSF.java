@@ -298,21 +298,24 @@ public class ExtractPSF
 	 * @param view - the SPIM view
 	 * @param size - the size in which the psf is extracted (in pixel units, z-scaling is ignored)
 	 * @return - the psf, NOT z-scaling corrected
-	 *//*
-	protected static Img<FloatType> extractPSF( final Img< FloatType > img, final ImgFactory< FloatType > psfFactory, final ArrayList< float[] > locations, final int[] size )
+	 */
+	protected static Img<FloatType> extractPSF(
+			final Img< FloatType > img,
+			final ImgFactory< FloatType > psfFactory,
+			final ArrayList< float[] > locations,
+			final long[] size )
 	{
 		final int numDimensions = size.length;
 		
-		// Mirror produces some artifacts ...
-		final OutOfBoundsStrategyFactory<FloatType> outside = new OutOfBoundsStrategyPeriodicFactory<FloatType>();
-		final InterpolatorFactory<FloatType> interpolatorFactory = new LinearInterpolatorFactory<FloatType>( outside );
+		final Img<FloatType> psf = psfFactory.create( size, img.firstElement() );
 		
-		final Image<FloatType> psf = psfFactory.createImage( size );
+		// Mirror produces some artifacts ... so we use periodic
+		final RealRandomAccess< FloatType > interpolator = 
+				Views.interpolate( Views.extendPeriodic( img ), new NLinearInterpolatorFactory< FloatType >() ).realRandomAccess();
 		
-		final Interpolator<FloatType> interpolator = img.createInterpolator( interpolatorFactory );
-		final LocalizableCursor<FloatType> psfCursor = psf.createLocalizableCursor();
+		final Cursor<FloatType> psfCursor = psf.localizingCursor();
 		
-		final int[] sizeHalf = size.clone();		
+		final long[] sizeHalf = size.clone();		
 		for ( int d = 0; d < numDimensions; ++d )
 			sizeHalf[ d ] /= 2;
 		
@@ -326,19 +329,19 @@ public class ExtractPSF
 			while ( psfCursor.hasNext() )
 			{
 				psfCursor.fwd();
-				psfCursor.getPosition( tmpI );
+				psfCursor.localize( tmpI );
 
 				for ( int d = 0; d < numDimensions; ++d )
 					tmpF[ d ] = tmpI[ d ] - sizeHalf[ d ] + position[ d ];
 				
-				interpolator.moveTo( tmpF );
+				interpolator.setPosition( tmpF );
 				
-				psfCursor.getType().add( interpolator.getType() );
+				psfCursor.get().add( interpolator.get() );
 			}
 		}
 
 		return psf;
-	}*/
+	}
 	
 	public static < T extends RealType< T > > Img< T > transform( final Img< T > image, final AffineTransform3D transform, final long[] newDim, final float[] offset )
 	{
