@@ -21,40 +21,43 @@ import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.Type;
 import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 
-public class ExtractPSF
+public class ExtractPSF< T extends RealType< T > >
 {
-	final ArrayList<Img<FloatType>> pointSpreadFunctions, originalPSFs;
-	Img<FloatType> avgPSF, avgOriginalPSF;
+	final ImgFactory< T > psfFactory;
 	
-	public ExtractPSF()
+	final ArrayList< Img< T > > pointSpreadFunctions, originalPSFs;
+	Img< T > avgPSF, avgOriginalPSF;
+	
+	public ExtractPSF( final ImgFactory< T > psfFactory )
 	{		
-		this.pointSpreadFunctions = new ArrayList<Img<FloatType>>();
-		this.originalPSFs = new ArrayList<Img<FloatType>>();
+		this.pointSpreadFunctions = new ArrayList< Img< T > >();
+		this.originalPSFs = new ArrayList< Img< T > >();
+		
+		this.psfFactory = psfFactory;
 	}
 		
 	/**
 	 * @return - the extracted PSFs after applying the transformations of each view
 	 */
-	public ArrayList< Img< FloatType > > getPSFs() { return pointSpreadFunctions; }
+	public ArrayList< Img< T > > getPSFs() { return pointSpreadFunctions; }
 
 	/**
 	 * @return - the extracted PSFs in original calibration for each view
 	 */
-	public ArrayList< Img< FloatType > > getPSFsInInputCalibration() { return originalPSFs; }
+	public ArrayList< Img< T > > getPSFsInInputCalibration() { return originalPSFs; }
 
 	/**
 	 * @return - the average extracted PSF after applying the transformations of each view
 	 */
-	public Img< FloatType > getAveragePSF() { return avgPSF; }
+	public Img< T > getAveragePSF() { return avgPSF; }
 	
 	/**
 	 * @return - the average extracted PSF in the same calibration as the input data
 	 */
-	public Img< FloatType > getAverageOriginalPSF() { return avgOriginalPSF; }
+	public Img< T > getAverageOriginalPSF() { return avgOriginalPSF; }
 	
 	/**
 	 * Get projection along the smallest dimension (which is usually the rotation axis)
@@ -63,7 +66,7 @@ public class ExtractPSF
 	 * @param minDim - along which dimension to project, if set to <0, the smallest dimension will be chosen
 	 * @return - the averaged, projected PSF
 	 */
-	public < T extends RealType< T > > Img< T > getMaxProjectionAveragePSF( final Img< T > avgPSF, int minDim )
+	public Img< T > getMaxProjectionAveragePSF( final Img< T > avgPSF, int minDim )
 	{
 		final long[] dimensions = new long[ avgPSF.numDimensions() ];
 		avgPSF.dimensions( dimensions );
@@ -136,7 +139,7 @@ public class ExtractPSF
 	 * 
 	 * @param maxSize
 	 */
-	public < T extends RealType< T > > Img< T > computeAverageTransformedPSF( final long[] maxSize, final ArrayList< Img< T > > pointSpreadFunctions )
+	public Img< T > computeAverageTransformedPSF( final long[] maxSize, final ArrayList< Img< T > > pointSpreadFunctions )
 	{
 		final int numDimensions = maxSize.length;
 		
@@ -180,7 +183,7 @@ public class ExtractPSF
 	 * @param originalPSFs
 	 * @return
 	 */
-	public < T extends RealType< T > > Img< T > computeAveragePSF( final ArrayList< Img< T > > originalPSFs )
+	public Img< T > computeAveragePSF( final ArrayList< Img< T > > originalPSFs )
 	{ 
 		final Img< T > avgOriginalPSF = originalPSFs.get( 0 ).factory().create( originalPSFs.get( 0 ), originalPSFs.get( 0 ).firstElement() );
 
@@ -202,47 +205,38 @@ public class ExtractPSF
 		
 		return avgOriginalPSF;
 	}
-	/*
-	public void extract( final int viewID, final int[] maxSize )
+	
+	/**
+	 * 
+	 * @param img
+	 * @param psfFactory
+	 * @param locations
+	 * @param maxSize - will be set
+	 */
+	public void extractNextImg(
+			final Img< T > img,
+			final AffineTransform3D model,
+			final ImgFactory< T > psfFactory,
+			final ArrayList< float[] > locations,
+			final long[] psfSize,
+			final long[] maxSize )
 	{
-		final ArrayList<ViewDataBeads > views = viewStructure.getViews();
-		final int numDimensions = 3;
+		final int numDimensions = img.numDimensions();
+				
+		IOFunctions.println( "PSF size: " + Util.printCoordinates( psfSize ) );
 		
-		final int[] size;
-		
-		if ( this.size3d == null )
-		{
-			size = Util.getArrayFromValue( this.size, numDimensions );
-			if ( !this.isotropic )
-			{
-				size[ numDimensions - 1 ] *= Math.max( 1, 5.0/views.get( 0 ).getZStretching() );
-				if ( size[ numDimensions - 1 ] % 2 == 0 )
-					size[ numDimensions - 1 ]++;
-			}
-		}
-		else
-		{
-			size = this.size3d.clone();
-		}
-		
-		IJ.log ( "PSF size: " + Util.printCoordinates( size ) );
-		
-		final ViewDataBeads view = views.get( viewID );		
-			
-		final Image<FloatType> originalPSF = extractPSF( view, size );
-		final Image<FloatType> psf = transformPSF( originalPSF, (AbstractAffineModel3D<?>)view.getTile().getModel() );
-		psf.setName( "PSF_" + view.getName() );
+		final Img< T > originalPSF = extractPSFLocal( img, psfFactory, locations, psfSize );
+		final Img< T > psf = transformPSF( originalPSF, model );
 		
 		for ( int d = 0; d < numDimensions; ++d )
-			if ( psf.getDimension( d ) > maxSize[ d ] )
-				maxSize[ d ] = psf.getDimension( d );
+			if ( psf.dimension( d ) > maxSize[ d ] )
+				maxSize[ d ] = psf.dimension( d );
 		
 		pointSpreadFunctions.add( psf );
 		originalPSFs.add( originalPSF );
-		
-		psf.getDisplay().setMinMax();
 	}
-	*/
+
+	
 	/**
 	 * Transforms the extracted PSF using the affine transformation of the corresponding view
 	 * 
@@ -250,7 +244,7 @@ public class ExtractPSF
 	 * @param model - the transformation model
 	 * @return the transformed psf which has odd sizes and where the center of the psf is also the center of the transformed psf
 	 */
-	protected static Img<FloatType> transformPSF( final Img<FloatType> psf, final AffineTransform3D model )
+	protected Img< T > transformPSF( final Img< T > psf, final AffineTransform3D model )
 	{
 		// here we compute a slightly different transformation than the ImageTransform does
 		// two things are necessary:
@@ -299,21 +293,21 @@ public class ExtractPSF
 	 * @param size - the size in which the psf is extracted (in pixel units, z-scaling is ignored)
 	 * @return - the psf, NOT z-scaling corrected
 	 */
-	protected static Img<FloatType> extractPSF(
-			final Img< FloatType > img,
-			final ImgFactory< FloatType > psfFactory,
+	protected Img< T > extractPSFLocal(
+			final Img< T > img,
+			final ImgFactory< T > psfFactory,
 			final ArrayList< float[] > locations,
 			final long[] size )
 	{
 		final int numDimensions = size.length;
 		
-		final Img<FloatType> psf = psfFactory.create( size, img.firstElement() );
+		final Img< T > psf = psfFactory.create( size, img.firstElement() );
 		
 		// Mirror produces some artifacts ... so we use periodic
-		final RealRandomAccess< FloatType > interpolator = 
-				Views.interpolate( Views.extendPeriodic( img ), new NLinearInterpolatorFactory< FloatType >() ).realRandomAccess();
+		final RealRandomAccess< T > interpolator = 
+				Views.interpolate( Views.extendPeriodic( img ), new NLinearInterpolatorFactory< T >() ).realRandomAccess();
 		
-		final Cursor<FloatType> psfCursor = psf.localizingCursor();
+		final Cursor< T > psfCursor = psf.localizingCursor();
 		
 		final long[] sizeHalf = size.clone();		
 		for ( int d = 0; d < numDimensions; ++d )
@@ -446,9 +440,13 @@ public class ExtractPSF
 	 * @param model - if model is null, PSFs will not be transformed
 	 * @return
 	 */
-	public static ExtractPSF loadAndTransformPSFs( final ArrayList< File > filenames, final ImgFactory< FloatType > factory, final AffineTransform3D model )
+	public static < T extends RealType< T > > ExtractPSF< T > loadAndTransformPSFs(
+			final ArrayList< File > filenames,
+			final ImgFactory< T > factory,
+			final T type,
+			final AffineTransform3D model )
 	{
-		ExtractPSF extractPSF = new ExtractPSF();
+		final ExtractPSF< T > extractPSF = new ExtractPSF< T >( factory );
 		
 		final int numDimensions = 3;
 				
@@ -471,26 +469,26 @@ public class ExtractPSF
     		final int width = imp.getWidth();
     		final int sizeZ = imp.getNSlices();
 
-    		Img< FloatType > psfImage = factory.create( new long[]{ width, imp.getHeight(), sizeZ }, new FloatType() );
+    		Img< T > psfImage = factory.create( new long[]{ width, imp.getHeight(), sizeZ }, type );
     		
     		for ( int z = 0; z < sizeZ; ++z )
 			{
-				final Cursor< FloatType > cursor = Views.iterable( Views.hyperSlice( psfImage, 2, z ) ).localizingCursor();
+				final Cursor< T > cursor = Views.iterable( Views.hyperSlice( psfImage, 2, z ) ).localizingCursor();
 				final ImageProcessor ip = stack.getProcessor( z + 1 );
 				
 				while ( cursor.hasNext() )
 				{
 					cursor.fwd();
-					cursor.get().set( ip.getf( cursor.getIntPosition( 0 ) + cursor.getIntPosition( 1 ) * width ) );
+					cursor.get().setReal( ip.getf( cursor.getIntPosition( 0 ) + cursor.getIntPosition( 1 ) * width ) );
 				}
 			}
 
-    		final Img< FloatType > psf;
+    		final Img< T > psf;
     		
 			if ( model != null )
 			{
 				IOFunctions.println( "Transforming PSF for " + file.getName() );
-				psf = transformPSF( psfImage, model );
+				psf = extractPSF.transformPSF( psfImage, model );
 			}
 			else
 			{
