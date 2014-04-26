@@ -146,7 +146,15 @@ public class EfficientBayesianBased extends Fusion
 			for ( final Channel c : channelsToProcess )
 			{
 				// fuse the images, create weights, extract PSFs we need for the deconvolution
-				pfd.fuseStacksAndGetPSFs( t, c, osemspeedupIndex, osemSpeedUp, justShowWeights, extractPSFLabels, new long[]{ psfSizeX, psfSizeY, psfSizeZ } );
+				pfd.fuseStacksAndGetPSFs(
+						t, c,
+						osemspeedupIndex,
+						osemSpeedUp,
+						justShowWeights,
+						extractPSFLabels,
+						new long[]{ psfSizeX, psfSizeY, psfSizeZ },
+						psfFiles,
+						transformPSFs );
 				
 				// on the first run update the osemspeedup if necessary
 				if ( stack++ == 0 )
@@ -526,6 +534,9 @@ public class EfficientBayesianBased extends Fusion
 	{
 		if ( extractPSFIndex == 0 )
 		{
+			extractPSF = true;
+			this.psfFiles = null;
+
 			final HashMap< Channel, ArrayList< Correspondence > > correspondences = new HashMap< Channel, ArrayList< Correspondence > >();
 
 			// get all interest point labels that have correspondences for all views that are processed
@@ -629,13 +640,12 @@ public class EfficientBayesianBased extends Fusion
 				 ( oldX/2 == ProcessForDeconvolution.defaultBlendingBorder[ 0 ] && oldY/2 == ProcessForDeconvolution.defaultBlendingBorder[ 1 ] && oldZ/2 == ProcessForDeconvolution.defaultBlendingBorder[ 2 ] ) )
 			{
 				ProcessForDeconvolution.defaultBlendingBorder = new int[]{ psfSizeX/2, psfSizeY/2, psfSizeZ/2 };
-			}
-			
-			extractPSF = true;
+			}			
 		}
 		else
 		{
 			extractPSF = false;
+			this.extractPSFLabels = null;
 
 			final GenericDialogPlus gd = new GenericDialogPlus( "Load PSF File ..." );
 
@@ -697,15 +707,15 @@ public class EfficientBayesianBased extends Fusion
 				
 				if ( defaultSamePSFForAllChannels )
 				{
-					for ( final Angle a : anglesToProcess )
-						for ( final Illumination i : illumsToProcess )
+					for ( final Illumination i : illumsToProcess )
+						for ( final Angle a : anglesToProcess )
 							gd2.addFileField( "PSF_file_(angle=" + a.getName() + ", illum=" + i.getName() + ")", defaultPSFFileField.get( j++ ) );
 				}
 				else
 				{
 					for ( final Channel c : channelsToProcess )
-						for ( final Angle a : anglesToProcess )
-							for ( final Illumination i : illumsToProcess )
+						for ( final Illumination i : illumsToProcess )
+							for ( final Angle a : anglesToProcess )
 								gd2.addFileField( "PSF_file_(angle=" + a.getName() + ", illum=" + i.getName() + ", channel=" + c.getName() + ")", defaultPSFFileField.get( j++ ) );					
 				}
 			}

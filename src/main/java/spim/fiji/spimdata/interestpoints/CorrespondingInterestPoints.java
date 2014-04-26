@@ -40,20 +40,20 @@ public class CorrespondingInterestPoints
 	/**
 	 * @return The detection id of the interest point in this {@link InterestPointList}
 	 */
-	final int getDetectionId() { return detectionId; }
+	final public int getDetectionId() { return detectionId; }
 
 	/**
 	 * @return The {@link ViewId} the corresponding interest point belongs to
 	 */
-	final ViewId getCorrespondingViewId() { return correspondingViewId; }
+	final public ViewId getCorrespondingViewId() { return correspondingViewId; }
 	
 	/**
 	 * @return The label of {@link InterestPointList} as stored in the {@link ViewInterestPointLists} HashMap
 	 */
-	final String getCorrespodingLabel() { return correspondingLabel; }
+	final public String getCorrespodingLabel() { return correspondingLabel; }
 	
 	/**
 	 * @return The detection id of the corresponding interest point in the {@link InterestPointList}
 	 */
-	final int getCorrespondingDetectionId() { return correspondingDetectionId; }
+	final public int getCorrespondingDetectionId() { return correspondingDetectionId; }
 }

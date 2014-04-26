@@ -1,8 +1,10 @@
 package spim.process.fusion.deconvolution;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.Callable;
@@ -22,11 +24,15 @@ import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
+import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
+import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
 import spim.process.fusion.export.DisplayImage;
@@ -90,7 +96,9 @@ public class ProcessForDeconvolution
 			double osemspeedup,
 			final boolean weightsOnly,
 			final HashMap< Channel, ChannelPSF > extractPSFLabels,
-			final long[] psfSize )
+			final long[] psfSize,
+			final HashMap< Channel, ArrayList< String > > psfFiles,
+			final boolean transformLoadedPSFs )
 	{				
 		// get all views that are fused
 		final ArrayList< ViewDescription< TimePoint, ViewSetup > > allInputData =
@@ -107,10 +115,13 @@ public class ProcessForDeconvolution
 			overlapImg = null;
 		
 		final ExtractPSF< FloatType > ePSF;		
-		final boolean extractPSFs = extractPSFs( channel, extractPSFLabels ) && !weightsOnly;
-		
+		final boolean extractPSFs = extractPSFsAndSetOtherChannel( channel, extractPSFLabels ) && !weightsOnly;
+		final boolean loadPSFs = (psfFiles != null) && !weightsOnly;
+				
 		if ( extractPSFs )
 			ePSF = new ExtractPSF<FloatType>( bb.getImgFactory( new FloatType() ) );
+		else if ( loadPSFs )
+			ePSF = loadPSFs( channel, allInputData, psfFiles, transformLoadedPSFs );
 		else
 			ePSF = null;
 		
@@ -200,13 +211,13 @@ public class ProcessForDeconvolution
 			// extract PSFs if wanted
 			if ( extractPSFs )
 			{
-				IOFunctions.println( "Extracting PSF for channel " + channel.getName() + " using label '" + extractPSFLabels.get( channel ).getLabel() + "'" );
+				IOFunctions.println( "Extracting PSF for viewsetup " + inputData.getViewSetupId() + " using label '" + extractPSFLabels.get( channel ).getLabel() + "'" );
 				
 				ePSF.extractNextImg(
 						img,
 						inputData,
 						spimData.getViewRegistrations().getViewRegistration( inputData ).getModel(),
-						getLocationsOfCorrespondingBeads( inputData, extractPSFLabels.get( channel ).getLabel() ),
+						getLocationsOfCorrespondingBeads( timepoint, inputData, extractPSFLabels.get( channel ).getLabel() ),
 						psfSize );
 			}
 			
@@ -219,9 +230,8 @@ public class ProcessForDeconvolution
 		if ( !normalizeWeightsAndComputeMinAvgViews( weights ) )
 			return false;
 		
-		// remember the extracted PSFs
-		if ( extractPSFs )
-			extractPSFLabels.get( channel ).setExtractPSFInstance( ePSF );
+		// remember the extracted or loaded PSFs
+		extractPSFLabels.get( channel ).setExtractPSFInstance( ePSF );
 		
 		IOFunctions.println( "Minimal number of overlapping views: " + getMinOverlappingViews() + ", using " + (this.minOverlappingViews = Math.max( 1, this.minOverlappingViews ) ) );
 		IOFunctions.println( "Average number of overlapping views: " + getAvgOverlappingViews() + ", using " + (this.avgOverlappingViews = Math.max( 1, this.avgOverlappingViews ) ) );
@@ -239,21 +249,72 @@ public class ProcessForDeconvolution
 		return true;
 	}
 	
-	protected boolean extractPSFs( final Channel channel, final HashMap<Channel, ChannelPSF> extractPSFLabels )
+	private ExtractPSF<FloatType> loadPSFs(
+			final Channel ch,
+			final ArrayList< ViewDescription< TimePoint, ViewSetup > > allInputData,
+			final HashMap< Channel, ArrayList< String > > psfFiles,
+			final boolean transformLoadedPSFs )
+	{
+		final ArrayList< AffineTransform3D > models;
+		
+		if ( transformLoadedPSFs )
+		{
+			models = new ArrayList< AffineTransform3D >();
+		
+			for ( final ViewDescription< TimePoint, ViewSetup > viewDesc  : allInputData )
+				models.add( spimData.getViewRegistrations().getViewRegistration( viewDesc ).getModel() );
+		}
+		else
+		{
+			models = null;
+		}
+		
+		final ArrayList< File > files = new ArrayList< File >();
+		
+		for ( final String fname : psfFiles.get( ch ) )
+			files.add( new File( fname ) );
+		
+		return ExtractPSF.loadAndTransformPSFs( files, allInputData, bb.getImgFactory( new FloatType() ), new FloatType(), models );
+	}
+
+	protected boolean extractPSFsAndSetOtherChannel( final Channel channel, final HashMap< Channel, ChannelPSF > extractPSFLabels )
 	{
 		if ( extractPSFLabels == null )
 			return false;
 		
-		if ( extractPSFLabels.get( channel ).getLabel() == null )
-			return false;
+		final ChannelPSF thisChannelPSF = extractPSFLabels.get( channel );
+		
+		if ( thisChannelPSF.getLabel() != null )
+		{
+			return true;
+		}
+		else
+		{
+			final ChannelPSF otherChannelPSF = extractPSFLabels.get( thisChannelPSF.getOtherChannel() );			 
+			thisChannelPSF.setExtractPSFInstance( otherChannelPSF.getExtractPSFInstance() );
 
-		return true;
+			return false;
+		}
 	}
 
-	protected ArrayList< float[] > getLocationsOfCorrespondingBeads( final ViewDescription< TimePoint, ViewSetup > inputData, final String label )
+	protected ArrayList< float[] > getLocationsOfCorrespondingBeads( final TimePoint tp, final ViewDescription< TimePoint, ViewSetup > inputData, final String label )
 	{
-		// TODO: get the list
-		return null;
+		final InterestPointList iplist = spimData.getViewInterestPoints().getViewInterestPointLists( inputData ).getInterestPointList( label );
+		
+		// we use a hashset as a detection can correspond with several other detections, and we only want it once
+		final HashSet< Integer > ipWithCorrespondences = new HashSet< Integer >();
+		
+		for ( final CorrespondingInterestPoints cip : iplist.getCorrespondingInterestPoints() )
+			ipWithCorrespondences.add( cip.getDetectionId() );
+		
+		final ArrayList< float[] > llist = new ArrayList< float[] >();
+		
+		// now go over all detections and see if they had correspondences
+		for ( final InterestPoint ip : iplist.getInterestPoints() )
+			if ( ipWithCorrespondences.contains( ip.getId() ) )
+				llist.add( ip.getL().clone() );
+
+		return llist;
 	}
 	
 	protected void displayWeights( final double osemspeedup, final ArrayList< Img< FloatType > > weights, final Img< FloatType > overlapImg )

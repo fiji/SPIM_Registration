@@ -455,7 +455,7 @@ public class ExtractPSF< T extends RealType< T > >
 			final ArrayList< ViewDescription< TimePoint, ViewSetup > > viewDescriptions,
 			final ImgFactory< T > factory,
 			final T type,
-			final AffineTransform3D model )
+			final ArrayList< AffineTransform3D > models )
 	{
 		final ExtractPSF< T > extractPSF = new ExtractPSF< T >( factory );
 		
@@ -465,8 +465,12 @@ public class ExtractPSF< T extends RealType< T > >
 			return null;
 		}
 		
-		for ( final File file : filenames )		
+		extractPSF.viewDescriptions.addAll( viewDescriptions );
+		
+		for ( int i = 0; i < filenames.size(); ++i )		
 		{
+			final File file = filenames.get( i );
+			
 	        // extract the PSF for this one	        
     		IOFunctions.println( "Loading PSF file '" + file.getAbsolutePath() );
 
@@ -495,14 +499,14 @@ public class ExtractPSF< T extends RealType< T > >
 
     		final Img< T > psf;
     		
-			if ( model != null )
+			if ( models != null )
 			{
-				IOFunctions.println( "Transforming PSF for " + file.getName() );
-				psf = extractPSF.transformPSF( psfImage, model );
+				IOFunctions.println( "Transforming PSF for viewid " + viewDescriptions.get( i ).getViewSetupId() + ", file=" + file.getName() );
+				psf = extractPSF.transformPSF( psfImage, models.get( i ) );
 			}
 			else
 			{
-				IOFunctions.println( "PSF for " + file.getName() + " will not be transformed." );
+				IOFunctions.println( "PSF for viewid " + viewDescriptions.get( i ).getViewSetupId() + ", file=" + file.getName() + " will not be transformed." );
 				psf = psfImage.copy();
 			}
 									
