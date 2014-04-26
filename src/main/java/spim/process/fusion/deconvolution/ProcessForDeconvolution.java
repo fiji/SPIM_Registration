@@ -115,16 +115,19 @@ public class ProcessForDeconvolution
 			overlapImg = null;
 		
 		final ExtractPSF< FloatType > ePSF;		
-		final boolean extractPSFs = extractPSFsAndSetOtherChannel( channel, extractPSFLabels ) && !weightsOnly;
-		final boolean loadPSFs = (psfFiles != null) && !weightsOnly;
+		final boolean extractPSFs = (extractPSFLabels != null) && (extractPSFLabels.get( channel ).getLabel() != null);
+		final boolean loadPSFs = (psfFiles != null);
 				
 		if ( extractPSFs )
 			ePSF = new ExtractPSF<FloatType>( bb.getImgFactory( new FloatType() ) );
 		else if ( loadPSFs )
 			ePSF = loadPSFs( channel, allInputData, psfFiles, transformLoadedPSFs );
 		else
-			ePSF = null;
+			ePSF = assignOtherChannel( channel, extractPSFLabels );
 		
+		// remember the extracted or loaded PSFs
+		extractPSFLabels.get( channel ).setExtractPSFInstance( ePSF );
+
 		// we will need to run some batches until all is fused
 		for ( int i = 0; i < allInputData.size(); ++i )
 		{
@@ -229,10 +232,7 @@ public class ProcessForDeconvolution
 		// normalize the weights
 		if ( !normalizeWeightsAndComputeMinAvgViews( weights ) )
 			return false;
-		
-		// remember the extracted or loaded PSFs
-		extractPSFLabels.get( channel ).setExtractPSFInstance( ePSF );
-		
+				
 		IOFunctions.println( "Minimal number of overlapping views: " + getMinOverlappingViews() + ", using " + (this.minOverlappingViews = Math.max( 1, this.minOverlappingViews ) ) );
 		IOFunctions.println( "Average number of overlapping views: " + getAvgOverlappingViews() + ", using " + (this.avgOverlappingViews = Math.max( 1, this.avgOverlappingViews ) ) );
 
@@ -277,24 +277,12 @@ public class ProcessForDeconvolution
 		return ExtractPSF.loadAndTransformPSFs( files, allInputData, bb.getImgFactory( new FloatType() ), new FloatType(), models );
 	}
 
-	protected boolean extractPSFsAndSetOtherChannel( final Channel channel, final HashMap< Channel, ChannelPSF > extractPSFLabels )
+	protected ExtractPSF< FloatType > assignOtherChannel( final Channel channel, final HashMap< Channel, ChannelPSF > extractPSFLabels )
 	{
-		if ( extractPSFLabels == null )
-			return false;
-		
 		final ChannelPSF thisChannelPSF = extractPSFLabels.get( channel );
+		final ChannelPSF otherChannelPSF = extractPSFLabels.get( thisChannelPSF.getOtherChannel() );
 		
-		if ( thisChannelPSF.getLabel() != null )
-		{
-			return true;
-		}
-		else
-		{
-			final ChannelPSF otherChannelPSF = extractPSFLabels.get( thisChannelPSF.getOtherChannel() );			 
-			thisChannelPSF.setExtractPSFInstance( otherChannelPSF.getExtractPSFInstance() );
-
-			return false;
-		}
+		return otherChannelPSF.getExtractPSFInstance();
 	}
 
 	protected ArrayList< float[] > getLocationsOfCorrespondingBeads( final TimePoint tp, final ViewDescription< TimePoint, ViewSetup > inputData, final String label )
