@@ -297,7 +297,7 @@ public class EfficientBayesianBased extends Fusion
 	public long totalRAM( final long fusedSizeMB, final int bytePerPixel )
 	{
 		if ( it.getSelectedIndex() == iterationTypeString.length - 1 )
-			return fusedSizeMB * 8;
+			return fusedSizeMB * 8 + (avgPixels/ ( 1024*1024 )) * bytePerPixel;
 		
 		final int blockChoice = block.getSelectedIndex();
 		
@@ -1068,11 +1068,9 @@ public class EfficientBayesianBased extends Fusion
 			
 			final ArrayList< Correspondence > corrList = new ArrayList< Correspondence >();
 			
-			corrList.add( new Correspondence( "nuclei1" ) );
-			
 			for ( final TimePoint t : timepointsToProcess )
-				for ( final Angle a : anglesToProcess )
-					for ( final Illumination i : illumsToProcess )
+				for ( final Illumination i : illumsToProcess )
+					for ( final Angle a : anglesToProcess )
 					{
 						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
 						final ViewDescription<TimePoint, ViewSetup> desc = spimData.getSequenceDescription().getViewDescription( viewId ); 
@@ -1126,8 +1124,6 @@ public class EfficientBayesianBased extends Fusion
 							}
 						}
 					}
-			
-			corrList.add( new Correspondence( "nuclei2" ) );
 			
 			correspondences.put( c, corrList );
 			viewsPresent.put( c, countViews );

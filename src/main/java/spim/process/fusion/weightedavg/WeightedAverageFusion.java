@@ -33,7 +33,6 @@ public class WeightedAverageFusion extends Fusion
 	public static int defaultNumParalellViewsIndex = 0;
 	protected int numParalellViews = 1;
 	
-	final long avgPixels;
 	protected Choice sequentialViews = null;
 
 	public WeightedAverageFusion(
@@ -46,12 +45,7 @@ public class WeightedAverageFusion extends Fusion
 	{
 		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
 		
-		this.type = type;
-		
-		if ( spimData == null )
-			this.avgPixels = 0;
-		else
-			this.avgPixels = computeAvgImageSize();
+		this.type = type;		
 	}
 	
 	public WeightedAvgFusionType getFusionType() { return type; }
@@ -190,32 +184,6 @@ public class WeightedAverageFusion extends Fusion
 		return true;
 	}
 	
-	protected long computeAvgImageSize()
-	{
-		long avgSize = 0;
-		int countImgs = 0;
-		
-		for ( final TimePoint t : timepointsToProcess )
-			for ( final Channel c : channelsToProcess )
-				for ( final Angle a : anglesToProcess )
-					for ( final Illumination i : illumsToProcess )
-					{
-						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
-						final ViewDescription<TimePoint, ViewSetup> desc = spimData.getSequenceDescription().getViewDescription( viewId );
-						
-						if ( desc.isPresent() )
-						{
-							final ViewSetup viewSetup = desc.getViewSetup();
-							final long numPixel = viewSetup.getWidth() * viewSetup.getHeight() * viewSetup.getDepth();
-							
-							avgSize += numPixel;
-							++countImgs;
-						}
-					}
-		
-		return avgSize / countImgs;
-	}
-
 	@Override
 	public long totalRAM( final long fusedSizeMB, final int bytePerPixel )
 	{

@@ -48,6 +48,7 @@ public abstract class Fusion
 
 	final protected SpimData2 spimData;
 	final int maxNumViews;
+	final protected long avgPixels;
 	
 	/**
 	 * @param spimData
@@ -70,9 +71,15 @@ public abstract class Fusion
 		this.timepointsToProcess = timepointsToProcess;
 		
 		if ( spimData == null )
+		{
+			avgPixels = 0;
 			maxNumViews = 0;
+		}
 		else
+		{
+			avgPixels = computeAvgImageSize();
 			maxNumViews = computeMaxNumViews();
+		}
 	}
 	
 	public abstract long totalRAM( final long fusedSizeMB, final int bytePerPixel );
@@ -137,6 +144,32 @@ public abstract class Fusion
 	 */
 	public abstract String getDescription();
 	
+	protected long computeAvgImageSize()
+	{
+		long avgSize = 0;
+		int countImgs = 0;
+		
+		for ( final TimePoint t : timepointsToProcess )
+			for ( final Channel c : channelsToProcess )
+				for ( final Angle a : anglesToProcess )
+					for ( final Illumination i : illumsToProcess )
+					{
+						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
+						final ViewDescription<TimePoint, ViewSetup> desc = spimData.getSequenceDescription().getViewDescription( viewId );
+						
+						if ( desc.isPresent() )
+						{
+							final ViewSetup viewSetup = desc.getViewSetup();
+							final long numPixel = viewSetup.getWidth() * viewSetup.getHeight() * viewSetup.getDepth();
+							
+							avgSize += numPixel;
+							++countImgs;
+						}
+					}
+		
+		return avgSize / countImgs;
+	}
+
 	protected int computeMaxNumViews()
 	{
 		int maxViews = 0;
