@@ -155,7 +155,7 @@ public class ProcessForDeconvolution
 			// same as in the paralell fusion now more or less
 			final RandomAccessibleInterval< FloatType > img;
 			
-			if ( weightsOnly )
+			if ( weightsOnly && !extractPSFs )
 				img = null;
 			else
 				img = getImage( new FloatType(), spimData, inputData, true );
