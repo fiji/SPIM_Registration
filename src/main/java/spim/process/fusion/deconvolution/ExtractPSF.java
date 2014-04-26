@@ -10,8 +10,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.kenai.jffi.Array;
-
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewSetup;

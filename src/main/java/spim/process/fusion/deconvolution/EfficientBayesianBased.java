@@ -8,10 +8,6 @@ import java.awt.Choice;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import net.imglib2.img.Img;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.numeric.real.FloatType;
-
 import mpicbg.imglib.util.Util;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
@@ -23,8 +19,9 @@ import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.postprocessing.deconvolution2.CUDAConvolution;
 import mpicbg.spim.postprocessing.deconvolution2.LRFFT;
-import mpicbg.spim.postprocessing.deconvolution2.LRInput;
 import mpicbg.spim.postprocessing.deconvolution2.LRFFT.PSFTYPE;
+import mpicbg.spim.postprocessing.deconvolution2.LRInput;
+import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.GUIHelper;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
@@ -64,7 +61,8 @@ public class EfficientBayesianBased extends Fusion
 	public static boolean defaultAdjustBlending = false;
 	public static int defaultDebugInterval = 1;
 	public static double defaultOSEMspeedup = 1;
-	public static boolean defaultOnePSFForAll = true;
+	public static boolean defaultSamePSFForAllViews = true;
+	public static boolean defaultSamePSFForAllChannels = true;
 	public static boolean defaultTransformPSFs = true;
 	public static ArrayList< String > defaultPSFFileField = null;
 	public static int[] defaultPSFLabelIndex = null;
@@ -92,7 +90,7 @@ public class EfficientBayesianBased extends Fusion
 	double osemSpeedUp;
 	boolean extractPSF;
 	boolean transformPSFs;
-	ArrayList< String > psfFiles;
+	HashMap< Channel, ArrayList< String > > psfFiles;
 	HashMap< Channel, ChannelPSF > extractPSFLabels; // should be either a String or another Channel object
 	int blendingBorderX, blendingBorderY, blendingBorderZ;
 	int blendingRangeX, blendingRangeY, blendingRangeZ;
@@ -148,7 +146,7 @@ public class EfficientBayesianBased extends Fusion
 			for ( final Channel c : channelsToProcess )
 			{
 				// fuse the images, create weights, extract PSFs we need for the deconvolution
-				pfd.fuseStacks( t, c, osemspeedupIndex, osemSpeedUp, justShowWeights, extractPSFLabels, new long[]{ psfSizeX, psfSizeY, psfSizeZ } );
+				pfd.fuseStacksAndGetPSFs( t, c, osemspeedupIndex, osemSpeedUp, justShowWeights, extractPSFLabels, new long[]{ psfSizeX, psfSizeY, psfSizeZ } );
 				
 				// on the first run update the osemspeedup if necessary
 				if ( stack++ == 0 )
@@ -641,17 +639,19 @@ public class EfficientBayesianBased extends Fusion
 
 			final GenericDialogPlus gd = new GenericDialogPlus( "Load PSF File ..." );
 
-			gd.addCheckbox( "Use same PSF for all views", defaultOnePSFForAll );
+			gd.addCheckbox( "Use_same_PSF_for_all_views", defaultSamePSFForAllViews );
+			gd.addCheckbox( "Use_same_PSF_for_all_channels", defaultSamePSFForAllChannels );
 			
 			gd.showDialog();
 
 			if ( gd.wasCanceled() )
 				return false;
 
-			defaultOnePSFForAll = gd.getNextBoolean();			
-			
 			final GenericDialogPlus gd2 = new GenericDialogPlus( "Select PSF File ..." );
 			
+			defaultSamePSFForAllViews = gd.getNextBoolean();
+			defaultSamePSFForAllChannels = gd.getNextBoolean();
+					
 			gd2.addCheckbox( "Transform_PSFs", defaultTransformPSFs );
 			gd2.addMessage( "" );
 			gd2.addMessage( "Note: the calibration of the PSF(s) has to match the calibration of the input views\n" +
@@ -659,10 +659,13 @@ public class EfficientBayesianBased extends Fusion
 
 			int numPSFs;
 			
-			if ( defaultOnePSFForAll )
+			if ( defaultSamePSFForAllViews )
 				numPSFs = 1;
 			else
 				numPSFs = anglesToProcess.size() * illumsToProcess.size();
+			
+			if ( !defaultSamePSFForAllChannels )
+				numPSFs *= channelsToProcess.size();
 
 			if ( defaultPSFFileField == null )
 				defaultPSFFileField = new ArrayList<String>();
@@ -674,18 +677,40 @@ public class EfficientBayesianBased extends Fusion
 				for ( int i = numPSFs; i < defaultPSFFileField.size(); ++i )
 					defaultPSFFileField.remove( numPSFs );
 
-			if ( defaultOnePSFForAll )
+			if ( defaultSamePSFForAllViews )
 			{
-				gd2.addFileField( "PSF_file", defaultPSFFileField.get( 0 ) );
+				if ( defaultSamePSFForAllChannels )
+				{
+					gd2.addFileField( "PSF_file", defaultPSFFileField.get( 0 ) );
+				}
+				else
+				{
+					int j = 0;
+					
+					for ( final Channel c : channelsToProcess )
+						gd2.addFileField( "PSF_file_(channel=" + c.getName() + ")", defaultPSFFileField.get( j++ ) );
+				}
 			}
 			else
 			{
 				int j = 0;
 				
-				for ( final Angle a : anglesToProcess )
-					for ( final Illumination i : illumsToProcess )
-						gd2.addFileField( "PSF_file_(angle=" + a.getName() + ", illum=" + i.getName() + ")", defaultPSFFileField.get( j++ ) );
+				if ( defaultSamePSFForAllChannels )
+				{
+					for ( final Angle a : anglesToProcess )
+						for ( final Illumination i : illumsToProcess )
+							gd2.addFileField( "PSF_file_(angle=" + a.getName() + ", illum=" + i.getName() + ")", defaultPSFFileField.get( j++ ) );
+				}
+				else
+				{
+					for ( final Channel c : channelsToProcess )
+						for ( final Angle a : anglesToProcess )
+							for ( final Illumination i : illumsToProcess )
+								gd2.addFileField( "PSF_file_(angle=" + a.getName() + ", illum=" + i.getName() + ", channel=" + c.getName() + ")", defaultPSFFileField.get( j++ ) );					
+				}
 			}
+			
+			GUIHelper.addScrollBars( gd2 );
 			
 			gd2.showDialog();
 			
@@ -699,15 +724,59 @@ public class EfficientBayesianBased extends Fusion
 			for ( int i = 0; i < numPSFs; ++i )
 				defaultPSFFileField.add( gd2.getNextString() );
 				
-			psfFiles = new ArrayList<String>();
-			if ( defaultOnePSFForAll )
+			psfFiles = new HashMap< Channel, ArrayList< String > >();
+			
+			if ( defaultSamePSFForAllViews )
 			{
-				for ( int i = 0; i < numPSFs; ++i )
-					psfFiles.add( defaultPSFFileField.get( 0 ) );
+				if ( defaultSamePSFForAllChannels )
+				{
+					final ArrayList< String > files = new ArrayList< String >();
+					for ( int i = 0; i < numPSFs; ++i )
+						files.add( defaultPSFFileField.get( 0 ) );
+					
+					for ( final Channel c : channelsToProcess )
+						psfFiles.put( c, files );
+				}
+				else
+				{
+					int j = 0;
+					
+					for ( final Channel c : channelsToProcess )
+					{
+						final ArrayList< String > files = new ArrayList< String >();
+						
+						for ( int i = 0; i < numPSFs; ++i )
+							files.add( defaultPSFFileField.get( j ) );
+						
+						psfFiles.put( c, files );
+						++j;
+					}
+				}
 			}
 			else
 			{
-				psfFiles.addAll( defaultPSFFileField );
+				if ( defaultSamePSFForAllChannels )
+				{
+					final ArrayList< String > files = new ArrayList< String >();
+					files.addAll( defaultPSFFileField );
+					
+					for ( final Channel c : channelsToProcess )
+						psfFiles.put( c, files );
+				}
+				else
+				{
+					int j = 0;
+					
+					for ( final Channel c : channelsToProcess )
+					{
+						final ArrayList< String > files = new ArrayList< String >();
+						
+						for ( int i = 0; i < anglesToProcess.size() * illumsToProcess.size(); ++i )
+							files.add( defaultPSFFileField.get( j++ ) );
+						
+						psfFiles.put( c, files );		
+					}
+				}
 			}	
 		}
 		

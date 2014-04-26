@@ -83,7 +83,7 @@ public class ProcessForDeconvolution
 	 * @param channel
 	 * @return
 	 */
-	public boolean fuseStacks(
+	public boolean fuseStacksAndGetPSFs(
 			final TimePoint timepoint, 
 			final Channel channel,
 			final int osemIndex,
