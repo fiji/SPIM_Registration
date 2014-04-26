@@ -10,6 +10,11 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.kenai.jffi.Array;
+
+import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
@@ -30,12 +35,13 @@ public class ExtractPSF< T extends RealType< T > >
 	final ImgFactory< T > psfFactory;
 	
 	final ArrayList< Img< T > > pointSpreadFunctions, originalPSFs;
-	Img< T > avgPSF, avgOriginalPSF;
+	final ArrayList< ViewDescription< TimePoint, ViewSetup > > viewDescriptions;
 	
 	public ExtractPSF( final ImgFactory< T > psfFactory )
 	{		
 		this.pointSpreadFunctions = new ArrayList< Img< T > >();
 		this.originalPSFs = new ArrayList< Img< T > >();
+		this.viewDescriptions = new ArrayList< ViewDescription< TimePoint, ViewSetup > >();
 		
 		this.psfFactory = psfFactory;
 	}
@@ -43,22 +49,17 @@ public class ExtractPSF< T extends RealType< T > >
 	/**
 	 * @return - the extracted PSFs after applying the transformations of each view
 	 */
-	public ArrayList< Img< T > > getPSFs() { return pointSpreadFunctions; }
+	public ArrayList< Img< T > > getTransformedPSFs() { return pointSpreadFunctions; }
 
 	/**
 	 * @return - the extracted PSFs in original calibration for each view
 	 */
-	public ArrayList< Img< T > > getPSFsInInputCalibration() { return originalPSFs; }
-
-	/**
-	 * @return - the average extracted PSF after applying the transformations of each view
-	 */
-	public Img< T > getAveragePSF() { return avgPSF; }
+	public ArrayList< Img< T > > getInputCalibrationPSFs() { return originalPSFs; }
 	
 	/**
-	 * @return - the average extracted PSF in the same calibration as the input data
+	 * @return - the viewdescriptions corresponding to the PSFs
 	 */
-	public Img< T > getAverageOriginalPSF() { return avgOriginalPSF; }
+	public ArrayList< ViewDescription< TimePoint, ViewSetup > > getViewDescriptionsForPSFs() { return viewDescriptions; }
 	
 	/**
 	 * Get projection along the smallest dimension (which is usually the rotation axis)
@@ -67,7 +68,7 @@ public class ExtractPSF< T extends RealType< T > >
 	 * @param minDim - along which dimension to project, if set to <0, the smallest dimension will be chosen
 	 * @return - the averaged, projected PSF
 	 */
-	public Img< T > getMaxProjectionAveragePSF( final Img< T > avgPSF, int minDim )
+	public Img< T > computeMaxProjectionAveragePSF( final Img< T > avgPSF, int minDim )
 	{
 		final long[] dimensions = new long[ avgPSF.numDimensions() ];
 		avgPSF.dimensions( dimensions );
@@ -137,11 +138,11 @@ public class ExtractPSF< T extends RealType< T > >
 	
 	/**
 	 * compute the average psf in original calibration and after applying the transformations
-	 * 
-	 * @param maxSize
 	 */
-	public Img< T > computeAverageTransformedPSF( final long[] maxSize, final ArrayList< Img< T > > pointSpreadFunctions )
+	public Img< T > computeAverageTransformedPSF()
 	{
+		final long[] maxSize = computeMaxDimTransformedPSF();
+		
 		final int numDimensions = maxSize.length;
 		
 		IJ.log( "maxSize: " + Util.printCoordinates( maxSize ) );
@@ -181,10 +182,9 @@ public class ExtractPSF< T extends RealType< T > >
 	/**
 	 * Compute average PSF in local image coordinates, all images are supposed to have the same dimensions
 	 * 
-	 * @param originalPSFs
 	 * @return
 	 */
-	public Img< T > computeAveragePSF( final ArrayList< Img< T > > originalPSFs )
+	public Img< T > computeAveragePSF()
 	{ 
 		final Img< T > avgOriginalPSF = originalPSFs.get( 0 ).factory().create( originalPSFs.get( 0 ), originalPSFs.get( 0 ).firstElement() );
 
@@ -210,12 +210,14 @@ public class ExtractPSF< T extends RealType< T > >
 	/**
 	 * 
 	 * @param img
+	 * @param viewDescription
 	 * @param model
 	 * @param locations
 	 * @param size - dimensions of psf to extract
 	 */
 	public void extractNextImg(
 			final RandomAccessibleInterval< T > img,
+			final ViewDescription< TimePoint, ViewSetup > viewDescription,
 			final AffineTransform3D model,
 			final ArrayList< float[] > locations,
 			final long[] psfSize )
@@ -227,6 +229,7 @@ public class ExtractPSF< T extends RealType< T > >
 		
 		pointSpreadFunctions.add( psf );
 		originalPSFs.add( originalPSF );
+		viewDescriptions.add( viewDescription );
 	}
 
 	
@@ -428,6 +431,22 @@ public class ExtractPSF< T extends RealType< T > >
 	}
 	
 	/**
+	 * @return - maximal dimensions of the transformed PSFs
+	 */
+	public long[] computeMaxDimTransformedPSF()
+	{
+		final int numDimensions = 3;
+		
+		final long[] maxSize = new long[ numDimensions ];
+
+		for ( final Img< T > transformedPSF : pointSpreadFunctions )
+			for ( int d = 0; d < numDimensions; ++d )
+				maxSize[ d ] = Math.max( maxSize[ d ], transformedPSF.dimension( d ) );
+
+		return maxSize;
+	}
+	
+	/**
 	 * 
 	 * @param fileName
 	 * @param model - if model is null, PSFs will not be transformed
@@ -435,19 +454,19 @@ public class ExtractPSF< T extends RealType< T > >
 	 */
 	public static < T extends RealType< T > > ExtractPSF< T > loadAndTransformPSFs(
 			final ArrayList< File > filenames,
+			final ArrayList< ViewDescription< TimePoint, ViewSetup > > viewDescriptions,
 			final ImgFactory< T > factory,
 			final T type,
 			final AffineTransform3D model )
 	{
 		final ExtractPSF< T > extractPSF = new ExtractPSF< T >( factory );
 		
-		final int numDimensions = 3;
-				
-		final long[] maxSize = new long[ numDimensions ];
+		if ( viewDescriptions.size() != filenames.size() )
+		{
+			IOFunctions.println( "There must be as many filenames as there are viewdescriptions." );
+			return null;
+		}
 		
-		for ( int d = 0; d < numDimensions; ++d )
-			maxSize[ d ] = 0;
-
 		for ( final File file : filenames )		
 		{
 	        // extract the PSF for this one	        
@@ -488,16 +507,10 @@ public class ExtractPSF< T extends RealType< T > >
 				IOFunctions.println( "PSF for " + file.getName() + " will not be transformed." );
 				psf = psfImage.copy();
 			}
-						
-			for ( int d = 0; d < numDimensions; ++d )
-				maxSize[ d ] = Math.max( maxSize[ d ], psf.dimension( d ) );
-			
+									
 			extractPSF.pointSpreadFunctions.add( psf );
 			extractPSF.originalPSFs.add( psfImage );
 		}
-		
-		extractPSF.computeAverageTransformedPSF( maxSize, extractPSF.pointSpreadFunctions );
-		extractPSF.computeAveragePSF( extractPSF.originalPSFs );
 		
 		return extractPSF;
 	}

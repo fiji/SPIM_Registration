@@ -8,6 +8,8 @@ import java.awt.Choice;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import net.imglib2.img.Img;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
 
 import mpicbg.imglib.util.Util;
@@ -30,6 +32,7 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.process.fusion.export.DisplayImage;
 import spim.process.fusion.export.ImgExport;
 
 import com.sun.jna.Native;
@@ -157,7 +160,7 @@ public class EfficientBayesianBased extends Fusion
 				}
 				
 				// setup & run the deconvolution
-				displayParameters( bb );
+				displayParametersAndPSFs( bb, c, extractPSFLabels );
 
 				final LRInput deconvolutionData = new LRInput();
 
@@ -173,45 +176,6 @@ public class EfficientBayesianBased extends Fusion
 		return true;
 	}
 	
-	protected void displayParameters( final BoundingBox bb )
-	{
-		IOFunctions.println( "Type of iteration: " + iterationType );
-		IOFunctions.println( "Number iterations: " + numIterations );
-		IOFunctions.println( "OSEM speedup: " + osemSpeedUp );
-		IOFunctions.println( "Using blocks: " + useBlocks );
-		if ( useBlocks )
-			IOFunctions.println( "Block size: " + Util.printCoordinates( blockSize ) );
-		IOFunctions.println( "Using CUDA: " + useCUDA );
-
-		IOFunctions.println( "Blending border: " + blendingBorderX + "x" + blendingBorderY + "x" + blendingBorderZ );
-		IOFunctions.println( "Blending range: " + blendingRangeX + "x" + blendingRangeY + "x" + blendingRangeZ );
-
-		if ( extractPSF)
-		{
-			IOFunctions.println( "PSF size (extracting): " + psfSizeX + "x" + psfSizeY + "x" + psfSizeZ );
-			
-			for ( final ChannelPSF c : extractPSFLabels.values() )
-			{
-				if ( c.getOtherChannel() == null )
-					IOFunctions.println( "Channel " + c.getChannel().getName() + " extracts from label '" + c.getLabel() + "'. " );
-				else
-					IOFunctions.println( "Channel " + c.getChannel().getName() + " uses same PSF as channel '" + c.getOtherChannel().getName() + "'. " );
-			}
-		}
-		else
-			IOFunctions.println( "PSF will be read from disc, number of PSF's to load " + psfFiles.size() );
-		
-		if ( debugMode )
-			IOFunctions.println( "Debugging every " + debugInterval + " iterations." );
-	
-		IOFunctions.println( "ImgLib container (deconvolved): " + bb.getImgFactory( new FloatType() ).getClass().getSimpleName() );
-		
-		if ( useTikhonovRegularization )
-			IOFunctions.println( "Using Tikhonov regularization (lambda = " + lambda + ")" );
-		else
-			IOFunctions.println( "Not using Tikhonov regularization" );		
-	}
-
 	@Override
 	public boolean queryParameters()
 	{
@@ -227,6 +191,9 @@ public class EfficientBayesianBased extends Fusion
 		if ( !getPSF() )
 			return false;
 		
+		// reorder the channels so that those who extract a PSF
+		// from the images for a certain timepoint will be processed
+		// first
 		if ( extractPSF )
 			if ( !reOrderChannels() )
 				return false;
@@ -243,53 +210,6 @@ public class EfficientBayesianBased extends Fusion
 		if ( !getDebug() )
 			return false;
 
-		return true;
-	}
-
-	/**
-	 * Order the channels in a way so that those were the beads are extracted from, are first.
-	 * Otherwise, the extracted PSF will not be avaiable for a certain channel that uses PSFs
-	 * from another channel
-	 * 
-	 * @return
-	 */
-	protected boolean reOrderChannels()
-	{
-		final ArrayList< Channel > channelsToExtract = new ArrayList< Channel >();
-		final ArrayList< Channel > channelsUsingAnotherPSF = new ArrayList< Channel >();
-		
-		for ( final Channel c : channelsToProcess )
-		{
-			if ( extractPSFLabels.get( c ).getLabel() == null )
-				channelsUsingAnotherPSF.add( c );
-			else
-				channelsToExtract.add( c );
-		}
-		
-		// check that there is at least one channel that extracts
-		if ( channelsToExtract.size() == 0 )
-		{
-			IOFunctions.println( "At least one channel needs to extract PSFs. Stopping." );
-			return false;
-		}
-		
-		// test that each channel using the PSF from another channel actually links to one that extracts
-		for ( final Channel c : channelsUsingAnotherPSF )
-		{
-			if ( extractPSFLabels.get( extractPSFLabels.get( c ).getOtherChannel() ).getLabel() == null )
-			{
-				IOFunctions.println( "Channel " + c.getName() + " is supposed to use the PSF from channel " +
-								extractPSFLabels.get( c ).getOtherChannel().getName() + ", but this one also does not" +
-								"extract PSFs. Stopping." );
-				return false;
-			}
-		}
-		
-		this.channelsToProcess.clear();
-		
-		this.channelsToProcess.addAll( channelsToExtract );
-		this.channelsToProcess.addAll( channelsUsingAnotherPSF );
-		
 		return true;
 	}
 
@@ -408,7 +328,130 @@ public class EfficientBayesianBased extends Fusion
 		
 		return totalRam;
 	}
+
+	protected void displayParametersAndPSFs( final BoundingBox bb, final Channel channel, final HashMap< Channel, ChannelPSF > extractPSFLabels  )
+	{
+		IOFunctions.println( "Type of iteration: " + iterationType );
+		IOFunctions.println( "Number iterations: " + numIterations );
+		IOFunctions.println( "OSEM speedup: " + osemSpeedUp );
+		IOFunctions.println( "Using blocks: " + useBlocks );
+		if ( useBlocks )
+			IOFunctions.println( "Block size: " + Util.printCoordinates( blockSize ) );
+		IOFunctions.println( "Using CUDA: " + useCUDA );
+
+		IOFunctions.println( "Blending border: " + blendingBorderX + "x" + blendingBorderY + "x" + blendingBorderZ );
+		IOFunctions.println( "Blending range: " + blendingRangeX + "x" + blendingRangeY + "x" + blendingRangeZ );
+
+		if ( extractPSF )
+		{
+			IOFunctions.println( "PSF size (extracting): " + psfSizeX + "x" + psfSizeY + "x" + psfSizeZ );
+			
+			for ( final ChannelPSF c : extractPSFLabels.values() )
+			{
+				if ( c.getOtherChannel() == null )
+					IOFunctions.println( "Channel " + c.getChannel().getName() + " extracts from label '" + c.getLabel() + "'. " );
+				else
+					IOFunctions.println( "Channel " + c.getChannel().getName() + " uses same PSF as channel '" + c.getOtherChannel().getName() + "'. " );
+			}
+		}
+		else
+			IOFunctions.println( "PSF will be read from disc, number of PSF's to load " + psfFiles.size() );
+		
+		if ( debugMode )
+			IOFunctions.println( "Debugging every " + debugInterval + " iterations." );
 	
+		IOFunctions.println( "ImgLib container (deconvolved): " + bb.getImgFactory( new FloatType() ).getClass().getSimpleName() );
+		
+		if ( useTikhonovRegularization )
+			IOFunctions.println( "Using Tikhonov regularization (lambda = " + lambda + ")" );
+		else
+			IOFunctions.println( "Not using Tikhonov regularization" );
+
+		// only if the PSF was extracted in this channel
+		if ( extractPSFLabels.get( channel ).isExtractedPSF() )
+		{
+			// "Do not show PSFs", 
+			// "Show MIP of combined PSF's",
+			// "Show combined PSF's",
+			// "Show individual PSF's",
+			// "Show combined PSF's (original scale)",
+			// "Show individual PSF's (original scale)" };
+			
+			final ExtractPSF< FloatType > ePSF = extractPSFLabels.get( channel ).getExtractPSFInstance(); 
+			final DisplayImage di = new DisplayImage();
+
+			if ( displayPSF == 1 )
+			{
+				di.exportImage( ePSF.computeMaxProjectionAveragePSF( ePSF.computeAverageTransformedPSF(), -1 ), "Max projected avg transformed PSF's" );
+			}
+			else if ( displayPSF == 2 )
+			{
+				di.exportImage( ePSF.computeAverageTransformedPSF(), "Avg transformed PSF's" );				
+			}
+			else if ( displayPSF == 3 )
+			{
+				for ( int i = 0; i < ePSF.getTransformedPSFs().size(); ++i )
+					di.exportImage( ePSF.getTransformedPSFs().get( i ), "transfomed PSF of viewsetup " + ePSF.getViewDescriptionsForPSFs().get( i ).getViewSetupId() );
+			}
+			else if ( displayPSF == 4 )
+			{
+				di.exportImage( ePSF.computeAveragePSF(), "Avg original PSF's" );				
+			}
+			else if ( displayPSF == 5 )
+			{
+				for ( int i = 0; i < ePSF.getInputCalibrationPSFs().size(); ++i )
+					di.exportImage( ePSF.getInputCalibrationPSFs().get( i ), "original PSF of viewsetup " + ePSF.getViewDescriptionsForPSFs().get( i ).getViewSetupId() );				
+			}
+		}
+	}
+
+	/**
+	 * Order the channels in a way so that those were the beads are extracted from, are first.
+	 * Otherwise, the extracted PSF will not be avaiable for a certain channel that uses PSFs
+	 * from another channel
+	 * 
+	 * @return
+	 */
+	protected boolean reOrderChannels()
+	{
+		final ArrayList< Channel > channelsToExtract = new ArrayList< Channel >();
+		final ArrayList< Channel > channelsUsingAnotherPSF = new ArrayList< Channel >();
+		
+		for ( final Channel c : channelsToProcess )
+		{
+			if ( extractPSFLabels.get( c ).getLabel() == null )
+				channelsUsingAnotherPSF.add( c );
+			else
+				channelsToExtract.add( c );
+		}
+		
+		// check that there is at least one channel that extracts
+		if ( channelsToExtract.size() == 0 )
+		{
+			IOFunctions.println( "At least one channel needs to extract PSFs. Stopping." );
+			return false;
+		}
+		
+		// test that each channel using the PSF from another channel actually links to one that extracts
+		for ( final Channel c : channelsUsingAnotherPSF )
+		{
+			if ( extractPSFLabels.get( extractPSFLabels.get( c ).getOtherChannel() ).getLabel() == null )
+			{
+				IOFunctions.println( "Channel " + c.getName() + " is supposed to use the PSF from channel " +
+								extractPSFLabels.get( c ).getOtherChannel().getName() + ", but this one also does not" +
+								"extract PSFs. Stopping." );
+				return false;
+			}
+		}
+		
+		this.channelsToProcess.clear();
+		
+		this.channelsToProcess.addAll( channelsToExtract );
+		this.channelsToProcess.addAll( channelsUsingAnotherPSF );
+		
+		return true;
+	}
+
 	protected boolean getBlending()
 	{
 		if ( adjustBlending )

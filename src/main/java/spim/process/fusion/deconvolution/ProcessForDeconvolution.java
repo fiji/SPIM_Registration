@@ -198,12 +198,13 @@ public class ProcessForDeconvolution
 			taskExecutor.shutdown();
 			
 			// extract PSFs if wanted
-			if ( extractPSFs && !weightsOnly )
+			if ( extractPSFs )
 			{
 				IOFunctions.println( "Extracting PSF for channel " + channel.getName() + " using label '" + extractPSFLabels.get( channel ).getLabel() + "'" );
 				
 				ePSF.extractNextImg(
-						img, 
+						img,
+						inputData,
 						spimData.getViewRegistrations().getViewRegistration( inputData ).getModel(),
 						getLocationsOfCorrespondingBeads( inputData, extractPSFLabels.get( channel ).getLabel() ),
 						psfSize );
@@ -217,6 +218,10 @@ public class ProcessForDeconvolution
 		// normalize the weights
 		if ( !normalizeWeightsAndComputeMinAvgViews( weights ) )
 			return false;
+		
+		// remember the extracted PSFs
+		if ( extractPSFs )
+			extractPSFLabels.get( channel ).setExtractPSFInstance( ePSF );
 		
 		IOFunctions.println( "Minimal number of overlapping views: " + getMinOverlappingViews() + ", using " + (this.minOverlappingViews = Math.max( 1, this.minOverlappingViews ) ) );
 		IOFunctions.println( "Average number of overlapping views: " + getAvgOverlappingViews() + ", using " + (this.avgOverlappingViews = Math.max( 1, this.avgOverlappingViews ) ) );

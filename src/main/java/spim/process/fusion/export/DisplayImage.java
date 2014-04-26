@@ -17,6 +17,11 @@ public class DisplayImage implements ImgExport
 	
 	public DisplayImage() { this( false ); }
 	public DisplayImage( final boolean virtualDisplay ) { this.virtualDisplay = virtualDisplay; }
+
+	public < T extends RealType< T > & NativeType< T > > void exportImage( final RandomAccessibleInterval< T > img, final String title )
+	{
+		exportImage( img, null, title );
+	}
 	
 	@SuppressWarnings("unchecked")
 	public < T extends RealType< T > & NativeType< T > > void exportImage( final RandomAccessibleInterval< T > img, final BoundingBox bb, final String title )
