@@ -416,7 +416,6 @@ public class ProcessForDeconvolution
 							for ( long j = 0; j < portion.getLoopSize(); ++j )
 							{
 								double sumW = 0;
-								
 								int count = 0;
 								
 								for ( final Cursor< FloatType > c : cursors )
@@ -437,6 +436,8 @@ public class ProcessForDeconvolution
 							}
 							
 							final double avgNumViews = (double)countViews / (double)( portion.getLoopSize() );
+
+							System.out.println( avgNumViews + " = " + countViews + " / " + portion.getLoopSize() );
 							
 							return new double[]{ minNumViews, avgNumViews };
 						}
@@ -460,7 +461,7 @@ public class ProcessForDeconvolution
 				this.avgOverlappingViews += minAvg[ 1 ];
 			}
 			
-			this.avgOverlappingViews /= (double)weights.size();
+			this.avgOverlappingViews /= (double)futures.size();
 		}
 		catch ( final Exception e )
 		{
