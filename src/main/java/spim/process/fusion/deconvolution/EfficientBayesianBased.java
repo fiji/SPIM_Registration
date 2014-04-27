@@ -68,7 +68,7 @@ public class EfficientBayesianBased extends Fusion
 	public static int[] defaultPSFLabelIndex = null;
 	public static int defaultPSFSizeX = 27;
 	public static int defaultPSFSizeY = 27;
-	public static int defaultPSFSizeZ = 27;
+	public static int defaultPSFSizeZ = 21;
 
 	PSFTYPE iterationType;
 	boolean justShowWeights;
@@ -297,7 +297,7 @@ public class EfficientBayesianBased extends Fusion
 	public long totalRAM( final long fusedSizeMB, final int bytePerPixel )
 	{
 		if ( it.getSelectedIndex() == iterationTypeString.length - 1 )
-			return fusedSizeMB * 8 + (avgPixels/ ( 1024*1024 )) * bytePerPixel;
+			return fusedSizeMB * getMaxNumViewsPerTimepoint() + (avgPixels/ ( 1024*1024 )) * bytePerPixel;
 		
 		final int blockChoice = block.getSelectedIndex();
 		

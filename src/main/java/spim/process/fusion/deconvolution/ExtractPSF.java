@@ -255,27 +255,26 @@ public class ExtractPSF< T extends RealType< T > >
 		
 		// the center of the psf has to be the center of the transformed psf as well
 		// this is important!
-		final float[] center = new float[ numDimensions ]; 
-		
+		final float[] center = new float[ numDimensions ];
+		final float[] tmp = new float[ numDimensions ];
+
 		for ( int d = 0; d < numDimensions; ++d )
 			center[ d ] = psf.dimension( d ) / 2;
 		
-		model.apply( center, center );
+		model.apply( center, tmp );
 
 		for ( int d = 0; d < numDimensions; ++d )
 		{						
-			size[ d ] = (float)minMaxDim.realMax( d ) -(float) minMaxDim.realMin( d );
+			size[ d ] = (float)minMaxDim.realMax( d ) - (float) minMaxDim.realMin( d );
 			
-			newSize[ d ] = (int)size[ d ] + 3;
+			newSize[ d ] = (int)size[ d ] + 1;
 			if ( newSize[ d ] % 2 == 0 )
 				++newSize[ d ];
 				
 			// the offset is defined like this:
 			// the transformed coordinates of the center of the psf
 			// are the center of the transformed psf
-			offset[ d ] = center[ d ] - newSize[ d ]/2;
-			
-			//System.out.println( MathLib.printCoordinates( minMaxDim[ d ] ) + " size " + size[ d ] + " newSize " + newSize[ d ] );
+			offset[ d ] = tmp[ d ] - newSize[ d ]/2;
 		}
 		
 		return transform( psf, model, newSize, offset );
@@ -331,17 +330,19 @@ public class ExtractPSF< T extends RealType< T > >
 		return psf;
 	}
 	
-	public static < T extends RealType< T > > Img< T > transform( final Img< T > image, final AffineTransform3D transform, final long[] newDim, final float[] offset )
+	public static < T extends RealType< T > > Img< T > transform( final Img< T > image, final AffineTransform3D transformIn, final long[] newDim, final float[] offset )
 	{
 		final int numDimensions = image.numDimensions();
+		final AffineTransform3D transform = transformIn.inverse(); 
 
 		// create the new output image
-		final Img< T > transformed = image.factory().create( newDim, Views.iterable( image ).firstElement().createVariable() );
+		final Img< T > transformed = image.factory().create( newDim, image.firstElement() );
 
 		final Cursor<T> transformedIterator = transformed.localizingCursor();		
 		final RealRandomAccess<T> interpolator = Views.interpolate( Views.extendZero( image ), new NLinearInterpolatorFactory<T>() ).realRandomAccess();
 		
-		final float[] tmp = new float[ numDimensions ];
+		final float[] tmp1 = new float[ numDimensions ];
+		final float[] tmp2 = new float[ numDimensions ];
 
 		while (transformedIterator.hasNext())
 		{
@@ -350,16 +351,16 @@ public class ExtractPSF< T extends RealType< T > >
 			// we have to add the offset of our new image
 			// relative to it's starting point (0,0,0)
 			for ( int d = 0; d < numDimensions; ++d )
-				tmp[ d ] = transformedIterator.getIntPosition( d ) + offset[ d ];
+				tmp1[ d ] = transformedIterator.getIntPosition( d ) + offset[ d ];
 			
 			// transform back into the original image
 			// 
 			// in order to compute the voxels in the new object we have to apply
 			// the inverse transform to all voxels of the new array and interpolate
 			// the position in the original image
-			transform.applyInverse( tmp, tmp );
+			transform.apply( tmp1, tmp2 );
 			
-			interpolator.setPosition( tmp );
+			interpolator.setPosition( tmp2 );
 
 			transformedIterator.get().set( interpolator.get() );
 		}		

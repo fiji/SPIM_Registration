@@ -214,13 +214,16 @@ public class ProcessForDeconvolution
 			// extract PSFs if wanted
 			if ( extractPSFs )
 			{
-				IOFunctions.println( "Extracting PSF for viewsetup " + inputData.getViewSetupId() + " using label '" + extractPSFLabels.get( channel ).getLabel() + "'" );
+				final ArrayList< float[] > llist = getLocationsOfCorrespondingBeads( timepoint, inputData, extractPSFLabels.get( channel ).getLabel() );
+				
+				IOFunctions.println( "Extracting PSF for viewsetup " + inputData.getViewSetupId() + " using label '" + extractPSFLabels.get( channel ).getLabel() + "'" +
+						" (" +llist.size() + " corresponding detections available)" );
 				
 				ePSF.extractNextImg(
 						img,
 						inputData,
 						spimData.getViewRegistrations().getViewRegistration( inputData ).getModel(),
-						getLocationsOfCorrespondingBeads( timepoint, inputData, extractPSFLabels.get( channel ).getLabel() ),
+						llist,
 						psfSize );
 			}
 			
