@@ -17,6 +17,7 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
+import mpicbg.spim.postprocessing.deconvolution2.BayesMVDeconvolution;
 import mpicbg.spim.postprocessing.deconvolution2.CUDAConvolution;
 import mpicbg.spim.postprocessing.deconvolution2.LRFFT;
 import mpicbg.spim.postprocessing.deconvolution2.LRFFT.PSFTYPE;
@@ -48,6 +49,8 @@ public class EfficientBayesianBased extends Fusion
 		"Independent (slow, very precise)",
 		"Illustrate overlap of views per pixel (do not deconvolve)" };
 
+	public static boolean makeAllPSFSameSize = false;
+	
 	public static int defaultIterationType = 1;
 	public static int defaultOSEMspeedupIndex = 0;
 	public static int defaultNumIterations = 10;
@@ -140,6 +143,10 @@ public class EfficientBayesianBased extends Fusion
 				new int[]{ blendingBorderX, blendingBorderY, blendingBorderZ },
 				new int[]{ blendingRangeX, blendingRangeY, blendingRangeZ } );
 		
+		// set debug mode
+		BayesMVDeconvolution.debug = debugMode;
+		BayesMVDeconvolution.debugInterval = debugInterval;
+
 		int stack = 0;
 		
 		for ( final TimePoint t : timepointsToProcess )
@@ -170,7 +177,19 @@ public class EfficientBayesianBased extends Fusion
 
 				final LRInput deconvolutionData = new LRInput();
 
-				
+				for ( int view = 0; view < anglesToProcess.size() * illumsToProcess.size(); ++view )
+				{
+					// device list for CPU or CUDA processing
+					final int[] devList = new int[ deviceList.size() ];
+					for ( int i = 0; i < devList.length; ++i )
+						devList[ i ] = deviceList.get( i );
+					
+					deconvolutionData.add( new LRFFT( 
+							pfd.getTransformedImgs().get( view ),
+							pfd.getTransformedWeights().get( view ),
+							pfd.getExtractPSF().getTransformedPSFs().get( view ), devList, useBlocks, blockSize ) );
+				}
+
 				
 				// export the final image
 				exporter.exportImage(

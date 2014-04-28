@@ -3,6 +3,10 @@ package mpicbg.spim.postprocessing.deconvolution2;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import net.imglib2.exception.ImgLibException;
+import net.imglib2.img.Img;
+import net.imglib2.img.imageplus.ImagePlusImg;
+
 import mpicbg.imglib.algorithm.fft.FourierConvolution;
 import mpicbg.imglib.algorithm.mirror.MirrorImage;
 import mpicbg.imglib.container.array.Array;
@@ -13,9 +17,11 @@ import mpicbg.imglib.container.constant.ConstantContainer;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.imglib.wrapper.ImgLib2;
 
 public class LRFFT 
 {
@@ -40,8 +46,44 @@ public class LRFFT
 	 * Used to determine if the Convolutions already have been computed for the current iteration
 	 */
 	int i = -1;
+
+	public LRFFT(
+			final Img< net.imglib2.type.numeric.real.FloatType > image,
+			final Img< net.imglib2.type.numeric.real.FloatType > weight,
+			final Img< net.imglib2.type.numeric.real.FloatType > kernel,
+			final int[] deviceList, final boolean useBlocks, final int[] blockSize )
+	{
+		this( wrap( image ), wrap( weight ), wrap( kernel ), deviceList, useBlocks, blockSize );
+		
+	}
 	
-	public LRFFT( final Image<FloatType> image, final Image<FloatType> weight, final Image<FloatType> kernel, final int[] deviceList, final boolean useBlocks, final int[] blockSize )
+	@SuppressWarnings("rawtypes")
+	protected static final Image< FloatType > wrap( final Img< net.imglib2.type.numeric.real.FloatType > i )
+	{
+		if ( i instanceof ImagePlusImg )
+		{
+			try
+			{
+				return ImageJFunctions.wrapFloat( ((ImagePlusImg) i).getImagePlus() );
+			}
+			catch (ImgLibException e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return null;
+			}			
+		}
+		else
+		{
+			return ImgLib2.wrapFloatToImgLib1( i );
+		}
+	}
+	
+	public LRFFT(
+			final Image<FloatType> image,
+			final Image<FloatType> weight,
+			final Image<FloatType> kernel,
+			final int[] deviceList, final boolean useBlocks, final int[] blockSize )
 	{
 		this.image = image;
 		this.kernel1 = kernel;

@@ -60,7 +60,10 @@ public class ProcessForDeconvolution
 	
 	int minOverlappingViews;
 	double avgOverlappingViews;
-
+	ArrayList< ViewDescription< TimePoint, ViewSetup > > viewDescriptions;
+	ArrayList< Img< FloatType > > imgs, weights;
+	ExtractPSF< FloatType > ePSF;
+	
 	public ProcessForDeconvolution(
 			final SpimData2 spimData,
 			final ArrayList<Angle> anglesToProcess,
@@ -77,6 +80,10 @@ public class ProcessForDeconvolution
 		this.blendingRange = blendingRange;
 	}
 	
+	public ExtractPSF< FloatType > getExtractPSF() { return ePSF; }
+	public ArrayList< Img< FloatType > > getTransformedImgs() { return imgs; }
+	public ArrayList< Img< FloatType > > getTransformedWeights() { return weights; }
+	public ArrayList< ViewDescription< TimePoint, ViewSetup > > getViewDescriptions() { return viewDescriptions; }
 	public int getMinOverlappingViews() { return minOverlappingViews; }
 	public double getAvgOverlappingViews() { return avgOverlappingViews; }
 
@@ -101,11 +108,10 @@ public class ProcessForDeconvolution
 			final boolean transformLoadedPSFs )
 	{				
 		// get all views that are fused
-		final ArrayList< ViewDescription< TimePoint, ViewSetup > > allInputData =
-				FusionHelper.assembleInputData( spimData, timepoint, channel, anglesToProcess, illumsToProcess );
+		this.viewDescriptions = FusionHelper.assembleInputData( spimData, timepoint, channel, anglesToProcess, illumsToProcess );
 		
-		final ArrayList< Img< FloatType > > imgs = new ArrayList< Img< FloatType > >(); 
-		final ArrayList< Img< FloatType > > weights = new ArrayList< Img< FloatType > >();
+		this.imgs = new ArrayList< Img< FloatType > >(); 
+		this.weights = new ArrayList< Img< FloatType > >();
 		
 		final Img< FloatType > overlapImg;
 		
@@ -113,15 +119,14 @@ public class ProcessForDeconvolution
 			overlapImg = bb.getImgFactory( new FloatType() ).create( bb.getDimensions(), new FloatType() );
 		else
 			overlapImg = null;
-		
-		final ExtractPSF< FloatType > ePSF;		
+				
 		final boolean extractPSFs = (extractPSFLabels != null) && (extractPSFLabels.get( channel ).getLabel() != null);
 		final boolean loadPSFs = (psfFiles != null);
 				
 		if ( extractPSFs )
 			ePSF = new ExtractPSF<FloatType>( bb.getImgFactory( new FloatType() ) );
 		else if ( loadPSFs )
-			ePSF = loadPSFs( channel, allInputData, psfFiles, transformLoadedPSFs );
+			ePSF = loadPSFs( channel, viewDescriptions, psfFiles, transformLoadedPSFs );
 		else
 			ePSF = assignOtherChannel( channel, extractPSFLabels );
 		
@@ -129,9 +134,9 @@ public class ProcessForDeconvolution
 		extractPSFLabels.get( channel ).setExtractPSFInstance( ePSF );
 
 		// we will need to run some batches until all is fused
-		for ( int i = 0; i < allInputData.size(); ++i )
+		for ( int i = 0; i < viewDescriptions.size(); ++i )
 		{
-			IOFunctions.println( "Fusing view " + i + " of " + (allInputData.size()-1) );
+			IOFunctions.println( "Fusing view " + i + " of " + (viewDescriptions.size()-1) );
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Reserving memory for fused & weight image.");
 
 			// try creating the output (type needs to be there to define T)
@@ -150,7 +155,7 @@ public class ProcessForDeconvolution
 				return false;
 			}
 	
-			final ViewDescription< TimePoint, ViewSetup > inputData = allInputData.get( i );
+			final ViewDescription< TimePoint, ViewSetup > inputData = viewDescriptions.get( i );
 			
 			// same as in the paralell fusion now more or less
 			final RandomAccessibleInterval< FloatType > img;
