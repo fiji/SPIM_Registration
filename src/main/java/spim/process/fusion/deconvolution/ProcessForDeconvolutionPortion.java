@@ -67,6 +67,7 @@ public class ProcessForDeconvolutionPortion implements Callable< String >
 		final float[] t = new float[ 3 ];
 		
 		cursor.jumpFwd( portion.getStartPosition() );
+		cursorW.jumpFwd( portion.getStartPosition() );
 		
 		for ( int j = 0; j < portion.getLoopSize(); ++j )
 		{
