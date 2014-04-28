@@ -436,8 +436,6 @@ public class ProcessForDeconvolution
 							}
 							
 							final double avgNumViews = (double)countViews / (double)( portion.getLoopSize() );
-
-							System.out.println( avgNumViews + " = " + countViews + " / " + portion.getLoopSize() );
 							
 							return new double[]{ minNumViews, avgNumViews };
 						}

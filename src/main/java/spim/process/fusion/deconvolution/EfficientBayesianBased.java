@@ -816,6 +816,9 @@ public class EfficientBayesianBased extends Fusion
 	
 	protected boolean getDebug()
 	{
+		if ( justShowWeights )
+			return true;
+
 		if ( debugMode )
 		{
 			GenericDialog gdDebug = new GenericDialog( "Debug options" );
