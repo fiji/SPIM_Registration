@@ -22,6 +22,7 @@ import mpicbg.spim.postprocessing.deconvolution2.CUDAConvolution;
 import mpicbg.spim.postprocessing.deconvolution2.LRFFT;
 import mpicbg.spim.postprocessing.deconvolution2.LRFFT.PSFTYPE;
 import mpicbg.spim.postprocessing.deconvolution2.LRInput;
+import net.imglib2.img.Img;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.GUIHelper;
 import spim.fiji.plugin.fusion.BoundingBox;
@@ -175,6 +176,9 @@ public class EfficientBayesianBased extends Fusion
 				// setup & run the deconvolution
 				displayParametersAndPSFs( bb, c, extractPSFLabels );
 
+				if ( justShowWeights )
+					return true;
+				
 				final LRInput deconvolutionData = new LRInput();
 
 				for ( int view = 0; view < anglesToProcess.size() * illumsToProcess.size(); ++view )
@@ -190,10 +194,17 @@ public class EfficientBayesianBased extends Fusion
 							pfd.getExtractPSF().getTransformedPSFs().get( view ), devList, useBlocks, blockSize ) );
 				}
 
+				final Img<FloatType> deconvolved;
+				
+				if ( useTikhonovRegularization )
+					deconvolved = LRFFT.wrap( new BayesMVDeconvolution( deconvolutionData, iterationType, numIterations, lambda, osemSpeedUp, osemspeedupIndex, "deconvolved" ).getPsi() );
+				else
+					deconvolved = LRFFT.wrap( new BayesMVDeconvolution( deconvolutionData, iterationType, numIterations, 0, osemSpeedUp, osemspeedupIndex, "deconvolved" ).getPsi() );
+
 				
 				// export the final image
 				exporter.exportImage(
-						null,
+						deconvolved,
 						bb,
 						"TP: " + t.getName() + ", Ch: " + c.getName() );
 			}
