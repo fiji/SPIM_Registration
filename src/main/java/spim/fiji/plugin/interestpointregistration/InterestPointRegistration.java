@@ -126,9 +126,9 @@ public abstract class InterestPointRegistration
 		final ArrayList< Illumination > illumsToProcess = getIllumsToProcess();
 		
 		for ( final TimePoint t : timepointsToProcess )
-			for ( final Angle a : anglesToProcess )
+			for ( final ChannelProcess c : channelsToProcess )
 				for ( final Illumination i : illumsToProcess )
-					for ( final ChannelProcess c : channelsToProcess )
+					for ( final Angle a : anglesToProcess )
 					{
 						// bureaucracy
 						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c.getChannel(), a, i );
@@ -189,7 +189,7 @@ public abstract class InterestPointRegistration
 		return true;
 	}
 
-	protected boolean calibrationAvailable( final ViewSetup viewSetup )
+	protected static boolean calibrationAvailable( final ViewSetup viewSetup )
 	{
 		if ( viewSetup.getPixelWidth() <= 0 || viewSetup.getPixelHeight() <= 0 || viewSetup.getPixelDepth() <= 0 )
 			return false;
