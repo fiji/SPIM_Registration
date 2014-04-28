@@ -29,8 +29,8 @@ public class Specify_Calibration implements PlugIn
 	@Override
 	public void run( final String arg0 )
 	{
-		// ask for everything but the channels
-		final XMLParseResult result = new LoadParseQueryXML().queryXML( "specifying calibration", false, true, true, true );
+		// ask for everything
+		final XMLParseResult result = new LoadParseQueryXML().queryXML( "specifying calibration", true, true, true, true );
 		
 		if ( result == null )
 			return;
