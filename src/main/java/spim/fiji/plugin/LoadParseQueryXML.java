@@ -31,7 +31,7 @@ import fiji.util.gui.GenericDialogPlus;
 
 public class LoadParseQueryXML 
 {
-	public static String defaultXMLfilename = "/Users/preibischs/Documents/Microscopy/SPIM/HisYFP-SPIM/example_fromdialog.xml";//"/home/preibisc/Microscopy/SPIM/HisYFP-SPIM/example_fromdialog.xml";
+	public static String defaultXMLfilename = "/home/preibisc/Microscopy/SPIM/HisYFP-SPIM/example_fromdialog.xml";//"/Users/preibischs/Documents/Microscopy/SPIM/HisYFP-SPIM/example_fromdialog.xml";
 		
 	public static String goodMsg1 = "The selected XML file was parsed successfully";
 	public static String warningMsg1 = "The selected file does not appear to be an xml. Press OK to try to parse anyways.";
