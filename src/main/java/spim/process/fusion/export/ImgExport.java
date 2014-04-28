@@ -18,6 +18,17 @@ public interface ImgExport
 	public < T extends RealType< T > & NativeType< T > > void exportImage( final RandomAccessibleInterval< T > img, final BoundingBox bb, final String title );
 	
 	/**
+	 * Exports the image using a predefined min/max
+	 * 
+	 * @param img - Note, in rare cases this can be null (i.e. do nothing)
+	 * @param bb
+	 * @param title
+	 * @param min
+	 * @param max
+	 */
+	public < T extends RealType< T > & NativeType< T > > void exportImage( final RandomAccessibleInterval< T > img, final BoundingBox bb, final String title, final double min, final double max );
+	
+	/**
 	 * Query the necessary parameters for the fusion (new dialog has to be made)
 	 * 
 	 * @return

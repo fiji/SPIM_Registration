@@ -22,16 +22,27 @@ public class DisplayImage implements ImgExport
 	{
 		exportImage( img, null, title );
 	}
-	
-	@SuppressWarnings("unchecked")
+
+	@Override
 	public < T extends RealType< T > & NativeType< T > > void exportImage( final RandomAccessibleInterval< T > img, final BoundingBox bb, final String title )
+	{
+		exportImage( img, bb, title, Double.NaN, Double.NaN );
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T extends RealType<T> & NativeType<T>> void exportImage( final RandomAccessibleInterval<T> img, final BoundingBox bb, final String title, final double min, final double max )
 	{
 		// do nothing in case the image is null
 		if ( img == null )
 			return;
 		
 		// determine min and max
-		final float[] minmax = FusionHelper.minMax( img );
+		final float[] minmax;
+		
+		if ( Double.isNaN( min ) || Double.isNaN( max ) )
+			minmax = FusionHelper.minMax( img );
+		else
+			minmax = new float[]{ (float)min, (float)max };
 
 		ImagePlus imp = null;
 		

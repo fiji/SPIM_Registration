@@ -201,12 +201,12 @@ public class EfficientBayesianBased extends Fusion
 				else
 					deconvolved = LRFFT.wrap( new BayesMVDeconvolution( deconvolutionData, iterationType, numIterations, 0, osemSpeedUp, osemspeedupIndex, "deconvolved" ).getPsi() );
 
-				
 				// export the final image
 				exporter.exportImage(
 						deconvolved,
 						bb,
-						"TP: " + t.getName() + ", Ch: " + c.getName() );
+						"TP: " + t.getName() + ", Ch: " + c.getName(),
+						0, 1 );
 			}
 
 		return true;
