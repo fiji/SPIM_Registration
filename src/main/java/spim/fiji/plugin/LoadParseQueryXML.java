@@ -113,22 +113,36 @@ public class LoadParseQueryXML
 	}
 
 	public XMLParseResult queryXML(
+			final String additionalTitle,
 			final boolean askForAngles,
 			final boolean askForChannels,
 			final boolean askForIllum,
 			final boolean askForTimepoints )
 	{
-		return queryXML( "", askForAngles, askForChannels, askForIllum, askForTimepoints );
+		return queryXML( additionalTitle, "Process", askForAngles, askForChannels, askForIllum, askForTimepoints );
+	}
+
+	public XMLParseResult queryXML(
+			final boolean askForAngles,
+			final boolean askForChannels,
+			final boolean askForIllum,
+			final boolean askForTimepoints )
+	{
+		return queryXML( "", "Process", askForAngles, askForChannels, askForIllum, askForTimepoints );
 	}
 	
 	/**
 	 * Asks the user for a valid XML (real time parsing)
 	 * 
+	 * @param askForAngles - ask the user if he/she wants to select a subset of angles, otherwise all angles are selected
+	 * @param askForChannels - ask the user if he/she wants to select a subset of channels, otherwise all channels are selected
+	 * @param askForIllum - ask the user if he/she wants to select a subset of illuminations, otherwise all illuminations are selected
 	 * @param askForTimepoints - ask the user if he/she wants to select a subset of timepoints, otherwise all timepoints are selected
 	 * @return null if cancelled or timepointlistsize = 0
 	 */
 	public XMLParseResult queryXML(
 			final String additionalTitle,
+			final String query,
 			final boolean askForAngles,
 			final boolean askForChannels,
 			final boolean askForIllum,
@@ -157,16 +171,16 @@ public class LoadParseQueryXML
 			gd.addMessage( "" );
 		
 		if ( askForAngles )
-			gd.addChoice( "Process", angleChoice, angleChoice[ defaultAngleChoice ] );
+			gd.addChoice( query, angleChoice, angleChoice[ defaultAngleChoice ] );
 		
 		if ( askForChannels )
-			gd.addChoice( "Process", channelChoice, channelChoice[ defaultChannelChoice ] );
+			gd.addChoice( query, channelChoice, channelChoice[ defaultChannelChoice ] );
 		
 		if ( askForIllum )
-			gd.addChoice( "Process", illumChoice, illumChoice[ defaultIllumChoice ] );
+			gd.addChoice( query, illumChoice, illumChoice[ defaultIllumChoice ] );
 		
 		if ( askForTimepoints )
-			gd.addChoice( "Process", tpChoice, tpChoice[ defaultTPChoice ] );
+			gd.addChoice( query, tpChoice, tpChoice[ defaultTPChoice ] );
 		
 		gd.showDialog();
 		
