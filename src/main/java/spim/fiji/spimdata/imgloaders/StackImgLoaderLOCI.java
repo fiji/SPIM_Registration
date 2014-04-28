@@ -242,7 +242,10 @@ public class StackImgLoaderLOCI extends StackImgLoader
 			t = Integer.parseInt( ((TimePoint)view.getTimePoint()).getName() );
 			
 			if ( t >= timepoints )
+			{
+				r.close();
 				throw new RuntimeException( "File '" + path + "' has only timepoints [0 ... " + (timepoints-1) + "], but you want to open timepoint " + t + ". Stopping.");
+			}
 		}
 		
 		if ( layoutChannels == 2 )
@@ -250,13 +253,19 @@ public class StackImgLoaderLOCI extends StackImgLoader
 			c = Integer.parseInt( ((ViewSetup)view.getViewSetup()).getChannel().getName() );
 			
 			if ( c >= channels )
+			{
+				r.close();
 				throw new RuntimeException( "File '" + path + "' has only channels [0 ... " + (channels-1) + "], but you want to open channel " + c + ". Stopping.");
+			}
 		}
 		
 		if (!(pixelType == FormatTools.UINT8 || pixelType == FormatTools.UINT16 || pixelType == FormatTools.UINT32 || pixelType == FormatTools.FLOAT))
 		{
 			IOFunctions.println( "StackImgLoaderLOCI.openLOCI(): PixelType " + pixelTypeString + " not supported by " + 
 					type.getClass().getSimpleName() + ", returning. ");
+			
+			r.close();
+			
 			return null;
 		}
 
@@ -265,7 +274,10 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		img = instantiateImg( new long[] { width, height, depth }, type );
 
 		if ( img == null )
+		{
+			r.close();
 			throw new RuntimeException( "Could not instantiate " + getImgFactory().getClass().getSimpleName() + " for '" + path + "', most likely out of memory." );
+		}
 		else
 			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Opening '" + path + "' [" + width + "x" + height + "x" + depth + " ch=" + c + " tp=" + t + " type=" + pixelTypeString + " image=" + img.getClass().getSimpleName() + "<" + type.getClass().getSimpleName() + ">]" );
 				
@@ -322,6 +334,8 @@ public class StackImgLoaderLOCI extends StackImgLoader
 				}
 			}
 		}				
+		
+		r.close();
 		
 		return new CalibratedImg<T>( img, calX, calY, calZ );			
 	}
