@@ -4,8 +4,12 @@ import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
+
+import javax.media.j3d.Transform3D;
 
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
@@ -42,16 +46,50 @@ public class Apply_Transformation implements PlugIn
 	public static String[] modelChoice = new String[]{ "Translation", "Rigid", "Affine" };
 	public static String[] defineChoice = new String[] { "Vector/matrix", "Rotation around axis (rigid only)" };
 	
-	public String[] axes = new String[] { "x-axis", "y-axis", "z-axis" };
-	public static int defaultAxis = 0;
-	public static double defaultDegrees = 90;
+	public String[] axesChoice = new String[] { "x-axis", "y-axis", "z-axis" };
+	public static int[] defaultAxis = null;
+	public static double[] defaultDegrees = null;
 
 	public static ArrayList< double[] > defaultModels;
 
-	public class ModelDescription
+	public class Entry implements Comparable< Entry >
 	{
 		public String title;
-		public AffineTransform3D model;
+		public int id;
+		
+		public Entry( final int id, final String title )
+		{
+			this.id = id;
+			this.title = title;
+		}
+		
+		public String getTitle() { return title; }
+		
+		@Override
+		public int hashCode() { return id; }
+		
+		@Override
+		public boolean equals( final Object o )
+		{
+			if ( o == null )
+			{
+				return false;
+			}
+			else if ( o instanceof Entry )
+			{
+				if ( ((Entry)o).id == id )
+					return true;
+				else
+					return false;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		
+		@Override
+		public int compareTo( final Entry o ) { return id - o.id; }
 	}
 	
 	@Override
@@ -135,18 +173,118 @@ public class Apply_Transformation implements PlugIn
 		if ( defineAs == 0 )
 			queryString( model, applyTo, minResolution, result, sameModelTimePoints, sameModelChannels, sameModelIlluminations, sameModelAngles );
 		else
-			queryRotationAxis( model, sameModelTimePoints, sameModelChannels, sameModelIlluminations, sameModelAngles );
+			queryRotationAxis( model, applyTo, minResolution, result, sameModelTimePoints, sameModelChannels, sameModelIlluminations, sameModelAngles );
 		
 		// now save it
 		Interest_Point_Registration.saveXML( result.getData(), result.getXMLFileName() );
 	}
 
+	protected boolean queryRotationAxis( final int model, final int applyTo, final double minResolution, final XMLParseResult result, final boolean sameModelTimePoints, final boolean sameModelChannels, final boolean sameModelIlluminations, final boolean sameModelAngles )
+	{
+		if ( model != 1 )
+		{
+			IOFunctions.println( "No rigid model selected." );
+			return false;
+		}
+		
+		final HashMap< Entry, List< TimePoint > > timepoints = getTimePoints( result.getTimePointsToProcess(), sameModelTimePoints );
+		final HashMap< Entry, List< Channel > > channels = getChannels( result.getChannelsToProcess(), sameModelChannels );
+		final HashMap< Entry, List< Illumination > > illums = getIlluminations( result.getIlluminationsToProcess(), sameModelIlluminations );
+		final HashMap< Entry, List< Angle > > angles = getAngles( result.getAnglesToProcess(), sameModelAngles );
+		
+		final int numEntries = getNumEntries( timepoints, channels, illums, angles );
+
+		if ( defaultAxis == null || defaultDegrees == null || defaultAxis.length != numEntries || defaultDegrees.length != numEntries )
+		{
+			defaultAxis = new int[ numEntries ];
+			defaultDegrees = new double[ numEntries ];
+
+			int j = 0;
+			
+			for ( final Entry t : sortedList( timepoints.keySet() ) )
+				for ( final Entry c : sortedList( channels.keySet() ) )
+					for ( final Entry i : sortedList( illums.keySet() ) )
+						for ( final Entry a : sortedList( angles.keySet() ) )
+						{
+							// it is for one individual angle, let's set the name as default rotation
+							if ( angles.get( a ).size() == 1 )
+							{
+								try
+								{
+									defaultDegrees[ j ] = Double.parseDouble( angles.get( a ).get( 0 ).getName() );
+								}
+								catch ( Exception e ) {};
+							}
+							
+							++j;
+						}
+		}
+		
+		final GenericDialog gd = new GenericDialog( "Parameters for rigid model 3d" );
+
+		int j = 0;
+		
+		for ( final Entry t : sortedList( timepoints.keySet() ) )
+			for ( final Entry c : sortedList( channels.keySet() ) )
+				for ( final Entry i : sortedList( illums.keySet() ) )
+					for ( final Entry a : sortedList( angles.keySet() ) )
+					{
+						gd.addChoice( "Axis_" + t.getTitle() + "_" + c.getTitle() + "_" + i.getTitle() + "_" + a.getTitle(), axesChoice, axesChoice[ defaultAxis[ j ] ] );
+						gd.addSlider( "Rotation_" + t.getTitle() + "_" + c.getTitle() + "_" + i.getTitle() + "_" + a.getTitle(), -360, 360, defaultDegrees[ j++ ] );
+					}
+
+		if ( numEntries > 5 )
+			GUIHelper.addScrollBars( gd );
+
+		gd.showDialog();
+		
+		if ( gd.wasCanceled() )
+			return false;
+		
+		final int[] axes = new int[ numEntries ];
+		final double[] degrees = new double[ numEntries ];
+		final ArrayList< double[] > models = new ArrayList< double[] >();
+		
+		final double[] tmp = new double[ 16 ];
+		
+		for ( j = 0; j < numEntries; ++j )
+		{
+			axes[ j ] = gd.getNextChoiceIndex();
+			degrees[ j ] = gd.getNextNumber();
+			
+			final Transform3D t = new Transform3D();
+			if ( axes[ j ] == 0 )
+				t.rotX( Math.toRadians( degrees[ j ] ) );
+			else if ( axes[ j ] == 1 )
+				t.rotY( Math.toRadians( degrees[ j ] ) );
+			else
+				t.rotZ( Math.toRadians( degrees[ j ] ) );
+
+			t.get( tmp );
+
+			models.add( new double[]{
+					tmp[ 0 ], tmp[ 1 ], tmp[ 2 ], tmp[ 3 ],
+					tmp[ 4 ], tmp[ 5 ], tmp[ 6 ], tmp[ 7 ],
+					tmp[ 8 ], tmp[ 9 ], tmp[ 10 ], tmp[ 11 ] } );
+			
+		}
+		
+		// set defaults
+		defaultAxis = axes;
+		defaultDegrees = degrees;
+		
+		defaultModels = models;
+		
+		// apply the models as asked
+		return applyModels( result.getData(), models, applyTo, minResolution, timepoints, channels, illums, angles );
+	}
+
 	protected boolean queryString( final int model, final int applyTo, final double minResolution, final XMLParseResult result, final boolean sameModelTimePoints, final boolean sameModelChannels, final boolean sameModelIlluminations, final boolean sameModelAngles )
 	{
-		final HashMap< String, List< TimePoint > > timepoints = getTimePoints( result.getTimePointsToProcess(), sameModelTimePoints );
-		final HashMap< String, List< Channel > > channels = getChannels( result.getChannelsToProcess(), sameModelChannels );
-		final HashMap< String, List< Illumination > > illums = getIlluminations( result.getIlluminationsToProcess(), sameModelIlluminations );
-		final HashMap< String, List< Angle > > angles = getAngles( result.getAnglesToProcess(), sameModelAngles );
+		final HashMap< Entry, List< TimePoint > > timepoints = getTimePoints( result.getTimePointsToProcess(), sameModelTimePoints );
+		final HashMap< Entry, List< Channel > > channels = getChannels( result.getChannelsToProcess(), sameModelChannels );
+		final HashMap< Entry, List< Illumination > > illums = getIlluminations( result.getIlluminationsToProcess(), sameModelIlluminations );
+		final HashMap< Entry, List< Angle > > angles = getAngles( result.getAnglesToProcess(), sameModelAngles );
 		
 		final int numEntries = getNumEntries( timepoints, channels, illums, angles );
 		
@@ -175,11 +313,11 @@ public class Apply_Transformation implements PlugIn
 			
 			int j = 0;
 			
-			for ( final String t : timepoints.keySet() )
-				for ( final String c : channels.keySet() )
-					for ( final String i : illums.keySet() )
-						for ( final String a : angles.keySet() )
-							gd.addStringField( t + "_" + c + "_" + i + "_" + a, defaultModels.get( j )[ 3 ] + ", " + defaultModels.get( j )[ 7 ] + ", " + defaultModels.get( j++ )[ 11 ], 30 );
+			for ( final Entry t : sortedList( timepoints.keySet() ) )
+				for ( final Entry c : sortedList( channels.keySet() ) )
+					for ( final Entry i : sortedList( illums.keySet() ) )
+						for ( final Entry a : sortedList( angles.keySet() ) )
+							gd.addStringField( t.getTitle() + "_" + c.getTitle() + "_" + i.getTitle() + "_" + a.getTitle(), defaultModels.get( j )[ 3 ] + ", " + defaultModels.get( j )[ 7 ] + ", " + defaultModels.get( j++ )[ 11 ], 30 );
 		}
 		else
 		{
@@ -193,13 +331,13 @@ public class Apply_Transformation implements PlugIn
 			
 			int j = 0;
 			
-			for ( final String t : timepoints.keySet() )
-				for ( final String c : channels.keySet() )
-					for ( final String i : illums.keySet() )
-						for ( final String a : angles.keySet() )
+			for ( final Entry t : sortedList( timepoints.keySet() ) )
+				for ( final Entry c : sortedList( channels.keySet() ) )
+					for ( final Entry i : sortedList( illums.keySet() ) )
+						for ( final Entry a : sortedList( angles.keySet() ) )
 						{
 							final double[] m = defaultModels.get( j++ );
-							gd.addStringField( t + "_" + c + "_" + i + "_" + a, 
+							gd.addStringField( t.getTitle() + "_" + c.getTitle() + "_" + i.getTitle() + "_" + a.getTitle(), 
 									m[ 0 ] + ", " + m[ 1 ] + ", " + m[ 2 ] + ", " + m[ 3 ] + ", " + 
 									m[ 4 ] + ", " + m[ 5 ] + ", " + m[ 6 ] + ", " + m[ 7 ] + ", " + 
 									m[ 8 ] + ", " + m[ 9 ] + ", " + m[ 10 ] + ", " + m[ 11 ], 80 );
@@ -254,17 +392,18 @@ public class Apply_Transformation implements PlugIn
 			final ArrayList< double[] > models,
 			final int applyTo,
 			final double minResolution,
-			final HashMap< String, List< TimePoint > > timepoints, 
-			final HashMap< String, List< Channel > > channels, 
-			final HashMap< String, List< Illumination > > illums, 
-			final HashMap< String, List< Angle > > angles )
+			final HashMap< Entry, List< TimePoint > > timepoints, 
+			final HashMap< Entry, List< Channel > > channels, 
+			final HashMap< Entry, List< Illumination > > illums, 
+			final HashMap< Entry, List< Angle > > angles )
 	{
 		int j = 0;
 		
-		for ( final String ts : timepoints.keySet() )
-			for ( final String cs : channels.keySet() )
-				for ( final String is : illums.keySet() )
-					for ( final String as : angles.keySet() )
+		// needs to be sorted as well it relies on the index j for accessing the transforms
+		for ( final Entry ts : sortedList( timepoints.keySet() ) )
+			for ( final Entry cs : sortedList( channels.keySet() ) )
+				for ( final Entry is : sortedList( illums.keySet() ) )
+					for ( final Entry as : sortedList( angles.keySet() ) )
 					{
 						final List< TimePoint > tl = timepoints.get( ts );
 						final List< Channel > cl = channels.get( cs );
@@ -309,6 +448,14 @@ public class Apply_Transformation implements PlugIn
 					}
 		return true;
 	}
+	
+	public static ArrayList< Entry > sortedList( final Set< Entry > set )
+	{
+		final ArrayList< Entry > list = new ArrayList< Entry >( set );
+		Collections.sort( list );
+		
+		return list;
+	}
 		
 	protected double[] parseString( String entry, final int numValues )
 	{
@@ -341,24 +488,18 @@ public class Apply_Transformation implements PlugIn
 		
 		return v;
 	}
-
-	protected ModelDescription queryRotationAxis( final int model, final boolean sameModelTimePoints, final boolean sameModelChannels, final boolean sameModelIlluminations, final boolean sameModelAngles )
-	{
-		// TODO Auto-generated method stub
-		return null;
-	}
 	
-	protected int getNumEntries( final HashMap< String, List< TimePoint > > t, final HashMap< String, List< Channel > > c, final HashMap< String, List< Illumination > > i, final HashMap< String, List< Angle > > a )
+	protected int getNumEntries( final HashMap< Entry, List< TimePoint > > t, final HashMap< Entry, List< Channel > > c, final HashMap< Entry, List< Illumination > > i, final HashMap< Entry, List< Angle > > a )
 	{
 		return t.keySet().size() * c.keySet().size() * i.keySet().size() * a.keySet().size();
 	}
 	
-	protected HashMap< String, List< TimePoint > > getTimePoints( final List< TimePoint > tps, final boolean sameModelTimePoints )
+	protected HashMap< Entry, List< TimePoint > > getTimePoints( final List< TimePoint > tps, final boolean sameModelTimePoints )
 	{
-		final HashMap< String, List< TimePoint > > h = new HashMap< String, List< TimePoint > >();
+		final HashMap< Entry, List< TimePoint > > h = new HashMap< Entry, List< TimePoint > >();
 		
 		if ( sameModelTimePoints && tps.size() > 1 )
-			h.put( "all_timepoints", tps );
+			h.put( new Entry( -1, "all_timepoints" ), tps );
 		else
 		{
 			for ( final TimePoint t : tps )
@@ -366,19 +507,19 @@ public class Apply_Transformation implements PlugIn
 				final ArrayList< TimePoint > tpl = new ArrayList< TimePoint >();
 				tpl.add( t );
 				
-				h.put( "timepoint_" + t.getName(), tpl );
+				h.put( new Entry( t.getId(), "timepoint_" + t.getName() ), tpl );
 			}
 		}
 		
 		return h;
 	}
 
-	protected HashMap< String, List< Channel > > getChannels( final List< Channel > channels, final boolean sameModelChannels )
+	protected HashMap< Entry, List< Channel > > getChannels( final List< Channel > channels, final boolean sameModelChannels )
 	{
-		final HashMap< String, List< Channel > > h = new HashMap< String, List< Channel > >();
+		final HashMap< Entry, List< Channel > > h = new HashMap< Entry, List< Channel > >();
 		
 		if ( sameModelChannels && channels.size() > 1 )
-			h.put( "all_channels", channels );
+			h.put( new Entry( -1, "all_channels" ), channels );
 		else
 		{
 			for ( final Channel c : channels )
@@ -386,19 +527,19 @@ public class Apply_Transformation implements PlugIn
 				final ArrayList< Channel > chl = new ArrayList< Channel >();
 				chl.add( c );
 				
-				h.put( "channel_" + c.getName(), chl );
+				h.put( new Entry( c.getId(), "channel_" + c.getName() ), chl );
 			}
 		}
 		
 		return h;
 	}
 
-	protected HashMap< String, List< Illumination > > getIlluminations( final List< Illumination > illums, final boolean sameModelIlluminations )
+	protected HashMap< Entry, List< Illumination > > getIlluminations( final List< Illumination > illums, final boolean sameModelIlluminations )
 	{
-		final HashMap< String, List< Illumination > > h = new HashMap< String, List< Illumination > >();
+		final HashMap< Entry, List< Illumination > > h = new HashMap< Entry, List< Illumination > >();
 		
 		if ( sameModelIlluminations && illums.size() > 1 )
-			h.put( "all_illuminations", illums );
+			h.put( new Entry( -1, "all_illuminations" ), illums );
 		else
 		{
 			for ( final Illumination i : illums )
@@ -406,19 +547,19 @@ public class Apply_Transformation implements PlugIn
 				final ArrayList< Illumination > ill = new ArrayList< Illumination >();
 				ill.add( i );
 				
-				h.put( "illumination_" + i.getName(), ill );
+				h.put( new Entry( i.getId(), "illumination_" + i.getName() ), ill );
 			}
 		}
 		
 		return h;
 	}
 
-	protected HashMap< String, List< Angle > > getAngles( final List< Angle > angles, final boolean sameModelAngles )
+	protected HashMap< Entry, List< Angle > > getAngles( final List< Angle > angles, final boolean sameModelAngles )
 	{
-		final HashMap< String, List< Angle > > h = new HashMap< String, List< Angle > >();
+		final HashMap< Entry, List< Angle > > h = new HashMap< Entry, List< Angle > >();
 		
 		if ( sameModelAngles && angles.size() > 1 )
-			h.put( "all_angles", angles );
+			h.put( new Entry( -1, "all_angles" ), angles );
 		else
 		{
 			for ( final Angle a : angles )
@@ -426,7 +567,7 @@ public class Apply_Transformation implements PlugIn
 				final ArrayList< Angle > al = new ArrayList< Angle >();
 				al.add( a );
 				
-				h.put( "angle_" + a.getName(), al );
+				h.put( new Entry( a.getId(), "angle_" + a.getName() ), al );
 			}
 		}
 		
