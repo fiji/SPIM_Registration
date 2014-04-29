@@ -300,7 +300,7 @@ public class Interest_Point_Registration implements PlugIn
 			ipr.getTimepointsToProcess().addAll( tps );
 			
 			if ( !displayOnly )
-				saveXML( result );
+				saveXML( result.getData(), result.getXMLFileName() );
 		}
 		
 		// perform the actual registration(s)
@@ -329,16 +329,15 @@ public class Interest_Point_Registration implements PlugIn
 				
 		// save the XML including transforms and correspondences
 		if ( !displayOnly )
-			saveXML( result );
+			saveXML( result.getData(), result.getXMLFileName() );
 	}
 	
-	protected void saveXML( final XMLParseResult result )
+	public static void saveXML( final SpimData2 data, final String xmlFileName  )
 	{
 		// save the xml
 		final XmlIoSpimData2 io = XmlIo.createDefaultIo();
-		final SpimData2 data = result.getData();
 		
-		final String xml = new File( data.getBasePath(), new File( result.getXMLFileName() ).getName() ).getAbsolutePath();
+		final String xml = new File( data.getBasePath(), new File( xmlFileName ).getName() ).getAbsolutePath();
 		try 
 		{
 			io.save( data, xml );

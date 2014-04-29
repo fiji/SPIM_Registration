@@ -5,12 +5,13 @@ import ij.gui.GenericDialog;
 import java.util.ArrayList;
 
 import mpicbg.spim.data.sequence.Angle;
+import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
-import mpicbg.spim.io.IOFunctions;
+import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.interestpointregistration.ChannelProcess;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationType;
@@ -31,7 +32,7 @@ public abstract class InterestPointRegistration
 	/*
 	 * type of input transform ( 0 == calibration, 1 == current transform, including calibration )
 	 */
-	protected int inputTransform = 0;
+	private int inputTransform = 0;
 	
 	/*
 	 * ensure that the resolution of the world coordinates corresponds to the finest resolution
@@ -113,6 +114,11 @@ public abstract class InterestPointRegistration
 	public void setInitialTransformType( final int inputTransform ) { this.inputTransform = inputTransform; }
 		
 	/**
+	 * @return inputTransform type of input transform ( 0 == calibration, 1 == current transform, including calibration )
+	 */
+	public int getInitialTransformType() { return inputTransform; }
+	
+	/**
 	 * Should be called before registration to make sure all metadata is right
 	 * 
 	 * @return
@@ -125,6 +131,18 @@ public abstract class InterestPointRegistration
 		final ArrayList< Angle > anglesToProcess = getAnglesToProcess();
 		final ArrayList< Illumination > illumsToProcess = getIllumsToProcess();
 		
+		final ArrayList< Channel > channels = new ArrayList< Channel >();
+		for ( final ChannelProcess c : channelsToProcess )
+			channels.add( c.getChannel() );
+		
+		final double minResolution = Apply_Transformation.assembleAllMetaData( spimData, timepointsToProcess, channels, illumsToProcess, anglesToProcess );
+		
+		if ( Double.isNaN( minResolution ) )
+			return false;
+		
+		setMinResolution( minResolution );
+
+		// try to set the unit as well
 		for ( final TimePoint t : timepointsToProcess )
 			for ( final ChannelProcess c : channelsToProcess )
 				for ( final Illumination i : illumsToProcess )
@@ -133,54 +151,11 @@ public abstract class InterestPointRegistration
 						// bureaucracy
 						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c.getChannel(), a, i );
 						
-						if ( viewId == null )
-						{
-							IOFunctions.println( "An error occured. Could not find the corresponding ViewSetup for timepoint: " + t.getId() + " angle: " + 
-									a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
-						
-							return false;
-						}
-						
 						final ViewDescription< TimePoint, ViewSetup > viewDescription = spimData.getSequenceDescription().getViewDescription( 
 								viewId.getTimePointId(), viewId.getViewSetupId() );
 
 						if ( !viewDescription.isPresent() )
 							continue;
-						
-						// load metadata to update the registrations if required
-						// only use calibration as defined in the metadata
-						if ( !calibrationAvailable( viewDescription.getViewSetup() ) )
-						{
-							if ( !spimData.getSequenceDescription().getImgLoader().loadMetaData( viewDescription ) )
-							{
-								IOFunctions.println( "An error occured. Cannot load calibration for timepoint: " + t.getId() + " angle: " + 
-										a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
-								
-								IOFunctions.println( "Quitting. Please set it manually when defining the dataset or by modifying the XML" );
-								
-								return false;
-							}						
-						}
-
-						if ( !calibrationAvailable( viewDescription.getViewSetup() ) )
-						{
-							IOFunctions.println( "An error occured. No calibration available for timepoint: " + t.getId() + " angle: " + 
-									a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
-							
-							IOFunctions.println( "Quitting. Please set it manually when defining the dataset or by modifying the XML." );
-							IOFunctions.println( "Note: if you selected to load calibration independently for each image, it should." );
-							IOFunctions.println( "      have been loaded during interest point detection." );
-							
-							return false;
-						}
-						
-						final double calX = viewDescription.getViewSetup().getPixelWidth();
-						final double calY = viewDescription.getViewSetup().getPixelHeight();
-						final double calZ = viewDescription.getViewSetup().getPixelDepth();
-						
-						setMinResolution( Math.min( getMinResolution(), calX ) );
-						setMinResolution( Math.min( getMinResolution(), calY ) );
-						setMinResolution( Math.min( getMinResolution(), calZ ) );
 						
 						if ( viewDescription.getViewSetup().getPixelSizeUnit() != null )
 							setUnit( viewDescription.getViewSetup().getPixelSizeUnit() );
@@ -188,12 +163,4 @@ public abstract class InterestPointRegistration
 		
 		return true;
 	}
-
-	protected static boolean calibrationAvailable( final ViewSetup viewSetup )
-	{
-		if ( viewSetup.getPixelWidth() <= 0 || viewSetup.getPixelHeight() <= 0 || viewSetup.getPixelDepth() <= 0 )
-			return false;
-		else
-			return true;
-	}	
 }

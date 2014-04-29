@@ -4,8 +4,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import mpicbg.spim.data.registration.ViewRegistration;
+import mpicbg.spim.data.registration.ViewRegistrations;
+import mpicbg.spim.data.sequence.Angle;
+import mpicbg.spim.data.sequence.Illumination;
+import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.ViewSetup;
+import mpicbg.spim.io.IOFunctions;
+import mpicbg.spim.mpicbg.PointMatchGeneric;
 import net.imglib2.realtransform.AffineTransform3D;
-
+import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
@@ -16,19 +26,6 @@ import spim.process.interestpointregistration.ChannelInterestPointList;
 import spim.process.interestpointregistration.ChannelInterestPointListPair;
 import spim.process.interestpointregistration.ChannelProcess;
 import spim.process.interestpointregistration.Detection;
-
-import mpicbg.spim.data.registration.ViewRegistration;
-import mpicbg.spim.data.registration.ViewRegistrations;
-import mpicbg.spim.data.registration.ViewTransform;
-import mpicbg.spim.data.registration.ViewTransformAffine;
-import mpicbg.spim.data.sequence.Angle;
-import mpicbg.spim.data.sequence.Illumination;
-import mpicbg.spim.data.sequence.TimePoint;
-import mpicbg.spim.data.sequence.ViewDescription;
-import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.data.sequence.ViewSetup;
-import mpicbg.spim.io.IOFunctions;
-import mpicbg.spim.mpicbg.PointMatchGeneric;
 
 /**
  * A certain type of global optimization, must be able to define all view pairs
@@ -120,21 +117,7 @@ public abstract class GlobalOptimizationType
 
 				// reset the registrations if required
 				if ( inputTransform == 0 )
-				{
-					final ViewRegistration r = registrations.getViewRegistration( viewId );
-					r.identity();
-					
-					final double calX = viewDescription.getViewSetup().getPixelWidth() / minResolution;
-					final double calY = viewDescription.getViewSetup().getPixelHeight() / minResolution;
-					final double calZ = viewDescription.getViewSetup().getPixelDepth() / minResolution;
-					
-					final AffineTransform3D m = new AffineTransform3D();
-					m.set( calX, 0.0f, 0.0f, 0.0f, 
-						   0.0f, calY, 0.0f, 0.0f,
-						   0.0f, 0.0f, calZ, 0.0f );
-					final ViewTransform vt = new ViewTransformAffine( "calibration", m );
-					r.preconcatenateTransform( vt );
-				}
+					Apply_Transformation.setModelToCalibration( spimData, viewId, minResolution );
 
 				// assemble a new list
 				final ArrayList< InterestPoint > list = new ArrayList< InterestPoint >();

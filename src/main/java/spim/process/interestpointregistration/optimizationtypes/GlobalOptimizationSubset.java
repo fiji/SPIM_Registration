@@ -6,17 +6,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import net.imglib2.realtransform.AffineTransform3D;
-
 import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.Model;
 import mpicbg.models.Tile;
-import mpicbg.spim.data.registration.ViewRegistration;
-import mpicbg.spim.data.registration.ViewRegistrations;
-import mpicbg.spim.data.registration.ViewTransform;
-import mpicbg.spim.data.registration.ViewTransformAffine;
 import mpicbg.spim.data.sequence.ViewId;
-
+import net.imglib2.realtransform.AffineTransform3D;
+import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.interestpointregistration.ChannelInterestPointListPair;
 import spim.process.interestpointregistration.ChannelProcess;
@@ -54,7 +49,6 @@ public class GlobalOptimizationSubset
 			final boolean considerTimePointsAsUnit )
 	{
 		final HashMap< ViewId, Tile< M > > tiles = GlobalOpt.compute( model, type, this, considerTimePointsAsUnit );
-		final ViewRegistrations viewRegistrations = spimData.getViewRegistrations();
 
 		String channelList = "[";
 		for ( final ChannelProcess c : channelsToProcess )
@@ -67,12 +61,11 @@ public class GlobalOptimizationSubset
 			final Tile< M > tile = tiles.get( viewId );
 			final AbstractAffineModel3D<?> tilemodel = (AbstractAffineModel3D<?>)tile.getModel();
 			final float[] m = tilemodel.getMatrix( null );
-			final ViewRegistration vr = viewRegistrations.getViewRegistration( viewId );
 			
 			final AffineTransform3D t = new AffineTransform3D();
 			t.set( m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8], m[9], m[10], m[11] );
-			final ViewTransform vt = new ViewTransformAffine( description + " on " + channelList, t );
-			vr.preconcatenateTransform( vt );
+			
+			Apply_Transformation.preConcatenateTransform( spimData, viewId, t, description + " on " + channelList );
 		}
 	}
 

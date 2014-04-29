@@ -63,7 +63,7 @@ public abstract class PairwiseGloballyOptimalRegistration< T extends Callable< C
 				getChannelsToProcess(),
 				getIllumsToProcess(),
 				getTimepointsToProcess(),
-				inputTransform,
+				getInitialTransformType(),
 				getMinResolution() );
 		
 		for ( final GlobalOptimizationSubset subset : list )
