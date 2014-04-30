@@ -81,7 +81,7 @@ public class Define_Multi_View_Dataset implements PlugIn
 		// then add the correct text
 		gd1.addMessage( "", new Font( Font.MONOSPACED, Font.PLAIN, 11 ), Color.BLACK );
 		Label label = (Label)gd1.getMessage();
-		label.setText( formatEntry( datasetDefinitions.get( defaultDatasetDef ).getExtendedDescription(), numCharacters, numLinesDocumentation ) );
+		//label.setText( formatEntry( datasetDefinitions.get( defaultDatasetDef ).getExtendedDescription(), numCharacters, numLinesDocumentation ) );
 		
 		addListeners( gd1, choice, label, datasetDefinitions );
 		
