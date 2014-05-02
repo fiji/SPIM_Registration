@@ -75,9 +75,10 @@ public abstract class InterestPointDetection
 	/**
 	 * Query the necessary parameters for the interestpoint detection
 	 * 
+	 * @param defineAnisotropy - whether to use/query for anisotropy in resolution of the data
 	 * @return
 	 */
-	public abstract boolean queryParameters();
+	public abstract boolean queryParameters( final boolean defineAnisotropy );
 	
 	/**
 	 * @param spimData

@@ -10,6 +10,7 @@ import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+import spim.fiji.plugin.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 
 public abstract class DifferenceOf extends InterestPointDetection
@@ -29,7 +30,12 @@ public abstract class DifferenceOf extends InterestPointDetection
 	public static int defaultTimepointChoice = 0;
 	public static int defaultAngleChoice = 0;
 	public static int defaultIlluminationChoice = 0;
-		
+	
+	public static double defaultImageSigmaX = 0.5;
+	public static double defaultImageSigmaY = 0.5;
+	public static double defaultImageSigmaZ = 0.5;
+	
+	protected double imageSigmaX, imageSigmaY, imageSigmaZ;
 	protected int localization;
 
 	public DifferenceOf(
@@ -43,7 +49,7 @@ public abstract class DifferenceOf extends InterestPointDetection
 	}
 
 	@Override
-	public boolean queryParameters()
+	public boolean queryParameters( final boolean defineAnisotropy )
 	{		
 		final ArrayList< Channel > channels = spimData.getSequenceDescription().getAllChannels();
 
@@ -64,6 +70,16 @@ public abstract class DifferenceOf extends InterestPointDetection
 		for ( int c = 0; c < channelsToProcess.size(); ++c )
 			gd.addChoice( "Interest_point_specification_(channel_" + channelsToProcess.get( c ).getName() + ")", brightnessChoice, brightnessChoice[ defaultBrightness[ channelsToProcess.get( c ).getId() ] ] );
 
+		if ( defineAnisotropy )
+		{
+			gd.addNumericField( "Image_Sigma_X", defaultImageSigmaX, 5 );
+			gd.addNumericField( "Image_Sigma_Y", defaultImageSigmaY, 5 );
+			gd.addNumericField( "Image_Sigma_Z", defaultImageSigmaZ, 5 );
+			
+			gd.addMessage( "Please consider that usually the lower resolution in z is compensated by a lower sampling rate in z.\n" +
+					"Only adjust the initial sigma's if this is not the case.", GUIHelper.mediumstatusfont );
+		}
+		
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
@@ -91,6 +107,17 @@ public abstract class DifferenceOf extends InterestPointDetection
 				if ( !setInteractiveValues( channel ) )
 					return false;
 			}
+		}
+		
+		if ( defineAnisotropy )
+		{
+			imageSigmaX = defaultImageSigmaX = gd.getNextNumber();
+			imageSigmaY = defaultImageSigmaY = gd.getNextNumber();
+			imageSigmaZ = defaultImageSigmaZ = gd.getNextNumber();
+		}
+		else
+		{
+			imageSigmaX = imageSigmaY = imageSigmaZ = 0.5;
 		}
 		
 		return true;

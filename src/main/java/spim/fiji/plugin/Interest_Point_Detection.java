@@ -42,6 +42,7 @@ public class Interest_Point_Detection implements PlugIn
 {
 	public static ArrayList< InterestPointDetection > staticAlgorithms = new ArrayList< InterestPointDetection >();
 	public static int defaultAlgorithm = 0;
+	public static boolean defaultDefineAnisotropy = false;
 	public static boolean[] defaultChannelChoice = null;
 	public static String defaultLabel = "beads";
 	
@@ -94,6 +95,8 @@ public class Interest_Point_Detection implements PlugIn
 				gd.addCheckbox( "Channel_" + channels.get( i ).getName(), defaultChannelChoice[ i ] );
 		}
 		
+		gd.addCheckbox( "Define_anisotropy for segmentation", defaultDefineAnisotropy );
+		
 		gd.addMessage( "" );
 		GUIHelper.addWebsite( gd );
 		
@@ -124,6 +127,8 @@ public class Interest_Point_Detection implements PlugIn
 		{
 			channelsToProcess.add( channels.get( 0 ) );
 		}
+		
+		final boolean defineAnisotropy = defaultDefineAnisotropy = gd.getNextBoolean();
 
 		final InterestPointDetection ipd = staticAlgorithms.get( algorithm ).newInstance(
 				result.getData(),
@@ -133,7 +138,7 @@ public class Interest_Point_Detection implements PlugIn
 				result.getTimePointsToProcess() );
 		
 		// the interest point detection should query its parameters
-		if ( !ipd.queryParameters() )
+		if ( !ipd.queryParameters( defineAnisotropy ) )
 			return;
 		
 		// now extract all the detections

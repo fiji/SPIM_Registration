@@ -113,7 +113,17 @@ public class DifferenceOfMean extends DifferenceOf
 						//
 						// compute Difference-of-Mean
 						//
-						interestPoints.put( viewId, ProcessDOM.compute( img, radius1[ c.getId() ], radius2[ c.getId() ], (float)threshold[ c.getId() ], localization, findMin[ c.getId() ], findMax[ c.getId() ] ) );
+						interestPoints.put( viewId, ProcessDOM.compute(
+								img,
+								radius1[ c.getId() ],
+								radius2[ c.getId() ],
+								(float)threshold[ c.getId() ],
+								localization,
+								imageSigmaX,
+								imageSigmaY,
+								imageSigmaZ,
+								findMin[ c.getId() ],
+								findMax[ c.getId() ] ) );
 						img.close();
 
 				        benchmark.computation += System.currentTimeMillis() - time2;
@@ -279,6 +289,7 @@ public class DifferenceOfMean extends DifferenceOf
 	@Override
 	public String getParameters( final int channelId )
 	{
-		return "DOM r1=" + radius1[ channelId ] + " t=" + threshold[ channelId ] + " min=" + findMin[ channelId ] + " max=" + findMax[ channelId ];
+		return "DOM r1=" + radius1[ channelId ] + " t=" + threshold[ channelId ] + " min=" + findMin[ channelId ] + " max=" + findMax[ channelId ] + 
+				" imageSigmaX=" + imageSigmaX + " imageSigmaY=" + imageSigmaY + " imageSigmaZ=" + imageSigmaZ;
 	}
 }

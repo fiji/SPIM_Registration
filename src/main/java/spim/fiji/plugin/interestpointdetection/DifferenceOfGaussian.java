@@ -110,7 +110,16 @@ public class DifferenceOfGaussian extends DifferenceOf
 						//
 						// compute Difference-of-Mean
 						//
-						interestPoints.put( viewId, ProcessDOG.compute( img, (float)sigma[ c.getId() ], (float)threshold[ c.getId() ], localization, findMin[ c.getId() ], findMax[ c.getId() ] ) );
+						interestPoints.put(viewId, ProcessDOG.compute(
+								img,
+								(float)sigma[ c.getId() ],
+								(float)threshold[ c.getId() ],
+								localization,
+								Math.min( imageSigmaX, (float)sigma[ c.getId() ] ),
+								Math.min( imageSigmaY, (float)sigma[ c.getId() ] ),
+								Math.min( imageSigmaZ, (float)sigma[ c.getId() ] ),
+								findMin[ c.getId() ],
+								findMax[ c.getId() ] ) );
 						img.close();
 
 				        benchmark.computation += System.currentTimeMillis() - time2;
@@ -270,6 +279,7 @@ public class DifferenceOfGaussian extends DifferenceOf
 	@Override
 	public String getParameters( final int channelId )
 	{
-		return "DOG s=" + sigma[ channelId ] + " t=" + threshold[ channelId ] + " min=" + findMin[ channelId ] + " max=" + findMax[ channelId ];
+		return "DOG s=" + sigma[ channelId ] + " t=" + threshold[ channelId ] + " min=" + findMin[ channelId ] + " max=" + findMax[ channelId ] + 
+				" imageSigmaX=" + imageSigmaX + " imageSigmaY=" + imageSigmaY + " imageSigmaZ=" + imageSigmaZ;
 	}
 }

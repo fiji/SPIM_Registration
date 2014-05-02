@@ -3,6 +3,8 @@ package spim.process.interestpointdetection;
 import java.util.ArrayList;
 import java.util.Date;
 
+import net.imglib2.util.Util;
+
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianReal1;
 import mpicbg.imglib.image.Image;
@@ -22,10 +24,12 @@ public class ProcessDOG
 			final float sigma, 
 			final float threshold, 
 			final int localization,
+			final double imageSigmaX,
+			final double imageSigmaY,
+			final double imageSigmaZ,
 			final boolean findMin, 
 			final boolean findMax )
 	{
-        float imageSigma = 0.5f;
         float initialSigma = sigma;
 
         final float minPeakValue = threshold;
@@ -60,11 +64,20 @@ public class ProcessDOG
         //
         // Compute the Sigmas for the gaussian convolution
         //
-        final float[] sigmaSteps = LaPlaceFunctions.computeSigma( steps, k, initialSigma );
-        final float[] sigmaStepsDiff = LaPlaceFunctions.computeSigmaDiff( sigmaSteps, imageSigma );
-         
+        final float[] sigmaStepsX = LaPlaceFunctions.computeSigma( steps, k, initialSigma );
+        final float[] sigmaStepsDiffX = LaPlaceFunctions.computeSigmaDiff( sigmaStepsX, (float)imageSigmaX );
+
+        final float[] sigmaStepsY = LaPlaceFunctions.computeSigma( steps, k, initialSigma );
+        final float[] sigmaStepsDiffY = LaPlaceFunctions.computeSigmaDiff( sigmaStepsY, (float)imageSigmaY );
+
+        final float[] sigmaStepsZ = LaPlaceFunctions.computeSigma( steps, k, initialSigma );
+        final float[] sigmaStepsDiffZ = LaPlaceFunctions.computeSigmaDiff( sigmaStepsZ, (float)imageSigmaZ );
+
+        final double[] sigma1 = new double[]{ sigmaStepsDiffX[0], sigmaStepsDiffY[0], sigmaStepsDiffZ[0] };
+        final double[] sigma2 = new double[]{ sigmaStepsDiffX[1], sigmaStepsDiffY[1], sigmaStepsDiffZ[1] };
+        
 		// compute difference of gaussian
-		final DifferenceOfGaussianReal1<FloatType> dog = new DifferenceOfGaussianReal1<FloatType>( img, new OutOfBoundsStrategyMirrorFactory<FloatType>(), sigmaStepsDiff[0], sigmaStepsDiff[1], minInitialPeakValue, K_MIN1_INV );
+		final DifferenceOfGaussianReal1<FloatType> dog = new DifferenceOfGaussianReal1<FloatType>( img, new OutOfBoundsStrategyMirrorFactory<FloatType>(), sigma1, sigma2, minInitialPeakValue, K_MIN1_INV );
 		
 		// do quadratic fit??
 		if ( localization == 1 )
@@ -72,7 +85,9 @@ public class ProcessDOG
 		else
 			dog.setKeepDoGImage( false );
 
-		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): computing difference-of-gausian (sigma=" + initialSigma + ", threshold=" + minPeakValue + ")" );
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): computing difference-of-gausian (sigma=" + initialSigma + ", " +
+				"threshold=" + minPeakValue + ", sigma1=" + Util.printCoordinates( sigma1) + ", sigma2=" + Util.printCoordinates( sigma1) + ")" );
+		
 		dog.process();
 		
         final ArrayList< DifferenceOfGaussianPeak<FloatType> > peakListOld = dog.getPeaks();

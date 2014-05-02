@@ -22,6 +22,9 @@ public class ProcessDOM
 			final int radius2, 
 			final float threshold, 
 			final int localization,
+			final double imageSigmaX,
+			final double imageSigmaY,
+			final double imageSigmaZ,
 			final boolean findMin, 
 			final boolean findMax )
 	{
@@ -43,10 +46,16 @@ public class ProcessDOM
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): min intensity = " + min.get() + ", max intensity = " + max.get() );
 		
 		// in-place
-		final int s1 = radius1*2 + 1;
-		final int s2 = radius2*2 + 1;
+		final int sX1 = Math.max( 3, (int)Math.round( radius1 * (0.5/imageSigmaX ) ) * 2 + 1 );
+		final int sX2 = Math.max( 5, (int)Math.round( radius2 * (0.5/imageSigmaX ) ) * 2 + 1 );
 
-		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Computing Difference-of-Mean");					
+		final int sY1 = Math.max( 3, (int)Math.round( radius1 * (0.5/imageSigmaY ) ) * 2 + 1 );
+		final int sY2 = Math.max( 5, (int)Math.round( radius2 * (0.5/imageSigmaY ) ) * 2 + 1 );
+
+		final int sZ1 = Math.max( 3, (int)Math.round( radius1 * (0.5/imageSigmaZ ) ) * 2 + 1 );
+		final int sZ2 = Math.max( 5, (int)Math.round( radius2 * (0.5/imageSigmaZ ) ) * 2 + 1 );
+
+		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Computing Difference-of-Mean, diameters = (" + sX1 + ", "  + sX2 + ", "  + sY1 + ", "  + sY2 + ", "  + sZ1 + ", "  + sZ2 + ")" );
 
 		// in-place overwriting img if no adjacent Gauss fit is required
 		final Image< FloatType > domImg;
@@ -62,7 +71,7 @@ public class ProcessDOM
 				tt.setZero();
 		}
 		
-		DOM.computeDifferencOfMean3d( integralImg, domImg, s1, s1, s1, s2, s2, s2, min.get(), max.get() );
+		DOM.computeDifferencOfMean3d( integralImg, domImg, sX1, sY1, sZ1, sX2, sY2, sZ2, min.get(), max.get() );
 
 		// close integral img
 		integralImg.close();
