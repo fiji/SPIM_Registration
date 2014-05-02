@@ -201,9 +201,9 @@ public class Apply_Transformation implements PlugIn
 
 			int j = 0;
 			
-			for ( final Entry t : sortedList( timepoints.keySet() ) )
-				for ( final Entry c : sortedList( channels.keySet() ) )
-					for ( final Entry i : sortedList( illums.keySet() ) )
+			for ( int t = 0; t < sortedList( timepoints.keySet() ).size(); ++t )
+				for ( int c = 0; c < sortedList( channels.keySet() ).size(); ++c )
+					for ( int i = 0; i < sortedList( illums.keySet() ).size(); ++i )
 						for ( final Entry a : sortedList( angles.keySet() ) )
 						{
 							// it is for one individual angle, let's set the name as default rotation
