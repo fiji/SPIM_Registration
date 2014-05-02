@@ -133,7 +133,8 @@ public class Interest_Point_Detection implements PlugIn
 				result.getTimePointsToProcess() );
 		
 		// the interest point detection should query its parameters
-		ipd.queryParameters();
+		if ( !ipd.queryParameters() )
+			return;
 		
 		// now extract all the detections
 		for ( final TimePoint tp : result.getTimePointsToProcess() )
