@@ -227,7 +227,7 @@ public class LoadParseQueryXML
 	 * @param defaultSelection - default selection
 	 * @return the selection or -1 if cancelled
 	 */
-	protected int queryIndividualEntry( final String name, final String[] list, int defaultSelection )
+	public static int queryIndividualEntry( final String name, final String[] list, int defaultSelection )
 	{
 		if ( defaultSelection >= list.length )
 			defaultSelection = 0;
@@ -251,7 +251,7 @@ public class LoadParseQueryXML
 	 * @param defaultSelection - default selection
 	 * @return the selection or null if cancelled
 	 */
-	protected boolean[] queryMultipleEntries( final String name, final String[] list, boolean[] defaultSelection )
+	public static boolean[] queryMultipleEntries( final String name, final String[] list, boolean[] defaultSelection )
 	{
 		if ( defaultSelection == null || defaultSelection.length != list.length )
 		{
@@ -297,7 +297,7 @@ public class LoadParseQueryXML
 	 * @param defaultSelection - default selection (array of size 1 to be able to return it)
 	 * @return the selection or null if cancelled
 	 */
-	protected boolean[] queryPattern( final String name, final String[] list, final String[] defaultSelectionArray )
+	public static boolean[] queryPattern( final String name, final String[] list, final String[] defaultSelectionArray )
 	{
 		String defaultSelection = defaultSelectionArray[ 0 ];
 
@@ -354,7 +354,7 @@ public class LoadParseQueryXML
 				}
 				
 				if ( !found )
-					IOFunctions.println( "Timepoint " + tp + " not part of the list of timepoints. Ignoring it." );
+					IOFunctions.println( name + " " + tp + " not part of the list of timepoints. Ignoring it." );
 			}				
 		} 
 		catch ( final ParseException e ) 
