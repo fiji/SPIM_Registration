@@ -424,7 +424,6 @@ public class Apply_Transformation implements PlugIn
 
 										if ( !viewDescription.isPresent() )
 											continue;
-
 										
 										if ( applyTo == 0 )
 										{

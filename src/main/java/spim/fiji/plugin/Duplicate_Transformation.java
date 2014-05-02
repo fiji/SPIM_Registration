@@ -6,9 +6,19 @@ import ij.plugin.PlugIn;
 import java.util.ArrayList;
 import java.util.List;
 
+import mpicbg.spim.data.registration.ViewRegistration;
+import mpicbg.spim.data.registration.ViewRegistrations;
+import mpicbg.spim.data.registration.ViewTransform;
+import mpicbg.spim.data.sequence.Angle;
+import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
+import spim.fiji.spimdata.SpimData2;
 
 public class Duplicate_Transformation implements PlugIn
 {
@@ -58,6 +68,8 @@ public class Duplicate_Transformation implements PlugIn
 			}
 		}
 
+		// now save it in case something was applied
+		Interest_Point_Registration.saveXML( result.getData(), result.getXMLFileName() );
 	}
 	
 	protected boolean applyTimepoints( final XMLParseResult result )
@@ -130,13 +142,59 @@ public class Duplicate_Transformation implements PlugIn
 		}
 		else
 		{
-			for ( int i = 0; i < targets.size(); ++i )
-				if ( !source.equals( targets.get( i ) ) )
+			final ViewRegistrations viewRegistrations = result.getData().getViewRegistrations();
+
+			int countApplied = 0;
+			
+			for ( int j = 0; j < targets.size(); ++j )
+				if ( !source.equals( targets.get( j ) ) )
 				{
-					IOFunctions.println( "Applying timepoint " + source.getName() + " >>> " + targets.get( i ).getName() );
+					IOFunctions.println( "Applying timepoint " + source.getName() + " >>> " + targets.get( j ).getName() );
+					++countApplied;
 					
-					// TODO: apply
+					for ( final Channel c : result.getChannelsToProcess() )
+						for ( final Illumination i : result.getIlluminationsToProcess() )
+							for ( final Angle a : result.getAnglesToProcess() )
+							{
+								final ViewId sourceViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), source, c, a, i );
+								final ViewId targetViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), targets.get( j ), c, a, i );
+								
+								final ViewDescription< TimePoint, ViewSetup > sourceViewDescription = result.getData().getSequenceDescription().getViewDescription( 
+										sourceViewId.getTimePointId(), sourceViewId.getViewSetupId() );
+
+								final ViewDescription< TimePoint, ViewSetup > targetViewDescription = result.getData().getSequenceDescription().getViewDescription( 
+										targetViewId.getTimePointId(), targetViewId.getViewSetupId() );
+
+								IOFunctions.println( "Source viewId t=" + source.getName() + ", ch=" + c.getName() + ", ill=" + i.getName() + ", angle=" + a.getName() );  
+								IOFunctions.println( "Target viewId t=" + targets.get( j ).getName() + ", ch=" + c.getName() + ", ill=" + i.getName() + ", angle=" + a.getName() );  
+								
+								if ( !sourceViewDescription.isPresent() || !targetViewDescription.isPresent() )
+								{
+									if ( !sourceViewDescription.isPresent() )
+										IOFunctions.println( "Source viewId is NOT present" );
+									
+									if ( !targetViewDescription.isPresent() )
+										IOFunctions.println( "Target viewId is NOT present" );
+									
+									continue;
+								}
+								
+								// update the view registration
+								final ViewRegistration vrSource = viewRegistrations.getViewRegistration( sourceViewId );
+								final ViewRegistration vrTarget = viewRegistrations.getViewRegistration( targetViewId );
+								
+								vrTarget.identity();
+								
+								for ( final ViewTransform vt : vrSource.getTransformList() )
+								{
+									IOFunctions.println( "Concatenationg model " + vt.getName() + ", " + vt.asAffine3D() );
+									vrTarget.concatenateTransform( vt );
+								}
+							}
 				}
+			
+			if ( countApplied == 0 )
+				return false;
 		}
 		return true;
 	}
