@@ -328,6 +328,8 @@ public abstract class StackList implements MultiViewDatasetDefinition
 					{
 						String fileName = getFileNameFor( t, c, i, a );
 						
+						final boolean fileExisits = new File( directory, fileName ).exists();
+						
 						String ext = "";
 						
 						if ( hasMultipleChannels > 0 && numDigitsChannels == 0 )
@@ -354,10 +356,17 @@ public abstract class StackList implements MultiViewDatasetDefinition
 						if ( ext.length() > 1 )
 							fileName += "   >> [" + ext + "]";
 						
+						if ( fileExisits )
+							fileName += " (file found)";
+						else
+							fileName += " (file NOT found)";
+						
 						gd.addCheckbox( fileName, true );
 						
 						// otherwise underscores are gone ...
 						((Checkbox)gd.getCheckboxes().lastElement()).setLabel( fileName );
+						if ( !fileExisits )
+							((Checkbox)gd.getCheckboxes().lastElement()).setBackground( GUIHelper.error );
 					}
 				
 		GUIHelper.addScrollBars( gd );
@@ -507,10 +516,10 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		}
 
 		// get the list of integers
-		timepointNameList = convertIntegerList( IntegerPattern.parseIntegerString( timepoints ) );
-		channelNameList = convertIntegerList( IntegerPattern.parseIntegerString( channels ) );
-		illuminationsNameList = convertIntegerList( IntegerPattern.parseIntegerString( illuminations ) );
-		angleNameList = convertIntegerList( IntegerPattern.parseIntegerString( angles ) );
+		timepointNameList = ( IntegerPattern.parseNameString( timepoints ) );
+		channelNameList = ( IntegerPattern.parseNameString( channels ) );
+		illuminationsNameList = ( IntegerPattern.parseNameString( illuminations ) );
+		angleNameList = ( IntegerPattern.parseNameString( angles ) );
 
 		exceptionIds = new ArrayList< int[] >();
 		
