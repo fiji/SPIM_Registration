@@ -113,9 +113,9 @@ public class ProcessIndependent extends ProcessFusion
 
 			taskExecutor.shutdown();
 			
-			export.exportImage( fusedImg, bb, "TP: " + timepoint.getName() + ", Ch: " + channel.getName() + 
-					", angle: " + inputData.getViewSetup().getAngle().getName() +
-					", illum: " + inputData.getViewSetup().getIllumination().getName() );
+			export.exportImage( fusedImg, bb, "TP" + timepoint.getName() + "_Ch" + channel.getName() + 
+					"_Angle" + inputData.getViewSetup().getAngle().getName() +
+					"_Illum" + inputData.getViewSetup().getIllumination().getName() );
 		}
 		
 		return null;

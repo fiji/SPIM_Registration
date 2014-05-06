@@ -70,7 +70,7 @@ public class WeightedAverageFusion extends Fusion
 		for ( final TimePoint t : timepointsToProcess )
 			for ( final Channel c : channelsToProcess )
 			{
-				final String title = "TP: " + t.getName() + ", Ch: " + c.getName(); 
+				final String title = "TP" + t.getName() + "_Ch" + c.getName(); 
 				if ( bb.getPixelType() == 0 )
 				{
 					exporter.exportImage(

@@ -1,7 +1,12 @@
 package spim.process.fusion.export;
 
+import java.io.File;
+import java.util.Date;
+
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
+import ij.io.FileSaver;
+import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.exception.ImgLibException;
 import net.imglib2.img.display.imagej.ImageJFunctions;
@@ -12,13 +17,16 @@ import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.FusionHelper;
 
-public class DisplayImage implements ImgExport
+public class Save3dTIFF implements ImgExport
 {
-	final boolean virtualDisplay;
+	public static boolean defaultUseXMLPath = true;
+	public static String defaultPath = null;
 	
-	public DisplayImage() { this( false ); }
-	public DisplayImage( final boolean virtualDisplay ) { this.virtualDisplay = virtualDisplay; }
-
+	String path;
+	boolean useXMLPath;
+	
+	public Save3dTIFF( final String path ) { this.path = path; }
+	
 	public < T extends RealType< T > & NativeType< T > > void exportImage( final RandomAccessibleInterval< T > img, final String title )
 	{
 		exportImage( img, null, title );
@@ -51,12 +59,7 @@ public class DisplayImage implements ImgExport
 			try { imp = ((ImagePlusImg<T, ?>)img).getImagePlus(); } catch (ImgLibException e) {}
 
 		if ( imp == null )
-		{
-			if ( virtualDisplay )
-				imp = ImageJFunctions.wrap( img, title );
-			else
-				imp = ImageJFunctions.wrap( img, title ).duplicate();
-		}
+			imp = ImageJFunctions.wrap( img, title ).duplicate();
 
 		imp.setTitle( title );
 
@@ -73,23 +76,45 @@ public class DisplayImage implements ImgExport
 		imp.setDisplayRange( minmax[ 0 ], minmax[ 1 ] );
 		
 		imp.updateAndDraw();
-		imp.show();
 
-		return true;
+		final String fileName = new File( path, title + ".tif" ).getAbsolutePath();
+		
+		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Saving file " + fileName );
+		
+		return new FileSaver( imp ).saveAsTiffStack( fileName );
 	}
 
 	@Override
 	public boolean queryParameters( final SpimData2 spimData ) { return true; }
 
 	@Override
-	public void queryAdditionalParameters( final GenericDialog gd, final SpimData2 spimData ) {}
+	public void queryAdditionalParameters( final GenericDialog gd, final SpimData2 spimData )
+	{
+		if ( defaultPath == null || defaultPath.length() == 0 )
+		{
+			defaultPath = spimData.getBasePath().getAbsolutePath();
+			
+			if ( defaultPath.endsWith( "/." ) )
+				defaultPath = defaultPath.substring( 0, defaultPath.length() - 1 );
+			
+			if ( defaultPath.endsWith( "/./" ) )
+				defaultPath = defaultPath.substring( 0, defaultPath.length() - 2 );
+		}
+
+		gd.addStringField( "Output_file_directory", defaultPath, 50 );
+	}
 
 	@Override
-	public boolean parseAdditionalParameters( final GenericDialog gd, final SpimData2 spimData ) { return true; }
+	public boolean parseAdditionalParameters( final GenericDialog gd, final SpimData2 spimData )
+	{
+		this.path = gd.getNextString().trim();
+		
+		return true;
+	}
 
 	@Override
-	public ImgExport newInstance() { return new DisplayImage(); }
+	public ImgExport newInstance() { return new Save3dTIFF( path ); }
 
 	@Override
-	public String getDescription() { return "Display using ImageJ"; }
+	public String getDescription() { return "Save as TIFF stack"; }
 }

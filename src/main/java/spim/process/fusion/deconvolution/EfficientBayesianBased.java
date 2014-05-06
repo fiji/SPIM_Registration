@@ -205,7 +205,7 @@ public class EfficientBayesianBased extends Fusion
 				exporter.exportImage(
 						deconvolved,
 						bb,
-						"TP: " + t.getName() + ", Ch: " + c.getName(),
+						"TP" + t.getName() + "_Ch" + c.getName(),
 						0, 1 );
 			}
 

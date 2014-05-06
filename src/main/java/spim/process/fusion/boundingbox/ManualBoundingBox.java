@@ -92,7 +92,7 @@ public class ManualBoundingBox extends BoundingBox
 		gd.addChoice( "ImgLib2_container", imgTypes, imgTypes[ defaultImgType ] );
 		
 		fusion.queryAdditionalParameters( gd );
-		imgExport.queryAdditionalParameters( gd );
+		imgExport.queryAdditionalParameters( gd, spimData );
 
 		gd.addMessage( "Estimated size: ", GUIHelper.largestatusfont, GUIHelper.good );
 		Label l1 = (Label)gd.getMessage();
@@ -136,7 +136,7 @@ public class ManualBoundingBox extends BoundingBox
 		if ( !fusion.parseAdditionalParameters( gd ) )
 			return false;
 		
-		if ( !imgExport.parseAdditionalParameters( gd ) )
+		if ( !imgExport.parseAdditionalParameters( gd, spimData ) )
 			return false;
 		
 		BoundingBox.defaultMin[ 0 ] = min[ 0 ];

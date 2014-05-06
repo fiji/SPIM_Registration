@@ -5,6 +5,7 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import spim.fiji.plugin.fusion.BoundingBox;
+import spim.fiji.spimdata.SpimData2;
 
 public interface ImgExport
 {
@@ -15,7 +16,7 @@ public interface ImgExport
 	 * @param bb
 	 * @param title
 	 */
-	public < T extends RealType< T > & NativeType< T > > void exportImage( final RandomAccessibleInterval< T > img, final BoundingBox bb, final String title );
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval< T > img, final BoundingBox bb, final String title );
 	
 	/**
 	 * Exports the image using a predefined min/max
@@ -26,26 +27,26 @@ public interface ImgExport
 	 * @param min
 	 * @param max
 	 */
-	public < T extends RealType< T > & NativeType< T > > void exportImage( final RandomAccessibleInterval< T > img, final BoundingBox bb, final String title, final double min, final double max );
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval< T > img, final BoundingBox bb, final String title, final double min, final double max );
 	
 	/**
 	 * Query the necessary parameters for the fusion (new dialog has to be made)
 	 * 
 	 * @return
 	 */
-	public abstract boolean queryParameters();
+	public abstract boolean queryParameters( final SpimData2 spimData );
 	
 	/**
 	 * Query additional parameters within the bounding box dialog
 	 */
-	public abstract void queryAdditionalParameters( final GenericDialog gd );
+	public abstract void queryAdditionalParameters( final GenericDialog gd, final SpimData2 spimData );
 
 	/**
 	 * Parse the additional parameters added before within the bounding box dialog
 	 * @param gd
 	 * @return
 	 */
-	public abstract boolean parseAdditionalParameters( final GenericDialog gd );
+	public abstract boolean parseAdditionalParameters( final GenericDialog gd, final SpimData2 spimData );
 	
 	public abstract ImgExport newInstance();
 	

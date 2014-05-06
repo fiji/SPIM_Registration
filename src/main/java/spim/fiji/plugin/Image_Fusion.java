@@ -15,6 +15,7 @@ import spim.process.fusion.boundingbox.ManualBoundingBox;
 import spim.process.fusion.deconvolution.EfficientBayesianBased;
 import spim.process.fusion.export.DisplayImage;
 import spim.process.fusion.export.ImgExport;
+import spim.process.fusion.export.Save3dTIFF;
 import spim.process.fusion.weightedavg.WeightedAverageFusion;
 import spim.process.fusion.weightedavg.WeightedAverageFusion.WeightedAvgFusionType;
 
@@ -40,6 +41,7 @@ public class Image_Fusion implements PlugIn
 		staticBoundingBoxAlgorithms.add( new AutomaticBoundingBox( null, null, null, null, null ) );
 		
 		staticImgExportAlgorithms.add( new DisplayImage() );
+		staticImgExportAlgorithms.add( new Save3dTIFF( null ) );
 	}
 
 	@Override
