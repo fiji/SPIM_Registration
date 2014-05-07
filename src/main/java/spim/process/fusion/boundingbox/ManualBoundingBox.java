@@ -331,14 +331,9 @@ public class ManualBoundingBox extends BoundingBox
 								viewDescription.getViewSetup().getHeight() - 1,
 								viewDescription.getViewSetup().getDepth() - 1 };
 						
-						IOFunctions.println( Util.printCoordinates( min ) );
-						IOFunctions.println( Util.printCoordinates( max ) );
-						
 						final ViewRegistration r = spimData.getViewRegistrations().getViewRegistration( viewId );
 						r.updateModel();
 						final FinalRealInterval interval = r.getModel().estimateBounds( new FinalRealInterval( min, max ) );
-						
-						IOFunctions.println( r.getModel() );
 						
 						for ( int d = 0; d < minBB.length; ++d )
 						{
