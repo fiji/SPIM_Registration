@@ -5,6 +5,7 @@ import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
@@ -14,6 +15,7 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
@@ -26,6 +28,7 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.process.fusion.export.DisplayImage;
@@ -33,7 +36,10 @@ import spim.process.interestpointregistration.ChannelProcess;
 
 public class Visualize_Detections implements PlugIn
 {
-
+	protected static String[] detectionsChoice = new String[]{ "All detections", "Corresponding detections" };
+	public static int defaultDetections = 0;
+	public static boolean defaultDisplayInput = true;
+	
 	@Override
 	public void run( final String arg0 )
 	{
@@ -68,6 +74,10 @@ public class Visualize_Detections implements PlugIn
 			gd.addChoice( "Interest_points_channel_" + channel.getName(), labels, labels[ Interest_Point_Registration.defaultChannelLabels[ j++ ] ] );
 			channelLabels.add( labels );
 		}
+		
+		gd.addChoice( "Display", detectionsChoice, detectionsChoice[ defaultDetections ] );
+		gd.addCheckbox( "Display_input_images", defaultDisplayInput );
+		
 		GUIHelper.addWebsite( gd );
 		gd.showDialog();
 		
@@ -100,7 +110,10 @@ public class Visualize_Detections implements PlugIn
 		}
 		
 		for ( final ChannelProcess c : channelsToProcess )
-			IOFunctions.println( "registering channel: " + c.getChannel().getId()  + " label: '" + c.getLabel() + "'" );
+			IOFunctions.println( "displaying channel: " + c.getChannel().getId()  + " label: '" + c.getLabel() + "'" );
+		
+		final int detections = defaultDetections = gd.getNextChoiceIndex();
+		final boolean displayInput = defaultDisplayInput = gd.getNextBoolean();
 		
 		//
 		// load the images and render the segmentations
@@ -124,11 +137,33 @@ public class Visualize_Detections implements PlugIn
 							continue;
 
 						// load and display
-						final RandomAccessibleInterval< UnsignedShortType > img = result.getData().getSequenceDescription().getImgLoader().getUnsignedShortImage( viewDescription );
-						final String name = "TP" + t.getName() + "_Ch" + c.getChannel().getName() + "(label='" + c.getLabel() + "')_ill" + i.getName() + "_angle" + a.getName(); 
+						final String name = "TP" + t.getName() + "_Ch" + c.getChannel().getName() + "(label='" + c.getLabel() + "')_ill" + i.getName() + "_angle" + a.getName();
+						final Interval interval;
 						
-						di.exportImage( img, name );
-						di.exportImage( renderSegmentations( result.getData(), viewId, c.getLabel(), img ), "seg of " + name );
+						if ( displayInput )
+						{
+							final RandomAccessibleInterval< UnsignedShortType > img = result.getData().getSequenceDescription().getImgLoader().getUnsignedShortImage( viewDescription );							
+							di.exportImage( img, name );
+							interval = img;
+						}
+						else
+						{
+							final int w = viewDescription.getViewSetup().getWidth();
+							final int h = viewDescription.getViewSetup().getHeight();
+							final int d = viewDescription.getViewSetup().getDepth();
+							
+							if ( w <= 0 || h <= 0 || d <= 0 )
+							{
+								IOFunctions.println( "Cannot load image dimensions from XML for " + name + ", using min/max of all detections instead." );
+								interval = null;
+							}
+							else
+							{
+								interval = new FinalInterval( new long[]{ w, h, d } );
+							}
+						}
+						
+						di.exportImage( renderSegmentations( result.getData(), viewId, c.getLabel(), detections, interval ), "seg of " + name );
 					}
 	}
 	
@@ -136,30 +171,79 @@ public class Visualize_Detections implements PlugIn
 			final SpimData2 data,
 			final ViewId viewId,
 			final String label,
-			final Interval img )
+			final int detections,
+			Interval interval )
 	{		
 		final InterestPointList ipl = data.getViewInterestPoints().getViewInterestPointLists( viewId ).getInterestPointList( label );
 		
 		if ( ipl.getInterestPoints() == null || ipl.getInterestPoints().size() == 0 )
 			ipl.loadInterestPoints();
+			
+		if ( interval == null )
+		{
+			final int n = ipl.getInterestPoints().get( 0 ).getL().length;
+			
+			final long[] min = new long[ n ];
+			final long[] max = new long[ n ];
+
+			for ( int d = 0; d < n; ++d )
+			{
+				min[ d ] = Math.round( ipl.getInterestPoints().get( 0 ).getL()[ d ] ) - 1;
+				max[ d ] = Math.round( ipl.getInterestPoints().get( 0 ).getL()[ d ] ) + 1;
+			}
+			
+			for ( final InterestPoint ip : ipl.getInterestPoints() )
+			{
+				for ( int d = 0; d < n; ++d )
+				{
+					min[ d ] = Math.min( min[ d ], Math.round( ip.getL()[ d ] ) - 1 );
+					max[ d ] = Math.max( max[ d ], Math.round( ip.getL()[ d ] ) + 1 );
+				}
+			}
+			
+			interval = new FinalInterval( min, max );
+		}
 	
-		final Img< FloatType > s = new ImagePlusImgFactory< FloatType >().create( img, new FloatType() );
+		final Img< FloatType > s = new ImagePlusImgFactory< FloatType >().create( interval, new FloatType() );
 		final RandomAccess< FloatType > r = Views.extendZero( s ).randomAccess();
 		
 		final int n = s.numDimensions();
 		final int[] tmp = new int[ n ];
 		
-		IOFunctions.println( "Visualizing " + ipl.getInterestPoints().size() + " detections." );
-		
-		for ( final InterestPoint ip : ipl.getInterestPoints() )
+		if ( detections == 0 )
 		{
-			for ( int d = 0; d < n; ++d )
-				tmp[ d ] = Math.round( ip.getL()[ d ] );
-
-			r.setPosition( tmp );
-			r.get().set( 1 );
+			IOFunctions.println( "Visualizing " + ipl.getInterestPoints().size() + " detections." );
+			
+			for ( final InterestPoint ip : ipl.getInterestPoints() )
+			{
+				for ( int d = 0; d < n; ++d )
+					tmp[ d ] = Math.round( ip.getL()[ d ] );
+	
+				r.setPosition( tmp );
+				r.get().set( 1 );
+			}
 		}
-		
+		else
+		{
+			final HashMap< Integer, InterestPoint > map = new HashMap< Integer, InterestPoint >();
+			
+			for ( final InterestPoint ip : ipl.getInterestPoints() )
+				map.put( ip.getId(), ip );
+			
+			if ( ipl.getCorrespondingInterestPoints() == null || ipl.getCorrespondingInterestPoints().size() == 0 )
+				ipl.loadCorrespondingInterestPoints();
+
+			IOFunctions.println( "Visualizing " + ipl.getCorrespondingInterestPoints().size() + " corresponding detections." );
+			
+			for ( final CorrespondingInterestPoints ip : ipl.getCorrespondingInterestPoints() )
+			{	
+				for ( int d = 0; d < n; ++d )
+					tmp[ d ] = Math.round( map.get( ip.getDetectionId() ).getL()[ d ] );
+	
+				r.setPosition( tmp );
+				r.get().set( 1 );
+			}
+		}
 
 		try
 		{
