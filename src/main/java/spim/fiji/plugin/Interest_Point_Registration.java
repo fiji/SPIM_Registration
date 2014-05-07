@@ -67,7 +67,7 @@ public class Interest_Point_Registration implements PlugIn
 	public static boolean defaultAddNewCorrespondences = true;
 	public static boolean defaultDisplayTransformOnly = false;
 
-	final protected String warningLabel = " (WARNING: Only available for "; 
+	final static protected String warningLabel = " (WARNING: Only available for "; 
 	
 	static
 	{
@@ -358,7 +358,7 @@ public class Interest_Point_Registration implements PlugIn
 	 * @param channel
 	 * @return
 	 */
-	protected String[] getAllInterestPointLabelsForChannel( final SpimData2 spimData, final ArrayList< TimePoint > timepointsToProcess, final Channel channel )
+	protected static String[] getAllInterestPointLabelsForChannel( final SpimData2 spimData, final ArrayList< TimePoint > timepointsToProcess, final Channel channel )
 	{
 		final ViewInterestPoints interestPoints = spimData.getViewInterestPoints();
 		final HashMap< String, Integer > labels = new HashMap< String, Integer >();
@@ -375,7 +375,7 @@ public class Interest_Point_Registration implements PlugIn
 					if ( viewId == null )
 					{
 						IOFunctions.println( "An error occured. Count not find the corresponding ViewSetup for angle: " + 
-							a.getId() + " channel: " + channel.getId() + " illum: " + i.getId() );
+							a.getName() + " channel: " + channel.getName() + " illum: " + i.getName() );
 						
 						return null;
 					}
