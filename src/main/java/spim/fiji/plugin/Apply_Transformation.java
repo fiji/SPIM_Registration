@@ -35,16 +35,16 @@ public class Apply_Transformation implements PlugIn
 	public static boolean defaultSameModelIlluminations = true;
 	public static boolean defaultSameModelAngles = false;
 	
-	public static int defaultModel = 1;
+	public static int defaultModel = 2;
 	public static int defaultDefineAs = 1;
 	public static int defaultApplyTo = 1;
 	
 	public static String[] inputChoice = new String[]{
-		"Identity transform (resets existing transform)",
-		"Calibration only (resets existing transform)",
-		"Current view transformations (appends to current transform)" };	
-	public static String[] modelChoice = new String[]{ "Translation", "Rigid", "Affine" };
-	public static String[] defineChoice = new String[] { "Vector/matrix", "Rotation around axis (rigid only)" };
+		"Identity transform (removes any existing transforms)",
+		"Calibration (removes any existing transforms)",
+		"Current view transformations (appends to current transforms)" };	
+	public static String[] modelChoice = new String[]{ "Identity (no transformation)", "Translation", "Rigid", "Affine" };
+	public static String[] defineChoice = new String[] { "Matrix", "Rotation around axis" };
 	
 	public String[] axesChoice = new String[] { "x-axis", "y-axis", "z-axis" };
 	public static int[] defaultAxis = null;
@@ -106,11 +106,10 @@ public class Apply_Transformation implements PlugIn
 		final boolean multipleIlluminations = result.getIlluminationsToProcess().size() > 1;
 		final boolean multipleAngles = result.getAnglesToProcess().size() > 1;
 		
-		final GenericDialog gd = new GenericDialog( "Choose type of application" );
+		final GenericDialog gd = new GenericDialog( "Choose transformation model" );
 		
 		gd.addChoice( "Transformation model", modelChoice, modelChoice[ defaultModel ] );
-		gd.addChoice( "Define as", defineChoice, defineChoice[ defaultDefineAs ] );
-		gd.addChoice( "Apply to", inputChoice, inputChoice[ defaultApplyTo ] );
+		gd.addChoice( "Apply on top of", inputChoice, inputChoice[ defaultApplyTo ] );
 		
 		if ( multipleTimePoints )
 			gd.addCheckbox( "Same_transformation_for_all_timepoints", defaultSameModelTimePoints );
@@ -130,8 +129,25 @@ public class Apply_Transformation implements PlugIn
 			return;
 	
 		final int model = defaultModel = gd.getNextChoiceIndex();
-		final int defineAs = defaultDefineAs = gd.getNextChoiceIndex();
 		final int applyTo = defaultApplyTo = gd.getNextChoiceIndex();
+		final int defineAs;
+		
+		if ( model == 2 ) // rigid
+		{
+			final GenericDialog gd2 = new GenericDialog( "Choose application for transformation model" );
+			gd2.addChoice( "Define as", defineChoice, defineChoice[ defaultDefineAs ] );
+
+			gd2.showDialog();
+			
+			if ( gd2.wasCanceled() )
+				return;
+
+			defineAs = defaultDefineAs = gd2.getNextChoiceIndex();
+		}
+		else
+		{
+			defineAs = 0;
+		}
 		
 		final boolean sameModelTimePoints, sameModelChannels, sameModelIlluminations, sameModelAngles;
 		
@@ -155,14 +171,17 @@ public class Apply_Transformation implements PlugIn
 		else
 			sameModelAngles = true;
 		
-		// reset the transform, in this case we need to make sure the calibration is actually available
+		// reset the transform to the calibration (x,y,z resolution), in this case we need to make sure the calibration is actually available
 		final double minResolution;
 		if ( applyTo == 1 )
 		{
 			minResolution = assembleAllMetaData( result.getData(), result.getTimePointsToProcess(), result.getChannelsToProcess(), result.getIlluminationsToProcess(), result.getAnglesToProcess() );
 			
 			if ( Double.isNaN( minResolution ) )
+			{
+				IOFunctions.println( "Could not assemble the calibration, quitting." );
 				return;
+			}
 		}
 		else
 		{
@@ -181,7 +200,7 @@ public class Apply_Transformation implements PlugIn
 
 	protected boolean queryRotationAxis( final int model, final int applyTo, final double minResolution, final XMLParseResult result, final boolean sameModelTimePoints, final boolean sameModelChannels, final boolean sameModelIlluminations, final boolean sameModelAngles )
 	{
-		if ( model != 1 )
+		if ( model != 2 )
 		{
 			IOFunctions.println( "No rigid model selected." );
 			return false;
@@ -244,6 +263,7 @@ public class Apply_Transformation implements PlugIn
 		final int[] axes = new int[ numEntries ];
 		final double[] degrees = new double[ numEntries ];
 		final ArrayList< double[] > models = new ArrayList< double[] >();
+		final ArrayList< String > modelDescriptions = new ArrayList< String >();
 		
 		final double[] tmp = new double[ 16 ];
 		
@@ -254,19 +274,27 @@ public class Apply_Transformation implements PlugIn
 			
 			final Transform3D t = new Transform3D();
 			if ( axes[ j ] == 0 )
+			{
 				t.rotX( Math.toRadians( degrees[ j ] ) );
+				modelDescriptions.add( "Rotation around x-axis by " + degrees[ j ] + " degrees" );	
+			}
 			else if ( axes[ j ] == 1 )
+			{
 				t.rotY( Math.toRadians( degrees[ j ] ) );
+				modelDescriptions.add( "Rotation around y-axis by " + degrees[ j ] + " degrees" );	
+			}
 			else
+			{
 				t.rotZ( Math.toRadians( degrees[ j ] ) );
+				modelDescriptions.add( "Rotation around z-axis by " + degrees[ j ] + " degrees" );	
+			}
 
 			t.get( tmp );
 
 			models.add( new double[]{
 					tmp[ 0 ], tmp[ 1 ], tmp[ 2 ], tmp[ 3 ],
 					tmp[ 4 ], tmp[ 5 ], tmp[ 6 ], tmp[ 7 ],
-					tmp[ 8 ], tmp[ 9 ], tmp[ 10 ], tmp[ 11 ] } );
-			
+					tmp[ 8 ], tmp[ 9 ], tmp[ 10 ], tmp[ 11 ] } );			
 		}
 		
 		// set defaults
@@ -276,7 +304,7 @@ public class Apply_Transformation implements PlugIn
 		defaultModels = models;
 		
 		// apply the models as asked
-		return applyModels( result.getData(), models, applyTo, minResolution, timepoints, channels, illums, angles );
+		return applyModels( result.getData(), models, modelDescriptions, applyTo, minResolution, timepoints, channels, illums, angles );
 	}
 
 	protected boolean queryString( final int model, final int applyTo, final double minResolution, final XMLParseResult result, final boolean sameModelTimePoints, final boolean sameModelChannels, final boolean sameModelIlluminations, final boolean sameModelAngles )
@@ -304,6 +332,10 @@ public class Apply_Transformation implements PlugIn
 		final GenericDialog gd;
 		
 		if ( model == 0 )
+		{
+			gd = null;
+		}
+		else if ( model == 1 )
 		{
 			gd = new GenericDialog( "Model parameters for translation model 3d" );
 
@@ -344,17 +376,26 @@ public class Apply_Transformation implements PlugIn
 						}
 		}
 		
-		if ( numEntries > 10 )
-			GUIHelper.addScrollBars( gd );
+		if ( gd != null )
+		{
+			if ( numEntries > 10 )
+				GUIHelper.addScrollBars( gd );
+			
+			gd.showDialog();
+			
+			if ( gd.wasCanceled() )
+				return false;
+		}
 		
-		gd.showDialog();
-		
-		if ( gd.wasCanceled() )
-			return false;
-
 		final ArrayList< double[] > models = new ArrayList< double[] >();
+		final ArrayList< String > modelDescriptions = new ArrayList< String >();
 		
 		if ( model == 0 )
+		{
+			for ( int j = 0; j < numEntries; ++j )
+				models.add( null );			
+		}
+		else if ( model == 1 )
 		{
 			for ( int j = 0; j < numEntries; ++j )
 			{
@@ -363,7 +404,10 @@ public class Apply_Transformation implements PlugIn
 				if ( v == null )
 					return false;
 				else
-					models.add( new double[]{ 1, 0, 0, v[ 0 ],    0, 1, 0, v[ 1 ],    0, 0, 1, v[ 2 ] } );
+				{
+					models.add( new double[]{ 1, 0, 0, v[ 0 ], 0, 1, 0, v[ 1 ], 0, 0, 1, v[ 2 ] } );
+					modelDescriptions.add( "Translation [" + v[ 0 ] + "," + v[ 1 ] + "," + v[ 2 ] + "]" );
+				}
 			}
 				
 		}
@@ -376,7 +420,10 @@ public class Apply_Transformation implements PlugIn
 				if ( v == null )
 					return false;
 				else
+				{
 					models.add( v );
+					modelDescriptions.add( "Rigid/Affine by matrix" );					
+				}
 			}
 		}
 		
@@ -384,12 +431,13 @@ public class Apply_Transformation implements PlugIn
 		defaultModels = models;
 		
 		// apply the models as asked
-		return applyModels( result.getData(), models, applyTo, minResolution, timepoints, channels, illums, angles );
+		return applyModels( result.getData(), models, modelDescriptions, applyTo, minResolution, timepoints, channels, illums, angles );
 	}
 	
 	protected boolean applyModels(
 			final SpimData2 spimData,
 			final ArrayList< double[] > models,
+			final ArrayList< String > modelDescriptions,
 			final int applyTo,
 			final double minResolution,
 			final HashMap< Entry, List< TimePoint > > timepoints, 
@@ -410,7 +458,15 @@ public class Apply_Transformation implements PlugIn
 						final List< Illumination > il = illums.get( is );
 						final List< Angle > al = angles.get( as );
 						
-						final double[] v = models.get( j++ );
+						final double[] v = models.get( j );
+						final String modelDesc;
+						
+						if ( modelDescriptions == null || modelDescriptions.size() == 0 )
+							modelDesc = "";
+						else
+							modelDesc = modelDescriptions.get( j );
+
+						++j;
 						
 						for ( final TimePoint t : tl )
 							for ( final Channel c : cl )
@@ -427,7 +483,7 @@ public class Apply_Transformation implements PlugIn
 										
 										if ( applyTo == 0 )
 										{
-											IOFunctions.println( "Reseting model to idenity transform for timepoint " + t.getName() + ", channel " + c.getName() + ", illum " + i.getName() + ", angle " + a.getName() );
+											IOFunctions.println( "Reseting model to identity transform for timepoint " + t.getName() + ", channel " + c.getName() + ", illum " + i.getName() + ", angle " + a.getName() );
 											setModelToIdentity( spimData, viewId );
 										}
 										
@@ -437,12 +493,15 @@ public class Apply_Transformation implements PlugIn
 											setModelToCalibration( spimData, viewId, minResolution );
 										}
 										
-										IOFunctions.println( "Applying model " + Util.printCoordinates( v ) + " to timepoint " + t.getName() + ", channel " + c.getName() + ", illum " + i.getName() + ", angle " + a.getName() );
-										
-										final AffineTransform3D model = new AffineTransform3D();
-										model.set( v );
-										
-										preConcatenateTransform(spimData, viewId, model, "Manually defined transformation" );
+										if ( v != null )
+										{
+											IOFunctions.println( "Applying model " + Util.printCoordinates( v ) + " (" + modelDesc + ") to timepoint " + t.getName() + ", channel " + c.getName() + ", illum " + i.getName() + ", angle " + a.getName() );
+											
+											final AffineTransform3D model = new AffineTransform3D();
+											model.set( v );
+											
+											preConcatenateTransform(spimData, viewId, model, "Manually defined transformation (" + modelDesc + ")" );
+										}
 									}
 					}
 		return true;
