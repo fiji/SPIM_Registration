@@ -12,9 +12,6 @@ import java.awt.event.TextEvent;
 import java.util.ArrayList;
 import java.util.Vector;
 
-import net.imglib2.FinalRealInterval;
-import net.imglib2.util.Util;
-
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
@@ -24,6 +21,7 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.FinalRealInterval;
 import spim.fiji.plugin.GUIHelper;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
@@ -340,9 +338,6 @@ public class ManualBoundingBox extends BoundingBox
 							minBB[ d ] = Math.min( minBB[ d ], interval.realMin( d ) );
 							maxBB[ d ] = Math.max( maxBB[ d ], interval.realMax( d ) );
 						}
-
-						IOFunctions.println( Util.printCoordinates( minBB ) );
-						IOFunctions.println( Util.printCoordinates( maxBB ) );
 					}		
 	}
 
