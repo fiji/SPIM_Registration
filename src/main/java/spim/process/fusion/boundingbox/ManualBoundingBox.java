@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Vector;
 
 import net.imglib2.FinalRealInterval;
+import net.imglib2.util.Util;
 
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.Angle;
@@ -59,6 +60,20 @@ public class ManualBoundingBox extends BoundingBox
 			{
 				BoundingBox.defaultMin[ d ] = BoundingBox.defaultRangeMin[ d ];
 				BoundingBox.defaultMax[ d ] = BoundingBox.defaultRangeMax[ d ];
+			}
+			else if ( BoundingBox.defaultMin[ d ] < BoundingBox.defaultRangeMin[ d ] )
+			{
+				BoundingBox.defaultMin[ d ] = BoundingBox.defaultRangeMin[ d ];				
+			}
+			else if ( BoundingBox.defaultMax[ d ] > BoundingBox.defaultRangeMax[ d ] )
+			{
+				BoundingBox.defaultMax[ d ] = BoundingBox.defaultRangeMax[ d ];								
+			}
+			
+			if ( BoundingBox.defaultMin[ d ] > BoundingBox.defaultMax[ d ] )
+			{
+				BoundingBox.defaultMin[ d ] = BoundingBox.defaultRangeMin[ d ];
+				BoundingBox.defaultMax[ d ] = BoundingBox.defaultRangeMax[ d ];				
 			}
 		}
 
@@ -316,15 +331,23 @@ public class ManualBoundingBox extends BoundingBox
 								viewDescription.getViewSetup().getHeight() - 1,
 								viewDescription.getViewSetup().getDepth() - 1 };
 						
+						IOFunctions.println( Util.printCoordinates( min ) );
+						IOFunctions.println( Util.printCoordinates( max ) );
+						
 						final ViewRegistration r = spimData.getViewRegistrations().getViewRegistration( viewId );
 						r.updateModel();
 						final FinalRealInterval interval = r.getModel().estimateBounds( new FinalRealInterval( min, max ) );
+						
+						IOFunctions.println( r.getModel() );
 						
 						for ( int d = 0; d < minBB.length; ++d )
 						{
 							minBB[ d ] = Math.min( minBB[ d ], interval.realMin( d ) );
 							maxBB[ d ] = Math.max( maxBB[ d ], interval.realMax( d ) );
 						}
+
+						IOFunctions.println( Util.printCoordinates( minBB ) );
+						IOFunctions.println( Util.printCoordinates( maxBB ) );
 					}		
 	}
 
