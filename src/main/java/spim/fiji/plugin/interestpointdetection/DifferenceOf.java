@@ -10,6 +10,11 @@ import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.algorithm.gauss3.Gauss3;
+import net.imglib2.exception.IncompatibleTypeException;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.view.Views;
 import spim.fiji.plugin.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 
@@ -34,8 +39,13 @@ public abstract class DifferenceOf extends InterestPointDetection
 	public static double defaultImageSigmaX = 0.5;
 	public static double defaultImageSigmaY = 0.5;
 	public static double defaultImageSigmaZ = 0.5;
-	
+
+	public static double defaultAdditionalSigmaX = 0.0;
+	public static double defaultAdditionalSigmaY = 0.0;
+	public static double defaultAdditionalSigmaZ = 0.0;
+
 	protected double imageSigmaX, imageSigmaY, imageSigmaZ;
+	protected double additionalSigmaX, additionalSigmaY, additionalSigmaZ;
 	protected int localization;
 
 	public DifferenceOf(
@@ -49,7 +59,7 @@ public abstract class DifferenceOf extends InterestPointDetection
 	}
 
 	@Override
-	public boolean queryParameters( final boolean defineAnisotropy )
+	public boolean queryParameters( final boolean defineAnisotropy, final boolean additionalSmoothing )
 	{		
 		final ArrayList< Channel > channels = spimData.getSequenceDescription().getAllChannels();
 
@@ -80,6 +90,15 @@ public abstract class DifferenceOf extends InterestPointDetection
 					"Only adjust the initial sigma's if this is not the case.", GUIHelper.mediumstatusfont );
 		}
 		
+		if ( additionalSmoothing )
+		{
+			gd.addNumericField( "Presmooth_Sigma_X", defaultAdditionalSigmaX, 5 );
+			gd.addNumericField( "Presmooth_Sigma_Y", defaultAdditionalSigmaY, 5 );
+			gd.addNumericField( "Presmooth_Sigma_Z", defaultAdditionalSigmaZ, 5 );			
+
+			gd.addMessage( "Note: a sigma of 0.0 means no additional smoothing.", GUIHelper.mediumstatusfont );
+		}
+		
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
@@ -87,26 +106,12 @@ public abstract class DifferenceOf extends InterestPointDetection
 		
 		this.localization = defaultLocalization = gd.getNextChoiceIndex();
 
+		final int[] brightness = new int[ channelsToProcess.size() ];
+		
 		for ( int c = 0; c < channelsToProcess.size(); ++c )
 		{
 			final Channel channel = channelsToProcess.get( c );
-			final int brightness = defaultBrightness[ channel.getId() ] = gd.getNextChoiceIndex();
-			
-			if ( brightness <= 3 )
-			{
-				if ( !setDefaultValues( channel, brightness ) )
-					return false;
-			}
-			else if ( brightness == 4 )
-			{
-				if ( !setAdvancedValues( channel ) )
-					return false;
-			}
-			else
-			{
-				if ( !setInteractiveValues( channel ) )
-					return false;
-			}
+			brightness[ c ] = defaultBrightness[ channel.getId() ] = gd.getNextChoiceIndex();			
 		}
 		
 		if ( defineAnisotropy )
@@ -120,7 +125,56 @@ public abstract class DifferenceOf extends InterestPointDetection
 			imageSigmaX = imageSigmaY = imageSigmaZ = 0.5;
 		}
 		
+		if ( additionalSmoothing )
+		{
+			additionalSigmaX = defaultAdditionalSigmaX = gd.getNextNumber();
+			additionalSigmaY = defaultAdditionalSigmaY = gd.getNextNumber();
+			additionalSigmaZ = defaultAdditionalSigmaZ = gd.getNextNumber();
+		}
+		else
+		{
+			additionalSigmaX = additionalSigmaY = additionalSigmaZ = 0.0;
+		}
+		
+		for ( int c = 0; c < channelsToProcess.size(); ++c )
+		{
+			final Channel channel = channelsToProcess.get( c );
+			
+			if ( brightness[ c ] <= 3 )
+			{
+				if ( !setDefaultValues( channel, brightness[ c ] ) )
+					return false;
+			}
+			else if ( brightness[ c ] == 4 )
+			{
+				if ( !setAdvancedValues( channel ) )
+					return false;
+			}
+			else
+			{
+				if ( !setInteractiveValues( channel ) )
+					return false;
+			}
+		}
+
 		return true;
+	}
+	
+	protected < T extends RealType< T > > void preSmooth( final RandomAccessibleInterval< T > img )
+	{
+		if ( additionalSigmaX > 0.0 || additionalSigmaY > 0.0 || additionalSigmaZ > 0.0 )
+		{
+			IOFunctions.println( "presmoothing image with sigma=[" + additionalSigmaX + "," + additionalSigmaY + "," + additionalSigmaZ + "]" );
+			try
+			{
+				Gauss3.gauss( new double[]{ additionalSigmaX, additionalSigmaY, additionalSigmaZ }, Views.extendMirrorSingle( img ), img );
+			}
+			catch (IncompatibleTypeException e)
+			{
+				IOFunctions.println( "presmoothing failed: " + e );
+				e.printStackTrace();
+			}
+		}
 	}
 
 	/**

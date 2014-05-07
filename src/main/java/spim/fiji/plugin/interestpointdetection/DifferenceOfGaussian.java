@@ -99,14 +99,16 @@ public class DifferenceOfGaussian extends DifferenceOf
 						if ( !viewDescription.isPresent() )
 							continue;
 						
-						final Image< FloatType > img = ImgLib2.wrapFloatToImgLib1( 
-							(Img<net.imglib2.type.numeric.real.FloatType>)
-								spimData.getSequenceDescription().getImgLoader().getImage( viewDescription, false ) );
-						
+						final RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input = spimData.getSequenceDescription().getImgLoader().getImage( viewDescription, false );
+												
 						long time2 = System.currentTimeMillis();
 						
 						benchmark.openFiles += time2 - time1;
 						
+						preSmooth( input );
+						
+						final Image< FloatType > img = ImgLib2.wrapFloatToImgLib1( (Img<net.imglib2.type.numeric.real.FloatType>)input );
+
 						//
 						// compute Difference-of-Mean
 						//
@@ -166,7 +168,7 @@ public class DifferenceOfGaussian extends DifferenceOf
 		final GenericDialog gd = new GenericDialog( "Advanced values for channel " + channel.getName() );
 		
 		gd.addMessage( "Advanced values for channel " + channel.getName() );
-		gd.addNumericField( "Sigma", defaultSigma[ channelId ], 0 );
+		gd.addNumericField( "Sigma", defaultSigma[ channelId ], 5 );
 		gd.addNumericField( "Threshold", defaultThreshold[ channelId ], 4 );
 		gd.addCheckbox( "Find_minima", defaultFindMin[ channelId ] );
 		gd.addCheckbox( "Find_maxima", defaultFindMax[ channelId ] );
@@ -206,13 +208,15 @@ public class DifferenceOfGaussian extends DifferenceOf
 
 		RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > img = 
 				spimData.getSequenceDescription().getImgLoader().getImage( viewDescription, false );
-		
+				
 		if ( img == null )
 		{
 			IOFunctions.println( "View not found: " + viewDescription );
 			return false;
 		}
-		
+	
+		preSmooth( img );
+
 		final ImagePlus imp = ImageJFunctions.wrapFloat( img, "" ).duplicate();
 		img = null;
 		imp.setDimensions( 1, imp.getStackSize(), 1 );

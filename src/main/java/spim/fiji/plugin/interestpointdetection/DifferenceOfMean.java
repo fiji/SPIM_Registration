@@ -102,14 +102,16 @@ public class DifferenceOfMean extends DifferenceOf
 						if ( !viewDescription.isPresent() )
 							continue;
 						
-						final Image< FloatType > img = ImgLib2.wrapFloatToImgLib1( 
-							(Img<net.imglib2.type.numeric.real.FloatType>)
-								spimData.getSequenceDescription().getImgLoader().getImage( viewDescription, false ) );
-						
+						final RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input = spimData.getSequenceDescription().getImgLoader().getImage( viewDescription, false );
+														
 						long time2 = System.currentTimeMillis();
-						
+
 						benchmark.openFiles += time2 - time1;
+
+						preSmooth( input );
 						
+						final Image< FloatType > img = ImgLib2.wrapFloatToImgLib1( (Img<net.imglib2.type.numeric.real.FloatType>)input );
+												
 						//
 						// compute Difference-of-Mean
 						//
@@ -219,6 +221,8 @@ public class DifferenceOfMean extends DifferenceOf
 			IOFunctions.println( "View not found: " + viewDescription );
 			return false;
 		}
+		
+		preSmooth( img );
 		
 		final ImagePlus imp = ImageJFunctions.wrapFloat( img, "" ).duplicate();
 		img = null;

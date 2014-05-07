@@ -76,9 +76,10 @@ public abstract class InterestPointDetection
 	 * Query the necessary parameters for the interestpoint detection
 	 * 
 	 * @param defineAnisotropy - whether to use/query for anisotropy in resolution of the data
+	 * @param additionalSmoothing - smooth in certain dimensions before computing the segmentation
 	 * @return
 	 */
-	public abstract boolean queryParameters( final boolean defineAnisotropy );
+	public abstract boolean queryParameters( final boolean defineAnisotropy, final boolean additionalSmoothing );
 	
 	/**
 	 * @param spimData
