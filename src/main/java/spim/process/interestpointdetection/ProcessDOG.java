@@ -86,7 +86,7 @@ public class ProcessDOG
 			dog.setKeepDoGImage( false );
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): computing difference-of-gausian (sigma=" + initialSigma + ", " +
-				"threshold=" + minPeakValue + ", sigma1=" + Util.printCoordinates( sigma1) + ", sigma2=" + Util.printCoordinates( sigma1) + ")" );
+				"threshold=" + minPeakValue + ", sigma1=" + Util.printCoordinates( sigma1 ) + ", sigma2=" + Util.printCoordinates( sigma2 ) + ")" );
 		
 		dog.process();
 		
