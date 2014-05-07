@@ -118,7 +118,7 @@ public abstract class GlobalOptimizationType
 				// reset the registrations if required
 				if ( inputTransform == 0 )
 					Apply_Transformation.setModelToCalibration( spimData, viewId, minResolution );
-
+				
 				// assemble a new list
 				final ArrayList< InterestPoint > list = new ArrayList< InterestPoint >();
 
@@ -147,7 +147,10 @@ public abstract class GlobalOptimizationType
 				final List< InterestPoint > ptList = lists.getInterestPointList( c.getLabel() ).getInterestPoints();
 				
 				final ViewRegistration r = registrations.getViewRegistration( viewId );
+				r.updateModel();
 				final AffineTransform3D m = r.getModel();
+				
+				IOFunctions.println( m );
 				
 				for ( final InterestPoint p : ptList )
 				{
