@@ -150,8 +150,6 @@ public abstract class GlobalOptimizationType
 				r.updateModel();
 				final AffineTransform3D m = r.getModel();
 				
-				IOFunctions.println( m );
-				
 				for ( final InterestPoint p : ptList )
 				{
 					final float[] l = new float[ 3 ];
