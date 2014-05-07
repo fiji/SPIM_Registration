@@ -65,7 +65,7 @@ public class IterativeClosestPointPairwise implements Callable< ChannelInterestP
 			lastNumCorresponding = icp.getNumPointMatches();
 			lastAvgError = icp.getAverageError();
 			
-			//System.out.println( i + ": " + icp.getNumPointMatches() + " matches, avg error [px] " + icp.getAverageError() + ", max error [px] " + icp.getMaximalError() );
+			System.out.println( i + ": " + icp.getNumPointMatches() + " matches, avg error [px] " + icp.getAverageError() + ", max error [px] " + icp.getMaximalError() );
 		}
 		while ( !converged && ++i < ip.getMaxNumIterations() );
 		
