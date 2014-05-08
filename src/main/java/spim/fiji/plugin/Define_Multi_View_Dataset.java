@@ -10,7 +10,6 @@ import java.awt.AWTEvent;
 import java.awt.Choice;
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.Label;
 import java.awt.event.ItemEvent;
 import java.io.File;
 import java.util.ArrayList;
@@ -72,15 +71,13 @@ public class Define_Multi_View_Dataset implements PlugIn
 		
 		gd1.addChoice( "Type_of_dataset: ", titles, titles[ defaultDatasetDef ] );
 		Choice choice = (Choice)gd1.getChoices().lastElement();
-		gd1.addStringField( "XML filename", defaultXMLName );
-		gd1.addMessage( "" );
-				
-		// first add an empty label so that it is not a MultiLineLabel,
-		// then add the correct text
-		gd1.addMessage( "a\nb", new Font( Font.MONOSPACED, Font.PLAIN, 11 ), Color.BLACK );
-		Label label = (Label)gd1.getMessage();
-		//label.setText( formatEntry( datasetDefinitions.get( defaultDatasetDef ).getExtendedDescription(), numCharacters, numLinesDocumentation ) );
+		gd1.addStringField( "XML filename", defaultXMLName, 30 );
 		
+		final MyMultiLineLabel label = MyMultiLineLabel.addMessage( gd1,
+				formatEntry( datasetDefinitions.get( defaultDatasetDef ).getExtendedDescription(), numCharacters, numLinesDocumentation ),
+				new Font( Font.MONOSPACED, Font.PLAIN, 11 ),
+				Color.BLACK );
+						
 		addListeners( gd1, choice, label, datasetDefinitions );
 		
 		GUIHelper.addWebsite( gd1 );
@@ -129,7 +126,7 @@ public class Define_Multi_View_Dataset implements PlugIn
 		}
 	}
 	
-	public static String formatEntry( String line, final int numCharacters, final int numLines )
+	public static String[] formatEntry( String line, final int numCharacters, final int numLines )
 	{
 		if ( line == null )
 			line = "";
@@ -163,17 +160,10 @@ public class Define_Multi_View_Dataset implements PlugIn
 			split[ j ] = s;
 		}
 		
-		line = "";
-		
-		for ( int j = 0; j < numLines - 1; ++j )
-			line += split[ j ] + "\n";
-
-		line += split[ numLines - 1 ];
-
-		return line;
+		return split;
 	}
 
-	protected void addListeners( final GenericDialog gd, final Choice choice, final Label label, final ArrayList< MultiViewDatasetDefinition > datasetDefinitions )
+	protected void addListeners( final GenericDialog gd, final Choice choice, final MyMultiLineLabel label, final ArrayList< MultiViewDatasetDefinition > datasetDefinitions )
 	{
 		gd.addDialogListener( new DialogListener()
 		{
