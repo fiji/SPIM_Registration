@@ -80,8 +80,6 @@ public class Interest_Point_Registration implements PlugIn
 	@Override
 	public void run( final String arg )
 	{
-		new ImageJ();
-		
 		// ask for everything but the channels
 		final XMLParseResult result = new LoadParseQueryXML().queryXML( "for performing interest point registration", true, false, true, true );
 
@@ -436,6 +434,7 @@ public class Interest_Point_Registration implements PlugIn
 
 	public static void main( String[] args )
 	{
+		new ImageJ();
 		new Interest_Point_Registration().run( null );
 	}
 }
