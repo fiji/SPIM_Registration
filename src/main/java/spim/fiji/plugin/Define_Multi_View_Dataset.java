@@ -2,7 +2,6 @@ package spim.fiji.plugin;
 
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
-import ij.ImageJ;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
@@ -16,10 +15,7 @@ import java.awt.event.ItemEvent;
 import java.io.File;
 import java.util.ArrayList;
 
-import net.imglib2.img.display.imagej.ImageJFunctions;
-
 import mpicbg.spim.io.IOFunctions;
-
 import spim.fiji.datasetmanager.LightSheetZ1;
 import spim.fiji.datasetmanager.MultiViewDatasetDefinition;
 import spim.fiji.datasetmanager.StackListImageJ;
@@ -32,6 +28,7 @@ public class Define_Multi_View_Dataset implements PlugIn
 {
 	final public static ArrayList< MultiViewDatasetDefinition > staticDatasetDefinitions = new ArrayList< MultiViewDatasetDefinition >();
 	public static int defaultDatasetDef = 0;
+	public static String defaultXMLName = "dataset.xml";
 
 	final int numLinesDocumentation = 15;
 	final int numCharacters = 80;
@@ -75,11 +72,12 @@ public class Define_Multi_View_Dataset implements PlugIn
 		
 		gd1.addChoice( "Type_of_dataset: ", titles, titles[ defaultDatasetDef ] );
 		Choice choice = (Choice)gd1.getChoices().lastElement();
+		gd1.addStringField( "XML filename", defaultXMLName );
 		gd1.addMessage( "" );
 				
 		// first add an empty label so that it is not a MultiLineLabel,
 		// then add the correct text
-		gd1.addMessage( "", new Font( Font.MONOSPACED, Font.PLAIN, 11 ), Color.BLACK );
+		gd1.addMessage( "a\nb", new Font( Font.MONOSPACED, Font.PLAIN, 11 ), Color.BLACK );
 		Label label = (Label)gd1.getMessage();
 		//label.setText( formatEntry( datasetDefinitions.get( defaultDatasetDef ).getExtendedDescription(), numCharacters, numLinesDocumentation ) );
 		
@@ -92,6 +90,7 @@ public class Define_Multi_View_Dataset implements PlugIn
 			return;
 		
 		defaultDatasetDef = gd1.getNextChoiceIndex();
+		final String xmlFileName = defaultXMLName = gd1.getNextString();
 		
 		// run the definition
 		final MultiViewDatasetDefinition def = datasetDefinitions.get( defaultDatasetDef );
@@ -110,11 +109,12 @@ public class Define_Multi_View_Dataset implements PlugIn
 			//final XmlIoSpimData< TimePoint, ViewSetupBeads > io = XmlIoSpimData.createDefault();
 			final XmlIoSpimData2 io = XmlIo.createDefaultIo();
 			
-			final String xml = new File( spimData.getBasePath(), "example_fromdialog.xml" ).getAbsolutePath();
+			final String xml = new File( spimData.getBasePath(), xmlFileName ).getAbsolutePath();
 			try 
 			{
 				io.save( spimData, xml );
 				IOFunctions.println( "Saved xml '" + xml + "'." );
+				LoadParseQueryXML.defaultXMLfilename = xml;
 			}
 			catch ( Exception e )
 			{
