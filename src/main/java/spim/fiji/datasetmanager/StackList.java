@@ -97,7 +97,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	protected String directory, fileNamePattern;
 	
 	protected double calX = 1, calY = 1, calZ = 1;
-	protected String calUnit = "µm";
+	protected String calUnit = "um";
 	
 	protected abstract boolean supportsMultipleTimepointsPerFile();
 	protected abstract boolean supportsMultipleChannelsPerFile();
