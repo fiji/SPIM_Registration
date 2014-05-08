@@ -397,16 +397,16 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		gd.addStringField( "Image_File_Pattern", defaultFileNamePattern, 40 );
 
 		if ( hasMultipleTimePoints > 0 )
-			gd.addStringField( "Timepoints", defaultTimepoints );
+			gd.addStringField( "Timepoints", defaultTimepoints, 15 );
 		
 		if ( hasMultipleChannels > 0 )
-			gd.addStringField( "Channels", defaultChannels );
+			gd.addStringField( "Channels", defaultChannels, 15 );
 
 		if ( hasMultipleIlluminations > 0 )
-			gd.addStringField( "Illumination_directions", defaultIlluminations );
+			gd.addStringField( "Illumination_directions", defaultIlluminations, 15 );
 		
 		if ( hasMultipleAngles > 0 )
-			gd.addStringField( "Acquisition_angles", defaultAngles );
+			gd.addStringField( "Acquisition_angles", defaultAngles, 15 );
 		
 		gd.addChoice( "Calibration", calibrationChoice, calibrationChoice[ defaultCalibration ] );
 		
