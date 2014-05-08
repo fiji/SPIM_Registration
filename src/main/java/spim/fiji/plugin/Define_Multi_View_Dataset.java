@@ -123,8 +123,8 @@ public class Define_Multi_View_Dataset implements PlugIn
 			}
 
 			// show the first image
-			new ImageJ();
-			ImageJFunctions.show( spimData.getSequenceDescription().getImgLoader().getImage( spimData.getSequenceDescription().getViewDescription( 0, 0 ), true ) );
+			//new ImageJ();
+			//ImageJFunctions.show( spimData.getSequenceDescription().getImgLoader().getImage( spimData.getSequenceDescription().getViewDescription( 0, 0 ), true ) );
 			//ImageJFunctions.show( spimData.getSequenceDescription().getImgLoader().getUnsignedShortImage( spimData.getSequenceDescription().getViewDescription( 0, 0 ) ) );
 		}
 	}
