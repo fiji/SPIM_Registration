@@ -393,7 +393,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	{
 		final GenericDialogPlus gd = new GenericDialogPlus( "Define dataset (2/3)" );
 		
-		gd.addDirectoryOrFileField( "Image_File_directory", defaultDirectory );
+		gd.addDirectoryOrFileField( "Image_File_directory", defaultDirectory, 40 );
 		gd.addStringField( "Image_File_Pattern", defaultFileNamePattern, 40 );
 
 		if ( hasMultipleTimePoints > 0 )
