@@ -1,14 +1,13 @@
 package spim.fiji.plugin;
 
 import ij.ImageJ;
-import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 
-import java.awt.AWTEvent;
 import java.awt.Color;
 import java.awt.Label;
 import java.awt.TextField;
 import java.awt.event.TextEvent;
+import java.awt.event.TextListener;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -29,7 +28,7 @@ import spim.fiji.spimdata.XmlIo;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import fiji.util.gui.GenericDialogPlus;
 
-public class LoadParseQueryXML 
+public class LoadParseQueryXML
 {
 	public static String defaultXMLfilename = "/Users/preibischs/Documents/Microscopy/SPIM/HisYFP-SPIM/example_fromdialog.xml";
 		
@@ -38,7 +37,7 @@ public class LoadParseQueryXML
 	public static String errorMsg1 = "An ERROR occured parsing this XML file! Please select a different XML (see log)";
 	public static String neutralMsg1 = "No XML file selected.";
 	
-	public static String noMsg2 = " \n ";
+	public static String noMsg2 = " ";
 	
 	public static String[] tpChoice = new String[]{ "All Timepoints", "Single Timepoint (Select from List)", "Multiple Timepoints (Select from List)", "Range of Timepoints (Specify by Name)" };
 	public static int defaultTPChoice = 0;
@@ -111,7 +110,7 @@ public class LoadParseQueryXML
 		 */
 		public ArrayList< Illumination > getIlluminationsToProcess() { return illums; }
 	}
-
+	
 	public XMLParseResult queryXML(
 			final String additionalTitle,
 			final boolean askForAngles,
@@ -165,11 +164,8 @@ public class LoadParseQueryXML
 		gd.addMessage( xmlResult.message1, GUIHelper.largestatusfont, xmlResult.color );
 		Label l1 = (Label)gd.getMessage();
 		
-		// first set an empty text so that it does not become a multilinelabel
-		gd.addMessage( " ", GUIHelper.smallStatusFont, xmlResult.color );
+		gd.addMessage( xmlResult.message2, GUIHelper.smallStatusFont, xmlResult.color );
 		Label l2 = (Label)gd.getMessage();
-		l2.setText( xmlResult.message2 );
-		addListeners( gd, (TextField)gd.getStringFields().lastElement(), l1, l2 );
 		
 		if ( askForAngles || askForChannels || askForIllum || askForTimepoints  )
 			gd.addMessage( " " );
@@ -185,6 +181,8 @@ public class LoadParseQueryXML
 		
 		if ( askForTimepoints )
 			gd.addChoice( query + "_Timepoints", tpChoice, tpChoice[ defaultTPChoice ] );
+		
+		addListeners( gd, (TextField)gd.getStringFields().firstElement(), l1, l2 );
 		
 		gd.showDialog();
 		
@@ -691,8 +689,7 @@ public class LoadParseQueryXML
 				final int timepoints = xml.data.getSequenceDescription().numTimePoints();
 				
 				xml.message1 = goodMsg1;
-				xml.message2 = angles + " angles, " + channels + " channels, " + illums + " illumination directions, " + timepoints + " timepoints, " + countMissingViews + " missing views\n" +
-						"ImgLoader: " + xml.data.getSequenceDescription().getImgLoader().getClass().getName();
+				xml.message2 = angles + " angles, " + channels + " channels, " + illums + " illumination directions, " + timepoints + " timepoints, " + countMissingViews + " missing views";
 				xml.color = GUIHelper.good;
 			}
 			catch ( final Exception e )
@@ -722,6 +719,28 @@ public class LoadParseQueryXML
 	
 	protected void addListeners( final GenericDialog gd, final TextField tf, final Label label1, final Label label2  )
 	{
+		// using TextListener instead
+		tf.addTextListener( new TextListener()
+		{	
+			@Override
+			public void textValueChanged( final TextEvent t )
+			{
+				if ( t.getID() == TextEvent.TEXT_VALUE_CHANGED )
+				{
+					final String xmlFilename = tf.getText();
+					
+					// try parsing if it ends with XML
+					final XMLParseResult xmlResult = tryParsing( xmlFilename, false );
+					
+					label1.setText( xmlResult.message1 );
+					label2.setText( xmlResult.message2 );
+					label1.setForeground( xmlResult.color );
+					label2.setForeground( xmlResult.color );
+				}
+			}
+		});
+		
+		/*
 		gd.addDialogListener( new DialogListener()
 		{
 			@Override
@@ -739,9 +758,10 @@ public class LoadParseQueryXML
 					label1.setForeground( xmlResult.color );
 					label2.setForeground( xmlResult.color );
 				}
+				
 				return true;
 			}
-		} );		
+		} );*/
 	}
 
 	public static void main( String args[] )
