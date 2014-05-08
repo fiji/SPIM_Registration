@@ -142,12 +142,16 @@ public class LoadParseQueryXML
 	 */
 	public XMLParseResult queryXML(
 			final String additionalTitle,
-			final String query,
+			String query,
 			final boolean askForAngles,
 			final boolean askForChannels,
 			final boolean askForIllum,
 			final boolean askForTimepoints )
 	{
+		// adjust query to support recording
+		if ( query.contains( " " ) )
+			query = query.replace( " ", "_" );
+		
 		// try parsing if it ends with XML
 		XMLParseResult xmlResult = tryParsing( defaultXMLfilename, false );
 		
@@ -171,16 +175,16 @@ public class LoadParseQueryXML
 			gd.addMessage( "" );
 		
 		if ( askForAngles )
-			gd.addChoice( query, angleChoice, angleChoice[ defaultAngleChoice ] );
+			gd.addChoice( query + "_Angles", angleChoice, angleChoice[ defaultAngleChoice ] );
 		
 		if ( askForChannels )
-			gd.addChoice( query, channelChoice, channelChoice[ defaultChannelChoice ] );
+			gd.addChoice( query + "_Channels", channelChoice, channelChoice[ defaultChannelChoice ] );
 		
 		if ( askForIllum )
-			gd.addChoice( query, illumChoice, illumChoice[ defaultIllumChoice ] );
+			gd.addChoice( query + "_Illuminations", illumChoice, illumChoice[ defaultIllumChoice ] );
 		
 		if ( askForTimepoints )
-			gd.addChoice( query, tpChoice, tpChoice[ defaultTPChoice ] );
+			gd.addChoice( query + "_Timepoints", tpChoice, tpChoice[ defaultTPChoice ] );
 		
 		gd.showDialog();
 		
