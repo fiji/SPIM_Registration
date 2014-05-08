@@ -166,13 +166,13 @@ public class LoadParseQueryXML
 		Label l1 = (Label)gd.getMessage();
 		
 		// first set an empty text so that it does not become a multilinelabel
-		gd.addMessage( "", GUIHelper.smallStatusFont, xmlResult.color );
+		gd.addMessage( " ", GUIHelper.smallStatusFont, xmlResult.color );
 		Label l2 = (Label)gd.getMessage();
 		l2.setText( xmlResult.message2 );
 		addListeners( gd, (TextField)gd.getStringFields().lastElement(), l1, l2 );
 		
 		if ( askForAngles || askForChannels || askForIllum || askForTimepoints  )
-			gd.addMessage( "" );
+			gd.addMessage( " " );
 		
 		if ( askForAngles )
 			gd.addChoice( query + "_Angles", angleChoice, angleChoice[ defaultAngleChoice ] );
