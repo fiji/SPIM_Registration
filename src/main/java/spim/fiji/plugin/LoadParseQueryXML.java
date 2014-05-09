@@ -267,6 +267,9 @@ public class LoadParseQueryXML
 				defaultSelection[ 1 ] = true;
 		}
 		
+		for ( int i = 0; i < list.length; ++i )
+			list[ i ] = list[ i  ].replace( " ", "_" );
+		
 		final GenericDialog gd = new GenericDialog( "Select Multiple " + name );
 		
 		gd.addMessage( "" );
@@ -387,7 +390,7 @@ public class LoadParseQueryXML
 		//
 		if ( xmlResult.angleChoiceIndex == 1 ) // choose a single angle
 		{
-			final int selection = queryIndividualEntry( "Angles", buildAngleList( angleList, true ), defaultAngleIndex );
+			final int selection = queryIndividualEntry( "Angle", buildAngleList( angleList, true ), defaultAngleIndex );
 			
 			if ( selection >= 0 )
 				xmlResult.angles.add( angleList.get( defaultAngleIndex = selection ) );
@@ -443,7 +446,7 @@ public class LoadParseQueryXML
 		//
 		if ( xmlResult.channelChoiceIndex == 1 ) // choose a single channel
 		{
-			final int selection = queryIndividualEntry( "Channels", buildChannelList( channelList, true ), defaultChannelIndex );
+			final int selection = queryIndividualEntry( "Channel", buildChannelList( channelList, true ), defaultChannelIndex );
 			
 			if ( selection >= 0 )
 				xmlResult.channels.add( channelList.get( defaultChannelIndex = selection ) );
@@ -499,7 +502,7 @@ public class LoadParseQueryXML
 		//
 		if ( xmlResult.illumChoiceIndex == 1 ) // choose a single illumination direction
 		{
-			final int selection = queryIndividualEntry( "Illumination Directions", buildIllumList( illumList, true ), defaultIllumIndex );
+			final int selection = queryIndividualEntry( "Illumination Direction", buildIllumList( illumList, true ), defaultIllumIndex );
 			
 			if ( selection >= 0 )
 				xmlResult.illums.add( illumList.get( defaultIllumIndex = selection ) );
@@ -628,7 +631,7 @@ public class LoadParseQueryXML
 		
 		for ( int i = 0; i < angles.length; ++i )
 			if ( addTitle )
-				angles[ i ] = "Angles " + angleList.get( i ).getName();
+				angles[ i ] = "Angle " + angleList.get( i ).getName();
 			else
 				angles[ i ] = angleList.get( i ).getName();
 		
@@ -641,7 +644,7 @@ public class LoadParseQueryXML
 		
 		for ( int i = 0; i < channels.length; ++i )
 			if ( addTitle )
-				channels[ i ] = "Channels " + channelList.get( i ).getName();
+				channels[ i ] = "Channel " + channelList.get( i ).getName();
 			else
 				channels[ i ] = channelList.get( i ).getName();
 		
@@ -654,7 +657,7 @@ public class LoadParseQueryXML
 		
 		for ( int i = 0; i < illums.length; ++i )
 			if ( addTitle )
-				illums[ i ] = "Illumination Directions " + illumList.get( i ).getName();
+				illums[ i ] = "Illumination Direction " + illumList.get( i ).getName();
 			else
 				illums[ i ] = illumList.get( i ).getName();
 		
