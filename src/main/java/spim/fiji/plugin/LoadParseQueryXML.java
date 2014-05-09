@@ -235,7 +235,7 @@ public class LoadParseQueryXML
 			defaultSelection = 0;
 		
 		final GenericDialog gd = new GenericDialog( "Select Single " + name );
-		gd.addChoice( "Process", list, list[ defaultSelection ] );
+		gd.addChoice( "Process_" + name, list, list[ defaultSelection ] );
 		
 		gd.showDialog();
 		
