@@ -317,7 +317,7 @@ public class LoadParseQueryXML
 		final GenericDialog gd = new GenericDialog( "Select Range of " + name );
 		
 		gd.addMessage( "" );
-		gd.addStringField( "Process_" + name, defaultSelection, 30 );
+		gd.addStringField( "Process_following_" + name, defaultSelection, 30 );
 		gd.addMessage( "" );
 		gd.addMessage( "Available " + name + ":" );
 		
