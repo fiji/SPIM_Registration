@@ -172,6 +172,132 @@ public class ManualBoundingBox extends BoundingBox
 		return numpixels;
 	}
 	
+	class ManageListeners
+	{
+		final GenericDialog gd;
+		final TextField minX, minY, minZ, maxX, maxY, maxZ, downsample;
+		final Choice pixelTypeChoice, imgTypeChoice;
+		final Label label1;
+		final Label label2;
+		final Fusion fusion;
+		final boolean supportsDownsampling;
+		final boolean supports16bit;
+
+		final long[] min = new long[ 3 ];
+		final long[] max = new long[ 3 ];
+
+		public ManageListeners(
+				final GenericDialog gd,
+				final Vector<?> tf,
+				final Vector<?> choices,
+				final Label label1,
+				final Label label2,
+				final Fusion fusion,
+				final boolean supportsDownsampling,
+				final boolean supports16bit )
+		{
+			this.gd = gd;
+			
+			this.minX = (TextField)tf.get( 0 );
+			this.minY = (TextField)tf.get( 1 );
+			this.minZ = (TextField)tf.get( 2 );
+			
+			this.maxX = (TextField)tf.get( 3 );
+			this.maxY = (TextField)tf.get( 4 );
+			this.maxZ = (TextField)tf.get( 5 );
+			
+			if ( supports16bit )
+			{
+				pixelTypeChoice = (Choice)choices.get( 0 );
+				imgTypeChoice = (Choice)choices.get( 1 );
+			}
+			else
+			{
+				pixelTypeChoice = null;
+				imgTypeChoice = (Choice)choices.get( 0 );
+			}
+			
+			if ( supportsDownsampling )
+				downsample = (TextField)tf.get( 6 );
+			else
+				downsample = null;
+			
+			this.label1 = label1;
+			this.label2 = label2;
+			this.supportsDownsampling = supportsDownsampling;
+			this.supports16bit = supports16bit;
+			this.fusion = fusion;
+		}
+		
+		public void update()
+		{
+			min[ 0 ] = Long.parseLong( minX.getText() );
+			min[ 1 ] = Long.parseLong( minY.getText() );
+			min[ 2 ] = Long.parseLong( minZ.getText() );
+
+			max[ 0 ] = Long.parseLong( maxX.getText() );
+			max[ 1 ] = Long.parseLong( maxY.getText() );
+			max[ 2 ] = Long.parseLong( maxZ.getText() );
+
+			// update sliders if necessary
+			if ( min[ 0 ] > max[ 0 ] )
+				if ( e.getSource() == minX )
+					maxX.setText( "" + min[ 0 ] );
+				else
+					minX.setText( "" + max[ 0 ] );
+			
+			if ( min[ 1 ] > max[ 1 ] )
+				if ( e.getSource() == minY )
+					maxY.setText( "" + min[ 1 ] );
+				else
+					minY.setText( "" + max[ 1 ] );
+
+			if ( min[ 2 ] > max[ 2 ] )
+				if ( e.getSource() == minZ )
+					maxZ.setText( "" + min[ 2 ] );
+				else
+					minZ.setText( "" + max[ 2 ] );
+
+			if ( supportsDownsampling )
+				downsampling = Integer.parseInt( downsample.getText() );
+			else
+				downsampling = 1;
+			
+			if ( supports16bit )
+				pixelType = pixelTypeChoice.getSelectedIndex();
+			else
+				pixelType = 0;
+			
+			imgtype = imgTypeChoice.getSelectedIndex();
+			
+			
+			final long numPixels = numPixels( min, max, downsampling );
+			final int bytePerPixel;
+			if ( pixelType == 1 )
+				bytePerPixel = 2;
+			else
+				bytePerPixel = 4;
+			
+			final long megabytes = (numPixels * bytePerPixel) / (1024*1024);
+			
+			if ( numPixels > Integer.MAX_VALUE && imgtype == 0 )
+			{
+				label1.setText( megabytes + " MB is too large for ArrayImg!" );
+				label1.setForeground( GUIHelper.error );
+			}
+			else
+			{
+				label1.setText( "Fused image: " + megabytes + " MB, required total memory ~" + fusion.totalRAM( megabytes, bytePerPixel ) +  " MB" );
+				label1.setForeground( GUIHelper.good );
+			}
+				
+			label2.setText( "Dimensions: " + 
+					(max[ 0 ] - min[ 0 ] + 1)/downsampling + " x " + 
+					(max[ 1 ] - min[ 1 ] + 1)/downsampling + " x " + 
+					(max[ 2 ] - min[ 2 ] + 1)/downsampling + " pixels @ " + BoundingBox.pixelTypes[ pixelType ] );			
+		}
+	}
+	
 	protected DialogListener addListeners(
 			final GenericDialog gd,
 			final Vector<?> tf,
