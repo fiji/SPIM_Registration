@@ -1,14 +1,14 @@
 package spim.process.fusion.boundingbox;
 
-import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 
-import java.awt.AWTEvent;
 import java.awt.Choice;
 import java.awt.Label;
 import java.awt.TextField;
 import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.TextEvent;
+import java.awt.event.TextListener;
 import java.util.ArrayList;
 import java.util.Vector;
 
@@ -112,8 +112,8 @@ public class ManualBoundingBox extends BoundingBox
 		gd.addMessage( "???x???x??? pixels", GUIHelper.smallStatusFont, GUIHelper.good );
 		Label l2 = (Label)gd.getMessage();
 
-		DialogListener d = addListeners( gd, gd.getNumericFields(), gd.getChoices(), l1, l2, fusion, fusion.supportsDownsampling(), fusion.supports16BitUnsigned() );
-		d.dialogItemChanged( gd, new TextEvent( gd, TextEvent.TEXT_VALUE_CHANGED ) );
+		final ManageListeners m = new ManageListeners( gd, gd.getNumericFields(), gd.getChoices(), l1, l2, fusion, fusion.supportsDownsampling(), fusion.supports16BitUnsigned() );
+		m.update();
 		
 		gd.showDialog();
 		
@@ -172,6 +172,8 @@ public class ManualBoundingBox extends BoundingBox
 		return numpixels;
 	}
 	
+	public enum Source { IRRELEVANT, MINX, MINY, MINZ, MAXX, MAXY, MAXZ };
+	
 	class ManageListeners
 	{
 		final GenericDialog gd;
@@ -227,9 +229,30 @@ public class ManualBoundingBox extends BoundingBox
 			this.supportsDownsampling = supportsDownsampling;
 			this.supports16bit = supports16bit;
 			this.fusion = fusion;
+			
+			this.addListeners();
 		}
 		
-		public void update()
+		protected void addListeners()
+		{
+			this.minX.addTextListener( new TextListener() { public void textValueChanged(TextEvent e) { update( Source.MINX ); } });
+			this.minY.addTextListener( new TextListener() { public void textValueChanged(TextEvent e) { update( Source.MINY ); } });
+			this.minZ.addTextListener( new TextListener() { public void textValueChanged(TextEvent e) { update( Source.MINZ ); } });
+			this.maxX.addTextListener( new TextListener() { public void textValueChanged(TextEvent e) { update( Source.MAXX ); } });
+			this.maxY.addTextListener( new TextListener() { public void textValueChanged(TextEvent e) { update( Source.MAXY ); } });
+			this.maxZ.addTextListener( new TextListener() { public void textValueChanged(TextEvent e) { update( Source.MAXZ ); } });
+			
+			this.imgTypeChoice.addItemListener( new ItemListener() { public void itemStateChanged(ItemEvent e) { update(); } });
+			
+			if ( supportsDownsampling )
+				this.downsample.addTextListener( new TextListener() { public void textValueChanged(TextEvent e) { update(); } });
+			
+			if ( supports16bit )
+				this.pixelTypeChoice.addItemListener( new ItemListener() { public void itemStateChanged(ItemEvent e) { update(); } });
+		}
+		
+		public void update() { update( Source.IRRELEVANT ); }
+		public void update( final Source s )
 		{
 			min[ 0 ] = Long.parseLong( minX.getText() );
 			min[ 1 ] = Long.parseLong( minY.getText() );
@@ -241,19 +264,19 @@ public class ManualBoundingBox extends BoundingBox
 
 			// update sliders if necessary
 			if ( min[ 0 ] > max[ 0 ] )
-				if ( e.getSource() == minX )
+				if ( s == Source.MINX )
 					maxX.setText( "" + min[ 0 ] );
 				else
 					minX.setText( "" + max[ 0 ] );
 			
 			if ( min[ 1 ] > max[ 1 ] )
-				if ( e.getSource() == minY )
+				if ( s == Source.MINY )
 					maxY.setText( "" + min[ 1 ] );
 				else
 					minY.setText( "" + max[ 1 ] );
 
 			if ( min[ 2 ] > max[ 2 ] )
-				if ( e.getSource() == minZ )
+				if ( s == Source.MINZ )
 					maxZ.setText( "" + min[ 2 ] );
 				else
 					minZ.setText( "" + max[ 2 ] );
@@ -296,129 +319,6 @@ public class ManualBoundingBox extends BoundingBox
 					(max[ 1 ] - min[ 1 ] + 1)/downsampling + " x " + 
 					(max[ 2 ] - min[ 2 ] + 1)/downsampling + " pixels @ " + BoundingBox.pixelTypes[ pixelType ] );			
 		}
-	}
-	
-	protected DialogListener addListeners(
-			final GenericDialog gd,
-			final Vector<?> tf,
-			final Vector<?> choices,
-			final Label label1,
-			final Label label2,
-			final Fusion fusion,
-			final boolean supportsDownsampling,
-			final boolean supports16bit )
-	{
-		final TextField minX = (TextField)tf.get( 0 );
-		final TextField minY = (TextField)tf.get( 1 );
-		final TextField minZ = (TextField)tf.get( 2 );
-		
-		final TextField maxX = (TextField)tf.get( 3 );
-		final TextField maxY = (TextField)tf.get( 4 );
-		final TextField maxZ = (TextField)tf.get( 5 );
-		
-		final Choice pixelTypeChoice, imgTypeChoice;
-		if ( supports16bit )
-		{
-			pixelTypeChoice = (Choice)choices.get( 0 );
-			imgTypeChoice = (Choice)choices.get( 1 );
-		}
-		else
-		{
-			pixelTypeChoice = null;
-			imgTypeChoice = (Choice)choices.get( 0 );
-		}
-		
-		final TextField downsample;
-		if ( supportsDownsampling )
-			downsample = (TextField)tf.get( 6 );
-		else
-			downsample = null;
-				
-		DialogListener d = new DialogListener()
-		{
-			final long[] min = new long[ 3 ];
-			final long[] max = new long[ 3 ];
-			
-			int downsampling, pixelType, imgtype;
-			
-			@Override
-			public boolean dialogItemChanged( final GenericDialog dialog, final AWTEvent e )
-			{
-				//System.out.println( e.g );
-				if ( ( e instanceof TextEvent || e instanceof ItemEvent) && (e.getID() == TextEvent.TEXT_VALUE_CHANGED || e.getID() == ItemEvent.ITEM_STATE_CHANGED ) )
-				{
-					min[ 0 ] = Long.parseLong( minX.getText() );
-					min[ 1 ] = Long.parseLong( minY.getText() );
-					min[ 2 ] = Long.parseLong( minZ.getText() );
-
-					max[ 0 ] = Long.parseLong( maxX.getText() );
-					max[ 1 ] = Long.parseLong( maxY.getText() );
-					max[ 2 ] = Long.parseLong( maxZ.getText() );
-
-					// update sliders if necessary
-					if ( min[ 0 ] > max[ 0 ] )
-						if ( e.getSource() == minX )
-							maxX.setText( "" + min[ 0 ] );
-						else
-							minX.setText( "" + max[ 0 ] );
-					
-					if ( min[ 1 ] > max[ 1 ] )
-						if ( e.getSource() == minY )
-							maxY.setText( "" + min[ 1 ] );
-						else
-							minY.setText( "" + max[ 1 ] );
-
-					if ( min[ 2 ] > max[ 2 ] )
-						if ( e.getSource() == minZ )
-							maxZ.setText( "" + min[ 2 ] );
-						else
-							minZ.setText( "" + max[ 2 ] );
-
-					if ( supportsDownsampling )
-						downsampling = Integer.parseInt( downsample.getText() );
-					else
-						downsampling = 1;
-					
-					if ( supports16bit )
-						pixelType = pixelTypeChoice.getSelectedIndex();
-					else
-						pixelType = 0;
-					
-					imgtype = imgTypeChoice.getSelectedIndex();
-					
-					
-					final long numPixels = numPixels( min, max, downsampling );
-					final int bytePerPixel;
-					if ( pixelType == 1 )
-						bytePerPixel = 2;
-					else
-						bytePerPixel = 4;
-					
-					final long megabytes = (numPixels * bytePerPixel) / (1024*1024);
-					
-					if ( numPixels > Integer.MAX_VALUE && imgtype == 0 )
-					{
-						label1.setText( megabytes + " MB is too large for ArrayImg!" );
-						label1.setForeground( GUIHelper.error );
-					}
-					else
-					{
-						label1.setText( "Fused image: " + megabytes + " MB, required total memory ~" + fusion.totalRAM( megabytes, bytePerPixel ) +  " MB" );
-						label1.setForeground( GUIHelper.good );
-					}
-						
-					label2.setText( "Dimensions: " + 
-							(max[ 0 ] - min[ 0 ] + 1)/downsampling + " x " + 
-							(max[ 1 ] - min[ 1 ] + 1)/downsampling + " x " + 
-							(max[ 2 ] - min[ 2 ] + 1)/downsampling + " pixels @ " + BoundingBox.pixelTypes[ pixelType ] );
-				}
-				return true;
-			}			
-		};
-		
-		gd.addDialogListener( d );
-		
-		return d;
 	}
 
 	public static void computeMaximalBoundingBox(
