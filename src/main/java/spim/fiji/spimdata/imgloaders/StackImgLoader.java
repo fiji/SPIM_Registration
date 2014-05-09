@@ -178,7 +178,7 @@ public abstract class StackImgLoader extends AbstractImgLoader
 		
 		if ( replaceAngles != null )
 			numDigitsAngles = replaceAngles.length() - 2;
-		
+		/*
 		IOFunctions.println( replaceTimepoints );
 		IOFunctions.println( replaceChannels );
 		IOFunctions.println( replaceIlluminations );
@@ -190,7 +190,8 @@ public abstract class StackImgLoader extends AbstractImgLoader
 		IOFunctions.println( layoutAngles );
 		
 		IOFunctions.println( path );
-		IOFunctions.println( fileNamePattern );		
+		IOFunctions.println( fileNamePattern );
+		*/		
 	}
 
 	/**
