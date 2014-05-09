@@ -10,7 +10,6 @@ import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.XmlKeys;
-import mpicbg.spim.io.IOFunctions;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
