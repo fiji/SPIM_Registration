@@ -10,11 +10,10 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 
-import spim.fiji.plugin.GUIHelper;
-
 import mpicbg.models.AffineModel3D;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
+import spim.fiji.plugin.GUIHelper;
 
 public class Apply_External_Transformation implements PlugIn 
 {
@@ -328,6 +327,14 @@ public class Apply_External_Transformation implements PlugIn
 		return conf;
 	}
 	
+	public static String removeSequences( String trim, final String[] strings )
+	{
+		for ( final String s : strings )
+			trim = trim.replace( s, "" );
+
+		return trim;
+	}
+
 	public static void main( String args[ ] )
 	{
 		String test1 = "dsgsdgsdg324 45 45, 45, 4545 ";

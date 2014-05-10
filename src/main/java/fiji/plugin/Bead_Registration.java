@@ -1155,6 +1155,11 @@ public class Bead_Registration implements PlugIn
 		
 		return true;
 	}
+	
+	public static final void addHyperLinkListener( final MultiLineLabel text, final String myURL )
+	{
+		GUIHelper.addHyperLinkListener( text, myURL );
+	}
 
 	public static void main(String[] args) {
 		Debug.run("Record...", null);
