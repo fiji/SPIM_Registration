@@ -5,6 +5,7 @@ import ij.IJ;
 import ij.gui.GenericDialog;
 
 import java.awt.Choice;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -70,9 +71,11 @@ public class EfficientBayesianBased extends Fusion
 	public static boolean defaultTransformPSFs = true;
 	public static ArrayList< String > defaultPSFFileField = null;
 	public static int[] defaultPSFLabelIndex = null;
-	public static int defaultPSFSizeX = 27;
-	public static int defaultPSFSizeY = 27;
-	public static int defaultPSFSizeZ = 21;
+	public static int defaultPSFSizeX = 19;
+	public static int defaultPSFSizeY = 19;
+	public static int defaultPSFSizeZ = 25;
+	public static String defaultCUDAPath = null;
+	public static boolean defaultCUDAPathIsRelative = true;
 
 	PSFTYPE iterationType;
 	boolean justShowWeights;
@@ -667,9 +670,9 @@ public class EfficientBayesianBased extends Fusion
 
 			// update the borders if applicable
 			if ( ProcessForDeconvolution.defaultBlendingBorder == null || ProcessForDeconvolution.defaultBlendingBorder.length < 3 ||
-				 ( oldX/2 == ProcessForDeconvolution.defaultBlendingBorder[ 0 ] && oldY/2 == ProcessForDeconvolution.defaultBlendingBorder[ 1 ] && oldZ/2 == ProcessForDeconvolution.defaultBlendingBorder[ 2 ] ) )
+				 ( oldX/2 == ProcessForDeconvolution.defaultBlendingBorder[ 0 ] && oldY/2 == ProcessForDeconvolution.defaultBlendingBorder[ 1 ] && oldZ/5 == ProcessForDeconvolution.defaultBlendingBorder[ 2 ] ) )
 			{
-				ProcessForDeconvolution.defaultBlendingBorder = new int[]{ psfSizeX/2, psfSizeY/2, psfSizeZ/2 };
+				ProcessForDeconvolution.defaultBlendingBorder = new int[]{ psfSizeX/2, psfSizeY/2, psfSizeZ/5 };
 			}			
 		}
 		else
@@ -930,16 +933,91 @@ public class EfficientBayesianBased extends Fusion
 			// well, do some testing first
 			try
 			{
-		        //String fijiDir = new File( "names.txt" ).getAbsoluteFile().getParentFile().getAbsolutePath();
-		        //IJ.log( "Fiji directory: " + fijiDir );
-				//LRFFT.cuda = (CUDAConvolution) Native.loadLibrary( fijiDir  + File.separator + "libConvolution3D_fftCUDAlib.so", CUDAConvolution.class );
+				// it cannot be null
+				if ( System.getProperty( "jna.library.path" ) == null )
+					System.setProperty( "jna.library.path", "" );
 				
+				final GenericDialogPlus gd3 = new GenericDialogPlus( "Specify path of native library for CUDA" );
+
+				final String fijiDir = IJ.getDirectory( "ImageJ" );
+				String suggestedLibrary = "";
+				
+				if ( IJ.isWindows() )
+				{
+					if ( new File( fijiDir, "Convolution3D_fftCUDAlib.dll" ).exists() )
+						suggestedLibrary = "Convolution3D_fftCUDAlib.dll";
+					else if ( new File( fijiDir, "lib/win64/Convolution3D_fftCUDAlib.dll" ).exists() )
+						suggestedLibrary = "lib/win64/Convolution3D_fftCUDAlib.dll";
+					else if ( new File( fijiDir, "lib/win/Convolution3D_fftCUDAlib.dll" ).exists() )
+						suggestedLibrary = "lib/win/Convolution3D_fftCUDAlib.dll";						
+				}
+				else if ( IJ.isLinux() )
+				{
+					if ( new File( fijiDir, "libConvolution3D_fftCUDAlib.so" ).exists() )
+						suggestedLibrary = "libConvolution3D_fftCUDAlib.so";
+					else if ( new File( fijiDir, "Convolution3D_fftCUDAlib.so" ).exists() )
+						suggestedLibrary = "Convolution3D_fftCUDAlib.so";
+					if ( new File( fijiDir, "lib/linux64/libConvolution3D_fftCUDAlib.so" ).exists() )
+						suggestedLibrary = "lib/linux64/libConvolution3D_fftCUDAlib.so";
+					else if ( new File( fijiDir, "lib/linux64/Convolution3D_fftCUDAlib.so" ).exists() )
+						suggestedLibrary = "lib/linux64/Convolution3D_fftCUDAlib.so";
+				}
+				
+				gd3.addMessage( "Fiji directory: '" + fijiDir + "'" );
+				
+				if ( suggestedLibrary.length() == 0 )
+				{
+					if ( defaultCUDAPath == null )
+						defaultCUDAPath = "";
+					
+					gd3.addMessage( "CUDA library not found, should be named libConvolution3D_fftCUDAlib.so (linux) or Convolution3D_fftCUDAlib.dll (windows)" );
+				}
+				else
+				{
+					if ( defaultCUDAPath == null )
+						defaultCUDAPath = suggestedLibrary;
+					
+					gd3.addMessage( "Suggested CUDA library: '" + suggestedLibrary + "' (relative path)" );
+				}
+
+				gd3.addStringField( "CUDA path", defaultCUDAPath, 35 );
+				gd3.addCheckbox( "Is relative path", defaultCUDAPathIsRelative );
+				
+				gd3.showDialog();
+				
+				if ( gd3.wasCanceled() )
+					return false;
+				
+				final String path = defaultCUDAPath = gd3.getNextString();
+				final String fullPath;
+				
+				if ( defaultCUDAPathIsRelative = gd3.getNextBoolean() )
+					fullPath = new File( fijiDir, path ).getAbsolutePath();
+				else
+					fullPath = new File( path ).getAbsolutePath();
+
+				if ( new File( fullPath ).exists() )
+				{
+					IOFunctions.println( "Trying to load following library: " + fullPath );
+				}
+				else
+				{
+					IOFunctions.println( "Following library does not exist: " + fullPath );
+					return false;
+				}
+				
+				LRFFT.cuda = (CUDAConvolution) Native.loadLibrary( fullPath, CUDAConvolution.class );
+				
+		        //String fijiDir = new File( "names.txt" ).getAbsoluteFile().getParentFile().getAbsolutePath();
+		        //IOFunctions.println( "Fiji directory: " + fijiDir );
+				//LRFFT.cuda = (CUDAConvolution) Native.loadLibrary( fijiDir  + File.separator + "libConvolution3D_fftCUDAlib.so", CUDAConvolution.class );
+								
 				// under linux automatically checks lib/linux64
-		        LRFFT.cuda = (CUDAConvolution) Native.loadLibrary( "Convolution3D_fftCUDAlib", CUDAConvolution.class );
+		        //LRFFT.cuda = (CUDAConvolution) Native.loadLibrary( "Convolution3D_fftCUDAlib", CUDAConvolution.class );
 			}
-			catch (UnsatisfiedLinkError e )
+			catch ( UnsatisfiedLinkError e )
 			{
-				IJ.log( "Cannot find CUDA JNA library: " + e );
+				IOFunctions.println( "Cannot load CUDA JNA library: " + e );
 				return false;
 			}
 			
@@ -947,11 +1025,11 @@ public class EfficientBayesianBased extends Fusion
 			
 			if ( numDevices == 0 )
 			{
-				IJ.log( "No CUDA devices detected, only CPU will be available." );
+				IOFunctions.println( "No CUDA devices detected, only CPU will be available." );
 			}
 			else
 			{
-				IJ.log( "numdevices = " + numDevices );
+				IOFunctions.println( "numdevices = " + numDevices );
 				
 				// yes, CUDA is possible
 				useCUDA = true;
@@ -1052,14 +1130,14 @@ public class EfficientBayesianBased extends Fusion
 				for ( final int i : deviceList )
 				{
 					if ( i >= 0 )
-						IJ.log( "Using device " + devices[ i ] );
+						IOFunctions.println( "Using device " + devices[ i ] );
 					else if ( i == -1 )
-						IJ.log( "Using device " + cpuSpecs );
+						IOFunctions.println( "Using device " + cpuSpecs );
 				}
 				
 				if ( deviceList.size() == 0 )
 				{
-					IJ.log( "You selected no device, quitting." );
+					IOFunctions.println( "You selected no device, quitting." );
 					return false;
 				}
 			}
@@ -1079,7 +1157,7 @@ public class EfficientBayesianBased extends Fusion
 					return false;
 				
 				deviceList.add( standardDevice = gdCUDA.getNextChoiceIndex() );
-				IJ.log( "Using device " + devices[ deviceList.get( 0 ) ] );
+				IOFunctions.println( "Using device " + devices[ deviceList.get( 0 ) ] );
 			}
 		}
 		
