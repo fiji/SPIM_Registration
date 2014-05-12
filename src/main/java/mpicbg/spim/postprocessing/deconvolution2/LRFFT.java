@@ -6,7 +6,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import net.imglib2.exception.ImgLibException;
 import net.imglib2.img.Img;
 import net.imglib2.img.imageplus.ImagePlusImg;
-
 import mpicbg.imglib.algorithm.fft.FourierConvolution;
 import mpicbg.imglib.algorithm.mirror.MirrorImage;
 import mpicbg.imglib.container.ContainerFactory;
@@ -24,8 +23,10 @@ import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.imglib.util.Util;
 import mpicbg.imglib.wrapper.ImgLib1;
 import mpicbg.imglib.wrapper.ImgLib2;
+import mpicbg.spim.io.IOFunctions;
 
 public class LRFFT 
 {
@@ -149,6 +150,8 @@ public class LRFFT
 			
 			// blocksize might change during division if they were too small
 			 //this.blockSize = blockSize.clone();
+			
+			IOFunctions.println( "Number of blocks (" + Util.printCoordinates( blockSize ) + "): " + this.blocks.length );
 			
 			this.factory = new ImageFactory< FloatType >( new FloatType(), new ArrayContainerFactory() );
 		}
