@@ -24,7 +24,7 @@ public class BlendingSimple extends CombinedPixelWeightener<BlendingSimple>
 
 		weights = new float[ numViews ];
 		scaling = new float[ numViews ][ numDimensions ];
-		border = new float[ numDimensions ];
+		border = new float[]{ 15,15,15 };
 
 		// cache image sizes
 		imageSizes = new int[ numViews ][];
@@ -38,10 +38,10 @@ public class BlendingSimple extends CombinedPixelWeightener<BlendingSimple>
 
 			scaling[ i ][ 2 ] = (float)views.get( i ).getZStretching();
 		}
-
+		
 		//setBorder( 15 );
 	}
-
+	
 	public void setPercentScaling( final float p ) { this.percentScaling = p; }
 
 	public void setBorder( final float numPixels )
@@ -58,6 +58,7 @@ public class BlendingSimple extends CombinedPixelWeightener<BlendingSimple>
 
 	public void setBlendingRange( final float ratio ) { this.percentScaling = ratio; }
 
+	
 	@Override
 	public void close() {}
 
