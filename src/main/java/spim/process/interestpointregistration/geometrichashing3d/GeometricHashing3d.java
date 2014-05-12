@@ -43,18 +43,18 @@ public class GeometricHashing3d extends PairwiseGloballyOptimalRegistration< Geo
 	}
 
 	@Override
-	protected void runGlobalOpt(final GlobalOptimizationSubset subset, 
+	protected boolean runGlobalOpt(final GlobalOptimizationSubset subset, 
 			final GlobalOptimizationType registrationType,
 			final SpimData2 spimData,
 			final ArrayList< ChannelProcess > channelsToProcess,
 			final boolean considerTimePointsAsUnit )
 	{
 		if ( model == 0 )
-			subset.computeGlobalOpt( new TranslationModel3D(), registrationType, spimData, getChannelsToProcess(), getDescription(), considerTimePointsAsUnit );
+			return subset.computeGlobalOpt( new TranslationModel3D(), registrationType, spimData, getChannelsToProcess(), getDescription(), considerTimePointsAsUnit );
 		else if ( model == 1 )
-			subset.computeGlobalOpt( new RigidModel3D(), registrationType, spimData, getChannelsToProcess(), getDescription(), considerTimePointsAsUnit );
+			return subset.computeGlobalOpt( new RigidModel3D(), registrationType, spimData, getChannelsToProcess(), getDescription(), considerTimePointsAsUnit );
 		else
-			subset.computeGlobalOpt( new AffineModel3D(), registrationType, spimData, getChannelsToProcess(), getDescription(), considerTimePointsAsUnit );	
+			return subset.computeGlobalOpt( new AffineModel3D(), registrationType, spimData, getChannelsToProcess(), getDescription(), considerTimePointsAsUnit );	
 	}
 
 	@Override

@@ -51,7 +51,7 @@ public class RGLDM extends PairwiseGloballyOptimalRegistration< RGLDMPairwise >
 	}
 
 	@Override
-	protected void runGlobalOpt(
+	protected boolean runGlobalOpt(
 			final GlobalOptimizationSubset subset, 
 			final GlobalOptimizationType registrationType,
 			final SpimData2 spimData,
@@ -59,11 +59,11 @@ public class RGLDM extends PairwiseGloballyOptimalRegistration< RGLDMPairwise >
 			final boolean considerTimePointsAsUnit )
 	{
 		if ( model == 0 )
-			subset.computeGlobalOpt( new TranslationModel3D(), registrationType, spimData, getChannelsToProcess(), getDescription(), considerTimePointsAsUnit );
+			return subset.computeGlobalOpt( new TranslationModel3D(), registrationType, spimData, getChannelsToProcess(), getDescription(), considerTimePointsAsUnit );
 		else if ( model == 1 )
-			subset.computeGlobalOpt( new RigidModel3D(), registrationType, spimData, getChannelsToProcess(), getDescription(), considerTimePointsAsUnit );
+			return subset.computeGlobalOpt( new RigidModel3D(), registrationType, spimData, getChannelsToProcess(), getDescription(), considerTimePointsAsUnit );
 		else
-			subset.computeGlobalOpt( new AffineModel3D(), registrationType, spimData, getChannelsToProcess(), getDescription(), considerTimePointsAsUnit );	
+			return subset.computeGlobalOpt( new AffineModel3D(), registrationType, spimData, getChannelsToProcess(), getDescription(), considerTimePointsAsUnit );	
 	}
 
 	@Override

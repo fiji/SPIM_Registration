@@ -52,6 +52,12 @@ public class GlobalOpt
 		// add and fix tiles as defined in the GlobalOptimizationType
 		final TileConfiguration tc = addAndFixTiles( views, map, registrationType, subset, considerTimePointsAsUnit );
 		
+		if ( tc.getTiles().size() == 0 )
+		{
+			IOFunctions.println( "There are no connected tiles, cannot do an optimization. Quitting." );
+			return null;
+		}
+		
 		// now perform the global optimization
 		try 
 		{

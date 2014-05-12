@@ -40,7 +40,7 @@ public class GlobalOptimizationSubset
 		this.description = description;
 	}
 	
-	public < M extends Model< M > > void computeGlobalOpt(
+	public < M extends Model< M > > boolean computeGlobalOpt(
 			final M model,
 			final GlobalOptimizationType type,
 			final SpimData2 spimData,
@@ -50,6 +50,9 @@ public class GlobalOptimizationSubset
 	{
 		final HashMap< ViewId, Tile< M > > tiles = GlobalOpt.compute( model, type, this, considerTimePointsAsUnit );
 
+		if ( tiles == null )
+			return false;
+		
 		String channelList = "[";
 		for ( final ChannelProcess c : channelsToProcess )
 			channelList += c.getLabel() + " (c=" + c.getChannel().getName() + "), ";
@@ -67,6 +70,8 @@ public class GlobalOptimizationSubset
 			
 			Apply_Transformation.preConcatenateTransform( spimData, viewId, t, description + " on " + channelList );
 		}
+		
+		return true;
 	}
 
 	

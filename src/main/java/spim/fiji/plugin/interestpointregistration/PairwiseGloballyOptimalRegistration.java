@@ -32,7 +32,16 @@ public abstract class PairwiseGloballyOptimalRegistration< T extends Callable< C
 	}
 	
 	protected abstract T getPairwiseMatching( final ChannelInterestPointListPair pair, final String description );
-	protected abstract void runGlobalOpt(
+	
+	/**
+	 * @param subset
+	 * @param registrationType
+	 * @param spimData
+	 * @param channelsToProcess
+	 * @param considerTimePointsAsUnit
+	 * @return - true if the global optimization could be run successfully, otherwise false (XML will not be saved if false)
+	 */
+	protected abstract boolean runGlobalOpt(
 			final GlobalOptimizationSubset subset, 
 			final GlobalOptimizationType registrationType,
 			final SpimData2 spimData,
@@ -65,6 +74,8 @@ public abstract class PairwiseGloballyOptimalRegistration< T extends Callable< C
 				getTimepointsToProcess(),
 				getInitialTransformType(),
 				getMinResolution() );
+		
+		int successfulRuns = 0;
 		
 		for ( final GlobalOptimizationSubset subset : list )
 		{
@@ -127,10 +138,14 @@ public abstract class PairwiseGloballyOptimalRegistration< T extends Callable< C
 			if ( registrationType.save() )
 				registrationType.saveCorrespondences( spimData, getChannelsToProcess(), subset );
 			
-			runGlobalOpt( subset, registrationType, spimData, getChannelsToProcess(), registrationType.considerTimePointsAsUnit() );
+			if ( runGlobalOpt( subset, registrationType, spimData, getChannelsToProcess(), registrationType.considerTimePointsAsUnit() ) )
+				++successfulRuns;
 		}
 		
-		return true;
+		if ( successfulRuns > 0 )
+			return true;
+		else
+			return false;
 	}
 
 }
