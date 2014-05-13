@@ -113,6 +113,7 @@ public class ManualBoundingBox extends BoundingBox
 		Label l2 = (Label)gd.getMessage();
 
 		final ManageListeners m = new ManageListeners( gd, gd.getNumericFields(), gd.getChoices(), l1, l2, fusion, fusion.supportsDownsampling(), fusion.supports16BitUnsigned() );
+		fusion.registerAdditionalListeners( m );
 		m.update();
 		
 		gd.showDialog();
@@ -174,7 +175,7 @@ public class ManualBoundingBox extends BoundingBox
 	
 	public enum Source { IRRELEVANT, MINX, MINY, MINZ, MAXX, MAXY, MAXZ };
 	
-	class ManageListeners
+	public class ManageListeners
 	{
 		final GenericDialog gd;
 		final TextField minX, minY, minZ, maxX, maxY, maxZ, downsample;

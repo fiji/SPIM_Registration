@@ -5,6 +5,8 @@ import ij.IJ;
 import ij.gui.GenericDialog;
 
 import java.awt.Choice;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,6 +34,7 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.process.fusion.boundingbox.ManualBoundingBox.ManageListeners;
 import spim.process.fusion.export.DisplayImage;
 import spim.process.fusion.export.ImgExport;
 
@@ -250,6 +253,13 @@ public class EfficientBayesianBased extends Fusion
 			return false;
 
 		return true;
+	}
+	
+	@Override
+	public void registerAdditionalListeners( final ManageListeners m )
+	{
+		block.addItemListener( new ItemListener() { public void itemStateChanged(ItemEvent e) { m.update(); } });
+		gpu.addItemListener( new ItemListener() { public void itemStateChanged(ItemEvent e) { m.update(); } });
 	}
 
 	@Override
