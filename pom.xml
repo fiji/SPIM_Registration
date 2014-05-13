@@ -114,6 +114,11 @@
 			<groupId>net.imglib2</groupId>
 			<artifactId>imglib2-algorithms</artifactId>
 		</dependency>
+        <dependency>
+            <groupId>ome</groupId>
+            <artifactId>formats-gpl</artifactId>
+            <version>${bio-formats.version}</version>
+        </dependency>
 	</dependencies>
 
 	<developers>
