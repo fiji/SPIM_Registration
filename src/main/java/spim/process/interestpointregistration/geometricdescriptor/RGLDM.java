@@ -4,9 +4,6 @@ import ij.gui.GenericDialog;
 
 import java.util.ArrayList;
 
-import mpicbg.models.AffineModel3D;
-import mpicbg.models.RigidModel3D;
-import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
@@ -16,6 +13,7 @@ import spim.fiji.spimdata.SpimData2;
 import spim.process.interestpointregistration.ChannelInterestPointListPair;
 import spim.process.interestpointregistration.ChannelProcess;
 import spim.process.interestpointregistration.RANSACParameters;
+import spim.process.interestpointregistration.TransformationModel;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationSubset;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationType;
 
@@ -27,9 +25,9 @@ import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizati
  */
 public class RGLDM extends PairwiseGloballyOptimalRegistration< RGLDMPairwise >
 {
-	final String modelChoice[] = new String[] { "Translation", "Rigid", "Affine" };
-	public static int defaultModel = 2;	
-	protected int model = 2;
+	public static int defaultModel = 2;
+	public static boolean defaultRegularize = false;
+	protected TransformationModel model = null;
 	
 	protected RGLDMParameters parameters;
 	protected RANSACParameters ransacParams;
@@ -50,6 +48,7 @@ public class RGLDM extends PairwiseGloballyOptimalRegistration< RGLDMPairwise >
 		return new RGLDMPairwise( pair, model, description, ransacParams, parameters );
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected boolean runGlobalOpt(
 			final GlobalOptimizationSubset subset, 
@@ -58,12 +57,7 @@ public class RGLDM extends PairwiseGloballyOptimalRegistration< RGLDMPairwise >
 			final ArrayList< ChannelProcess > channelsToProcess,
 			final boolean considerTimePointsAsUnit )
 	{
-		if ( model == 0 )
-			return subset.computeGlobalOpt( new TranslationModel3D(), registrationType, spimData, getChannelsToProcess(), getDescription(), considerTimePointsAsUnit );
-		else if ( model == 1 )
-			return subset.computeGlobalOpt( new RigidModel3D(), registrationType, spimData, getChannelsToProcess(), getDescription(), considerTimePointsAsUnit );
-		else
-			return subset.computeGlobalOpt( new AffineModel3D(), registrationType, spimData, getChannelsToProcess(), getDescription(), considerTimePointsAsUnit );	
+		return subset.computeGlobalOpt( model.getModel(), registrationType, spimData, getChannelsToProcess(), getDescription(), considerTimePointsAsUnit );
 	}
 
 	@Override
@@ -84,7 +78,8 @@ public class RGLDM extends PairwiseGloballyOptimalRegistration< RGLDMPairwise >
 	@Override
 	public void addQuery( final GenericDialog gd, final int registrationType )
 	{
-		gd.addChoice( "Transformation model", modelChoice, modelChoice[ defaultModel ] );
+		gd.addChoice( "Transformation model", TransformationModel.modelChoice, TransformationModel.modelChoice[ defaultModel ] );
+		gd.addCheckbox( "Regularize_model", defaultRegularize );
 		gd.addSlider( "Number_of_neighbors for the descriptors", 3, 10, RGLDMParameters.numNeighbors );
 		gd.addSlider( "Redundancy for descriptor matching", 0, 10, RGLDMParameters.redundancy );		
 		gd.addSlider( "Significance required for a descriptor match", 1.0, 10.0, RGLDMParameters.ratioOfDistance );
@@ -94,8 +89,14 @@ public class RGLDM extends PairwiseGloballyOptimalRegistration< RGLDMPairwise >
 	@Override
 	public boolean parseDialog( final GenericDialog gd, final int registrationType )
 	{
-		model = defaultModel = gd.getNextChoiceIndex();
+		model = new TransformationModel( defaultModel = gd.getNextChoiceIndex() );
 		
+		if ( defaultRegularize = gd.getNextBoolean() )
+		{
+			if ( !model.queryRegularizedModel() )
+				return false;
+		}
+
 		final int numNeighbors = RGLDMParameters.numNeighbors = (int)Math.round( gd.getNextNumber() );
 		final int redundancy = RGLDMParameters.redundancy = (int)Math.round( gd.getNextNumber() );
 		final float significance = RGLDMParameters.ratioOfDistance = (float)gd.getNextNumber();

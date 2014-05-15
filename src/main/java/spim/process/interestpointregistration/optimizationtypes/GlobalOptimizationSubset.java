@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import mpicbg.models.AbstractAffineModel3D;
+import mpicbg.models.Affine3D;
 import mpicbg.models.Model;
 import mpicbg.models.Tile;
 import mpicbg.spim.data.sequence.ViewId;
@@ -57,13 +57,16 @@ public class GlobalOptimizationSubset
 		for ( final ChannelProcess c : channelsToProcess )
 			channelList += c.getLabel() + " (c=" + c.getChannel().getName() + "), ";
 		channelList = channelList.substring( 0, channelList.length() - 2 ) + "]";
-		
+
 		// update the view registrations
 		for ( final ViewId viewId : this.getViews() )
 		{
 			final Tile< M > tile = tiles.get( viewId );
-			final AbstractAffineModel3D<?> tilemodel = (AbstractAffineModel3D<?>)tile.getModel();
-			final float[] m = tilemodel.getMatrix( null );
+			
+			// TODO: we assume that M is an Affine3D, which is not necessarily true
+			final Affine3D< ? > tilemodel = (Affine3D< ? >)tile.getModel();
+			final float[] m = new float[ 12 ];
+			tilemodel.toArray( m );
 			
 			final AffineTransform3D t = new AffineTransform3D();
 			t.set( m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8], m[9], m[10], m[11] );
