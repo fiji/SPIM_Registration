@@ -65,11 +65,13 @@ public class GlobalOptimizationSubset
 			
 			// TODO: we assume that M is an Affine3D, which is not necessarily true
 			final Affine3D< ? > tilemodel = (Affine3D< ? >)tile.getModel();
-			final float[] m = new float[ 12 ];
-			tilemodel.toArray( m );
+			final float[][] m = new float[ 3 ][ 4 ];
+			tilemodel.toMatrix( m );
 			
 			final AffineTransform3D t = new AffineTransform3D();
-			t.set( m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8], m[9], m[10], m[11] );
+			t.set( m[0][0], m[0][1], m[0][2], m[0][3],
+				   m[1][0], m[1][1], m[1][2], m[1][3],
+				   m[2][0], m[2][1], m[2][2], m[2][3] );
 			
 			Apply_Transformation.preConcatenateTransform( spimData, viewId, t, description + " on " + channelList );
 		}
