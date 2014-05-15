@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
+import spim.fiji.plugin.Interest_Point_Registration.RegistrationType;
 import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
 import spim.fiji.plugin.interestpointregistration.PairwiseGloballyOptimalRegistration;
 import spim.fiji.spimdata.SpimData2;
@@ -60,7 +61,7 @@ public class IterativeClosestPoint extends PairwiseGloballyOptimalRegistration< 
 	}
 
 	@Override
-	public void addQuery( final GenericDialog gd, final int registrationType )
+	public void addQuery( final GenericDialog gd, final RegistrationType registrationType )
 	{
 		gd.addChoice( "Transformation model", TransformationModel.modelChoice, TransformationModel.modelChoice[ defaultModel ] );
 		gd.addCheckbox( "Regularize_model", defaultRegularize );
@@ -69,7 +70,7 @@ public class IterativeClosestPoint extends PairwiseGloballyOptimalRegistration< 
 	}
 
 	@Override
-	public boolean parseDialog( final GenericDialog gd, final int registrationType )
+	public boolean parseDialog( final GenericDialog gd, final RegistrationType registrationType )
 	{
 		model = new TransformationModel( defaultModel = gd.getNextChoiceIndex() );
 		
@@ -78,7 +79,6 @@ public class IterativeClosestPoint extends PairwiseGloballyOptimalRegistration< 
 			if ( !model.queryRegularizedModel() )
 				return false;
 		}
-
 
 		final double maxDistance = IterativeClosestPointParameters.maxDistance = gd.getNextNumber();
 		final int maxIterations = IterativeClosestPointParameters.maxIterations = (int)Math.round( gd.getNextNumber() );

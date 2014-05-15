@@ -50,6 +50,8 @@ public class Interest_Point_Registration implements PlugIn
 		"Match against one reference timepoint (no global optimization)", 
 		"All-to-all timepoints matching (global optimization)", 
 		"All-to-all timepoints matching with range ('reasonable' global optimization)" };
+	
+	public enum RegistrationType { TIMEPOINTS_INDIVIDUALLY, TO_REFERENCE_TIMEPOINT, ALL_TO_ALL, ALL_TO_ALL_WITH_RANGE };
 
 	public static String[] inputChoice = new String[]{
 		"Calibration only (resets existing transform)",
@@ -150,7 +152,26 @@ public class Interest_Point_Registration implements PlugIn
 			return;
 		
 		final int algorithm = defaultAlgorithm = gd.getNextChoiceIndex();
-		final int registrationType = defaultRegistrationType = gd.getNextChoiceIndex();
+		
+		final RegistrationType registrationType;
+		
+		switch ( defaultRegistrationType = gd.getNextChoiceIndex() )
+		{
+			case 0:
+				registrationType = RegistrationType.TIMEPOINTS_INDIVIDUALLY;
+				break;
+			case 1:
+				registrationType = RegistrationType.TO_REFERENCE_TIMEPOINT;
+				break;
+			case 2:
+				registrationType = RegistrationType.ALL_TO_ALL;
+				break;
+			case 3:
+				registrationType = RegistrationType.ALL_TO_ALL_WITH_RANGE;
+			default:
+				return;
+		}
+		//final int registrationType = defaultRegistrationType = gd.getNextChoiceIndex();
 
 		// assemble which channels have been selected with with label
 		final ArrayList< ChannelProcess > channelsToProcess = new ArrayList< ChannelProcess >();
@@ -191,11 +212,11 @@ public class Interest_Point_Registration implements PlugIn
 		queryDetailedParameters( result, ipr, registrationType );
 	}
 	
-	protected void queryDetailedParameters( final XMLParseResult result, final InterestPointRegistration ipr, final int registrationType )
+	protected void queryDetailedParameters( final XMLParseResult result, final InterestPointRegistration ipr, final RegistrationType registrationType )
 	{
-		final GenericDialog gd = new GenericDialog( "Register: " + registrationTypes[ registrationType ] );
+		final GenericDialog gd = new GenericDialog( "Register: " + registrationTypes[ registrationType.ordinal() ] );
 		
-		if ( registrationType == 1 )
+		if ( registrationType == RegistrationType.TO_REFERENCE_TIMEPOINT )
 		{
 			final String[] tpList = assembleTimepoints( result.getData().getSequenceDescription().getTimePoints() );
 			
@@ -211,7 +232,7 @@ public class Interest_Point_Registration implements PlugIn
 			gd.addCheckbox( "Register reference timepoint first", defaultRegisterReferenceFirst );
 			gd.addMessage( "" );
 		}
-		else if ( registrationType == 3 )
+		else if ( registrationType == RegistrationType.ALL_TO_ALL_WITH_RANGE )
 		{
 			gd.addSlider( "Range for all-to-all timepoint matching", 2, 10, defaultRange );
 		}
@@ -219,7 +240,7 @@ public class Interest_Point_Registration implements PlugIn
 		gd.addChoice( "Register_based_on", inputChoice, inputChoice[ defaultTransformInputChoice ] );
 		
 		// for all registrations that include multiple timepointss
-		if ( registrationType > 0 )
+		if ( registrationType != RegistrationType.TIMEPOINTS_INDIVIDUALLY )
 		{
 			gd.addCheckbox( "Consider_each_timepoint_as_rigid_unit", defaultConsiderTimepointAsUnit );
 			gd.addMessage( "Note: This option applies the same transformation model to all views of one timepoint. This makes for example\n" +
@@ -247,18 +268,18 @@ public class Interest_Point_Registration implements PlugIn
 		int referenceTimePoint = defaultReferenceTimepoint;
 		int range = defaultRange;
 		
-		if ( registrationType == 1 )
+		if ( registrationType == RegistrationType.TO_REFERENCE_TIMEPOINT )
 		{
 			referenceTimePoint = defaultReferenceTimepoint = gd.getNextChoiceIndex();
 			registerReferenceFirst = defaultRegisterReferenceFirst = gd.getNextBoolean();
 		}
 
-		if ( registrationType == 3 )
+		if ( registrationType == RegistrationType.ALL_TO_ALL_WITH_RANGE )
 			range = defaultRange = (int)Math.round( gd.getNextNumber() );
 		
 		ipr.setInitialTransformType( defaultTransformInputChoice = gd.getNextChoiceIndex() );
 		final boolean considerTimepointsAsUnit;
-		if ( registrationType > 0 )
+		if ( registrationType != RegistrationType.TIMEPOINTS_INDIVIDUALLY )
 			considerTimepointsAsUnit = defaultConsiderTimepointAsUnit = gd.getNextBoolean();
 		else
 			considerTimepointsAsUnit = false;
@@ -269,7 +290,7 @@ public class Interest_Point_Registration implements PlugIn
 		ipr.parseDialog( gd, registrationType );
 		
 		// first register only the reference timepoint if wanted
-		if ( registrationType == 1 && registerReferenceFirst )
+		if ( registrationType == RegistrationType.TO_REFERENCE_TIMEPOINT && registerReferenceFirst )
 		{
 			if ( displayOnly )
 			{
@@ -304,9 +325,9 @@ public class Interest_Point_Registration implements PlugIn
 		// perform the actual registration(s)
 		final GlobalOptimizationType type;
 		
-		if ( registrationType == 0 )
+		if ( registrationType == RegistrationType.TIMEPOINTS_INDIVIDUALLY )
 			type = new IndividualTimepointRegistration( removeCorrespondences, addNewCorrespondences, !displayOnly );
-		else if ( registrationType == 1 )
+		else if ( registrationType == RegistrationType.TO_REFERENCE_TIMEPOINT )
 			type = new ReferenceTimepointRegistration(
 					result.getData(),
 					ipr.getAnglesToProcess(),
@@ -315,9 +336,9 @@ public class Interest_Point_Registration implements PlugIn
 					result.getData().getSequenceDescription().getTimePoints().getTimePointList().get( referenceTimePoint ),
 					removeCorrespondences, addNewCorrespondences, !displayOnly,
 					considerTimepointsAsUnit );
-		else if ( registrationType == 2 )
+		else if ( registrationType == RegistrationType.ALL_TO_ALL )
 			type = new AllToAllRegistration( removeCorrespondences, addNewCorrespondences, !displayOnly, considerTimepointsAsUnit  );
-		else if ( registrationType == 3 )
+		else if ( registrationType == RegistrationType.ALL_TO_ALL_WITH_RANGE )
 			type = new AllToAllRegistrationWithRange( range, removeCorrespondences, addNewCorrespondences, !displayOnly, considerTimepointsAsUnit  );
 		else
 			type = null;

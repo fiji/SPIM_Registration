@@ -12,6 +12,7 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import spim.fiji.plugin.Apply_Transformation;
+import spim.fiji.plugin.Interest_Point_Registration.RegistrationType;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.interestpointregistration.ChannelProcess;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationType;
@@ -71,7 +72,7 @@ public abstract class InterestPointRegistration
 	 * @param gd
 	 * @param registrationType - which kind of registration
 	 */
-	public abstract void addQuery( final GenericDialog gd, final int registrationType );
+	public abstract void addQuery( final GenericDialog gd, final RegistrationType registrationType );
 	
 	/**
 	 * queries the questions asked before
@@ -80,7 +81,7 @@ public abstract class InterestPointRegistration
 	 * @param registrationType - which kind of timeseries registration
 	 * @return
 	 */
-	public abstract boolean parseDialog( final GenericDialog gd, final int registrationType );
+	public abstract boolean parseDialog( final GenericDialog gd, final RegistrationType registrationType );
 	
 	/**
 	 * @return - a new instance without any special properties
