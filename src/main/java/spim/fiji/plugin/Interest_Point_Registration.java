@@ -10,6 +10,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
+import mpicbg.models.AbstractModel;
+import mpicbg.models.RigidModel3D;
+import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
@@ -55,7 +58,13 @@ public class Interest_Point_Registration implements PlugIn
 
 	public static String[] inputChoice = new String[]{
 		"Calibration only (resets existing transform)",
-		"Current view transformations (appends to current transform)" };	
+		"Current view transformations (appends to current transform)" };
+	
+	public static String[] fixFirstTileChoice = new String[]{
+		"Fix first tile",
+		"Do not fix tiles",
+		"Do not fix tiles, map back using translation model",
+		"Do not fix tiles, map back using rigid model" };
 
 	public static int defaultAlgorithm = 0;
 	public static int defaultRegistrationType = 0;
@@ -65,6 +74,7 @@ public class Interest_Point_Registration implements PlugIn
 	public static boolean defaultRegisterReferenceFirst = false;
 	public static int defaultTransformInputChoice = 0;
 	public static boolean defaultConsiderTimepointAsUnit = false;
+	public static int defaultFixFirstTile = 0;
 	public static boolean defaultRemoveExistingCorrespondences = true;
 	public static boolean defaultAddNewCorrespondences = true;
 	public static boolean defaultDisplayTransformOnly = false;
@@ -252,6 +262,9 @@ public class Interest_Point_Registration implements PlugIn
 		gd.addCheckbox( "Add_new_correspondences (as identified by this registration run)", defaultAddNewCorrespondences );
 		gd.addCheckbox( "Display final transformation only (do not edit XML)", defaultDisplayTransformOnly );
 		
+		if ( registrationType != RegistrationType.TO_REFERENCE_TIMEPOINT )
+			gd.addChoice( "Fix_tiles", fixFirstTileChoice, fixFirstTileChoice[ defaultFixFirstTile ] );
+		
 		gd.addMessage( "" );
 		gd.addMessage( "Algorithm parameters [" + ipr.getDescription() + "]", new Font( Font.SANS_SERIF, Font.BOLD, 12 ) );
 		gd.addMessage( "" );
@@ -287,6 +300,25 @@ public class Interest_Point_Registration implements PlugIn
 		final boolean addNewCorrespondences = defaultAddNewCorrespondences = gd.getNextBoolean();
 		final boolean displayOnly = defaultDisplayTransformOnly = gd.getNextBoolean();
 		
+		final int fixFirstTile;
+		final AbstractModel< ? > mapBackModel; 
+		
+		if ( registrationType != RegistrationType.TO_REFERENCE_TIMEPOINT )
+		{
+			fixFirstTile = defaultFixFirstTile = gd.getNextChoiceIndex();
+			if ( fixFirstTile == 0 || fixFirstTile == 1 )
+				mapBackModel = null;
+			else if ( fixFirstTile == 2 )
+				mapBackModel = new TranslationModel3D();
+			else
+				mapBackModel = new RigidModel3D();
+		}
+		else
+		{
+			fixFirstTile = 0;
+			mapBackModel = null;
+		}
+
 		ipr.parseDialog( gd, registrationType );
 		
 		// first register only the reference timepoint if wanted
@@ -312,7 +344,7 @@ public class Interest_Point_Registration implements PlugIn
 			ipr.getTimepointsToProcess().add( result.getData().getSequenceDescription().getTimePoints().getTimePointList().get( referenceTimePoint ) );
 			
 			// only individually register the reference timepoint
-			ipr.register( new IndividualTimepointRegistration( removeCorrespondences, addNewCorrespondences, !displayOnly ) );
+			ipr.register( new IndividualTimepointRegistration( removeCorrespondences, addNewCorrespondences, !displayOnly, fixFirstTile == 0, mapBackModel ) );
 			
 			// restore the timepoints and save XML
 			ipr.getTimepointsToProcess().clear();
@@ -326,7 +358,7 @@ public class Interest_Point_Registration implements PlugIn
 		final GlobalOptimizationType type;
 		
 		if ( registrationType == RegistrationType.TIMEPOINTS_INDIVIDUALLY )
-			type = new IndividualTimepointRegistration( removeCorrespondences, addNewCorrespondences, !displayOnly );
+			type = new IndividualTimepointRegistration( removeCorrespondences, addNewCorrespondences, !displayOnly, fixFirstTile == 0, mapBackModel );
 		else if ( registrationType == RegistrationType.TO_REFERENCE_TIMEPOINT )
 			type = new ReferenceTimepointRegistration(
 					result.getData(),
@@ -337,9 +369,9 @@ public class Interest_Point_Registration implements PlugIn
 					removeCorrespondences, addNewCorrespondences, !displayOnly,
 					considerTimepointsAsUnit );
 		else if ( registrationType == RegistrationType.ALL_TO_ALL )
-			type = new AllToAllRegistration( removeCorrespondences, addNewCorrespondences, !displayOnly, considerTimepointsAsUnit  );
+			type = new AllToAllRegistration( removeCorrespondences, addNewCorrespondences, !displayOnly, considerTimepointsAsUnit, fixFirstTile == 0, mapBackModel );
 		else if ( registrationType == RegistrationType.ALL_TO_ALL_WITH_RANGE )
-			type = new AllToAllRegistrationWithRange( range, removeCorrespondences, addNewCorrespondences, !displayOnly, considerTimepointsAsUnit  );
+			type = new AllToAllRegistrationWithRange( range, removeCorrespondences, addNewCorrespondences, !displayOnly, considerTimepointsAsUnit, fixFirstTile == 0, mapBackModel );
 		else
 			type = null;
 		

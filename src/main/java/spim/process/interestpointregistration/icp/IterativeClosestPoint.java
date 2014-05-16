@@ -29,7 +29,6 @@ public class IterativeClosestPoint extends PairwiseGloballyOptimalRegistration< 
 	public static boolean defaultRegularize = false;
 	protected TransformationModel model = null;
 
-	
 	protected IterativeClosestPointParameters parameters;
 
 	public IterativeClosestPoint(
@@ -57,7 +56,7 @@ public class IterativeClosestPoint extends PairwiseGloballyOptimalRegistration< 
 			final ArrayList< ChannelProcess > channelsToProcess,
 			final boolean considerTimePointsAsUnit )
 	{
-		return subset.computeGlobalOpt( model.getModel(), registrationType, spimData, getChannelsToProcess(), getDescription(), considerTimePointsAsUnit );
+		return subset.computeGlobalOpt( model.getModel(), registrationType, spimData, getChannelsToProcess(), getDescription() + ", " + model.getDescription(), getInitialTransformType(), considerTimePointsAsUnit );
 	}
 
 	@Override

@@ -33,6 +33,7 @@ public class TransformationModel
 		this.lambda = lambda;		
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public AbstractModel getModel()
 	{
 		AbstractModel<?> model;
@@ -79,5 +80,32 @@ public class TransformationModel
 		this.regularize = true;
 
 		return true;
+	}
+
+	public String getDescription()
+	{
+		String d;
+		
+		if ( modelIndex == 0 )
+			d = "TranslationModel3D";
+		else if ( modelIndex == 1 )
+			d = "RigidModel3D";
+		else
+			d = "AffineModel3D";
+		
+		
+		if ( regularize )
+		{
+			if ( regularizedModelIndex == 0 )
+				d += " regularized with an IdentityModel, lambda = " + lambda;
+			else if ( regularizedModelIndex == 1 )
+				d += " regularized with an TranslationModel3D, lambda = " + lambda;
+			else if ( regularizedModelIndex == 2 )
+				d += " regularized with an RigidModel3D, lambda = " + lambda;
+			else if ( regularizedModelIndex == 3 )
+				d += " regularized with an AffineModel3D, lambda = " + lambda;			 
+		}
+
+		return d;
 	}
 }

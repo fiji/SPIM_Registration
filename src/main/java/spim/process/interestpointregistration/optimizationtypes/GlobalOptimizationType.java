@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import mpicbg.models.AbstractModel;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.Angle;
@@ -36,16 +37,25 @@ import spim.process.interestpointregistration.Detection;
 public abstract class GlobalOptimizationType
 {
 	protected boolean save, remove, add;
-	final protected boolean considerTimePointsAsUnit;
+	final protected boolean considerTimePointsAsUnit, fixFirstTile;
+	final AbstractModel<?> mapBackModel;
 	
-	public GlobalOptimizationType( final boolean remove, final boolean add, final boolean save, final boolean considerTimePointsAsUnit )
+	public GlobalOptimizationType(
+			final boolean remove,
+			final boolean add,
+			final boolean save,
+			final boolean considerTimePointsAsUnit,
+			final boolean fixFirstTile,
+			final AbstractModel<?> mapBackModel )
 	{ 
 		this.remove = remove;
 		this.add = add;
 		this.save = save;
 		this.considerTimePointsAsUnit = considerTimePointsAsUnit;
+		this.fixFirstTile = fixFirstTile;
+		this.mapBackModel = mapBackModel;
 	}
-		
+	
 	public abstract List< GlobalOptimizationSubset > getAllViewPairs(
 			final SpimData2 spimData,
 			final ArrayList< Angle > anglesToProcess,
@@ -61,7 +71,29 @@ public abstract class GlobalOptimizationType
 	 * @return - true if a certain tile is fixed for global optimization, otherwise false
 	 */
 	public abstract boolean isFixedTile( final ViewId viewId, final GlobalOptimizationSubset set );
+	
+	/**
+	 * @return - if the first tile was fixed or not
+	 */
+	public boolean fixFirstTile() { return fixFirstTile; }
 
+	/**
+	 * In case there is one tile which would be reference tile, return this one - can be null.
+	 * This will be used to map the entire acquisition back to this frame as good as possible if the user
+	 * asks for not fixing the first tile but still wants it roughly oriented like this
+	 * 
+	 * @param set - the current set that will be globally optimized
+	 * @return
+	 */
+	public abstract ViewId getReferenceTile( final GlobalOptimizationSubset set );
+	
+	/**
+	 * The transformation model used to map back to the reference frame (can be null)
+	 * 
+	 * @return - a new instance of the model
+	 */
+	public AbstractModel<?> getMapBackModel() { return mapBackModel; }
+	
 	/** 
 	 * @return - true if previous correspondences should be removed
 	 */

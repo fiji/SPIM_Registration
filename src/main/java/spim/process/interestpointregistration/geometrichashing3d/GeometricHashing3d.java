@@ -23,7 +23,6 @@ public class GeometricHashing3d extends PairwiseGloballyOptimalRegistration< Geo
 	public static boolean defaultRegularize = false;
 	protected TransformationModel model = null;
 
-
 	protected RANSACParameters ransacParams;
 
 	public GeometricHashing3d(
@@ -50,7 +49,7 @@ public class GeometricHashing3d extends PairwiseGloballyOptimalRegistration< Geo
 			final ArrayList< ChannelProcess > channelsToProcess,
 			final boolean considerTimePointsAsUnit )
 	{
-		return subset.computeGlobalOpt( model.getModel(), registrationType, spimData, getChannelsToProcess(), getDescription(), considerTimePointsAsUnit );
+		return subset.computeGlobalOpt( model.getModel(), registrationType, spimData, getChannelsToProcess(), getDescription() + ", " + model.getDescription(), getInitialTransformType(), considerTimePointsAsUnit );
 	}
 
 	@Override

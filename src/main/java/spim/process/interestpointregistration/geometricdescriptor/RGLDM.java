@@ -29,7 +29,7 @@ public class RGLDM extends PairwiseGloballyOptimalRegistration< RGLDMPairwise >
 	public static int defaultModel = 2;
 	public static boolean defaultRegularize = false;
 	protected TransformationModel model = null;
-	
+
 	protected RGLDMParameters parameters;
 	protected RANSACParameters ransacParams;
 
@@ -58,7 +58,7 @@ public class RGLDM extends PairwiseGloballyOptimalRegistration< RGLDMPairwise >
 			final ArrayList< ChannelProcess > channelsToProcess,
 			final boolean considerTimePointsAsUnit )
 	{
-		return subset.computeGlobalOpt( model.getModel(), registrationType, spimData, getChannelsToProcess(), getDescription(), considerTimePointsAsUnit );
+		return subset.computeGlobalOpt( model.getModel(), registrationType, spimData, getChannelsToProcess(), getDescription() + ", " + model.getDescription(), getInitialTransformType(), considerTimePointsAsUnit );
 	}
 
 	@Override
