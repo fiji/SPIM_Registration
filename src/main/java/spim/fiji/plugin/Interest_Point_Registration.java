@@ -178,11 +178,11 @@ public class Interest_Point_Registration implements PlugIn
 				break;
 			case 3:
 				registrationType = RegistrationType.ALL_TO_ALL_WITH_RANGE;
+				break;
 			default:
 				return;
 		}
-		//final int registrationType = defaultRegistrationType = gd.getNextChoiceIndex();
-
+		
 		// assemble which channels have been selected with with label
 		final ArrayList< ChannelProcess > channelsToProcess = new ArrayList< ChannelProcess >();
 		i = 0;
