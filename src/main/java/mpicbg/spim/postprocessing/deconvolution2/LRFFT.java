@@ -23,7 +23,6 @@ import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
-import mpicbg.imglib.util.Util;
 import mpicbg.imglib.wrapper.ImgLib1;
 import mpicbg.imglib.wrapper.ImgLib2;
 import mpicbg.spim.io.IOFunctions;
@@ -151,7 +150,7 @@ public class LRFFT
 			// blocksize might change during division if they were too small
 			 //this.blockSize = blockSize.clone();
 			
-			IOFunctions.println( "Number of blocks (" + Util.printCoordinates( blockSize ) + "): " + this.blocks.length );
+			IOFunctions.println( "Number of blocks: " + this.blocks.length );
 			
 			this.factory = new ImageFactory< FloatType >( new FloatType(), new ArrayContainerFactory() );
 		}
