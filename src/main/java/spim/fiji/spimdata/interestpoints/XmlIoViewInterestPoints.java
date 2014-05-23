@@ -83,7 +83,8 @@ public class XmlIoViewInterestPoints
 		elem.setAttribute( VIEWINTERESTPOINTS_SETUP_ATTRIBUTE_NAME, Integer.toString( viewId ) );
 		elem.setAttribute( VIEWINTERESTPOINTS_LABEL_ATTRIBUTE_NAME, label );
 		elem.setAttribute( VIEWINTERESTPOINTS_PARAMETERS_ATTRIBUTE_NAME, interestPointList.getParameters() );
-		elem.setText( interestPointList.getFile().toString() );
+		// a hack so that windows does not put its backslashes in
+		elem.setText( interestPointList.getFile().toString().replace( "\\", "/" ) );
 
 		return elem;
 	}
