@@ -31,7 +31,7 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 			final boolean remove, final boolean add, final boolean save,
 			final boolean considerTimePointsAsUnit )
 	{ 
-		super( remove, add, save, considerTimePointsAsUnit );
+		super( remove, add, save, considerTimePointsAsUnit, true, null );
 
 		this.referenceTimepoint = referenceTimepoint;
 		this.fixedTiles = assembleFixedTiles( spimData, anglesToProcess, channelsToProcess, illumsToProcess, referenceTimepoint );
@@ -167,4 +167,7 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 		
 		return list;
 	}
+
+	@Override
+	public ViewId getReferenceTile( final GlobalOptimizationSubset set ) { return null; }
 }

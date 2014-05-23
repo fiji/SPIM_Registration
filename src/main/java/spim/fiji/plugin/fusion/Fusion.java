@@ -12,6 +12,7 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import spim.fiji.spimdata.SpimData2;
+import spim.process.fusion.boundingbox.ManualBoundingBox.ManageListeners;
 import spim.process.fusion.export.ImgExport;
 
 public abstract class Fusion
@@ -116,6 +117,13 @@ public abstract class Fusion
 	 * Query additional parameters within the bounding box dialog
 	 */
 	public abstract void queryAdditionalParameters( final GenericDialog gd );
+	
+	/**
+	 * In case there are some other Listener upon whom the memory needs to be recomputed in the Manual Bounding Box.
+	 * 
+	 * @param m
+	 */
+	public void registerAdditionalListeners( final ManageListeners m ) {};
 
 	/**
 	 * Parse the additional parameters added before within the bounding box dialog

@@ -5,26 +5,23 @@ import java.util.Date;
 import java.util.concurrent.Callable;
 
 import mpicbg.icp.ICP;
-import mpicbg.models.AffineModel3D;
 import mpicbg.models.Model;
 import mpicbg.models.PointMatch;
-import mpicbg.models.RigidModel3D;
-import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
-
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.interestpointregistration.ChannelInterestPointListPair;
 import spim.process.interestpointregistration.Detection;
+import spim.process.interestpointregistration.TransformationModel;
 
 public class IterativeClosestPointPairwise implements Callable< ChannelInterestPointListPair >
 {
 	final ChannelInterestPointListPair pair;
-	final int model;
+	final TransformationModel model;
 	final IterativeClosestPointParameters ip;
 	final String comparison;
 
-	public IterativeClosestPointPairwise( final ChannelInterestPointListPair pair, final int model, final String comparison, final IterativeClosestPointParameters ip  )
+	public IterativeClosestPointPairwise( final ChannelInterestPointListPair pair, final TransformationModel model, final String comparison, final IterativeClosestPointParameters ip  )
 	{
 		this.pair = pair;
 		this.ip = ip;
@@ -47,7 +44,7 @@ public class IterativeClosestPointPairwise implements Callable< ChannelInterestP
 		final ICP< Detection > icp = new ICP<Detection>( listA, listB, (float)ip.getMaxDistance() );
 		
 		// identity transform
-		Model<?> model = newModel();
+		Model<?> model = this.model.getModel();
 		
 		int i = 0;
 		double lastAvgError = 0;
@@ -80,15 +77,5 @@ public class IterativeClosestPointPairwise implements Callable< ChannelInterestP
     	IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): " + comparison + ": Found " + icp.getNumPointMatches() + " matches, avg error [px] " + icp.getAverageError() + " after " + i + " iterations" );
     	
 		return pair;
-	}
-	
-	protected Model<?> newModel()
-	{
-		if ( model == 0 )
-			return new TranslationModel3D();
-		else if ( model == 1 )
-			return new RigidModel3D();
-		else
-			return new AffineModel3D();
 	}
 }

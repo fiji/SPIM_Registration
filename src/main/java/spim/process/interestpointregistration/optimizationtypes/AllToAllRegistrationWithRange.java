@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+import mpicbg.models.AbstractModel;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
@@ -18,9 +19,9 @@ public class AllToAllRegistrationWithRange extends GlobalOptimizationType
 {
 	final int range;
 	
-	public AllToAllRegistrationWithRange( final int range, final boolean remove, final boolean add, final boolean save, final boolean considerTimePointsAsUnit  )
+	public AllToAllRegistrationWithRange( final int range, final boolean remove, final boolean add, final boolean save, final boolean considerTimePointsAsUnit, final boolean fixFirstTile, final AbstractModel<?> mapBackModel )
 	{ 
-		super( remove, add, save, considerTimePointsAsUnit );
+		super( remove, add, save, considerTimePointsAsUnit, fixFirstTile, mapBackModel );
 		
 		this.range = range;
 	}
@@ -88,9 +89,12 @@ public class AllToAllRegistrationWithRange extends GlobalOptimizationType
 	public boolean isFixedTile( final ViewId viewId, final GlobalOptimizationSubset set )
 	{
 		// fix first tile
-		if ( viewId == set.getViews().get( 0 ) )
+		if ( fixFirstTile && viewId == set.getViews().get( 0 ) )
 			return true;
 		else
 			return false;
 	}
+
+	@Override
+	public ViewId getReferenceTile( final GlobalOptimizationSubset set ) { return set.getViews().get( 0 ); }
 }

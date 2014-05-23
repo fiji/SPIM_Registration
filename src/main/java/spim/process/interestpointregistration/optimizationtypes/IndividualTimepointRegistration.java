@@ -9,6 +9,7 @@ import spim.fiji.spimdata.SpimData2;
 import spim.process.interestpointregistration.ChannelInterestPointList;
 import spim.process.interestpointregistration.ChannelInterestPointListPair;
 import spim.process.interestpointregistration.ChannelProcess;
+import mpicbg.models.AbstractModel;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
@@ -22,16 +23,16 @@ import mpicbg.spim.data.sequence.ViewId;
  */
 public class IndividualTimepointRegistration extends GlobalOptimizationType
 {
-	public IndividualTimepointRegistration( final boolean remove, final boolean add, final boolean save )
+	public IndividualTimepointRegistration( final boolean remove, final boolean add, final boolean save, final boolean fixFirstTile, final AbstractModel<?> mapBackModel )
 	{ 
-		super( remove, add, save, false );
+		super( remove, add, save, false, fixFirstTile, mapBackModel );
 	}
 
 	@Override
 	public boolean isFixedTile( final ViewId viewId, final GlobalOptimizationSubset set )
 	{
 		// fix first tile
-		if ( viewId == set.getViews().get( 0 ) )
+		if ( fixFirstTile && viewId == set.getViews().get( 0 ) )
 			return true;
 		else
 			return false;
@@ -88,4 +89,7 @@ public class IndividualTimepointRegistration extends GlobalOptimizationType
 		
 		return list;
 	}
+
+	@Override
+	public ViewId getReferenceTile( final GlobalOptimizationSubset set ) { return set.getViews().get( 0 ); }
 }
