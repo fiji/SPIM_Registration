@@ -343,7 +343,7 @@ public class LoadParseQueryXML
 		
 		try 
 		{
-			final ArrayList< Integer > timepointList = IntegerPattern.parseIntegerString( defaultTimePointString = gd.getNextString() );
+			final ArrayList< Integer > timepointList = IntegerPattern.parseIntegerString( defaultSelection = gd.getNextString() );
 			
 			for ( final int tp : timepointList )
 			{
@@ -364,7 +364,7 @@ public class LoadParseQueryXML
 		} 
 		catch ( final ParseException e ) 
 		{
-			IOFunctions.println( "Cannot parse pattern '" + defaultTimePointString + "': " + e );
+			IOFunctions.println( "Cannot parse pattern '" + defaultSelection + "': " + e );
 			return null;
 		}
 		
