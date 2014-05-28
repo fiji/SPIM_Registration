@@ -19,13 +19,14 @@ import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.Dimensions;
 import net.imglib2.FinalRealInterval;
 import spim.fiji.plugin.GUIHelper;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.ViewSetupUtils;
 import spim.process.fusion.export.ImgExport;
 
 public class ManualBoundingBox extends BoundingBox
@@ -236,20 +237,29 @@ public class ManualBoundingBox extends BoundingBox
 		
 		protected void addListeners()
 		{
-			this.minX.addTextListener( new TextListener() { public void textValueChanged(TextEvent e) { update( Source.MINX ); } });
-			this.minY.addTextListener( new TextListener() { public void textValueChanged(TextEvent e) { update( Source.MINY ); } });
-			this.minZ.addTextListener( new TextListener() { public void textValueChanged(TextEvent e) { update( Source.MINZ ); } });
-			this.maxX.addTextListener( new TextListener() { public void textValueChanged(TextEvent e) { update( Source.MAXX ); } });
-			this.maxY.addTextListener( new TextListener() { public void textValueChanged(TextEvent e) { update( Source.MAXY ); } });
-			this.maxZ.addTextListener( new TextListener() { public void textValueChanged(TextEvent e) { update( Source.MAXZ ); } });
+			this.minX.addTextListener( new TextListener() { @Override
+			public void textValueChanged(TextEvent e) { update( Source.MINX ); } });
+			this.minY.addTextListener( new TextListener() { @Override
+			public void textValueChanged(TextEvent e) { update( Source.MINY ); } });
+			this.minZ.addTextListener( new TextListener() { @Override
+			public void textValueChanged(TextEvent e) { update( Source.MINZ ); } });
+			this.maxX.addTextListener( new TextListener() { @Override
+			public void textValueChanged(TextEvent e) { update( Source.MAXX ); } });
+			this.maxY.addTextListener( new TextListener() { @Override
+			public void textValueChanged(TextEvent e) { update( Source.MAXY ); } });
+			this.maxZ.addTextListener( new TextListener() { @Override
+			public void textValueChanged(TextEvent e) { update( Source.MAXZ ); } });
 			
-			this.imgTypeChoice.addItemListener( new ItemListener() { public void itemStateChanged(ItemEvent e) { update(); } });
+			this.imgTypeChoice.addItemListener( new ItemListener() { @Override
+			public void itemStateChanged(ItemEvent e) { update(); } });
 			
 			if ( supportsDownsampling )
-				this.downsample.addTextListener( new TextListener() { public void textValueChanged(TextEvent e) { update(); } });
+				this.downsample.addTextListener( new TextListener() { @Override
+				public void textValueChanged(TextEvent e) { update(); } });
 			
 			if ( supports16bit )
-				this.pixelTypeChoice.addItemListener( new ItemListener() { public void itemStateChanged(ItemEvent e) { update(); } });
+				this.pixelTypeChoice.addItemListener( new ItemListener() { @Override
+				public void itemStateChanged(ItemEvent e) { update(); } });
 		}
 		
 		public void update() { update( Source.IRRELEVANT ); }
@@ -344,17 +354,18 @@ public class ManualBoundingBox extends BoundingBox
 						// bureaucracy
 						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
 						
-						final ViewDescription< TimePoint, ViewSetup > viewDescription = spimData.getSequenceDescription().getViewDescription( 
+						final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
 								viewId.getTimePointId(), viewId.getViewSetupId() );
 		
 						if ( !viewDescription.isPresent() )
 							continue;
-						
+
+						Dimensions size = ViewSetupUtils.getSizeOrDefault( viewDescription.getViewSetup() );
 						final double[] min = new double[]{ 0, 0, 0 };
 						final double[] max = new double[]{
-								viewDescription.getViewSetup().getWidth() - 1,
-								viewDescription.getViewSetup().getHeight() - 1,
-								viewDescription.getViewSetup().getDepth() - 1 };
+								size.dimension( 0 ) - 1,
+								size.dimension( 1 ) - 1,
+								size.dimension( 2 ) - 1 };
 						
 						final ViewRegistration r = spimData.getViewRegistrations().getViewRegistration( viewId );
 						r.updateModel();

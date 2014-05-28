@@ -9,6 +9,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 import mpicbg.models.AbstractModel;
 import mpicbg.models.RigidModel3D;
@@ -20,12 +21,10 @@ import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.TimePoints;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
 import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.XmlIo;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
@@ -108,7 +107,7 @@ public class Interest_Point_Registration implements PlugIn
 			defaultAlgorithm = 0;
 
 		// ask which channels have the objects we are searching for
-		final ArrayList< Channel > channels = result.getData().getSequenceDescription().getAllChannels();
+		final List< Channel > channels = result.getData().getSequenceDescription().getAllChannelsOrdered();
 
 		// build up the dialog
 		final GenericDialog gd = new GenericDialog( "Basic Registration Parameters" );
@@ -120,9 +119,9 @@ public class Interest_Point_Registration implements PlugIn
 			choicesGlobal = registrationTypes.clone();
 		else
 		{
-			final int globalAmountTimepoints = 
-					result.getData().getSequenceDescription().getTimePoints().getTimePointList().size();
-			
+			final int globalAmountTimepoints =
+					result.getData().getSequenceDescription().getTimePoints().size();
+
 			// suggest a registration to a reference timepoint (that we do not process here)
 			// if there the entire dataset description has more than one timepoint
 			if ( globalAmountTimepoints > 1 )
@@ -333,7 +332,7 @@ public class Interest_Point_Registration implements PlugIn
 			else
 			{
 				IOFunctions.println( "Registering reference timepoint: " + 
-						result.getData().getSequenceDescription().getTimePoints().getTimePointList().get( referenceTimePoint ).getName() +
+						result.getData().getSequenceDescription().getTimePoints().getTimePoints().get( referenceTimePoint ).getName() +
 						", id: " + referenceTimePoint );
 			}
 
@@ -341,7 +340,7 @@ public class Interest_Point_Registration implements PlugIn
 			final ArrayList< TimePoint > tps = new ArrayList< TimePoint >();
 			tps.addAll( ipr.getTimepointsToProcess() );
 			ipr.getTimepointsToProcess().clear();
-			ipr.getTimepointsToProcess().add( result.getData().getSequenceDescription().getTimePoints().getTimePointList().get( referenceTimePoint ) );
+			ipr.getTimepointsToProcess().add( result.getData().getSequenceDescription().getTimePoints().getTimePoints().get( referenceTimePoint ) );
 			
 			// only individually register the reference timepoint
 			ipr.register( new IndividualTimepointRegistration( removeCorrespondences, addNewCorrespondences, !displayOnly, fixFirstTile == 0, mapBackModel ) );
@@ -365,7 +364,7 @@ public class Interest_Point_Registration implements PlugIn
 					ipr.getAnglesToProcess(),
 					ipr.getChannelsToProcess(),
 					ipr.getIllumsToProcess(),
-					result.getData().getSequenceDescription().getTimePoints().getTimePointList().get( referenceTimePoint ),
+					result.getData().getSequenceDescription().getTimePoints().getTimePoints().get( referenceTimePoint ),
 					removeCorrespondences, addNewCorrespondences, !displayOnly,
 					considerTimepointsAsUnit );
 		else if ( registrationType == RegistrationType.ALL_TO_ALL )
@@ -386,7 +385,7 @@ public class Interest_Point_Registration implements PlugIn
 	public static void saveXML( final SpimData2 data, final String xmlFileName  )
 	{
 		// save the xml
-		final XmlIoSpimData2 io = XmlIo.createDefaultIo();
+		final XmlIoSpimData2 io = new XmlIoSpimData2();
 		
 		final String xml = new File( data.getBasePath(), new File( xmlFileName ).getName() ).getAbsolutePath();
 		try 
@@ -415,10 +414,12 @@ public class Interest_Point_Registration implements PlugIn
 		final HashMap< String, Integer > labels = new HashMap< String, Integer >();
 		
 		int countViewDescriptions = 0;
-		
+
+		final List< Angle > anglesToProcess = spimData.getSequenceDescription().getAllAnglesOrdered();
+		final List< Illumination > illuminationsToProcess = spimData.getSequenceDescription().getAllIlluminationsOrdered();
 		for ( final TimePoint t : timepointsToProcess )
-			for ( final Angle a : spimData.getSequenceDescription().getAllAngles() )
-				for ( final Illumination i : spimData.getSequenceDescription().getAllIlluminations() )
+			for ( final Angle a : anglesToProcess )
+				for ( final Illumination i : illuminationsToProcess )
 				{
 					final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, channel, a, i );
 					
@@ -432,7 +433,7 @@ public class Interest_Point_Registration implements PlugIn
 					}
 					
 					// get the viewdescription
-					final ViewDescription< TimePoint, ViewSetup > viewDescription = spimData.getSequenceDescription().getViewDescription( 
+					final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
 							viewId.getTimePointId(), viewId.getViewSetupId() );
 
 					// check if the view is present
@@ -475,13 +476,13 @@ public class Interest_Point_Registration implements PlugIn
 		return allLabels;
 	}
 
-	protected String[] assembleTimepoints( final TimePoints< TimePoint > timepoints )
+	protected String[] assembleTimepoints( final TimePoints timepoints )
 	{
-		final String[] tps = new String[ timepoints.getTimePointList().size() ];
-		
+		final String[] tps = new String[ timepoints.size() ];
+
 		for ( int t = 0; t < tps.length; ++t )
-			tps[ t ] = timepoints.getTimePointList().get( t ).getName();
-		
+			tps[ t ] = timepoints.getTimePoints().get( t ).getName();
+
 		return tps;
 	}
 

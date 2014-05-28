@@ -11,7 +11,6 @@ import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
-import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
@@ -68,7 +67,7 @@ public class ProcessParalell extends ProcessFusion
 		}
 		
 		// get all views that are fused
-		final ArrayList< ViewDescription< TimePoint, ViewSetup > > inputData =
+		final ArrayList< ViewDescription > inputData =
 				FusionHelper.assembleInputData( spimData, timepoint, channel, anglesToProcess, illumsToProcess );
 
 		final ArrayList< RandomAccessibleInterval< T > > imgs = new ArrayList< RandomAccessibleInterval< T > >();
@@ -128,7 +127,7 @@ public class ProcessParalell extends ProcessFusion
 	}
 
 	@SuppressWarnings("unchecked")
-	protected static < T extends RealType< T > > RandomAccessibleInterval< T > getImage( final T type, final SpimData2 spimData, final ViewDescription<TimePoint, ViewSetup> view )
+	protected static < T extends RealType< T > > RandomAccessibleInterval< T > getImage( final T type, final SpimData2 spimData, final ViewDescription view )
 	{
 		if ( type instanceof FloatType )
 			return (RandomAccessibleInterval< T >)(Object)spimData.getSequenceDescription().getImgLoader().getImage( view, false );

@@ -11,7 +11,6 @@ import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
-import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
@@ -66,7 +65,7 @@ public class ProcessIndependent extends ProcessFusion
 			final Channel channel )
 	{				
 		// get all views that are fused
-		final ArrayList< ViewDescription< TimePoint, ViewSetup > > allInputData =
+		final ArrayList< ViewDescription > allInputData =
 				FusionHelper.assembleInputData( spimData, timepoint, channel, anglesToProcess, illumsToProcess );
 		
 		// we will need to run some batches until all is fused
@@ -84,7 +83,7 @@ public class ProcessIndependent extends ProcessFusion
 				return null;
 			}
 	
-			final ViewDescription< TimePoint, ViewSetup > inputData = allInputData.get( i );
+			final ViewDescription inputData = allInputData.get( i );
 			
 			// same as in the paralell fusion now more or less
 			final RandomAccessibleInterval< T > img = getImage( type, spimData, inputData );
@@ -127,7 +126,7 @@ public class ProcessIndependent extends ProcessFusion
 	}
 
 	@SuppressWarnings("unchecked")
-	protected static < T extends RealType< T > > RandomAccessibleInterval< T > getImage( final T type, final SpimData2 spimData, final ViewDescription<TimePoint, ViewSetup> view )
+	protected static < T extends RealType< T > > RandomAccessibleInterval< T > getImage( final T type, final SpimData2 spimData, final ViewDescription view )
 	{
 		if ( type instanceof FloatType )
 			return (RandomAccessibleInterval< T >)(Object)spimData.getSequenceDescription().getImgLoader().getImage( view, false );

@@ -9,8 +9,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 
-import net.imglib2.util.Util;
-
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
@@ -18,10 +16,12 @@ import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
+import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.util.Util;
 import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.XmlIo;
+import spim.fiji.spimdata.ViewSetupUtils;
 import spim.fiji.spimdata.XmlIoSpimData2;
 
 public class Specify_Calibration implements PlugIn
@@ -36,7 +36,7 @@ public class Specify_Calibration implements PlugIn
 			return;
 		
 		// this is the same for all timepoints, we are just interested in the ViewSetup
-		final TimePoint t = result.getData().getSequenceDescription().getTimePoints().getTimePointList().get( 0 );
+		final TimePoint t = result.getData().getSequenceDescription().getTimePoints().getTimePointsOrdered().get( 0 );
 		
 		final ArrayList< Cal > calibrations = new ArrayList< Cal >(); 
 		
@@ -45,14 +45,15 @@ public class Specify_Calibration implements PlugIn
 				for ( final Illumination i : result.getIlluminationsToProcess() )
 				{
 					final ViewId viewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c, a, i );
-					final ViewDescription<TimePoint, ViewSetup> desc = result.getData().getSequenceDescription().getViewDescription( viewId ); 
+					final ViewDescription desc = result.getData().getSequenceDescription().getViewDescription( viewId ); 
 					final ViewSetup viewSetup = desc.getViewSetup();
 					final String name = "angle: " + a.getName() + " channel: " + c.getName() + " illum: " + i.getName() + 
 							", present at timepoint: " + t.getName() + ": " + desc.isPresent();
 
-					final double x = viewSetup.getPixelWidth();
-					final double y = viewSetup.getPixelHeight();
-					final double z = viewSetup.getPixelDepth();
+					VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSizeOrDefault( viewSetup );
+					final double x = voxelSize.dimension( 0 );
+					final double y = voxelSize.dimension( 1 );
+					final double z = voxelSize.dimension( 2 );
 					
 					IOFunctions.println( "cal: [" + x + ", " + y + ", " + z + "] -- " + name );
 					
@@ -125,16 +126,16 @@ public class Specify_Calibration implements PlugIn
 				for ( final Illumination i : result.getIlluminationsToProcess() )
 				{
 					final ViewId viewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c, a, i );
-					final ViewDescription<TimePoint, ViewSetup> desc = result.getData().getSequenceDescription().getViewDescription( viewId ); 
+					final ViewDescription desc = result.getData().getSequenceDescription().getViewDescription( viewId ); 
 					final ViewSetup viewSetup = desc.getViewSetup();
-					
+
 					viewSetup.setPixelWidth( maxCal.getCal()[ 0 ] );
 					viewSetup.setPixelHeight( maxCal.getCal()[ 1 ] );
 					viewSetup.setPixelDepth( maxCal.getCal()[ 2 ] );
 				}
 		
 		// save the xml
-		final XmlIoSpimData2 io = XmlIo.createDefaultIo();
+		final XmlIoSpimData2 io = new XmlIoSpimData2();
 		
 		final String xml = new File( result.getData().getBasePath(), new File( result.getXMLFileName() ).getName() ).getAbsolutePath();
 		try 

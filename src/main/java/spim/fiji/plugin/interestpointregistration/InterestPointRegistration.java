@@ -10,7 +10,6 @@ import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.data.sequence.ViewSetup;
 import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.plugin.Interest_Point_Registration.RegistrationType;
 import spim.fiji.spimdata.SpimData2;
@@ -152,14 +151,18 @@ public abstract class InterestPointRegistration
 						// bureaucracy
 						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c.getChannel(), a, i );
 						
-						final ViewDescription< TimePoint, ViewSetup > viewDescription = spimData.getSequenceDescription().getViewDescription( 
+						final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
 								viewId.getTimePointId(), viewId.getViewSetupId() );
 
 						if ( !viewDescription.isPresent() )
 							continue;
-						
-						if ( viewDescription.getViewSetup().getPixelSizeUnit() != null )
-							setUnit( viewDescription.getViewSetup().getPixelSizeUnit() );
+
+						if ( viewDescription.getViewSetup().hasVoxelSize() )
+						{
+							final String unit = viewDescription.getViewSetup().getVoxelSize().unit();
+							if ( !( unit == null || unit.isEmpty() ) )
+							setUnit( unit );
+						}
 					}
 		
 		return true;

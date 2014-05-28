@@ -16,9 +16,11 @@ import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.Dimensions;
 import net.imglib2.realtransform.AffineTransform3D;
 import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.ViewSetupUtils;
 import spim.process.interestpointregistration.ChannelInterestPointListPair;
 import spim.process.interestpointregistration.ChannelProcess;
 import spim.process.interestpointregistration.GlobalOpt;
@@ -116,12 +118,15 @@ public class GlobalOptimizationSubset
 			
 			final ViewId referenceTile = type.getReferenceTile( this );
 			final ViewSetup referenceTileSetup = spimData.getSequenceDescription().getViewDescription( referenceTile ).getViewSetup();
+			Dimensions size = ViewSetupUtils.getSizeOrDefault( referenceTileSetup );
+			long w = size.dimension( 0 );
+			long h = size.dimension( 1 );
 
 			final float[][] p = new float[][]{
 					{ 0, 0, 0 },
-					{ referenceTileSetup.getWidth(), 0, 0 },
-					{ 0, referenceTileSetup.getHeight(), 0 },
-					{ referenceTileSetup.getWidth(), referenceTileSetup.getHeight(), 0 } };
+					{ w, 0, 0 },
+					{ 0, h, 0 },
+					{ w, h, 0 } };
 
 			// original coordinates == pa
 			final float[][] pa = new float[ 4 ][ 3 ];

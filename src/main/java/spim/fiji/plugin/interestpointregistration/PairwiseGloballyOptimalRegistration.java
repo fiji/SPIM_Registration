@@ -11,7 +11,6 @@ import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
-import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.interestpointregistration.ChannelInterestPointListPair;
@@ -87,8 +86,8 @@ public abstract class PairwiseGloballyOptimalRegistration< T extends Callable< C
 			for ( final ChannelInterestPointListPair pair : pairs )
 			{
 				// just for logging the names and results of pairwise comparison
-				final ViewDescription< TimePoint, ViewSetup > viewA = spimData.getSequenceDescription().getViewDescription( pair.getViewIdA() );
-		    	final ViewDescription< TimePoint, ViewSetup > viewB = spimData.getSequenceDescription().getViewDescription( pair.getViewIdB() );
+				final ViewDescription viewA = spimData.getSequenceDescription().getViewDescription( pair.getViewIdA() );
+		    	final ViewDescription viewB = spimData.getSequenceDescription().getViewDescription( pair.getViewIdB() );
 		    	
 				final String description = "[TP=" + viewA.getTimePoint().getName() + 
 		    			" angle=" + viewA.getViewSetup().getAngle().getName() + ", ch=" + viewA.getViewSetup().getChannel().getName() +

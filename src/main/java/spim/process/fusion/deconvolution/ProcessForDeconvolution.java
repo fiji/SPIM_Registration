@@ -1,5 +1,7 @@
 package spim.process.fusion.deconvolution;
 
+import static spim.fiji.spimdata.ViewSetupUtils.getSizeOrDefault;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
@@ -17,7 +19,6 @@ import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
-import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.FinalInterval;
@@ -60,7 +61,7 @@ public class ProcessForDeconvolution
 	
 	int minOverlappingViews;
 	double avgOverlappingViews;
-	ArrayList< ViewDescription< TimePoint, ViewSetup > > viewDescriptions;
+	ArrayList< ViewDescription > viewDescriptions;
 	ArrayList< Img< FloatType > > imgs, weights;
 	ExtractPSF< FloatType > ePSF;
 	
@@ -83,7 +84,7 @@ public class ProcessForDeconvolution
 	public ExtractPSF< FloatType > getExtractPSF() { return ePSF; }
 	public ArrayList< Img< FloatType > > getTransformedImgs() { return imgs; }
 	public ArrayList< Img< FloatType > > getTransformedWeights() { return weights; }
-	public ArrayList< ViewDescription< TimePoint, ViewSetup > > getViewDescriptions() { return viewDescriptions; }
+	public ArrayList< ViewDescription > getViewDescriptions() { return viewDescriptions; }
 	public int getMinOverlappingViews() { return minOverlappingViews; }
 	public double getAvgOverlappingViews() { return avgOverlappingViews; }
 
@@ -155,7 +156,7 @@ public class ProcessForDeconvolution
 				return false;
 			}
 	
-			final ViewDescription< TimePoint, ViewSetup > inputData = viewDescriptions.get( i );
+			final ViewDescription inputData = viewDescriptions.get( i );
 			
 			// same as in the paralell fusion now more or less
 			final RandomAccessibleInterval< FloatType > img;
@@ -175,12 +176,7 @@ public class ProcessForDeconvolution
 			for ( final ImagePortion portion : portions )
 				if ( weightsOnly )
 				{
-					final Interval imgInterval = new FinalInterval(
-							new long[]{ 0, 0, 0 },
-							new long[]{ 
-									inputData.getViewSetup().getWidth() - 1,
-									inputData.getViewSetup().getHeight() - 1,
-									inputData.getViewSetup().getDepth() - 1 } );
+					final Interval imgInterval = new FinalInterval( getSizeOrDefault( inputData.getViewSetup() ) );
 					
 					tasks.add( new ProcessForOverlapOnlyPortion(
 							portion,
@@ -259,7 +255,7 @@ public class ProcessForDeconvolution
 	
 	private ExtractPSF<FloatType> loadPSFs(
 			final Channel ch,
-			final ArrayList< ViewDescription< TimePoint, ViewSetup > > allInputData,
+			final ArrayList< ViewDescription > allInputData,
 			final HashMap< Channel, ArrayList< String > > psfFiles,
 			final boolean transformLoadedPSFs )
 	{
@@ -269,7 +265,7 @@ public class ProcessForDeconvolution
 		{
 			models = new ArrayList< AffineTransform3D >();
 		
-			for ( final ViewDescription< TimePoint, ViewSetup > viewDesc  : allInputData )
+			for ( final ViewDescription viewDesc  : allInputData )
 				models.add( spimData.getViewRegistrations().getViewRegistration( viewDesc ).getModel() );
 		}
 		else
@@ -293,7 +289,7 @@ public class ProcessForDeconvolution
 		return otherChannelPSF.getExtractPSFInstance();
 	}
 
-	protected ArrayList< float[] > getLocationsOfCorrespondingBeads( final TimePoint tp, final ViewDescription< TimePoint, ViewSetup > inputData, final String label )
+	protected ArrayList< float[] > getLocationsOfCorrespondingBeads( final TimePoint tp, final ViewDescription inputData, final String label )
 	{
 		final InterestPointList iplist = spimData.getViewInterestPoints().getViewInterestPointLists( inputData ).getInterestPointList( label );
 		
@@ -464,7 +460,7 @@ public class ProcessForDeconvolution
 				this.avgOverlappingViews += minAvg[ 1 ];
 			}
 			
-			this.avgOverlappingViews /= (double)futures.size();
+			this.avgOverlappingViews /= futures.size();
 		}
 		catch ( final Exception e )
 		{
@@ -478,7 +474,7 @@ public class ProcessForDeconvolution
 		return true;
 	}
 
-	protected Blending getBlending( final Interval interval, final int[] blendingBorder, final int[] blendingRange, final ViewDescription< TimePoint, ViewSetup > desc )
+	protected Blending getBlending( final Interval interval, final int[] blendingBorder, final int[] blendingRange, final ViewDescription desc )
 	{		
 		final float[] blending = new float[ 3 ];
 		final float[] border = new float[ 3 ];
@@ -495,7 +491,7 @@ public class ProcessForDeconvolution
 	}
 
 	@SuppressWarnings("unchecked")
-	protected static < T extends RealType< T > > RandomAccessibleInterval< T > getImage( final T type, final SpimData2 spimData, final ViewDescription<TimePoint, ViewSetup> view, final boolean normalize )
+	protected static < T extends RealType< T > > RandomAccessibleInterval< T > getImage( final T type, final SpimData2 spimData, final ViewDescription view, final boolean normalize )
 	{
 		if ( type instanceof FloatType )
 			return (RandomAccessibleInterval< T >)(Object)spimData.getSequenceDescription().getImgLoader().getImage( view, normalize );

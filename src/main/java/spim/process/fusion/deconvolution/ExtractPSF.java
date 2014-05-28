@@ -10,9 +10,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
-import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
@@ -33,13 +31,13 @@ public class ExtractPSF< T extends RealType< T > >
 	final ImgFactory< T > psfFactory;
 	
 	final ArrayList< Img< T > > pointSpreadFunctions, originalPSFs;
-	final ArrayList< ViewDescription< TimePoint, ViewSetup > > viewDescriptions;
+	final ArrayList< ViewDescription > viewDescriptions;
 	
 	public ExtractPSF( final ImgFactory< T > psfFactory )
 	{		
 		this.pointSpreadFunctions = new ArrayList< Img< T > >();
 		this.originalPSFs = new ArrayList< Img< T > >();
-		this.viewDescriptions = new ArrayList< ViewDescription< TimePoint, ViewSetup > >();
+		this.viewDescriptions = new ArrayList< ViewDescription >();
 		
 		this.psfFactory = psfFactory;
 	}
@@ -57,7 +55,7 @@ public class ExtractPSF< T extends RealType< T > >
 	/**
 	 * @return - the viewdescriptions corresponding to the PSFs
 	 */
-	public ArrayList< ViewDescription< TimePoint, ViewSetup > > getViewDescriptionsForPSFs() { return viewDescriptions; }
+	public ArrayList< ViewDescription > getViewDescriptionsForPSFs() { return viewDescriptions; }
 	
 	/**
 	 * Get projection along the smallest dimension (which is usually the rotation axis)
@@ -215,7 +213,7 @@ public class ExtractPSF< T extends RealType< T > >
 	 */
 	public void extractNextImg(
 			final RandomAccessibleInterval< T > img,
-			final ViewDescription< TimePoint, ViewSetup > viewDescription,
+			final ViewDescription viewDescription,
 			final AffineTransform3D model,
 			final ArrayList< float[] > locations,
 			final long[] psfSize )
@@ -453,7 +451,7 @@ public class ExtractPSF< T extends RealType< T > >
 	 */
 	public static < T extends RealType< T > > ExtractPSF< T > loadAndTransformPSFs(
 			final ArrayList< File > filenames,
-			final ArrayList< ViewDescription< TimePoint, ViewSetup > > viewDescriptions,
+			final ArrayList< ViewDescription > viewDescriptions,
 			final ImgFactory< T > factory,
 			final T type,
 			final ArrayList< AffineTransform3D > models )

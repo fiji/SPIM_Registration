@@ -39,14 +39,14 @@ public class FusionHelper
 			return false;
 	}
 
-	public static final ArrayList< ViewDescription< TimePoint, ViewSetup > > assembleInputData(
+	public static final ArrayList< ViewDescription > assembleInputData(
 			final SpimData2 spimData,
 			final TimePoint timepoint,
 			final Channel channel,
 			final ArrayList< Angle > anglesToProcess,
 			final ArrayList< Illumination > illumsToProcess )
 	{
-		final ArrayList< ViewDescription< TimePoint, ViewSetup > > inputData = new ArrayList< ViewDescription< TimePoint, ViewSetup > >();
+		final ArrayList< ViewDescription > inputData = new ArrayList< ViewDescription >();
 		
 		for ( final Illumination i : illumsToProcess )
 			for ( final Angle a : anglesToProcess )
@@ -54,7 +54,7 @@ public class FusionHelper
 				// bureaucracy
 				final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), timepoint, channel, a, i );
 				
-				final ViewDescription< TimePoint, ViewSetup > viewDescription = spimData.getSequenceDescription().getViewDescription( 
+				final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
 						viewId.getTimePointId(), viewId.getViewSetupId() );
 
 				if ( !viewDescription.isPresent() )

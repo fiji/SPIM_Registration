@@ -20,7 +20,6 @@ import spim.fiji.datasetmanager.MultiViewDatasetDefinition;
 import spim.fiji.datasetmanager.StackListImageJ;
 import spim.fiji.datasetmanager.StackListLOCI;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.XmlIo;
 import spim.fiji.spimdata.XmlIoSpimData2;
 
 public class Define_Multi_View_Dataset implements PlugIn
@@ -104,7 +103,7 @@ public class Define_Multi_View_Dataset implements PlugIn
 		else
 		{
 			//final XmlIoSpimData< TimePoint, ViewSetupBeads > io = XmlIoSpimData.createDefault();
-			final XmlIoSpimData2 io = XmlIo.createDefaultIo();
+			final XmlIoSpimData2 io = new XmlIoSpimData2();
 			
 			final String xml = new File( spimData.getBasePath(), xmlFileName ).getAbsolutePath();
 			try 

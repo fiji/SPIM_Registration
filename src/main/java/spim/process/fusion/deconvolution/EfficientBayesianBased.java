@@ -18,7 +18,6 @@ import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.postprocessing.deconvolution2.BayesMVDeconvolution;
 import mpicbg.spim.postprocessing.deconvolution2.CUDAConvolution;
@@ -258,8 +257,10 @@ public class EfficientBayesianBased extends Fusion
 	@Override
 	public void registerAdditionalListeners( final ManageListeners m )
 	{
-		block.addItemListener( new ItemListener() { public void itemStateChanged(ItemEvent e) { m.update(); } });
-		gpu.addItemListener( new ItemListener() { public void itemStateChanged(ItemEvent e) { m.update(); } });
+		block.addItemListener( new ItemListener() { @Override
+		public void itemStateChanged(ItemEvent e) { m.update(); } });
+		gpu.addItemListener( new ItemListener() { @Override
+		public void itemStateChanged(ItemEvent e) { m.update(); } });
 	}
 
 	@Override
@@ -1194,7 +1195,7 @@ public class EfficientBayesianBased extends Fusion
 					for ( final Angle a : anglesToProcess )
 					{
 						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
-						final ViewDescription<TimePoint, ViewSetup> desc = spimData.getSequenceDescription().getViewDescription( viewId ); 
+						final ViewDescription desc = spimData.getSequenceDescription().getViewDescription( viewId ); 
 						
 						if ( desc.isPresent() )
 						{

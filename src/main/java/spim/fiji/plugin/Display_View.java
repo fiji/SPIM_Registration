@@ -4,6 +4,7 @@ import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
@@ -11,7 +12,6 @@ import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
 import spim.fiji.plugin.fusion.BoundingBox;
@@ -45,17 +45,17 @@ public class Display_View implements PlugIn
 		for ( int i = 0; i < timepointNames.length; ++i )
 			timepointNames[ i ] = result.getTimePointsToProcess().get( i ).getName();
 		
-		final ArrayList< Angle > angles = result.getData().getSequenceDescription().getAllAngles();
+		final List< Angle > angles = result.getData().getSequenceDescription().getAllAnglesOrdered();
 		final String[] angleNames = new String[ angles.size() ];
 		for ( int i = 0; i < angles.size(); ++i )
 			angleNames[ i ] = angles.get( i ).getName();
 
-		final ArrayList< Channel > channels = result.getData().getSequenceDescription().getAllChannels();
+		final List< Channel > channels = result.getData().getSequenceDescription().getAllChannelsOrdered();
 		final String[] channelNames = new String[ channels.size() ];
 		for ( int i = 0; i < channels.size(); ++i )
 			channelNames[ i ] = channels.get( i ).getName();
 
-		final ArrayList< Illumination > illuminations = result.getData().getSequenceDescription().getAllIlluminations();
+		final List< Illumination > illuminations = result.getData().getSequenceDescription().getAllIlluminationsOrdered();
 		final String[] illuminationNames = new String[ illuminations.size() ];
 		for ( int i = 0; i < illuminations.size(); ++i )
 			illuminationNames[ i ] = illuminations.get( i ).getName();
@@ -92,7 +92,7 @@ public class Display_View implements PlugIn
 		}
 		
 		// get the viewdescription
-		final ViewDescription< TimePoint, ViewSetup > viewDescription = result.getData().getSequenceDescription().getViewDescription( 
+		final ViewDescription viewDescription = result.getData().getSequenceDescription().getViewDescription( 
 				viewId.getTimePointId(), viewId.getViewSetupId() );
 
 		// check if this viewid is present in the current timepoint

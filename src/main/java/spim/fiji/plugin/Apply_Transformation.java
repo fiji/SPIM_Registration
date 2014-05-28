@@ -21,12 +21,13 @@ import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.data.sequence.ViewSetup;
+import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.util.Util;
 import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.ViewSetupUtils;
 
 public class Apply_Transformation implements PlugIn
 {
@@ -475,7 +476,7 @@ public class Apply_Transformation implements PlugIn
 									{
 										final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
 										
-										final ViewDescription< TimePoint, ViewSetup > viewDescription = spimData.getSequenceDescription().getViewDescription( 
+										final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
 												viewId.getTimePointId(), viewId.getViewSetupId() );
 
 										if ( !viewDescription.isPresent() )
@@ -649,12 +650,13 @@ public class Apply_Transformation implements PlugIn
 		final ViewRegistrations viewRegistrations = spimData.getViewRegistrations();
 		final ViewRegistration r = viewRegistrations.getViewRegistration( viewId );
 		
-		final ViewDescription< TimePoint, ViewSetup > viewDescription = spimData.getSequenceDescription().getViewDescription( 
+		final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
 				viewId.getTimePointId(), viewId.getViewSetupId() );
 
-		final double calX = viewDescription.getViewSetup().getPixelWidth() / minResolution;
-		final double calY = viewDescription.getViewSetup().getPixelHeight() / minResolution;
-		final double calZ = viewDescription.getViewSetup().getPixelDepth() / minResolution;
+		VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSizeOrDefault( viewDescription.getViewSetup() );
+		final double calX = voxelSize.dimension( 0 ) / minResolution;
+		final double calY = voxelSize.dimension( 1 ) / minResolution;
+		final double calZ = voxelSize.dimension( 2 ) / minResolution;
 		
 		final AffineTransform3D m = new AffineTransform3D();
 		m.set( calX, 0.0f, 0.0f, 0.0f, 
@@ -701,7 +703,7 @@ public class Apply_Transformation implements PlugIn
 							return Double.NaN;
 						}
 						
-						final ViewDescription< TimePoint, ViewSetup > viewDescription = spimData.getSequenceDescription().getViewDescription( 
+						final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
 								viewId.getTimePointId(), viewId.getViewSetupId() );
 
 						if ( !viewDescription.isPresent() )
@@ -709,7 +711,7 @@ public class Apply_Transformation implements PlugIn
 						
 						// load metadata to update the registrations if required
 						// only use calibration as defined in the metadata
-						if ( !calibrationAvailable( viewDescription.getViewSetup() ) )
+						if ( !viewDescription.getViewSetup().hasVoxelSize() )
 						{
 							if ( !spimData.getSequenceDescription().getImgLoader().loadMetaData( viewDescription ) )
 							{
@@ -722,7 +724,7 @@ public class Apply_Transformation implements PlugIn
 							}						
 						}
 
-						if ( !calibrationAvailable( viewDescription.getViewSetup() ) )
+						if ( !viewDescription.getViewSetup().hasVoxelSize() )
 						{
 							IOFunctions.println( "An error occured. No calibration available for timepoint: " + t.getName() + " angle: " + 
 									a.getName() + " channel: " + c.getName() + " illum: " + i.getName() );
@@ -734,9 +736,10 @@ public class Apply_Transformation implements PlugIn
 							return Double.NaN;
 						}
 						
-						final double calX = viewDescription.getViewSetup().getPixelWidth();
-						final double calY = viewDescription.getViewSetup().getPixelHeight();
-						final double calZ = viewDescription.getViewSetup().getPixelDepth();
+						VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSizeOrDefault( viewDescription.getViewSetup() );
+						final double calX = voxelSize.dimension( 0 );
+						final double calY = voxelSize.dimension( 1 );
+						final double calZ = voxelSize.dimension( 2 );
 						
 						minResolution = Math.min( minResolution, calX );
 						minResolution = Math.min( minResolution, calY );
@@ -745,14 +748,6 @@ public class Apply_Transformation implements PlugIn
 		
 		return minResolution;
 	}
-
-	public static boolean calibrationAvailable( final ViewSetup viewSetup )
-	{
-		if ( viewSetup.getPixelWidth() <= 0 || viewSetup.getPixelHeight() <= 0 || viewSetup.getPixelDepth() <= 0 )
-			return false;
-		else
-			return true;
-	}	
 
 	/**
 	 * @param args

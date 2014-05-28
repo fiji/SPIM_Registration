@@ -15,7 +15,6 @@ import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
 import spim.fiji.plugin.interestpointdetection.DifferenceOf;
@@ -23,7 +22,6 @@ import spim.fiji.plugin.interestpointdetection.DifferenceOfGaussian;
 import spim.fiji.plugin.interestpointdetection.DifferenceOfMean;
 import spim.fiji.plugin.interestpointdetection.InterestPointDetection;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.XmlIo;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
@@ -157,11 +155,11 @@ public class Interest_Point_Detection implements PlugIn
 			
 			// save the file and the path in the XML
 			final SpimData2 data = result.getData();
-			final SequenceDescription< TimePoint, ViewSetup > seqDesc = data.getSequenceDescription();
+			final SequenceDescription seqDesc = data.getSequenceDescription();
 			
 			for ( final ViewId viewId : points.keySet() )
 			{
-				final ViewDescription< TimePoint, ViewSetup > viewDesc = seqDesc.getViewDescription( viewId.getTimePointId(), viewId.getViewSetupId() );
+				final ViewDescription viewDesc = seqDesc.getViewDescription( viewId.getTimePointId(), viewId.getViewSetupId() );
 				final int channelId = viewDesc.getViewSetup().getChannel().getId();		
 				
 				final InterestPointList list = new InterestPointList(
@@ -182,7 +180,7 @@ public class Interest_Point_Detection implements PlugIn
 			}
 			
 			// save the xml
-			final XmlIoSpimData2 io = XmlIo.createDefaultIo();
+			final XmlIoSpimData2 io = new XmlIoSpimData2();
 			
 			final String xml = new File( data.getBasePath(), new File( result.getXMLFileName() ).getName() ).getAbsolutePath();
 			try 

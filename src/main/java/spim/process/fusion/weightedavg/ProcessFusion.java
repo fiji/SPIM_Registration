@@ -8,6 +8,8 @@ import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewSetup;
+import mpicbg.spim.data.sequence.VoxelDimensions;
+import net.imglib2.Dimensions;
 import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccessible;
@@ -22,6 +24,7 @@ import net.imglib2.type.numeric.complex.ComplexFloatType;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.ViewSetupUtils;
 import spim.process.fusion.weights.Blending;
 import spim.process.fusion.weights.ContentBased;
 
@@ -64,43 +67,41 @@ public abstract class ProcessFusion
 			final TimePoint timepoint, 
 			final Channel channel );
 
-	protected Blending getBlending( final Interval interval, final ViewDescription< TimePoint, ViewSetup > desc )
+	protected Blending getBlending( final Interval interval, final ViewDescription desc )
 	{
 		final float[] blending = ProcessFusion.defaultBlendingRange.clone();
 		final float[] border = ProcessFusion.defaultBlendingBorder.clone();
 		
 		final float minRes = (float)getMinRes( desc.getViewSetup() );
-		
+		final VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSizeOrDefault( desc.getViewSetup() );
+
 		if ( ProcessFusion.defaultAdjustBlendingForAnisotropy )
 		{
-			blending[ 0 ] /= (float)desc.getViewSetup().getPixelWidth() / minRes;
-			blending[ 1 ] /= (float)desc.getViewSetup().getPixelHeight() / minRes;
-			blending[ 2 ] /= (float)desc.getViewSetup().getPixelDepth() / minRes;
-
-			border[ 0 ] /= (float)desc.getViewSetup().getPixelWidth() / minRes;
-			border[ 1 ] /= (float)desc.getViewSetup().getPixelHeight() / minRes;
-			border[ 2 ] /= (float)desc.getViewSetup().getPixelDepth() / minRes;
+			for ( int d = 0; d < 2; ++d )
+			{
+				blending[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
+				border[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
+			}
 		}
 		
 		return new Blending( interval, border, blending );
 	}
 	
-	protected < T extends RealType< T > > ContentBased< T > getContentBased( final RandomAccessibleInterval< T > img, final ViewDescription< TimePoint, ViewSetup > desc )
+	protected < T extends RealType< T > > ContentBased< T > getContentBased( final RandomAccessibleInterval< T > img, final ViewDescription desc )
 	{
 		final double[] sigma1 = ProcessFusion.defaultContentBasedSigma1.clone();
 		final double[] sigma2 = ProcessFusion.defaultContentBasedSigma2.clone();
 
 		final double minRes = getMinRes( desc.getViewSetup() );
+		final VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSizeOrDefault( desc.getViewSetup() );
 
 		if ( ProcessFusion.defaultAdjustContentBasedSigmaForAnisotropy )
 		{
-			sigma1[ 0 ] /= desc.getViewSetup().getPixelWidth() / minRes;
-			sigma1[ 1 ] /= desc.getViewSetup().getPixelHeight() / minRes;
-			sigma1[ 2 ] /= desc.getViewSetup().getPixelDepth() / minRes;
-
-			sigma2[ 0 ] /= desc.getViewSetup().getPixelWidth() / minRes;
-			sigma2[ 1 ] /= desc.getViewSetup().getPixelHeight() / minRes;
-			sigma2[ 2 ] /= desc.getViewSetup().getPixelDepth() / minRes;
+			for ( int d = 0; d < 2; ++d )
+			{
+				sigma1[ d ] /= voxelSize.dimension( d ) / minRes;
+				sigma2[ d ] /= voxelSize.dimension( d ) / minRes;
+			}
 		}
 
 		return new ContentBased<T>( img, bb.getImgFactory( new ComplexFloatType() ), sigma1, sigma2);
@@ -108,7 +109,7 @@ public abstract class ProcessFusion
 	
 	protected < T extends RealType< T > > ArrayList< RealRandomAccessible< FloatType > > getAllWeights(
 			final RandomAccessibleInterval< T > img,
-			final ViewDescription< TimePoint, ViewSetup > desc )
+			final ViewDescription desc )
 	{
 		final ArrayList< RealRandomAccessible< FloatType > > weigheners = new ArrayList< RealRandomAccessible< FloatType > >();
 		
@@ -123,15 +124,16 @@ public abstract class ProcessFusion
 
 	public static double getMinRes( final ViewSetup setup )
 	{
-		return Math.min( setup.getPixelWidth(), Math.min( setup.getPixelHeight(), setup.getPixelDepth() ) );
+		final Dimensions size = ViewSetupUtils.getSizeOrDefault( setup );
+		return Math.min( size.dimension( 0 ), Math.min( size.dimension( 1 ), size.dimension( 2 ) ) );
 	}
 
-	protected AffineTransform3D getTransform( final ViewDescription< TimePoint, ViewSetup > inputData )
+	protected AffineTransform3D getTransform( final ViewDescription inputData )
 	{
 		return spimData.getViewRegistrations().getViewRegistration( inputData ).getModel();
 	}
 
-	protected AffineTransform3D[] getTransforms( final ArrayList< ViewDescription< TimePoint, ViewSetup > > inputData )
+	protected AffineTransform3D[] getTransforms( final ArrayList< ViewDescription > inputData )
 	{
 		final int numViews = inputData.size();
 		final AffineTransform3D[] transforms = new AffineTransform3D[ numViews ];

@@ -17,7 +17,6 @@ import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.segmentation.InteractiveDoG;
 import net.imglib2.RandomAccessibleInterval;
@@ -93,7 +92,7 @@ public class DifferenceOfGaussian extends DifferenceOf
 							continue;
 						}
 						
-						final ViewDescription< TimePoint, ViewSetup > viewDescription = spimData.getSequenceDescription().getViewDescription( 
+						final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
 								viewId.getTimePointId(), viewId.getViewSetupId() );
 
 						if ( !viewDescription.isPresent() )
@@ -194,7 +193,7 @@ public class DifferenceOfGaussian extends DifferenceOf
 		if ( view == null )
 			return false;
 		
-		final ViewDescription<TimePoint, ViewSetup > viewDescription = spimData.getSequenceDescription().getViewDescription( view.getTimePointId(), view.getViewSetupId() );
+		final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( view.getTimePointId(), view.getViewSetupId() );
 		
 		if ( !viewDescription.isPresent() )
 		{

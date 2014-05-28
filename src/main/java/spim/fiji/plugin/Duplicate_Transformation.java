@@ -15,7 +15,6 @@ import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
 import spim.fiji.spimdata.SpimData2;
@@ -204,10 +203,10 @@ public class Duplicate_Transformation implements PlugIn
 								final ViewId sourceViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), source, c, a, i );
 								final ViewId targetViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), targets.get( j ), c, a, i );
 								
-								final ViewDescription< TimePoint, ViewSetup > sourceViewDescription = result.getData().getSequenceDescription().getViewDescription( 
+								final ViewDescription sourceViewDescription = result.getData().getSequenceDescription().getViewDescription( 
 										sourceViewId.getTimePointId(), sourceViewId.getViewSetupId() );
 
-								final ViewDescription< TimePoint, ViewSetup > targetViewDescription = result.getData().getSequenceDescription().getViewDescription( 
+								final ViewDescription targetViewDescription = result.getData().getSequenceDescription().getViewDescription( 
 										targetViewId.getTimePointId(), targetViewId.getViewSetupId() );
 
 								IOFunctions.println( "Source viewId t=" + source.getName() + ", ch=" + c.getName() + ", ill=" + i.getName() + ", angle=" + a.getName() );  
@@ -331,10 +330,10 @@ public class Duplicate_Transformation implements PlugIn
 								final ViewId sourceViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, source, a, i );
 								final ViewId targetViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, targets.get( j ), a, i );
 								
-								final ViewDescription< TimePoint, ViewSetup > sourceViewDescription = result.getData().getSequenceDescription().getViewDescription( 
+								final ViewDescription sourceViewDescription = result.getData().getSequenceDescription().getViewDescription( 
 										sourceViewId.getTimePointId(), sourceViewId.getViewSetupId() );
 
-								final ViewDescription< TimePoint, ViewSetup > targetViewDescription = result.getData().getSequenceDescription().getViewDescription( 
+								final ViewDescription targetViewDescription = result.getData().getSequenceDescription().getViewDescription( 
 										targetViewId.getTimePointId(), targetViewId.getViewSetupId() );
 
 								IOFunctions.println( "Source viewId t=" + t.getName() + ", ch=" + source.getName() + ", ill=" + i.getName() + ", angle=" + a.getName() );  
@@ -458,10 +457,10 @@ public class Duplicate_Transformation implements PlugIn
 								final ViewId sourceViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c, a, source );
 								final ViewId targetViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c, a, targets.get( j ) );
 								
-								final ViewDescription< TimePoint, ViewSetup > sourceViewDescription = result.getData().getSequenceDescription().getViewDescription( 
+								final ViewDescription sourceViewDescription = result.getData().getSequenceDescription().getViewDescription( 
 										sourceViewId.getTimePointId(), sourceViewId.getViewSetupId() );
 
-								final ViewDescription< TimePoint, ViewSetup > targetViewDescription = result.getData().getSequenceDescription().getViewDescription( 
+								final ViewDescription targetViewDescription = result.getData().getSequenceDescription().getViewDescription( 
 										targetViewId.getTimePointId(), targetViewId.getViewSetupId() );
 
 								IOFunctions.println( "Source viewId t=" + t.getName() + ", ch=" + c.getName() + ", ill=" + source.getName() + ", angle=" + a.getName() );  
@@ -585,10 +584,10 @@ public class Duplicate_Transformation implements PlugIn
 								final ViewId sourceViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c, source, i );
 								final ViewId targetViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c, targets.get( j ), i );
 								
-								final ViewDescription< TimePoint, ViewSetup > sourceViewDescription = result.getData().getSequenceDescription().getViewDescription( 
+								final ViewDescription sourceViewDescription = result.getData().getSequenceDescription().getViewDescription( 
 										sourceViewId.getTimePointId(), sourceViewId.getViewSetupId() );
 
-								final ViewDescription< TimePoint, ViewSetup > targetViewDescription = result.getData().getSequenceDescription().getViewDescription( 
+								final ViewDescription targetViewDescription = result.getData().getSequenceDescription().getViewDescription( 
 										targetViewId.getTimePointId(), targetViewId.getViewSetupId() );
 
 								IOFunctions.println( "Source viewId t=" + t.getName() + ", ch=" + c.getName() + ", ill=" + i.getName() + ", angle=" + source.getName() );  

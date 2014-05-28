@@ -8,11 +8,11 @@ import java.awt.Label;
 import java.awt.TextField;
 import java.awt.event.TextEvent;
 import java.awt.event.TextListener;
-import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
+import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
@@ -20,11 +20,7 @@ import mpicbg.spim.data.sequence.IntegerPattern;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.io.IOFunctions;
-
-import org.jdom2.JDOMException;
-
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.XmlIo;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import fiji.util.gui.GenericDialogPlus;
 
@@ -374,12 +370,12 @@ public class LoadParseQueryXML
 	}
 	
 	public boolean queryDetails( final XMLParseResult xmlResult )
-	{	
-		final List< TimePoint > tpList = xmlResult.data.getSequenceDescription().getTimePoints().getTimePointList();
-		final List< Angle > angleList = xmlResult.data.getSequenceDescription().getAllAngles();
-		final List< Channel > channelList = xmlResult.data.getSequenceDescription().getAllChannels();
-		final List< Illumination > illumList = xmlResult.data.getSequenceDescription().getAllIlluminations();
-		
+	{
+		final List< TimePoint > tpList = xmlResult.data.getSequenceDescription().getTimePoints().getTimePointsOrdered();
+		final List< Angle > angleList = xmlResult.data.getSequenceDescription().getAllAnglesOrdered();
+		final List< Channel > channelList = xmlResult.data.getSequenceDescription().getAllChannelsOrdered();
+		final List< Illumination > illumList = xmlResult.data.getSequenceDescription().getAllIlluminationsOrdered();
+
 		xmlResult.timepoints = new ArrayList< TimePoint >();
 		xmlResult.angles = new ArrayList< Angle >();
 		xmlResult.channels = new ArrayList< Channel >();
@@ -682,14 +678,14 @@ public class LoadParseQueryXML
 				
 				int countMissingViews = 0;
 				
-				for ( final ViewDescription<?, ?> v : xml.data.getSequenceDescription().getViewDescriptions().values() )
+				for ( final ViewDescription v : xml.data.getSequenceDescription().getViewDescriptions().values() )
 					if ( !v.isPresent() )
 						++countMissingViews;
 				
 				final int angles = xml.data.getSequenceDescription().getAllAngles().size();
 				final int channels = xml.data.getSequenceDescription().getAllChannels().size();
 				final int illums = xml.data.getSequenceDescription().getAllIlluminations().size();
-				final int timepoints = xml.data.getSequenceDescription().numTimePoints();
+				final int timepoints = xml.data.getSequenceDescription().getTimePoints().size();
 				
 				xml.message1 = goodMsg1;
 				xml.message2 = angles + " angles, " + channels + " channels, " + illums + " illumination directions, " + timepoints + " timepoints, " + countMissingViews + " missing views";
@@ -714,9 +710,9 @@ public class LoadParseQueryXML
 		return xml;
 	}
 
-	public SpimData2 parseXML( final String xmlFilename ) throws JDOMException, IOException, InstantiationException, IllegalAccessException, ClassNotFoundException
+	public SpimData2 parseXML( final String xmlFilename ) throws SpimDataException
 	{
-		final XmlIoSpimData2 io = XmlIo.createDefaultIo();
+		final XmlIoSpimData2 io = new XmlIoSpimData2();
 		return io.load( xmlFilename );
 	}
 	

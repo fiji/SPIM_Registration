@@ -3,6 +3,7 @@ package spim.fiji.plugin.interestpointdetection;
 import ij.gui.GenericDialog;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
@@ -61,7 +62,7 @@ public abstract class DifferenceOf extends InterestPointDetection
 	@Override
 	public boolean queryParameters( final boolean defineAnisotropy, final boolean additionalSmoothing )
 	{		
-		final ArrayList< Channel > channels = spimData.getSequenceDescription().getAllChannels();
+		final List< Channel > channels = spimData.getSequenceDescription().getAllChannelsOrdered();
 
 		// tell the implementing classes the total number of channels
 		init( channels.size() );
@@ -193,12 +194,12 @@ public abstract class DifferenceOf extends InterestPointDetection
 		for ( int i = 0; i < timepointNames.length; ++i )
 			timepointNames[ i ] = timepointsToProcess.get( i ).getName();
 		
-		final ArrayList< Angle > angles = spimData.getSequenceDescription().getAllAngles();
+		final List< Angle > angles = spimData.getSequenceDescription().getAllAnglesOrdered();
 		final String[] angleNames = new String[ angles.size() ];
 		for ( int i = 0; i < angles.size(); ++i )
 			angleNames[ i ] = angles.get( i ).getName();
 		
-		final ArrayList< Illumination > illuminations = spimData.getSequenceDescription().getAllIlluminations();
+		final List< Illumination > illuminations = spimData.getSequenceDescription().getAllIlluminationsOrdered();
 		final String[] illuminationNames = new String[ illuminations.size() ];
 		for ( int i = 0; i < illuminations.size(); ++i )
 			illuminationNames[ i ] = illuminations.get( i ).getName();

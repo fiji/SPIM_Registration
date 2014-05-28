@@ -11,7 +11,6 @@ import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.data.sequence.ViewSetup;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.interestpointregistration.ChannelInterestPointList;
 import spim.process.interestpointregistration.ChannelInterestPointListPair;
@@ -70,7 +69,7 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 								a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
 					}
 
-					final ViewDescription< TimePoint, ViewSetup > viewDescription = spimData.getSequenceDescription().getViewDescription( 
+					final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
 							viewId.getTimePointId(), viewId.getViewSetupId() );
 	
 					if ( !viewDescription.isPresent() )

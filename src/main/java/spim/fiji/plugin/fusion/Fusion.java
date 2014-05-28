@@ -11,7 +11,9 @@ import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
+import net.imglib2.util.Intervals;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.ViewSetupUtils;
 import spim.process.fusion.boundingbox.ManualBoundingBox.ManageListeners;
 import spim.process.fusion.export.ImgExport;
 
@@ -163,12 +165,12 @@ public abstract class Fusion
 					for ( final Illumination i : illumsToProcess )
 					{
 						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
-						final ViewDescription<TimePoint, ViewSetup> desc = spimData.getSequenceDescription().getViewDescription( viewId );
+						final ViewDescription desc = spimData.getSequenceDescription().getViewDescription( viewId );
 						
 						if ( desc.isPresent() )
 						{
 							final ViewSetup viewSetup = desc.getViewSetup();
-							final long numPixel = viewSetup.getWidth() * viewSetup.getHeight() * viewSetup.getDepth();
+							final long numPixel = Intervals.numElements( ViewSetupUtils.getSizeOrDefault( viewSetup ) );
 							
 							avgSize += numPixel;
 							++countImgs;
@@ -191,7 +193,7 @@ public abstract class Fusion
 					for ( final Illumination i : illumsToProcess )
 					{
 						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
-						final ViewDescription<TimePoint, ViewSetup> desc = spimData.getSequenceDescription().getViewDescription( viewId );
+						final ViewDescription desc = spimData.getSequenceDescription().getViewDescription( viewId );
 						
 						if ( desc.isPresent() )
 							++views;

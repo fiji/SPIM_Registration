@@ -20,6 +20,7 @@
 	<properties>
 		<!-- Prevent the plugin from being copied to ./plugins/ by default -->
 		<imagej.app.directory>path/to/Fiji.app/</imagej.app.directory>
+		<imglib2.version>2.0.0-SNAPSHOT</imglib2.version>
 	</properties>
 
 	<dependencies>

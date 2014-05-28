@@ -12,7 +12,6 @@ import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 import net.imglib2.realtransform.AffineTransform3D;
@@ -141,7 +140,7 @@ public abstract class GlobalOptimizationType
 				// bureaucracy
 				final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), timepoint, c.getChannel(), a, i );
 				
-				final ViewDescription< TimePoint, ViewSetup > viewDescription = spimData.getSequenceDescription().getViewDescription( 
+				final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
 						viewId.getTimePointId(), viewId.getViewSetupId() );
 
 				if ( !viewDescription.isPresent() )

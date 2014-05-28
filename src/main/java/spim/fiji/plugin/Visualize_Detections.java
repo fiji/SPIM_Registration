@@ -6,6 +6,7 @@ import ij.plugin.PlugIn;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
@@ -13,7 +14,6 @@ import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
@@ -50,7 +50,7 @@ public class Visualize_Detections implements PlugIn
 			return;
 
 		// ask which channels have the objects we are searching for
-		final ArrayList< Channel > channels = result.getData().getSequenceDescription().getAllChannels();
+		final List< Channel > channels = result.getData().getSequenceDescription().getAllChannelsOrdered();
 
 		// build up the dialog
 		final GenericDialog gd = new GenericDialog( "Choose segmentations to display" );
@@ -129,7 +129,7 @@ public class Visualize_Detections implements PlugIn
 						final ViewId viewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c.getChannel(), a, i );
 						
 						// get the viewdescription
-						final ViewDescription< TimePoint, ViewSetup > viewDescription = result.getData().getSequenceDescription().getViewDescription( 
+						final ViewDescription viewDescription = result.getData().getSequenceDescription().getViewDescription( 
 								viewId.getTimePointId(), viewId.getViewSetupId() );
 
 						// check if the view is present
@@ -148,18 +148,14 @@ public class Visualize_Detections implements PlugIn
 						}
 						else
 						{
-							final int w = viewDescription.getViewSetup().getWidth();
-							final int h = viewDescription.getViewSetup().getHeight();
-							final int d = viewDescription.getViewSetup().getDepth();
-							
-							if ( w <= 0 || h <= 0 || d <= 0 )
+							if ( !viewDescription.getViewSetup().hasSize() )
 							{
 								IOFunctions.println( "Cannot load image dimensions from XML for " + name + ", using min/max of all detections instead." );
 								interval = null;
 							}
 							else
 							{
-								interval = new FinalInterval( new long[]{ w, h, d } );
+								interval = new FinalInterval( viewDescription.getViewSetup().getSize() );
 							}
 						}
 						
