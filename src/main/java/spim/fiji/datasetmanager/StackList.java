@@ -1,6 +1,5 @@
 package spim.fiji.datasetmanager;
 
-import static mpicbg.spim.data.sequence.XmlKeys.TIMEPOINTS_PATTERN_STRING;
 import fiji.util.gui.GenericDialogPlus;
 import ij.gui.GenericDialog;
 
@@ -12,12 +11,14 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.IntegerPattern;
@@ -25,9 +26,11 @@ import mpicbg.spim.data.sequence.MissingViews;
 import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.TimePoints;
+import mpicbg.spim.data.sequence.TimePointsPattern;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
+import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
@@ -35,6 +38,7 @@ import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.GUIHelper;
+import spim.fiji.spimdata.NamePattern;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
@@ -152,20 +156,21 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			return null;
 		
 		// assemble timepints, viewsetups, missingviews and the imgloader
-		final TimePoints< TimePoint > timepoints = this.createTimePoints();
+		final TimePoints timepoints = this.createTimePoints();
 		final ArrayList< ViewSetup > setups = this.createViewSetups();
 		final MissingViews missingViews = this.createMissingViews();
 		final ImgLoader imgLoader = createAndInitImgLoader( ".", new File( directory ), imgFactory );
 		
 		// instantiate the sequencedescription
-		final SequenceDescription< TimePoint, ViewSetup > sequenceDescription = new SequenceDescription< TimePoint, ViewSetup >( timepoints, setups, missingViews, imgLoader );
-		
+		final SequenceDescription sequenceDescription = new SequenceDescription( timepoints, setups, imgLoader, missingViews );
+
 		// create the initial view registrations (they are all the identity transform)
 		final ViewRegistrations viewRegistrations = this.createViewRegistrations( sequenceDescription.getViewDescriptions() );
 		
 		// create the initial view interest point object
-		final ViewInterestPoints viewInterestPoints = ViewInterestPoints.createViewInterestPoints( sequenceDescription.getViewDescriptions() );
-		
+		final ViewInterestPoints viewInterestPoints = new ViewInterestPoints();
+		viewInterestPoints.createViewInterestPoints( sequenceDescription.getViewDescriptions() );
+
 		// finally create the SpimData itself based on the sequence description and the view registration
 		final SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints );
 		
@@ -178,11 +183,11 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	 * @param viewDescriptionList
 	 * @return
 	 */
-	protected ViewRegistrations createViewRegistrations( final HashMap< ViewId, ViewDescription< TimePoint, ViewSetup > > viewDescriptionList )
+	protected ViewRegistrations createViewRegistrations( final Map< ViewId, ViewDescription > viewDescriptionList )
 	{
 		final HashMap< ViewId, ViewRegistration > viewRegistrationList = new HashMap< ViewId, ViewRegistration >();
 		
-		for ( final ViewDescription< TimePoint, ViewSetup > viewDescription : viewDescriptionList.values() )
+		for ( final ViewDescription viewDescription : viewDescriptionList.values() )
 			if ( viewDescription.isPresent() )
 			{
 				final ViewRegistration viewRegistration = new ViewRegistration( viewDescription.getTimePointId(), viewDescription.getViewSetupId() ); 
@@ -233,56 +238,55 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		
 		return new MissingViews( missingViews );
 	}
-	
+
 	/**
 	 * Creates the List of {@link ViewSetup} for the {@link SpimData} object.
 	 * The {@link ViewSetup} are defined independent of the {@link TimePoint},
 	 * each {@link TimePoint} should have the same {@link ViewSetup}s. The {@link MissingViews}
 	 * class defines if some of them are missing for some of the {@link TimePoint}s
-	 * 
+	 *
 	 * @return
 	 */
 	protected ArrayList< ViewSetup > createViewSetups()
 	{
-		final ArrayList< ViewSetup > viewSetups = new ArrayList< ViewSetup >();
-		
+		final VoxelDimensions voxelSize = ( calibation < 2 ) ? new FinalVoxelDimensions( calUnit, calX, calY, calZ ) : null;
+
+		final ArrayList< Channel > channels = new ArrayList< Channel >();
 		for ( int c = 0; c < channelNameList.size(); ++c )
-			for ( int i = 0; i < illuminationsNameList.size(); ++i )
-				for ( int a = 0; a < angleNameList.size(); ++a )
-				{
-					final Channel channel = new Channel( c, channelNameList.get( c ) );
-					final Illumination illumination = new Illumination( i, illuminationsNameList.get( i ) );
-					final Angle angle = new Angle( a, angleNameList.get( a ) );
-					
-					if ( calibation < 2 )
-						viewSetups.add( new ViewSetup( viewSetups.size(), angle, illumination, channel, -1, -1, -1, calUnit, calX, calY, calZ ) );
-					else
-						viewSetups.add( new ViewSetup( viewSetups.size(), angle, illumination, channel, -1, -1, -1, calUnit, -1, -1, -1 ) );
-				}
-		
+			channels.add( new Channel( c, channelNameList.get( c ) ) );
+
+		final ArrayList< Illumination > illuminations = new ArrayList< Illumination >();
+		for ( int i = 0; i < illuminationsNameList.size(); ++i )
+			illuminations.add( new Illumination( i, illuminationsNameList.get( i ) ) );
+
+		final ArrayList< Angle > angles = new ArrayList< Angle >();
+		for ( int a = 0; a < angleNameList.size(); ++a )
+			angles.add( new Angle( a, channelNameList.get( a ) ) );
+
+		final ArrayList< ViewSetup > viewSetups = new ArrayList< ViewSetup >();
+		for ( final Channel c : channels )
+			for ( final Illumination i : illuminations )
+				for ( final Angle a : angles )
+					viewSetups.add( new ViewSetup( viewSetups.size(), null, null, voxelSize, c, a, i ) );
+
 		return viewSetups;
 	}
-	
+
 	/**
 	 * Creates the {@link TimePoints} for the {@link SpimData} object
-	 * 
-	 * @return
 	 */
-	protected TimePoints< TimePoint > createTimePoints()
+	protected TimePoints createTimePoints()
 	{
-		final ArrayList< TimePoint > timepointList = new ArrayList< TimePoint >();
-		
-		for ( final String timepoint : this.timepointNameList )
-			timepointList.add( new TimePoint( timepointList.size(), timepoint ) );
-		
-		final TimePoints< TimePoint > timepoints = new TimePoints< TimePoint >( timepointList );
-		
-		// remember the pattern
-		timepoints.getHashMap().put( TIMEPOINTS_PATTERN_STRING, this.timepoints );
-		
-		return timepoints;
+		try
+		{
+			return new TimePointsPattern( timepoints );
+		}
+		catch ( final ParseException e )
+		{
+			throw new RuntimeException( e );
+		}
 	}
-		
+
 	protected boolean queryDetails()
 	{
 		if ( calibation < 2 )
@@ -516,10 +520,10 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		}
 
 		// get the list of integers
-		timepointNameList = ( IntegerPattern.parseNameString( timepoints ) );
-		channelNameList = ( IntegerPattern.parseNameString( channels ) );
-		illuminationsNameList = ( IntegerPattern.parseNameString( illuminations ) );
-		angleNameList = ( IntegerPattern.parseNameString( angles ) );
+		timepointNameList = ( NamePattern.parseNameString( timepoints ) );
+		channelNameList = ( NamePattern.parseNameString( channels ) );
+		illuminationsNameList = ( NamePattern.parseNameString( illuminations ) );
+		angleNameList = ( NamePattern.parseNameString( angles ) );
 
 		exceptionIds = new ArrayList< int[] >();
 		

@@ -1,78 +1,51 @@
 package spim.fiji.spimdata;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 
-import mpicbg.spim.data.XmlIoSpimData;
-import mpicbg.spim.data.registration.ViewRegistrations;
+import mpicbg.spim.data.SpimDataException;
+import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
 import mpicbg.spim.data.registration.XmlIoViewRegistrations;
 import mpicbg.spim.data.sequence.SequenceDescription;
-import mpicbg.spim.data.sequence.TimePoint;
-import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.XmlIoSequenceDescription;
 
-import org.jdom2.Document;
 import org.jdom2.Element;
-import org.jdom2.JDOMException;
-import org.jdom2.output.Format;
-import org.jdom2.output.XMLOutputter;
 
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.fiji.spimdata.interestpoints.XmlIoViewInterestPoints;
 
-public class XmlIoSpimData2 extends XmlIoSpimData< TimePoint, ViewSetup >
+public class XmlIoSpimData2 extends XmlIoAbstractSpimData< SequenceDescription, SpimData2 >
 {
 	final XmlIoViewInterestPoints xmlViewsInterestPoints;
 
-	public XmlIoSpimData2( final XmlIoSequenceDescription< TimePoint, ViewSetup > xmlSequenceDescription,
-			final XmlIoViewRegistrations xmlViewRegistrations, final XmlIoViewInterestPoints xmlViewsInterestPoints )
+	public XmlIoSpimData2()
 	{
-		super( xmlSequenceDescription, xmlViewRegistrations );
-
-		this.xmlViewsInterestPoints = xmlViewsInterestPoints;
+		super( SpimData2.class, new XmlIoSequenceDescription(), new XmlIoViewRegistrations() );
+		xmlViewsInterestPoints = new XmlIoViewInterestPoints();
+		handledTags.add( xmlViewsInterestPoints.getTag() );
 	}
 
 	@Override
-	public SpimData2 load( final String xmlFilename ) throws JDOMException, IOException, InstantiationException, IllegalAccessException, ClassNotFoundException
+	public SpimData2 fromXml( final Element root, final File xmlFile ) throws SpimDataException
 	{
-		return ( SpimData2 ) super.load( xmlFilename );
-	}
-
-	@Override
-	public SpimData2 fromXml( final Element root, final File basePath ) throws InstantiationException, IllegalAccessException, ClassNotFoundException
-	{
-//		String version = getVersion( root );
-
-		Element elem = root.getChild( xmlSequenceDescription.getTagName() );
-		if ( elem == null )
-			throw new IllegalArgumentException( "no <" + xmlSequenceDescription.getTagName() + "> element found." );
-		final SequenceDescription< TimePoint, ViewSetup > seq = xmlSequenceDescription.fromXml( elem, basePath );
-
-		elem = root.getChild( xmlViewRegistrations.getTagName() );
-		if ( elem == null )
-			throw new IllegalArgumentException( "no <" + xmlViewRegistrations.getTagName() + "> element found." );
-		final ViewRegistrations reg = xmlViewRegistrations.fromXml( elem );
+		final SpimData2 spimData = super.fromXml( root, xmlFile );
+		final SequenceDescription seq = spimData.getSequenceDescription();
 
 		final ViewInterestPoints viewsInterestPoints;
-		elem = root.getChild( xmlViewsInterestPoints.getTagName() );
+		final Element elem = root.getChild( xmlViewsInterestPoints.getTag() );
 		if ( elem == null )
-			viewsInterestPoints = ViewInterestPoints.createViewInterestPoints( seq.getViewDescriptions() );
+		{
+			viewsInterestPoints = new ViewInterestPoints();
+			viewsInterestPoints.createViewInterestPoints( seq.getViewDescriptions() );
+		}
 		else
-			viewsInterestPoints = xmlViewsInterestPoints.fromXml( elem, basePath, seq.getViewDescriptions() );
+			viewsInterestPoints = xmlViewsInterestPoints.fromXml( elem, spimData.getBasePath(), seq.getViewDescriptions() );
 
-		return new SpimData2( basePath, seq, reg, viewsInterestPoints );
+		spimData.setViewsInterestPoints( viewsInterestPoints );
+		return spimData;
 	}
 
-	public void save( final SpimData2 spimData, final String xmlFilename ) throws IOException
-	{
-		final File xmlFileDirectory = new File( xmlFilename ).getParentFile();
-		final Document doc = new Document( toXml( spimData, xmlFileDirectory ) );
-		final XMLOutputter xout = new XMLOutputter( Format.getPrettyFormat() );
-		xout.output( doc, new FileWriter( xmlFilename ) );
-	}
-
-	public Element toXml( final SpimData2 spimData, final File xmlFileDirectory )
+	@Override
+	public Element toXml( final SpimData2 spimData, final File xmlFileDirectory ) throws SpimDataException
 	{
 		final Element root = super.toXml( spimData, xmlFileDirectory );
 		root.addContent( xmlViewsInterestPoints.toXml( spimData.getViewInterestPoints() ) );

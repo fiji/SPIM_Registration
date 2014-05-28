@@ -18,11 +18,11 @@ import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
  * 
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  */
-public class SpimData2 extends SpimData< TimePoint, ViewSetup >
+public class SpimData2 extends SpimData
 {
-	final protected ViewInterestPoints viewsInterestPoints;
+	private ViewInterestPoints viewsInterestPoints;
 	
-	public SpimData2( final File basePath, final SequenceDescription< TimePoint, ViewSetup > sequenceDescription, 
+	public SpimData2( final File basePath, final SequenceDescription sequenceDescription, 
 			final ViewRegistrations viewRegistrations, final ViewInterestPoints viewsInterestPoints )
 	{
 		super( basePath, sequenceDescription, viewRegistrations );
@@ -31,7 +31,12 @@ public class SpimData2 extends SpimData< TimePoint, ViewSetup >
 	}
 
 	public ViewInterestPoints getViewInterestPoints() { return viewsInterestPoints; }
-	
+
+	protected void setViewsInterestPoints( final ViewInterestPoints viewsInterestPoints )
+	{
+		this.viewsInterestPoints = viewsInterestPoints;
+	}
+
 	/**
 	 * @param seqDesc
 	 * @param t
@@ -40,9 +45,9 @@ public class SpimData2 extends SpimData< TimePoint, ViewSetup >
 	 * @param i
 	 * @return - the ViewId that fits to timepoint, angle, channel & illumination by ID (or null if it does not exist)
 	 */
-	public static ViewId getViewId( final SequenceDescription<?, ?> seqDesc, final TimePoint t, final Channel c, final Angle a, final Illumination i )
+	public static ViewId getViewId( final SequenceDescription seqDesc, final TimePoint t, final Channel c, final Angle a, final Illumination i )
 	{
-		for ( ViewSetup viewSetup : seqDesc.getViewSetups() )
+		for ( final ViewSetup viewSetup : seqDesc.getViewSetupsOrdered() )
 		{
 			if ( viewSetup.getAngle().getId() == a.getId() && 
 				 viewSetup.getChannel().getId() == c.getId() && 

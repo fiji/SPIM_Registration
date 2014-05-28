@@ -3,11 +3,10 @@ package spim.fiji.spimdata.interestpoints;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 
-import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.data.sequence.ViewSetup;
 
 /**
  * A class that organizes all interest point detections of all {@link ViewDescription}s (which extend {@link ViewId})
@@ -18,6 +17,11 @@ import mpicbg.spim.data.sequence.ViewSetup;
 public class ViewInterestPoints
 {
 	protected final HashMap< ViewId, ViewInterestPointLists > interestPointCollectionLookup;
+
+	public ViewInterestPoints()
+	{
+		interestPointCollectionLookup = new HashMap< ViewId, ViewInterestPointLists >();
+	}
 
 	public ViewInterestPoints( final HashMap< ViewId, ViewInterestPointLists > interestPointCollectionLookup )
 	{
@@ -46,18 +50,14 @@ public class ViewInterestPoints
 	
 	/**
 	 * Assembles the {@link ViewInterestPoints} object consisting of a list of {@link ViewInterestPointLists} objects for all {@link ViewDescription}s that are present
-	 * 
-	 * @param viewDescriptionList
+	 *
+	 * @param viewDescriptions
 	 * @return
 	 */
-	public static ViewInterestPoints createViewInterestPoints( final HashMap< ViewId, ViewDescription< TimePoint, ViewSetup > > viewDescriptionList )
+	public void createViewInterestPoints( final Map< ViewId, ViewDescription > viewDescriptions )
 	{
-		final ArrayList< ViewInterestPointLists > viewInterestPointsList = new ArrayList< ViewInterestPointLists >();
-		
-		for ( final ViewDescription< TimePoint, ViewSetup > viewDescription : viewDescriptionList.values() )
+		for ( final ViewDescription viewDescription : viewDescriptions.values() )
 			if ( viewDescription.isPresent() )
-				viewInterestPointsList.add( new ViewInterestPointLists( viewDescription.getTimePointId(), viewDescription.getViewSetupId() ) );
-		
-		return new ViewInterestPoints( viewInterestPointsList );
+				interestPointCollectionLookup.put( viewDescription, new ViewInterestPointLists( viewDescription.getTimePointId(), viewDescription.getViewSetupId() ) );
 	}
 }

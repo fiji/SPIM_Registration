@@ -10,50 +10,26 @@ import static spim.fiji.spimdata.XmlKeysInterestPoints.VIEWINTERESTPOINTS_TIMEPO
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.Map;
 
-import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.SpimDataException;
+import mpicbg.spim.data.generic.base.XmlIoSingleton;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.data.sequence.ViewSetup;
 
 import org.jdom2.Element;
 
-public class XmlIoViewInterestPoints
+public class XmlIoViewInterestPoints extends XmlIoSingleton< ViewInterestPoints >
 {
-	public String getTagName()
+	public XmlIoViewInterestPoints()
 	{
-		return VIEWINTERESTPOINTS_TAG;
-	}
-
-	public ViewInterestPoints fromXml( final Element allInterestPointLists, final File basePath, final HashMap< ViewId, ViewDescription< TimePoint, ViewSetup > > viewDescriptionList ) throws InstantiationException, IllegalAccessException, ClassNotFoundException
-	{
-		final ViewInterestPoints viewsInterestPoints = ViewInterestPoints.createViewInterestPoints( viewDescriptionList );
-
-		for ( final Element viewInterestPointsElement : allInterestPointLists.getChildren( VIEWINTERESTPOINTSFILE_TAG ) )
-		{
-			final int timepointId = Integer.parseInt( viewInterestPointsElement.getAttributeValue( VIEWINTERESTPOINTS_TIMEPOINT_ATTRIBUTE_NAME ) );
-			final int setupId = Integer.parseInt( viewInterestPointsElement.getAttributeValue( VIEWINTERESTPOINTS_SETUP_ATTRIBUTE_NAME ) );
-			final String label = viewInterestPointsElement.getAttributeValue( VIEWINTERESTPOINTS_LABEL_ATTRIBUTE_NAME );
-			final String parameters = viewInterestPointsElement.getAttributeValue( VIEWINTERESTPOINTS_PARAMETERS_ATTRIBUTE_NAME );
-
-			final String interestPointFileName = viewInterestPointsElement.getTextTrim();
-
-			final ViewId viewId = new ViewId( timepointId, setupId );
-			final ViewInterestPointLists collection = viewsInterestPoints.getViewInterestPointLists( viewId );
-
-			// we do not load the interestpoints nor the correspondinginterestpoints, we just do that once it is requested
-			final InterestPointList list = new InterestPointList( basePath, new File( interestPointFileName ) );
-			list.setParameters( parameters );
-			collection.addInterestPointList( label, list );
-		}
-
-		return viewsInterestPoints;
+		super( VIEWINTERESTPOINTS_TAG, ViewInterestPoints.class );
+		handledTags.add( VIEWINTERESTPOINTSFILE_TAG );
 	}
 
 	public Element toXml( final ViewInterestPoints viewsInterestPoints )
 	{
-		final Element elem = new Element( VIEWINTERESTPOINTS_TAG );
+		final Element elem = super.toXml();
 
 		// sort all entries by timepoint and viewsetupid so that it is possible to edit XML by hand
 		final ArrayList< ViewInterestPointLists > viewIPlist = new ArrayList< ViewInterestPointLists >();
@@ -74,6 +50,32 @@ public class XmlIoViewInterestPoints
 			}
 		}
 		return elem;
+	}
+
+	public ViewInterestPoints fromXml( final Element allInterestPointLists, final File basePath, final Map< ViewId, ViewDescription > viewDescriptions ) throws SpimDataException
+	{
+		final ViewInterestPoints viewsInterestPoints = super.fromXml( allInterestPointLists );
+		viewsInterestPoints.createViewInterestPoints( viewDescriptions );
+
+		for ( final Element viewInterestPointsElement : allInterestPointLists.getChildren( VIEWINTERESTPOINTSFILE_TAG ) )
+		{
+			final int timepointId = Integer.parseInt( viewInterestPointsElement.getAttributeValue( VIEWINTERESTPOINTS_TIMEPOINT_ATTRIBUTE_NAME ) );
+			final int setupId = Integer.parseInt( viewInterestPointsElement.getAttributeValue( VIEWINTERESTPOINTS_SETUP_ATTRIBUTE_NAME ) );
+			final String label = viewInterestPointsElement.getAttributeValue( VIEWINTERESTPOINTS_LABEL_ATTRIBUTE_NAME );
+			final String parameters = viewInterestPointsElement.getAttributeValue( VIEWINTERESTPOINTS_PARAMETERS_ATTRIBUTE_NAME );
+
+			final String interestPointFileName = viewInterestPointsElement.getTextTrim();
+
+			final ViewId viewId = new ViewId( timepointId, setupId );
+			final ViewInterestPointLists collection = viewsInterestPoints.getViewInterestPointLists( viewId );
+
+			// we do not load the interestpoints nor the correspondinginterestpoints, we just do that once it is requested
+			final InterestPointList list = new InterestPointList( basePath, new File( interestPointFileName ) );
+			list.setParameters( parameters );
+			collection.addInterestPointList( label, list );
+		}
+
+		return viewsInterestPoints;
 	}
 
 	protected Element viewInterestPointsToXml( final InterestPointList interestPointList, final int tpId, final int viewId, final String label )
