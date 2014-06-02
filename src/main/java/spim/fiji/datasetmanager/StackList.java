@@ -76,10 +76,10 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	
 	public static boolean showDebugFileNames = true;
 	
-	public static String defaultTimepoints = "18-20";
+	public static String defaultTimepoints = "18";
 	public static String defaultChannels = "1,2";
 	public static String defaultIlluminations = "0,1";
-	public static String defaultAngles = "0-315:45";
+	public static String defaultAngles = "0-270:45";
 
 	protected String timepoints, channels, illuminations, angles;
 	protected ArrayList< String > timepointNameList, channelNameList, illuminationsNameList, angleNameList;
@@ -97,7 +97,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	public static int defaultCalibration = 0;
 	public int calibation;
 	
-	public static String defaultDirectory = "/Users/preibischs/Documents/Microscopy/SPIM/HisYFP-SPIM";
+	public static String defaultDirectory = "/home/preibisch/Documents/Microscopy/SPIM/HisYFP-SPIM";
 	public static String defaultFileNamePattern = null;
 
 	protected String directory, fileNamePattern;
@@ -254,7 +254,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	protected ArrayList< ViewSetup > createViewSetups()
 	{
 		final VoxelDimensions voxelSize = ( calibation < 2 ) ? new FinalVoxelDimensions( calUnit, calX, calY, calZ ) : null;
-
+		
 		final ArrayList< Channel > channels = new ArrayList< Channel >();
 		for ( int c = 0; c < channelNameList.size(); ++c )
 			channels.add( new Channel( c, channelNameList.get( c ) ) );
@@ -265,7 +265,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 
 		final ArrayList< Angle > angles = new ArrayList< Angle >();
 		for ( int a = 0; a < angleNameList.size(); ++a )
-			angles.add( new Angle( a, channelNameList.get( a ) ) );
+			angles.add( new Angle( a, angleNameList.get( a ) ) );
 
 		final ArrayList< ViewSetup > viewSetups = new ArrayList< ViewSetup >();
 		for ( final Channel c : channels )
