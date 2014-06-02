@@ -19,6 +19,7 @@ import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.FinalInterval;
@@ -491,12 +492,12 @@ public class ProcessForDeconvolution
 	}
 
 	@SuppressWarnings("unchecked")
-	protected static < T extends RealType< T > > RandomAccessibleInterval< T > getImage( final T type, final SpimData2 spimData, final ViewDescription view, final boolean normalize )
+	protected static < T extends RealType< T > > RandomAccessibleInterval< T > getImage( final T type, final SpimData2 spimData, final ViewId view, final boolean normalize )
 	{
 		if ( type instanceof FloatType )
-			return (RandomAccessibleInterval< T >)(Object)spimData.getSequenceDescription().getImgLoader().getImage( view, normalize );
+			return (RandomAccessibleInterval< T >)spimData.getSequenceDescription().getImgLoader().getFloatImage( view, normalize );
 		else if ( type instanceof UnsignedShortType )
-			return (RandomAccessibleInterval< T >)(Object)spimData.getSequenceDescription().getImgLoader().getUnsignedShortImage( view );
+			return (RandomAccessibleInterval< T >)spimData.getSequenceDescription().getImgLoader().getImage( view );
 		else
 			return null;
 	}

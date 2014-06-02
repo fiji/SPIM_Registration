@@ -12,6 +12,7 @@ import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessible;
@@ -218,12 +219,12 @@ public class ProcessSequential extends ProcessFusion
 	}
 
 	@SuppressWarnings("unchecked")
-	protected static < T extends RealType< T > > RandomAccessibleInterval< T > getImage( final T type, final SpimData2 spimData, final ViewDescription view )
+	protected static < T extends RealType< T > > RandomAccessibleInterval< T > getImage( final T type, final SpimData2 spimData, final ViewId view )
 	{
 		if ( type instanceof FloatType )
-			return (RandomAccessibleInterval< T >)(Object)spimData.getSequenceDescription().getImgLoader().getImage( view, false );
+			return (RandomAccessibleInterval< T >)(Object)spimData.getSequenceDescription().getImgLoader().getFloatImage( view, false );
 		else if ( type instanceof UnsignedShortType )
-			return (RandomAccessibleInterval< T >)(Object)spimData.getSequenceDescription().getImgLoader().getUnsignedShortImage( view );
+			return (RandomAccessibleInterval< T >)(Object)spimData.getSequenceDescription().getImgLoader().getImage( view );
 		else
 			return null;
 	}

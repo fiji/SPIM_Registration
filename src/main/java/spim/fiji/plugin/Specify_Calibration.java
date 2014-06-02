@@ -11,6 +11,7 @@ import java.util.Date;
 
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
@@ -129,9 +130,10 @@ public class Specify_Calibration implements PlugIn
 					final ViewDescription desc = result.getData().getSequenceDescription().getViewDescription( viewId ); 
 					final ViewSetup viewSetup = desc.getViewSetup();
 
-					viewSetup.setPixelWidth( maxCal.getCal()[ 0 ] );
-					viewSetup.setPixelHeight( maxCal.getCal()[ 1 ] );
-					viewSetup.setPixelDepth( maxCal.getCal()[ 2 ] );
+					viewSetup.setVoxelSize( new FinalVoxelDimensions( "",
+							maxCal.getCal()[ 0 ],
+							maxCal.getCal()[ 1 ],
+							maxCal.getCal()[ 2 ] ) );
 				}
 		
 		// save the xml

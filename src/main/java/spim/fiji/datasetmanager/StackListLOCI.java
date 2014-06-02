@@ -2,11 +2,12 @@ package spim.fiji.datasetmanager;
 
 import java.io.File;
 
-import mpicbg.spim.data.sequence.ImgLoader;
+import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.type.NativeType;
 import spim.fiji.spimdata.imgloaders.Calibration;
+import spim.fiji.spimdata.imgloaders.StackImgLoader;
 import spim.fiji.spimdata.imgloaders.StackImgLoaderLOCI;
 
 public class StackListLOCI extends StackList
@@ -23,13 +24,13 @@ public class StackListLOCI extends StackList
 	}
 
 	@Override
-	protected ImgLoader createAndInitImgLoader( final String path, final File basePath, final ImgFactory< ? extends NativeType< ? > > imgFactory )
+	protected StackImgLoader createAndInitImgLoader( final String path, final File basePath, final ImgFactory< ? extends NativeType< ? > > imgFactory, SequenceDescription sequenceDescription )
 	{
-		final StackImgLoaderLOCI imgLoader = new StackImgLoaderLOCI();
-		
-		imgLoader.init( path, basePath, fileNamePattern, imgFactory, hasMultipleTimePoints, hasMultipleChannels, hasMultipleIlluminations, hasMultipleAngles );
-		
-		return imgLoader;
+		return new StackImgLoaderLOCI(
+				new File( basePath.getAbsolutePath(), path ),
+				fileNamePattern, imgFactory,
+				hasMultipleTimePoints, hasMultipleChannels, hasMultipleIlluminations, hasMultipleAngles,
+				sequenceDescription );
 	}
 
 	@Override

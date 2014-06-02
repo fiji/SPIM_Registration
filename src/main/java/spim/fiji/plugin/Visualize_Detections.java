@@ -142,7 +142,8 @@ public class Visualize_Detections implements PlugIn
 						
 						if ( displayInput )
 						{
-							final RandomAccessibleInterval< UnsignedShortType > img = result.getData().getSequenceDescription().getImgLoader().getUnsignedShortImage( viewDescription );							
+							@SuppressWarnings( "unchecked" )
+							final RandomAccessibleInterval< UnsignedShortType > img = ( RandomAccessibleInterval< UnsignedShortType > ) result.getData().getSequenceDescription().getImgLoader().getImage( viewDescription );							
 							di.exportImage( img, name );
 							interval = img;
 						}

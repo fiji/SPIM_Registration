@@ -101,7 +101,7 @@ public class DifferenceOfMean extends DifferenceOf
 						if ( !viewDescription.isPresent() )
 							continue;
 						
-						final RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input = spimData.getSequenceDescription().getImgLoader().getImage( viewDescription, false );
+						final RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input = spimData.getSequenceDescription().getImgLoader().getFloatImage( viewId, false );
 														
 						long time2 = System.currentTimeMillis();
 
@@ -213,7 +213,7 @@ public class DifferenceOfMean extends DifferenceOf
 		}
 		
 		RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > img = 
-				spimData.getSequenceDescription().getImgLoader().getImage( viewDescription, false );
+				spimData.getSequenceDescription().getImgLoader().getFloatImage( view, false );
 		
 		if ( img == null )
 		{

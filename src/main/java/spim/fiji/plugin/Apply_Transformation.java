@@ -21,6 +21,7 @@ import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.realtransform.AffineTransform3D;
@@ -709,11 +710,14 @@ public class Apply_Transformation implements PlugIn
 						if ( !viewDescription.isPresent() )
 							continue;
 						
+						ViewSetup setup = viewDescription.getViewSetup();
+						
 						// load metadata to update the registrations if required
 						// only use calibration as defined in the metadata
-						if ( !viewDescription.getViewSetup().hasVoxelSize() )
+						if ( !setup.hasVoxelSize() )
 						{
-							if ( !spimData.getSequenceDescription().getImgLoader().loadMetaData( viewDescription ) )
+							VoxelDimensions voxelSize = spimData.getSequenceDescription().getImgLoader().getVoxelSize( viewId );
+							if ( voxelSize == null )
 							{
 								IOFunctions.println( "An error occured. Cannot load calibration for timepoint: " + t.getName() + " angle: " + 
 										a.getName() + " channel: " + c.getName() + " illum: " + i.getName() );
@@ -721,10 +725,11 @@ public class Apply_Transformation implements PlugIn
 								IOFunctions.println( "Quitting. Please set it manually when defining the dataset or by modifying the XML" );
 								
 								return Double.NaN;
-							}						
+							}
+							setup.setVoxelSize( voxelSize );
 						}
 
-						if ( !viewDescription.getViewSetup().hasVoxelSize() )
+						if ( !setup.hasVoxelSize() )
 						{
 							IOFunctions.println( "An error occured. No calibration available for timepoint: " + t.getName() + " angle: " + 
 									a.getName() + " channel: " + c.getName() + " illum: " + i.getName() );
@@ -736,7 +741,7 @@ public class Apply_Transformation implements PlugIn
 							return Double.NaN;
 						}
 						
-						VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSizeOrDefault( viewDescription.getViewSetup() );
+						VoxelDimensions voxelSize = setup.getVoxelSize();
 						final double calX = voxelSize.dimension( 0 );
 						final double calY = voxelSize.dimension( 1 );
 						final double calZ = voxelSize.dimension( 2 );

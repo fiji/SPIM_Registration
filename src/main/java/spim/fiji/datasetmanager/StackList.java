@@ -40,6 +40,7 @@ import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.GUIHelper;
 import spim.fiji.spimdata.NamePattern;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.imgloaders.StackImgLoader;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
 public abstract class StackList implements MultiViewDatasetDefinition
@@ -144,9 +145,10 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	 * 
 	 * @param path - The path relative to the basepath
 	 * @param basePath - The base path, where XML will be and the image stack are
+	 * @param sequenceDescription 
 	 * @return
 	 */
-	protected abstract ImgLoader createAndInitImgLoader( final String path, final File basePath, final ImgFactory< ? extends NativeType< ? > > imgFactory );
+	protected abstract StackImgLoader createAndInitImgLoader( final String path, final File basePath, final ImgFactory< ? extends NativeType< ? > > imgFactory, SequenceDescription sequenceDescription );
 	
 	@Override
 	public SpimData2 createDataset()
@@ -159,10 +161,11 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		final TimePoints timepoints = this.createTimePoints();
 		final ArrayList< ViewSetup > setups = this.createViewSetups();
 		final MissingViews missingViews = this.createMissingViews();
-		final ImgLoader imgLoader = createAndInitImgLoader( ".", new File( directory ), imgFactory );
 		
 		// instantiate the sequencedescription
-		final SequenceDescription sequenceDescription = new SequenceDescription( timepoints, setups, imgLoader, missingViews );
+		final SequenceDescription sequenceDescription = new SequenceDescription( timepoints, setups, null, missingViews );
+		final ImgLoader imgLoader = createAndInitImgLoader( ".", new File( directory ), imgFactory, sequenceDescription );
+		sequenceDescription.setImgLoader( imgLoader );
 
 		// create the initial view registrations (they are all the identity transform)
 		final ViewRegistrations viewRegistrations = this.createViewRegistrations( sequenceDescription.getViewDescriptions() );

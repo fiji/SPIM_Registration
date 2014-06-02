@@ -6,10 +6,11 @@ import ij.measure.Calibration;
 
 import java.io.File;
 
-import mpicbg.spim.data.sequence.ImgLoader;
+import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.type.NativeType;
+import spim.fiji.spimdata.imgloaders.StackImgLoader;
 import spim.fiji.spimdata.imgloaders.StackImgLoaderIJ;
 
 public class StackListImageJ extends StackList
@@ -84,13 +85,13 @@ public class StackListImageJ extends StackList
 	}
 
 	@Override
-	protected ImgLoader createAndInitImgLoader( final String path, final File basePath, final ImgFactory< ? extends NativeType< ? > > imgFactory )
+	protected StackImgLoader createAndInitImgLoader( final String path, final File basePath, final ImgFactory< ? extends NativeType< ? > > imgFactory, SequenceDescription sequenceDescription )
 	{
-		final StackImgLoaderIJ imgLoader = new StackImgLoaderIJ();
-		
-		imgLoader.init( path, basePath, fileNamePattern, imgFactory, hasMultipleTimePoints, hasMultipleChannels, hasMultipleIlluminations, hasMultipleAngles );
-		
-		return imgLoader;
+		return new StackImgLoaderIJ(
+				new File( basePath.getAbsolutePath(), path ),
+				fileNamePattern, imgFactory,
+				hasMultipleTimePoints, hasMultipleChannels, hasMultipleIlluminations, hasMultipleAngles,
+				sequenceDescription );
 	}
 
 	@Override

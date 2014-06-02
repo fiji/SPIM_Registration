@@ -13,6 +13,8 @@ import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.type.numeric.integer.UnsignedShortType;
 import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.spimdata.SpimData2;
@@ -103,9 +105,13 @@ public class Display_View implements PlugIn
 		ImgExport export = new DisplayImage( virtual );
 		
 		if ( pixelType == 0 )
-			export.exportImage( result.getData().getSequenceDescription().getImgLoader().getImage( viewDescription, false ), null, name );
+			export.exportImage( result.getData().getSequenceDescription().getImgLoader().getFloatImage( viewId, false ), null, name );
 		else
-			export.exportImage( result.getData().getSequenceDescription().getImgLoader().getUnsignedShortImage( viewDescription ), null, name );
+		{
+			@SuppressWarnings( "unchecked" )
+			RandomAccessibleInterval< UnsignedShortType > img = ( RandomAccessibleInterval< UnsignedShortType > ) result.getData().getSequenceDescription().getImgLoader().getImage( viewId );
+			export.exportImage( img, null, name );
+		}
 	}
 
 	public static void main( String[] args )
