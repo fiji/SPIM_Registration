@@ -8,19 +8,30 @@ import ij.process.ImageProcessor;
 import java.io.File;
 import java.util.Date;
 
-import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.SequenceDescription;
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
+import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.planar.PlanarImg;
+import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
 public class StackImgLoaderIJ extends StackImgLoader
 {
+	public StackImgLoaderIJ(
+			final File path, final String fileNamePattern, final ImgFactory< ? extends NativeType< ? > > imgFactory,
+			final int layoutTP, final int layoutChannels, final int layoutIllum, final int layoutAngles,
+			final SequenceDescription sequenceDescription )
+	{
+		super( path, fileNamePattern, imgFactory, layoutTP, layoutChannels, layoutIllum, layoutAngles, sequenceDescription );
+	}
+
 	protected ImagePlus open( File file )
 	{
 		final ImagePlus imp = new Opener().openImage( file.getAbsolutePath() );
@@ -44,7 +55,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 	 * @return {@link FloatType} image normalized to range [0,1]
 	 */
 	@Override
-	public RandomAccessibleInterval< FloatType > getImage( final ViewDescription< ?, ? > view, final boolean normalize )
+	public RandomAccessibleInterval< FloatType > getFloatImage( final ViewId view, final boolean normalize )
 	{
 		final File file = getFile( view );
 		final ImagePlus imp = open( file );
@@ -170,7 +181,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 	 * @return {@link UnsignedShortType} image.
 	 */
 	@Override
-	public RandomAccessibleInterval< UnsignedShortType > getUnsignedShortImage( final ViewDescription< ?, ? > view )
+	public RandomAccessibleInterval< UnsignedShortType > getImage( final ViewId view )
 	{
 		final File file = getFile( view );
 		final ImagePlus imp = open( file );
@@ -229,7 +240,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 	}
 
 	@Override
-	public boolean loadMetaData( final ViewDescription<?, ?> view )
+	protected void loadMetaData( final ViewId view )
 	{
 		final File file = getFile( view );
 		final ImagePlus imp = open( file );
@@ -242,7 +253,5 @@ public class StackImgLoaderIJ extends StackImgLoader
 				imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight, imp.getCalibration().pixelDepth, true );
 
 		imp.close();
-		
-		return true;
 	}
 }
