@@ -29,6 +29,9 @@ public class SpimData2 extends SpimData
 
 		this.viewsInterestPoints = viewsInterestPoints;
 	}
+	
+	protected SpimData2()
+	{}
 
 	public ViewInterestPoints getViewInterestPoints() { return viewsInterestPoints; }
 
