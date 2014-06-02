@@ -73,6 +73,9 @@ public class StackListImageJ extends StackList
 			
 			calUnit = c.getUnit();
 			
+			if ( calUnit.contains( "µ" ) )
+				calUnit = calUnit.replace( 'µ', 'u' );
+			
 			imp.close();
 			
 			return true;
