@@ -18,6 +18,8 @@
 	<description>Software for the reconstruction of multi-view microscopic acquisitions like Selective Plane Illumination Microscopy (SPIM) Data.</description>
 
 	<properties>
+		<bio-formats.groupId>ome</bio-formats.groupId>
+
 		<!-- Prevent the plugin from being copied to ./plugins/ by default -->
 		<imagej.app.directory>path/to/Fiji.app/</imagej.app.directory>
 		<imglib2.version>2.0.0-SNAPSHOT</imglib2.version>
@@ -116,6 +118,16 @@
 		<dependency>
 			<groupId>ome</groupId>
 			<artifactId>formats-gpl</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>${bio-formats.groupId}</groupId>
+			<artifactId>ome-xml</artifactId>
+			<version>${bio-formats.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>${bio-formats.groupId}</groupId>
+			<artifactId>formats-common</artifactId>
+			<version>${bio-formats.version}</version>
 		</dependency>
 	</dependencies>
 
