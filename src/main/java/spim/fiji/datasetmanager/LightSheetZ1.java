@@ -6,15 +6,13 @@ import java.io.IOException;
 import loci.common.services.DependencyException;
 import loci.common.services.ServiceException;
 import loci.common.services.ServiceFactory;
-import loci.formats.ChannelSeparator;
-import loci.formats.FormatException;
 import loci.formats.IFormatReader;
 import loci.formats.Modulo;
 import loci.formats.in.ZeissCZIReader;
 import loci.formats.meta.IMetadata;
 import loci.formats.services.OMEXMLService;
-import fiji.util.gui.GenericDialogPlus;
 import spim.fiji.spimdata.SpimData2;
+import fiji.util.gui.GenericDialogPlus;
 
 public class LightSheetZ1 implements MultiViewDatasetDefinition
 {
@@ -95,7 +93,10 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 
 			// and later on open the requested data
 
+			r.close();
+			
 		} catch ( Exception e ) { e.printStackTrace(); }
+		
 		
 		// TODO Auto-generated method stub
 		return null;

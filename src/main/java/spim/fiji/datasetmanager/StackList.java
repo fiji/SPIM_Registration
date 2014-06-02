@@ -36,6 +36,7 @@ import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.GUIHelper;
 import spim.fiji.spimdata.NamePattern;
@@ -164,7 +165,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		
 		// instantiate the sequencedescription
 		final SequenceDescription sequenceDescription = new SequenceDescription( timepoints, setups, null, missingViews );
-		final ImgLoader imgLoader = createAndInitImgLoader( ".", new File( directory ), imgFactory, sequenceDescription );
+		final ImgLoader< UnsignedShortType > imgLoader = createAndInitImgLoader( ".", new File( directory ), imgFactory, sequenceDescription );
 		sequenceDescription.setImgLoader( imgLoader );
 
 		// create the initial view registrations (they are all the identity transform)

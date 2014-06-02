@@ -19,14 +19,11 @@ public abstract class AbstractImgLoader implements ImgLoader< UnsignedShortType 
 	protected ImgFactory< ? extends NativeType< ? > > imgFactory;
 	
 	private final HashMap< ViewId, Pair< Dimensions, VoxelDimensions > > imageMetaData;
-	
-	private final UnsignedShortType type;
 
 	protected AbstractImgLoader()
 	{
 		imgFactory = null;
 		imageMetaData = new HashMap< ViewId, Pair< Dimensions, VoxelDimensions > >();
-		type = new UnsignedShortType();
 	}
 
 	/**
