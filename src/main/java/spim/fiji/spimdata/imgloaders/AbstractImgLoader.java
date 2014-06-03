@@ -21,24 +21,29 @@ public abstract class AbstractImgLoader implements ImgLoader< UnsignedShortType 
 {
 	protected ImgFactory< ? extends NativeType< ? > > imgFactory;
 	
-	private final HashMap< Integer, Pair< Dimensions, VoxelDimensions > > imageMetaDataCache;
+	private final HashMap< ViewId, Pair< Dimensions, VoxelDimensions > > imageMetaDataCache;
+	private final HashMap< Integer, ViewId > viewIdLookUp;
 
 	protected AbstractImgLoader()
 	{
 		imgFactory = null;
-		imageMetaDataCache = new HashMap< Integer, Pair< Dimensions, VoxelDimensions > >();
+		imageMetaDataCache = new HashMap< ViewId, Pair< Dimensions, VoxelDimensions > >();
+		viewIdLookUp = new HashMap< Integer, ViewId >();
 	}
 
 	/**
 	 * Updates the cached imageMetaData
 	 */
-	protected void updateMetaDataCache( final int viewSetupId,
+	protected void updateMetaDataCache( final ViewId viewId,
 			final int w, final int h, final int d,
 			final double calX, final double calY, final double calZ )
 	{
-		imageMetaDataCache.put( viewSetupId, new ValuePair< Dimensions, VoxelDimensions >(
+		imageMetaDataCache.put( viewId, new ValuePair< Dimensions, VoxelDimensions >(
 				new FinalDimensions( w, h, d ),
 				new FinalVoxelDimensions( "", calX, calY, calZ ) ) );
+
+		// links the viewSetupId to the last added viewId, overwrites earlier entries
+		viewIdLookUp.put( viewId.getViewSetupId(), viewId );
 	}
 
 	/**
@@ -50,16 +55,30 @@ public abstract class AbstractImgLoader implements ImgLoader< UnsignedShortType 
 	@Override
 	public Dimensions getImageSize( final ViewId view )
 	{
-		if ( ! imageMetaDataCache.containsKey( view ) )
-			loadMetaData( view );
+		// if there is no data for the viewId
+		if ( !imageMetaDataCache.containsKey( view ) )
+		{
+			// check if the data is present for the same viewsetup of another timepoint
+			if ( !viewIdLookUp.containsKey( view.getViewSetupId() ) )
+				loadMetaData( view );
+			else
+				return imageMetaDataCache.get( viewIdLookUp.get( view.getViewSetupId() ) ).getA();
+		}
 		return imageMetaDataCache.get( view ).getA();
 	}
 
 	@Override
 	public VoxelDimensions getVoxelSize( final ViewId view )
 	{
-		if ( ! imageMetaDataCache.containsKey( view ) )
-			loadMetaData( view );
+		// if there is no data for the viewId
+		if ( !imageMetaDataCache.containsKey( view ) )
+		{
+			// check if the data is present for the same viewsetup of another timepoint
+			if ( !viewIdLookUp.containsKey( view.getViewSetupId() ) )
+				loadMetaData( view );
+			else
+				return imageMetaDataCache.get( viewIdLookUp.get( view.getViewSetupId() ) ).getB();
+		}
 		return imageMetaDataCache.get( view ).getB();
 	}
 	
@@ -104,9 +123,10 @@ public abstract class AbstractImgLoader implements ImgLoader< UnsignedShortType 
 	 */
 	public boolean updateXMLMetaData( final ViewSetup setup, final boolean forceUpdate )
 	{
-		if ( imageMetaDataCache.containsKey( setup.getId() ) )
+		if ( viewIdLookUp.containsKey( setup.getId() ) )
 		{
-			final Pair< Dimensions, VoxelDimensions > metaData = imageMetaDataCache.get( setup.getId() );
+			// look up the metadata using the ViewId linked by the ViewSetupId
+			final Pair< Dimensions, VoxelDimensions > metaData = imageMetaDataCache.get( viewIdLookUp.get( setup.getId() ) );
 
 			if ( !setup.hasSize() || forceUpdate )
 				setup.setSize( metaData.getA() );
