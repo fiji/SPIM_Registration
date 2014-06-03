@@ -192,9 +192,15 @@ public class Apply_Transformation implements PlugIn
 		
 		// query models and apply them
 		if ( defineAs == 0 )
-			queryString( model, applyTo, minResolution, result, sameModelTimePoints, sameModelChannels, sameModelIlluminations, sameModelAngles );
+		{
+			if ( !queryString( model, applyTo, minResolution, result, sameModelTimePoints, sameModelChannels, sameModelIlluminations, sameModelAngles ) )
+				return;
+		}
 		else
-			queryRotationAxis( model, applyTo, minResolution, result, sameModelTimePoints, sameModelChannels, sameModelIlluminations, sameModelAngles );
+		{
+			if ( !queryRotationAxis( model, applyTo, minResolution, result, sameModelTimePoints, sameModelChannels, sameModelIlluminations, sameModelAngles ) )
+				return;
+		}
 		
 		// now save it
 		Interest_Point_Registration.saveXML( result.getData(), result.getXMLFileName() );
