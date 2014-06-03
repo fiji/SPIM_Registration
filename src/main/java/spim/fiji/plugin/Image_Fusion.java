@@ -4,12 +4,17 @@ import ij.ImageJ;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 
+import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
+import spim.fiji.spimdata.XmlIoSpimData2;
+import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import spim.process.fusion.boundingbox.AutomaticBoundingBox;
 import spim.process.fusion.boundingbox.ManualBoundingBox;
 import spim.process.fusion.deconvolution.EfficientBayesianBased;
@@ -113,6 +118,33 @@ public class Image_Fusion implements PlugIn
 			return;
 		
 		fusion.fuseData( boundingBox, imgExport );
+		
+		// save the XML if metadata was updated
+		if ( result.getData().getSequenceDescription().getImgLoader() instanceof AbstractImgLoader )
+		{
+			boolean updated = false;
+			
+			for ( final ViewSetup setup : result.getData().getSequenceDescription().getViewSetupsOrdered() )
+				updated |= ( (AbstractImgLoader)result.getData().getSequenceDescription().getImgLoader() ).updateXMLMetaData( setup, false );
+			
+			if ( updated )
+			{
+				// save the xml
+				final XmlIoSpimData2 io = new XmlIoSpimData2();
+				
+				final String xml = new File( result.getData().getBasePath(), new File( result.getXMLFileName() ).getName() ).getAbsolutePath();
+				try 
+				{
+					io.save( result.getData(), xml );
+					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + xml + "' (image metadata was updated)." );
+				}
+				catch ( Exception e )
+				{
+					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + xml + "': " + e );
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 
 	public static void main( final String[] args )

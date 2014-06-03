@@ -23,6 +23,7 @@ import spim.fiji.plugin.interestpointdetection.DifferenceOfMean;
 import spim.fiji.plugin.interestpointdetection.InterestPointDetection;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
+import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
@@ -181,6 +182,10 @@ public class Interest_Point_Detection implements PlugIn
 			
 			// save the xml
 			final XmlIoSpimData2 io = new XmlIoSpimData2();
+			
+			// update metadata if necessary
+			if ( data.getSequenceDescription().getImgLoader() instanceof AbstractImgLoader )
+				( (AbstractImgLoader)data.getSequenceDescription().getImgLoader() ).updateXMLMetaData( data, false );
 			
 			final String xml = new File( data.getBasePath(), new File( result.getXMLFileName() ).getName() ).getAbsolutePath();
 			try 
