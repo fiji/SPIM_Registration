@@ -86,9 +86,10 @@ public class StackImgLoaderLOCI extends StackImgLoader
 	
 			}
 			
-			// update the MetaData
-			updateXMLMetaData( view, (int)img.getImg().dimension( 0 ), (int)img.getImg().dimension( 1 ), (int)img.getImg().dimension( 2 ), 
-					img.getCalX(), img.getCalY(), img.getCalZ(), false );
+			// update the MetaDataCache of the AbstractImgLoader
+			// this does not update the XML ViewSetup but has to be called explicitly before saving
+			updateMetaDataCache( view, (int)img.getImg().dimension( 0 ), (int)img.getImg().dimension( 1 ), (int)img.getImg().dimension( 2 ), 
+					img.getCalX(), img.getCalY(), img.getCalZ() );
 
 			return img.getImg();
 		} 
@@ -117,9 +118,10 @@ public class StackImgLoaderLOCI extends StackImgLoader
 			if ( img == null )
 				throw new RuntimeException( "Could not load '" + file + "'" );
 			
-			// update the MetaData
-			updateXMLMetaData( view, (int)img.getImg().dimension( 0 ), (int)img.getImg().dimension( 1 ), (int)img.getImg().dimension( 2 ), 
-					img.getCalX(), img.getCalY(), img.getCalZ(), false );
+			// update the MetaDataCache of the AbstractImgLoader
+			// this does not update the XML ViewSetup but has to be called explicitly before saving
+			updateMetaDataCache( view, (int)img.getImg().dimension( 0 ), (int)img.getImg().dimension( 1 ), (int)img.getImg().dimension( 2 ), 
+					img.getCalX(), img.getCalY(), img.getCalZ() );
 
 			return img.getImg();
 		} 
@@ -415,16 +417,19 @@ public class StackImgLoaderLOCI extends StackImgLoader
 	}
 
 	@Override
-	public void loadMetaData( final ViewId view )
+	protected void loadMetaData( final ViewId view )
 	{
 		final File file = getFile( view );
 
 		final Calibration cal = loadMetaData( file );
 		
 		if ( cal != null )
-			// update the MetaData
-			updateXMLMetaData( view, cal.getWidth(), cal.getHeight(), cal.getDepth(), 
-					cal.getCalX(), cal.getCalY(), cal.getCalZ(), true );
+		{
+			// update the MetaDataCache of the AbstractImgLoader
+			// this does not update the XML ViewSetup but has to be called explicitly before saving
+			updateMetaDataCache( view, cal.getWidth(), cal.getHeight(), cal.getDepth(), 
+					cal.getCalX(), cal.getCalY(), cal.getCalZ() );
+		}
 	}
 	
 	public static Calibration loadMetaData( final File file )

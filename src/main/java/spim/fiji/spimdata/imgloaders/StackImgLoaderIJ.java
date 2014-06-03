@@ -164,9 +164,10 @@ public class StackImgLoaderIJ extends StackImgLoader
 			}
 		}
 
-		// update the MetaData
-		updateXMLMetaData( view, imp.getWidth(), imp.getHeight(), imp.getNSlices(), 
-				imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight, imp.getCalibration().pixelDepth, false );
+		// update the MetaDataCache of the AbstractImgLoader
+		// this does not update the XML ViewSetup but has to be called explicitly before saving
+		updateMetaDataCache( view, imp.getWidth(), imp.getHeight(), imp.getNSlices(), 
+				imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight, imp.getCalibration().pixelDepth );
 
 		imp.close();
 	
@@ -230,9 +231,10 @@ public class StackImgLoaderIJ extends StackImgLoader
 			}
 		}
 		
-		// update the MetaData
-		updateXMLMetaData( view, imp.getWidth(), imp.getHeight(), imp.getNSlices(), 
-				imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight, imp.getCalibration().pixelDepth, false );
+		// update the MetaDataCache of the AbstractImgLoader
+		// this does not update the XML ViewSetup but has to be called explicitly before saving
+		updateMetaDataCache( view, imp.getWidth(), imp.getHeight(), imp.getNSlices(), 
+				imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight, imp.getCalibration().pixelDepth );
 
 		imp.close();
 
@@ -248,9 +250,10 @@ public class StackImgLoaderIJ extends StackImgLoader
 		if ( imp == null )
 			throw new RuntimeException( "Could not load '" + file + "'." );
 		
-		// update the MetaData
-		updateXMLMetaData( view, imp.getWidth(), imp.getHeight(), imp.getNSlices(), 
-				imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight, imp.getCalibration().pixelDepth, true );
+		// update the MetaDataCache of the AbstractImgLoader
+		// this does not update the XML ViewSetup but has to be called explicitly before saving
+		updateMetaDataCache( view, imp.getWidth(), imp.getHeight(), imp.getNSlices(), 
+				imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight, imp.getCalibration().pixelDepth );
 
 		imp.close();
 	}
