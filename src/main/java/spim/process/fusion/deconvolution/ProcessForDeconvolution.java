@@ -1,7 +1,5 @@
 package spim.process.fusion.deconvolution;
 
-import static spim.fiji.spimdata.ViewSetupUtils.getSizeOrDefault;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
@@ -32,6 +30,7 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.ViewSetupUtils;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
@@ -177,7 +176,7 @@ public class ProcessForDeconvolution
 			for ( final ImagePortion portion : portions )
 				if ( weightsOnly )
 				{
-					final Interval imgInterval = new FinalInterval( getSizeOrDefault( inputData.getViewSetup() ) );
+					final Interval imgInterval = new FinalInterval( ViewSetupUtils.getSizeOrLoad( inputData.getViewSetup(), inputData.getTimePoint(), spimData.getSequenceDescription().getImgLoader() ) );
 					
 					tasks.add( new ProcessForOverlapOnlyPortion(
 							portion,

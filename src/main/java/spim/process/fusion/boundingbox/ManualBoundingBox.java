@@ -360,7 +360,7 @@ public class ManualBoundingBox extends BoundingBox
 						if ( !viewDescription.isPresent() )
 							continue;
 
-						Dimensions size = ViewSetupUtils.getSizeOrDefault( viewDescription.getViewSetup() );
+						final Dimensions size = ViewSetupUtils.getSizeOrLoad( viewDescription.getViewSetup(), viewDescription.getTimePoint(), spimData.getSequenceDescription().getImgLoader() );
 						final double[] min = new double[]{ 0, 0, 0 };
 						final double[] max = new double[]{
 								size.dimension( 0 ) - 1,

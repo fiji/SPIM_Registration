@@ -654,7 +654,7 @@ public class Apply_Transformation implements PlugIn
 		final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
 				viewId.getTimePointId(), viewId.getViewSetupId() );
 
-		VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSizeOrDefault( viewDescription.getViewSetup() );
+		VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSizeOrLoad( viewDescription.getViewSetup(), viewDescription.getTimePoint(), spimData.getSequenceDescription().getImgLoader() );
 		final double calX = voxelSize.dimension( 0 ) / minResolution;
 		final double calY = voxelSize.dimension( 1 ) / minResolution;
 		final double calZ = voxelSize.dimension( 2 ) / minResolution;

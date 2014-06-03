@@ -13,6 +13,7 @@ import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
 import mpicbg.models.Tile;
 import mpicbg.spim.data.registration.ViewRegistration;
+import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
@@ -117,8 +118,9 @@ public class GlobalOptimizationSubset
 			IOFunctions.println( "Mapping back to reference frame using a " + mapBackModel.getClass().getSimpleName() );
 			
 			final ViewId referenceTile = type.getReferenceTile( this );
-			final ViewSetup referenceTileSetup = spimData.getSequenceDescription().getViewDescription( referenceTile ).getViewSetup();
-			Dimensions size = ViewSetupUtils.getSizeOrDefault( referenceTileSetup );
+			final ViewDescription referenceTileViewDescription = spimData.getSequenceDescription().getViewDescription( referenceTile );
+			final ViewSetup referenceTileSetup = referenceTileViewDescription.getViewSetup();
+			Dimensions size = ViewSetupUtils.getSizeOrLoad( referenceTileSetup, referenceTileViewDescription.getTimePoint(), spimData.getSequenceDescription().getImgLoader() );
 			long w = size.dimension( 0 );
 			long h = size.dimension( 1 );
 

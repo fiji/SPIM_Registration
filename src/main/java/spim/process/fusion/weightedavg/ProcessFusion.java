@@ -5,11 +5,10 @@ import java.util.ArrayList;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
+import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
-import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.VoxelDimensions;
-import net.imglib2.Dimensions;
 import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccessible;
@@ -67,13 +66,13 @@ public abstract class ProcessFusion
 			final TimePoint timepoint, 
 			final Channel channel );
 
-	protected Blending getBlending( final Interval interval, final ViewDescription desc )
+	protected Blending getBlending( final Interval interval, final ViewDescription desc, final ImgLoader< ? > imgLoader )
 	{
 		final float[] blending = ProcessFusion.defaultBlendingRange.clone();
 		final float[] border = ProcessFusion.defaultBlendingBorder.clone();
 		
-		final float minRes = (float)getMinRes( desc.getViewSetup() );
-		final VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSizeOrDefault( desc.getViewSetup() );
+		final float minRes = (float)getMinRes( desc, imgLoader );
+		final VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSizeOrLoad( desc.getViewSetup(), desc.getTimePoint(), imgLoader );
 
 		if ( ProcessFusion.defaultAdjustBlendingForAnisotropy )
 		{
@@ -87,13 +86,13 @@ public abstract class ProcessFusion
 		return new Blending( interval, border, blending );
 	}
 	
-	protected < T extends RealType< T > > ContentBased< T > getContentBased( final RandomAccessibleInterval< T > img, final ViewDescription desc )
+	protected < T extends RealType< T > > ContentBased< T > getContentBased( final RandomAccessibleInterval< T > img, final ViewDescription desc, final ImgLoader< ? > imgLoader )
 	{
 		final double[] sigma1 = ProcessFusion.defaultContentBasedSigma1.clone();
 		final double[] sigma2 = ProcessFusion.defaultContentBasedSigma2.clone();
 
-		final double minRes = getMinRes( desc.getViewSetup() );
-		final VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSizeOrDefault( desc.getViewSetup() );
+		final double minRes = getMinRes( desc, imgLoader );
+		final VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSizeOrLoad( desc.getViewSetup(), desc.getTimePoint(), imgLoader );
 
 		if ( ProcessFusion.defaultAdjustContentBasedSigmaForAnisotropy )
 		{
@@ -109,22 +108,23 @@ public abstract class ProcessFusion
 	
 	protected < T extends RealType< T > > ArrayList< RealRandomAccessible< FloatType > > getAllWeights(
 			final RandomAccessibleInterval< T > img,
-			final ViewDescription desc )
+			final ViewDescription desc,
+			final ImgLoader< ? > imgLoader )
 	{
 		final ArrayList< RealRandomAccessible< FloatType > > weigheners = new ArrayList< RealRandomAccessible< FloatType > >();
 		
 		if ( useBlending )
-			weigheners.add( getBlending( new FinalInterval( img ), desc ) );
+			weigheners.add( getBlending( new FinalInterval( img ), desc, imgLoader ) );
 		
 		if ( useContentBased )
-			weigheners.add( getContentBased( img, desc ) );
+			weigheners.add( getContentBased( img, desc, imgLoader ) );
 		
 		return weigheners;
 	}
 
-	public static double getMinRes( final ViewSetup setup )
+	public static double getMinRes( final ViewDescription desc, final ImgLoader< ? > imgLoader )
 	{
-		final Dimensions size = ViewSetupUtils.getSizeOrDefault( setup );
+		final VoxelDimensions size = ViewSetupUtils.getVoxelSizeOrLoad( desc.getViewSetup(), desc.getTimePoint(), imgLoader );
 		return Math.min( size.dimension( 0 ), Math.min( size.dimension( 1 ), size.dimension( 2 ) ) );
 	}
 

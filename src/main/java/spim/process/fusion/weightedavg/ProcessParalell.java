@@ -80,7 +80,7 @@ public class ProcessParalell extends ProcessFusion
 		final ArrayList< ArrayList< RealRandomAccessible< FloatType > > > weights = new ArrayList< ArrayList< RealRandomAccessible< FloatType > > >();
 		
 		for ( int i = 0; i < inputData.size(); ++i )
-			weights.add( getAllWeights( imgs.get( i ), inputData.get( i ) ) );
+			weights.add( getAllWeights( imgs.get( i ), inputData.get( i ), spimData.getSequenceDescription().getImgLoader() ) );
 		
 		// split up into many parts for multithreading
 		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( fusedImg.size(), Runtime.getRuntime().availableProcessors() * 4 );

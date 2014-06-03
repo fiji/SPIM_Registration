@@ -51,16 +51,21 @@ public class Specify_Calibration implements PlugIn
 					final String name = "angle: " + a.getName() + " channel: " + c.getName() + " illum: " + i.getName() + 
 							", present at timepoint: " + t.getName() + ": " + desc.isPresent();
 
-					VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSizeOrDefault( viewSetup );
+					// only consider voxelsizes as defined in the XML
+					VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSize( viewSetup );
+
+					if ( voxelSize == null )
+						voxelSize = new FinalVoxelDimensions( "", new double[]{ 1, 1, 1 } );
+
 					final double x = voxelSize.dimension( 0 );
 					final double y = voxelSize.dimension( 1 );
 					final double z = voxelSize.dimension( 2 );
-					
+
 					IOFunctions.println( "cal: [" + x + ", " + y + ", " + z + "] -- " + name );
-					
+
 					final Cal calTmp = new Cal( new double[]{ x, y, z } );
 					boolean foundMatch = false;
-					
+
 					for ( int j = 0; j < calibrations.size() && !foundMatch; ++j )
 					{
 						final Cal cal = calibrations.get( j );
@@ -70,7 +75,7 @@ public class Specify_Calibration implements PlugIn
 							foundMatch = true;
 						}
 					}
-					
+
 					if ( !foundMatch )
 						calibrations.add( calTmp );
 				}

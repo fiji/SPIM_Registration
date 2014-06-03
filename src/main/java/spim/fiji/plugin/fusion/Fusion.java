@@ -166,12 +166,12 @@ public abstract class Fusion
 					{
 						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
 						final ViewDescription desc = spimData.getSequenceDescription().getViewDescription( viewId );
-						
+
 						if ( desc.isPresent() )
 						{
 							final ViewSetup viewSetup = desc.getViewSetup();
-							final long numPixel = Intervals.numElements( ViewSetupUtils.getSizeOrDefault( viewSetup ) );
-							
+							final long numPixel = Intervals.numElements( ViewSetupUtils.getSizeOrLoad( viewSetup, desc.getTimePoint(), spimData.getSequenceDescription().getImgLoader() ) );
+
 							avgSize += numPixel;
 							++countImgs;
 						}
