@@ -1,11 +1,11 @@
 package spim.fiji.spimdata;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
@@ -48,15 +48,9 @@ public class XmlIoSpimData2 extends XmlIoAbstractSpimData< SequenceDescription, 
 			try
 			{
 				for ( int i = maxExistingBackup; i >= 1; --i )
-				{
-					final Path input = Paths.get( xmlFilename + "~" + i );
-					final Path output = Paths.get( xmlFilename + "~" + (i + 1) );
-					Files.copy( input, output, StandardCopyOption.REPLACE_EXISTING );
-				}
+					copyFile( new File( xmlFilename + "~" + i ), new File( xmlFilename + "~" + (i + 1) ) );
 
-				final Path input = Paths.get( xmlFilename );
-				final Path output = Paths.get( xmlFilename + "~1" );
-				Files.copy( input, output, StandardCopyOption.REPLACE_EXISTING );
+				copyFile( new File( xmlFilename ), new File( xmlFilename + "~1" ) );
 			}
 			catch ( final IOException e )
 			{
@@ -66,6 +60,32 @@ public class XmlIoSpimData2 extends XmlIoAbstractSpimData< SequenceDescription, 
 		}
 
 		super.save( spimData, xmlFilename );
+	}
+	
+	 
+	protected static void copyFile( final File inputFile, final File outputFile ) throws IOException
+	{
+		InputStream input = null;
+		OutputStream output = null;
+		
+		try
+		{
+			input = new FileInputStream( inputFile );
+			output = new FileOutputStream( outputFile );
+
+			final byte[] buf = new byte[ 65536 ];
+			int bytesRead;
+			while ( ( bytesRead = input.read( buf ) ) > 0 )
+				output.write( buf, 0, bytesRead );
+
+		}
+		finally
+		{
+			if ( input != null )
+				input.close();
+			if ( output != null )
+				output.close();			
+		}
 	}
 
 	@Override
