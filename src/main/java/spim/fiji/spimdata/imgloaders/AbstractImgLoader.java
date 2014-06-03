@@ -21,22 +21,22 @@ public abstract class AbstractImgLoader implements ImgLoader< UnsignedShortType 
 {
 	protected ImgFactory< ? extends NativeType< ? > > imgFactory;
 	
-	private final HashMap< ViewId, Pair< Dimensions, VoxelDimensions > > imageMetaDataCache;
+	private final HashMap< Integer, Pair< Dimensions, VoxelDimensions > > imageMetaDataCache;
 
 	protected AbstractImgLoader()
 	{
 		imgFactory = null;
-		imageMetaDataCache = new HashMap< ViewId, Pair< Dimensions, VoxelDimensions > >();
+		imageMetaDataCache = new HashMap< Integer, Pair< Dimensions, VoxelDimensions > >();
 	}
 
 	/**
 	 * Updates the cached imageMetaData
 	 */
-	protected void updateMetaDataCache( final ViewId view,
+	protected void updateMetaDataCache( final int viewSetupId,
 			final int w, final int h, final int d,
 			final double calX, final double calY, final double calZ )
 	{
-		imageMetaDataCache.put( view, new ValuePair< Dimensions, VoxelDimensions >(
+		imageMetaDataCache.put( viewSetupId, new ValuePair< Dimensions, VoxelDimensions >(
 				new FinalDimensions( w, h, d ),
 				new FinalVoxelDimensions( "", calX, calY, calZ ) ) );
 	}
@@ -79,7 +79,7 @@ public abstract class AbstractImgLoader implements ImgLoader< UnsignedShortType 
 	 * @param forceUpdate - overwrite the data if it is already present
 	 */
 	public void updateXMLMetaData( final SpimData data, final boolean forceUpdate )
-	{
+	{	
 		updateXMLMetaData( data.getSequenceDescription().getViewSetupsOrdered(), forceUpdate );
 	}
 
@@ -104,10 +104,10 @@ public abstract class AbstractImgLoader implements ImgLoader< UnsignedShortType 
 	 */
 	public boolean updateXMLMetaData( final ViewSetup setup, final boolean forceUpdate )
 	{
-		if ( imageMetaDataCache.containsKey( setup ) )
+		if ( imageMetaDataCache.containsKey( setup.getId() ) )
 		{
-			final Pair< Dimensions, VoxelDimensions > metaData = imageMetaDataCache.get( setup );
-			
+			final Pair< Dimensions, VoxelDimensions > metaData = imageMetaDataCache.get( setup.getId() );
+
 			if ( !setup.hasSize() || forceUpdate )
 				setup.setSize( metaData.getA() );
 

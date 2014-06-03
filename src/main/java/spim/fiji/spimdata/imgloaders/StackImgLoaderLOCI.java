@@ -88,7 +88,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 			
 			// update the MetaDataCache of the AbstractImgLoader
 			// this does not update the XML ViewSetup but has to be called explicitly before saving
-			updateMetaDataCache( view, (int)img.getImg().dimension( 0 ), (int)img.getImg().dimension( 1 ), (int)img.getImg().dimension( 2 ), 
+			updateMetaDataCache( view.getViewSetupId(), (int)img.getImg().dimension( 0 ), (int)img.getImg().dimension( 1 ), (int)img.getImg().dimension( 2 ), 
 					img.getCalX(), img.getCalY(), img.getCalZ() );
 
 			return img.getImg();
@@ -120,7 +120,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 			
 			// update the MetaDataCache of the AbstractImgLoader
 			// this does not update the XML ViewSetup but has to be called explicitly before saving
-			updateMetaDataCache( view, (int)img.getImg().dimension( 0 ), (int)img.getImg().dimension( 1 ), (int)img.getImg().dimension( 2 ), 
+			updateMetaDataCache( view.getViewSetupId(), (int)img.getImg().dimension( 0 ), (int)img.getImg().dimension( 1 ), (int)img.getImg().dimension( 2 ), 
 					img.getCalX(), img.getCalY(), img.getCalZ() );
 
 			return img.getImg();
@@ -427,7 +427,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		{
 			// update the MetaDataCache of the AbstractImgLoader
 			// this does not update the XML ViewSetup but has to be called explicitly before saving
-			updateMetaDataCache( view, cal.getWidth(), cal.getHeight(), cal.getDepth(), 
+			updateMetaDataCache( view.getViewSetupId(), cal.getWidth(), cal.getHeight(), cal.getDepth(), 
 					cal.getCalX(), cal.getCalY(), cal.getCalZ() );
 		}
 	}

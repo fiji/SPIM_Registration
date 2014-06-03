@@ -166,7 +166,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 
 		// update the MetaDataCache of the AbstractImgLoader
 		// this does not update the XML ViewSetup but has to be called explicitly before saving
-		updateMetaDataCache( view, imp.getWidth(), imp.getHeight(), imp.getNSlices(), 
+		updateMetaDataCache( view.getViewSetupId(), imp.getWidth(), imp.getHeight(), imp.getNSlices(), 
 				imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight, imp.getCalibration().pixelDepth );
 
 		imp.close();
@@ -233,7 +233,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 		
 		// update the MetaDataCache of the AbstractImgLoader
 		// this does not update the XML ViewSetup but has to be called explicitly before saving
-		updateMetaDataCache( view, imp.getWidth(), imp.getHeight(), imp.getNSlices(), 
+		updateMetaDataCache( view.getViewSetupId(), imp.getWidth(), imp.getHeight(), imp.getNSlices(), 
 				imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight, imp.getCalibration().pixelDepth );
 
 		imp.close();
@@ -252,7 +252,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 		
 		// update the MetaDataCache of the AbstractImgLoader
 		// this does not update the XML ViewSetup but has to be called explicitly before saving
-		updateMetaDataCache( view, imp.getWidth(), imp.getHeight(), imp.getNSlices(), 
+		updateMetaDataCache( view.getViewSetupId(), imp.getWidth(), imp.getHeight(), imp.getNSlices(), 
 				imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight, imp.getCalibration().pixelDepth );
 
 		imp.close();
