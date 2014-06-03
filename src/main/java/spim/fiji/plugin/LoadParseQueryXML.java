@@ -18,9 +18,7 @@ import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.IntegerPattern;
 import mpicbg.spim.data.sequence.TimePoint;
-import mpicbg.spim.data.sequence.TimePointsPattern;
 import mpicbg.spim.data.sequence.ViewDescription;
-import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
@@ -683,34 +681,11 @@ public class LoadParseQueryXML
 				for ( final ViewDescription v : xml.data.getSequenceDescription().getViewDescriptions().values() )
 					if ( !v.isPresent() )
 						++countMissingViews;
-				
-				SpimData2 spimData = xml.data;
-				
-				System.out.println( "Num Timepoints: " + spimData.getSequenceDescription().getTimePoints().size() );
-				
-				if ( spimData.getSequenceDescription().getTimePoints() instanceof TimePointsPattern )
-					System.out.println( ( (TimePointsPattern)spimData.getSequenceDescription().getTimePoints() ).getPattern() );
-				
-				for ( final TimePoint t : spimData.getSequenceDescription().getTimePoints().getTimePointsOrdered() )
-				{
-					System.out.println( "\nTimepoint: " + t.getId() );
-					
-					for ( final ViewSetup setup : spimData.getSequenceDescription().getViewSetupsOrdered() )
-					{
-						System.out.println( "Setup: " + setup.getId() );
-						if ( setup.hasName() )
-							System.out.println( setup.getName() );
-						
-						System.out.println( spimData.getViewRegistrations().getViewRegistration( t.getId(), setup.getId() ).getModel() );
-					}
-				}
-				
+
 				final int angles = xml.data.getSequenceDescription().getAllAngles().size();
 				final int channels = xml.data.getSequenceDescription().getAllChannels().size();
 				final int illums = xml.data.getSequenceDescription().getAllIlluminations().size();
 				final int timepoints = xml.data.getSequenceDescription().getTimePoints().size();
-
-				System.exit( 0 );
 
 				xml.message1 = goodMsg1;
 				xml.message2 = angles + " angles, " + channels + " channels, " + illums + " illumination directions, " + timepoints + " timepoints, " + countMissingViews + " missing views";
