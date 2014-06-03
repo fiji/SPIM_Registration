@@ -94,6 +94,8 @@ public class Interest_Point_Detection implements PlugIn
 			
 			for ( int i = 0; i < channels.size(); ++i )
 				gd.addCheckbox( "Channel_" + channels.get( i ).getName(), defaultChannelChoice[ i ] );
+
+			gd.addMessage( "" );
 		}
 		
 		gd.addCheckbox( "Define_anisotropy for segmentation", defaultDefineAnisotropy );
