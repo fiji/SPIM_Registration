@@ -124,7 +124,9 @@ public class DifferenceOfMean extends DifferenceOf
 								imageSigmaY,
 								imageSigmaZ,
 								findMin[ c.getId() ],
-								findMax[ c.getId() ] ) );
+								findMax[ c.getId() ],
+								minIntensity,
+								maxIntensity ) );
 						img.close();
 
 				        benchmark.computation += System.currentTimeMillis() - time2;

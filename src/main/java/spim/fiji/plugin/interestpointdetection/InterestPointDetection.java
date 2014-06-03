@@ -77,9 +77,10 @@ public abstract class InterestPointDetection
 	 * 
 	 * @param defineAnisotropy - whether to use/query for anisotropy in resolution of the data
 	 * @param additionalSmoothing - smooth in certain dimensions before computing the segmentation
+	 * @param setMinMax - whether to define minimal and maximal intensity relative to whom everything is normalized to [0...1]
 	 * @return
 	 */
-	public abstract boolean queryParameters( final boolean defineAnisotropy, final boolean additionalSmoothing );
+	public abstract boolean queryParameters( final boolean defineAnisotropy, final boolean additionalSmoothing, final boolean setMinMax );
 	
 	/**
 	 * @param spimData

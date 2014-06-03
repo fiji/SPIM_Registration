@@ -120,7 +120,9 @@ public class DifferenceOfGaussian extends DifferenceOf
 								Math.min( imageSigmaY, (float)sigma[ c.getId() ] ),
 								Math.min( imageSigmaZ, (float)sigma[ c.getId() ] ),
 								findMin[ c.getId() ],
-								findMax[ c.getId() ] ) );
+								findMax[ c.getId() ],
+								minIntensity,
+								maxIntensity ) );
 						img.close();
 
 				        benchmark.computation += System.currentTimeMillis() - time2;

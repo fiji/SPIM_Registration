@@ -21,12 +21,6 @@ import spim.fiji.spimdata.SpimData2;
 
 public abstract class DifferenceOf extends InterestPointDetection
 {	
-	/**
-	 * Can be used to manually set min (minmaxset[0]) and max (minmaxset[1]) value for all views
-	 * that are opened. Otherwise min and max will be read from the images 
-	 */
-	public static float[] minmaxset = null;
-
 	public static String[] localizationChoice = { "None", "3-dimensional quadratic fit", "Gaussian mask localization fit" };	
 	public static String[] brightnessChoice = { "Very weak & small (beads)", "Weak & small (beads)", "Comparable to Sample & small (beads)", "Strong & small (beads)", "Advanced ...", "Interactive ..." };
 	
@@ -45,8 +39,12 @@ public abstract class DifferenceOf extends InterestPointDetection
 	public static double defaultAdditionalSigmaY = 0.0;
 	public static double defaultAdditionalSigmaZ = 0.0;
 
+	public static double defaultMinIntensity = 0.0;
+	public static double defaultMaxIntensity = 65535.0;
+	
 	protected double imageSigmaX, imageSigmaY, imageSigmaZ;
 	protected double additionalSigmaX, additionalSigmaY, additionalSigmaZ;
+	protected double minIntensity, maxIntensity;
 	protected int localization;
 
 	public DifferenceOf(
@@ -60,8 +58,8 @@ public abstract class DifferenceOf extends InterestPointDetection
 	}
 
 	@Override
-	public boolean queryParameters( final boolean defineAnisotropy, final boolean additionalSmoothing )
-	{		
+	public boolean queryParameters( final boolean defineAnisotropy, final boolean additionalSmoothing, final boolean setMinMax )
+	{
 		final List< Channel > channels = spimData.getSequenceDescription().getAllChannelsOrdered();
 
 		// tell the implementing classes the total number of channels
@@ -90,7 +88,7 @@ public abstract class DifferenceOf extends InterestPointDetection
 			gd.addMessage( "Please consider that usually the lower resolution in z is compensated by a lower sampling rate in z.\n" +
 					"Only adjust the initial sigma's if this is not the case.", GUIHelper.mediumstatusfont );
 		}
-		
+
 		if ( additionalSmoothing )
 		{
 			gd.addNumericField( "Presmooth_Sigma_X", defaultAdditionalSigmaX, 5 );
@@ -98,6 +96,12 @@ public abstract class DifferenceOf extends InterestPointDetection
 			gd.addNumericField( "Presmooth_Sigma_Z", defaultAdditionalSigmaZ, 5 );			
 
 			gd.addMessage( "Note: a sigma of 0.0 means no additional smoothing.", GUIHelper.mediumstatusfont );
+		}
+
+		if ( setMinMax )
+		{
+			gd.addNumericField( "Minimal_intensity", defaultMinIntensity, 1 );
+			gd.addNumericField( "Maximal_intensity", defaultMaxIntensity, 1 );
 		}
 		
 		gd.showDialog();
@@ -135,6 +139,16 @@ public abstract class DifferenceOf extends InterestPointDetection
 		else
 		{
 			additionalSigmaX = additionalSigmaY = additionalSigmaZ = 0.0;
+		}
+		
+		if ( setMinMax )
+		{
+			minIntensity = defaultMinIntensity = gd.getNextNumber();
+			maxIntensity = defaultMaxIntensity = gd.getNextNumber();
+		}
+		else
+		{
+			minIntensity = maxIntensity = Double.NaN;
 		}
 		
 		for ( int c = 0; c < channelsToProcess.size(); ++c )

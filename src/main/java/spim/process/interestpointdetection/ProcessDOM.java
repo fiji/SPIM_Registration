@@ -11,7 +11,6 @@ import mpicbg.spim.segmentation.DOM;
 import mpicbg.spim.segmentation.IntegralImage3d;
 import mpicbg.spim.segmentation.InteractiveIntegral;
 import mpicbg.spim.segmentation.SimplePeak;
-import spim.fiji.plugin.interestpointdetection.DifferenceOf;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 
 public class ProcessDOM 
@@ -26,21 +25,23 @@ public class ProcessDOM
 			final double imageSigmaY,
 			final double imageSigmaZ,
 			final boolean findMin, 
-			final boolean findMax )
+			final boolean findMax,
+			final double minIntensity,
+			final double maxIntensity )
 	{
 		final Image< LongType > integralImg = IntegralImage3d.compute( img );
 		
 		final FloatType min = new FloatType();
 		final FloatType max = new FloatType();
 		
-		if ( DifferenceOf.minmaxset == null )
+		if ( Double.isNaN( minIntensity ) || Double.isNaN( maxIntensity ) || minIntensity == maxIntensity )
 		{
 			DOM.computeMinMax( img, min, max );
 		}
 		else
 		{
-			min.set( DifferenceOf.minmaxset[ 0 ] );
-			max.set( DifferenceOf.minmaxset[ 1 ] );
+			min.set( (float)minIntensity );
+			max.set( (float)maxIntensity );
 		}
 
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): min intensity = " + min.get() + ", max intensity = " + max.get() );
