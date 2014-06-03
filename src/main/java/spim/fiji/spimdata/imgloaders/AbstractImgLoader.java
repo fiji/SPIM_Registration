@@ -119,26 +119,30 @@ public abstract class AbstractImgLoader implements ImgLoader< UnsignedShortType 
 	 * 
 	 * @param setup - {@link ViewSetup}s that can potentially be updated if it is in the cache
 	 * @param forceUpdate - overwrite the data if it is already present
-	 * @return true if it was updated or could have been updated but was already there, false if it was not in the cache
+	 * @return true if something was updated, false if it was not in the cache or if could have been updated but was already there
 	 */
 	public boolean updateXMLMetaData( final ViewSetup setup, final boolean forceUpdate )
 	{
+		boolean updated = false;
+		
 		if ( viewIdLookUp.containsKey( setup.getId() ) )
 		{
 			// look up the metadata using the ViewId linked by the ViewSetupId
 			final Pair< Dimensions, VoxelDimensions > metaData = imageMetaDataCache.get( viewIdLookUp.get( setup.getId() ) );
 
 			if ( !setup.hasSize() || forceUpdate )
+			{
 				setup.setSize( metaData.getA() );
+				updated = true;
+			}
 
 			if ( !setup.hasVoxelSize() || forceUpdate )
+			{
 				setup.setVoxelSize( metaData.getB() );
-
-			return true;
+				updated = true;
+			}
 		}
-		else
-		{
-			return false;
-		}
+		
+		return updated;
 	}
 }
