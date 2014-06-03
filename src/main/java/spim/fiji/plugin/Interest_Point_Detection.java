@@ -180,12 +180,15 @@ public class Interest_Point_Detection implements PlugIn
 				vipl.addInterestPointList( label, list );
 			}
 			
-			// save the xml
-			final XmlIoSpimData2 io = new XmlIoSpimData2();
-			
 			// update metadata if necessary
 			if ( data.getSequenceDescription().getImgLoader() instanceof AbstractImgLoader )
+			{
+				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Updating metadata ... " );
 				( (AbstractImgLoader)data.getSequenceDescription().getImgLoader() ).updateXMLMetaData( data, false );
+			}
+			
+			// save the xml
+			final XmlIoSpimData2 io = new XmlIoSpimData2();
 			
 			final String xml = new File( data.getBasePath(), new File( result.getXMLFileName() ).getName() ).getAbsolutePath();
 			try 
