@@ -145,6 +145,8 @@ public class Image_Fusion implements PlugIn
 				}
 			}
 		}
+
+		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Fusion finished." );
 	}
 
 	public static void main( final String[] args )
