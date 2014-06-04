@@ -23,7 +23,6 @@ import net.imglib2.algorithm.gauss3.Gauss3;
 import net.imglib2.img.Img;
 import net.imglib2.img.imageplus.ImagePlusImgFactory;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
-import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
 import spim.fiji.spimdata.SpimData2;
@@ -37,7 +36,8 @@ public class Visualize_Detections implements PlugIn
 {
 	protected static String[] detectionsChoice = new String[]{ "All detections", "Corresponding detections" };
 	public static int defaultDetections = 0;
-	public static boolean defaultDisplayInput = true;
+	public static double defaultDownsample = 1.0;
+	public static boolean defaultDisplayInput = false;
 	
 	@Override
 	public void run( final String arg0 )
@@ -75,6 +75,7 @@ public class Visualize_Detections implements PlugIn
 		}
 		
 		gd.addChoice( "Display", detectionsChoice, detectionsChoice[ defaultDetections ] );
+		gd.addNumericField( "Downsample_detections_rendering", defaultDownsample, 2, 4, "times" );
 		gd.addCheckbox( "Display_input_images", defaultDisplayInput );
 		
 		GUIHelper.addWebsite( gd );
@@ -114,6 +115,7 @@ public class Visualize_Detections implements PlugIn
 			IOFunctions.println( "displaying channel: " + c.getChannel().getId()  + " label: '" + c.getLabel() + "'" );
 		
 		final int detections = defaultDetections = gd.getNextChoiceIndex();
+		final double downsample = defaultDownsample = gd.getNextNumber();
 		final boolean displayInput = defaultDisplayInput = gd.getNextBoolean();
 		
 		//
@@ -161,16 +163,17 @@ public class Visualize_Detections implements PlugIn
 							}
 						}
 						
-						di.exportImage( renderSegmentations( result.getData(), viewId, c.getLabel(), detections, interval ), "seg of " + name );
+						di.exportImage( renderSegmentations( result.getData(), viewId, c.getLabel(), detections, interval, downsample ), "seg of " + name );
 					}
 	}
 	
-	protected Img< FloatType > renderSegmentations(
+	protected Img< UnsignedShortType > renderSegmentations(
 			final SpimData2 data,
 			final ViewId viewId,
 			final String label,
 			final int detections,
-			Interval interval )
+			Interval interval,
+			final double downsample )
 	{		
 		final InterestPointList ipl = data.getViewInterestPoints().getViewInterestPointLists( viewId ).getInterestPointList( label );
 		
@@ -201,12 +204,24 @@ public class Visualize_Detections implements PlugIn
 			
 			interval = new FinalInterval( min, max );
 		}
+		
+		// downsample
+		final long[] min = new long[ interval.numDimensions() ];
+		final long[] max = new long[ interval.numDimensions() ];
+		
+		for ( int d = 0; d < interval.numDimensions(); ++d )
+		{
+			min[ d ] = Math.round( interval.min( d ) / downsample );
+			max[ d ] = Math.round( interval.max( d ) / downsample ) ;
+		}
+		
+		interval = new FinalInterval( min, max );
 	
-		final Img< FloatType > s = new ImagePlusImgFactory< FloatType >().create( interval, new FloatType() );
-		final RandomAccess< FloatType > r = Views.extendZero( s ).randomAccess();
+		final Img< UnsignedShortType > s = new ImagePlusImgFactory< UnsignedShortType >().create( interval, new UnsignedShortType() );
+		final RandomAccess< UnsignedShortType > r = Views.extendZero( s ).randomAccess();
 		
 		final int n = s.numDimensions();
-		final int[] tmp = new int[ n ];
+		final long[] tmp = new long[ n ];
 		
 		if ( detections == 0 )
 		{
@@ -215,10 +230,10 @@ public class Visualize_Detections implements PlugIn
 			for ( final InterestPoint ip : ipl.getInterestPoints() )
 			{
 				for ( int d = 0; d < n; ++d )
-					tmp[ d ] = Math.round( ip.getL()[ d ] );
+					tmp[ d ] = Math.round( ip.getL()[ d ] / downsample );
 	
 				r.setPosition( tmp );
-				r.get().set( 1 );
+				r.get().set( 65535 );
 			}
 		}
 		else
@@ -236,7 +251,7 @@ public class Visualize_Detections implements PlugIn
 			for ( final CorrespondingInterestPoints ip : ipl.getCorrespondingInterestPoints() )
 			{	
 				for ( int d = 0; d < n; ++d )
-					tmp[ d ] = Math.round( map.get( ip.getDetectionId() ).getL()[ d ] );
+					tmp[ d ] = Math.round( map.get( ip.getDetectionId() ).getL()[ d ] / downsample );
 	
 				r.setPosition( tmp );
 				r.get().set( 1 );
