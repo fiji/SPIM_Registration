@@ -143,7 +143,7 @@ public class Interest_Point_Registration implements PlugIn
 		int i = 0;
 		for ( final Channel channel : channels )
 		{
-			final String[] labels = getAllInterestPointLabelsForChannel( result.getData(), result.getTimePointsToProcess(), channel );
+			final String[] labels = getAllInterestPointLabelsForChannel( result.getData(), result.getTimePointsToProcess(), channel, "register" );
 			
 			if ( channelLabels == null )
 				return;
@@ -192,13 +192,15 @@ public class Interest_Point_Registration implements PlugIn
 			
 			if ( channelChoice < channelLabels.get( i ).length - 1 )
 			{
-				String label = channelLabels.get( i++ )[ channelChoice ];
+				String label = channelLabels.get( i )[ channelChoice ];
 				
 				if ( label.contains( warningLabel ) )
 					label = label.substring( 0, label.indexOf( warningLabel ) );
 				
 				channelsToProcess.add( new ChannelProcess( channel, label ) );
 			}
+
+			++i;
 		}
 		
 		if ( channelsToProcess.size() == 0 )
@@ -406,9 +408,10 @@ public class Interest_Point_Registration implements PlugIn
 	 * @param spimData
 	 * @param timepointsToProcess
 	 * @param channel
+	 * @param doWhat - the text for not doing anything with this channel
 	 * @return
 	 */
-	protected static String[] getAllInterestPointLabelsForChannel( final SpimData2 spimData, final ArrayList< TimePoint > timepointsToProcess, final Channel channel )
+	protected static String[] getAllInterestPointLabelsForChannel( final SpimData2 spimData, final ArrayList< TimePoint > timepointsToProcess, final Channel channel, final String doWhat )
 	{
 		final ViewInterestPoints interestPoints = spimData.getViewInterestPoints();
 		final HashMap< String, Integer > labels = new HashMap< String, Integer >();
@@ -471,7 +474,7 @@ public class Interest_Point_Registration implements PlugIn
 			++i;
 		}
 		
-		allLabels[ i ] = "[DO NOT register this channel]";
+		allLabels[ i ] = "[DO NOT " + doWhat + " this channel]";
 		
 		return allLabels;
 	}

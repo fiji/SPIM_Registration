@@ -20,7 +20,6 @@ import net.imglib2.Interval;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.gauss3.Gauss3;
-import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.Img;
 import net.imglib2.img.imageplus.ImagePlusImgFactory;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
@@ -63,7 +62,7 @@ public class Visualize_Detections implements PlugIn
 		int j = 0;
 		for ( final Channel channel : channels )
 		{
-			final String[] labels = Interest_Point_Registration.getAllInterestPointLabelsForChannel( result.getData(), result.getTimePointsToProcess(), channel );
+			final String[] labels = Interest_Point_Registration.getAllInterestPointLabelsForChannel( result.getData(), result.getTimePointsToProcess(), channel, "visualize" );
 			
 			if ( channelLabels == null )
 				return;
@@ -94,13 +93,15 @@ public class Visualize_Detections implements PlugIn
 			
 			if ( channelChoice < channelLabels.get( j ).length - 1 )
 			{
-				String label = channelLabels.get( j++ )[ channelChoice ];
+				String label = channelLabels.get( j )[ channelChoice ];
 				
 				if ( label.contains( Interest_Point_Registration.warningLabel ) )
 					label = label.substring( 0, label.indexOf( Interest_Point_Registration.warningLabel ) );
 				
 				channelsToProcess.add( new ChannelProcess( channel, label ) );
 			}
+
+			++j;
 		}
 		
 		if ( channelsToProcess.size() == 0 )
@@ -246,9 +247,14 @@ public class Visualize_Detections implements PlugIn
 		{
 			Gauss3.gauss( new double[]{ 2, 2, 2 }, Views.extendZero( s ), s );
 		}
-		catch (IncompatibleTypeException e)
+		catch ( Exception e )
 		{
+			IOFunctions.println( "Gaussian Convolution of detections failed: " + e );
 			e.printStackTrace();
+		}
+		catch ( OutOfMemoryError e )
+		{
+			IOFunctions.println( "Gaussian Convolution of detections failed due to out of memory, just showing plain image: " + e );
 		}
 		
 		return s;
