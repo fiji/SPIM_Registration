@@ -254,7 +254,7 @@ public class Visualize_Detections implements PlugIn
 					tmp[ d ] = Math.round( map.get( ip.getDetectionId() ).getL()[ d ] / downsample );
 	
 				r.setPosition( tmp );
-				r.get().set( 1 );
+				r.get().set( 65535 );
 			}
 		}
 
