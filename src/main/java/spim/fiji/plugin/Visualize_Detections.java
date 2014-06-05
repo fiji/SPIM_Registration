@@ -24,6 +24,7 @@ import net.imglib2.img.Img;
 import net.imglib2.img.imageplus.ImagePlusImgFactory;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.view.Views;
+import spim.fiji.ImgLib2Temp;
 import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
@@ -159,7 +160,9 @@ public class Visualize_Detections implements PlugIn
 							}
 							else
 							{
-								interval = new FinalInterval( viewDescription.getViewSetup().getSize() );
+								interval = ImgLib2Temp.getIntervalFromDimension( viewDescription.getViewSetup().getSize() );
+								// TODO: change back to imglib2 implementation once uploaded to Fiji
+								//interval = new FinalInterval( viewDescription.getViewSetup().getSize() );
 							}
 						}
 						

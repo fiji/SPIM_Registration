@@ -20,7 +20,6 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
-import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
@@ -28,6 +27,7 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import spim.fiji.ImgLib2Temp;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
@@ -176,7 +176,9 @@ public class ProcessForDeconvolution
 			for ( final ImagePortion portion : portions )
 				if ( weightsOnly )
 				{
-					final Interval imgInterval = new FinalInterval( ViewSetupUtils.getSizeOrLoad( inputData.getViewSetup(), inputData.getTimePoint(), spimData.getSequenceDescription().getImgLoader() ) );
+					final Interval imgInterval = ImgLib2Temp.getIntervalFromDimension( ViewSetupUtils.getSizeOrLoad( inputData.getViewSetup(), inputData.getTimePoint(), spimData.getSequenceDescription().getImgLoader() ) );
+					// TODO: change back to imglib2 implementation once uploaded to Fiji
+					//final Interval imgInterval = new FinalInterval( ViewSetupUtils.getSizeOrLoad( inputData.getViewSetup(), inputData.getTimePoint(), spimData.getSequenceDescription().getImgLoader() ) );
 					
 					tasks.add( new ProcessForOverlapOnlyPortion(
 							portion,
