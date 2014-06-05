@@ -27,7 +27,12 @@ public class Duplicate_Transformation implements PlugIn
 		"One illumination direction to other illumination directions",
 		"One angle to other angles",
 	};
-	
+
+	public static String[] transformationChoice = new String[]{
+		"Replace all transformations",
+		""
+	};
+
 	public static int defaultChoice = 0;
 	public static int defaultTimePoint = 0;
 	public static int defaultSelectedTimePointIndex = 1;
@@ -113,7 +118,7 @@ public class Duplicate_Transformation implements PlugIn
 		}
 
 		// now save it in case something was applied
-		Interest_Point_Registration.saveXML( result.getData(), result.getXMLFileName() );
+		//Interest_Point_Registration.saveXML( result.getData(), result.getXMLFileName() );
 	}
 	
 	protected boolean applyTimepoints( final XMLParseResult result )
@@ -241,6 +246,12 @@ public class Duplicate_Transformation implements PlugIn
 				return false;
 		}
 		return true;
+	}
+	
+	protected void askForRegistrations( final GenericDialog gd )
+	{
+		gd.addMessage( "" );
+		//gd.addChoice( "", arg1, arg2);
 	}
 
 	protected boolean applyChannels( final XMLParseResult result )
