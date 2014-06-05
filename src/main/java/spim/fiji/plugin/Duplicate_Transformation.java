@@ -1,5 +1,6 @@
 package spim.fiji.plugin;
 
+import ij.ImageJ;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
@@ -15,6 +16,7 @@ import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
 import spim.fiji.spimdata.SpimData2;
@@ -30,10 +32,13 @@ public class Duplicate_Transformation implements PlugIn
 
 	public static String[] transformationChoice = new String[]{
 		"Replace all transformations",
-		""
+		"Add last transformation only",
+		"Add multiple transformations"
 	};
 
 	public static int defaultChoice = 0;
+	public static int defaultTransformationChoice = 0;
+	public static int defaultNumTransformations = 2;
 	public static int defaultTimePoint = 0;
 	public static int defaultSelectedTimePointIndex = 1;
 	public static int defaultChannel = 0;
@@ -118,9 +123,99 @@ public class Duplicate_Transformation implements PlugIn
 		}
 
 		// now save it in case something was applied
-		//Interest_Point_Registration.saveXML( result.getData(), result.getXMLFileName() );
+		Interest_Point_Registration.saveXML( result.getData(), result.getXMLFileName() );
 	}
-	
+
+	protected void askForRegistrations( final GenericDialog gd )
+	{
+		gd.addMessage( "" );
+		gd.addChoice( "Duplicate_which_transformations", transformationChoice, transformationChoice[ defaultTransformationChoice ] );
+	}
+
+	/**
+	 * 
+	 * @param gd
+	 * @return -1 means invalid/cancelled, 0 means all, >0 means how many
+	 */
+	protected int parseRegistrations( final GenericDialog gd )
+	{
+		int transformation = defaultTransformationChoice = gd.getNextChoiceIndex();
+		
+		if ( transformation == 2 )
+		{
+			final GenericDialog gd2 = new GenericDialog( "Choose number of transformations" );
+			gd2.addNumericField( "Number of transformations to add", defaultNumTransformations, 0 );
+			
+			gd2.showDialog();
+			
+			if ( gd2.wasCanceled() )
+				return -1;
+			else
+				transformation = (int)Math.round( gd2.getNextNumber() );
+		}
+		
+		return transformation;
+	}
+
+	protected void duplicateTransformations( final int transformations, final ViewId sourceViewId, final ViewId targetViewId, final SpimData2 spimData )
+	{
+		final ViewDescription sourceVD = spimData.getSequenceDescription().getViewDescription( 
+				sourceViewId.getTimePointId(), sourceViewId.getViewSetupId() );
+
+		final ViewDescription targetVD = spimData.getSequenceDescription().getViewDescription( 
+				targetViewId.getTimePointId(), targetViewId.getViewSetupId() );
+
+		final ViewSetup sourceVS = sourceVD.getViewSetup();
+		final ViewSetup targetVS = targetVD.getViewSetup();
+
+		IOFunctions.println( "Source viewId t=" + sourceVD.getTimePoint().getName() + ", ch=" + sourceVS.getChannel().getName() + ", ill=" + sourceVS.getIllumination().getName() + ", angle=" + sourceVS.getAngle().getName() );
+		IOFunctions.println( "Target viewId t=" + targetVD.getTimePoint().getName() + ", ch=" + targetVS.getChannel().getName() + ", ill=" + targetVS.getIllumination().getName() + ", angle=" + targetVS.getAngle().getName() );  
+		
+		if ( !sourceVD.isPresent() || !targetVD.isPresent() )
+		{
+			if ( !sourceVD.isPresent() )
+				IOFunctions.println( "Source viewId is NOT present" );
+			
+			if ( !targetVD.isPresent() )
+				IOFunctions.println( "Target viewId is NOT present" );
+			
+			return;
+		}
+		
+		// update the view registration
+		final ViewRegistrations viewRegistrations = spimData.getViewRegistrations();
+		
+		final ViewRegistration vrSource = viewRegistrations.getViewRegistration( sourceViewId );
+		final ViewRegistration vrTarget = viewRegistrations.getViewRegistration( targetViewId );
+		
+		// reset the transformation and add all
+		if ( transformations == 0 )
+		{
+			vrTarget.identity();
+
+			for ( final ViewTransform vt : vrSource.getTransformList() )
+			{
+				IOFunctions.println( "Concatenationg model " + vt.getName() + ", " + vt.asAffine3D() );
+				vrTarget.concatenateTransform( vt );
+			}
+		}
+		else
+		{
+			// copy the last n transformations
+			final ArrayList< ViewTransform > vts = new ArrayList< ViewTransform >();
+			for ( int k = 0; k < transformations; ++k )
+				vts.add( vrSource.getTransformList().get( k ) );
+			
+			// and add them at the end
+			for ( int k = vts.size() - 1; k >= 0; --k )
+			{
+				final ViewTransform vt = vts.get( k );
+				IOFunctions.println( "Adding model " + vt.getName() + ", " + vt.asAffine3D() );
+				vrTarget.preconcatenateTransform( vt );
+			}
+		}
+	}
+
 	protected boolean applyTimepoints( final XMLParseResult result )
 	{
 		final GenericDialog gd = new GenericDialog( "Define source and target timepoints" );
@@ -132,7 +227,9 @@ public class Duplicate_Transformation implements PlugIn
 		
 		gd.addChoice( "Source timepoint", timepoints, timepoints[ defaultTimePoint ] );
 		gd.addChoice( "Target timepoint(s)", LoadParseQueryXML.tpChoice, LoadParseQueryXML.tpChoice[ LoadParseQueryXML.defaultTPChoice ] );
-		
+
+		askForRegistrations( gd );
+
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
@@ -191,7 +288,10 @@ public class Duplicate_Transformation implements PlugIn
 		}
 		else
 		{
-			final ViewRegistrations viewRegistrations = result.getData().getViewRegistrations();
+			final int transformations = parseRegistrations( gd );
+
+			if ( transformations < 0 )
+				return false;
 
 			int countApplied = 0;
 			
@@ -208,37 +308,7 @@ public class Duplicate_Transformation implements PlugIn
 								final ViewId sourceViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), source, c, a, i );
 								final ViewId targetViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), targets.get( j ), c, a, i );
 								
-								final ViewDescription sourceViewDescription = result.getData().getSequenceDescription().getViewDescription( 
-										sourceViewId.getTimePointId(), sourceViewId.getViewSetupId() );
-
-								final ViewDescription targetViewDescription = result.getData().getSequenceDescription().getViewDescription( 
-										targetViewId.getTimePointId(), targetViewId.getViewSetupId() );
-
-								IOFunctions.println( "Source viewId t=" + source.getName() + ", ch=" + c.getName() + ", ill=" + i.getName() + ", angle=" + a.getName() );  
-								IOFunctions.println( "Target viewId t=" + targets.get( j ).getName() + ", ch=" + c.getName() + ", ill=" + i.getName() + ", angle=" + a.getName() );  
-								
-								if ( !sourceViewDescription.isPresent() || !targetViewDescription.isPresent() )
-								{
-									if ( !sourceViewDescription.isPresent() )
-										IOFunctions.println( "Source viewId is NOT present" );
-									
-									if ( !targetViewDescription.isPresent() )
-										IOFunctions.println( "Target viewId is NOT present" );
-									
-									continue;
-								}
-								
-								// update the view registration
-								final ViewRegistration vrSource = viewRegistrations.getViewRegistration( sourceViewId );
-								final ViewRegistration vrTarget = viewRegistrations.getViewRegistration( targetViewId );
-								
-								vrTarget.identity();
-								
-								for ( final ViewTransform vt : vrSource.getTransformList() )
-								{
-									IOFunctions.println( "Concatenationg model " + vt.getName() + ", " + vt.asAffine3D() );
-									vrTarget.concatenateTransform( vt );
-								}
+								duplicateTransformations( transformations, sourceViewId, targetViewId, result.getData() );
 							}
 				}
 			
@@ -246,12 +316,6 @@ public class Duplicate_Transformation implements PlugIn
 				return false;
 		}
 		return true;
-	}
-	
-	protected void askForRegistrations( final GenericDialog gd )
-	{
-		gd.addMessage( "" );
-		//gd.addChoice( "", arg1, arg2);
 	}
 
 	protected boolean applyChannels( final XMLParseResult result )
@@ -265,6 +329,8 @@ public class Duplicate_Transformation implements PlugIn
 		
 		gd.addChoice( "Source channel", channels, channels[ defaultChannel ] );
 		gd.addChoice( "Target channel(s)", LoadParseQueryXML.channelChoice, LoadParseQueryXML.channelChoice[ LoadParseQueryXML.defaultChannelChoice ] );
+		
+		askForRegistrations( gd );
 		
 		gd.showDialog();
 		
@@ -324,8 +390,11 @@ public class Duplicate_Transformation implements PlugIn
 		}
 		else
 		{
-			final ViewRegistrations viewRegistrations = result.getData().getViewRegistrations();
-
+			final int transformations = parseRegistrations( gd );
+			
+			if ( transformations < 0 )
+				return false;
+			
 			int countApplied = 0;
 			
 			for ( int j = 0; j < targets.size(); ++j )
@@ -341,37 +410,7 @@ public class Duplicate_Transformation implements PlugIn
 								final ViewId sourceViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, source, a, i );
 								final ViewId targetViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, targets.get( j ), a, i );
 								
-								final ViewDescription sourceViewDescription = result.getData().getSequenceDescription().getViewDescription( 
-										sourceViewId.getTimePointId(), sourceViewId.getViewSetupId() );
-
-								final ViewDescription targetViewDescription = result.getData().getSequenceDescription().getViewDescription( 
-										targetViewId.getTimePointId(), targetViewId.getViewSetupId() );
-
-								IOFunctions.println( "Source viewId t=" + t.getName() + ", ch=" + source.getName() + ", ill=" + i.getName() + ", angle=" + a.getName() );  
-								IOFunctions.println( "Target viewId t=" + t.getName() + ", ch=" + targets.get( j ).getName() + ", ill=" + i.getName() + ", angle=" + a.getName() );  
-								
-								if ( !sourceViewDescription.isPresent() || !targetViewDescription.isPresent() )
-								{
-									if ( !sourceViewDescription.isPresent() )
-										IOFunctions.println( "Source viewId is NOT present" );
-									
-									if ( !targetViewDescription.isPresent() )
-										IOFunctions.println( "Target viewId is NOT present" );
-									
-									continue;
-								}
-								
-								// update the view registration
-								final ViewRegistration vrSource = viewRegistrations.getViewRegistration( sourceViewId );
-								final ViewRegistration vrTarget = viewRegistrations.getViewRegistration( targetViewId );
-								
-								vrTarget.identity();
-								
-								for ( final ViewTransform vt : vrSource.getTransformList() )
-								{
-									IOFunctions.println( "Concatenationg model " + vt.getName() + ", " + vt.asAffine3D() );
-									vrTarget.concatenateTransform( vt );
-								}
+								duplicateTransformations( transformations, sourceViewId, targetViewId, result.getData() );
 							}
 				}
 			
@@ -392,7 +431,9 @@ public class Duplicate_Transformation implements PlugIn
 		
 		gd.addChoice( "Source illumination direction", illums, illums[ defaultIllum ] );
 		gd.addChoice( "Target illumination direction(s)", LoadParseQueryXML.illumChoice, LoadParseQueryXML.illumChoice[ LoadParseQueryXML.defaultIllumChoice ] );
-		
+
+		askForRegistrations( gd );
+
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
@@ -451,7 +492,10 @@ public class Duplicate_Transformation implements PlugIn
 		}
 		else
 		{
-			final ViewRegistrations viewRegistrations = result.getData().getViewRegistrations();
+			final int transformations = parseRegistrations( gd );
+			
+			if ( transformations < 0 )
+				return false;
 
 			int countApplied = 0;
 			
@@ -468,37 +512,7 @@ public class Duplicate_Transformation implements PlugIn
 								final ViewId sourceViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c, a, source );
 								final ViewId targetViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c, a, targets.get( j ) );
 								
-								final ViewDescription sourceViewDescription = result.getData().getSequenceDescription().getViewDescription( 
-										sourceViewId.getTimePointId(), sourceViewId.getViewSetupId() );
-
-								final ViewDescription targetViewDescription = result.getData().getSequenceDescription().getViewDescription( 
-										targetViewId.getTimePointId(), targetViewId.getViewSetupId() );
-
-								IOFunctions.println( "Source viewId t=" + t.getName() + ", ch=" + c.getName() + ", ill=" + source.getName() + ", angle=" + a.getName() );  
-								IOFunctions.println( "Target viewId t=" + t.getName() + ", ch=" + c.getName() + ", ill=" + targets.get( j ).getName() + ", angle=" + a.getName() );  
-								
-								if ( !sourceViewDescription.isPresent() || !targetViewDescription.isPresent() )
-								{
-									if ( !sourceViewDescription.isPresent() )
-										IOFunctions.println( "Source viewId is NOT present" );
-									
-									if ( !targetViewDescription.isPresent() )
-										IOFunctions.println( "Target viewId is NOT present" );
-									
-									continue;
-								}
-								
-								// update the view registration
-								final ViewRegistration vrSource = viewRegistrations.getViewRegistration( sourceViewId );
-								final ViewRegistration vrTarget = viewRegistrations.getViewRegistration( targetViewId );
-								
-								vrTarget.identity();
-								
-								for ( final ViewTransform vt : vrSource.getTransformList() )
-								{
-									IOFunctions.println( "Concatenationg model " + vt.getName() + ", " + vt.asAffine3D() );
-									vrTarget.concatenateTransform( vt );
-								}
+								duplicateTransformations( transformations, sourceViewId, targetViewId, result.getData() );
 							}
 				}
 			
@@ -519,7 +533,9 @@ public class Duplicate_Transformation implements PlugIn
 		
 		gd.addChoice( "Source angle", angles, angles[ defaultAngle ] );
 		gd.addChoice( "Target angles(s)", LoadParseQueryXML.angleChoice, LoadParseQueryXML.angleChoice[ LoadParseQueryXML.defaultAngleChoice ] );
-		
+
+		askForRegistrations( gd );
+
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
@@ -578,7 +594,10 @@ public class Duplicate_Transformation implements PlugIn
 		}
 		else
 		{
-			final ViewRegistrations viewRegistrations = result.getData().getViewRegistrations();
+			final int transformations = parseRegistrations( gd );
+
+			if ( transformations < 0 )
+				return false;
 
 			int countApplied = 0;
 			
@@ -595,37 +614,7 @@ public class Duplicate_Transformation implements PlugIn
 								final ViewId sourceViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c, source, i );
 								final ViewId targetViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c, targets.get( j ), i );
 								
-								final ViewDescription sourceViewDescription = result.getData().getSequenceDescription().getViewDescription( 
-										sourceViewId.getTimePointId(), sourceViewId.getViewSetupId() );
-
-								final ViewDescription targetViewDescription = result.getData().getSequenceDescription().getViewDescription( 
-										targetViewId.getTimePointId(), targetViewId.getViewSetupId() );
-
-								IOFunctions.println( "Source viewId t=" + t.getName() + ", ch=" + c.getName() + ", ill=" + i.getName() + ", angle=" + source.getName() );  
-								IOFunctions.println( "Target viewId t=" + t.getName() + ", ch=" + c.getName() + ", ill=" + i.getName() + ", angle=" + targets.get( j ).getName() );  
-								
-								if ( !sourceViewDescription.isPresent() || !targetViewDescription.isPresent() )
-								{
-									if ( !sourceViewDescription.isPresent() )
-										IOFunctions.println( "Source viewId is NOT present" );
-									
-									if ( !targetViewDescription.isPresent() )
-										IOFunctions.println( "Target viewId is NOT present" );
-									
-									continue;
-								}
-								
-								// update the view registration
-								final ViewRegistration vrSource = viewRegistrations.getViewRegistration( sourceViewId );
-								final ViewRegistration vrTarget = viewRegistrations.getViewRegistration( targetViewId );
-								
-								vrTarget.identity();
-								
-								for ( final ViewTransform vt : vrSource.getTransformList() )
-								{
-									IOFunctions.println( "Concatenationg model " + vt.getName() + ", " + vt.asAffine3D() );
-									vrTarget.concatenateTransform( vt );
-								}
+								duplicateTransformations( transformations, sourceViewId, targetViewId, result.getData() );
 							}
 				}
 			
@@ -677,6 +666,7 @@ public class Duplicate_Transformation implements PlugIn
 
 	public static void main( final String[] args )
 	{
+		new ImageJ();
 		new Duplicate_Transformation().run( null );
 	}
 }
