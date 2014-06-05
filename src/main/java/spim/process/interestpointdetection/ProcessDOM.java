@@ -86,9 +86,9 @@ public class ProcessDOM
 		if ( localization == 0 )
 			finalPeaks = Localization.noLocalization( peaks, findMin, findMax );
 		else if ( localization == 1 )
-			finalPeaks = Localization.computeQuadraticLocalization( peaks, domImg, findMin, findMax );
+			finalPeaks = Localization.computeQuadraticLocalization( peaks, domImg, findMin, findMax, threshold );
 		else
-			finalPeaks = Localization.computeGaussLocalization( peaks, domImg, ( radius2 + radius1 )/2.0, findMin, findMax );
+			finalPeaks = Localization.computeGaussLocalization( peaks, domImg, ( radius2 + radius1 )/2.0, findMin, findMax, threshold );
 
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Found " + finalPeaks.size() + " peaks." );
 		

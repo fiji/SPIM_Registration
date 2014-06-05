@@ -36,20 +36,21 @@ public class Localization
         	}
         }
         
-        return peaks2;		
+        return peaks2;
 	}
 
-	public static ArrayList< InterestPoint > computeQuadraticLocalization( final ArrayList< SimplePeak > peaks, final Image< FloatType > domImg, final boolean findMin, final boolean findMax )
+	public static ArrayList< InterestPoint > computeQuadraticLocalization( final ArrayList< SimplePeak > peaks, final Image< FloatType > domImg, final boolean findMin, final boolean findMax, final float threshold )
 	{
-		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Subpixel localization using quadratic n-dimensional fit");					
+		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Subpixel localization using quadratic n-dimensional fit");
 
-        final ArrayList< DifferenceOfGaussianPeak<FloatType> > peakList = new ArrayList<DifferenceOfGaussianPeak<FloatType>>();
+		final ArrayList< DifferenceOfGaussianPeak<FloatType> > peakList = new ArrayList<DifferenceOfGaussianPeak<FloatType>>();
 
-        for ( final SimplePeak peak : peaks )
-        	if ( ( peak.isMax && findMax ) || ( peak.isMin && findMin ) )
-        		peakList.add( new DifferenceOfGaussianPeak<FloatType>( peak.location, new FloatType( peak.intensity ), SpecialPoint.MAX ) );
+		for ( final SimplePeak peak : peaks )
+			if ( ( peak.isMax && findMax ) || ( peak.isMin && findMin ) )
+				peakList.add( new DifferenceOfGaussianPeak<FloatType>( peak.location, new FloatType( peak.intensity ), SpecialPoint.MAX ) );
 		
-        final SubpixelLocalization<FloatType> spl = new SubpixelLocalization<FloatType>( domImg, peakList );
+
+		final SubpixelLocalization<FloatType> spl = new SubpixelLocalization<FloatType>( domImg, peakList );
 		spl.setAllowMaximaTolerance( true );
 		spl.setMaxNumMoves( 10 );
 		
@@ -62,16 +63,19 @@ public class Localization
 		
 		int id = 0;
 		
-        for ( DifferenceOfGaussianPeak<FloatType> detection : peakList )
-        {
-    		detection.getSubPixelPosition( pos );
-    		peaks2.add( new InterestPoint( id++, pos.clone() ) );
-        }
-        
-        return peaks2;
+		for ( DifferenceOfGaussianPeak<FloatType> detection : peakList )
+		{
+			if ( Math.abs( detection.getValue().get() ) > threshold )
+			{
+				detection.getSubPixelPosition( pos );
+				peaks2.add( new InterestPoint( id++, pos.clone() ) );
+			}
+		}
+
+		return peaks2;
 	}
 	
-	public static ArrayList< InterestPoint > computeGaussLocalization( final ArrayList< SimplePeak > peaks, final Image< FloatType > domImg, final double sigma, final boolean findMin, final boolean findMax )
+	public static ArrayList< InterestPoint > computeGaussLocalization( final ArrayList< SimplePeak > peaks, final Image< FloatType > domImg, final double sigma, final boolean findMin, final boolean findMax, final float threshold )
 	{
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Subpixel localization using Gaussian Mask Localization");					
 

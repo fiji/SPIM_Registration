@@ -6,6 +6,7 @@ import java.util.Date;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianReal1;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.spim.io.IOFunctions;
@@ -33,7 +34,12 @@ public class ProcessDOG
 		float initialSigma = sigma;
 		
 		final float minPeakValue = threshold;
-		final float minInitialPeakValue = threshold/10.0f;
+		final float minInitialPeakValue;
+		
+		if ( localization == 0 )
+			minInitialPeakValue = minPeakValue;
+		else
+			minInitialPeakValue = threshold/10.0f;
 
 		final FloatType min = new FloatType();
 		final FloatType max = new FloatType();
@@ -90,6 +96,8 @@ public class ProcessDOG
 		
 		dog.process();
 		
+		ImageJFunctions.copyToImagePlus( dog.getDoGImage() ).show();
+		
 		final ArrayList< DifferenceOfGaussianPeak<FloatType> > peakListOld = dog.getPeaks();
 		final ArrayList< SimplePeak > peaks = new ArrayList< SimplePeak >();
 		final int n = img.getNumDimensions();
@@ -99,10 +107,10 @@ public class ProcessDOG
 			if ( peak.isValid() )
 			{
 				final int[] location = new int[ n ];
-				
+
 				for ( int d = 0; d < n; ++d )
 					location[ d ] = peak.getPosition( d );
-				
+
 				peaks.add( new SimplePeak( location, peak.getValue().get(), peak.isMin(), peak.isMax() ) );
 			}
 		}
@@ -115,12 +123,12 @@ public class ProcessDOG
 		}
 		else if ( localization == 1 )
 		{
-			finalPeaks = Localization.computeQuadraticLocalization( peaks, dog.getDoGImage(), findMin, findMax );
+			finalPeaks = Localization.computeQuadraticLocalization( peaks, dog.getDoGImage(), findMin, findMax, minPeakValue );
 			dog.getDoGImage().close();
 		}
 		else
 		{
-			finalPeaks = Localization.computeGaussLocalization( peaks, img, sigma, findMin, findMax );
+			finalPeaks = Localization.computeGaussLocalization( peaks, img, sigma, findMin, findMax, minPeakValue );
 		}
 		
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Found " + finalPeaks.size() + " peaks." );
