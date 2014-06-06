@@ -5,11 +5,11 @@ import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import spim.fiji.plugin.LoadParseQueryXML;
 import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
 
-public class SimpleListener implements SelectedViewDescriptionListener
+public class ExampleListener implements SelectedViewDescriptionListener
 {
 	final ViewSetupExplorer explorer;
 	
-	public SimpleListener( final ViewSetupExplorer explorer ) { this.explorer = explorer; }
+	public ExampleListener( final ViewSetupExplorer explorer ) { this.explorer = explorer; }
 	
 	@Override
 	public void seletedViewDescription( final BasicViewDescription<? extends BasicViewSetup> viewDescription )
@@ -34,7 +34,7 @@ public class SimpleListener implements SelectedViewDescriptionListener
 
 		final ViewSetupExplorer explorer = new ViewSetupExplorer( result.getData() );
 		
-		explorer.addListener( new SimpleListener( explorer ) );
-		explorer.addListener( new SimpleListener( explorer ) );
+		explorer.addListener( new ExampleListener( explorer ) );
+		explorer.addListener( new ExampleListener( explorer ) );
 	}
 }
