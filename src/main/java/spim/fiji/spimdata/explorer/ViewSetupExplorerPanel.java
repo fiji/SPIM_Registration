@@ -14,8 +14,6 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 
 import mpicbg.spim.data.SpimData;
@@ -28,11 +26,13 @@ public class ViewSetupExplorerPanel extends JPanel
 	protected ViewSetupTableModel tableModel;
 	protected ArrayList< SelectedViewDescriptionListener > listeners;
 	protected SpimData data;
+	final String xml;
 	
-	public ViewSetupExplorerPanel( final SpimData data )
+	public ViewSetupExplorerPanel( final SpimData data, final String xml )
 	{
 		this.listeners = new ArrayList< SelectedViewDescriptionListener >();
 		this.data = data;
+		this.xml = xml;
 		
 		initComponent();
 	}
@@ -57,7 +57,6 @@ public class ViewSetupExplorerPanel extends JPanel
 	public void initComponent()
 	{
 		tableModel = new ViewSetupTableModel( data );
-		tableModel.addTableModelListener( new InteractiveTableModelListener() );
 
 		table = new JTable();
 		table.setModel( tableModel );
@@ -110,17 +109,9 @@ public class ViewSetupExplorerPanel extends JPanel
 		table.getColumnModel().getColumn( 1 ).setPreferredWidth( 15 );
 
 		this.setLayout( new BorderLayout() );
+		this.add( new JLabel( "XML: " + xml ), BorderLayout.NORTH );
 		this.add( new JScrollPane( table ), BorderLayout.CENTER );
 		
 		table.getSelectionModel().setSelectionInterval( 0, 0 );
-	}
-	
-	public class InteractiveTableModelListener implements TableModelListener
-	{
-		@Override
-		public void tableChanged( final TableModelEvent evt )
-		{
-			System.out.println( evt );
-		}
 	}
 }

@@ -87,12 +87,6 @@ public class ViewSetupTableModel extends AbstractTableModel
 		return false;
 	}
 
-	public void setValueAt( final Object value, final int row, final int column )
-	{
-		// do something ...
-		fireTableCellUpdated( row, column );
-	}
-	
 	@Override
 	public Object getValueAt( final int row, final int column )
 	{

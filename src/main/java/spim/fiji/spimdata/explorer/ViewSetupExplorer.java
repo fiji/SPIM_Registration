@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.util.ArrayList;
 
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.UIManager;
 
 import mpicbg.spim.data.SpimData;
@@ -26,9 +25,7 @@ public class ViewSetupExplorer
 		}
 
 		frame = new JFrame( "ViewSetup Explorer" );
-		panel = new ViewSetupExplorerPanel( data );
-		
-		panel.add( new JLabel( "XML: " + xml ), BorderLayout.NORTH );
+		panel = new ViewSetupExplorerPanel( data, xml );
 
 		frame.add( panel, BorderLayout.CENTER );
 		frame.setSize( panel.getPreferredSize() );
