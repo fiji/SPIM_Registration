@@ -1,10 +1,10 @@
 package spim.fiji.spimdata.explorer;
 
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.BorderLayout;
 import java.util.ArrayList;
 
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.UIManager;
 
 import mpicbg.spim.data.SpimData;
@@ -12,9 +12,9 @@ import mpicbg.spim.data.SpimData;
 public class ViewSetupExplorer
 {
 	final JFrame frame;
-	final ViewSetupExplorerPanel panel;
+	ViewSetupExplorerPanel panel;
 	
-	public ViewSetupExplorer( final SpimData data )
+	public ViewSetupExplorer( final SpimData data, final String xml )
 	{
 		try
 		{
@@ -26,15 +26,13 @@ public class ViewSetupExplorer
 		}
 
 		frame = new JFrame( "ViewSetup Explorer" );
-		
-		frame.addWindowListener( new WindowAdapter()
-		{
-			public void windowClosing( final WindowEvent evt ) { System.out.println( "Window closing." ); }
-		});
-		
 		panel = new ViewSetupExplorerPanel( data );
+		
+		panel.add( new JLabel( "XML: " + xml ), BorderLayout.NORTH );
 
-		frame.getContentPane().add( panel );
+		frame.add( panel, BorderLayout.CENTER );
+		frame.setSize( panel.getPreferredSize() );
+		
 		frame.pack();
 		frame.setVisible( true );
 	}

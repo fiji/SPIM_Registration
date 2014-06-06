@@ -64,7 +64,6 @@ public class ViewSetupExplorerPanel extends JPanel
 		table.setSurrendersFocusOnKeystroke( true );
 		table.setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
 		
-		
 		final DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
 		centerRenderer.setHorizontalAlignment( JLabel.CENTER );
 		
@@ -110,8 +109,8 @@ public class ViewSetupExplorerPanel extends JPanel
 		table.getColumnModel().getColumn( 0 ).setPreferredWidth( 20 );
 		table.getColumnModel().getColumn( 1 ).setPreferredWidth( 15 );
 
-		setLayout( new BorderLayout() );
-		add( new JScrollPane( table ), BorderLayout.CENTER );
+		this.setLayout( new BorderLayout() );
+		this.add( new JScrollPane( table ), BorderLayout.CENTER );
 		
 		table.getSelectionModel().setSelectionInterval( 0, 0 );
 	}

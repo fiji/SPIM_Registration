@@ -32,7 +32,7 @@ public class ExampleListener implements SelectedViewDescriptionListener
 		if ( result == null )
 			return;
 
-		final ViewSetupExplorer explorer = new ViewSetupExplorer( result.getData() );
+		final ViewSetupExplorer explorer = new ViewSetupExplorer( result.getData(), result.getXMLFileName() );
 		
 		explorer.addListener( new ExampleListener( explorer ) );
 		explorer.addListener( new ExampleListener( explorer ) );
