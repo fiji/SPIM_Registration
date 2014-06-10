@@ -567,27 +567,37 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	protected String getFileNameFor( final int tpID, final int chID, final int illID, final int angleID )
 	{
 		return getFileNameFor( fileNamePattern, replaceTimepoints, replaceChannels, replaceIlluminations, replaceAngles, 
-				timepointNameList.get( tpID ), channelNameList.get( chID ), illuminationsNameList.get( illID ), angleNameList.get( angleID ) );
+				timepointNameList.get( tpID ), channelNameList.get( chID ), illuminationsNameList.get( illID ), angleNameList.get( angleID ),
+				numDigitsTimepoints, numDigitsChannels, numDigitsIlluminations, numDigitsAngles );
 	}
 
 	public static String getFileNameFor( String fileName, 
 			final String replaceTimepoints, final String replaceChannels, 
 			final String replaceIlluminations, final String replaceAngles, 
-			final String tpName, final String chName, final String illName, final String angleName )
+			final String tpName, final String chName, final String illName, final String angleName,
+			final int numDigitsTP, final int numDigitsCh, final int numDigitsIll, final int numDigitsAngle )
 	{
 		if ( replaceTimepoints != null )
-			fileName = fileName.replace( replaceTimepoints, tpName );
+			fileName = fileName.replace( replaceTimepoints, leadingZeros( tpName, numDigitsTP ) );
 
 		if ( replaceChannels != null )
-			fileName = fileName.replace( replaceChannels, chName );
+			fileName = fileName.replace( replaceChannels, leadingZeros( chName, numDigitsCh ) );
 
 		if ( replaceIlluminations != null )
-			fileName = fileName.replace( replaceIlluminations, illName );
+			fileName = fileName.replace( replaceIlluminations, leadingZeros( illName, numDigitsIll ) );
 
 		if ( replaceAngles != null )
-			fileName = fileName.replace( replaceAngles, angleName );
+			fileName = fileName.replace( replaceAngles, leadingZeros( angleName, numDigitsAngle ) );
 		
 		return fileName;
+	}
+	
+	public static String leadingZeros( String s, final int numDigits )
+	{
+		while ( s.length() < numDigits )
+			s = "0" + s;
+		
+		return s;
 	}
 
 	/**

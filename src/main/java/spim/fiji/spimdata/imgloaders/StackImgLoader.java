@@ -59,7 +59,8 @@ public abstract class StackImgLoader extends AbstractImgLoader
 		final String illum = vs.getIllumination().getName();
 
 		final String fileName = StackList.getFileNameFor( fileNamePattern, replaceTimepoints, replaceChannels,
-				replaceIlluminations, replaceAngles, timepoint, channel, illum, angle );
+				replaceIlluminations, replaceAngles, timepoint, channel, illum, angle,
+				numDigitsTimepoints, numDigitsChannels, numDigitsIlluminations, numDigitsAngles );
 
 		return new File( path, fileName );
 	}
