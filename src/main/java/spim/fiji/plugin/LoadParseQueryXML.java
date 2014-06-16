@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import mpicbg.spim.data.SpimDataException;
+import mpicbg.spim.data.Version;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
@@ -106,6 +107,8 @@ public class LoadParseQueryXML
 		 */
 		public ArrayList< Illumination > getIlluminationsToProcess() { return illums; }
 	}
+	
+	public LoadParseQueryXML() { IOFunctions.println( "Using spimdata version: " + Version.getVersion() ); }
 	
 	public XMLParseResult queryXML(
 			final String additionalTitle,
