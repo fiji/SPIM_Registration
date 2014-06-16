@@ -8,7 +8,7 @@ import ij.process.ImageProcessor;
 import java.io.File;
 import java.util.Date;
 
-import mpicbg.spim.data.sequence.SequenceDescription;
+import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
@@ -27,7 +27,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 	public StackImgLoaderIJ(
 			final File path, final String fileNamePattern, final ImgFactory< ? extends NativeType< ? > > imgFactory,
 			final int layoutTP, final int layoutChannels, final int layoutIllum, final int layoutAngles,
-			final SequenceDescription sequenceDescription )
+			final AbstractSequenceDescription< ?, ?, ? > sequenceDescription )
 	{
 		super( path, fileNamePattern, imgFactory, layoutTP, layoutChannels, layoutIllum, layoutAngles, sequenceDescription );
 	}

@@ -19,8 +19,9 @@ import loci.formats.IFormatReader;
 import loci.formats.meta.IMetadata;
 import loci.formats.meta.MetadataRetrieve;
 import loci.formats.services.OMEXMLService;
-import mpicbg.spim.data.sequence.SequenceDescription;
-import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
+import mpicbg.spim.data.generic.sequence.BasicViewDescription;
+import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
@@ -39,7 +40,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 	public StackImgLoaderLOCI(
 			final File path, final String fileNamePattern, final ImgFactory< ? extends NativeType< ? > > imgFactory,
 			final int layoutTP, final int layoutChannels, final int layoutIllum, final int layoutAngles,
-			final SequenceDescription sequenceDescription )
+			final AbstractSequenceDescription< ?, ?, ? > sequenceDescription )
 	{
 		super( path, fileNamePattern, imgFactory, layoutTP, layoutChannels, layoutIllum, layoutAngles, sequenceDescription );
 	}
@@ -133,7 +134,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 
 	protected < T extends RealType< T > & NativeType< T > > CalibratedImg< T > openLOCI( final File path, final T type, final ViewId view ) throws Exception
 	{						
-		ViewDescription viewDescription = sequenceDescription.getViewDescription( view );
+		BasicViewDescription< ? > viewDescription = sequenceDescription.getViewDescriptions().get( view );
 		
 		// read many 2d-images if it is a directory
 		if ( path.isDirectory() )
@@ -262,7 +263,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		
 		if ( layoutChannels == 2 )
 		{ 
-			c = Integer.parseInt( viewDescription.getViewSetup().getChannel().getName() );
+			c = Integer.parseInt( viewDescription.getViewSetup().getAttribute( Channel.class ).getName() );
 			
 			if ( c >= channels )
 			{

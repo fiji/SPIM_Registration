@@ -2,11 +2,14 @@ package spim.fiji.spimdata.imgloaders;
 
 import java.io.File;
 
+import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
+import mpicbg.spim.data.generic.sequence.BasicViewSetup;
+import mpicbg.spim.data.sequence.Angle;
+import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.IntegerPattern;
-import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.data.sequence.ViewSetup;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.cell.CellImgFactory;
@@ -23,7 +26,7 @@ public abstract class StackImgLoader extends AbstractImgLoader
 	protected int numDigitsTimepoints, numDigitsChannels, numDigitsIlluminations, numDigitsAngles;
 	protected int layoutTP, layoutChannels, layoutIllum, layoutAngles; // 0 == one, 1 == one per file, 2 == all in one file
 		
-	protected SequenceDescription sequenceDescription;
+	protected AbstractSequenceDescription< ?, ?, ? > sequenceDescription;
 
 	protected < T extends NativeType< T > > Img< T > instantiateImg( final long[] dim, final T type )
 	{
@@ -51,12 +54,12 @@ public abstract class StackImgLoader extends AbstractImgLoader
 	protected File getFile( final ViewId view )
 	{
 		final TimePoint tp = sequenceDescription.getTimePoints().getTimePoints().get( view.getTimePointId() );
-		final ViewSetup vs = sequenceDescription.getViewSetups().get( view.getViewSetupId() );
+		final BasicViewSetup  vs = sequenceDescription.getViewSetups().get( view.getViewSetupId() );
 
 		final String timepoint = tp.getName();
-		final String angle = vs.getAngle().getName();
-		final String channel = vs.getChannel().getName();
-		final String illum = vs.getIllumination().getName();
+		final String angle = vs.getAttribute( Angle.class ).getName();
+		final String channel = vs.getAttribute( Channel.class ).getName();
+		final String illum = vs.getAttribute( Illumination.class ).getName();
 
 		final String fileName = StackList.getFileNameFor( fileNamePattern, replaceTimepoints, replaceChannels,
 				replaceIlluminations, replaceAngles, timepoint, channel, illum, angle );
@@ -78,7 +81,7 @@ public abstract class StackImgLoader extends AbstractImgLoader
 	public StackImgLoader(
 			final File path, final String fileNamePattern, final ImgFactory< ? extends NativeType< ? > > imgFactory,
 			final int layoutTP, final int layoutChannels, final int layoutIllum, final int layoutAngles,
-			final SequenceDescription sequenceDescription )
+			final AbstractSequenceDescription< ?, ?, ? > sequenceDescription )
 	{
 		super();
 		this.path = path;

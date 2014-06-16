@@ -9,7 +9,6 @@ import mpicbg.spim.data.XmlHelpers;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.generic.sequence.ImgLoaderIo;
 import mpicbg.spim.data.generic.sequence.XmlIoBasicImgLoader;
-import mpicbg.spim.data.sequence.SequenceDescription;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.cell.CellImgFactory;
@@ -87,7 +86,7 @@ public abstract class XmlIoStackImgLoader< T extends StackImgLoader > implements
 				}
 			}
 			
-			return createImgLoader( path, fileNamePattern, imgFactory, layoutTP, layoutChannels, layoutIllum, layoutAngles, ( SequenceDescription ) sequenceDescription );
+			return createImgLoader( path, fileNamePattern, imgFactory, layoutTP, layoutChannels, layoutIllum, layoutAngles, sequenceDescription );
 		}
 		catch ( final Exception e )
 		{
@@ -98,6 +97,6 @@ public abstract class XmlIoStackImgLoader< T extends StackImgLoader > implements
 	protected abstract T createImgLoader(
 			final File path, final String fileNamePattern, final ImgFactory< ? extends NativeType< ? > > imgFactory,
 			final int layoutTP, final int layoutChannels, final int layoutIllum, final int layoutAngles,
-			final SequenceDescription sequenceDescription );
+			final AbstractSequenceDescription< ?, ?, ? > sequenceDescription );
 
 }
