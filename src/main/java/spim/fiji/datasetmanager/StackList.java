@@ -89,7 +89,11 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	/* new int[]{ t, c, i, a } - indices */
 	protected ArrayList< int[] > exceptionIds;
 	
-	protected String[] calibrationChoice = new String[]{ "Same calibration for all files (load from first file)", "Same calibration for all files (user defined)", "Load calibration for each file individually" };
+	protected String[] calibrationChoice = new String[]{
+			"Same calibration for all views (load from first file)",
+			"Same calibration for all views (user defined)",
+			"Different calibrations for each view (load from files)",
+			"Different calibrations for each view (user defined)" };
 	protected String[] imglib2Container = new String[]{ "ArrayImg (faster)", "CellImg (slower, larger files supported)" };
 
 	public static int defaultContainer = 0;
@@ -126,7 +130,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			if ( showDebugFileNames && !debugShowFiles() )
 				return false;
 			
-			if ( calibation == 0 && !loadFirstCalibration() )
+			if ( ( calibation == 0 && !loadFirstCalibration() ) || ( calibation == 2 && !loadAllCalibrations() ) )
 				return false;
 			
 			if ( !queryDetails() )
@@ -524,10 +528,10 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		}
 
 		// get the list of integers
-		timepointNameList = ( NamePattern.parseNameString( timepoints ) );
-		channelNameList = ( NamePattern.parseNameString( channels ) );
-		illuminationsNameList = ( NamePattern.parseNameString( illuminations ) );
-		angleNameList = ( NamePattern.parseNameString( angles ) );
+		timepointNameList = ( NamePattern.parseNameString( timepoints, false ) );
+		channelNameList = ( NamePattern.parseNameString( channels, true ) );
+		illuminationsNameList = ( NamePattern.parseNameString( illuminations, true ) );
+		angleNameList = ( NamePattern.parseNameString( angles, true ) );
 
 		exceptionIds = new ArrayList< int[] >();
 		
@@ -626,7 +630,35 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		
 		return false;
 	}
-	
+
+	/**
+	 * populates the fields calX, calY, calZ from the first file of the series
+	 * 
+	 * @return - true if successful
+	 */
+	protected boolean loadAllCalibrations()
+	{
+		for ( int t = 0; t < timepointNameList.size(); ++t )
+			for ( int c = 0; c < channelNameList.size(); ++c )
+				for ( int i = 0; i < illuminationsNameList.size(); ++i )
+					for ( int a = 0; a < angleNameList.size(); ++a )
+					{
+						if ( exceptionIds.size() > 0 && 
+							 exceptionIds.get( 0 )[ 0 ] == t && exceptionIds.get( 0 )[ 1 ] == c && 
+							 exceptionIds.get( 0 )[ 2 ] == t && exceptionIds.get( 0 )[ 3 ] == a )
+						{
+							continue;
+						}
+						else
+						{
+							//SpimData2.
+							return loadCalibration( new File( directory, getFileNameFor( t, c, i, a ) ) );
+						}
+					}
+		
+		return false;
+	}
+
 	/**
 	 * Loads the calibration stored in a specific file and closes it afterwards. Depends on the type of opener that is used.
 	 * 

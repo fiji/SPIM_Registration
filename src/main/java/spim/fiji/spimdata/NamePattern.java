@@ -10,11 +10,12 @@ public class NamePattern
 	 * commas, each entry can be a single number, a range e.g. 4-100 or a range in intervals e.g. 0-30:10 - which
 	 * is equivalent to 0,10,20,30. Enumerations can now also contain letters or entire names!
 	 *
-	 * @param integers - the input
+	 * @param codedEnum - the input
+	 * @param allowNonNumeric - if non-numeric entries are allowed or not
 	 * @return a list of integers that were described, an empty list with the entry 0 if the String is "" or null
 	 * @throws ParseException if the input string was illegal
 	 */
-    public static ArrayList< String > parseNameString( final String codedEnum ) throws ParseException
+    public static ArrayList< String > parseNameString( final String codedEnum, final boolean allowNonNumeric ) throws ParseException
     {
     	ArrayList< String > tmp = null;
 
@@ -62,7 +63,10 @@ public class NamePattern
 	    		else
 	    		{
 	    			// this can be anything
-	    			tmp.add( s );
+	    			if ( allowNonNumeric )
+	    				tmp.add( s );
+	    			else
+	    				tmp.add( "" + Integer.parseInt( s ) );
 	    		}
 	    	}
 		}
