@@ -2,7 +2,6 @@ package spim.fiji.datasetmanager;
 
 import ij.ImagePlus;
 import ij.io.Opener;
-import ij.measure.Calibration;
 
 import java.io.File;
 
@@ -45,7 +44,7 @@ public class StackListImageJ extends StackList
 	}
 
 	@Override
-	protected boolean loadCalibration( final File file ) 
+	protected Calibration loadCalibration( final File file ) 
 	{
 		try
 		{
@@ -54,7 +53,7 @@ public class StackListImageJ extends StackList
 			if ( !file.exists() )
 			{
 				IOFunctions.println( "File '" + file + "' does not exist. Stopping." );
-				return false;
+				return null;
 			}
 			
 			final ImagePlus imp = new Opener().openImage( file.getAbsolutePath() );
@@ -62,28 +61,28 @@ public class StackListImageJ extends StackList
 			if ( imp == null )
 			{
 				IOFunctions.println( "Could not open file: '" + file.getAbsolutePath() + "'" );
-				return false;				
+				return null;				
 			}
 			
-			final Calibration c = imp.getCalibration();
+			final ij.measure.Calibration c = imp.getCalibration();
 			
-			calX = c.pixelWidth;
-			calY = c.pixelHeight;
-			calZ = c.pixelDepth;
+			final double calX = c.pixelWidth;
+			final double calY = c.pixelHeight;
+			final double calZ = c.pixelDepth;
 			
-			calUnit = c.getUnit();
+			String calUnit = c.getUnit();
 			
 			if ( calUnit.contains( "µ" ) )
 				calUnit = calUnit.replace( 'µ', 'u' );
 			
 			imp.close();
 			
-			return true;
+			return new Calibration( calX, calY, calZ, calUnit );
 		}
 		catch ( Exception e )
 		{
 			IOFunctions.println( "Could not open file: '" + file.getAbsolutePath() + "'" );
-			return false;
+			return null;
 		}
 	}
 

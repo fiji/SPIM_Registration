@@ -101,18 +101,70 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	public static int defaultCalibration = 0;
 	public int calibation;
 	
+	protected HashMap< ViewSetupPrecursor, Calibration > calibrations = new HashMap< ViewSetupPrecursor, Calibration >();
+	
 	public static String defaultDirectory = "/home/preibisch/Documents/Microscopy/SPIM/HisYFP-SPIM";
 	public static String defaultFileNamePattern = null;
 
-	protected String directory, fileNamePattern;
-	
-	protected double calX = 1, calY = 1, calZ = 1;
-	protected String calUnit = "um";
+	protected String directory, fileNamePattern;	
 	
 	protected abstract boolean supportsMultipleTimepointsPerFile();
 	protected abstract boolean supportsMultipleChannelsPerFile();
 	protected abstract boolean supportsMultipleAnglesPerFile();
 	protected abstract boolean supportsMultipleIlluminationsPerFile();
+	
+	protected class Calibration
+	{
+		public double calX = 1, calY = 1, calZ = 1;
+		public String calUnit = "um";
+
+		public Calibration( final double calX, final double calY, final double calZ, final String calUnit )
+		{
+			this.calX = calX;
+			this.calY = calY;
+			this.calZ = calZ;
+			this.calUnit = calUnit;
+		}
+		
+		public Calibration( final double calX, final double calY, final double calZ )
+		{
+			this.calX = calX;
+			this.calY = calY;
+			this.calZ = calZ;
+		}
+		
+		public Calibration() {};
+	}
+	
+	protected class ViewSetupPrecursor
+	{
+		final public int c, i, a;
+		
+		public ViewSetupPrecursor( final int c, final int i, final int a )
+		{
+			this.c = c;
+			this.i = i;
+			this.a = a;
+		}
+		
+		@Override
+		public int hashCode()
+		{
+			return c * illuminationsNameList.size() * angleNameList.size() + i * angleNameList.size() + a;
+		}
+		
+		@Override
+		public boolean equals( final Object o )
+		{
+			if ( o instanceof ViewSetupPrecursor )
+				return c == ((ViewSetupPrecursor)o).c && i == ((ViewSetupPrecursor)o).i && a == ((ViewSetupPrecursor)o).a;
+			else
+				return false;
+		}
+		
+		@Override
+		public String toString() { return "channel=" + channelNameList.get( c ) + ", ill.dir.=" + illuminationsNameList.get( i ) + ", angle=" + angleNameList.get( a ); }
+	}
 	
 	protected boolean queryInformation()
 	{		
@@ -257,8 +309,6 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	 */
 	protected ArrayList< ViewSetup > createViewSetups()
 	{
-		final VoxelDimensions voxelSize = ( calibation < 2 ) ? new FinalVoxelDimensions( calUnit, calX, calY, calZ ) : null;
-		
 		final ArrayList< Channel > channels = new ArrayList< Channel >();
 		for ( int c = 0; c < channelNameList.size(); ++c )
 			channels.add( new Channel( c, channelNameList.get( c ) ) );
@@ -275,7 +325,11 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		for ( final Channel c : channels )
 			for ( final Illumination i : illuminations )
 				for ( final Angle a : angles )
+				{
+					final Calibration cal = calibrations.get( new ViewSetupPrecursor( c.getId(), i.getId(), a.getId() ) );
+					final VoxelDimensions voxelSize = new FinalVoxelDimensions( cal.calUnit, cal.calX, cal.calY, cal.calZ );
 					viewSetups.add( new ViewSetup( viewSetups.size(), null, null, voxelSize, c, a, i ) );
+				}
 
 		return viewSetups;
 	}
@@ -297,30 +351,102 @@ public abstract class StackList implements MultiViewDatasetDefinition
 
 	protected boolean queryDetails()
 	{
+		final GenericDialog gd = new GenericDialog( "Define dataset (3/3)" );
+
 		if ( calibation < 2 )
 		{
-			final GenericDialog gd = new GenericDialog( "Define dataset (3/3)" );
-		
+			Calibration cal = null;
+			
+			if ( calibrations.values().size() != 1 )
+				cal = new Calibration();
+			else
+				for ( final Calibration c : calibrations.values() )
+					cal = c;
+					
 			gd.addMessage( "Calibration", new Font( Font.SANS_SERIF, Font.BOLD, 14 ) );			
-			if ( calibation == 1 )
+			if ( calibation == 0 )
 				gd.addMessage( "(read from file)", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
 			gd.addMessage( "" );
 			
-			gd.addNumericField( "Pixel_distance_x", calX, 5 );
-			gd.addNumericField( "Pixel_distance_y", calY, 5 );
-			gd.addNumericField( "Pixel_distance_z", calZ, 5 );
-			gd.addStringField( "Pixel_unit", calUnit );
+			gd.addNumericField( "Pixel_distance_x", cal.calX, 5 );
+			gd.addNumericField( "Pixel_distance_y", cal.calY, 5 );
+			gd.addNumericField( "Pixel_distance_z", cal.calZ, 5 );
+			gd.addStringField( "Pixel_unit", cal.calUnit );
 		
 			gd.showDialog();
 	
 			if ( gd.wasCanceled() )
 				return false;
 
-			calX = gd.getNextNumber();
-			calY = gd.getNextNumber();
-			calZ = gd.getNextNumber();
+			cal.calX = gd.getNextNumber();
+			cal.calY = gd.getNextNumber();
+			cal.calZ = gd.getNextNumber();
 			
-			calUnit = gd.getNextString();
+			cal.calUnit = gd.getNextString();
+			
+			// same calibrations for all views
+			calibrations.clear();			
+			for ( int c = 0; c < channelNameList.size(); ++c )
+				for ( int i = 0; i < illuminationsNameList.size(); ++i )
+					for ( int a = 0; a < angleNameList.size(); ++a )
+						calibrations.put( new ViewSetupPrecursor( c, i, a ),  cal );
+		}
+		else
+		{
+			gd.addMessage( "Calibrations", new Font( Font.SANS_SERIF, Font.BOLD, 14 ) );
+			if ( calibation == 2 )
+				gd.addMessage( "(read from file)", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
+			gd.addMessage( "" );
+			
+			for ( int c = 0; c < channelNameList.size(); ++c )
+				for ( int i = 0; i < illuminationsNameList.size(); ++i )
+					for ( int a = 0; a < angleNameList.size(); ++a )
+					{
+						ViewSetupPrecursor vsp = new ViewSetupPrecursor( c, i, a );
+						Calibration cal = calibrations.get( vsp );
+
+						if ( cal == null )
+						{
+							if ( calibation == 2 )
+							{
+								IOFunctions.println( "Could not read calibration for view: " + vsp );
+								IOFunctions.println( "Replacing with uniform calibration." );
+							}
+						
+							cal = new Calibration();
+							calibrations.put( vsp, cal );
+						}
+
+						gd.addMessage( "View [" + vsp + "]" );
+						
+						gd.addNumericField( "Pixel_distance_x", cal.calX, 5 );
+						gd.addNumericField( "Pixel_distance_y", cal.calY, 5 );
+						gd.addNumericField( "Pixel_distance_z", cal.calZ, 5 );
+						gd.addStringField( "Pixel_unit", cal.calUnit );
+
+						gd.addMessage( "" );
+					}
+			
+			GUIHelper.addScrollBars( gd );
+			
+			gd.showDialog();
+			
+			if ( gd.wasCanceled() )
+				return false;
+
+			for ( int c = 0; c < channelNameList.size(); ++c )
+				for ( int i = 0; i < illuminationsNameList.size(); ++i )
+					for ( int a = 0; a < angleNameList.size(); ++a )
+					{
+						final ViewSetupPrecursor vsp = new ViewSetupPrecursor( c, i, a );
+						final Calibration cal = calibrations.get( vsp );
+						
+						cal.calX = gd.getNextNumber();
+						cal.calY = gd.getNextNumber();
+						cal.calZ = gd.getNextNumber();
+						
+						cal.calUnit = gd.getNextString();
+					}			
 		}
 		
 		return true;
@@ -624,7 +750,17 @@ public abstract class StackList implements MultiViewDatasetDefinition
 						}
 						else
 						{
-							return loadCalibration( new File( directory, getFileNameFor( t, c, i, a ) ) );
+							final Calibration cal = loadCalibration( new File( directory, getFileNameFor( t, c, i, a ) ) );
+							
+							if ( cal == null )
+							{
+								return false;
+							}
+							else
+							{
+								calibrations.put( new ViewSetupPrecursor( c, i, a ), cal );
+								return true;
+							}
 						}
 					}
 		
@@ -651,21 +787,28 @@ public abstract class StackList implements MultiViewDatasetDefinition
 						}
 						else
 						{
-							//SpimData2.
-							return loadCalibration( new File( directory, getFileNameFor( t, c, i, a ) ) );
+							final ViewSetupPrecursor vsp = new ViewSetupPrecursor( c, i, a );
+							
+							if ( calibrations.get( vsp ) == null )
+							{
+								final Calibration cal = loadCalibration( new File( directory, getFileNameFor( t, c, i, a ) ) );
+								
+								if ( cal != null )
+									calibrations.put( vsp, cal );
+							}
 						}
 					}
 		
-		return false;
+		return true;
 	}
 
 	/**
 	 * Loads the calibration stored in a specific file and closes it afterwards. Depends on the type of opener that is used.
 	 * 
 	 * @param file
-	 * @return
+	 * @return - the Calibration or null if it could not be loaded for some reason
 	 */
-	protected abstract boolean loadCalibration( final File file );
+	protected abstract Calibration loadCalibration( final File file );
 
 	protected String assembleDefaultPattern()
 	{

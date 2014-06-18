@@ -6,7 +6,6 @@ import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.type.NativeType;
-import spim.fiji.spimdata.imgloaders.Calibration;
 import spim.fiji.spimdata.imgloaders.StackImgLoader;
 import spim.fiji.spimdata.imgloaders.StackImgLoaderLOCI;
 
@@ -52,26 +51,26 @@ public class StackListLOCI extends StackList
 	}
 
 	@Override
-	protected boolean loadCalibration( final File file )
+	protected Calibration loadCalibration( final File file )
 	{
 		IOFunctions.println( "Loading calibration for: " + file.getAbsolutePath() );
 				
 		if ( !file.exists() )
 		{
 			IOFunctions.println( "File '" + file + "' does not exist. Stopping." );
-			return false;
+			return null;
 		}
 
-		final Calibration cal = StackImgLoaderLOCI.loadMetaData( file );
+		final spim.fiji.spimdata.imgloaders.Calibration cal = StackImgLoaderLOCI.loadMetaData( file );
 		
 		if ( cal == null )
-			return false;
+			return null;
 		
-		calX = cal.getCalX();
-		calY = cal.getCalY();
-		calZ = cal.getCalZ();
+		final double calX = cal.getCalX();
+		final double calY = cal.getCalY();
+		final double calZ = cal.getCalZ();
 
-		return true;
+		return new Calibration( calX, calY, calZ );
 	}
 
 	@Override
