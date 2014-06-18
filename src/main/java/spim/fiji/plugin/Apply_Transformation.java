@@ -18,6 +18,7 @@ import mpicbg.spim.data.registration.ViewTransformAffine;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
+import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
@@ -177,7 +178,7 @@ public class Apply_Transformation implements PlugIn
 		final double minResolution;
 		if ( applyTo == 1 )
 		{
-			minResolution = assembleAllMetaData( result.getData(), result.getTimePointsToProcess(), result.getChannelsToProcess(), result.getIlluminationsToProcess(), result.getAnglesToProcess() );
+			minResolution = assembleAllMetaData( result.getData().getSequenceDescription(), result.getTimePointsToProcess(), result.getChannelsToProcess(), result.getIlluminationsToProcess(), result.getAnglesToProcess() );
 			
 			if ( Double.isNaN( minResolution ) )
 			{
@@ -686,11 +687,11 @@ public class Apply_Transformation implements PlugIn
 	 * @return - minimal resolution in all dimensions
 	 */
 	public static double assembleAllMetaData(
-			final SpimData2 spimData,
-			final ArrayList< TimePoint > timepointsToProcess, 
-			final ArrayList< Channel > channelsToProcess,
-			final ArrayList< Illumination > illumsToProcess,
-			final ArrayList< Angle > anglesToProcess )
+			final SequenceDescription sequenceDescription,
+			final List< TimePoint > timepointsToProcess, 
+			final List< Channel > channelsToProcess,
+			final List< Illumination > illumsToProcess,
+			final List< Angle > anglesToProcess )
 	{
 		double minResolution = Double.MAX_VALUE;
 		
@@ -700,7 +701,7 @@ public class Apply_Transformation implements PlugIn
 					for ( final Angle a : anglesToProcess )
 					{
 						// bureaucracy
-						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
+						final ViewId viewId = SpimData2.getViewId( sequenceDescription, t, c, a, i );
 						
 						if ( viewId == null )
 						{
@@ -710,7 +711,7 @@ public class Apply_Transformation implements PlugIn
 							return Double.NaN;
 						}
 						
-						final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
+						final ViewDescription viewDescription = sequenceDescription.getViewDescription( 
 								viewId.getTimePointId(), viewId.getViewSetupId() );
 
 						if ( !viewDescription.isPresent() )
@@ -722,7 +723,7 @@ public class Apply_Transformation implements PlugIn
 						// only use calibration as defined in the metadata
 						if ( !setup.hasVoxelSize() )
 						{
-							VoxelDimensions voxelSize = spimData.getSequenceDescription().getImgLoader().getVoxelSize( viewId );
+							VoxelDimensions voxelSize = sequenceDescription.getImgLoader().getVoxelSize( viewId );
 							if ( voxelSize == null )
 							{
 								IOFunctions.println( "An error occured. Cannot load calibration for timepoint: " + t.getName() + " angle: " + 

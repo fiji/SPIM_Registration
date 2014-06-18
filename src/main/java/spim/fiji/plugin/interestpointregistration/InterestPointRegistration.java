@@ -135,7 +135,7 @@ public abstract class InterestPointRegistration
 		for ( final ChannelProcess c : channelsToProcess )
 			channels.add( c.getChannel() );
 		
-		final double minResolution = Apply_Transformation.assembleAllMetaData( spimData, timepointsToProcess, channels, illumsToProcess, anglesToProcess );
+		final double minResolution = Apply_Transformation.assembleAllMetaData( spimData.getSequenceDescription(), timepointsToProcess, channels, illumsToProcess, anglesToProcess );
 		
 		if ( Double.isNaN( minResolution ) )
 			return false;

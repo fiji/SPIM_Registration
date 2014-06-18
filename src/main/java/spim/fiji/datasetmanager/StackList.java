@@ -16,6 +16,8 @@ import java.util.Map;
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
+import mpicbg.spim.data.registration.ViewTransform;
+import mpicbg.spim.data.registration.ViewTransformAffine;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
@@ -35,9 +37,11 @@ import mpicbg.spim.io.IOFunctions;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.cell.CellImgFactory;
+import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.plugin.GUIHelper;
 import spim.fiji.spimdata.NamePattern;
 import spim.fiji.spimdata.SpimData2;
@@ -224,8 +228,19 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		final ImgLoader< UnsignedShortType > imgLoader = createAndInitImgLoader( ".", new File( directory ), imgFactory, sequenceDescription );
 		sequenceDescription.setImgLoader( imgLoader );
 
+		// get the minimal resolution of all calibrations
+		final double minResolution = Apply_Transformation.assembleAllMetaData(
+				sequenceDescription,
+				timepoints.getTimePointsOrdered(),
+				sequenceDescription.getAllChannelsOrdered(),
+				sequenceDescription.getAllIlluminationsOrdered(),
+				sequenceDescription.getAllAnglesOrdered() );
+
+		IOFunctions.println( "Minimal resolution in all dimensions over all views is: " + minResolution );
+		IOFunctions.println( "(The smallest resolution in any dimension; the distance between two pixels in the output image will be that wide)" );
+		
 		// create the initial view registrations (they are all the identity transform)
-		final ViewRegistrations viewRegistrations = this.createViewRegistrations( sequenceDescription.getViewDescriptions() );
+		final ViewRegistrations viewRegistrations = this.createViewRegistrations( sequenceDescription.getViewDescriptions(), minResolution );
 		
 		// create the initial view interest point object
 		final ViewInterestPoints viewInterestPoints = new ViewInterestPoints();
@@ -233,6 +248,8 @@ public abstract class StackList implements MultiViewDatasetDefinition
 
 		// finally create the SpimData itself based on the sequence description and the view registration
 		final SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints );
+				
+		// apply the 
 		
 		return spimData;
 	}
@@ -241,16 +258,31 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	 * Assembles the {@link ViewRegistration} object consisting of a list of {@link ViewRegistration}s for all {@link ViewDescription}s that are present
 	 * 
 	 * @param viewDescriptionList
+	 * @param minResolution - the smallest resolution in any dimension (distance between two pixels in the output image will be that wide)
 	 * @return
 	 */
-	protected ViewRegistrations createViewRegistrations( final Map< ViewId, ViewDescription > viewDescriptionList )
+	protected ViewRegistrations createViewRegistrations( final Map< ViewId, ViewDescription > viewDescriptionList, final double minResolution )
 	{
 		final HashMap< ViewId, ViewRegistration > viewRegistrationList = new HashMap< ViewId, ViewRegistration >();
 		
 		for ( final ViewDescription viewDescription : viewDescriptionList.values() )
 			if ( viewDescription.isPresent() )
 			{
-				final ViewRegistration viewRegistration = new ViewRegistration( viewDescription.getTimePointId(), viewDescription.getViewSetupId() ); 
+				final ViewRegistration viewRegistration = new ViewRegistration( viewDescription.getTimePointId(), viewDescription.getViewSetupId() );
+				
+				final VoxelDimensions voxelSize = viewDescription.getViewSetup().getVoxelSize(); 
+
+				final double calX = voxelSize.dimension( 0 ) / minResolution;
+				final double calY = voxelSize.dimension( 1 ) / minResolution;
+				final double calZ = voxelSize.dimension( 2 ) / minResolution;
+				
+				final AffineTransform3D m = new AffineTransform3D();
+				m.set( calX, 0.0f, 0.0f, 0.0f, 
+					   0.0f, calY, 0.0f, 0.0f,
+					   0.0f, 0.0f, calZ, 0.0f );
+				final ViewTransform vt = new ViewTransformAffine( "calibration", m );
+				viewRegistration.preconcatenateTransform( vt );
+				
 				viewRegistrationList.put( viewRegistration, viewRegistration );
 			}
 		
