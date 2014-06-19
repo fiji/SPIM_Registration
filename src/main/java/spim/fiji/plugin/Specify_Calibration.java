@@ -20,7 +20,7 @@ import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.util.Util;
-import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
+import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
 import spim.fiji.spimdata.XmlIoSpimData2;
@@ -31,9 +31,9 @@ public class Specify_Calibration implements PlugIn
 	public void run( final String arg0 )
 	{
 		// ask for everything
-		final XMLParseResult result = new LoadParseQueryXML().queryXML( "specifying calibration", true, true, true, true );
+		final LoadParseQueryXML result = new LoadParseQueryXML();
 		
-		if ( result == null )
+		if ( !result.queryXML( "specifying calibration", true, true, true, true ) )
 			return;
 		
 		// this is the same for all timepoints, we are just interested in the ViewSetup

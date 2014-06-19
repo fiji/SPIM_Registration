@@ -1,6 +1,6 @@
 package spim.fiji.plugin.fusion;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
@@ -38,22 +38,22 @@ public abstract class BoundingBox implements Interval
 	/**
 	 * which angles to process, set in queryParameters
 	 */
-	protected final ArrayList< Angle > anglesToProcess;
+	protected final List< Angle > anglesToProcess;
 
 	/**
 	 * which channels to process, set in queryParameters
 	 */
-	protected final ArrayList< Channel> channelsToProcess;
+	protected final List< Channel> channelsToProcess;
 
 	/**
 	 * which illumination directions to process, set in queryParameters
 	 */
-	protected final ArrayList< Illumination > illumsToProcess;
+	protected final List< Illumination > illumsToProcess;
 
 	/**
 	 * which timepoints to process, set in queryParameters
 	 */
-	protected final ArrayList< TimePoint > timepointsToProcess;
+	protected final List< TimePoint > timepointsToProcess;
 
 	protected final SpimData2 spimData;
 	
@@ -69,10 +69,10 @@ public abstract class BoundingBox implements Interval
 	 */
 	public BoundingBox(
 			final SpimData2 spimData,
-			final ArrayList< Angle > anglesToProcess,
-			final ArrayList< Channel> channelsToProcess,
-			final ArrayList< Illumination > illumsToProcess,
-			final ArrayList< TimePoint > timepointsToProcess )
+			final List< Angle > anglesToProcess,
+			final List< Channel> channelsToProcess,
+			final List< Illumination > illumsToProcess,
+			final List< TimePoint > timepointsToProcess )
 	{
 		this.spimData = spimData;
 		this.anglesToProcess = anglesToProcess;
@@ -102,10 +102,10 @@ public abstract class BoundingBox implements Interval
 	 */
 	public abstract BoundingBox newInstance(
 			final SpimData2 spimData,
-			final ArrayList<Angle> anglesToProcess,
-			final ArrayList<Channel> channelsToProcess,
-			final ArrayList<Illumination> illumsToProcess,
-			final ArrayList<TimePoint> timepointsToProcess );
+			final List<Angle> anglesToProcess,
+			final List<Channel> channelsToProcess,
+			final List<Illumination> illumsToProcess,
+			final List<TimePoint> timepointsToProcess );
 
 	/**
 	 * @return - to be displayed in the generic dialog

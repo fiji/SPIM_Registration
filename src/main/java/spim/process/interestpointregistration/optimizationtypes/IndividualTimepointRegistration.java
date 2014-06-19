@@ -41,10 +41,10 @@ public class IndividualTimepointRegistration extends GlobalOptimizationType
 	@Override
 	public List< GlobalOptimizationSubset > getAllViewPairs(
 			final SpimData2 spimData,
-			final ArrayList< Angle > anglesToProcess,
-			final ArrayList< ChannelProcess > channelsToProcess,
-			final ArrayList< Illumination > illumsToProcess,
-			final ArrayList< TimePoint > timepointsToProcess,
+			final List< Angle > anglesToProcess,
+			final List< ChannelProcess > channelsToProcess,
+			final List< Illumination > illumsToProcess,
+			final List< TimePoint > timepointsToProcess,
 			final int inputTransform,
 			final double minResolution )
 	{

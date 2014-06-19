@@ -27,7 +27,7 @@ import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.util.Util;
-import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
+import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
 
@@ -99,9 +99,9 @@ public class Apply_Transformation implements PlugIn
 	public void run( final String arg0 )
 	{
 		// ask for everything
-		final XMLParseResult result = new LoadParseQueryXML().queryXML( "applying a transformation", "Apply to", true, true, true, true );
+		final LoadParseQueryXML result = new LoadParseQueryXML();
 		
-		if ( result == null )
+		if ( !result.queryXML( "applying a transformation", "Apply to", true, true, true, true ) )
 			return;
 		
 		final boolean multipleTimePoints = result.getTimePointsToProcess().size() > 1;
@@ -207,7 +207,7 @@ public class Apply_Transformation implements PlugIn
 		Interest_Point_Registration.saveXML( result.getData(), result.getXMLFileName() );
 	}
 
-	protected boolean queryRotationAxis( final int model, final int applyTo, final double minResolution, final XMLParseResult result, final boolean sameModelTimePoints, final boolean sameModelChannels, final boolean sameModelIlluminations, final boolean sameModelAngles )
+	protected boolean queryRotationAxis( final int model, final int applyTo, final double minResolution, final LoadParseQueryXML result, final boolean sameModelTimePoints, final boolean sameModelChannels, final boolean sameModelIlluminations, final boolean sameModelAngles )
 	{
 		if ( model != 2 )
 		{
@@ -316,7 +316,7 @@ public class Apply_Transformation implements PlugIn
 		return applyModels( result.getData(), models, modelDescriptions, applyTo, minResolution, timepoints, channels, illums, angles );
 	}
 
-	protected boolean queryString( final int model, final int applyTo, final double minResolution, final XMLParseResult result, final boolean sameModelTimePoints, final boolean sameModelChannels, final boolean sameModelIlluminations, final boolean sameModelAngles )
+	protected boolean queryString( final int model, final int applyTo, final double minResolution, final LoadParseQueryXML result, final boolean sameModelTimePoints, final boolean sameModelChannels, final boolean sameModelIlluminations, final boolean sameModelAngles )
 	{
 		final HashMap< Entry, List< TimePoint > > timepoints = getTimePoints( result.getTimePointsToProcess(), sameModelTimePoints );
 		final HashMap< Entry, List< Channel > > channels = getChannels( result.getChannelsToProcess(), sameModelChannels );

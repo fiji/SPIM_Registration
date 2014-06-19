@@ -53,8 +53,8 @@ public class ProcessForDeconvolution
 	public static int[] defaultBlendingBorder = null;
 
 	final protected SpimData2 spimData;
-	final protected ArrayList<Angle> anglesToProcess;
-	final protected ArrayList<Illumination> illumsToProcess;
+	final protected List<Angle> anglesToProcess;
+	final protected List<Illumination> illumsToProcess;
 	final BoundingBox bb;
 	final int[] blendingBorder;
 	final int[] blendingRange;
@@ -67,8 +67,8 @@ public class ProcessForDeconvolution
 	
 	public ProcessForDeconvolution(
 			final SpimData2 spimData,
-			final ArrayList<Angle> anglesToProcess,
-			final ArrayList<Illumination> illumsToProcess,
+			final List<Angle> anglesToProcess,
+			final List<Illumination> illumsToProcess,
 			final BoundingBox bb,
 			final int[] blendingBorder,
 			final int[] blendingRange )

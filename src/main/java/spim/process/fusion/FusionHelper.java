@@ -42,8 +42,8 @@ public class FusionHelper
 			final SpimData2 spimData,
 			final TimePoint timepoint,
 			final Channel channel,
-			final ArrayList< Angle > anglesToProcess,
-			final ArrayList< Illumination > illumsToProcess )
+			final List< Angle > anglesToProcess,
+			final List< Illumination > illumsToProcess )
 	{
 		final ArrayList< ViewDescription > inputData = new ArrayList< ViewDescription >();
 		

@@ -1,6 +1,5 @@
 package spim.fiji.plugin.interestpointdetection;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -18,22 +17,22 @@ public abstract class InterestPointDetection
 	/**
 	 * which angles to process, set in queryParameters
 	 */
-	final ArrayList< Angle > anglesToProcess;
+	final List< Angle > anglesToProcess;
 
 	/**
 	 * which channels to process, set in queryParameters
 	 */
-	final ArrayList< Channel> channelsToProcess;
+	final List< Channel> channelsToProcess;
 
 	/**
 	 * which illumination directions to process, set in queryParameters
 	 */
-	final ArrayList< Illumination > illumsToProcess;
+	final List< Illumination > illumsToProcess;
 
 	/**
 	 * which timepoints to process, set in queryParameters
 	 */
-	final ArrayList< TimePoint > timepointsToProcess;
+	final List< TimePoint > timepointsToProcess;
 
 	final SpimData2 spimData;
 	final public SegmentationBenchmark benchmark = new SegmentationBenchmark();
@@ -47,10 +46,10 @@ public abstract class InterestPointDetection
 	 */
 	public InterestPointDetection(
 			final SpimData2 spimData,
-			final ArrayList< Angle > anglesToProcess,
-			final ArrayList< Channel> channelsToProcess,
-			final ArrayList< Illumination > illumsToProcess,
-			final ArrayList< TimePoint > timepointsToProcess )
+			final List< Angle > anglesToProcess,
+			final List< Channel> channelsToProcess,
+			final List< Illumination > illumsToProcess,
+			final List< TimePoint > timepointsToProcess )
 	{
 		this.spimData = spimData;
 		this.anglesToProcess = anglesToProcess;
@@ -59,10 +58,10 @@ public abstract class InterestPointDetection
 		this.timepointsToProcess = timepointsToProcess;
 	}
 
-	public ArrayList< Angle > getAnglesToProcess() { return anglesToProcess; }
-	public ArrayList< Channel > getChannelsToProcess() { return channelsToProcess; }
-	public ArrayList< Illumination > getIllumsToProcess() { return illumsToProcess; }
-	public ArrayList< TimePoint > getTimepointsToProcess() { return timepointsToProcess; }
+	public List< Angle > getAnglesToProcess() { return anglesToProcess; }
+	public List< Channel > getChannelsToProcess() { return channelsToProcess; }
+	public List< Illumination > getIllumsToProcess() { return illumsToProcess; }
+	public List< TimePoint > getTimepointsToProcess() { return timepointsToProcess; }
 	public SegmentationBenchmark getBenchmark() { return benchmark; }
 	
 	/**
@@ -92,10 +91,10 @@ public abstract class InterestPointDetection
 	 */
 	public abstract InterestPointDetection newInstance(
 			final SpimData2 spimData,
-			final ArrayList<Angle> anglesToProcess,
-			final ArrayList<Channel> channelsToProcess,
-			final ArrayList<Illumination> illumsToProcess,
-			final ArrayList<TimePoint> timepointsToProcess );
+			final List<Angle> anglesToProcess,
+			final List<Channel> channelsToProcess,
+			final List<Illumination> illumsToProcess,
+			final List<TimePoint> timepointsToProcess );
 	
 	/**
 	 * @return - to be displayed in the generic dialog

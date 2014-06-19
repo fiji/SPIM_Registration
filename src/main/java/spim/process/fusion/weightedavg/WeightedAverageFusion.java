@@ -3,7 +3,7 @@ package spim.process.fusion.weightedavg;
 import ij.gui.GenericDialog;
 
 import java.awt.Choice;
-import java.util.ArrayList;
+import java.util.List;
 
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
@@ -34,10 +34,10 @@ public class WeightedAverageFusion extends Fusion
 
 	public WeightedAverageFusion(
 			final SpimData2 spimData,
-			final ArrayList<Angle> anglesToProcess,
-			final ArrayList<Channel> channelsToProcess,
-			final ArrayList<Illumination> illumsToProcess,
-			final ArrayList<TimePoint> timepointsToProcess, 
+			final List<Angle> anglesToProcess,
+			final List<Channel> channelsToProcess,
+			final List<Illumination> illumsToProcess,
+			final List<TimePoint> timepointsToProcess, 
 			final WeightedAvgFusionType type )
 	{
 		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
@@ -99,10 +99,10 @@ public class WeightedAverageFusion extends Fusion
 	@Override
 	public WeightedAverageFusion newInstance(
 			final SpimData2 spimData,
-			final ArrayList<Angle> anglesToProcess,
-			final ArrayList<Channel> channelsToProcess,
-			final ArrayList<Illumination> illumsToProcess,
-			final ArrayList<TimePoint> timepointsToProcess )
+			final List<Angle> anglesToProcess,
+			final List<Channel> channelsToProcess,
+			final List<Illumination> illumsToProcess,
+			final List<TimePoint> timepointsToProcess )
 	{
 		return new WeightedAverageFusion( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess, type );
 	}

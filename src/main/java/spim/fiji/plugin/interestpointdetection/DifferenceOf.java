@@ -2,7 +2,6 @@ package spim.fiji.plugin.interestpointdetection;
 
 import ij.gui.GenericDialog;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import mpicbg.spim.data.sequence.Angle;
@@ -49,10 +48,10 @@ public abstract class DifferenceOf extends InterestPointDetection
 
 	public DifferenceOf(
 			final SpimData2 spimData,
-			final ArrayList<Angle> anglesToProcess,
-			final ArrayList<Channel> channelsToProcess,
-			final ArrayList<Illumination> illumsToProcess,
-			final ArrayList<TimePoint> timepointsToProcess)
+			final List<Angle> anglesToProcess,
+			final List<Channel> channelsToProcess,
+			final List<Illumination> illumsToProcess,
+			final List<TimePoint> timepointsToProcess)
 	{
 		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
 	}

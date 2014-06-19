@@ -2,6 +2,7 @@ package spim.process.fusion.weightedavg;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,8 +32,8 @@ public class ProcessParalell extends ProcessFusion
 {	
 	public ProcessParalell(
 			final SpimData2 spimData,
-			final ArrayList<Angle> anglesToProcess,
-			final ArrayList<Illumination> illumsToProcess,
+			final List<Angle> anglesToProcess,
+			final List<Illumination> illumsToProcess,
 			final BoundingBox bb,
 			final boolean useBlending,
 			final boolean useContentBased )

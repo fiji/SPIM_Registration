@@ -2,7 +2,7 @@ package spim.process.interestpointregistration.geometrichashing3d;
 
 import ij.gui.GenericDialog;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Illumination;
@@ -27,10 +27,10 @@ public class GeometricHashing3d extends PairwiseGloballyOptimalRegistration< Geo
 
 	public GeometricHashing3d(
 			final SpimData2 spimData,
-			final ArrayList< Angle > anglesToProcess,
-			final ArrayList< ChannelProcess > channelsToProcess,
-			final ArrayList< Illumination > illumsToProcess,
-			final ArrayList< TimePoint > timepointsToProcess )
+			final List< Angle > anglesToProcess,
+			final List< ChannelProcess > channelsToProcess,
+			final List< Illumination > illumsToProcess,
+			final List< TimePoint > timepointsToProcess )
 	{
 		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
 	}
@@ -46,7 +46,7 @@ public class GeometricHashing3d extends PairwiseGloballyOptimalRegistration< Geo
 	protected boolean runGlobalOpt(final GlobalOptimizationSubset subset, 
 			final GlobalOptimizationType registrationType,
 			final SpimData2 spimData,
-			final ArrayList< ChannelProcess > channelsToProcess,
+			final List< ChannelProcess > channelsToProcess,
 			final boolean considerTimePointsAsUnit )
 	{
 		return subset.computeGlobalOpt( model.getModel(), registrationType, spimData, getChannelsToProcess(), getDescription() + ", " + model.getDescription(), getInitialTransformType(), considerTimePointsAsUnit );
@@ -55,10 +55,10 @@ public class GeometricHashing3d extends PairwiseGloballyOptimalRegistration< Geo
 	@Override
 	public GeometricHashing3d newInstance(
 			final SpimData2 spimData,
-			final ArrayList< Angle > anglesToProcess,
-			final ArrayList< ChannelProcess > channelsToProcess,
-			final ArrayList< Illumination > illumsToProcess,
-			final ArrayList< TimePoint > timepointsToProcess )
+			final List< Angle > anglesToProcess,
+			final List< ChannelProcess > channelsToProcess,
+			final List< Illumination > illumsToProcess,
+			final List< TimePoint > timepointsToProcess )
 	{
 		return new GeometricHashing3d( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
 	}

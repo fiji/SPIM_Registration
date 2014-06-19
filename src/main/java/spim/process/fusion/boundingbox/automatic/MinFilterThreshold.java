@@ -36,8 +36,8 @@ import spim.process.fusion.weightedavg.ProcessSequential;
 
 public class MinFilterThreshold
 {	
-	final ArrayList< Angle > anglesToProcess;
-	final ArrayList< Illumination > illumsToProcess;
+	final List< Angle > anglesToProcess;
+	final List< Illumination > illumsToProcess;
 	final Channel channel;
 	final TimePoint timepoint;
 	final SpimData2 spimData;
@@ -51,8 +51,8 @@ public class MinFilterThreshold
 
 	public MinFilterThreshold(
 			final SpimData2 spimData,
-			final ArrayList<Angle> anglesToProcess,
-			final ArrayList<Illumination> illumsToProcess,
+			final List<Angle> anglesToProcess,
+			final List<Illumination> illumsToProcess,
 			final Channel channel,
 			final TimePoint timepoint,
 			final BoundingBox bb,

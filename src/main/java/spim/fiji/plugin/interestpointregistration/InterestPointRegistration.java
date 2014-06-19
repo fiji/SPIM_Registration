@@ -3,6 +3,7 @@ package spim.fiji.plugin.interestpointregistration;
 import ij.gui.GenericDialog;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
@@ -24,10 +25,10 @@ import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizati
 public abstract class InterestPointRegistration
 {
 	final SpimData2 spimData1;
-	final ArrayList< Angle > anglesToProcess1;
-	final ArrayList< ChannelProcess > channelsToProcess1;
-	final ArrayList< Illumination > illumsToProcess1;
-	final ArrayList< TimePoint > timepointsToProcess1; 
+	final List< Angle > anglesToProcess1;
+	final List< ChannelProcess > channelsToProcess1;
+	final List< Illumination > illumsToProcess1;
+	final List< TimePoint > timepointsToProcess1; 
 	
 	/*
 	 * type of input transform ( 0 == calibration, 1 == current transform, including calibration )
@@ -45,10 +46,10 @@ public abstract class InterestPointRegistration
 		
 	public InterestPointRegistration(
 			final SpimData2 spimData,
-			final ArrayList< Angle > anglesToProcess,
-			final ArrayList< ChannelProcess > channelsToProcess,
-			final ArrayList< Illumination > illumsToProcess,
-			final ArrayList< TimePoint > timepointsToProcess )
+			final List< Angle > anglesToProcess,
+			final List< ChannelProcess > channelsToProcess,
+			final List< Illumination > illumsToProcess,
+			final List< TimePoint > timepointsToProcess )
 	{
 		this.spimData1 = spimData;
 		this.anglesToProcess1 = anglesToProcess;
@@ -87,10 +88,10 @@ public abstract class InterestPointRegistration
 	 */
 	public abstract InterestPointRegistration newInstance(
 			final SpimData2 spimData,
-			final ArrayList< Angle > anglesToProcess,
-			final ArrayList< ChannelProcess > channelsToProcess,
-			final ArrayList< Illumination > illumsToProcess,
-			final ArrayList< TimePoint > timepointsToProcess );
+			final List< Angle > anglesToProcess,
+			final List< ChannelProcess > channelsToProcess,
+			final List< Illumination > illumsToProcess,
+			final List< TimePoint > timepointsToProcess );
 	
 	/**
 	 * @return - to be displayed in the generic dialog
@@ -98,10 +99,10 @@ public abstract class InterestPointRegistration
 	public abstract String getDescription();
 	
 	protected SpimData2 getSpimData() { return spimData1; }
-	public ArrayList< Angle > getAnglesToProcess() { return anglesToProcess1; }
-	public ArrayList< ChannelProcess > getChannelsToProcess() { return channelsToProcess1; }
-	public ArrayList< Illumination > getIllumsToProcess() { return illumsToProcess1; }
-	public ArrayList< TimePoint > getTimepointsToProcess() { return timepointsToProcess1; }
+	public List< Angle > getAnglesToProcess() { return anglesToProcess1; }
+	public List< ChannelProcess > getChannelsToProcess() { return channelsToProcess1; }
+	public List< Illumination > getIllumsToProcess() { return illumsToProcess1; }
+	public List< TimePoint > getTimepointsToProcess() { return timepointsToProcess1; }
 	protected double getMinResolution() { return min1; }
 	protected String getUnit() { return unit1; }
 	
@@ -126,10 +127,10 @@ public abstract class InterestPointRegistration
 	protected boolean assembleAllMetaData()
 	{
 		final SpimData2 spimData = getSpimData();
-		final ArrayList< TimePoint > timepointsToProcess = getTimepointsToProcess(); 
-		final ArrayList< ChannelProcess > channelsToProcess = getChannelsToProcess();
-		final ArrayList< Angle > anglesToProcess = getAnglesToProcess();
-		final ArrayList< Illumination > illumsToProcess = getIllumsToProcess();
+		final List< TimePoint > timepointsToProcess = getTimepointsToProcess(); 
+		final List< ChannelProcess > channelsToProcess = getChannelsToProcess();
+		final List< Angle > anglesToProcess = getAnglesToProcess();
+		final List< Illumination > illumsToProcess = getIllumsToProcess();
 		
 		final ArrayList< Channel > channels = new ArrayList< Channel >();
 		for ( final ChannelProcess c : channelsToProcess )

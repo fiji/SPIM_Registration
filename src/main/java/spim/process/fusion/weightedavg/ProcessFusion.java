@@ -1,6 +1,7 @@
 package spim.process.fusion.weightedavg;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
@@ -38,16 +39,16 @@ public abstract class ProcessFusion
 	public static boolean defaultAdjustContentBasedSigmaForAnisotropy = true;
 	
 	final protected SpimData2 spimData;
-	final protected ArrayList<Angle> anglesToProcess;
-	final protected ArrayList<Illumination> illumsToProcess;
+	final protected List<Angle> anglesToProcess;
+	final protected List<Illumination> illumsToProcess;
 	final BoundingBox bb;
 	final boolean useBlending;
 	final boolean useContentBased;
 	
 	public ProcessFusion(
 			final SpimData2 spimData,
-			final ArrayList<Angle> anglesToProcess,
-			final ArrayList<Illumination> illumsToProcess,
+			final List<Angle> anglesToProcess,
+			final List<Illumination> illumsToProcess,
 			final BoundingBox bb,
 			final boolean useBlending,
 			final boolean useContentBased  )

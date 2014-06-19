@@ -11,8 +11,7 @@ import javax.swing.JFrame;
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
-import spim.fiji.plugin.LoadParseQueryXML;
-import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
+import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.explorer.SelectedViewDescriptionListener;
 import spim.fiji.spimdata.explorer.ViewSetupExplorer;
 
@@ -67,9 +66,9 @@ public class RegistrationExplorer implements SelectedViewDescriptionListener
 	
 	public static void main( String[] args )
 	{
-		final XMLParseResult result = new LoadParseQueryXML().queryXML( "View Registration Explorer", "", false, false, false, false );
+		final LoadParseQueryXML result = new LoadParseQueryXML();
 		
-		if ( result == null )
+		if ( !result.queryXML( "View Registration Explorer", "", false, false, false, false ) )
 			return;
 		
 		new RegistrationExplorer( result.getData(), result.getXMLFileName() );

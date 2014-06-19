@@ -2,7 +2,7 @@ package spim.fiji.plugin.fusion;
 
 import ij.gui.GenericDialog;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
@@ -32,22 +32,22 @@ public abstract class Fusion
 	/**
 	 * which angles to process, set in queryParameters
 	 */
-	final protected ArrayList< Angle > anglesToProcess;
+	final protected List< Angle > anglesToProcess;
 
 	/**
 	 * which channels to process, set in queryParameters
 	 */
-	final protected ArrayList< Channel> channelsToProcess;
+	final protected List< Channel> channelsToProcess;
 
 	/**
 	 * which illumination directions to process, set in queryParameters
 	 */
-	final protected ArrayList< Illumination > illumsToProcess;
+	final protected List< Illumination > illumsToProcess;
 
 	/**
 	 * which timepoints to process, set in queryParameters
 	 */
-	final protected ArrayList< TimePoint > timepointsToProcess;
+	final protected List< TimePoint > timepointsToProcess;
 
 	final protected SpimData2 spimData;
 	final int maxNumViews;
@@ -62,10 +62,10 @@ public abstract class Fusion
 	 */
 	public Fusion(
 			final SpimData2 spimData,
-			final ArrayList< Angle > anglesToProcess,
-			final ArrayList< Channel> channelsToProcess,
-			final ArrayList< Illumination > illumsToProcess,
-			final ArrayList< TimePoint > timepointsToProcess )
+			final List< Angle > anglesToProcess,
+			final List< Channel> channelsToProcess,
+			final List< Illumination > illumsToProcess,
+			final List< TimePoint > timepointsToProcess )
 	{
 		this.spimData = spimData;
 		this.anglesToProcess = anglesToProcess;
@@ -144,10 +144,10 @@ public abstract class Fusion
 	 */
 	public abstract Fusion newInstance(
 			final SpimData2 spimData,
-			final ArrayList<Angle> anglesToProcess,
-			final ArrayList<Channel> channelsToProcess,
-			final ArrayList<Illumination> illumsToProcess,
-			final ArrayList<TimePoint> timepointsToProcess );
+			final List<Angle> anglesToProcess,
+			final List<Channel> channelsToProcess,
+			final List<Illumination> illumsToProcess,
+			final List<TimePoint> timepointsToProcess );
 	
 	/**
 	 * @return - to be displayed in the generic dialog

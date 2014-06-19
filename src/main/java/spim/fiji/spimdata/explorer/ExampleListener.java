@@ -2,8 +2,7 @@ package spim.fiji.spimdata.explorer;
 
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
-import spim.fiji.plugin.LoadParseQueryXML;
-import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
+import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 
 public class ExampleListener implements SelectedViewDescriptionListener
 {
@@ -27,9 +26,9 @@ public class ExampleListener implements SelectedViewDescriptionListener
 	
 	public static void main( String[] args )
 	{
-		final XMLParseResult result = new LoadParseQueryXML().queryXML( "ViewSetup Explorer", "", false, false, false, false );
+		final LoadParseQueryXML result = new LoadParseQueryXML();
 		
-		if ( result == null )
+		if ( !result.queryXML( "ViewSetup Explorer", "", false, false, false, false ) )
 			return;
 
 		final ViewSetupExplorer explorer = new ViewSetupExplorer( result.getData(), result.getXMLFileName() );

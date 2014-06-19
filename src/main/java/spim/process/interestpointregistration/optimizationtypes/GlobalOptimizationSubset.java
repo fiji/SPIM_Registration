@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import mpicbg.models.AbstractModel;
@@ -53,7 +54,7 @@ public class GlobalOptimizationSubset
 			final M model,
 			final GlobalOptimizationType type,
 			final SpimData2 spimData,
-			final ArrayList< ChannelProcess > channelsToProcess,
+			final List< ChannelProcess > channelsToProcess,
 			final String description,
 			final int inputTransform, // 0==calibration, 1==previous transform
 			final boolean considerTimePointsAsUnit )

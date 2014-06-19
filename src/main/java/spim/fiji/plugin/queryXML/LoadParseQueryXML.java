@@ -17,11 +17,11 @@ import mpicbg.spim.io.IOFunctions;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
 
-public class LoadParseQueryXML2 extends GenericLoadParseQueryXML< SpimData2, SequenceDescription, ViewSetup, ViewDescription, ImgLoader< ? > >
+public class LoadParseQueryXML extends GenericLoadParseQueryXML< SpimData2, SequenceDescription, ViewSetup, ViewDescription, ImgLoader< ? > >
 {
 	static { GenericLoadParseQueryXML.defaultXMLfilename = "/Users/preibischs/dataset.xml"; }
 	
-	public LoadParseQueryXML2() { super( new XmlIoSpimData2() ); }
+	public LoadParseQueryXML() { super( new XmlIoSpimData2() ); }
 
 	public boolean queryXML(
 			final String additionalTitle,
@@ -90,7 +90,7 @@ public class LoadParseQueryXML2 extends GenericLoadParseQueryXML< SpimData2, Seq
 		new ImageJ();
 		IOFunctions.printIJLog = true;
 	
-		final LoadParseQueryXML2 lpq = new LoadParseQueryXML2();
+		final LoadParseQueryXML lpq = new LoadParseQueryXML();
 		
 		final ArrayList< String > queryFor = new ArrayList< String >();
 		queryFor.add( "Timepoint" );

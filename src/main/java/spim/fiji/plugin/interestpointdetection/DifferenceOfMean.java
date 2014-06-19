@@ -3,7 +3,6 @@ package spim.fiji.plugin.interestpointdetection;
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -47,10 +46,10 @@ public class DifferenceOfMean extends DifferenceOf
 	
 	public DifferenceOfMean(
 			final SpimData2 spimData,
-			final ArrayList<Angle> anglesToProcess,
-			final ArrayList<Channel> channelsToProcess,
-			final ArrayList<Illumination> illumsToProcess,
-			final ArrayList<TimePoint> timepointsToProcess )
+			final List<Angle> anglesToProcess,
+			final List<Channel> channelsToProcess,
+			final List<Illumination> illumsToProcess,
+			final List<TimePoint> timepointsToProcess )
 	{
 		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
 	}
@@ -61,10 +60,10 @@ public class DifferenceOfMean extends DifferenceOf
 	@Override
 	public DifferenceOfMean newInstance(
 			final SpimData2 spimData,
-			final ArrayList<Angle> anglesToProcess,
-			final ArrayList<Channel> channelsToProcess,
-			final ArrayList<Illumination> illumsToProcess,
-			final ArrayList<TimePoint> timepointsToProcess ) 
+			final List<Angle> anglesToProcess,
+			final List<Channel> channelsToProcess,
+			final List<Illumination> illumsToProcess,
+			final List<TimePoint> timepointsToProcess ) 
 	{ 
 		return new DifferenceOfMean( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
 	}

@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
+import spim.fiji.plugin.GUIHelper;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.Version;
 import mpicbg.spim.data.XmlKeys;
@@ -29,7 +30,6 @@ import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.IntegerPattern;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.io.IOFunctions;
-import spim.fiji.plugin.GUIHelper;
 import fiji.util.gui.GenericDialogPlus;
 
 /**

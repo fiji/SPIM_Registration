@@ -4,6 +4,7 @@ import ij.ImageJ;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,12 +14,13 @@ import mpicbg.spim.data.registration.ViewTransform;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
+import mpicbg.spim.data.sequence.IntegerPattern;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
-import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
+import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
 
 public class Duplicate_Transformation implements PlugIn
@@ -36,6 +38,30 @@ public class Duplicate_Transformation implements PlugIn
 		"Add multiple transformations"
 	};
 
+	public static String[] tpChoice = new String[]{ "All Timepoints", "Single Timepoint (Select from List)", "Multiple Timepoints (Select from List)", "Range of Timepoints (Specify by Name)" };
+	public static int defaultTPChoice = 0;
+	public static int defaultTimePointIndex = 0;
+	public static boolean[] defaultTimePointIndices = null;
+	public static String defaultTimePointString = null;
+
+	public static String[] angleChoice = new String[]{ "All Angles", "Single Angle (Select from List)", "Multiple Angles (Select from List)", "Range of Angles (Specify by Name)" };
+	public static int defaultAngleChoice = 0;
+	public static int defaultAngleIndex = 0;
+	public static boolean[] defaultAngleIndices = null;
+	public static String defaultAngleString = null;
+
+	public static String[] channelChoice = new String[]{ "All Channels", "Single Channel (Select from List)", "Multiple Channels (Select from List)", "Range of Channels (Specify by Name)" };
+	public static int defaultChannelChoice = 0;
+	public static int defaultChannelIndex = 0;
+	public static boolean[] defaultChannelIndices = null;
+	public static String defaultChannelString = null;
+
+	public static String[] illumChoice = new String[]{ "All Illumination Directions", "Single Illumination Directions (Select from List)", "Multiple Illumination Directions (Select from List)", "Range of Illumination Directions (Specify by Name)" };
+	public static int defaultIllumChoice = 0;
+	public static int defaultIllumIndex = 0;
+	public static boolean[] defaultIllumIndices = null;
+	public static String defaultIllumString = null;
+	
 	public static int defaultChoice = 0;
 	public static int defaultTransformationChoice = 0;
 	public static int defaultNumTransformations = 2;
@@ -64,9 +90,9 @@ public class Duplicate_Transformation implements PlugIn
 		final boolean askForIllum = choice != 2;
 		final boolean askForAngles = choice != 3;
 
-		final XMLParseResult result = new LoadParseQueryXML().queryXML( "duplicating transformations", "Apply to", askForAngles, askForChannels, askForIllum, askForTimepoints );
+		final LoadParseQueryXML result = new LoadParseQueryXML();
 		
-		if ( result == null )
+		if ( !result.queryXML( "duplicating transformations", "Apply to", askForAngles, askForChannels, askForIllum, askForTimepoints ) )
 			return;
 		
 		if ( !askForTimepoints )
@@ -216,7 +242,7 @@ public class Duplicate_Transformation implements PlugIn
 		}
 	}
 
-	protected boolean applyTimepoints( final XMLParseResult result )
+	protected boolean applyTimepoints( final LoadParseQueryXML result )
 	{
 		final GenericDialog gd = new GenericDialog( "Define source and target timepoints" );
 		
@@ -226,7 +252,7 @@ public class Duplicate_Transformation implements PlugIn
 			defaultTimePoint = 0;
 		
 		gd.addChoice( "Source timepoint", timepoints, timepoints[ defaultTimePoint ] );
-		gd.addChoice( "Target timepoint(s)", LoadParseQueryXML.tpChoice, LoadParseQueryXML.tpChoice[ LoadParseQueryXML.defaultTPChoice ] );
+		gd.addChoice( "Target timepoint(s)", tpChoice, tpChoice[ defaultTPChoice ] );
 
 		askForRegistrations( gd );
 
@@ -238,14 +264,14 @@ public class Duplicate_Transformation implements PlugIn
 		final TimePoint source = result.getTimePointsToProcess().get( defaultTimePoint = gd.getNextChoiceIndex() );
 		final ArrayList< TimePoint > targets = new ArrayList< TimePoint >();
 		
-		final int choice = LoadParseQueryXML.defaultTPChoice = gd.getNextChoiceIndex();
+		final int choice = defaultTPChoice = gd.getNextChoiceIndex();
 		
 		if ( choice == 1 )
 		{
 			if ( defaultSelectedTimePointIndex >= timepoints.length )
 				defaultSelectedTimePointIndex = 1;
 			
-			final int selection = LoadParseQueryXML.queryIndividualEntry( "Timepoint", timepoints, defaultSelectedTimePointIndex );
+			final int selection = queryIndividualEntry( "Timepoint", timepoints, defaultSelectedTimePointIndex );
 			
 			if ( selection >= 0 )
 				targets.add( result.getTimePointsToProcess().get( defaultSelectedTimePointIndex = selection ) );
@@ -255,21 +281,21 @@ public class Duplicate_Transformation implements PlugIn
 		else if ( choice == 2 || choice == 3 ) // choose multiple timepoints or timepoints defined by pattern
 		{
 			final boolean[] selection;
-			String[] defaultTimePoint = new String[]{ LoadParseQueryXML.defaultTimePointString };
+			String[] defaultTimePoint = new String[]{ defaultTimePointString };
 			
 			if ( choice == 2 )
-				selection = LoadParseQueryXML.queryMultipleEntries( "Timepoints", timepoints, LoadParseQueryXML.defaultTimePointIndices );
+				selection = queryMultipleEntries( "Timepoints", timepoints, defaultTimePointIndices );
 			else
-				selection = LoadParseQueryXML.queryPattern( "Timepoints", timepoints, defaultTimePoint );
+				selection = queryPattern( "Timepoints", timepoints, defaultTimePoint );
 			
 			if ( selection == null )
 				return false;
 			else
 			{
-				LoadParseQueryXML.defaultTimePointIndices = selection;
+				defaultTimePointIndices = selection;
 				
 				if ( choice == 3 )
-					LoadParseQueryXML.defaultTimePointString = defaultTimePoint[ 0 ];
+					defaultTimePointString = defaultTimePoint[ 0 ];
 				
 				for ( int i = 0; i < selection.length; ++i )
 					if ( selection[ i ] )
@@ -318,7 +344,7 @@ public class Duplicate_Transformation implements PlugIn
 		return true;
 	}
 
-	protected boolean applyChannels( final XMLParseResult result )
+	protected boolean applyChannels( final LoadParseQueryXML result )
 	{
 		final GenericDialog gd = new GenericDialog( "Define source and target channels" );
 		
@@ -328,7 +354,7 @@ public class Duplicate_Transformation implements PlugIn
 			defaultChannel = 0;
 		
 		gd.addChoice( "Source channel", channels, channels[ defaultChannel ] );
-		gd.addChoice( "Target channel(s)", LoadParseQueryXML.channelChoice, LoadParseQueryXML.channelChoice[ LoadParseQueryXML.defaultChannelChoice ] );
+		gd.addChoice( "Target channel(s)", channelChoice, channelChoice[ defaultChannelChoice ] );
 		
 		askForRegistrations( gd );
 		
@@ -340,14 +366,14 @@ public class Duplicate_Transformation implements PlugIn
 		final Channel source = result.getChannelsToProcess().get( defaultChannel = gd.getNextChoiceIndex() );
 		final ArrayList< Channel > targets = new ArrayList< Channel >();
 		
-		final int choice = LoadParseQueryXML.defaultChannelChoice = gd.getNextChoiceIndex();
+		final int choice = defaultChannelChoice = gd.getNextChoiceIndex();
 		
 		if ( choice == 1 )
 		{
 			if ( defaultSelectedChannelIndex >= channels.length )
 				defaultSelectedChannelIndex = 1;
 			
-			final int selection = LoadParseQueryXML.queryIndividualEntry( "Channel", channels, defaultSelectedChannelIndex );
+			final int selection = queryIndividualEntry( "Channel", channels, defaultSelectedChannelIndex );
 			
 			if ( selection >= 0 )
 				targets.add( result.getChannelsToProcess().get( defaultSelectedChannelIndex = selection ) );
@@ -357,21 +383,21 @@ public class Duplicate_Transformation implements PlugIn
 		else if ( choice == 2 || choice == 3 ) // choose multiple channels or channels defined by pattern
 		{
 			final boolean[] selection;
-			String[] defaultChannel = new String[]{ LoadParseQueryXML.defaultChannelString };
+			String[] defaultChannel = new String[]{ defaultChannelString };
 			
 			if ( choice == 2 )
-				selection = LoadParseQueryXML.queryMultipleEntries( "Channels", channels, LoadParseQueryXML.defaultChannelIndices );
+				selection = queryMultipleEntries( "Channels", channels, defaultChannelIndices );
 			else
-				selection = LoadParseQueryXML.queryPattern( "Channels", channels, defaultChannel );
+				selection = queryPattern( "Channels", channels, defaultChannel );
 			
 			if ( selection == null )
 				return false;
 			else
 			{
-				LoadParseQueryXML.defaultChannelIndices = selection;
+				defaultChannelIndices = selection;
 				
 				if ( choice == 3 )
-					LoadParseQueryXML.defaultChannelString = defaultChannel[ 0 ];
+					defaultChannelString = defaultChannel[ 0 ];
 				
 				for ( int i = 0; i < selection.length; ++i )
 					if ( selection[ i ] )
@@ -420,7 +446,7 @@ public class Duplicate_Transformation implements PlugIn
 		return true;
 	}
 
-	protected boolean applyIllums( final XMLParseResult result )
+	protected boolean applyIllums( final LoadParseQueryXML result )
 	{
 		final GenericDialog gd = new GenericDialog( "Define source and target illumination directions" );
 		
@@ -430,7 +456,7 @@ public class Duplicate_Transformation implements PlugIn
 			defaultIllum = 0;
 		
 		gd.addChoice( "Source illumination direction", illums, illums[ defaultIllum ] );
-		gd.addChoice( "Target illumination direction(s)", LoadParseQueryXML.illumChoice, LoadParseQueryXML.illumChoice[ LoadParseQueryXML.defaultIllumChoice ] );
+		gd.addChoice( "Target illumination direction(s)", illumChoice, illumChoice[ defaultIllumChoice ] );
 
 		askForRegistrations( gd );
 
@@ -442,14 +468,14 @@ public class Duplicate_Transformation implements PlugIn
 		final Illumination source = result.getIlluminationsToProcess().get( defaultIllum = gd.getNextChoiceIndex() );
 		final ArrayList< Illumination > targets = new ArrayList< Illumination >();
 		
-		final int choice = LoadParseQueryXML.defaultIllumChoice = gd.getNextChoiceIndex();
+		final int choice = defaultIllumChoice = gd.getNextChoiceIndex();
 		
 		if ( choice == 1 )
 		{
 			if ( defaultSelectedIllumIndex >= illums.length )
 				defaultSelectedIllumIndex = 1;
 			
-			final int selection = LoadParseQueryXML.queryIndividualEntry( "Illumination direction", illums, defaultSelectedIllumIndex );
+			final int selection = queryIndividualEntry( "Illumination direction", illums, defaultSelectedIllumIndex );
 			
 			if ( selection >= 0 )
 				targets.add( result.getIlluminationsToProcess().get( defaultSelectedIllumIndex = selection ) );
@@ -459,21 +485,21 @@ public class Duplicate_Transformation implements PlugIn
 		else if ( choice == 2 || choice == 3 ) // choose multiple illum dir or illum dirs defined by pattern
 		{
 			final boolean[] selection;
-			String[] defaultIllum = new String[]{ LoadParseQueryXML.defaultIllumString };
+			String[] defaultIllum = new String[]{ defaultIllumString };
 			
 			if ( choice == 2 )
-				selection = LoadParseQueryXML.queryMultipleEntries( "Illumination directions", illums, LoadParseQueryXML.defaultIllumIndices );
+				selection = queryMultipleEntries( "Illumination directions", illums, defaultIllumIndices );
 			else
-				selection = LoadParseQueryXML.queryPattern( "Illumination directions", illums, defaultIllum );
+				selection = queryPattern( "Illumination directions", illums, defaultIllum );
 			
 			if ( selection == null )
 				return false;
 			else
 			{
-				LoadParseQueryXML.defaultIllumIndices = selection;
+				defaultIllumIndices = selection;
 				
 				if ( choice == 3 )
-					LoadParseQueryXML.defaultIllumString = defaultIllum[ 0 ];
+					defaultIllumString = defaultIllum[ 0 ];
 				
 				for ( int i = 0; i < selection.length; ++i )
 					if ( selection[ i ] )
@@ -522,7 +548,7 @@ public class Duplicate_Transformation implements PlugIn
 		return true;
 	}
 
-	protected boolean applyAngles( final XMLParseResult result )
+	protected boolean applyAngles( final LoadParseQueryXML result )
 	{
 		final GenericDialog gd = new GenericDialog( "Define source and target angles" );
 		
@@ -532,7 +558,7 @@ public class Duplicate_Transformation implements PlugIn
 			defaultAngle = 0;
 		
 		gd.addChoice( "Source angle", angles, angles[ defaultAngle ] );
-		gd.addChoice( "Target angles(s)", LoadParseQueryXML.angleChoice, LoadParseQueryXML.angleChoice[ LoadParseQueryXML.defaultAngleChoice ] );
+		gd.addChoice( "Target angles(s)", angleChoice, angleChoice[ defaultAngleChoice ] );
 
 		askForRegistrations( gd );
 
@@ -544,14 +570,14 @@ public class Duplicate_Transformation implements PlugIn
 		final Angle source = result.getAnglesToProcess().get( defaultAngle = gd.getNextChoiceIndex() );
 		final ArrayList< Angle > targets = new ArrayList< Angle >();
 		
-		final int choice = LoadParseQueryXML.defaultAngleChoice = gd.getNextChoiceIndex();
+		final int choice = defaultAngleChoice = gd.getNextChoiceIndex();
 		
 		if ( choice == 1 )
 		{
 			if ( defaultSelectedAngleIndex >= angles.length )
 				defaultSelectedAngleIndex = 1;
 			
-			final int selection = LoadParseQueryXML.queryIndividualEntry( "Angle", angles, defaultSelectedAngleIndex );
+			final int selection = queryIndividualEntry( "Angle", angles, defaultSelectedAngleIndex );
 			
 			if ( selection >= 0 )
 				targets.add( result.getAnglesToProcess().get( defaultSelectedAngleIndex = selection ) );
@@ -561,21 +587,21 @@ public class Duplicate_Transformation implements PlugIn
 		else if ( choice == 2 || choice == 3 ) // choose multiple angle or angles defined by pattern
 		{
 			final boolean[] selection;
-			String[] defaultAngle = new String[]{ LoadParseQueryXML.defaultAngleString };
+			String[] defaultAngle = new String[]{ defaultAngleString };
 			
 			if ( choice == 2 )
-				selection = LoadParseQueryXML.queryMultipleEntries( "Angles", angles, LoadParseQueryXML.defaultAngleIndices );
+				selection = queryMultipleEntries( "Angles", angles, defaultAngleIndices );
 			else
-				selection = LoadParseQueryXML.queryPattern( "Angles", angles, defaultAngle );
+				selection = queryPattern( "Angles", angles, defaultAngle );
 			
 			if ( selection == null )
 				return false;
 			else
 			{
-				LoadParseQueryXML.defaultAngleIndices = selection;
+				defaultAngleIndices = selection;
 				
 				if ( choice == 3 )
-					LoadParseQueryXML.defaultAngleString = defaultAngle[ 0 ];
+					defaultAngleString = defaultAngle[ 0 ];
 				
 				for ( int i = 0; i < selection.length; ++i )
 					if ( selection[ i ] )
@@ -663,7 +689,157 @@ public class Duplicate_Transformation implements PlugIn
 		
 		return as;
 	}
+	/**
+	 * Querys a single element from the list
+	 * 
+	 * @param name - type of elements (e.g. "Timepoint")
+	 * @param list - list of available elements
+	 * @param defaultSelection - default selection
+	 * @return the selection or -1 if cancelled
+	 */
+	public static int queryIndividualEntry( final String name, final String[] list, int defaultSelection )
+	{
+		if ( defaultSelection >= list.length )
+			defaultSelection = 0;
 
+		final GenericDialog gd = new GenericDialog( "Select Single " + name );
+		gd.addChoice( "Process_" + name, list, list[ defaultSelection ] );
+
+		gd.showDialog();
+
+		if ( gd.wasCanceled() )
+			return -1;
+
+		return gd.getNextChoiceIndex();
+	}
+
+	/**
+	 * Querys a multiple element from the list
+	 * 
+	 * @param name - type of elements (e.g. "Timepoints")
+	 * @param list - list of available elements
+	 * @param defaultSelection - default selection
+	 * @return the selection or null if cancelled
+	 */
+	public static boolean[] queryMultipleEntries( final String name, final String[] list, boolean[] defaultSelection )
+	{
+		if ( defaultSelection == null || defaultSelection.length != list.length )
+		{
+			defaultSelection = new boolean[ list.length ];
+			defaultSelection[ 0 ] = true;
+			for ( int i = 1; i < list.length; ++i )
+				defaultSelection[ i ] = false;
+
+			// by default select first two
+			if ( defaultSelection.length > 1 )
+				defaultSelection[ 1 ] = true;
+		}
+
+		for ( int i = 0; i < list.length; ++i )
+			list[ i ] = list[ i  ].replace( " ", "_" );
+
+		final GenericDialog gd = new GenericDialog( "Select Multiple " + name );
+
+		gd.addMessage( "" );
+		for ( int i = 0; i < list.length; ++i )
+			gd.addCheckbox( list[ i ], defaultSelection[ i ] );
+		gd.addMessage( "" );
+
+		GUIHelper.addScrollBars( gd );			
+		gd.showDialog();
+
+		if ( gd.wasCanceled() )
+			return null;
+
+		for ( int i = 0; i < list.length; ++i )
+		{
+			if ( gd.getNextBoolean() )
+				defaultSelection[ i ] = true;
+			else
+				defaultSelection[ i ] = false;					
+		}
+
+		return defaultSelection;
+	}
+
+	/**
+	 * Querys a pattern of element from the list
+	 * 
+	 * @param name - type of elements (e.g. "Timepoints")
+	 * @param list - list of available elements
+	 * @param defaultSelection - default selection (array of size 1 to be able to return it)
+	 * @return the selection or null if cancelled
+	 */
+	public static boolean[] queryPattern( final String name, final String[] list, final String[] defaultSelectionArray )
+	{
+		String defaultSelection = defaultSelectionArray[ 0 ];
+
+		if ( defaultSelection == null || defaultSelection.length() == 0 )
+		{
+			defaultSelection = list[ 0 ];
+
+			for ( int i = 1; i < Math.min( list.length, 3 ); ++i )
+				defaultSelection += "," + list[ i ];
+		}
+
+		final GenericDialog gd = new GenericDialog( "Select Range of " + name );
+
+		gd.addMessage( "" );
+		gd.addStringField( "Process_following_" + name, defaultSelection, 30 );
+		gd.addMessage( "" );
+		gd.addMessage( "Available " + name + ":" );
+
+		final String singular = name.substring( 0, name.length() - 1 ) + " ";
+		String allTps = singular + list[ 0 ];
+
+		for ( int i = 1; i < list.length; ++i )
+			allTps += "\n" + singular + list[ i ];
+
+		gd.addMessage( allTps, GUIHelper.smallStatusFont );
+
+		GUIHelper.addScrollBars( gd );
+		gd.showDialog();
+
+		if ( gd.wasCanceled() )
+			return null;
+
+		// the result
+		final boolean[] selected = new boolean[ list.length ];
+
+		for ( int i = 0; i < list.length; ++i )
+			selected[ i ] = false;
+
+		try 
+		{
+			final ArrayList< Integer > timepointList = IntegerPattern.parseIntegerString( defaultSelection = gd.getNextString() );
+
+			for ( final int tp : timepointList )
+			{
+				boolean found = false;
+
+				for ( int i = 0; i < list.length && !found; ++i )
+				{
+					if ( tp == Integer.parseInt( list[ i ] ) )
+					{
+						selected[ i ] = true;
+						found = true;
+					}
+				}
+
+				if ( !found )
+					IOFunctions.println( name + " " + tp + " not part of the list of timepoints. Ignoring it." );
+			}				
+		} 
+		catch ( final ParseException e ) 
+		{
+			IOFunctions.println( "Cannot parse pattern '" + defaultSelection + "': " + e );
+			return null;
+		}
+
+		defaultSelectionArray[ 0 ] = defaultSelection;
+
+		return selected;
+	}
 	public static void main( final String[] args )
 	{
 		new ImageJ();

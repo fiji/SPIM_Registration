@@ -9,7 +9,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.TextEvent;
 import java.awt.event.TextListener;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 
 import mpicbg.spim.data.registration.ViewRegistration;
@@ -33,10 +33,10 @@ public class ManualBoundingBox extends BoundingBox
 {	
 	public ManualBoundingBox(
 			final SpimData2 spimData,
-			final ArrayList<Angle> anglesToProcess,
-			final ArrayList<Channel> channelsToProcess,
-			final ArrayList<Illumination> illumsToProcess,
-			final ArrayList<TimePoint> timepointsToProcess)
+			final List<Angle> anglesToProcess,
+			final List<Channel> channelsToProcess,
+			final List<Illumination> illumsToProcess,
+			final List<TimePoint> timepointsToProcess)
 	{
 		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
 	}
@@ -334,10 +334,10 @@ public class ManualBoundingBox extends BoundingBox
 
 	public static void computeMaximalBoundingBox(
 			final SpimData2 spimData,
-			final ArrayList<Angle> anglesToProcess,
-			final ArrayList<Channel> channelsToProcess,
-			final ArrayList<Illumination> illumsToProcess,
-			final ArrayList<TimePoint> timepointsToProcess,
+			final List<Angle> anglesToProcess,
+			final List<Channel> channelsToProcess,
+			final List<Illumination> illumsToProcess,
+			final List<TimePoint> timepointsToProcess,
 			final double[] minBB, final double[] maxBB )
 	{
 		for ( int d = 0; d < minBB.length; ++d )
@@ -382,10 +382,10 @@ public class ManualBoundingBox extends BoundingBox
 	@Override
 	public ManualBoundingBox newInstance(
 			final SpimData2 spimData,
-			final ArrayList<Angle> anglesToProcess,
-			final ArrayList<Channel> channelsToProcess,
-			final ArrayList<Illumination> illumsToProcess,
-			final ArrayList<TimePoint> timepointsToProcess )
+			final List<Angle> anglesToProcess,
+			final List<Channel> channelsToProcess,
+			final List<Illumination> illumsToProcess,
+			final List<TimePoint> timepointsToProcess )
 	{
 		return new ManualBoundingBox( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
 	}

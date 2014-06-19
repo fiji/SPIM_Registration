@@ -10,9 +10,9 @@ import java.util.Date;
 
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
-import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
+import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import spim.process.fusion.boundingbox.AutomaticBoundingBox;
@@ -53,9 +53,9 @@ public class Image_Fusion implements PlugIn
 	public void run( final String arg )
 	{		
 		// ask for everything
-		final XMLParseResult result = new LoadParseQueryXML().queryXML( "image fusion", true, true, true, true );
+		final LoadParseQueryXML result = new LoadParseQueryXML();
 		
-		if ( result == null )
+		if ( !result.queryXML( "image fusion", true, true, true, true ) )
 			return;
 		
 		// the GenericDialog needs a list[] of String

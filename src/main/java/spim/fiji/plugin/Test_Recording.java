@@ -1,12 +1,12 @@
 package spim.fiji.plugin;
 
+import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import ij.plugin.PlugIn;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.io.IOFunctions;
-import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
 
 public class Test_Recording implements PlugIn
 {
@@ -14,9 +14,9 @@ public class Test_Recording implements PlugIn
 	public void run(String arg0)
 	{
 		// ask for everything, underscores will be inserted by the LoadParseQuery class
-		final XMLParseResult result = new LoadParseQueryXML().queryXML( "for testing", true, true, true, true );
+		final LoadParseQueryXML result = new LoadParseQueryXML();
 
-		if ( result == null )
+		if ( !result.queryXML( "for testing", true, true, true, true ) )
 			return;
 		
 		for ( final TimePoint t : result.getTimePointsToProcess() )

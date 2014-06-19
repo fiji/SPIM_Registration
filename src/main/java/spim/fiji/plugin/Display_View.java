@@ -3,7 +3,6 @@ package spim.fiji.plugin;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import mpicbg.spim.data.sequence.Angle;
@@ -15,8 +14,8 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
-import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
 import spim.fiji.plugin.fusion.BoundingBox;
+import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.export.DisplayImage;
 import spim.process.fusion.export.ImgExport;
@@ -35,14 +34,14 @@ public class Display_View implements PlugIn
 	public void run(String arg0)
 	{
 		// ask for everything but the channels
-		final XMLParseResult result = new LoadParseQueryXML().queryXML( "displaying a view", false, false, false, false );
+		final LoadParseQueryXML result = new LoadParseQueryXML();
 		
-		if ( result == null )
+		if ( !result.queryXML( "displaying a view", false, false, false, false ) )
 			return;
 		
 		final GenericDialog gd = new GenericDialog( "Select View" );
 		
-		final ArrayList< TimePoint > timepoints = result.getTimePointsToProcess();
+		final List< TimePoint > timepoints = result.getTimePointsToProcess();
 		final String[] timepointNames = new String[ timepoints.size() ];
 		for ( int i = 0; i < timepointNames.length; ++i )
 			timepointNames[ i ] = result.getTimePointsToProcess().get( i ).getName();

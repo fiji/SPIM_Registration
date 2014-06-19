@@ -7,7 +7,6 @@ import java.awt.AWTEvent;
 import java.awt.Label;
 import java.awt.TextField;
 import java.awt.event.TextEvent;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
@@ -34,10 +33,10 @@ public class AutomaticBoundingBox extends ManualBoundingBox
 
 	public AutomaticBoundingBox(
 			final SpimData2 spimData,
-			final ArrayList<Angle> anglesToProcess,
-			final ArrayList<Channel> channelsToProcess,
-			final ArrayList<Illumination> illumsToProcess,
-			final ArrayList<TimePoint> timepointsToProcess )
+			final List<Angle> anglesToProcess,
+			final List<Channel> channelsToProcess,
+			final List<Illumination> illumsToProcess,
+			final List<TimePoint> timepointsToProcess )
 	{
 		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
 	}
@@ -198,10 +197,10 @@ public class AutomaticBoundingBox extends ManualBoundingBox
 	@Override
 	public AutomaticBoundingBox newInstance(
 			final SpimData2 spimData,
-			final ArrayList<Angle> anglesToProcess,
-			final ArrayList<Channel> channelsToProcess,
-			final ArrayList<Illumination> illumsToProcess,
-			final ArrayList<TimePoint> timepointsToProcess)
+			final List<Angle> anglesToProcess,
+			final List<Channel> channelsToProcess,
+			final List<Illumination> illumsToProcess,
+			final List<TimePoint> timepointsToProcess)
 	{
 		return new AutomaticBoundingBox( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
 	}

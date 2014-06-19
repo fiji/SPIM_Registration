@@ -25,7 +25,7 @@ import net.imglib2.img.imageplus.ImagePlusImgFactory;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.view.Views;
 import spim.fiji.ImgLib2Temp;
-import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
+import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
@@ -44,9 +44,9 @@ public class Visualize_Detections implements PlugIn
 	public void run( final String arg0 )
 	{
 		// ask for everything but the channels
-		final XMLParseResult result = new LoadParseQueryXML().queryXML( "visualize detections", true, false, true, true );
+		final LoadParseQueryXML result = new LoadParseQueryXML();
 		
-		if ( result == null )
+		if ( !result.queryXML( "visualize detections", true, false, true, true ) )
 			return;
 
 		// ask which channels have the objects we are searching for

@@ -16,11 +16,11 @@ import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
-import spim.fiji.plugin.LoadParseQueryXML.XMLParseResult;
 import spim.fiji.plugin.interestpointdetection.DifferenceOf;
 import spim.fiji.plugin.interestpointdetection.DifferenceOfGaussian;
 import spim.fiji.plugin.interestpointdetection.DifferenceOfMean;
 import spim.fiji.plugin.interestpointdetection.InterestPointDetection;
+import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
@@ -58,13 +58,13 @@ public class Interest_Point_Detection implements PlugIn
 	public void run( final String arg )
 	{
 		// ask for everything but the channels
-		final XMLParseResult result = new LoadParseQueryXML().queryXML( "perfoming interest point detection", true, false, true, true );
+		final LoadParseQueryXML result = new LoadParseQueryXML();
 		
-		if ( result == null )
+		if ( !result.queryXML( "perfoming interest point detection", true, false, true, true ) )
 			return;
 		
 		// ask which channels have the objects we are searching for
-		final ArrayList< Channel > channels = result.getChannelsToProcess(); //result.getData().getSequenceDescription().getAllChannels();
+		final List< Channel > channels = result.getChannelsToProcess(); //result.getData().getSequenceDescription().getAllChannels();
 		
 		// the GenericDialog needs a list[] of String
 		final String[] descriptions = new String[ staticAlgorithms.size() ];
