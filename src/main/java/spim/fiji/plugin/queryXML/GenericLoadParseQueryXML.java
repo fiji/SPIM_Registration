@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-import spim.fiji.plugin.GUIHelper;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.Version;
 import mpicbg.spim.data.XmlKeys;
@@ -27,9 +26,10 @@ import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.generic.sequence.BasicImgLoader;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
-import mpicbg.spim.data.sequence.IntegerPattern;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.io.IOFunctions;
+import spim.fiji.plugin.GUIHelper;
+import spim.fiji.spimdata.NamePattern;
 import fiji.util.gui.GenericDialogPlus;
 
 /**
@@ -250,7 +250,7 @@ public class GenericLoadParseQueryXML< AS extends AbstractSpimData< S >, S exten
 	 * @param defaultSelection - default selection
 	 * @return the selection or -1 if cancelled
 	 */
-	protected static int queryIndividualEntry( final String name, final String[] list, int defaultSelection )
+	public static int queryIndividualEntry( final String name, final String[] list, int defaultSelection )
 	{
 		if ( defaultSelection >= list.length )
 			defaultSelection = 0;
@@ -274,7 +274,7 @@ public class GenericLoadParseQueryXML< AS extends AbstractSpimData< S >, S exten
 	 * @param defaultSelection - default selection
 	 * @return the selection or null if cancelled
 	 */
-	protected static boolean[] queryMultipleEntries( final String name, final String[] list, boolean[] defaultSelection )
+	public static boolean[] queryMultipleEntries( final String name, final String[] list, boolean[] defaultSelection )
 	{
 		if ( defaultSelection == null || defaultSelection.length != list.length )
 		{
@@ -323,7 +323,7 @@ public class GenericLoadParseQueryXML< AS extends AbstractSpimData< S >, S exten
 	 * @param defaultSelection - default selection (array of size 1 to be able to return it)
 	 * @return the selection or null if cancelled
 	 */
-	protected static boolean[] queryPattern( final String name, final String[] list, final String[] defaultSelectionArray )
+	public static boolean[] queryPattern( final String name, final String[] list, final String[] defaultSelectionArray )
 	{
 		String defaultSelection = defaultSelectionArray[ 0 ];
 
@@ -364,15 +364,15 @@ public class GenericLoadParseQueryXML< AS extends AbstractSpimData< S >, S exten
 		
 		try 
 		{
-			final ArrayList< Integer > timepointList = IntegerPattern.parseIntegerString( defaultSelection = gd.getNextString() );
+			final ArrayList< String > nameList = NamePattern.parseNameString( defaultSelection = gd.getNextString(), true );
 			
-			for ( final int tp : timepointList )
+			for ( final String entry : nameList )
 			{
 				boolean found = false;
 				
 				for ( int i = 0; i < list.length && !found; ++i )
 				{
-					if ( tp == Integer.parseInt( list[ i ] ) )
+					if ( entry.equals( list[ i ] ) )
 					{
 						selected[ i ] = true;
 						found = true;
@@ -380,7 +380,7 @@ public class GenericLoadParseQueryXML< AS extends AbstractSpimData< S >, S exten
 				}
 				
 				if ( !found )
-					IOFunctions.println( name + " " + tp + " not part of the list of timepoints. Ignoring it." );
+					IOFunctions.println( name + " " + entry + " not part of the list of " + name + "s. Ignoring it." );
 			}				
 		} 
 		catch ( final ParseException e ) 
