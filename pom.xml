@@ -128,6 +128,11 @@
 			<artifactId>formats-common</artifactId>
 			<version>${bio-formats.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>bigdataviewer-core</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 
 	<developers>
