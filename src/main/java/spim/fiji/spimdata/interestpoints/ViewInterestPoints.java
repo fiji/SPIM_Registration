@@ -15,14 +15,14 @@ import mpicbg.spim.data.sequence.ViewId;
  */
 public class ViewInterestPoints
 {
-	protected final HashMap< ViewId, ViewInterestPointLists > interestPointCollectionLookup;
+	protected final Map< ViewId, ViewInterestPointLists > interestPointCollectionLookup;
 
 	public ViewInterestPoints()
 	{
 		interestPointCollectionLookup = new HashMap< ViewId, ViewInterestPointLists >();
 	}
 
-	public ViewInterestPoints( final HashMap< ViewId, ViewInterestPointLists > interestPointCollectionLookup )
+	public ViewInterestPoints( final Map< ViewId, ViewInterestPointLists > interestPointCollectionLookup )
 	{
 		this.interestPointCollectionLookup = interestPointCollectionLookup;
 	}
@@ -35,7 +35,7 @@ public class ViewInterestPoints
 			this.interestPointCollectionLookup.put( v, v );
 	}
 	
-	public HashMap< ViewId, ViewInterestPointLists > getViewInterestPoints() { return interestPointCollectionLookup; }
+	public Map< ViewId, ViewInterestPointLists > getViewInterestPoints() { return interestPointCollectionLookup; }
 	
 	public ViewInterestPointLists getViewInterestPointLists( final int tp, final int setupId )
 	{
