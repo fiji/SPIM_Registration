@@ -98,7 +98,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			"Same calibration for all views (user defined)",
 			"Different calibrations for each view (load from files)",
 			"Different calibrations for each view (user defined)" };
-	protected String[] imglib2Container = new String[]{ "ArrayImg (faster)", "CellImg (slower, larger files supported)" };
+	public static String[] imglib2Container = new String[]{ "ArrayImg (faster)", "CellImg (slower, larger files supported)" };
 
 	public static int defaultContainer = 0;
 	public ImgFactory< ? extends NativeType< ? > > imgFactory;
