@@ -1,4 +1,4 @@
-package spim.fiji.resave;
+package spim.fiji.plugin.resave;
 
 import java.awt.Button;
 import java.awt.FlowLayout;

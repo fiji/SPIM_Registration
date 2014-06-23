@@ -1,4 +1,4 @@
-package spim.fiji.resave;
+package spim.fiji.plugin.resave;
 
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;

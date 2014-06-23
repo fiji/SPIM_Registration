@@ -1,11 +1,11 @@
-package spim.fiji.resave;
+package spim.fiji.plugin.resave;
 
 import ij.plugin.PlugIn;
 
 import java.util.Map;
 
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
-import spim.fiji.resave.Generic_Resave_HDF5.Parameters;
+import spim.fiji.plugin.resave.Generic_Resave_HDF5.Parameters;
 import bdv.export.ExportMipmapInfo;
 import bdv.export.ProgressWriter;
 import bdv.export.ProposeMipmaps;
