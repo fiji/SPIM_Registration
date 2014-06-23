@@ -2,6 +2,7 @@ package spim.fiji.plugin.resave;
 
 import ij.plugin.PlugIn;
 
+import java.io.File;
 import java.util.Date;
 import java.util.Map;
 
@@ -13,7 +14,7 @@ import bdv.export.ExportMipmapInfo;
 import bdv.export.ProgressWriter;
 import bdv.export.ProposeMipmaps;
 
-public class Resave_as_HDF5 implements PlugIn
+public class Resave_HDF5 implements PlugIn
 {
 
 	@Override
@@ -37,6 +38,9 @@ public class Resave_as_HDF5 implements PlugIn
 		// write hdf5
 		Generic_Resave_HDF5.writeHDF5( xml.getData().getSequenceDescription(), params, perSetupExportMipmapInfo, progressWriter );
 		
+		// copy the interest points if they exist
+		Resave_TIFF.copyInterestPoints( xml.getData().getBasePath(), params.getSeqFile().getParentFile() );
+
 		// write xml sequence description
 		try
 		{
