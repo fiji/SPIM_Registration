@@ -98,6 +98,11 @@ public class GenericLoadParseQueryXML< AS extends AbstractSpimData< S >, S exten
 	}
 
 	/**
+	 * @return the i/o object used to parse the XML
+	 */
+	public XmlIoAbstractSpimData< S, AS > getIO() { return io; }
+	
+	/**
 	 * @return the SpimData object parsed from the xml
 	 */
 	public AS getData() { return data; }
