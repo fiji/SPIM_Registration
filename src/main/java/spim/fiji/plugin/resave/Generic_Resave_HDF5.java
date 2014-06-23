@@ -98,7 +98,14 @@ public class Generic_Resave_HDF5 implements PlugIn
 		writeHDF5( spimData.getSequenceDescription(), params, perSetupExportMipmapInfo, progressWriter );
 		
 		// write xml sequence description
-		writeXML( spimData, io, params.seqFile, params.hdf5File, progressWriter );
+		try 
+		{
+			writeXML( spimData, io, params.seqFile, params.hdf5File, progressWriter );
+		}
+		catch ( SpimDataException e )
+		{
+			throw new RuntimeException( e );
+		}
 	}
 	
 	public static void writeHDF5( final AbstractSequenceDescription< ?, ?, ? > seq, final Parameters params, final Map< Integer, ExportMipmapInfo > perSetupExportMipmapInfo, final ProgressWriter progressWriter )
@@ -119,20 +126,14 @@ public class Generic_Resave_HDF5 implements PlugIn
 			final File seqFile,
 			final File hdf5File,
 			final ProgressWriter progressWriter )
+		throws SpimDataException
 	{
 		final A seq = spimData.getSequenceDescription();
 		final Hdf5ImageLoader hdf5Loader = new Hdf5ImageLoader( hdf5File, null, null, false );
 		seq.setImgLoader( hdf5Loader );
 		spimData.setBasePath( seqFile.getParentFile() );
 
-		try
-		{
-			io.save( spimData, seqFile.getAbsolutePath() );
-		}
-		catch ( final SpimDataException e )
-		{
-			throw new RuntimeException( e );
-		}
+		io.save( spimData, seqFile.getAbsolutePath() );
 		
 		progressWriter.setProgress( 1.0 );
 		progressWriter.out().println( "done" );
