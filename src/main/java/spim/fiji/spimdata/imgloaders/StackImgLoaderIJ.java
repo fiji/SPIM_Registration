@@ -196,7 +196,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 		if ( img == null )
 			throw new RuntimeException( "Could not instantiate " + getImgFactory().getClass().getSimpleName() + " for '" + file + "', most likely out of memory." );
 		else
-			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Opening '" + path + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] + " image=" + img.getClass().getSimpleName() + "<UnsignedShortType>]" );			
+			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Opened '" + file + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] + " image=" + img.getClass().getSimpleName() + "<UnsignedShortType>]" );			
 
 		final ImageStack stack = imp.getStack();
 		final int sizeZ = imp.getNSlices();
