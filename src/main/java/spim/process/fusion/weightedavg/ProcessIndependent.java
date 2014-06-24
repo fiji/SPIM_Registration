@@ -73,21 +73,22 @@ public class ProcessIndependent extends ProcessFusion
 		// we will need to run some batches until all is fused
 		for ( int i = 0; i < allInputData.size(); ++i )
 		{
-			IOFunctions.println( "Fusing view " + i + " of " + (allInputData.size()-1) );
-			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Reserving memory for fused image.");
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Fusing view " + i + " of " + (allInputData.size()-1) );
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Reserving memory for fused image.");
 
 			// try creating the output (type needs to be there to define T)
 			final Img< T > fusedImg = bb.getImgFactory( type ).create( bb.getDimensions(), type );
 
 			if ( fusedImg == null )
 			{
-				IOFunctions.println( "WeightedAverageFusion: Cannot create output image."  );
+				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): WeightedAverageFusion: Cannot create output image."  );
 				return null;
 			}
 	
 			final ViewDescription inputData = allInputData.get( i );
 			
 			// same as in the paralell fusion now more or less
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Requesting Img from ImgLoader (tp=" + inputData.getTimePointId() + ", setup=" + inputData.getViewSetupId() + ")" );
 			final RandomAccessibleInterval< T > img = getImage( type, spimData, inputData );
 						
 			// split up into many parts for multithreading
@@ -99,7 +100,9 @@ public class ProcessIndependent extends ProcessFusion
 
 			for ( final ImagePortion portion : portions )
 				tasks.add( new ProcessIndependentPortion< T >( portion, img, interpolatorFactory, getTransform( inputData ), fusedImg, bb ) );
-			
+
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting fusion process.");
+
 			try
 			{
 				// invokeAll() returns when all tasks are complete
@@ -107,7 +110,7 @@ public class ProcessIndependent extends ProcessFusion
 			}
 			catch ( final InterruptedException e )
 			{
-				IOFunctions.println( "Failed to compute fusion: " + e );
+				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Failed to compute fusion: " + e );
 				e.printStackTrace();
 				return null;
 			}

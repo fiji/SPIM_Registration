@@ -71,7 +71,7 @@ public class ProcessSequential extends ProcessFusion
 
 		if ( fusedImg == null )
 		{
-			IOFunctions.println( "WeightedAverageFusion: Cannot create output image."  );
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): WeightedAverageFusion: Cannot create output image."  );
 			return null;
 		}
 		
@@ -80,7 +80,7 @@ public class ProcessSequential extends ProcessFusion
 
 		if ( weightImg == null )
 		{
-			IOFunctions.println( "WeightedAverageFusion: Cannot create weight image."  );
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): WeightedAverageFusion: Cannot create weight image."  );
 			return null;
 		}
 		
@@ -94,7 +94,7 @@ public class ProcessSequential extends ProcessFusion
 			final int start = batch * numSequentialViews;
 			final int end = Math.min( ( batch + 1 ) * numSequentialViews, allInputData.size() );
 			
-			IOFunctions.println( "Fusing view " + start + " ... " + (end-1) + " of " + (allInputData.size()-1) );
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Fusing view " + start + " ... " + (end-1) + " of " + (allInputData.size()-1) );
 			
 			final ArrayList< ViewDescription > inputData = new ArrayList< ViewDescription >();
 			
@@ -105,7 +105,11 @@ public class ProcessSequential extends ProcessFusion
 			final ArrayList< RandomAccessibleInterval< T > > imgs = new ArrayList< RandomAccessibleInterval< T > >();
 
 			for ( int i = 0; i < inputData.size(); ++i )
-				imgs.add( getImage( type, spimData, inputData.get( i ) ) );
+			{
+				final ViewDescription vd = inputData.get( i );
+				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Requesting Img from ImgLoader (tp=" + vd.getTimePointId() + ", setup=" + vd.getViewSetupId() + ")" );
+				imgs.add( getImage( type, spimData, vd ) );
+			}
 			
 			// get all weighting methods
 			final ArrayList< ArrayList< RealRandomAccessible< FloatType > > > weights = new ArrayList< ArrayList< RealRandomAccessible< FloatType > > >();
@@ -140,7 +144,9 @@ public class ProcessSequential extends ProcessFusion
 				for ( final ImagePortion portion : portions )
 					tasks.add( new ProcessSequentialPortionWeight< T >( portion, imgs, singleWeight, interpolatorFactory, getTransforms( inputData ), fusedImg, weightImg, bb ) );
 			}
-			
+
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Starting fusion process.");
+
 			try
 			{
 				// invokeAll() returns when all tasks are complete
@@ -148,7 +154,7 @@ public class ProcessSequential extends ProcessFusion
 			}
 			catch ( final InterruptedException e )
 			{
-				IOFunctions.println( "Failed to compute fusion: " + e );
+				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Failed to compute fusion: " + e );
 				e.printStackTrace();
 				return null;
 			}
