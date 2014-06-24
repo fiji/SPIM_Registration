@@ -110,13 +110,16 @@ public class Image_Fusion implements PlugIn
 				result.getTimePointsToProcess() );
 
 		final ImgExport imgExport = staticImgExportAlgorithms.get( imgExportAlgorithm ).newInstance();
-		
+
 		if ( !boundingBox.queryParameters( fusion, imgExport ) )
 			return;
-		
+
 		if ( !fusion.queryParameters() )
 			return;
-		
+
+		if ( !imgExport.queryParameters( result.getData() ) )
+			return;
+
 		fusion.fuseData( boundingBox, imgExport );
 		
 		// save the XML if metadata was updated
