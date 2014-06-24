@@ -180,7 +180,7 @@ public class InterestPointList
 	{
 		try 
 		{
-			final BufferedReader in = TextFileAccess.openFileReadEx( new File( getBaseDir(), getFile().toString() + getInterestPointsExt() ) );			
+			final BufferedReader in = TextFileAccess.openFileReadEx( new File( getBaseDir(), getFile().toString() + getInterestPointsExt() ) );
 			this.interestPoints = new ArrayList< InterestPoint >();
 			
 			// the header
