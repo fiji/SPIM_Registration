@@ -55,6 +55,8 @@ public class Resave_HDF5 implements PlugIn
 		if ( params == null )
 			return;
 
+		LoadParseQueryXML.defaultXMLfilename = params.getSeqFile().toString();
+
 		final ProgressWriter progressWriter = new ProgressWriterIJ();
 		progressWriter.out().println( "starting export..." );
 

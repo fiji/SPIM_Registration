@@ -1,8 +1,6 @@
 package spim.fiji.plugin.resave;
 
 import fiji.util.gui.GenericDialogPlus;
-import ij.ImagePlus;
-import ij.io.FileSaver;
 import ij.plugin.PlugIn;
 
 import java.awt.Font;
@@ -160,7 +158,7 @@ public class Resave_TIFF implements PlugIn
 
 		params.compress = defaultCompress = gd.getNextBoolean();
 
-		defaultPath = params.xmlFile;
+		defaultPath = LoadParseQueryXML.defaultXMLfilename = params.xmlFile;
 
 		if ( ( defaultContainer = gd.getNextChoiceIndex() ) == 0 )
 			params.imgFactory = new ArrayImgFactory< FloatType >();
