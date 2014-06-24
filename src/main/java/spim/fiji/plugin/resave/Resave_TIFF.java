@@ -1,6 +1,8 @@
 package spim.fiji.plugin.resave;
 
 import fiji.util.gui.GenericDialogPlus;
+import ij.ImagePlus;
+import ij.io.FileSaver;
 import ij.plugin.PlugIn;
 
 import java.awt.Font;
@@ -51,6 +53,7 @@ public class Resave_TIFF implements PlugIn
 {
 	public static String defaultPath = "";
 	public static int defaultContainer = 0;
+	public static boolean defaultCompress = false;
 
 	public static void main( final String[] args )
 	{
@@ -61,6 +64,7 @@ public class Resave_TIFF implements PlugIn
 	{
 		ImgFactory< ? extends NativeType< ? > > imgFactory;
 		String xmlFile;
+		boolean compress;
 	}
 
 	@Override
@@ -80,7 +84,7 @@ public class Resave_TIFF implements PlugIn
 			return;
 
 		// write the TIFF's
-		writeTIFF( lpq, new File( params.xmlFile ).getParent(), progressWriter );
+		writeTIFF( lpq, new File( params.xmlFile ).getParent(), params.compress, progressWriter );
 
 		// write the XML
 		try
@@ -136,6 +140,7 @@ public class Resave_TIFF implements PlugIn
 		PluginHelper.addSaveAsFileField( gd, "Select new XML", defaultPath, 80 );
 		
 		gd.addChoice( "ImgLib2_data_container", StackList.imglib2Container, StackList.imglib2Container[ defaultContainer ] );
+		gd.addCheckbox( "Lossless compression of TIFF files (ZIP)", defaultCompress );
 		gd.addMessage( "Use ArrayImg if -ALL- input views are smaller than ~2048x2048x500 px (2^31 px), or if the\n" +
 					   "program throws an OutOfMemory exception while processing.  CellImg is slower, but more\n" +
 				       "memory efficient and supports much larger file sizes only limited by the RAM of the machine.", 
@@ -152,9 +157,11 @@ public class Resave_TIFF implements PlugIn
 		
 		if ( !params.xmlFile.endsWith( ".xml" ) )
 			params.xmlFile += ".xml";
-		
+
+		params.compress = defaultCompress = gd.getNextBoolean();
+
 		defaultPath = params.xmlFile;
-		
+
 		if ( ( defaultContainer = gd.getNextChoiceIndex() ) == 0 )
 			params.imgFactory = new ArrayImgFactory< FloatType >();
 		else
@@ -163,10 +170,14 @@ public class Resave_TIFF implements PlugIn
 		return params;
 	}
 
-	public static void writeTIFF( final LoadParseQueryXML lpq, final String path, final ProgressWriter progressWriter )
+	public static void writeTIFF( final LoadParseQueryXML lpq, final String path, final boolean compress, final ProgressWriter progressWriter )
 	{
-		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Saving TIFFS to directory '" + path + "'" );
-		final Save3dTIFF save = new Save3dTIFF( path );
+		if ( compress )
+			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Saving compressed TIFFS to directory '" + path + "'" );
+		else
+			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Saving TIFFS to directory '" + path + "'" );
+		
+		final Save3dTIFF save = new Save3dTIFF( path, compress );
 		
 		final int numAngles = lpq.getAnglesToProcess().size();
 		final int numChannels = lpq.getChannelsToProcess().size();
@@ -205,7 +216,6 @@ public class Resave_TIFF implements PlugIn
 				if ( numAngles > 1 )
 					filename += "_Angle" + v.getAngle().getName();
 
-				IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Saving '" + new File( lpq.getData().getBasePath(), filename ) + "' ..." );
 				save.exportImage( img, filename );
 
 				progressWriter.setProgress( ((i-1) / (double)countImageStacks) * 95.00  );
@@ -325,6 +335,9 @@ public class Resave_TIFF implements PlugIn
 		}
 
 		filename += ".tif";
+
+		if ( params.compress )
+			filename += ".zip";
 
 		// Re-assemble a new SpimData object containing the subset of viewsetups and timepoints selected
 		final List< String > filesToCopy = new ArrayList< String >();

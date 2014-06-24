@@ -1,7 +1,12 @@
 package spim.process.fusion.export;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Date;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
@@ -23,9 +28,14 @@ public class Save3dTIFF implements ImgExport
 	public static String defaultPath = null;
 	
 	String path;
-	boolean useXMLPath;
+	boolean compress;
 	
-	public Save3dTIFF( final String path ) { this.path = path; }
+	public Save3dTIFF( final String path ) { this( path, false ); }
+	public Save3dTIFF( final String path, final boolean compress )
+	{ 
+		this.path = path;
+		this.compress = compress;
+	}
 	
 	public < T extends RealType< T > & NativeType< T > > void exportImage( final RandomAccessibleInterval< T > img, final String title )
 	{
@@ -77,11 +87,23 @@ public class Save3dTIFF implements ImgExport
 		
 		imp.updateAndDraw();
 
-		final String fileName = new File( path, title + ".tif" ).getAbsolutePath();
+		final String fileName;
 		
-		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Saving file " + fileName );
+		if ( !title.endsWith( ".tif" ) )
+			fileName = new File( path, title + ".tif" ).getAbsolutePath();
+		else
+			fileName = new File( path, title ).getAbsolutePath();
 		
-		return new FileSaver( imp ).saveAsTiffStack( fileName );
+		if ( compress )
+		{
+			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Saving file " + fileName + ".zip" );
+			return new FileSaver( imp ).saveAsZip( fileName );
+		}
+		else
+		{
+			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Saving file " + fileName );
+			return new FileSaver( imp ).saveAsTiffStack( fileName );
+		}
 	}
 
 	@Override
@@ -117,4 +139,38 @@ public class Save3dTIFF implements ImgExport
 
 	@Override
 	public String getDescription() { return "Save as TIFF stack"; }
+	
+	public static boolean zipFile( final File input, final File zipFile, final boolean deleteAfterZipping )
+	{
+		try
+		{
+			final FileOutputStream fos = new FileOutputStream( zipFile );
+			final ZipOutputStream zos = new ZipOutputStream( fos );
+			
+			zos.putNextEntry( new ZipEntry( input.getName() ) );
+			
+			final FileInputStream fis = new FileInputStream( input );
+			final byte[] buffer = new byte[ 1024 ];
+			int len;
+			while ( ( len = fis.read( buffer ) ) > 0 )
+			{
+				zos.write( buffer, 0, len );
+			}
+
+			zos.closeEntry();
+			zos.close();
+			fis.close();
+			fos.close();
+
+		} catch ( IOException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+		
+		if ( deleteAfterZipping )
+			input.delete();
+		
+		return true;
+	}
 }
