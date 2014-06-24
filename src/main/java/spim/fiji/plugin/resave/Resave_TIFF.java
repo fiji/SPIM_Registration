@@ -40,7 +40,6 @@ import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.datasetmanager.StackList;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.imgloaders.StackImgLoaderIJ;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
@@ -52,12 +51,12 @@ public class Resave_TIFF implements PlugIn
 {
 	public static String defaultPath = "";
 	public static int defaultContainer = 0;
-	
+
 	public static void main( final String[] args )
 	{
 		new Resave_TIFF().run( null );
 	}
-	
+
 	public static class Parameters
 	{
 		ImgFactory< ? extends NativeType< ? > > imgFactory;
@@ -90,13 +89,15 @@ public class Resave_TIFF implements PlugIn
 
 			// copy the interest points if they exist
 			copyInterestPoints( lpq.getData().getBasePath(), new File( params.xmlFile ).getParentFile(), filesToCopy );
-
-			progressWriter.out().println( "done" );
 		}
 		catch ( SpimDataException e )
 		{
-			// TODO Auto-generated catch block
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + params.xmlFile + "'." );
 			e.printStackTrace();
+		}
+		finally
+		{
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + params.xmlFile + "'." );
 		}
 	}
 

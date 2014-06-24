@@ -35,13 +35,17 @@ import bdv.img.hdf5.Hdf5ImageLoader;
 
 public class Resave_HDF5 implements PlugIn
 {
+	public static void main( final String[] args )
+	{
+		new Resave_HDF5().run( null );
+	}
 
 	@Override
 	public void run( final String arg0 )
 	{
 		final LoadParseQueryXML xml = new LoadParseQueryXML();
 		
-		if ( !xml.queryXML() )
+		if ( !xml.queryXML( "Resaving as HDF5", "Resave", true, true, true, true ) )
 			return;
 		
 		final Map< Integer, ExportMipmapInfo > perSetupExportMipmapInfo = ProposeMipmaps.proposeMipmaps( xml.getData().getSequenceDescription() );
@@ -64,17 +68,15 @@ public class Resave_HDF5 implements PlugIn
 
 			// copy the interest points if they exist
 			Resave_TIFF.copyInterestPoints( xml.getData().getBasePath(), params.getSeqFile().getParentFile(), filesToCopy );
-			
-			progressWriter.out().println( "done" );
 		} 
 		catch ( SpimDataException e )
 		{
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + xml + "': " + e );
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + params.getSeqFile() + "': " + e );
 			throw new RuntimeException( e );
 		}
 		finally
 		{
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + xml + "'." );
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + params.getSeqFile() + "'." );
 		}
 	}
 
