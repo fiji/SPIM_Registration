@@ -139,38 +139,4 @@ public class Save3dTIFF implements ImgExport
 
 	@Override
 	public String getDescription() { return "Save as TIFF stack"; }
-	
-	public static boolean zipFile( final File input, final File zipFile, final boolean deleteAfterZipping )
-	{
-		try
-		{
-			final FileOutputStream fos = new FileOutputStream( zipFile );
-			final ZipOutputStream zos = new ZipOutputStream( fos );
-			
-			zos.putNextEntry( new ZipEntry( input.getName() ) );
-			
-			final FileInputStream fis = new FileInputStream( input );
-			final byte[] buffer = new byte[ 1024 ];
-			int len;
-			while ( ( len = fis.read( buffer ) ) > 0 )
-			{
-				zos.write( buffer, 0, len );
-			}
-
-			zos.closeEntry();
-			zos.close();
-			fis.close();
-			fos.close();
-
-		} catch ( IOException e)
-		{
-			e.printStackTrace();
-			return false;
-		}
-		
-		if ( deleteAfterZipping )
-			input.delete();
-		
-		return true;
-	}
 }
