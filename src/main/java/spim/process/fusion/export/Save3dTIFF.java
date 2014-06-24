@@ -1,16 +1,12 @@
 package spim.process.fusion.export;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Date;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
 import ij.io.FileSaver;
+
+import java.io.File;
+import java.util.Date;
+
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.exception.ImgLibException;
