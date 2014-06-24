@@ -3,6 +3,7 @@ package spim.fiji.plugin.interestpointdetection;
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -96,7 +97,8 @@ public class DifferenceOfGaussian extends DifferenceOf
 
 						if ( !viewDescription.isPresent() )
 							continue;
-						
+
+						IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Requesting Img from ImgLoader (tp=" + viewId.getTimePointId() + ", setup=" + viewId.getViewSetupId() + ")" );
 						final RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input = spimData.getSequenceDescription().getImgLoader().getFloatImage( viewId, false );
 												
 						long time2 = System.currentTimeMillis();

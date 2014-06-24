@@ -3,6 +3,7 @@ package spim.fiji.plugin.interestpointdetection;
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -99,9 +100,10 @@ public class DifferenceOfMean extends DifferenceOf
 
 						if ( !viewDescription.isPresent() )
 							continue;
-						
+
+						IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Requesting Img from ImgLoader (tp=" + viewId.getTimePointId() + ", setup=" + viewId.getViewSetupId() + ")" );
 						final RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input = spimData.getSequenceDescription().getImgLoader().getFloatImage( viewId, false );
-														
+
 						long time2 = System.currentTimeMillis();
 
 						benchmark.openFiles += time2 - time1;
@@ -109,7 +111,7 @@ public class DifferenceOfMean extends DifferenceOf
 						preSmooth( input );
 						
 						final Image< FloatType > img = ImgLib2.wrapFloatToImgLib1( (Img<net.imglib2.type.numeric.real.FloatType>)input );
-												
+
 						//
 						// compute Difference-of-Mean
 						//
