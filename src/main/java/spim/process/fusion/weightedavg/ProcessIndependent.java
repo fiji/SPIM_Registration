@@ -3,6 +3,7 @@ package spim.process.fusion.weightedavg;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -13,6 +14,7 @@ import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
@@ -37,17 +39,20 @@ import spim.process.fusion.export.ImgExport;
 public class ProcessIndependent extends ProcessFusion
 {
 	final ImgExport export;
+	final Map< ViewSetup, ViewSetup > newViewsetups;
 	
 	public ProcessIndependent(
 			final SpimData2 spimData,
 			final List<Angle> anglesToProcess,
 			final List<Illumination> illumsToProcess,
 			final BoundingBox bb,
-			final ImgExport export )
+			final ImgExport export,
+			final Map< ViewSetup, ViewSetup > newViewsetups )
 	{
 		super( spimData, anglesToProcess, illumsToProcess, bb, false, false );
 		
 		this.export = export;
+		this.newViewsetups = newViewsetups;
 	}
 
 	/** 
@@ -65,7 +70,7 @@ public class ProcessIndependent extends ProcessFusion
 			final InterpolatorFactory< T, RandomAccessible< T > > interpolatorFactory,
 			final TimePoint timepoint, 
 			final Channel channel )
-	{				
+	{
 		// get all views that are fused
 		final ArrayList< ViewDescription > allInputData =
 				FusionHelper.assembleInputData( spimData, timepoint, channel, anglesToProcess, illumsToProcess );
@@ -117,9 +122,7 @@ public class ProcessIndependent extends ProcessFusion
 
 			taskExecutor.shutdown();
 			
-			export.exportImage( fusedImg, bb, "TP" + timepoint.getName() + "_Ch" + channel.getName() + 
-					"_Angle" + inputData.getViewSetup().getAngle().getName() +
-					"_Illum" + inputData.getViewSetup().getIllumination().getName() );
+			export.exportImage( fusedImg, bb, timepoint, newViewsetups.get( inputData.getViewSetup() ) );
 		}
 		
 		return null;

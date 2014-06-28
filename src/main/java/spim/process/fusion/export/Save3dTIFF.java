@@ -6,7 +6,10 @@ import ij.io.FileSaver;
 
 import java.io.File;
 import java.util.Date;
+import java.util.List;
 
+import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.exception.ImgLibException;
@@ -18,13 +21,15 @@ import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.FusionHelper;
 
-public class Save3dTIFF implements ImgExport
+public class Save3dTIFF implements ImgExportTitle
 {
 	public static boolean defaultUseXMLPath = true;
 	public static String defaultPath = null;
 	
 	String path;
 	boolean compress;
+	
+	ImgTitler imgTitler = new DefaultImgTitler();
 	
 	public Save3dTIFF( final String path ) { this( path, false ); }
 	public Save3dTIFF( final String path, final boolean compress )
@@ -35,17 +40,22 @@ public class Save3dTIFF implements ImgExport
 	
 	public < T extends RealType< T > & NativeType< T > > void exportImage( final RandomAccessibleInterval< T > img, final String title )
 	{
-		exportImage( img, null, title );
+		final ImgTitler current = this.getImgTitler();
+		this.setImgTitler( new FixedNameImgTitler( title ) );
+		
+		exportImage( img, null, null, null );
+		
+		this.setImgTitler( current );
 	}
 
 	@Override
-	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval< T > img, final BoundingBox bb, final String title )
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval< T > img, final BoundingBox bb, final TimePoint tp, final ViewSetup vs )
 	{
-		return exportImage( img, bb, title, Double.NaN, Double.NaN );
+		return exportImage( img, bb, tp, vs, Double.NaN, Double.NaN );
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T extends RealType<T> & NativeType<T>> boolean exportImage( final RandomAccessibleInterval<T> img, final BoundingBox bb, final String title, final double min, final double max )
+	public <T extends RealType<T> & NativeType<T>> boolean exportImage( final RandomAccessibleInterval<T> img, final BoundingBox bb, final TimePoint tp, final ViewSetup vs, final double min, final double max )
 	{
 		// do nothing in case the image is null
 		if ( img == null )
@@ -65,9 +75,9 @@ public class Save3dTIFF implements ImgExport
 			try { imp = ((ImagePlusImg<T, ?>)img).getImagePlus(); } catch (ImgLibException e) {}
 
 		if ( imp == null )
-			imp = ImageJFunctions.wrap( img, title ).duplicate();
+			imp = ImageJFunctions.wrap( img, getImgTitler().getImageTitle( tp, vs ) ).duplicate();
 
-		imp.setTitle( title );
+		imp.setTitle( getImgTitler().getImageTitle( tp, vs ) );
 
 		if ( bb != null )
 		{
@@ -85,10 +95,10 @@ public class Save3dTIFF implements ImgExport
 
 		final String fileName;
 		
-		if ( !title.endsWith( ".tif" ) )
-			fileName = new File( path, title + ".tif" ).getAbsolutePath();
+		if ( !getImgTitler().getImageTitle( tp, vs ).endsWith( ".tif" ) )
+			fileName = new File( path, getImgTitler().getImageTitle( tp, vs ) + ".tif" ).getAbsolutePath();
 		else
-			fileName = new File( path, title ).getAbsolutePath();
+			fileName = new File( path, getImgTitler().getImageTitle( tp, vs ) ).getAbsolutePath();
 		
 		if ( compress )
 		{
@@ -135,4 +145,16 @@ public class Save3dTIFF implements ImgExport
 
 	@Override
 	public String getDescription() { return "Save as TIFF stack"; }
+
+	@Override
+	public void setImgTitler( final ImgTitler imgTitler ) { this.imgTitler = imgTitler; }
+
+	@Override
+	public ImgTitler getImgTitler() { return imgTitler; }
+
+	@Override
+	public void setXMLData( final List< TimePoint > timepointsToProcess, final List< ViewSetup > newViewSetups ) {}
+
+	@Override
+	public boolean finish() { return true; }
 }

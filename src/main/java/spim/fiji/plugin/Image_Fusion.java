@@ -117,6 +117,10 @@ public class Image_Fusion implements PlugIn
 		if ( !fusion.queryParameters() )
 			return;
 
+		// set all the properties required for exporting as a new XML or as addition to an existing XML
+		fusion.defineNewViewSetups( boundingBox );
+		imgExport.setXMLData( fusion.getTimepointsToProcess(), fusion.getNewViewSetups() );
+		
 		if ( !imgExport.queryParameters( result.getData() ) )
 			return;
 

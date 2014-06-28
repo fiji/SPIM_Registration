@@ -130,11 +130,12 @@ public class DifferenceOfMean extends DifferenceOf
 								maxIntensity ) );
 						img.close();
 
-				        benchmark.computation += System.currentTimeMillis() - time2;
+						benchmark.computation += System.currentTimeMillis() - time2;
 					}
 					catch ( Exception  e )
 					{
-						IOFunctions.println( "An error occured. Failed to segment angle: " + 
+						IOFunctions.println( "An error occured: " + e ); 
+						IOFunctions.println( "Failed to segment angle: " + 
 								a.getId() + " channel: " + c.getId() + " illum: " + i.getId() + ". Continuing with next one." );
 						e.printStackTrace();
 					}

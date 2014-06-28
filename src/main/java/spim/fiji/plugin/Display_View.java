@@ -18,7 +18,6 @@ import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.export.DisplayImage;
-import spim.process.fusion.export.ImgExport;
 
 public class Display_View implements PlugIn
 {
@@ -101,15 +100,15 @@ public class Display_View implements PlugIn
 			IOFunctions.println( "This ViewSetup is not present for this timepoint: angle: " + name );
 		
 		// display it
-		ImgExport export = new DisplayImage( virtual );
+		DisplayImage export = new DisplayImage( virtual );
 		
 		if ( pixelType == 0 )
-			export.exportImage( result.getData().getSequenceDescription().getImgLoader().getFloatImage( viewId, false ), null, name );
+			export.exportImage( result.getData().getSequenceDescription().getImgLoader().getFloatImage( viewId, false ), name );
 		else
 		{
 			@SuppressWarnings( "unchecked" )
 			RandomAccessibleInterval< UnsignedShortType > img = ( RandomAccessibleInterval< UnsignedShortType > ) result.getData().getSequenceDescription().getImgLoader().getImage( viewId );
-			export.exportImage( img, null, name );
+			export.exportImage( img, name );
 		}
 	}
 

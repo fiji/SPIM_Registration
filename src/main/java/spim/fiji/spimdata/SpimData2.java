@@ -1,6 +1,7 @@
 package spim.fiji.spimdata;
 
 import java.io.File;
+import java.util.List;
 
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.registration.ViewRegistrations;
@@ -50,16 +51,26 @@ public class SpimData2 extends SpimData
 	 */
 	public static ViewId getViewId( final SequenceDescription seqDesc, final TimePoint t, final Channel c, final Angle a, final Illumination i )
 	{
-		for ( final ViewSetup viewSetup : seqDesc.getViewSetupsOrdered() )
+		final ViewSetup viewSetup = getViewSetup( seqDesc.getViewSetupsOrdered(), c, a, i );
+		
+		if ( viewSetup == null )
+			return null;
+		else
+			return new ViewId( t.getId(), viewSetup.getId() );
+	}
+
+	public static ViewSetup getViewSetup( final List< ViewSetup > list, final Channel c, final Angle a, final Illumination i )
+	{
+		for ( final ViewSetup viewSetup : list )
 		{
 			if ( viewSetup.getAngle().getId() == a.getId() && 
 				 viewSetup.getChannel().getId() == c.getId() && 
 				 viewSetup.getIllumination().getId() == i.getId() )
 			{
-				return new ViewId( t.getId(), viewSetup.getId() );
+				return viewSetup;
 			}
 		}
-		
+
 		return null;
 	}
 }

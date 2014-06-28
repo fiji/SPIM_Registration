@@ -3,12 +3,18 @@ package spim.process.fusion.weightedavg;
 import ij.gui.GenericDialog;
 
 import java.awt.Choice;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewSetup;
+import net.imglib2.FinalDimensions;
 import net.imglib2.RandomAccessible;
 import net.imglib2.interpolation.InterpolatorFactory;
 import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
@@ -16,11 +22,14 @@ import net.imglib2.interpolation.randomaccess.NearestNeighborInterpolatorFactory
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.FusionHelper;
+import spim.process.fusion.export.FixedNameImgTitler;
 import spim.process.fusion.export.ImgExport;
+import spim.process.fusion.export.ImgExportTitle;
 
 public class WeightedAverageFusion extends Fusion
 {
@@ -58,6 +67,11 @@ public class WeightedAverageFusion extends Fusion
 	@Override
 	public boolean fuseData( final BoundingBox bb, final ImgExport exporter ) 
 	{
+		// set up naming scheme
+		final FixedNameImgTitler titler = new FixedNameImgTitler( "" );
+		if ( exporter instanceof ImgExportTitle )
+			( (ImgExportTitle)exporter).setImgTitler( titler );
+
 		final ProcessFusion process;
 		
 		if ( getFusionType() == WeightedAvgFusionType.FUSEDATA && numParalellViews == 0 )
@@ -65,25 +79,27 @@ public class WeightedAverageFusion extends Fusion
 		else if ( getFusionType() == WeightedAvgFusionType.FUSEDATA )
 			process = new ProcessSequential( spimData, anglesToProcess, illumsToProcess, bb, useBlending, useContentBased, numParalellViews );
 		else
-			process = new ProcessIndependent( spimData, anglesToProcess, illumsToProcess, bb, exporter );
+			process = new ProcessIndependent( spimData, anglesToProcess, illumsToProcess, bb, exporter, newViewsetups );
 		
 		for ( final TimePoint t : timepointsToProcess )
 			for ( final Channel c : channelsToProcess )
 			{
-				final String title = "TP" + t.getName() + "_Ch" + c.getName(); 
+				titler.setTitle( "TP" + t.getName() + "_Ch" + c.getName() );
 				if ( bb.getPixelType() == 0 )
 				{
 					exporter.exportImage(
 							process.fuseStack( new FloatType(), getInterpolatorFactory( new FloatType() ), t , c ),
 							bb,
-							title );
+							t,
+							newViewsetups.get( SpimData2.getViewSetup( spimData.getSequenceDescription().getViewSetupsOrdered(), c, anglesToProcess.get( 0 ), illumsToProcess.get( 0 ) ) ));
 				}
 				else
 				{
 					exporter.exportImage(
 							process.fuseStack( new UnsignedShortType(), getInterpolatorFactory( new UnsignedShortType() ), t , c ),
 							bb,
-							title );
+							t,
+							newViewsetups.get( SpimData2.getViewSetup( spimData.getSequenceDescription().getViewSetupsOrdered(), c, anglesToProcess.get( 0 ), illumsToProcess.get( 0 ) ) ));
 				}
 			}
 
@@ -191,5 +207,176 @@ public class WeightedAverageFusion extends Fusion
 		else
 			return fusedSizeMB + (avgPixels/ ( 1024*1024 )) * bytePerPixel;
 	
+	}
+
+	@Override
+	protected Map< ViewSetup, ViewSetup > createNewViewSetups( final BoundingBox bb )
+	{
+		if ( type == WeightedAvgFusionType.FUSEDATA )
+		{
+			return assembleNewViewSetupsFusion(
+					spimData,
+					channelsToProcess,
+					illumsToProcess,
+					anglesToProcess,
+					bb,
+					"Average-Weighted Fusion of all Angles",
+					"Average-Weighted Fusion of all Illumination directions" );
+		}
+		else
+		{
+			return assembleNewViewSetupsSequential(
+					spimData,
+					channelsToProcess,
+					illumsToProcess,
+					anglesToProcess,
+					bb );
+		}
+	}
+
+	/**
+	 * Creates one new Angle and one new Illumination for the fused dataset.
+	 * The size of the List< ViewSetup > is therefore equal to the number of channels
+	 * 
+	 * @param spimData
+	 * @param channelsToProcess
+	 * @param bb
+	 * @param newViewSetupName
+	 * @param newAngleName
+	 * @param newIlluminationName
+	 * @return
+	 */
+	public static Map< ViewSetup, ViewSetup > assembleNewViewSetupsFusion(
+			final SpimData2 spimData,
+			final List< Channel > channelsToProcess,
+			final List< Illumination > illumsToProcess,
+			final List< Angle > anglesToProcess,
+			final BoundingBox bb,
+			final String newAngleName,
+			final String newIlluminationName )
+	{
+		final HashMap< ViewSetup, ViewSetup > map = new HashMap< ViewSetup, ViewSetup >();
+
+		int maxViewSetupIndex = -1;
+		int maxAngleIndex = -1;
+		int maxIllumIndex = -1;
+		
+		for ( final ViewSetup v : spimData.getSequenceDescription().getViewSetups().values() )
+			maxViewSetupIndex = Math.max( maxViewSetupIndex, v.getId() );
+
+		for ( final Angle a : spimData.getSequenceDescription().getAllAngles().values() )
+			maxAngleIndex = Math.max( maxAngleIndex, a.getId() );
+
+		for ( final Illumination i : spimData.getSequenceDescription().getAllIlluminations().values() )
+			maxIllumIndex = Math.max( maxIllumIndex, i.getId() );
+
+		final Angle newAngle = new Angle( maxAngleIndex + 1, newAngleName );
+		final Illumination newIllum = new Illumination( maxIllumIndex + 1, newIlluminationName );
+		
+		final String unit = spimData.getSequenceDescription().getViewSetupsOrdered().get( 0 ).getVoxelSize().unit();
+		
+		// get the minimal resolution of all calibrations relative to the downsampling
+		final double minResolution = Apply_Transformation.assembleAllMetaData(
+				spimData.getSequenceDescription(),
+				spimData.getSequenceDescription().getTimePoints().getTimePointsOrdered(),
+				spimData.getSequenceDescription().getAllChannelsOrdered(),
+				spimData.getSequenceDescription().getAllIlluminationsOrdered(),
+				spimData.getSequenceDescription().getAllAnglesOrdered() ) * bb.getDownSampling();
+
+		for ( final Channel channel : channelsToProcess )
+		{
+			final ViewSetup newSetup = new ViewSetup( 
+					++maxViewSetupIndex,
+					null,
+					new FinalDimensions( bb.getDimensions() ), 
+					new FinalVoxelDimensions ( unit, new double[]{ minResolution, minResolution, minResolution } ),
+					channel,
+					newAngle,
+					newIllum );
+			
+			// all viewsetups of the processed illuminations and angles map to the same new viewsetup
+			for ( final Illumination i : illumsToProcess )
+				for ( final Angle a : anglesToProcess )
+				{
+					map.put(
+						SpimData2.getViewSetup( spimData.getSequenceDescription().getViewSetupsOrdered(), channel, a, i ),
+						newSetup );
+				}
+		}
+
+		return map;
+	}
+
+	/**
+	 * Duplicates all Angles and Illuminations that are processed.
+	 * The size of the List< ViewSetup > is therefore equal to 
+	 * the number of channels * number of processed angles * number of processed illuminations
+	 * 
+	 * @param spimData
+	 * @param channelsToProcess
+	 * @param illumsToProcess
+	 * @param anglesToProcess
+	 * @param bb
+	 * @return
+	 */
+	public static Map< ViewSetup, ViewSetup > assembleNewViewSetupsSequential(
+			final SpimData2 spimData,
+			final List< Channel > channelsToProcess,
+			final List< Illumination > illumsToProcess,
+			final List< Angle > anglesToProcess,
+			final BoundingBox bb )
+	{
+		final HashMap< ViewSetup, ViewSetup > map = new HashMap< ViewSetup, ViewSetup >();
+
+		int maxViewSetupIndex = -1;
+		int maxAngleIndex = -1;
+		int maxIllumIndex = -1;
+		
+		for ( final ViewSetup v : spimData.getSequenceDescription().getViewSetups().values() )
+			maxViewSetupIndex = Math.max( maxViewSetupIndex, v.getId() );
+
+		for ( final Angle a : spimData.getSequenceDescription().getAllAngles().values() )
+			maxAngleIndex = Math.max( maxAngleIndex, a.getId() );
+
+		for ( final Illumination i : spimData.getSequenceDescription().getAllIlluminations().values() )
+			maxIllumIndex = Math.max( maxIllumIndex, i.getId() );
+
+		final String unit = spimData.getSequenceDescription().getViewSetupsOrdered().get( 0 ).getVoxelSize().unit();
+		
+		// get the minimal resolution of all calibrations relative to the downsampling
+		final double minResolution = Apply_Transformation.assembleAllMetaData(
+				spimData.getSequenceDescription(),
+				spimData.getSequenceDescription().getTimePoints().getTimePointsOrdered(),
+				spimData.getSequenceDescription().getAllChannelsOrdered(),
+				spimData.getSequenceDescription().getAllIlluminationsOrdered(),
+				spimData.getSequenceDescription().getAllAnglesOrdered() ) * bb.getDownSampling();
+
+		final List< Angle > newAngles = new ArrayList< Angle >();
+		final List< Illumination > newIllums = new ArrayList< Illumination >();
+
+		for ( int i = 0; i < anglesToProcess.size(); ++i )
+			newAngles.add( new Angle( maxAngleIndex + i + 1, "Transformed " + anglesToProcess.get( i ).getName(), anglesToProcess.get( i ).getRotationAngleDegrees(), anglesToProcess.get( i ).getRotationAxis() ) );
+
+		for ( int i = 0; i < illumsToProcess.size(); ++i )
+			newIllums.add( new Illumination( maxIllumIndex + i + 1, "Transformed " + illumsToProcess.get( i ).getName() ) );
+
+		for ( final Channel channel : channelsToProcess )
+			for ( int i = 0; i < illumsToProcess.size(); ++i )
+				for ( int a = 0; a < anglesToProcess.size(); ++a )
+				{
+					final ViewSetup oldSetup = SpimData2.getViewSetup( spimData.getSequenceDescription().getViewSetupsOrdered(), channel, anglesToProcess.get( a ), illumsToProcess.get( i ) );
+					final ViewSetup newSetup = new ViewSetup( 
+							++maxViewSetupIndex,
+							null,
+							new FinalDimensions( bb.getDimensions() ), 
+							new FinalVoxelDimensions ( unit, new double[]{ minResolution, minResolution, minResolution } ),
+							channel,
+							newAngles.get( a ),
+							newIllums.get( i ) );
+
+					map.put( oldSetup, newSetup );
+				}
+
+		return map;
 	}
 }

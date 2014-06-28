@@ -11,6 +11,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import mpicbg.imglib.util.Util;
 import mpicbg.spim.data.sequence.Angle;
@@ -19,6 +20,7 @@ import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.postprocessing.deconvolution2.BayesMVDeconvolution;
 import mpicbg.spim.postprocessing.deconvolution2.CUDAConvolution;
@@ -36,7 +38,10 @@ import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.process.fusion.boundingbox.ManualBoundingBox.ManageListeners;
 import spim.process.fusion.export.DisplayImage;
+import spim.process.fusion.export.FixedNameImgTitler;
 import spim.process.fusion.export.ImgExport;
+import spim.process.fusion.export.ImgExportTitle;
+import spim.process.fusion.weightedavg.WeightedAverageFusion;
 
 import com.sun.jna.Native;
 
@@ -142,6 +147,11 @@ public class EfficientBayesianBased extends Fusion
 	@Override
 	public boolean fuseData( final BoundingBox bb, final ImgExport exporter )
 	{
+		// set up naming scheme
+		final FixedNameImgTitler titler = new FixedNameImgTitler( "" );
+		if ( exporter instanceof ImgExportTitle )
+			( (ImgExportTitle)exporter).setImgTitler( titler );
+
 		final ProcessForDeconvolution pfd = new ProcessForDeconvolution(
 				spimData,
 				anglesToProcess,
@@ -208,10 +218,12 @@ public class EfficientBayesianBased extends Fusion
 					deconvolved = LRFFT.wrap( new BayesMVDeconvolution( deconvolutionData, iterationType, numIterations, 0, osemSpeedUp, osemspeedupIndex, "deconvolved" ).getPsi() );
 
 				// export the final image
+				titler.setTitle( "TP" + t.getName() + "_Ch" + c.getName() );
 				exporter.exportImage(
 						deconvolved,
 						bb,
-						"TP" + t.getName() + "_Ch" + c.getName(),
+						t,
+						newViewsetups.get( SpimData2.getViewSetup( spimData.getSequenceDescription().getViewSetupsOrdered(), c, anglesToProcess.get( 0 ), illumsToProcess.get( 0 ) ) ),
 						0, 1 );
 			}
 
@@ -1298,4 +1310,16 @@ public class EfficientBayesianBased extends Fusion
 				return false;
 		}
 	}
+
+	@Override
+	protected Map< ViewSetup, ViewSetup > createNewViewSetups( final BoundingBox bb )
+	{
+		return WeightedAverageFusion.assembleNewViewSetupsFusion(
+				spimData,
+				channelsToProcess,
+				illumsToProcess,
+				anglesToProcess,
+				bb,
+				"Multiview Deconvolution of all Angles",
+				"Multiview Deconvolution of all Illumination directions" );	}
 }

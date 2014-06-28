@@ -2,7 +2,10 @@ package spim.fiji.plugin.fusion;
 
 import ij.gui.GenericDialog;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
@@ -30,6 +33,11 @@ public abstract class Fusion
 	protected boolean useContentBased = false;
 
 	/**
+	 * Maps from an old Viewsetup to a new ViewSetup that is created by the fusion
+	 */
+	protected Map< ViewSetup, ViewSetup > newViewsetups = null;
+
+	/**
 	 * which angles to process, set in queryParameters
 	 */
 	final protected List< Angle > anglesToProcess;
@@ -37,7 +45,7 @@ public abstract class Fusion
 	/**
 	 * which channels to process, set in queryParameters
 	 */
-	final protected List< Channel> channelsToProcess;
+	final protected List< Channel > channelsToProcess;
 
 	/**
 	 * which illumination directions to process, set in queryParameters
@@ -84,13 +92,13 @@ public abstract class Fusion
 			maxNumViews = computeMaxNumViews();
 		}
 	}
-	
+
 	public abstract long totalRAM( final long fusedSizeMB, final int bytePerPixel );
-	
+
 	public int getMaxNumViewsPerTimepoint() { return maxNumViews; }
-	
+
 	public int getInterpolation() { return interpolation; }
-	
+
 	/**
 	 * Fuses and saves/displays
 	 * 
@@ -98,7 +106,42 @@ public abstract class Fusion
 	 * @return
 	 */
 	public abstract boolean fuseData( final BoundingBox bb, final ImgExport exporter );
+
+	/**
+	 * @return - which timepoints will be processed, this is maybe inquired by the exporter
+	 * if it needs to assemble a new XML dataset or append to the current XML dataset
+	 */
+	public List< TimePoint > getTimepointsToProcess()
+	{
+		return timepointsToProcess;
+	}
+
+	/**
+	 * @return - a sorted List of ViewSetup(s) that are created by this fusion, this maybe requested
+	 * if the exporter creates a new XML dataset or appends to an existing XML dataset
+	 */
+	public List< ViewSetup > getNewViewSetups()
+	{
+		final ArrayList< ViewSetup > newSetups = new ArrayList< ViewSetup >();
+		newSetups.addAll( newViewsetups.values() );
+		Collections.sort( newSetups );
+		
+		return newSetups;
+	}
 	
+	/**
+	 * Set up the list of new viewsetups that are created with this fusion. This maybe required
+	 * if the exporter needs to assemble a new XML dataset or append to the current XML dataset.
+	 * 
+	 * It maps from an old ViewSetup to a new ViewSetup
+	 * 
+	 * @param bb - the bounding box used for fusing the data
+	 * @return the list of new viewsetups (in the order as the viewsetups are processed)
+	 */
+	protected abstract Map< ViewSetup, ViewSetup > createNewViewSetups( final BoundingBox bb );
+	
+	public void defineNewViewSetups( final BoundingBox bb ) { this.newViewsetups = createNewViewSetups( bb ); }
+
 	public abstract boolean supports16BitUnsigned();
 	public abstract boolean supportsDownsampling();
 	
