@@ -19,6 +19,7 @@ import spim.process.fusion.boundingbox.AutomaticBoundingBox;
 import spim.process.fusion.boundingbox.ManualBoundingBox;
 import spim.process.fusion.deconvolution.EfficientBayesianBased;
 import spim.process.fusion.export.DisplayImage;
+import spim.process.fusion.export.ExportSpimData2TIFF;
 import spim.process.fusion.export.ImgExport;
 import spim.process.fusion.export.Save3dTIFF;
 import spim.process.fusion.weightedavg.WeightedAverageFusion;
@@ -47,6 +48,7 @@ public class Image_Fusion implements PlugIn
 		
 		staticImgExportAlgorithms.add( new DisplayImage() );
 		staticImgExportAlgorithms.add( new Save3dTIFF( null ) );
+		staticImgExportAlgorithms.add( new ExportSpimData2TIFF() );
 	}
 
 	@Override
@@ -152,6 +154,8 @@ public class Image_Fusion implements PlugIn
 				}
 			}
 		}
+
+		imgExport.finish();
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Fusion finished." );
 	}

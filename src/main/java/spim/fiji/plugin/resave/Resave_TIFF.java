@@ -138,7 +138,7 @@ public class Resave_TIFF implements PlugIn
 	{
 		final GenericDialogPlus gd = new GenericDialogPlus( "Resave dataset as TIFF" );
 
-		if ( defaultPath == null || defaultPath.trim().length() == 0 )
+		if ( defaultPath == null )
 			defaultPath = LoadParseQueryXML.defaultXMLfilename;
 
 		PluginHelper.addSaveAsFileField( gd, "Select new XML", defaultPath, 80 );

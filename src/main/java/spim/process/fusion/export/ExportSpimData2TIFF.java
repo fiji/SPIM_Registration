@@ -109,6 +109,9 @@ public class ExportSpimData2TIFF implements ImgExport
 			return false;
 		}
 
+		if ( Resave_TIFF.defaultPath == null )
+			Resave_TIFF.defaultPath = "";
+		
 		this.params = Resave_TIFF.getParameters();
 		
 		if ( this.params == null )
