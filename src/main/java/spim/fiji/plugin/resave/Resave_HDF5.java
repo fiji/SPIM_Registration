@@ -105,11 +105,6 @@ public class Resave_HDF5 implements PlugIn
 			e.printStackTrace();
 			return null;
 		}
-		
-		final MissingViews missingViews = oldSpimData.getSequenceDescription().getMissingViews();
-				
-		// instantiate the sequencedescription
-		final SequenceDescription sequenceDescription = new SequenceDescription( timepoints, viewSetupsToProcess, oldSpimData.getSequenceDescription().getImgLoader(), missingViews );
 
 		// a hashset for all viewsetups that remain
 		final Set< ViewId > views = new HashSet< ViewId >();
@@ -117,6 +112,16 @@ public class Resave_HDF5 implements PlugIn
 		for ( final TimePoint t : timepointsToProcess )
 			for ( final ViewSetup v : viewSetupsToProcess )
 				views.add( new ViewId( t.getId(), v.getId() ) );
+
+		final MissingViews oldMissingViews = oldSpimData.getSequenceDescription().getMissingViews();
+		final ArrayList< ViewId > missingViews = new ArrayList< ViewId >();
+		
+		for ( final ViewId id : oldMissingViews.getMissingViews() )
+			if ( views.contains( id ) )
+				missingViews.add( id );
+
+		// instantiate the sequencedescription
+		final SequenceDescription sequenceDescription = new SequenceDescription( timepoints, viewSetupsToProcess, oldSpimData.getSequenceDescription().getImgLoader(), new MissingViews( missingViews ) );
 
 		// re-assemble the registrations
 		final Map< ViewId, ViewRegistration > oldRegMap = oldSpimData.getViewRegistrations().getViewRegistrations();

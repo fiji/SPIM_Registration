@@ -63,6 +63,10 @@ public class Resave_TIFF implements PlugIn
 		ImgFactory< ? extends NativeType< ? > > imgFactory;
 		String xmlFile;
 		boolean compress;
+		
+		public boolean compress() { return compress; }
+		public String getXMLFile() { return xmlFile; }
+		public ImgFactory< ? extends NativeType< ? > > getImgFactory() { return imgFactory; }
 	}
 
 	@Override
@@ -87,7 +91,8 @@ public class Resave_TIFF implements PlugIn
 		// write the XML
 		try
 		{
-			final List< String > filesToCopy = writeXML( lpq, params, progressWriter );
+			final List< String > filesToCopy = writeXML( lpq, params );
+			progressWriter.setProgress( 0.95 );
 
 			// copy the interest points if they exist
 			copyInterestPoints( lpq.getData().getBasePath(), new File( params.xmlFile ).getParentFile(), filesToCopy );
@@ -99,6 +104,7 @@ public class Resave_TIFF implements PlugIn
 		}
 		finally
 		{
+			progressWriter.setProgress( 1.00 );
 			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + params.xmlFile + "'." );
 		}
 	}
@@ -128,7 +134,7 @@ public class Resave_TIFF implements PlugIn
 		}
 	}
 
-	protected Parameters getParameters()
+	public static Parameters getParameters()
 	{
 		final GenericDialogPlus gd = new GenericDialogPlus( "Resave dataset as TIFF" );
 
@@ -248,10 +254,6 @@ public class Resave_TIFF implements PlugIn
 		}
 		
 		final List< ViewSetup > setups = lpq.getViewSetupsToProcess();
-		final MissingViews missingViews = lpq.getData().getSequenceDescription().getMissingViews();
-				
-		// instantiate the sequencedescription
-		final SequenceDescription sequenceDescription = new SequenceDescription( timepoints, setups, null, missingViews );
 
 		// a hashset for all viewsetups that remain
 		final Set< ViewId > views = new HashSet< ViewId >();
@@ -259,6 +261,16 @@ public class Resave_TIFF implements PlugIn
 		for ( final TimePoint t : lpq.getTimePointsToProcess() )
 			for ( final ViewSetup v : lpq.getViewSetupsToProcess() )
 				views.add( new ViewId( t.getId(), v.getId() ) );
+
+		final MissingViews oldMissingViews = lpq.getData().getSequenceDescription().getMissingViews();
+		final ArrayList< ViewId > missingViews = new ArrayList< ViewId >();
+		
+		for ( final ViewId id : oldMissingViews.getMissingViews() )
+			if ( views.contains( id ) )
+				missingViews.add( id );
+
+		// instantiate the sequencedescription
+		final SequenceDescription sequenceDescription = new SequenceDescription( timepoints, setups, null, new MissingViews( missingViews ) );
 
 		// re-assemble the registrations
 		final Map< ViewId, ViewRegistration > oldRegMap = lpq.getData().getViewRegistrations().getViewRegistrations();
@@ -301,8 +313,7 @@ public class Resave_TIFF implements PlugIn
 
 	public static List< String > writeXML(
 			final LoadParseQueryXML lpq,
-			final Parameters params,
-			final ProgressWriter progressWriter )
+			final Parameters params )
 		throws SpimDataException
 	{
 		int layoutTP = 0, layoutChannels = 0, layoutIllum = 0, layoutAngles = 0;
@@ -348,13 +359,11 @@ public class Resave_TIFF implements PlugIn
 		newSpimData.getSequenceDescription().setImgLoader( imgLoader );
 
 		lpq.getIO().save( newSpimData, new File( params.xmlFile ).getAbsolutePath() );
-		
-		progressWriter.setProgress( 0.95 );
 
 		return filesToCopy;
 	}
 	
-	protected static String listAllTimePoints( final List<TimePoint> timePointsToProcess )
+	public static String listAllTimePoints( final List<TimePoint> timePointsToProcess )
 	{
 		String t = "" + timePointsToProcess.get( 0 ).getId();
 
