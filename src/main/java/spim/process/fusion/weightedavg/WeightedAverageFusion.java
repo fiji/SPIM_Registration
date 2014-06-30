@@ -220,8 +220,8 @@ public class WeightedAverageFusion extends Fusion
 					illumsToProcess,
 					anglesToProcess,
 					bb,
-					"Average-Weighted Fusion of all Angles",
-					"Average-Weighted Fusion of all Illumination directions" );
+					"Fused",
+					"Fused" );
 		}
 		else
 		{
@@ -270,8 +270,8 @@ public class WeightedAverageFusion extends Fusion
 		for ( final Illumination i : spimData.getSequenceDescription().getAllIlluminations().values() )
 			maxIllumIndex = Math.max( maxIllumIndex, i.getId() );
 
-		final Angle newAngle = new Angle( maxAngleIndex + 1, newAngleName );
-		final Illumination newIllum = new Illumination( maxIllumIndex + 1, newIlluminationName );
+		final Angle newAngle = new Angle( maxAngleIndex + 1, newAngleName + "_" + ( maxAngleIndex + 1 ) );
+		final Illumination newIllum = new Illumination( maxIllumIndex + 1, newIlluminationName + "_" + ( maxIllumIndex + 1 ) );
 		
 		final String unit = spimData.getSequenceDescription().getViewSetupsOrdered().get( 0 ).getVoxelSize().unit();
 		
@@ -355,10 +355,16 @@ public class WeightedAverageFusion extends Fusion
 		final List< Illumination > newIllums = new ArrayList< Illumination >();
 
 		for ( int i = 0; i < anglesToProcess.size(); ++i )
-			newAngles.add( new Angle( maxAngleIndex + i + 1, "Transformed " + anglesToProcess.get( i ).getName(), anglesToProcess.get( i ).getRotationAngleDegrees(), anglesToProcess.get( i ).getRotationAxis() ) );
+			newAngles.add( new Angle(
+					maxAngleIndex + i + 1,
+					"Transf_" + anglesToProcess.get( i ).getName() + "_" + maxAngleIndex + i + 1,
+					anglesToProcess.get( i ).getRotationAngleDegrees(),
+					anglesToProcess.get( i ).getRotationAxis() ) );
 
 		for ( int i = 0; i < illumsToProcess.size(); ++i )
-			newIllums.add( new Illumination( maxIllumIndex + i + 1, "Transformed " + illumsToProcess.get( i ).getName() ) );
+			newIllums.add( new Illumination(
+					maxIllumIndex + i + 1,
+					"Transf_" + illumsToProcess.get( i ).getName() + "_" + maxIllumIndex + i + 1 ) );
 
 		for ( final Channel channel : channelsToProcess )
 			for ( int i = 0; i < illumsToProcess.size(); ++i )

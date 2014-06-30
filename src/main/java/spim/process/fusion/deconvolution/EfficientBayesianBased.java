@@ -1320,6 +1320,6 @@ public class EfficientBayesianBased extends Fusion
 				illumsToProcess,
 				anglesToProcess,
 				bb,
-				"Multiview Deconvolution of all Angles",
-				"Multiview Deconvolution of all Illumination directions" );	}
+				"Decon",
+				"Decon" );	}
 }
