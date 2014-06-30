@@ -28,6 +28,13 @@ public abstract class StackImgLoader extends AbstractImgLoader
 		
 	protected AbstractSequenceDescription< ?, ?, ? > sequenceDescription;
 
+	public File getPath() { return path; }
+	public String getFileNamePattern() { return fileNamePattern; }
+	public int getLayoutTimePoints() { return layoutTP; }
+	public int getLayoutChannels() { return layoutChannels; }
+	public int getLayoutIlluminations() { return layoutIllum; }
+	public int getLayoutAngles() { return layoutAngles; }
+	
 	protected < T extends NativeType< T > > Img< T > instantiateImg( final long[] dim, final T type )
 	{
 		Img< T > img;
@@ -50,7 +57,7 @@ public abstract class StackImgLoader extends AbstractImgLoader
 		
 		return img;
 	}
-	
+
 	protected File getFile( final ViewId view )
 	{
 		final TimePoint tp = sequenceDescription.getTimePoints().getTimePoints().get( view.getTimePointId() );
@@ -61,11 +68,20 @@ public abstract class StackImgLoader extends AbstractImgLoader
 		final String channel = vs.getAttribute( Channel.class ).getName();
 		final String illum = vs.getAttribute( Illumination.class ).getName();
 
-		final String fileName = StackList.getFileNameFor( fileNamePattern, replaceTimepoints, replaceChannels,
+		final String[] fileName = StackList.getFileNamesFor( fileNamePattern, replaceTimepoints, replaceChannels,
 				replaceIlluminations, replaceAngles, timepoint, channel, illum, angle,
 				numDigitsTimepoints, numDigitsChannels, numDigitsIlluminations, numDigitsAngles );
 
-		return new File( path, fileName );
+		// check which of them exists and return it
+		for ( final String fn : fileName )
+		{
+			final File f = new File( path, fn );
+			
+			if ( f.exists() )
+				return f;
+		}
+
+		return null;
 	}
 
 	/**

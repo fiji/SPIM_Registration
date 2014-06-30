@@ -720,6 +720,8 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	/**
 	 * Assemble the filename for the corresponding file based on the indices for time, channel, illumination and angle
 	 * 
+	 * If the fileNamePattern is separated by ';', it will return multiple solutions for each filenamepattern
+	 * 
 	 * @param tpID
 	 * @param chID
 	 * @param illID
@@ -728,29 +730,53 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	 */
 	protected String getFileNameFor( final int tpID, final int chID, final int illID, final int angleID )
 	{
-		return getFileNameFor( fileNamePattern, replaceTimepoints, replaceChannels, replaceIlluminations, replaceAngles, 
+		return getFileNamesFor( fileNamePattern, replaceTimepoints, replaceChannels, replaceIlluminations, replaceAngles, 
 				timepointNameList.get( tpID ), channelNameList.get( chID ), illuminationsNameList.get( illID ), angleNameList.get( angleID ),
-				numDigitsTimepoints, numDigitsChannels, numDigitsIlluminations, numDigitsAngles );
+				numDigitsTimepoints, numDigitsChannels, numDigitsIlluminations, numDigitsAngles )[ 0 ];
 	}
 
-	public static String getFileNameFor( String fileName, 
+	/**
+	 * Assemble the filename for the corresponding file based on the indices for time, channel, illumination and angle
+	 * 
+	 * If the fileNamePattern is separated by ';', it will return multiple solutions for each filenamepattern
+	 * 
+	 * @param fileNames
+	 * @param replaceTimepoints
+	 * @param replaceChannels
+	 * @param replaceIlluminations
+	 * @param replaceAngles
+	 * @param tpName
+	 * @param chName
+	 * @param illName
+	 * @param angleName
+	 * @param numDigitsTP
+	 * @param numDigitsCh
+	 * @param numDigitsIll
+	 * @param numDigitsAngle
+	 * @return
+	 */
+	public static String[] getFileNamesFor( String fileNames, 
 			final String replaceTimepoints, final String replaceChannels, 
 			final String replaceIlluminations, final String replaceAngles, 
 			final String tpName, final String chName, final String illName, final String angleName,
 			final int numDigitsTP, final int numDigitsCh, final int numDigitsIll, final int numDigitsAngle )
 	{
-		if ( replaceTimepoints != null )
-			fileName = fileName.replace( replaceTimepoints, leadingZeros( tpName, numDigitsTP ) );
-
-		if ( replaceChannels != null )
-			fileName = fileName.replace( replaceChannels, leadingZeros( chName, numDigitsCh ) );
-
-		if ( replaceIlluminations != null )
-			fileName = fileName.replace( replaceIlluminations, leadingZeros( illName, numDigitsIll ) );
-
-		if ( replaceAngles != null )
-			fileName = fileName.replace( replaceAngles, leadingZeros( angleName, numDigitsAngle ) );
+		String[] fileName = fileNames.split( ";" );
 		
+		for ( int i = 0; i < fileName.length; ++i )
+		{
+			if ( replaceTimepoints != null )
+				fileName[ i ] = fileName[ i ].replace( replaceTimepoints, leadingZeros( tpName, numDigitsTP ) );
+	
+			if ( replaceChannels != null )
+				fileName[ i ] = fileName[ i ].replace( replaceChannels, leadingZeros( chName, numDigitsCh ) );
+	
+			if ( replaceIlluminations != null )
+				fileName[ i ] = fileName[ i ].replace( replaceIlluminations, leadingZeros( illName, numDigitsIll ) );
+	
+			if ( replaceAngles != null )
+				fileName[ i ] = fileName[ i ].replace( replaceAngles, leadingZeros( angleName, numDigitsAngle ) );
+		}
 		return fileName;
 	}
 	
