@@ -18,6 +18,7 @@ import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import spim.process.fusion.boundingbox.AutomaticBoundingBox;
 import spim.process.fusion.boundingbox.ManualBoundingBox;
 import spim.process.fusion.deconvolution.EfficientBayesianBased;
+import spim.process.fusion.export.AppendSpimData2;
 import spim.process.fusion.export.DisplayImage;
 import spim.process.fusion.export.ExportSpimData2TIFF;
 import spim.process.fusion.export.ImgExport;
@@ -49,6 +50,7 @@ public class Image_Fusion implements PlugIn
 		staticImgExportAlgorithms.add( new DisplayImage() );
 		staticImgExportAlgorithms.add( new Save3dTIFF( null ) );
 		staticImgExportAlgorithms.add( new ExportSpimData2TIFF() );
+		staticImgExportAlgorithms.add( new AppendSpimData2() );
 	}
 
 	@Override

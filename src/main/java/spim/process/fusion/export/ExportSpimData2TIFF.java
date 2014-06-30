@@ -46,31 +46,12 @@ public class ExportSpimData2TIFF implements ImgExport
 	Save3dTIFF saver;
 	SpimData2 spimData;
 
-	@Override
-	public boolean finish()
+	public static class FileNamePattern
 	{
-		try
-		{
-			new XmlIoSpimData2().save( spimData, new File( params.getXMLFile() ).getAbsolutePath() );
-			
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + params.getXMLFile() + "'." );
-			return true;
-		}
-		catch ( SpimDataException e )
-		{
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + params.getXMLFile() + "'." );
-			e.printStackTrace();
-			return false;
-		}
+		public int layoutTP = 0, layoutChannels = 0, layoutIllum = 0, layoutAngles = 0;
+		public String fileNamePattern;
 	}
 
-	@Override
-	public void setXMLData ( final List< TimePoint > newTimepoints, final List< ViewSetup > newViewSetups )
-	{
-		this.newTimepoints = newTimepoints;
-		this.newViewSetups = newViewSetups;
-	}
-	
 	@Override
 	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval<T> img, final BoundingBox bb, final TimePoint tp, final ViewSetup vs )
 	{
@@ -98,6 +79,31 @@ public class ExportSpimData2TIFF implements ImgExport
 		vr.getTransformList().add( vt );
 		
 		return true;
+	}
+
+	@Override
+	public boolean finish()
+	{
+		try
+		{
+			new XmlIoSpimData2().save( spimData, new File( params.getXMLFile() ).getAbsolutePath() );
+			
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + params.getXMLFile() + "'." );
+			return true;
+		}
+		catch ( SpimDataException e )
+		{
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + params.getXMLFile() + "'." );
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	@Override
+	public void setXMLData ( final List< TimePoint > newTimepoints, final List< ViewSetup > newViewSetups )
+	{
+		this.newTimepoints = newTimepoints;
+		this.newViewSetups = newViewSetups;
 	}
 
 	@Override
@@ -142,48 +148,62 @@ public class ExportSpimData2TIFF implements ImgExport
 			final List< ViewSetup > viewSetupsToProcess,
 			final Parameters params )
 	{
-		int layoutTP = 0, layoutChannels = 0, layoutIllum = 0, layoutAngles = 0;
-		String filename = "img";
-
-		if ( timepointsToProcess.size() > 1 )
-		{
-			filename += "_TL{t}";
-			layoutTP = 1;
-		}
-		
-		if ( XMLTIFFImgTitler.getAllChannels( viewSetupsToProcess ).size() > 1 )
-		{
-			filename += "_Ch{c}";
-			layoutChannels = 1;
-		}
-		
-		if ( XMLTIFFImgTitler.getAllIlluminations( viewSetupsToProcess ).size() > 1 )
-		{
-			filename += "_Ill{i}";
-			layoutIllum = 1;
-		}
-		
-		if ( XMLTIFFImgTitler.getAllAngles( viewSetupsToProcess ).size() > 1 )
-		{
-			filename += "_Angle{a}";
-			layoutAngles = 1;
-		}
-
-		filename += ".tif";
-
-		if ( params.compress() )
-			filename += ".zip";
+		final FileNamePattern fnp = getFileNamePattern( timepointsToProcess, viewSetupsToProcess, params.compress() );
 
 		// Assemble a new SpimData object containing the subset of viewsetups and timepoints
 		final SpimData2 newSpimData = assembleSpimData2( timepointsToProcess, viewSetupsToProcess, new File( params.getXMLFile() ).getParentFile() );
 
 		final StackImgLoaderIJ imgLoader = new StackImgLoaderIJ(
 				new File( params.getXMLFile() ).getParentFile(),
-				filename, params.getImgFactory(),
-				layoutTP, layoutChannels, layoutIllum, layoutAngles, null );
+				fnp.fileNamePattern, params.getImgFactory(),
+				fnp.layoutTP, fnp.layoutChannels, fnp.layoutIllum, fnp.layoutAngles, null );
 		newSpimData.getSequenceDescription().setImgLoader( imgLoader );
 
 		return newSpimData;
+	}
+
+	public static FileNamePattern getFileNamePattern(
+			final List< TimePoint > timepoints,
+			final List< ViewSetup > viewSetups,
+			final boolean compress )
+	{
+		final FileNamePattern fnp = new FileNamePattern();
+		fnp.layoutTP = 0;
+		fnp.layoutChannels = 0;
+		fnp.layoutIllum = 0;
+		fnp.layoutAngles = 0;
+		fnp.fileNamePattern = "img";
+
+		if ( timepoints.size() > 1 )
+		{
+			fnp.fileNamePattern += "_TL{t}";
+			fnp.layoutTP = 1;
+		}
+		
+		if ( XMLTIFFImgTitler.getAllChannels( viewSetups ).size() > 1 )
+		{
+			fnp.fileNamePattern += "_Ch{c}";
+			fnp.layoutChannels = 1;
+		}
+		
+		if ( XMLTIFFImgTitler.getAllIlluminations( viewSetups ).size() > 1 )
+		{
+			fnp.fileNamePattern += "_Ill{i}";
+			fnp.layoutIllum = 1;
+		}
+		
+		if ( XMLTIFFImgTitler.getAllAngles( viewSetups ).size() > 1 )
+		{
+			fnp.fileNamePattern += "_Angle{a}";
+			fnp.layoutAngles = 1;
+		}
+
+		fnp.fileNamePattern += ".tif";
+
+		if ( compress )
+			fnp.fileNamePattern += ".zip";
+
+		return fnp;
 	}
 
 	/**

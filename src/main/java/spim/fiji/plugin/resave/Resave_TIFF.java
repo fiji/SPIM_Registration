@@ -49,7 +49,7 @@ import bdv.export.ProgressWriter;
 
 public class Resave_TIFF implements PlugIn
 {
-	public static String defaultPath = "";
+	public static String defaultPath = null;
 	public static int defaultContainer = 0;
 	public static boolean defaultCompress = false;
 
