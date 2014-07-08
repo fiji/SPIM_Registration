@@ -20,12 +20,14 @@ import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.TimePoints;
 import mpicbg.spim.data.sequence.TimePointsPattern;
+import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.resave.Generic_Resave_HDF5.Parameters;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import bdv.export.ExportMipmapInfo;
@@ -57,6 +59,25 @@ public class Resave_HDF5 implements PlugIn
 
 		LoadParseQueryXML.defaultXMLfilename = params.getSeqFile().toString();
 
+		// load all dimensions if they are not known (required for estimating the mipmap layout)
+		if ( loadDimensions( xml.getData(), xml.getViewSetupsToProcess() ) )
+		{
+			// save the XML again with the dimensions loaded
+			final XmlIoSpimData2 io = new XmlIoSpimData2();
+			
+			final String xmlFile = new File( xml.getData().getBasePath(), new File( xml.getXMLFileName() ).getName() ).getAbsolutePath();
+			try 
+			{
+				io.save( xml.getData(), xmlFile );
+				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + xml + "'." );
+			}
+			catch ( Exception e )
+			{
+				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + xml + "': " + e );
+				e.printStackTrace();
+			}
+		}
+
 		final ProgressWriter progressWriter = new ProgressWriterIJ();
 		progressWriter.out().println( "starting export..." );
 
@@ -82,6 +103,33 @@ public class Resave_HDF5 implements PlugIn
 		}
 	}
 
+	public static boolean loadDimensions( final SpimData2 spimData, final List< ViewSetup > viewsetups )
+	{
+		boolean loadedDimensions = false;
+		
+		for ( final ViewSetup vs : viewsetups )
+		{
+			if ( vs.getSize() == null )
+			{
+				IOFunctions.println( "Dimensions of viewsetup " + vs.getId() + " unknown. Loading them ... " );
+				
+				for ( final TimePoint t : spimData.getSequenceDescription().getTimePoints().getTimePointsOrdered() )
+				{
+					final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( t.getId(), vs.getId() );
+					
+					if ( vd.isPresent() )
+					{
+						vs.setSize( spimData.getSequenceDescription().getImgLoader().getImageSize( vd ) );
+						loadedDimensions = true;
+						break;
+					}
+				}
+			}
+		}
+		
+		return loadedDimensions;
+	}
+	
 	/**
 	 * Reduces a given SpimData2 to the subset of timepoints and viewsetups as selected by the user, including the original imgloader.
 	 * 
