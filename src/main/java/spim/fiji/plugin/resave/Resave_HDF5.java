@@ -60,11 +60,11 @@ public class Resave_HDF5 implements PlugIn
 			try 
 			{
 				io.save( xml.getData(), xmlFile );
-				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + xml + "'." );
+				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + xmlFile + "'." );
 			}
 			catch ( Exception e )
 			{
-				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + xml + "': " + e );
+				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + xmlFile + "': " + e );
 				e.printStackTrace();
 			}
 		}
