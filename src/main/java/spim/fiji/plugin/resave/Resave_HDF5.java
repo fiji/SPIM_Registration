@@ -49,15 +49,6 @@ public class Resave_HDF5 implements PlugIn
 		
 		if ( !xml.queryXML( "Resaving as HDF5", "Resave", true, true, true, true ) )
 			return;
-		
-		final Map< Integer, ExportMipmapInfo > perSetupExportMipmapInfo = ProposeMipmaps.proposeMipmaps( xml.getData().getSequenceDescription() );
-
-		Generic_Resave_HDF5.lastExportPath = LoadParseQueryXML.defaultXMLfilename;
-		final Parameters params = Generic_Resave_HDF5.getParameters( perSetupExportMipmapInfo.get( 0 ), true );
-		if ( params == null )
-			return;
-
-		LoadParseQueryXML.defaultXMLfilename = params.getSeqFile().toString();
 
 		// load all dimensions if they are not known (required for estimating the mipmap layout)
 		if ( loadDimensions( xml.getData(), xml.getViewSetupsToProcess() ) )
@@ -77,6 +68,16 @@ public class Resave_HDF5 implements PlugIn
 				e.printStackTrace();
 			}
 		}
+
+		final Map< Integer, ExportMipmapInfo > perSetupExportMipmapInfo = ProposeMipmaps.proposeMipmaps( xml.getData().getSequenceDescription() );
+
+		Generic_Resave_HDF5.lastExportPath = LoadParseQueryXML.defaultXMLfilename;
+
+		final Parameters params = Generic_Resave_HDF5.getParameters( perSetupExportMipmapInfo.get( 0 ), true );
+		if ( params == null )
+			return;
+
+		LoadParseQueryXML.defaultXMLfilename = params.getSeqFile().toString();
 
 		final ProgressWriter progressWriter = new ProgressWriterIJ();
 		progressWriter.out().println( "starting export..." );
