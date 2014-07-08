@@ -28,7 +28,9 @@ import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
+import spim.process.fusion.export.FixedNameImgTitler;
 import spim.process.fusion.export.ImgExport;
+import spim.process.fusion.export.ImgExportTitle;
 
 /**
  * Fused individual images for each input stack, uses the exporter directly
@@ -40,6 +42,7 @@ public class ProcessIndependent extends ProcessFusion
 {
 	final ImgExport export;
 	final Map< ViewSetup, ViewSetup > newViewsetups;
+	final FixedNameImgTitler titler;
 	
 	public ProcessIndependent(
 			final SpimData2 spimData,
@@ -53,6 +56,11 @@ public class ProcessIndependent extends ProcessFusion
 		
 		this.export = export;
 		this.newViewsetups = newViewsetups;
+
+		this.titler = new FixedNameImgTitler( "" );
+		if ( this.export instanceof ImgExportTitle )
+			( (ImgExportTitle)this.export).setImgTitler( titler );
+
 	}
 
 	/** 
@@ -121,7 +129,11 @@ public class ProcessIndependent extends ProcessFusion
 			}
 
 			taskExecutor.shutdown();
-			
+
+			titler.setTitle( "TP" + inputData.getTimePointId() + 
+					"_Channel" + inputData.getViewSetup().getChannel().getName() +
+					"_Illum" + inputData.getViewSetup().getIllumination().getName() +
+					"_Angle" + inputData.getViewSetup().getAngle().getName() );
 			export.exportImage( fusedImg, bb, timepoint, newViewsetups.get( inputData.getViewSetup() ) );
 		}
 		
