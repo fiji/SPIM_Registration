@@ -9,6 +9,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.TextEvent;
 import java.awt.event.TextListener;
+import java.util.Date;
 import java.util.List;
 import java.util.Vector;
 
@@ -345,7 +346,9 @@ public class ManualBoundingBox extends BoundingBox
 			minBB[ d ] = Double.MAX_VALUE;
 			maxBB[ d ] = -Double.MAX_VALUE;
 		}
-		
+
+		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Estimating Bounding Box for Fusion. If size of images is not known (they were never opened before), some of them need to be opened once to determine their size.");
+
 		for ( final TimePoint t: timepointsToProcess )
 			for ( final Channel c : channelsToProcess )
 				for ( final Illumination i : illumsToProcess )
