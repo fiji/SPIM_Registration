@@ -60,11 +60,19 @@ public class LoadParseQueryXML extends GenericLoadParseQueryXML< SpimData2, Sequ
 			final boolean askForTimepoints )
 	{
 		final ArrayList< String > specifyAttributes = new ArrayList< String >();
-		specifyAttributes.add( "Timepoint" );
-		specifyAttributes.add( "channel" );
+
+		if ( askForTimepoints )
+			specifyAttributes.add( "Timepoint" );
+
+		if ( askForChannels )
+			specifyAttributes.add( "channel" );
+
+		if ( askForAngles )
 		specifyAttributes.add( "angle" );
-		specifyAttributes.add( "illumination" );
-		
+
+		if ( askForIllum )
+			specifyAttributes.add( "illumination" );
+
 		return queryXML( additionalTitle, query, specifyAttributes );
 	}
 	/**
