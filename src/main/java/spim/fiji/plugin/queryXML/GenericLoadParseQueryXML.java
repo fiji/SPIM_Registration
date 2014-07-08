@@ -259,9 +259,9 @@ public class GenericLoadParseQueryXML< AS extends AbstractSpimData< S >, S exten
 	{
 		if ( defaultSelection >= list.length )
 			defaultSelection = 0;
-		
+
 		final GenericDialog gd = new GenericDialog( "Select Single " + name );
-		gd.addChoice( "Process_" + name, list, list[ defaultSelection ] );
+		gd.addChoice( "Processing_" + name, list, list[ defaultSelection ] );
 		
 		gd.showDialog();
 		
@@ -294,7 +294,7 @@ public class GenericLoadParseQueryXML< AS extends AbstractSpimData< S >, S exten
 		}
 		
 		for ( int i = 0; i < list.length; ++i )
-			list[ i ] = list[ i  ].replace( " ", "_" );
+			list[ i ] = list[ i ].replace( " ", "_" );
 		
 		final GenericDialog gd = new GenericDialog( "Select Multiple " + name );
 		
@@ -303,7 +303,7 @@ public class GenericLoadParseQueryXML< AS extends AbstractSpimData< S >, S exten
 			gd.addCheckbox( list[ i ], defaultSelection[ i ] );
 		gd.addMessage( "" );
 
-		GUIHelper.addScrollBars( gd );			
+		GUIHelper.addScrollBars( gd );
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
@@ -314,7 +314,7 @@ public class GenericLoadParseQueryXML< AS extends AbstractSpimData< S >, S exten
 			if ( gd.getNextBoolean() )
 				defaultSelection[ i ] = true;
 			else
-				defaultSelection[ i ] = false;					
+				defaultSelection[ i ] = false;
 		}
 
 		return defaultSelection;
