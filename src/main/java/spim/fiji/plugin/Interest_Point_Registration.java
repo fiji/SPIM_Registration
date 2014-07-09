@@ -143,7 +143,12 @@ public class Interest_Point_Registration implements PlugIn
 		int i = 0;
 		for ( final Channel channel : channels )
 		{
-			final String[] labels = getAllInterestPointLabelsForChannel( result.getData(), result.getTimePointsToProcess(), channel, "register" );
+			final String[] labels = getAllInterestPointLabelsForChannel(
+					result.getData(), result.getTimePointsToProcess(),
+					result.getAnglesToProcess(),
+					result.getIlluminationsToProcess(),
+					channel,
+					"register" );
 			
 			if ( channelLabels == null )
 				return;
@@ -411,15 +416,19 @@ public class Interest_Point_Registration implements PlugIn
 	 * @param doWhat - the text for not doing anything with this channel
 	 * @return
 	 */
-	protected static String[] getAllInterestPointLabelsForChannel( final SpimData2 spimData, final List< TimePoint > timepointsToProcess, final Channel channel, final String doWhat )
+	public static String[] getAllInterestPointLabelsForChannel(
+			final SpimData2 spimData,
+			final List< TimePoint > timepointsToProcess,
+			final List< Angle > anglesToProcess,
+			final List< Illumination > illuminationsToProcess,
+			final Channel channel,
+			final String doWhat )
 	{
 		final ViewInterestPoints interestPoints = spimData.getViewInterestPoints();
 		final HashMap< String, Integer > labels = new HashMap< String, Integer >();
 		
 		int countViewDescriptions = 0;
 
-		final List< Angle > anglesToProcess = spimData.getSequenceDescription().getAllAnglesOrdered();
-		final List< Illumination > illuminationsToProcess = spimData.getSequenceDescription().getAllIlluminationsOrdered();
 		for ( final TimePoint t : timepointsToProcess )
 			for ( final Angle a : anglesToProcess )
 				for ( final Illumination i : illuminationsToProcess )

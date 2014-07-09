@@ -63,7 +63,12 @@ public class Visualize_Detections implements PlugIn
 		int j = 0;
 		for ( final Channel channel : channels )
 		{
-			final String[] labels = Interest_Point_Registration.getAllInterestPointLabelsForChannel( result.getData(), result.getTimePointsToProcess(), channel, "visualize" );
+			final String[] labels = Interest_Point_Registration.getAllInterestPointLabelsForChannel(
+					result.getData(), result.getTimePointsToProcess(),
+					result.getAnglesToProcess(),
+					result.getIlluminationsToProcess(),
+					channel,
+					"visualize" );
 			
 			if ( channelLabels == null )
 				return;
