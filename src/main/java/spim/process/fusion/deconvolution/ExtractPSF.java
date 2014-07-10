@@ -13,6 +13,7 @@ import java.util.List;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
+import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealInterval;
@@ -224,13 +225,33 @@ public class ExtractPSF< T extends RealType< T > >
 		final Img< T > psf = transformPSF( originalPSF, model );
 
 		// normalize PSF
-		
+		normalize( originalPSF );
+		normalize( psf );
 
 		pointSpreadFunctions.add( psf );
 		originalPSFs.add( originalPSF );
 		viewDescriptions.add( viewDescription );
 	}
 
+	private void normalize( final IterableInterval< T > img )
+	{
+		double min = Float.MAX_VALUE;
+		double max = -Float.MAX_VALUE;
+
+		for ( final T t : img )
+		{
+			final double v = t.getRealDouble();
+			
+			if ( v < min )
+				min = v;
+			
+			if ( v > max )
+				max = v;					
+		}
+		
+		for ( final T t : img )
+			t.setReal( ( t.getRealDouble() - min ) / ( max - min ) );
+	}
 	
 	/**
 	 * Transforms the extracted PSF using the affine transformation of the corresponding view
