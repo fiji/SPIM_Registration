@@ -2,7 +2,6 @@ package mpicbg.spim.postprocessing.deconvolution2;
 
 import java.util.ArrayList;
 
-import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.spim.postprocessing.deconvolution2.LRFFT.PSFTYPE;
 
 public class LRInput 
