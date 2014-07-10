@@ -94,10 +94,10 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	protected ArrayList< int[] > exceptionIds;
 	
 	protected String[] calibrationChoice = new String[]{
-			"Same calibration for all views (load from first file)",
-			"Same calibration for all views (user defined)",
-			"Different calibrations for each view (load from files)",
-			"Different calibrations for each view (user defined)" };
+			"Same voxel-size for all views (load from first file)",
+			"Same voxel-size for all views (user defined)",
+			"Different voxel-sizes for each view (load from files)",
+			"Different voxel-sizes for each view (user defined)" };
 	public static String[] imglib2Container = new String[]{ "ArrayImg (faster)", "CellImg (slower, larger files supported)" };
 
 	public static int defaultContainer = 0;
@@ -395,7 +395,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 				for ( final Calibration c : calibrations.values() )
 					cal = c;
 					
-			gd.addMessage( "Calibration", new Font( Font.SANS_SERIF, Font.BOLD, 14 ) );			
+			gd.addMessage( "Calibration (voxel size)", new Font( Font.SANS_SERIF, Font.BOLD, 14 ) );			
 			if ( calibation == 0 )
 				gd.addMessage( "(read from file)", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
 			gd.addMessage( "" );
