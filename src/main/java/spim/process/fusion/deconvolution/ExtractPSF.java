@@ -219,10 +219,13 @@ public class ExtractPSF< T extends RealType< T > >
 			final long[] psfSize )
 	{
 		IOFunctions.println( "PSF size: " + Util.printCoordinates( psfSize ) );
-		
+
 		final Img< T > originalPSF = extractPSFLocal( img, psfFactory, locations, psfSize );
 		final Img< T > psf = transformPSF( originalPSF, model );
+
+		// normalize PSF
 		
+
 		pointSpreadFunctions.add( psf );
 		originalPSFs.add( originalPSF );
 		viewDescriptions.add( viewDescription );
@@ -361,9 +364,9 @@ public class ExtractPSF< T extends RealType< T > >
 			interpolator.setPosition( tmp2 );
 
 			transformedIterator.get().set( interpolator.get() );
-		}		
+		}
 
-		return transformed;		
+		return transformed;
 	}
 
 
@@ -381,15 +384,15 @@ public class ExtractPSF< T extends RealType< T > >
 
 		for ( final T f : img )
 			min = Math.min( min, f.getRealFloat() );
-		
+
 		final Img< T > square = img.factory().create( size, img.firstElement() );
-		
+
 		final Cursor< T > squareCursor = square.localizingCursor();
 		final T minT = img.firstElement().createVariable();
 		minT.setReal( min );
-		
+
 		final RandomAccess< T > inputCursor = Views.extendValue( img, minT ).randomAccess();
-		
+
 		while ( squareCursor.hasNext() )
 		{
 			squareCursor.fwd();
@@ -404,7 +407,7 @@ public class ExtractPSF< T extends RealType< T > >
 		
 		return square;
 	}
-	
+
 	/**
 	 * Returns the bounding box so that all images can fit in there
 	 * or null if input is null or input.size is 0
@@ -457,7 +460,7 @@ public class ExtractPSF< T extends RealType< T > >
 			final ArrayList< AffineTransform3D > models )
 	{
 		final ExtractPSF< T > extractPSF = new ExtractPSF< T >( factory );
-		
+
 		if ( viewDescriptions.size() != filenames.size() )
 		{
 			IOFunctions.println( "There must be as many filenames as there are viewdescriptions." );
@@ -466,29 +469,29 @@ public class ExtractPSF< T extends RealType< T > >
 		
 		extractPSF.viewDescriptions.addAll( viewDescriptions );
 		
-		for ( int i = 0; i < filenames.size(); ++i )		
+		for ( int i = 0; i < filenames.size(); ++i )
 		{
 			final File file = filenames.get( i );
-			
-	        // extract the PSF for this one	        
-    		IOFunctions.println( "Loading PSF file '" + file.getAbsolutePath() );
 
-    		final ImagePlus imp = new Opener().openImage( file.getAbsolutePath() );
+			// extract the PSF for this one
+			IOFunctions.println( "Loading PSF file '" + file.getAbsolutePath() );
 
-    		if ( imp == null )
-    			throw new RuntimeException( "Could not load '" + file + "' using ImageJ (should be a TIFF file)." );
+			final ImagePlus imp = new Opener().openImage( file.getAbsolutePath() );
+	
+			if ( imp == null )
+				throw new RuntimeException( "Could not load '" + file + "' using ImageJ (should be a TIFF file)." );
+	
+			final ImageStack stack = imp.getStack();
+			final int width = imp.getWidth();
+			final int sizeZ = imp.getNSlices();
+	
+			Img< T > psfImage = factory.create( new long[]{ width, imp.getHeight(), sizeZ }, type );
 
-    		final ImageStack stack = imp.getStack();
-    		final int width = imp.getWidth();
-    		final int sizeZ = imp.getNSlices();
-
-    		Img< T > psfImage = factory.create( new long[]{ width, imp.getHeight(), sizeZ }, type );
-    		
-    		for ( int z = 0; z < sizeZ; ++z )
+			for ( int z = 0; z < sizeZ; ++z )
 			{
 				final Cursor< T > cursor = Views.iterable( Views.hyperSlice( psfImage, 2, z ) ).localizingCursor();
 				final ImageProcessor ip = stack.getProcessor( z + 1 );
-				
+
 				while ( cursor.hasNext() )
 				{
 					cursor.fwd();
@@ -496,8 +499,8 @@ public class ExtractPSF< T extends RealType< T > >
 				}
 			}
 
-    		final Img< T > psf;
-    		
+			final Img< T > psf;
+
 			if ( models != null )
 			{
 				IOFunctions.println( "Transforming PSF for viewid " + viewDescriptions.get( i ).getViewSetupId() + ", file=" + file.getName() );
@@ -508,7 +511,7 @@ public class ExtractPSF< T extends RealType< T > >
 				IOFunctions.println( "PSF for viewid " + viewDescriptions.get( i ).getViewSetupId() + ", file=" + file.getName() + " will not be transformed." );
 				psf = psfImage.copy();
 			}
-									
+
 			extractPSF.pointSpreadFunctions.add( psf );
 			extractPSF.originalPSFs.add( psfImage );
 		}
