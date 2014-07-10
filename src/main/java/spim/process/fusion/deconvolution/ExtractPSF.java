@@ -222,18 +222,18 @@ public class ExtractPSF< T extends RealType< T > >
 		IOFunctions.println( "PSF size: " + Util.printCoordinates( psfSize ) );
 
 		final Img< T > originalPSF = extractPSFLocal( img, psfFactory, locations, psfSize );
-		final Img< T > psf = transformPSF( originalPSF, model );
 
 		// normalize PSF
 		normalize( originalPSF );
-		normalize( psf );
+
+		final Img< T > psf = transformPSF( originalPSF, model );
 
 		pointSpreadFunctions.add( psf );
 		originalPSFs.add( originalPSF );
 		viewDescriptions.add( viewDescription );
 	}
 
-	private void normalize( final IterableInterval< T > img )
+	private static < T extends RealType< T > >void normalize( final IterableInterval< T > img )
 	{
 		double min = Float.MAX_VALUE;
 		double max = -Float.MAX_VALUE;
@@ -246,9 +246,9 @@ public class ExtractPSF< T extends RealType< T > >
 				min = v;
 			
 			if ( v > max )
-				max = v;					
+				max = v;
 		}
-		
+
 		for ( final T t : img )
 			t.setReal( ( t.getRealDouble() - min ) / ( max - min ) );
 	}
