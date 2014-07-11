@@ -69,7 +69,7 @@ public class Interest_Point_Registration implements PlugIn
 	public static int defaultRegistrationType = 0;
 	public static int[] defaultChannelLabels = null;
 	public static int defaultRange = 5;
-	public static int defaultReferenceTimepoint = -1;
+	public static int defaultReferenceTimepointIndex = -1;
 	public static boolean defaultRegisterReferenceFirst = false;
 	public static int defaultTransformInputChoice = 0;
 	public static boolean defaultConsiderTimepointAsUnit = false;
@@ -236,15 +236,11 @@ public class Interest_Point_Registration implements PlugIn
 		{
 			final String[] tpList = assembleTimepoints( result.getData().getSequenceDescription().getTimePoints() );
 			
-			// by default, the reference timepoint is the first one the ones to process
-			if ( defaultReferenceTimepoint < 0 || defaultReferenceTimepoint >= tpList.length )
-				defaultReferenceTimepoint = result.getIlluminationsToProcess().get( 0 ).getId();
+			// by default, the reference timepoint is the first one
+			if ( defaultReferenceTimepointIndex < 0 || defaultReferenceTimepointIndex >= tpList.length )
+				defaultReferenceTimepointIndex = 0;
 
-			// if that goes wrong by any chance (should not), set it to 0
-			if ( defaultReferenceTimepoint >= tpList.length )
-				defaultReferenceTimepoint = 0;
-
-			gd.addChoice( "Reference timepoint", tpList, tpList[ defaultReferenceTimepoint ] );
+			gd.addChoice( "Reference timepoint", tpList, tpList[ defaultReferenceTimepointIndex ] );
 			gd.addCheckbox( "Register reference timepoint first", defaultRegisterReferenceFirst );
 			gd.addMessage( "" );
 		}
@@ -284,12 +280,12 @@ public class Interest_Point_Registration implements PlugIn
 			return;
 
 		boolean registerReferenceFirst = defaultRegisterReferenceFirst;
-		int referenceTimePoint = defaultReferenceTimepoint;
+		int referenceTimePoint = result.getData().getSequenceDescription().getTimePoints().getTimePointsOrdered().get( defaultReferenceTimepointIndex ).getId();
 		int range = defaultRange;
 		
 		if ( registrationType == RegistrationType.TO_REFERENCE_TIMEPOINT )
 		{
-			referenceTimePoint = defaultReferenceTimepoint = gd.getNextChoiceIndex();
+			referenceTimePoint = result.getData().getSequenceDescription().getTimePoints().getTimePointsOrdered().get( defaultReferenceTimepointIndex = gd.getNextChoiceIndex() ).getId();
 			registerReferenceFirst = defaultRegisterReferenceFirst = gd.getNextBoolean();
 		}
 
