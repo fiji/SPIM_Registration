@@ -493,7 +493,7 @@ public class Interest_Point_Registration implements PlugIn
 		final String[] tps = new String[ timepoints.size() ];
 
 		for ( int t = 0; t < tps.length; ++t )
-			tps[ t ] = timepoints.getTimePoints().get( t ).getName();
+			tps[ t ] = timepoints.getTimePointsOrdered().get( t ).getName();
 
 		return tps;
 	}
