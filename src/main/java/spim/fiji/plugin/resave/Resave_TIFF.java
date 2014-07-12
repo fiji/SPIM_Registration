@@ -117,11 +117,23 @@ public class Resave_TIFF implements PlugIn
 		{
 			final File target = new File( destBase, "interestpoints" );
 			
+			String from = src.getAbsolutePath();
+			String to = target.getAbsolutePath();
+			
+			from = from.replace( "/./", "/" );
+			to = to.replace( "/./", "/" );
+			
+			if ( from.endsWith( "/." ) )
+				from = from.substring( 0, from.length() - 2 );
+
+			if ( to.endsWith( "/." ) )
+				to = to.substring( 0, to.length() - 2 );
+
 			if ( src.getAbsolutePath().equals( target.getAbsolutePath() ) )
 				return;
 			
 			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Interestpoint directory exists. Copying '" + src + "' >>> '" + target + "'" );
-			
+
 			try
 			{
 				copyFolder( src, target, filesToCopy );
