@@ -111,27 +111,28 @@ public class Resave_TIFF implements PlugIn
 
 	public static void copyInterestPoints( final File srcBase, final File destBase, final List< String > filesToCopy )
 	{
+		// test if source and target directory are identical, if so stop
+		String from = srcBase.getAbsolutePath();
+		String to = destBase.getAbsolutePath();
+		
+		from = from.replace( "/./", "/" );
+		to = to.replace( "/./", "/" );
+		
+		if ( from.endsWith( "/." ) )
+			from = from.substring( 0, from.length() - 2 );
+
+		if ( to.endsWith( "/." ) )
+			to = to.substring( 0, to.length() - 2 );
+
+		if ( new File( from ).getAbsolutePath().equals( new File( to ).getAbsolutePath() ) )
+			return;
+
 		final File src = new File( srcBase, "interestpoints" );
 		
 		if ( src.exists() )
 		{
 			final File target = new File( destBase, "interestpoints" );
-			
-			String from = src.getAbsolutePath();
-			String to = target.getAbsolutePath();
-			
-			from = from.replace( "/./", "/" );
-			to = to.replace( "/./", "/" );
-			
-			if ( from.endsWith( "/." ) )
-				from = from.substring( 0, from.length() - 2 );
 
-			if ( to.endsWith( "/." ) )
-				to = to.substring( 0, to.length() - 2 );
-
-			if ( src.getAbsolutePath().equals( target.getAbsolutePath() ) )
-				return;
-			
 			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Interestpoint directory exists. Copying '" + src + "' >>> '" + target + "'" );
 
 			try
