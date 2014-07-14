@@ -1,7 +1,10 @@
 package spim.fiji.plugin.thinout;
 
+import ij.ImageJ;
+
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -34,6 +37,8 @@ public class Histogram extends ApplicationFrame
 		final IntervalXYDataset dataset = createDataset( values, numBins, title );
 		final JFreeChart chart = createChart( dataset, title, units );
 		final ChartPanel chartPanel = new ChartPanel( chart );
+		chartPanel.addChartMouseListener( new MouseListenerValue( chartPanel, getMin() + ( getMax() - getMin() ) / 2 ));
+
 		chartPanel.setPreferredSize( new Dimension( 600, 270 ) );
 		setContentPane( chartPanel );
 	}
@@ -130,8 +135,17 @@ public class Histogram extends ApplicationFrame
 		return chart;
 	}
 
+	@Override
+	public void windowClosing( final WindowEvent evt )
+	{
+		if( evt.getWindow() == this )
+			dispose();
+	}
+
 	public static void main( final String[] args )
 	{
+		new ImageJ();
+
 		final List< Double > values = new ArrayList< Double >();
 		final Random rnd = new Random();
 		
