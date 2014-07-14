@@ -1,5 +1,6 @@
 package spim.fiji.plugin.thinout;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +11,11 @@ import net.imglib2.util.ValuePair;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.StandardXYBarPainter;
+import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.data.xy.IntervalXYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
@@ -20,6 +25,7 @@ import org.jfree.ui.RefineryUtilities;
 public class Histogram extends ApplicationFrame
 {
 	private static final long serialVersionUID = 1L;
+	protected double min, max;
 
 	public Histogram( final List< Double > values, final int numBins, final String title, final String units )
 	{
@@ -37,8 +43,10 @@ public class Histogram extends ApplicationFrame
 		this.pack();
 		RefineryUtilities.centerFrameOnScreen( this );
 		this.setVisible( true );
-
 	}
+
+	public double getMin() { return min; }
+	public double getMax() { return max; }
 
 	public static ValuePair< Double, Double > getMinMax( final List< Double > data )
 	{
@@ -81,7 +89,10 @@ public class Histogram extends ApplicationFrame
 		final XYSeries series = new XYSeries( title );
 
 		final ValuePair< Double, Double > minmax = getMinMax( values );
-		final List< ValuePair< Double, Integer > > hist = binData( values, minmax.getA(), minmax.getB(), numBins );
+		this.min = minmax.getA();
+		this.max = minmax.getB();
+
+		final List< ValuePair< Double, Integer > > hist = binData( values, min, max, numBins );
 		
 		for ( final ValuePair< Double, Integer > pair : hist )
 			series.add( pair.getA(), pair.getB() );
@@ -104,6 +115,17 @@ public class Histogram extends ApplicationFrame
 			false, // legend
 			false,
 			false );
+
+		NumberAxis range = (NumberAxis) chart.getXYPlot().getDomainAxis();
+		range.setRange( getMin(), getMax() );
+
+		XYPlot plot = chart.getXYPlot();
+		XYBarRenderer renderer = (XYBarRenderer) plot.getRenderer();
+		
+		renderer.setSeriesPaint( 0, Color.red );
+		renderer.setDrawBarOutline( true );
+		renderer.setSeriesOutlinePaint( 0, Color.black );
+		renderer.setBarPainter( new StandardXYBarPainter() );
 
 		return chart;
 	}

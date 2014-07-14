@@ -266,6 +266,13 @@ public class ThinOut_Detections implements PlugIn
 				IOFunctions.println( "Stopping." );
 				return false;
 			}
+			else
+			{
+				if ( channel.keepRange() )
+					IOFunctions.println( "Channel " + channel.getChannel().getName() + ": keep only distances from " + channel.getMin() + " >>> " + channel.getMax() );
+				else
+					IOFunctions.println( "Channel " + channel.getChannel().getName() + ": remove distances from " + channel.getMin() + " >>> " + channel.getMax() );
+			}
 		}
 
 		return true;
@@ -338,7 +345,7 @@ public class ThinOut_Detections implements PlugIn
 
 		final Histogram h = new Histogram( distances, 100, "Distance Histogram [Channel=" + channel.getChannel().getName() + "]", unit  );
 		h.showHistogram();
-
+		IOFunctions.println( "Channel " + channel.getChannel().getName() + ": min distance=" + h.getMin() + ", max distance=" + h.getMax() );
 		return h;
 	}
 
