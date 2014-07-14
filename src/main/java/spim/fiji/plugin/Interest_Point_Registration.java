@@ -280,7 +280,7 @@ public class Interest_Point_Registration implements PlugIn
 			return;
 
 		boolean registerReferenceFirst = defaultRegisterReferenceFirst;
-		int referenceTimePoint = result.getData().getSequenceDescription().getTimePoints().getTimePointsOrdered().get( defaultReferenceTimepointIndex ).getId();
+		int referenceTimePoint = 0;result.getData().getSequenceDescription().getTimePoints().getTimePointsOrdered().get( 0 ).getId();
 		int range = defaultRange;
 		
 		if ( registrationType == RegistrationType.TO_REFERENCE_TIMEPOINT )
