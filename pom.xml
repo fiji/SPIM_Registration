@@ -90,7 +90,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>3D_Viewer</artifactId>
-			<version>${3D_Viewer.version}</version>
+			<version>${ImageJ_3D_Viewer.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
