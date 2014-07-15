@@ -38,7 +38,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>VIB-lib</artifactId>
-			<version>${fiji.version}</version>
+			<version>${VIB-lib.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -52,7 +52,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>legacy-imglib1</artifactId>
-			<version>${fiji.version}</version>
+			<version>${legacy-imglib1.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jfree</groupId>
@@ -90,17 +90,17 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>3D_Viewer</artifactId>
-			<version>${fiji.version}</version>
+			<version>${3D_Viewer.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Fiji_Plugins</artifactId>
-			<version>${fiji.version}</version>
+			<version>${Fiji_Plugins.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>SPIM_Opener</artifactId>
-			<version>${fiji.version}</version>
+			<version>${SPIM_Opener.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.java.dev.jna</groupId>
