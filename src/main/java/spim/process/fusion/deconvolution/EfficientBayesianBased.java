@@ -625,8 +625,8 @@ public class EfficientBayesianBased extends Fusion
 				{
 					if ( !channelsToProcess.get( j ).equals( c ) )
 					{
-						choices[ i ][ k + corr.size() ] = "Same PSF as channel " + c.getName();
-						otherChannel.put( k + corr.size(), c );
+						choices[ i ][ k + corr.size() ] = "Same PSF as channel " + channelsToProcess.get( j ).getName();
+						otherChannel.put( k + corr.size(), channelsToProcess.get( j ) );
 						++k;
 					}
 				}
