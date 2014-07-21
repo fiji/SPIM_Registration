@@ -5,6 +5,7 @@ import net.imglib2.FinalInterval;
 
 public class ImgLib2Temp
 {
+	// TODO: Remove when Imglib2 is updated in Fiji
 	public static FinalInterval getIntervalFromDimension( final Dimensions dim )
 	{
 		final long[] min = new long[ dim.numDimensions() ];
