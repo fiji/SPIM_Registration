@@ -19,7 +19,6 @@ import mpicbg.models.Model;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.RigidModel3D;
 import mpicbg.models.TranslationModel3D;
-import mpicbg.pointdescriptor.model.RigidModelOld3D;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
@@ -620,7 +619,7 @@ public class BeadRegistration
 		{
 			if ( model instanceof AffineModel3D )
 			{
-				final AffineModel3D tmpModel = new AffineModel3D();				
+				final AffineModel3D tmpModel = new AffineModel3D();
 				final float z = (float)zStretching;
 				
 				tmpModel.set( 1f, 0f, 0f, 0f, 
@@ -631,24 +630,14 @@ public class BeadRegistration
 			}
 			else if ( model instanceof RigidModel3D )
 			{
-				final RigidModel3D tmpModel = new RigidModel3D();				
+				final RigidModel3D tmpModel = new RigidModel3D();
 				final float z = (float)zStretching;
 
 				tmpModel.set( 1f, 0f, 0f, 0f, 
 							  0f, 1f, 0f, 0f,
 							  0f, 0f, z,  0f );
 
-				((RigidModel3D)model).concatenate( tmpModel );				
-			}
-			else if ( model instanceof RigidModelOld3D )
-			{
-				Transform3D t = ((RigidModelOld3D) model).getTransform3D();
-				Transform3D tmp = new Transform3D();
-				tmp.setScale( new Vector3d( 1, 1, zStretching ) );
-				t.mul( tmp );				
-				((RigidModelOld3D) model).set( t );
-				System.out.println( ((RigidModelOld3D) model).getTransform3D() );
-				
+				((RigidModel3D)model).concatenate( tmpModel );
 			}
 			else if ( model instanceof TranslationModel3D )
 			{

@@ -2,7 +2,8 @@ package mpicbg.pointdescriptor.model;
 
 import java.util.Collection;
 
-import math3d.JacobiFloat;
+import Jama.EigenvalueDecomposition;
+import Jama.Matrix;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.PointMatch;
@@ -28,7 +29,7 @@ public class TranslationInvariantSimilarityModel3D extends TranslationInvariantM
 		m10 = 0.0f, m11 = 1.0f, m12 = 0.0f, 
 		m20 = 0.0f, m21 = 0.0f, m22 = 1.0f;
 
-	final protected float[][] N = new float[4][4];
+	final protected double[][] N = new double[4][4];
 	
 	@Override
 	public boolean canDoNumDimension( final int numDimensions ) { return numDimensions == 3; }
@@ -123,6 +124,7 @@ public class TranslationInvariantSimilarityModel3D extends TranslationInvariantM
 		N[3][3] = -Sxx - Syy + Szz;
 
 		// calculate eigenvector with maximal eigenvalue
+		/*
 		final JacobiFloat jacobi = new JacobiFloat(N);
 		final float[][] eigenvectors = jacobi.getEigenVectors();
 		final float[] eigenvalues = jacobi.getEigenValues();
@@ -133,6 +135,23 @@ public class TranslationInvariantSimilarityModel3D extends TranslationInvariantM
 
 		final float [] q = eigenvectors[index];
 		final float q0 = q[0], qx = q[1], qy = q[2], qz = q[3];
+		*/
+		// calculate eigenvector with maximal eigenvalue
+
+		final EigenvalueDecomposition evd = new EigenvalueDecomposition( new Matrix( N ) );
+		
+		final double[] eigenvalues = evd.getRealEigenvalues();
+		final Matrix eigenVectors = evd.getV();
+
+		int index = 0;
+		for (int i = 1; i < 4; i++)
+			if (eigenvalues[i] > eigenvalues[index])
+				index = i;
+
+		final float q0 = (float)eigenVectors.get( 0, index ); 
+		final float qx = (float)eigenVectors.get( 1, index );
+		final float qy = (float)eigenVectors.get( 2, index );
+		final float qz = (float)eigenVectors.get( 3, index );
 
 		// compute result
 
