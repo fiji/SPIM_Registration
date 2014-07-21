@@ -1,7 +1,5 @@
 package mpicbg.spim;
 
-import ij.IJ;
-
 import java.util.ArrayList;
 import java.util.Date;
 

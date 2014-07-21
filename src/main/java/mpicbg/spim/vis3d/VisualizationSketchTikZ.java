@@ -7,8 +7,6 @@ import java.util.Iterator;
 import javax.media.j3d.Transform3D;
 import javax.vecmath.Point3f;
 
-import com.sun.j3d.utils.geometry.Sphere;
-
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.bead.Bead;
 import mpicbg.spim.registration.segmentation.Nucleus;

@@ -17,7 +17,6 @@ import javax.media.j3d.Background;
 import javax.media.j3d.LineAttributes;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
-import javax.vecmath.Vector3f;
 
 public class Viewer3dFunctions
 {
