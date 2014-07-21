@@ -13,8 +13,6 @@ import mpicbg.imglib.container.basictypecontainer.array.FloatArray;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor3D;
 import mpicbg.imglib.cursor.LocalizableCursor;
-import mpicbg.imglib.cursor.array.Array3DLocalizableByDimCursor;
-import mpicbg.imglib.cursor.array.Array3DLocalizableByDimOutOfBoundsCursor;
 import mpicbg.imglib.cursor.array.ArrayLocalizableCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;

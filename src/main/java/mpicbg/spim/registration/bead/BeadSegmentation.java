@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3i;
 
-import mpicbg.imglib.algorithm.integral.IntegralImageLong;
 import mpicbg.imglib.algorithm.math.LocalizablePoint;
 import mpicbg.imglib.algorithm.peak.GaussianPeakFitterND;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussian.SpecialPoint;
@@ -20,7 +19,6 @@ import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianReal1;
 import mpicbg.imglib.algorithm.scalespace.SubpixelLocalization;
 import mpicbg.imglib.cursor.LocalizableByDimCursor3D;
 import mpicbg.imglib.cursor.special.HyperSphereIterator;
-import mpicbg.imglib.function.Converter;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;

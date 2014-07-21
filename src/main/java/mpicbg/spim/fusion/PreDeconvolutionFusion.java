@@ -6,8 +6,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.vecmath.Point3f;
 
-import fiji.plugin.Multi_View_Deconvolution;
-
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
@@ -22,8 +20,7 @@ import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.postprocessing.deconvolution.ExtractPSF;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
-
-import ij.IJ;
+import fiji.plugin.Multi_View_Deconvolution;
 
 public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconvolutionFusionInterface
 {

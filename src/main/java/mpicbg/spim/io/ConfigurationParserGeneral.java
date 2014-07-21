@@ -15,8 +15,8 @@ package mpicbg.spim.io;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 
 public class ConfigurationParserGeneral
 {
@@ -78,7 +78,7 @@ public class ConfigurationParserGeneral
 	}
 
 	// load assignments
-	ArrayList assignments = new ArrayList();
+	ArrayList< Object > assignments = new ArrayList< Object >();
 	Field[] fields = conf.getClass().getDeclaredFields();
 
 	int lineCount = 0;
@@ -97,7 +97,7 @@ public class ConfigurationParserGeneral
 			throw new ConfigurationParserException("Wrong format in assignment file, should be 'entry = datatype name'");
 
 		  // entry name
-		  ArrayList temp = new ArrayList();
+		  ArrayList< Object > temp = new ArrayList< Object >();
 		  temp.add(words[0].trim());
 
 		  words = words[1].trim().split(" ");
@@ -268,7 +268,7 @@ public class ConfigurationParserGeneral
 	return conf;
   }
 
-  private static int findEntry(ArrayList list, String entry)
+  private static int findEntry(ArrayList< Object > list, String entry)
   {
 	int pos = -1;
 
@@ -281,7 +281,7 @@ public class ConfigurationParserGeneral
 	return pos;
   }
 
-  private static String getAllEntries(ArrayList list)
+  private static String getAllEntries(ArrayList< Object > list)
   {
 	String entries = "";
 	for (int i = 0; i < list.size(); i++)
@@ -292,46 +292,19 @@ public class ConfigurationParserGeneral
 	return entries;
   }
 
-  private static String getAllDatatypes(ArrayList list)
+  private static String getEntry(ArrayList< Object > list, int pos)
   {
-	String entries = "";
-	for (int i = 0; i < list.size(); i++)
-	{
-	  entries += getDatatype(list,i) + "\n";
-	}
-
-	return entries;
+	return (String)(((ArrayList<?>)list.get(pos)).get(0));
   }
 
-  private static String getAllVariableNames(ArrayList list)
+  private static String getDatatype(ArrayList< Object > list, int pos)
   {
-	String entries = "";
-	for (int i = 0; i < list.size(); i++)
-	{
-	  entries += getVariableName(list,i) + "\n";
-	}
-
-	return entries;
+	return (String)(((ArrayList<?>)list.get(pos)).get(1));
   }
 
-  private static String getEntry(ArrayList list, int pos)
+  private static int getVariableFieldPosition(ArrayList< Object > list, int pos)
   {
-	return (String)(((ArrayList)list.get(pos)).get(0));
-  }
-
-  private static String getDatatype(ArrayList list, int pos)
-  {
-	return (String)(((ArrayList)list.get(pos)).get(1));
-  }
-
-  private static String getVariableName(ArrayList list, int pos)
-  {
-	return (String)(((ArrayList)list.get(pos)).get(2));
-  }
-
-  private static int getVariableFieldPosition(ArrayList list, int pos)
-  {
-	return ((Integer)(((ArrayList)list.get(pos)).get(3))).intValue();
+	return ((Integer)(((ArrayList<?>)list.get(pos)).get(3))).intValue();
   }
 
 }

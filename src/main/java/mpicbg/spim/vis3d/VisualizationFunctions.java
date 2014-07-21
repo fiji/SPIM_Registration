@@ -21,13 +21,12 @@ import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
-import com.sun.j3d.utils.geometry.Sphere;
-
-import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.models.Point;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.bead.Bead;
 import mpicbg.spim.registration.segmentation.Nucleus;
+
+import com.sun.j3d.utils.geometry.Sphere;
 
 public class VisualizationFunctions
 {

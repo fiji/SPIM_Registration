@@ -2,7 +2,6 @@ package mpicbg.spim.vis3d;
 
 import java.util.ArrayList;
 
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.image.display.imagej.InverseTransformDescription;
 import mpicbg.imglib.interpolation.InterpolatorFactory;
 import mpicbg.imglib.interpolation.nearestneighbor.NearestNeighborInterpolatorFactory;

@@ -20,7 +20,6 @@ import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.integer.LongType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
-import mpicbg.spim.io.IOFunctions;
 
 public class IntegralImage3d 
 {
