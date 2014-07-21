@@ -117,18 +117,7 @@ public abstract class DifferenceOf extends InterestPointDetection
 			final Channel channel = channelsToProcess.get( c );
 			brightness[ c ] = defaultBrightness[ channel.getId() ] = gd.getNextChoiceIndex();			
 		}
-		
-		if ( defineAnisotropy )
-		{
-			imageSigmaX = defaultImageSigmaX = gd.getNextNumber();
-			imageSigmaY = defaultImageSigmaY = gd.getNextNumber();
-			imageSigmaZ = defaultImageSigmaZ = gd.getNextNumber();
-		}
-		else
-		{
-			imageSigmaX = imageSigmaY = imageSigmaZ = 0.5;
-		}
-		
+
 		if ( additionalSmoothing )
 		{
 			additionalSigmaX = defaultAdditionalSigmaX = gd.getNextNumber();
@@ -149,7 +138,7 @@ public abstract class DifferenceOf extends InterestPointDetection
 		{
 			minIntensity = maxIntensity = Double.NaN;
 		}
-		
+
 		for ( int c = 0; c < channelsToProcess.size(); ++c )
 		{
 			final Channel channel = channelsToProcess.get( c );
@@ -169,6 +158,17 @@ public abstract class DifferenceOf extends InterestPointDetection
 				if ( !setInteractiveValues( channel ) )
 					return false;
 			}
+		}
+
+		if ( defineAnisotropy )
+		{
+			imageSigmaX = defaultImageSigmaX = gd.getNextNumber();
+			imageSigmaY = defaultImageSigmaY = gd.getNextNumber();
+			imageSigmaZ = defaultImageSigmaZ = gd.getNextNumber();
+		}
+		else
+		{
+			imageSigmaX = imageSigmaY = imageSigmaZ = 0.5;
 		}
 
 		return true;
