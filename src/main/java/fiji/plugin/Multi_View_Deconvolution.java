@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import spim.fiji.plugin.GUIHelper;
-
+import spim.process.cuda.CUDAFourierConvolution;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.container.cell.CellContainerFactory;
 import mpicbg.imglib.image.Image;
@@ -28,7 +28,6 @@ import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.postprocessing.deconvolution.ExtractPSF;
 import mpicbg.spim.postprocessing.deconvolution2.BayesMVDeconvolution;
-import mpicbg.spim.postprocessing.deconvolution2.CUDAConvolution;
 import mpicbg.spim.postprocessing.deconvolution2.LRFFT;
 import mpicbg.spim.postprocessing.deconvolution2.LRFFT.PSFTYPE;
 import mpicbg.spim.postprocessing.deconvolution2.LRInput;
@@ -825,7 +824,7 @@ public class Multi_View_Deconvolution implements PlugIn
 				//LRFFT.cuda = (CUDAConvolution) Native.loadLibrary( fijiDir  + File.separator + "libConvolution3D_fftCUDAlib.so", CUDAConvolution.class );
 				
 				// under linux automatically checks lib/linux64
-		        LRFFT.cuda = (CUDAConvolution) Native.loadLibrary( "Convolution3D_fftCUDAlib", CUDAConvolution.class );
+		        LRFFT.cuda = (CUDAFourierConvolution) Native.loadLibrary( "Convolution3D_fftCUDAlib", CUDAFourierConvolution.class );
 			}
 			catch (UnsatisfiedLinkError e )
 			{

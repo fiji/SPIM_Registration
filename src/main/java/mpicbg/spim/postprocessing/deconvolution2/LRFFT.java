@@ -3,6 +3,7 @@ package mpicbg.spim.postprocessing.deconvolution2;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import spim.process.cuda.CUDAFourierConvolution;
 import net.imglib2.exception.ImgLibException;
 import net.imglib2.img.Img;
 import net.imglib2.img.imageplus.ImagePlusImg;
@@ -31,7 +32,7 @@ public class LRFFT
 {
 	public static enum PSFTYPE { OPTIMIZATION_II, OPTIMIZATION_I, EFFICIENT_BAYESIAN, INDEPENDENT };
 	
-	public static CUDAConvolution cuda = null;
+	public static CUDAFourierConvolution cuda = null;
 	
 	private Image<FloatType> image, weight, kernel1, kernel2;
 	Image<FloatType> viewContribution = null;

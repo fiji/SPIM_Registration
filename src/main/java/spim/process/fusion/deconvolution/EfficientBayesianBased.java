@@ -23,7 +23,6 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.postprocessing.deconvolution2.BayesMVDeconvolution;
-import mpicbg.spim.postprocessing.deconvolution2.CUDAConvolution;
 import mpicbg.spim.postprocessing.deconvolution2.LRFFT;
 import mpicbg.spim.postprocessing.deconvolution2.LRFFT.PSFTYPE;
 import mpicbg.spim.postprocessing.deconvolution2.LRInput;
@@ -36,6 +35,7 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.process.cuda.CUDAFourierConvolution;
 import spim.process.fusion.boundingbox.ManualBoundingBox.ManageListeners;
 import spim.process.fusion.export.DisplayImage;
 import spim.process.fusion.export.FixedNameImgTitler;
@@ -1030,7 +1030,7 @@ public class EfficientBayesianBased extends Fusion
 					return false;
 				}
 				
-				LRFFT.cuda = (CUDAConvolution) Native.loadLibrary( fullPath, CUDAConvolution.class );
+				LRFFT.cuda = (CUDAFourierConvolution) Native.loadLibrary( fullPath, CUDAFourierConvolution.class );
 				
 		        //String fijiDir = new File( "names.txt" ).getAbsoluteFile().getParentFile().getAbsolutePath();
 		        //IOFunctions.println( "Fiji directory: " + fijiDir );
