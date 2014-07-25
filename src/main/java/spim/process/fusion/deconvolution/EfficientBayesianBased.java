@@ -1,13 +1,11 @@
 package spim.process.fusion.deconvolution;
 
 import fiji.util.gui.GenericDialogPlus;
-import ij.IJ;
 import ij.gui.GenericDialog;
 
 import java.awt.Choice;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,14 +34,13 @@ import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.process.cuda.CUDAFourierConvolution;
+import spim.process.cuda.NativeLibraryTools;
 import spim.process.fusion.boundingbox.ManualBoundingBox.ManageListeners;
 import spim.process.fusion.export.DisplayImage;
 import spim.process.fusion.export.FixedNameImgTitler;
 import spim.process.fusion.export.ImgExport;
 import spim.process.fusion.export.ImgExportTitle;
 import spim.process.fusion.weightedavg.WeightedAverageFusion;
-
-import com.sun.jna.Native;
 
 public class EfficientBayesianBased extends Fusion
 {
@@ -954,94 +951,15 @@ public class EfficientBayesianBased extends Fusion
 		}
 		else
 		{
-			// well, do some testing first
-			try
+			final ArrayList< String > potentialNames = new ArrayList< String >();
+			potentialNames.add( "fftCUDA" );
+			potentialNames.add( "FourierConvolutionCUDA" );
+			
+			LRFFT.cuda = NativeLibraryTools.loadNativeLibrary( potentialNames, CUDAFourierConvolution.class );
+
+			if ( LRFFT.cuda == null )
 			{
-				// it cannot be null
-				if ( System.getProperty( "jna.library.path" ) == null )
-					System.setProperty( "jna.library.path", "" );
-				
-				final GenericDialogPlus gd3 = new GenericDialogPlus( "Specify path of native library for CUDA" );
-
-				final String fijiDir = IJ.getDirectory( "ImageJ" );
-				String suggestedLibrary = "";
-				
-				if ( IJ.isWindows() )
-				{
-					if ( new File( fijiDir, "Convolution3D_fftCUDAlib.dll" ).exists() )
-						suggestedLibrary = "Convolution3D_fftCUDAlib.dll";
-					else if ( new File( fijiDir, "lib/win64/Convolution3D_fftCUDAlib.dll" ).exists() )
-						suggestedLibrary = "lib/win64/Convolution3D_fftCUDAlib.dll";
-					else if ( new File( fijiDir, "lib/win/Convolution3D_fftCUDAlib.dll" ).exists() )
-						suggestedLibrary = "lib/win/Convolution3D_fftCUDAlib.dll";						
-				}
-				else if ( IJ.isLinux() )
-				{
-					if ( new File( fijiDir, "libConvolution3D_fftCUDAlib.so" ).exists() )
-						suggestedLibrary = "libConvolution3D_fftCUDAlib.so";
-					else if ( new File( fijiDir, "Convolution3D_fftCUDAlib.so" ).exists() )
-						suggestedLibrary = "Convolution3D_fftCUDAlib.so";
-					if ( new File( fijiDir, "lib/linux64/libConvolution3D_fftCUDAlib.so" ).exists() )
-						suggestedLibrary = "lib/linux64/libConvolution3D_fftCUDAlib.so";
-					else if ( new File( fijiDir, "lib/linux64/Convolution3D_fftCUDAlib.so" ).exists() )
-						suggestedLibrary = "lib/linux64/Convolution3D_fftCUDAlib.so";
-				}
-				
-				gd3.addMessage( "Fiji directory: '" + fijiDir + "'" );
-				
-				if ( suggestedLibrary.length() == 0 )
-				{
-					if ( defaultCUDAPath == null )
-						defaultCUDAPath = "";
-					
-					gd3.addMessage( "CUDA library not found, should be named libConvolution3D_fftCUDAlib.so (linux) or Convolution3D_fftCUDAlib.dll (windows)" );
-				}
-				else
-				{
-					if ( defaultCUDAPath == null )
-						defaultCUDAPath = suggestedLibrary;
-					
-					gd3.addMessage( "Suggested CUDA library: '" + suggestedLibrary + "' (relative path)" );
-				}
-
-				gd3.addStringField( "CUDA path", defaultCUDAPath, 35 );
-				gd3.addCheckbox( "Is relative path", defaultCUDAPathIsRelative );
-				
-				gd3.showDialog();
-				
-				if ( gd3.wasCanceled() )
-					return false;
-				
-				final String path = defaultCUDAPath = gd3.getNextString();
-				final String fullPath;
-				
-				if ( defaultCUDAPathIsRelative = gd3.getNextBoolean() )
-					fullPath = new File( fijiDir, path ).getAbsolutePath();
-				else
-					fullPath = new File( path ).getAbsolutePath();
-
-				if ( new File( fullPath ).exists() )
-				{
-					IOFunctions.println( "Trying to load following library: " + fullPath );
-				}
-				else
-				{
-					IOFunctions.println( "Following library does not exist: " + fullPath );
-					return false;
-				}
-				
-				LRFFT.cuda = (CUDAFourierConvolution) Native.loadLibrary( fullPath, CUDAFourierConvolution.class );
-				
-		        //String fijiDir = new File( "names.txt" ).getAbsoluteFile().getParentFile().getAbsolutePath();
-		        //IOFunctions.println( "Fiji directory: " + fijiDir );
-				//LRFFT.cuda = (CUDAConvolution) Native.loadLibrary( fijiDir  + File.separator + "libConvolution3D_fftCUDAlib.so", CUDAConvolution.class );
-								
-				// under linux automatically checks lib/linux64
-		        //LRFFT.cuda = (CUDAConvolution) Native.loadLibrary( "Convolution3D_fftCUDAlib", CUDAConvolution.class );
-			}
-			catch ( UnsatisfiedLinkError e )
-			{
-				IOFunctions.println( "Cannot load CUDA JNA library: " + e );
+				IOFunctions.println( "Cannot load CUDA JNA library." );
 				return false;
 			}
 			
