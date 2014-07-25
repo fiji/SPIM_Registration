@@ -68,7 +68,7 @@ public class LoadParseQueryXML extends GenericLoadParseQueryXML< SpimData2, Sequ
 			specifyAttributes.add( "channel" );
 
 		if ( askForAngles )
-		specifyAttributes.add( "angle" );
+			specifyAttributes.add( "angle" );
 
 		if ( askForIllum )
 			specifyAttributes.add( "illumination" );
