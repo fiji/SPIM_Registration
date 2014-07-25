@@ -34,6 +34,7 @@ import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.process.cuda.CUDAFourierConvolution;
+import spim.process.cuda.CUDATools;
 import spim.process.cuda.NativeLibraryTools;
 import spim.process.fusion.boundingbox.ManualBoundingBox.ManageListeners;
 import spim.process.fusion.export.DisplayImage;
@@ -963,144 +964,15 @@ public class EfficientBayesianBased extends Fusion
 				return false;
 			}
 			
-			final int numDevices = LRFFT.cuda.getNumDevicesCUDA();
+			final ArrayList< Integer > selectedDevices = CUDATools.queryCUDADetails( LRFFT.cuda, useBlocks );
 			
-			if ( numDevices == 0 )
-			{
-				IOFunctions.println( "No CUDA devices detected, only CPU will be available." );
-			}
+			if ( selectedDevices == null || selectedDevices.size() == 0 )
+				return false;
 			else
-			{
-				IOFunctions.println( "numdevices = " + numDevices );
-				
-				// yes, CUDA is possible
-				useCUDA = true;
-			}
-			
-			//
-			// get the ID's and functionality of the CUDA GPU's
-			//
-			final String[] devices = new String[ numDevices ];
-			final byte[] name = new byte[ 256 ];
-			int highestComputeCapability = 0;
-			long highestMemory = 0;
+				deviceList.addAll( selectedDevices );
 
-			int highestComputeCapabilityDevice = -1;
-			
-			for ( int i = 0; i < numDevices; ++i )
-			{		
-				LRFFT.cuda.getNameDeviceCUDA( i, name );
-				
-				devices[ i ] = "GPU_" + (i+1) + " of " + numDevices  + ": ";
-				for ( final byte b : name )
-					if ( b != 0 )
-						devices[ i ] = devices[ i ] + (char)b;
-				
-				devices[ i ].trim();
-				
-				final long mem = LRFFT.cuda.getMemDeviceCUDA( i );	
-				final int compCap =  10*LRFFT.cuda.getCUDAcomputeCapabilityMajorVersion( i ) + LRFFT.cuda.getCUDAcomputeCapabilityMinorVersion( i );
-				
-				if ( compCap > highestComputeCapability )
-				{
-					highestComputeCapability = compCap;
-				    highestComputeCapabilityDevice = i;
-				}
-				
-				if ( mem > highestMemory )
-				{
-					highestMemory = mem;
-				}
-				
-				devices[ i ] = devices[ i ] + " (" + mem/(1024*1024) + " MB, CUDA capability " + LRFFT.cuda.getCUDAcomputeCapabilityMajorVersion( i )  + "." + LRFFT.cuda.getCUDAcomputeCapabilityMinorVersion( i ) + ")";
-				//devices[ i ] = devices[ i ].replaceAll( " ", "_" );
-			}
-			
-			// get the CPU specs
-			final String cpuSpecs = "CPU (" + Runtime.getRuntime().availableProcessors() + " cores, " + Runtime.getRuntime().maxMemory()/(1024*1024) + " MB RAM available)";
-			
-			// if we use blocks, it makes sense to run more than one device
-			if ( useBlocks )
-			{
-				// make a list where all are checked if there is no previous selection
-				if ( deviceChoice == null || deviceChoice.size() != devices.length + 1 )
-				{
-					deviceChoice = new ArrayList<Boolean>( devices.length + 1 );
-					for ( int i = 0; i < devices.length; ++i )
-						deviceChoice.add( true );
-					
-					// CPU is by default not checked
-					deviceChoice.add( false );
-				}
-				
-				final GenericDialog gdCUDA = new GenericDialog( "Choose CUDA/CPUs devices to use" );
-				
-				for ( int i = 0; i < devices.length; ++i )
-					gdCUDA.addCheckbox( devices[ i ], deviceChoice.get( i ) );
-	
-				gdCUDA.addCheckbox( cpuSpecs, deviceChoice.get( devices.length ) );			
-				gdCUDA.showDialog();
-				
-				if ( gdCUDA.wasCanceled() )
-					return false;
-	
-				// check all CUDA devices
-				for ( int i = 0; i < devices.length; ++i )
-				{
-					if( gdCUDA.getNextBoolean() )
-					{
-						deviceList.add( i );
-						deviceChoice.set( i , true );
-					}
-					else
-					{
-						deviceChoice.set( i , false );
-					}
-				}
-				
-				// check the CPUs
-				if ( gdCUDA.getNextBoolean() )
-				{
-					deviceList.add( -1 );
-					deviceChoice.set( devices.length , true );
-				}
-				else
-				{
-					deviceChoice.set( devices.length , false );				
-				}
-				
-				for ( final int i : deviceList )
-				{
-					if ( i >= 0 )
-						IOFunctions.println( "Using device " + devices[ i ] );
-					else if ( i == -1 )
-						IOFunctions.println( "Using device " + cpuSpecs );
-				}
-				
-				if ( deviceList.size() == 0 )
-				{
-					IOFunctions.println( "You selected no device, quitting." );
-					return false;
-				}
-			}
-			else
-			{
-				// only choose one device to run everything at once				
-				final GenericDialog gdCUDA = new GenericDialog( "Choose CUDA device" );
-
-				if ( standardDevice >= devices.length )
-					standardDevice = highestComputeCapabilityDevice;
-				
-				gdCUDA.addChoice( "Device", devices, devices[ standardDevice ] );
-				
-				gdCUDA.showDialog();
-			
-				if ( gdCUDA.wasCanceled() )
-					return false;
-				
-				deviceList.add( standardDevice = gdCUDA.getNextChoiceIndex() );
-				IOFunctions.println( "Using device " + devices[ deviceList.get( 0 ) ] );
-			}
+			// yes, CUDA is possible
+			useCUDA = true;
 		}
 		
 		return true;
