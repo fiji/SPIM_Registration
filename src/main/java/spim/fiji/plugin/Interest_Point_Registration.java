@@ -113,7 +113,7 @@ public class Interest_Point_Registration implements PlugIn
 		final GenericDialog gd = new GenericDialog( "Basic Registration Parameters" );
 		
 		gd.addChoice( "Registration_algorithm", descriptions, descriptions[ defaultAlgorithm ] );
-		
+
 		final String[] choicesGlobal;
 		if ( result.getTimePointsToProcess().size() > 1 )
 			choicesGlobal = registrationTypes.clone();
@@ -186,7 +186,9 @@ public class Interest_Point_Registration implements PlugIn
 			default:
 				return;
 		}
-		
+
+		IOFunctions.println( "Registration type: " + registrationType.name() );
+
 		// assemble which channels have been selected with with label
 		final ArrayList< ChannelProcess > channelsToProcess = new ArrayList< ChannelProcess >();
 		i = 0;
@@ -204,13 +206,20 @@ public class Interest_Point_Registration implements PlugIn
 				
 				channelsToProcess.add( new ChannelProcess( channel, label ) );
 			}
-
 			++i;
 		}
 		
 		if ( channelsToProcess.size() == 0 )
 		{
 			IOFunctions.println( "No channels selected. Quitting." );
+			return;
+		}
+		
+		if (
+				result.getAnglesToProcess().size() * result.getIlluminationsToProcess().size() * channelsToProcess.size() <= 1 && 
+				registrationType == RegistrationType.TIMEPOINTS_INDIVIDUALLY )
+		{
+			IOFunctions.println( "You selected/have just one view setup per timepoint and to register timepoints individually. Nothing to do here. Quitting." );
 			return;
 		}
 		
@@ -321,7 +330,8 @@ public class Interest_Point_Registration implements PlugIn
 			mapBackModel = null;
 		}
 
-		ipr.parseDialog( gd, registrationType );
+		if ( !ipr.parseDialog( gd, registrationType ) )
+			return;
 		
 		// first register only the reference timepoint if wanted
 		if ( registrationType == RegistrationType.TO_REFERENCE_TIMEPOINT && registerReferenceFirst )
