@@ -17,7 +17,20 @@ import fiji.util.gui.GenericDialogPlus;
 public class NativeLibraryTools
 {
 	public static String defaultDirectory = null;
-	
+
+	public static < L extends Library > L loadNativeLibrary( final Class< L > library )
+	{
+		final ArrayList< String > names = new ArrayList< String >();
+		return loadNativeLibrary( names, library );
+	}
+
+	public static < L extends Library > L loadNativeLibrary( final String potentialName, final Class< L > library )
+	{
+		final ArrayList< String > names = new ArrayList< String >();
+		names.add( potentialName );
+		return loadNativeLibrary( names, library );
+	}
+
 	public static < L extends Library > L loadNativeLibrary( ArrayList< String > potentialNames, final Class< L > library )
 	{
 		final GenericDialogPlus gd = new GenericDialogPlus( "Specify path of native library" );
@@ -93,7 +106,7 @@ public class NativeLibraryTools
 			
 			for ( int i = 0; i < libs.length; ++i )
 				for ( final String s : potentialNames )
-					if ( libs[ i ].contains( s ) )
+					if ( libs[ i ].toLowerCase().contains( s.toLowerCase() ) )
 						index = i;
 
 			final GenericDialogPlus gd = new GenericDialogPlus( "Select native library" );
@@ -143,7 +156,7 @@ public class NativeLibraryTools
 	
 	public static void main( String[] args )
 	{
-		CUDAStandardFunctions c = loadNativeLibrary( null, CUDAStandardFunctions.class );
+		CUDAStandardFunctions c = loadNativeLibrary( CUDAStandardFunctions.class );
 		
 		IOFunctions.println( "devices: " + c.getNumDevicesCUDA() );
 	}

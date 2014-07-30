@@ -13,6 +13,9 @@ public interface CUDAStandardFunctions extends Library
 	 */
 	public int getCUDAcomputeCapabilityMinorVersion(int devCUDA);
 	public int getCUDAcomputeCapabilityMajorVersion(int devCUDA);
+	/**
+	 * @return -1 if driver crashed, otherwise the number of CUDA devices, >= 0
+	 */
 	public int getNumDevicesCUDA();
 	public void getNameDeviceCUDA(int devCUDA, byte[] name);
 	public long getMemDeviceCUDA(int devCUDA);

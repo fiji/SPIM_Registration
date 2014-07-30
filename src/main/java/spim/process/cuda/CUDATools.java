@@ -27,7 +27,12 @@ public class CUDATools
 
 		final int numDevices = cuda.getNumDevicesCUDA();
 
-		if ( numDevices == 0 )
+		if ( numDevices == -1 )
+		{
+			IOFunctions.println( "Querying CUDA devices crashed, no devices available." );
+			return null;
+		}
+		else if ( numDevices == 0 )
 		{
 			IOFunctions.println( "No CUDA devices detected." );
 			return null;
