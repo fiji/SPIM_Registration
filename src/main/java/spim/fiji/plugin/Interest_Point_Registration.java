@@ -187,8 +187,6 @@ public class Interest_Point_Registration implements PlugIn
 				return;
 		}
 
-		IOFunctions.println( "Registration type: " + registrationType.name() );
-
 		// assemble which channels have been selected with with label
 		final ArrayList< ChannelProcess > channelsToProcess = new ArrayList< ChannelProcess >();
 		i = 0;
@@ -232,6 +230,10 @@ public class Interest_Point_Registration implements PlugIn
 				channelsToProcess,
 				result.getIlluminationsToProcess(),
 				result.getTimePointsToProcess());
+
+		IOFunctions.println( "Registration algorithm: " + ipr.getDescription() );
+		IOFunctions.println( "Registration type: " + registrationType.name() );
+		IOFunctions.println( "Channels to process: " + channelsToProcess.size() );
 
 		// call the next dialog that asks for specific details
 		queryDetailedParameters( result, ipr, registrationType );
