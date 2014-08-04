@@ -44,14 +44,16 @@ public class Generic_Resave_HDF5 implements PlugIn
 		int[][] subdivisions;
 		File seqFile;
 		File hdf5File;
+		boolean deflate;
 
-		public Parameters( final boolean setMipmapManual, final int[][] resolutions, final int[][] subdivisions, final File seqFile, final File hdf5File )
+		public Parameters( final boolean setMipmapManual, final int[][] resolutions, final int[][] subdivisions, final File seqFile, final File hdf5File, final boolean deflate )
 		{
 			this.setMipmapManual = setMipmapManual;
 			this.resolutions = resolutions;
 			this.subdivisions = subdivisions;
 			this.seqFile = seqFile;
 			this.hdf5File = hdf5File;
+			this.deflate = deflate;
 		}
 		
 		public void setSeqFile( final File seqFile ) { this.seqFile = seqFile; }
@@ -115,9 +117,9 @@ public class Generic_Resave_HDF5 implements PlugIn
 		final int[][] manualSubdivisions = params.subdivisions;
 
 		if ( setMipmapManual )
-			WriteSequenceToHdf5.writeHdf5File( seq, manualResolutions, manualSubdivisions, params.hdf5File, new SubTaskProgressWriter( progressWriter, 0, 0.95 ) );
+			WriteSequenceToHdf5.writeHdf5File( seq, manualResolutions, manualSubdivisions, params.deflate, params.hdf5File, new SubTaskProgressWriter( progressWriter, 0, 0.95 ) );
 		else
-			WriteSequenceToHdf5.writeHdf5File( seq, perSetupExportMipmapInfo, params.hdf5File, new SubTaskProgressWriter( progressWriter, 0, 0.95 ) );
+			WriteSequenceToHdf5.writeHdf5File( seq, perSetupExportMipmapInfo, params.deflate, params.hdf5File, new SubTaskProgressWriter( progressWriter, 0, 0.95 ) );
 	}
 	
 	public static < T extends AbstractSpimData< A >, A extends AbstractSequenceDescription< ?, ?, ? super ImgLoader< ? > > > void writeXML(
@@ -144,6 +146,8 @@ public class Generic_Resave_HDF5 implements PlugIn
 	static String lastSubsampling = "{1,1,1}, {2,2,1}, {4,4,2}";
 
 	static String lastChunkSizes = "{16,16,16}, {16,16,16}, {16,16,16}";
+
+	static boolean lastDeflate = true;
 
 	public static String lastExportPath = "/Users/pietzsch/Desktop/spimrec2.xml";
 
@@ -195,8 +199,14 @@ public class Generic_Resave_HDF5 implements PlugIn
 			gd.addStringField( "Hdf5 chunk sizes", lastChunkSizes, 25 );
 			final TextField tfChunkSizes = ( TextField ) gd.getStringFields().lastElement();
 
+			gd.addMessage( "" );
+			gd.addCheckbox( "use deflate compression", lastDeflate );
+
 			if ( askForXMLPath )
+			{
+				gd.addMessage( "" );
 				PluginHelper.addSaveAsFileField( gd, "Export path", lastExportPath, 25 );
+			}
 
 			final String autoSubsampling = ProposeMipmaps.getArrayString( autoMipmapSettings.getExportResolutions() );
 			final String autoChunkSizes = ProposeMipmaps.getArrayString( autoMipmapSettings.getSubdivisions() );
@@ -235,6 +245,7 @@ public class Generic_Resave_HDF5 implements PlugIn
 			lastSetMipmapManual = gd.getNextBoolean();
 			lastSubsampling = gd.getNextString();
 			lastChunkSizes = gd.getNextString();
+			lastDeflate = gd.getNextBoolean();
 			lastExportPath = gd.getNextString();
 
 			// parse mipmap resolutions and cell sizes
@@ -278,7 +289,7 @@ public class Generic_Resave_HDF5 implements PlugIn
 				seqFile = hdf5File = null;
 			}
 
-			return new Parameters( lastSetMipmapManual, resolutions, subdivisions, seqFile, hdf5File );
+			return new Parameters( lastSetMipmapManual, resolutions, subdivisions, seqFile, hdf5File, lastDeflate );
 		}
 	}
 }
