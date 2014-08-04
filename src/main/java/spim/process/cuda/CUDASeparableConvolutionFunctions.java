@@ -48,6 +48,16 @@ public class CUDASeparableConvolutionFunctions
 		return gauss( img, dim, sigma, OutOfBounds.EXTEND_BORDER_PIXELS, 0, cuda, cudaDeviceId );
 	}
 
+	public boolean gauss( final float[] img, final int[] dim, final float[] sigma )
+	{
+		final double[] sigmaD = new double[ sigma.length ];
+
+		for ( int d = 0; d < sigmaD.length; ++d )
+			sigmaD[ d ] = sigma[ d ];
+
+		return gauss( img, dim, sigmaD, OutOfBounds.EXTEND_BORDER_PIXELS, 0, cuda, cudaDeviceId );
+	}
+
 	/**
 	 * Compute Gaussian convolution
 	 * 
