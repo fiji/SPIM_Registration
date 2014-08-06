@@ -11,7 +11,6 @@ public class CUDATools
 {
 	/**
 	 * 0 ... n == index for i'th CUDA device
-	 * n + 1 == CPU
 	 */
 	public static ArrayList< Boolean > deviceChoice = null;
 	public static int standardDevice = 10000;
@@ -75,13 +74,13 @@ public class CUDATools
 		}
 		
 		// get the CPU specs
-		final String cpuSpecs = "CPU (" + Runtime.getRuntime().availableProcessors() + " cores, " + Runtime.getRuntime().maxMemory()/(1024*1024) + " MB RAM available)";
+		// final String cpuSpecs = "CPU (" + Runtime.getRuntime().availableProcessors() + " cores, " + Runtime.getRuntime().maxMemory()/(1024*1024) + " MB RAM available)";
 		
 		// if we use blocks, it makes sense to run more than one device
 		if ( askForMultipleDevices )
 		{
 			// make a list where all are checked if there is no previous selection
-			if ( deviceChoice == null || deviceChoice.size() != devices.length + 1 )
+			if ( deviceChoice == null || deviceChoice.size() != devices.length ) //+ 1 )
 			{
 				deviceChoice = new ArrayList<Boolean>( devices.length + 1 );
 				for ( int i = 0; i < devices.length; ++i )
@@ -96,7 +95,7 @@ public class CUDATools
 			for ( int i = 0; i < devices.length; ++i )
 				gdCUDA.addCheckbox( devices[ i ], deviceChoice.get( i ) );
 
-			gdCUDA.addCheckbox( cpuSpecs, deviceChoice.get( devices.length ) );
+			//gdCUDA.addCheckbox( cpuSpecs, deviceChoice.get( devices.length ) );
 			gdCUDA.showDialog();
 
 			if ( gdCUDA.wasCanceled() )
@@ -117,22 +116,22 @@ public class CUDATools
 			}
 			
 			// check the CPUs
-			if ( gdCUDA.getNextBoolean() )
-			{
-				deviceList.add( -1 );
-				deviceChoice.set( devices.length , true );
-			}
-			else
-			{
-				deviceChoice.set( devices.length , false );				
-			}
+			//if ( gdCUDA.getNextBoolean() )
+			//{
+			//	deviceList.add( -1 );
+			//	deviceChoice.set( devices.length , true );
+			//}
+			//else
+			//{
+			//	deviceChoice.set( devices.length , false );				
+			//}
 			
 			for ( final int i : deviceList )
 			{
-				if ( i >= 0 )
+				//if ( i >= 0 )
 					IOFunctions.println( "Using device " + devices[ i ] );
-				else if ( i == -1 )
-					IOFunctions.println( "Using device " + cpuSpecs );
+				//else if ( i == -1 )
+				//	IOFunctions.println( "Using device " + cpuSpecs );
 			}
 			
 			if ( deviceList.size() == 0 )
