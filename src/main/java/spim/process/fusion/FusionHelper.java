@@ -176,8 +176,8 @@ public class FusionHelper
 							{
 								final FloatType t = c.next();
 								
-		            			final float norm = ( t.get() - min ) / diff;
-		            			t.set( norm );
+								final float norm = ( t.get() - min ) / diff;
+								t.set( norm );
 							}
 							
 							return "";
@@ -205,27 +205,27 @@ public class FusionHelper
 
 	public static final Vector<ImagePortion> divideIntoPortions( final long imageSize, final int numPortions )
 	{
-        final long threadChunkSize = imageSize / numPortions;
-        final long threadChunkMod = imageSize % numPortions;
-        
-        final Vector<ImagePortion> portions = new Vector<ImagePortion>();
-        
-        for ( int portionID = 0; portionID < numPortions; ++portionID )
-        {
-        	// move to the starting position of the current thread
-        	final long startPosition = portionID * threadChunkSize;
+		final long threadChunkSize = imageSize / numPortions;
+		final long threadChunkMod = imageSize % numPortions;
+		
+		final Vector<ImagePortion> portions = new Vector<ImagePortion>();
+		
+		for ( int portionID = 0; portionID < numPortions; ++portionID )
+		{
+			// move to the starting position of the current thread
+			final long startPosition = portionID * threadChunkSize;
 
-            // the last thread may has to run longer if the number of pixels cannot be divided by the number of threads
-            final long loopSize;		                    
-            if ( portionID == numPortions - 1 )
-            	loopSize = threadChunkSize + threadChunkMod;
-            else
-            	loopSize = threadChunkSize;
-        	
-            portions.add( new ImagePortion( startPosition, loopSize ) );
-        }
-        
-        return portions;
+			// the last thread may has to run longer if the number of pixels cannot be divided by the number of threads
+			final long loopSize;
+			if ( portionID == numPortions - 1 )
+				loopSize = threadChunkSize + threadChunkMod;
+			else
+				loopSize = threadChunkSize;
+			
+			portions.add( new ImagePortion( startPosition, loopSize ) );
+		}
+		
+		return portions;
 	}
 
 }
