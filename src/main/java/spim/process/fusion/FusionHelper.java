@@ -133,18 +133,34 @@ public class FusionHelper
 		
 		return new float[]{ min, max };
 	}
-	
+
 	/**
 	 * Normalizes the image to the range [0...1]
 	 * 
 	 * @param image - the image to normalize
-	 * @return - a new float[] array with array[ 0 ] == min and array[ 1 ] == max
+	 * @param min - min value
+	 * @param max - max value
+	 * @return - normalized array
 	 */
 	public static boolean normalizeImage( final RandomAccessibleInterval< FloatType > img )
 	{
 		final float minmax[] = minMax( img );
 		final float min = minmax[ 0 ];
 		final float max = minmax[ 1 ];
+		
+		return normalizeImage( img, min, max );
+	}
+
+	/**
+	 * Normalizes the image to the range [0...1]
+	 * 
+	 * @param image - the image to normalize
+	 * @param min - min value
+	 * @param max - max value
+	 * @return - normalized array
+	 */
+	public static boolean normalizeImage( final RandomAccessibleInterval< FloatType > img, final float min, final float max )
+	{
 		final float diff = max - min;
 
 		if ( Float.isNaN( diff ) || Float.isInfinite(diff) || diff == 0 )

@@ -117,6 +117,7 @@ public class DifferenceOfMean extends DifferenceOf
 						//
 						interestPoints.put( viewId, ProcessDOM.compute(
 								img,
+								(Img<net.imglib2.type.numeric.real.FloatType>)input,
 								radius1[ c.getId() ],
 								radius2[ c.getId() ],
 								(float)threshold[ c.getId() ],

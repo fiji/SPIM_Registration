@@ -3,6 +3,7 @@ package spim.process.interestpointdetection;
 import java.util.ArrayList;
 import java.util.Date;
 
+import net.imglib2.img.Img;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.integer.LongType;
 import mpicbg.imglib.type.numeric.real.FloatType;
@@ -12,11 +13,29 @@ import mpicbg.spim.segmentation.IntegralImage3d;
 import mpicbg.spim.segmentation.InteractiveIntegral;
 import mpicbg.spim.segmentation.SimplePeak;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.process.fusion.FusionHelper;
 
 public class ProcessDOM 
 {
+	/**
+	 * @param img - ImgLib1 image
+	 * @param imglib2img - ImgLib2 image (based on same image data as the ImgLib1 image, must be a wrap)
+	 * @param radius1
+	 * @param radius2
+	 * @param threshold
+	 * @param localization
+	 * @param imageSigmaX
+	 * @param imageSigmaY
+	 * @param imageSigmaZ
+	 * @param findMin
+	 * @param findMax
+	 * @param minIntensity
+	 * @param maxIntensity
+	 * @return
+	 */
 	public static ArrayList< InterestPoint > compute( 
-			final Image< FloatType > img, 
+			final Image< FloatType > img,
+			final Img< net.imglib2.type.numeric.real.FloatType > imglib2img,
 			final int radius1, 
 			final int radius2, 
 			final float threshold, 
@@ -30,21 +49,22 @@ public class ProcessDOM
 			final double maxIntensity )
 	{
 		final Image< LongType > integralImg = IntegralImage3d.compute( img );
-		
-		final FloatType min = new FloatType();
-		final FloatType max = new FloatType();
-		
+
+		final float min, max;
+
 		if ( Double.isNaN( minIntensity ) || Double.isNaN( maxIntensity ) || minIntensity == maxIntensity )
 		{
-			DOM.computeMinMax( img, min, max );
+			final float[] minmax = FusionHelper.minMax( imglib2img );
+			min = minmax[ 0 ];
+			max = minmax[ 1 ];
 		}
 		else
 		{
-			min.set( (float)minIntensity );
-			max.set( (float)maxIntensity );
+			min = (float)minIntensity;
+			max = (float)maxIntensity;
 		}
 
-		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): min intensity = " + min.get() + ", max intensity = " + max.get() );
+		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): min intensity = " + min + ", max intensity = " + max );
 		
 		// in-place
 		final int sX1 = Math.max( 3, (int)Math.round( radius1 * (0.5/imageSigmaX ) ) * 2 + 1 );
@@ -72,7 +92,7 @@ public class ProcessDOM
 				tt.setZero();
 		}
 		
-		DOM.computeDifferencOfMean3d( integralImg, domImg, sX1, sY1, sZ1, sX2, sY2, sZ2, min.get(), max.get() );
+		DOM.computeDifferencOfMean3d( integralImg, domImg, sX1, sY1, sZ1, sX2, sY2, sZ2, min, max );
 
 		// close integral img
 		integralImg.close();

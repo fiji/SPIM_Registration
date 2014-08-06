@@ -10,15 +10,32 @@ import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.registration.bead.laplace.LaPlaceFunctions;
-import mpicbg.spim.segmentation.DOM;
 import mpicbg.spim.segmentation.SimplePeak;
+import net.imglib2.img.Img;
 import net.imglib2.util.Util;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.process.fusion.FusionHelper;
 
 public class ProcessDOG
 {
+	/**
+	 * @param img - ImgLib1 image
+	 * @param imglib2img - ImgLib2 image (based on same image data as the ImgLib1 image, must be a wrap)
+	 * @param sigma
+	 * @param threshold
+	 * @param localization
+	 * @param imageSigmaX
+	 * @param imageSigmaY
+	 * @param imageSigmaZ
+	 * @param findMin
+	 * @param findMax
+	 * @param minIntensity
+	 * @param maxIntensity
+	 * @return
+	 */
 	public static ArrayList< InterestPoint > compute( 
-			final Image< FloatType > img, 
+			final Image< FloatType > img,
+			final Img< net.imglib2.type.numeric.real.FloatType > imglib2img,
 			final float sigma, 
 			final float threshold, 
 			final int localization,
@@ -40,27 +57,24 @@ public class ProcessDOG
 		else
 			minInitialPeakValue = threshold/10.0f;
 
-		final FloatType min = new FloatType();
-		final FloatType max = new FloatType();
-		
+		final float min, max;
+
 		if ( Double.isNaN( minIntensity ) || Double.isNaN( maxIntensity ) || minIntensity == maxIntensity )
 		{
-			DOM.computeMinMax( img, min, max );
+			final float[] minmax = FusionHelper.minMax( imglib2img );
+			min = minmax[ 0 ];
+			max = minmax[ 1 ];
 		}
 		else
 		{
-			min.set( (float)minIntensity );
-			max.set( (float)maxIntensity );
+			min = (float)minIntensity;
+			max = (float)maxIntensity;
 		}
 
-		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): min intensity = " + min.get() + ", max intensity = " + max.get() );
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): min intensity = " + min + ", max intensity = " + max );
 
 		// normalize image
-		final float diff = max.get() - min.get();
-		final float minValue = min.get();
-
-		for ( final FloatType f : img )
-			f.set( (f.get() - minValue) / diff );
+		FusionHelper.normalizeImage( imglib2img, min, max );
 
 		final float k = LaPlaceFunctions.computeK( 4 );
 		final float K_MIN1_INV = LaPlaceFunctions.computeKWeight(k);

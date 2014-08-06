@@ -114,6 +114,7 @@ public class DifferenceOfGaussian extends DifferenceOf
 						//
 						interestPoints.put(viewId, ProcessDOG.compute(
 								img,
+								(Img<net.imglib2.type.numeric.real.FloatType>)input,
 								(float)sigma[ c.getId() ],
 								(float)threshold[ c.getId() ],
 								localization,
