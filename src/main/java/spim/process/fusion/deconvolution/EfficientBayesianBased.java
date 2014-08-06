@@ -116,13 +116,6 @@ public class EfficientBayesianBased extends Fusion
 	 * 0 ... n == CUDA device i
 	 */
 	ArrayList< Integer > deviceList = null;
-	
-	/**
-	 * 0 ... n == index for i'th CUDA device
-	 * n + 1 == CPU
-	 */
-	public static ArrayList< Boolean > deviceChoice = null;
-	public static int standardDevice = 10000;
 
 	Choice gpu, block, it;
 	
