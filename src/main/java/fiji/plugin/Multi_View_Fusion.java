@@ -18,12 +18,12 @@ import java.util.ArrayList;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.container.cell.CellContainerFactory;
-import mpicbg.imglib.container.planar.PlanarContainerFactory;
 import mpicbg.spim.Reconstruction;
 import mpicbg.spim.io.ConfigurationParserException;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.io.TextFileAccess;
+import spim.fiji.plugin.GUIHelper;
 import spimopener.SPIMExperiment;
 
 public class Multi_View_Fusion implements PlugIn
@@ -49,7 +49,7 @@ public class Multi_View_Fusion implements PlugIn
 						"Preibisch et al., Nature Methods (2010), 7(6):418-419\n" );
 
 		MultiLineLabel text =  (MultiLineLabel) gd.getMessage();
-		Bead_Registration.addHyperLinkListener( text, paperURL );
+		GUIHelper.addHyperLinkListener( text, paperURL );
 
 		gd.showDialog();
 		
@@ -127,7 +127,7 @@ public class Multi_View_Fusion implements PlugIn
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
 
 		MultiLineLabel text = (MultiLineLabel) gd.getMessage();
-		Bead_Registration.addHyperLinkListener(text, myURL);
+		GUIHelper.addHyperLinkListener(text, myURL);
 		
 		gd.addDialogListener( new DialogListener()
 		{
@@ -454,7 +454,7 @@ public class Multi_View_Fusion implements PlugIn
 		gd2.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
 
 		text = (MultiLineLabel) gd2.getMessage();
-		Bead_Registration.addHyperLinkListener(text, myURL);
+		GUIHelper.addHyperLinkListener(text, myURL);
 
 		gd2.showDialog();
 		

@@ -31,7 +31,7 @@ public class IOFunctions
 	 */
 	protected IOFunctions() { }
 	
-	public static boolean printIJLog = false;
+	public static boolean printIJLog = true;
 
 	public static void printlnTS() { printlnTS( "" ); }
 	public static void printlnTS( final Object object) { printlnTS( object.toString() ); }

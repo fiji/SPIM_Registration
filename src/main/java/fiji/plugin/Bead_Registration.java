@@ -9,16 +9,11 @@ import ij.ImagePlus;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.gui.MultiLineLabel;
-import ij.plugin.BrowserLauncher;
 import ij.plugin.PlugIn;
 
 import java.awt.AWTEvent;
 import java.awt.Checkbox;
-import java.awt.Color;
-import java.awt.Cursor;
 import java.awt.TextField;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.event.TextEvent;
 import java.io.File;
 import java.util.ArrayList;
@@ -26,7 +21,6 @@ import java.util.Date;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.container.cell.CellContainerFactory;
-import mpicbg.imglib.container.planar.PlanarContainerFactory;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.io.LOCI;
@@ -39,6 +33,7 @@ import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.io.SPIMConfiguration.SegmentationTypes;
 import mpicbg.spim.segmentation.InteractiveDoG;
 import mpicbg.spim.segmentation.InteractiveIntegral;
+import spim.fiji.plugin.GUIHelper;
 import spimopener.SPIMExperiment;
 
 public class Bead_Registration implements PlugIn 
@@ -66,7 +61,7 @@ public class Bead_Registration implements PlugIn
 						"Preibisch et al., Nature Methods (2010), 7(6):418-419\n" );
 
 		MultiLineLabel text =  (MultiLineLabel) gd.getMessage();
-		addHyperLinkListener( text, paperURL );
+		GUIHelper.addHyperLinkListener( text, paperURL );
 
 		gd.showDialog();
 		
@@ -217,7 +212,7 @@ public class Bead_Registration implements PlugIn
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
 
 		MultiLineLabel text = (MultiLineLabel) gd.getMessage();
-		addHyperLinkListener(text, myURL);
+		GUIHelper.addHyperLinkListener(text, myURL);
 
 		gd.addDialogListener( new DialogListener()
 		{
@@ -558,7 +553,7 @@ public class Bead_Registration implements PlugIn
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
 
 		final MultiLineLabel text = (MultiLineLabel) gd.getMessage();
-		addHyperLinkListener(text, myURL);
+		GUIHelper.addHyperLinkListener(text, myURL);
 
 		gd.addDialogListener( new DialogListener()
 		{
@@ -1160,41 +1155,10 @@ public class Bead_Registration implements PlugIn
 		
 		return true;
 	}
-
-	public static final void addHyperLinkListener(final MultiLineLabel text, final String myURL)
+	
+	public static final void addHyperLinkListener( final MultiLineLabel text, final String myURL )
 	{
-		if ( text != null && myURL != null )
-		{
-			text.addMouseListener(new MouseAdapter()
-			{
-				@Override
-				public void mouseClicked(MouseEvent e)
-				{
-					try
-					{
-						BrowserLauncher.openURL(myURL);
-					}
-					catch (Exception ex)
-					{
-						IJ.error("" + ex);
-					}
-				}
-	
-				@Override
-				public void mouseEntered(MouseEvent e)
-				{
-					text.setForeground(Color.BLUE);
-					text.setCursor(new Cursor(Cursor.HAND_CURSOR));
-				}
-	
-				@Override
-				public void mouseExited(MouseEvent e)
-				{
-					text.setForeground(Color.BLACK);
-					text.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-				}
-			});
-		}
+		GUIHelper.addHyperLinkListener( text, myURL );
 	}
 
 	public static void main(String[] args) {

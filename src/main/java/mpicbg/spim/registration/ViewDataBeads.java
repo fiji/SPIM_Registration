@@ -1,8 +1,6 @@
 package mpicbg.spim.registration;
 
-import fiji.plugin.Bead_Registration;
 import fiji.plugin.Multi_View_Deconvolution;
-import fiji.plugin.Multi_View_Fusion;
 import ij.IJ;
 import ij.ImagePlus;
 

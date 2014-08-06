@@ -1,14 +1,12 @@
 package mpicbg.spim.fusion;
 
 import ij.IJ;
-import ij.ImagePlus;
 import mpicbg.imglib.algorithm.fft.FourierConvolution;
 import mpicbg.imglib.container.ContainerFactory;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.spim.io.SPIMConfiguration;

@@ -2,7 +2,6 @@ package mpicbg.spim.segmentation;
 
 import fiji.tool.SliceListener;
 import fiji.tool.SliceObserver;
-import ij.CompositeImage;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;

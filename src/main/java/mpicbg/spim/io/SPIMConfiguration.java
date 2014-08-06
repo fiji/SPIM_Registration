@@ -4,11 +4,8 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 
-import fiji.plugin.Multi_View_Deconvolution;
-
 import mpicbg.imglib.container.ContainerFactory;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.container.cell.CellContainerFactory;
 import mpicbg.imglib.interpolation.InterpolatorFactory;
 import mpicbg.imglib.interpolation.linear.LinearInterpolatorFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
@@ -22,6 +19,7 @@ import mpicbg.models.RigidModel3D;
 import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.registration.ViewStructure;
 import spimopener.SPIMExperiment;
+import fiji.plugin.Multi_View_Deconvolution;
 
 public class SPIMConfiguration
 {

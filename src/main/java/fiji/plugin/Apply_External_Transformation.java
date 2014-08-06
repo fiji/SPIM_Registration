@@ -6,19 +6,14 @@ import ij.gui.GenericDialog;
 import ij.gui.MultiLineLabel;
 import ij.plugin.PlugIn;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 
-import mpicbg.imglib.util.Util;
 import mpicbg.models.AffineModel3D;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
-import mpicbg.spim.io.TextFileAccess;
-import mpicbg.spim.registration.ViewStructure;
+import spim.fiji.plugin.GUIHelper;
 
 public class Apply_External_Transformation implements PlugIn 
 {
@@ -62,7 +57,7 @@ public class Apply_External_Transformation implements PlugIn
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
 
 		MultiLineLabel text = (MultiLineLabel) gd.getMessage();
-		Bead_Registration.addHyperLinkListener(text, myURL);
+		GUIHelper.addHyperLinkListener(text, myURL);
 		
 		gd.showDialog();
 		
@@ -217,7 +212,7 @@ public class Apply_External_Transformation implements PlugIn
 		gd2.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
 
 		text = (MultiLineLabel) gd2.getMessage();
-		Bead_Registration.addHyperLinkListener(text, myURL);
+		GUIHelper.addHyperLinkListener(text, myURL);
 
 		gd2.showDialog();
 		
@@ -226,7 +221,7 @@ public class Apply_External_Transformation implements PlugIn
 
 		if ( defaultHowToProvide == 0 )
 		{
-			String entry = removeSequences( gd2.getNextString().trim(), new String[] { "(", ")", "{", "}", "[", "]", "<", ">", ":", "m00", "m01", "m02", "m03", "m10", "m11", "m12", "m13", "m20", "m21", "m22", "m23", " " } );			
+			String entry = GUIHelper.removeSequences( gd2.getNextString().trim(), new String[] { "(", ")", "{", "}", "[", "]", "<", ">", ":", "m00", "m01", "m02", "m03", "m10", "m11", "m12", "m13", "m20", "m21", "m22", "m23", " " } );			
 			final String[] numbers = entry.split( "," );
 			
 			if  ( numbers.length != 12 )
@@ -331,53 +326,21 @@ public class Apply_External_Transformation implements PlugIn
 
 		return conf;
 	}
-		
-	/**
-	 * Removes any of those characters from a String: (, ), [, ], {, }, <, >
-	 * 
-	 * @param entry input (with brackets)
-	 * @return input, but without any brackets
-	 */
-	public static String removeBrackets( String entry )
-	{
-		return removeSequences( entry, new String[] { "(", ")", "{", "}", "[", "]", "<", ">" } );
-	}
 	
-	public static String removeSequences( String entry, final String[] sequences )
+	public static String removeSequences( String trim, final String[] strings )
 	{
-		while ( contains( entry, sequences ) )
-		{
-			for ( final String s : sequences )
-			{
-				final int index = entry.indexOf( s );
+		for ( final String s : strings )
+			trim = trim.replace( s, "" );
 
-				if ( index == 0 )
-					entry = entry.substring( s.length(), entry.length() );
-				else if ( index == entry.length() - s.length() )
-					entry = entry.substring( 0, entry.length() - s.length() );
-				else if ( index > 0 )
-					entry = entry.substring( 0, index ) + entry.substring( index + s.length(), entry.length() );
-			}
-		}
+		return trim;
+	}
 
-		return entry;		
-	}
-	
-	public static boolean contains( final String entry, final String[] sequences )
-	{
-		for ( final String seq : sequences )
-			if ( entry.contains( seq ) )
-				return true;
-		
-		return false;
-	}
-	
 	public static void main( String args[ ] )
 	{
 		String test1 = "dsgsdgsdg324 45 45, 45, 4545 ";
 		System.out.println( test1 );
 		
 		String test2 = "m02:(dsg[[[sdgsd(){}g3{{{24 45 45, m00: 0.43242- ]]]]]]]]45, 4545]] )]]m22";
-		System.out.println( removeSequences( test2, new String[] { "(", ")", "{", "}", "[", "]", "<", ">", ":", "m00", "m01", "m02", "m03", "m10", "m11", "m12", "m13", "m20", "m21", "m22", "m23", " " } ) );
+		System.out.println( GUIHelper.removeSequences( test2, new String[] { "(", ")", "{", "}", "[", "]", "<", ">", ":", "m00", "m01", "m02", "m03", "m10", "m11", "m12", "m13", "m20", "m21", "m22", "m23", " " } ) );
 	}
 }
