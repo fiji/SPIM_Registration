@@ -3,6 +3,7 @@ package spim.fiji.plugin.interestpointdetection;
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +25,10 @@ import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.process.cuda.CUDASeparableConvolution;
+import spim.process.cuda.CUDATools;
+import spim.process.cuda.NativeLibraryTools;
+import spim.process.fusion.deconvolution.EfficientBayesianBased;
 import spim.process.interestpointdetection.ProcessDOG;
 
 public class DifferenceOfGaussian extends DifferenceOf
@@ -39,7 +44,15 @@ public class DifferenceOfGaussian extends DifferenceOf
 	double[] sigma;
 	double[] threshold;
 	boolean[] findMin;
-	boolean[] findMax;	
+	boolean[] findMax;
+
+	/**
+	 * -1 == CPU
+	 * 0 ... n == CUDA device i
+	 */
+	ArrayList< Integer > deviceList = null;
+	boolean useCUDA = false;
+	CUDASeparableConvolution cuda = null;
 
 	public DifferenceOfGaussian(
 			final SpimData2 spimData,
@@ -288,5 +301,70 @@ public class DifferenceOfGaussian extends DifferenceOf
 	{
 		return "DOG s=" + sigma[ channelId ] + " t=" + threshold[ channelId ] + " min=" + findMin[ channelId ] + " max=" + findMax[ channelId ] + 
 				" imageSigmaX=" + imageSigmaX + " imageSigmaY=" + imageSigmaY + " imageSigmaZ=" + imageSigmaZ;
+	}
+
+	@Override
+	protected void addAddtionalParameters( final GenericDialog gd )
+	{
+		gd.addChoice( "Compute_on", EfficientBayesianBased.computationOnChoice, EfficientBayesianBased.computationOnChoice[ EfficientBayesianBased.defaultComputationTypeIndex ] );
+		
+	}
+
+	@Override
+	protected boolean queryAddtionalParameters( final GenericDialog gd )
+	{
+		final int computationTypeIndex = EfficientBayesianBased.defaultComputationTypeIndex = gd.getNextChoiceIndex();
+
+		if ( computationTypeIndex == 1 )
+		{
+			final ArrayList< String > potentialNames = new ArrayList< String >();
+			potentialNames.add( "separable" );
+			
+			cuda = NativeLibraryTools.loadNativeLibrary( potentialNames, CUDASeparableConvolution.class );
+
+			if ( cuda == null )
+			{
+				IOFunctions.println( "Cannot load CUDA JNA library." );
+				return false;
+			}
+			else
+			{
+				deviceList = new ArrayList< Integer >();
+			}
+
+			final ArrayList< Integer > selectedDevices = CUDATools.queryCUDADetails( cuda, true );
+
+			if ( selectedDevices == null || selectedDevices.size() == 0 )
+				return false;
+			else
+				deviceList.addAll( selectedDevices );
+
+			// TODO: remove this, only for debug on non-CUDA machines >>>>
+			final byte[] name = new byte[ 256 ];
+			cuda.getNameDeviceCUDA( deviceList.get( 0 ), name );
+			String device = "";
+			for ( final byte b : name )
+				if ( b != 0 )
+					device += (char)b;
+			if ( device.startsWith( "CPU emulation" ) )
+			{
+				final int numDev = deviceList.size();
+				deviceList.clear();
+				for ( int i = 0; i < numDev; ++i )
+				{
+					deviceList.add( -1-i );
+					IOFunctions.println( "Running on cpu emulation, added " + ( -1-i ) + " as device" );
+				}
+			}
+			// TODO: <<<< remove this, only for debug on non-CUDA machines
+
+			useCUDA = true;
+		}
+		else
+		{
+			useCUDA = false;
+		}
+
+		return true;
 	}
 }

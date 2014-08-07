@@ -300,4 +300,10 @@ public class DifferenceOfMean extends DifferenceOf
 		return "DOM r1=" + radius1[ channelId ] + " t=" + threshold[ channelId ] + " min=" + findMin[ channelId ] + " max=" + findMax[ channelId ] + 
 				" imageSigmaX=" + imageSigmaX + " imageSigmaY=" + imageSigmaY + " imageSigmaZ=" + imageSigmaZ;
 	}
+
+	@Override
+	protected void addAddtionalParameters( final GenericDialog gd ) {}
+
+	@Override
+	protected boolean queryAddtionalParameters( final GenericDialog gd ) { return true; }
 }

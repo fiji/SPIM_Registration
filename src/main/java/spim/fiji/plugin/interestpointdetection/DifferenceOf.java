@@ -56,6 +56,9 @@ public abstract class DifferenceOf extends InterestPointDetection
 		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
 	}
 
+	protected abstract void addAddtionalParameters( final GenericDialog gd );
+	protected abstract boolean queryAddtionalParameters( final GenericDialog gd );
+	
 	@Override
 	public boolean queryParameters( final boolean defineAnisotropy, final boolean additionalSmoothing, final boolean setMinMax )
 	{
@@ -102,6 +105,8 @@ public abstract class DifferenceOf extends InterestPointDetection
 			gd.addNumericField( "Minimal_intensity", defaultMinIntensity, 1 );
 			gd.addNumericField( "Maximal_intensity", defaultMaxIntensity, 1 );
 		}
+
+		addAddtionalParameters( gd );
 		
 		gd.showDialog();
 		
@@ -171,7 +176,10 @@ public abstract class DifferenceOf extends InterestPointDetection
 			imageSigmaX = imageSigmaY = imageSigmaZ = 0.5;
 		}
 
-		return true;
+		if ( !queryAddtionalParameters( gd ) )
+			return false;
+		else
+			return true;
 	}
 	
 	protected < T extends RealType< T > > void preSmooth( final RandomAccessibleInterval< T > img )
