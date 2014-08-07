@@ -95,7 +95,7 @@ public class BlockGeneratorVariableSizeSimple implements BlockGenerator< Block >
 				{
 					effectiveLocalOffset[ d ] = offset[ d ] = effectiveOffset[ d ] = 0;
 					effectiveSize[ d ] = imgSize[ d ] / numBlocks[ d ];
-					blockSize[ d ] = effectiveSize[ d ] + kernelSize[ 2 ];
+					blockSize[ d ] = effectiveSize[ d ] + kernelSize[ d ]/2;
 				}
 				else if ( currentBlock[ d ] < numBlocks[ d ] - 1 ) // it is some block in the middle
 				{
@@ -103,7 +103,7 @@ public class BlockGeneratorVariableSizeSimple implements BlockGenerator< Block >
 					effectiveSize[ d ] = imgSize[ d ] / numBlocks[ d ];
 					blockSize[ d ] = effectiveSize[ d ] + kernelSize[ d ] - 1;
 					effectiveOffset[ d ] = currentBlock[ d ] * effectiveSize[ d ];
-					offset[ d ] = effectiveOffset[ d ] - kernelSize[ 2 ];
+					offset[ d ] = effectiveOffset[ d ] - kernelSize[ d ]/2;
 				}
 				else // is the last block?
 				{
@@ -111,7 +111,7 @@ public class BlockGeneratorVariableSizeSimple implements BlockGenerator< Block >
 					effectiveSize[ d ] = imgSize[ d ] / numBlocks[ d ] + imgSize[ d ] % numBlocks[ d ];
 					blockSize[ d ] = effectiveSize[ d ] + kernelSize[ d ]/2;
 					effectiveOffset[ d ] = currentBlock[ d ] * effectiveSize[ d ];
-					offset[ d ] = effectiveOffset[ d ] - kernelSize[ 2 ];
+					offset[ d ] = effectiveOffset[ d ] - kernelSize[ d ]/2;
 				}
 
 				if ( effectiveSize[ d ] <= 0 )
@@ -119,7 +119,6 @@ public class BlockGeneratorVariableSizeSimple implements BlockGenerator< Block >
 					System.out.println( "Blocksize in dimension " + d + " (" + blockSize[ d ] + ") is smaller than the kernel (" + kernelSize[ d ] + ") which results in an negative effective size: " + effectiveSize[ d ] + ". Quitting." );
 					return null;
 				}
-
 			}
 
 			blockList.add( new Block( blockSize, offset, effectiveSize, effectiveOffset, effectiveLocalOffset ) );
@@ -133,4 +132,8 @@ public class BlockGeneratorVariableSizeSimple implements BlockGenerator< Block >
 		return blocks;
 	}
 
+	public static void main( String[] args )
+	{
+		new BlockGeneratorVariableSizeSimple( new int[]{ 3, 2, 1 } ).divideIntoBlocks( new int[] { 1025, 1024, 117 }, new int[]{ 17, 17, 4 } );
+	}
 }
