@@ -52,11 +52,22 @@ public class Block
 	 */
 	final int[] effectiveLocalOffset;
 
+	/**
+	 * If the blocks that cover the image are precise or an approximation
+	 */
+	final boolean isPrecise;
+
 	final Vector< ImagePortion > portions;
 	final int numThreads;
 	final ExecutorService taskExecutor;
 
-	public Block( final int[] blockSize, final int[] offset, final int[] effectiveSize, final int[] effectiveOffset, final int[] effectiveLocalOffset )
+	public Block(
+			final int[] blockSize,
+			final int[] offset,
+			final int[] effectiveSize,
+			final int[] effectiveOffset,
+			final int[] effectiveLocalOffset,
+			final boolean isPrecise )
 	{
 		this.numDimensions = blockSize.length;
 		this.blockSize = blockSize.clone();
@@ -65,7 +76,8 @@ public class Block
 		this.effectiveOffset = effectiveOffset.clone();
 		this.effectiveLocalOffset = effectiveLocalOffset.clone();
 		this.numThreads = Runtime.getRuntime().availableProcessors();
-		
+		this.isPrecise = isPrecise;
+
 		long n = blockSize[ 0 ];
 		for ( int d = 1; d < numDimensions; ++d )
 			n *= blockSize[ d ];
@@ -74,6 +86,11 @@ public class Block
 		this.portions = FusionHelper.divideIntoPortions( n, Runtime.getRuntime().availableProcessors() * 2 );
 		this.taskExecutor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
 	}
+
+	/**
+	 * @return - if the blocks that cover an area/volume/... are precise, i.e. if they are identical to performing the convolution on the entire image. Non-precise blocks do not need an outofbounds, they will not query data from outside of the blocked area.
+	 */
+	public boolean isPrecise() { return isPrecise; }
 
 	/**
 	 * @param source - needs to be extended with an OutOfBounds in case the block extends past the boundaries of the RandomAccessibleInterval

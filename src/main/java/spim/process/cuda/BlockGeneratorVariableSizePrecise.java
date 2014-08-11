@@ -68,7 +68,7 @@ public class BlockGeneratorVariableSizePrecise implements BlockGenerator< Block 
 				}
 			}
 
-			blockList.add( new Block( blockSize, offset, effectiveSize, effectiveOffset, effectiveLocalOffset ) );
+			blockList.add( new Block( blockSize, offset, effectiveSize, effectiveOffset, effectiveLocalOffset, true ) );
 			System.out.println( "block " + Util.printCoordinates( currentBlock ) + " offset: " + Util.printCoordinates( offset ) + " effectiveOffset: " + Util.printCoordinates( effectiveOffset ) + " effectiveLocalOffset: " + Util.printCoordinates( effectiveLocalOffset ) + " effectiveSize: " + Util.printCoordinates( effectiveSize )  + " blocksize: " + Util.printCoordinates( blockSize ) );
 		}
 		

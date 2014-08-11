@@ -90,7 +90,7 @@ public class BlockGeneratorFixedSizePrecise implements BlockGenerator< Block >
 					effectiveSize[ d ] = imgSize[ d ] - effectiveOffset[ d ];
 			}
 
-			blockList.add( new Block( blockSize, offset, effectiveSize, effectiveOffset, effectiveLocalOffset ) );
+			blockList.add( new Block( blockSize, offset, effectiveSize, effectiveOffset, effectiveLocalOffset, true ) );
 			//System.out.println( "block " + Util.printCoordinates( currentBlock ) + " effectiveOffset: " + Util.printCoordinates( effectiveOffset ) + " effectiveSize: " + Util.printCoordinates( effectiveSize )  + " offset: " + Util.printCoordinates( offset ) + " inside: " + inside );
 		}
 		
