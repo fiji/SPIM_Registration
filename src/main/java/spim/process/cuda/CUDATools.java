@@ -13,17 +13,15 @@ public class CUDATools
 	 * 0 ... n == index for i'th CUDA device
 	 */
 	public static ArrayList< Boolean > deviceChoice = null;
-	public static int standardDevice = 10000;
+	public static int standardDevice = -1;
 
 	/**
 	 * @param cuda
 	 * @param askForMultipleDevices
 	 * @return - a list of CUDA device Id's to be used
 	 */
-	public static ArrayList< Integer > queryCUDADetails( final CUDAStandardFunctions cuda, final boolean askForMultipleDevices )
+	public static ArrayList< CUDADevice > queryCUDADetails( final CUDAStandardFunctions cuda, final boolean askForMultipleDevices )
 	{
-		final ArrayList< Integer > deviceList = new ArrayList< Integer >();
-
 		final int numDevices = cuda.getNumDevicesCUDA();
 
 		if ( numDevices == -1 )
@@ -40,7 +38,8 @@ public class CUDATools
 		//
 		// get the ID's and functionality of the CUDA GPU's
 		//
-		final String[] devices = new String[ numDevices ];
+		final CUDADevice[] deviceList = new CUDADevice[ numDevices ];
+
 		final byte[] name = new byte[ 256 ];
 		int highestComputeCapability = 0;
 		long highestMemory = 0;
@@ -48,18 +47,21 @@ public class CUDATools
 		int highestComputeCapabilityDevice = -1;
 		
 		for ( int i = 0; i < numDevices; ++i )
-		{		
+		{
 			cuda.getNameDeviceCUDA( i, name );
-			
-			devices[ i ] = "GPU_" + (i+1) + " of " + numDevices  + ": ";
+	
+			String deviceName = "";
+
 			for ( final byte b : name )
 				if ( b != 0 )
-					devices[ i ] = devices[ i ] + (char)b;
-			
-			devices[ i ].trim();
-			
-			final long mem = cuda.getMemDeviceCUDA( i );	
-			final int compCap =  10 * cuda.getCUDAcomputeCapabilityMajorVersion( i ) + cuda.getCUDAcomputeCapabilityMinorVersion( i );
+					deviceName += (char)b;
+
+			deviceName.trim();
+
+			final long mem = cuda.getMemDeviceCUDA( i );
+			final int majorVersion = cuda.getCUDAcomputeCapabilityMajorVersion( i );
+			final int minorVersion = cuda.getCUDAcomputeCapabilityMinorVersion( i );
+			final int compCap =  10 * majorVersion + minorVersion;
 			
 			if ( compCap > highestComputeCapability )
 			{
@@ -69,21 +71,23 @@ public class CUDATools
 			
 			if ( mem > highestMemory )
 				highestMemory = mem;
-			
-			devices[ i ] = devices[ i ] + " (" + mem/(1024*1024) + " MB, CUDA capability " + cuda.getCUDAcomputeCapabilityMajorVersion( i )  + "." + cuda.getCUDAcomputeCapabilityMinorVersion( i ) + ")";
+
+			deviceList[ i ] = new CUDADevice( i, deviceName, mem, majorVersion, minorVersion );
 		}
 		
 		// get the CPU specs
 		// final String cpuSpecs = "CPU (" + Runtime.getRuntime().availableProcessors() + " cores, " + Runtime.getRuntime().maxMemory()/(1024*1024) + " MB RAM available)";
-		
+
+		final ArrayList< CUDADevice > selectedDevices = new ArrayList< CUDADevice >();
+
 		// if we use blocks, it makes sense to run more than one device
 		if ( askForMultipleDevices )
 		{
 			// make a list where all are checked if there is no previous selection
-			if ( deviceChoice == null || deviceChoice.size() != devices.length ) //+ 1 )
+			if ( deviceChoice == null || deviceChoice.size() != deviceList.length ) //+ 1 )
 			{
-				deviceChoice = new ArrayList<Boolean>( devices.length + 1 );
-				for ( int i = 0; i < devices.length; ++i )
+				deviceChoice = new ArrayList<Boolean>( deviceList.length + 1 );
+				for ( int i = 0; i < deviceList.length; ++i )
 					deviceChoice.add( true );
 				
 				// CPU is by default not checked
@@ -92,21 +96,20 @@ public class CUDATools
 			
 			final GenericDialog gdCUDA = new GenericDialog( "Choose CUDA/CPUs devices to use" );
 			
-			for ( int i = 0; i < devices.length; ++i )
-				gdCUDA.addCheckbox( devices[ i ], deviceChoice.get( i ) );
+			for ( int i = 0; i < deviceList.length; ++i )
+				gdCUDA.addCheckbox( "GPU " + (i+1) + " of " + deviceList.length  + ": " + deviceList[ i ], deviceChoice.get( i ) );
 
-			//gdCUDA.addCheckbox( cpuSpecs, deviceChoice.get( devices.length ) );
 			gdCUDA.showDialog();
 
 			if ( gdCUDA.wasCanceled() )
 				return null;
 
 			// check all CUDA devices
-			for ( int i = 0; i < devices.length; ++i )
+			for ( int i = 0; i < deviceList.length; ++i )
 			{
 				if( gdCUDA.getNextBoolean() )
 				{
-					deviceList.add( i );
+					selectedDevices.add( deviceList[ i ] );
 					deviceChoice.set( i , true );
 				}
 				else
@@ -114,27 +117,8 @@ public class CUDATools
 					deviceChoice.set( i , false );
 				}
 			}
-			
-			// check the CPUs
-			//if ( gdCUDA.getNextBoolean() )
-			//{
-			//	deviceList.add( -1 );
-			//	deviceChoice.set( devices.length , true );
-			//}
-			//else
-			//{
-			//	deviceChoice.set( devices.length , false );				
-			//}
-			
-			for ( final int i : deviceList )
-			{
-				//if ( i >= 0 )
-					IOFunctions.println( "Using device " + devices[ i ] );
-				//else if ( i == -1 )
-				//	IOFunctions.println( "Using device " + cpuSpecs );
-			}
-			
-			if ( deviceList.size() == 0 )
+
+			if ( selectedDevices.size() == 0 )
 			{
 				IOFunctions.println( "You selected no device, quitting." );
 				return null;
@@ -145,22 +129,28 @@ public class CUDATools
 			// only choose one device to run everything at once				
 			final GenericDialog gdCUDA = new GenericDialog( "Choose CUDA device" );
 
-			if ( standardDevice >= devices.length )
+			if ( standardDevice < 0 || standardDevice >= deviceList.length )
 				standardDevice = highestComputeCapabilityDevice;
-			
-			gdCUDA.addChoice( "Device", devices, devices[ standardDevice ] );
-			
+
+			final String desc[] = new String[ deviceList.length ];
+			for ( int i = 0; i < deviceList.length; ++i )
+				desc[ i ] = "GPU_" + (i+1) + " of " + deviceList.length  + ": " + deviceList[ i ];
+
+			gdCUDA.addChoice( "Device", desc, desc[ standardDevice ] );
+
 			gdCUDA.showDialog();
-		
+
 			if ( gdCUDA.wasCanceled() )
 				return null;
-			
-			deviceList.add( standardDevice = gdCUDA.getNextChoiceIndex() );
-			IOFunctions.println( "Using device " + devices[ deviceList.get( 0 ) ] );
+
+			selectedDevices.add( deviceList[ standardDevice = gdCUDA.getNextChoiceIndex() ] );
 		}
 
-		Collections.sort( deviceList );
+		Collections.sort( selectedDevices );
 
-		return deviceList;
+		for ( final CUDADevice dev : selectedDevices )
+			IOFunctions.println( "Using device " + dev );
+
+		return selectedDevices;
 	}
 }

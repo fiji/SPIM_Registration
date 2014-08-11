@@ -33,6 +33,7 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.process.cuda.CUDADevice;
 import spim.process.cuda.CUDAFourierConvolution;
 import spim.process.cuda.CUDATools;
 import spim.process.cuda.NativeLibraryTools;
@@ -112,10 +113,9 @@ public class EfficientBayesianBased extends Fusion
 	int psfSizeZ = -1;
 	
 	/**
-	 * -1 == CPU
 	 * 0 ... n == CUDA device i
 	 */
-	ArrayList< Integer > deviceList = null;
+	ArrayList< CUDADevice > deviceList = null;
 
 	Choice gpu, block, it;
 	
@@ -193,7 +193,7 @@ public class EfficientBayesianBased extends Fusion
 					// device list for CPU or CUDA processing
 					final int[] devList = new int[ deviceList.size() ];
 					for ( int i = 0; i < devList.length; ++i )
-						devList[ i ] = deviceList.get( i );
+						devList[ i ] = deviceList.get( i ).getDeviceId();
 					
 					deconvolutionData.add( new LRFFT( 
 							pfd.getTransformedImgs().get( view ),
@@ -936,12 +936,12 @@ public class EfficientBayesianBased extends Fusion
 	protected boolean getCUDA()
 	{
 		// we need to popluate the deviceList in any case
-		deviceList = new ArrayList<Integer>();
+		deviceList = new ArrayList< CUDADevice >();
 		
 		if ( computationTypeIndex == 0 )
 		{
+			deviceList.add( new CUDADevice( -1, "CPU", Runtime.getRuntime().maxMemory(), 0, 0 ) );
 			useCUDA = false;
-			deviceList.add( -1 );
 		}
 		else
 		{
@@ -957,7 +957,7 @@ public class EfficientBayesianBased extends Fusion
 				return false;
 			}
 			
-			final ArrayList< Integer > selectedDevices = CUDATools.queryCUDADetails( LRFFT.cuda, useBlocks );
+			final ArrayList< CUDADevice > selectedDevices = CUDATools.queryCUDADetails( LRFFT.cuda, useBlocks );
 			
 			if ( selectedDevices == null || selectedDevices.size() == 0 )
 				return false;

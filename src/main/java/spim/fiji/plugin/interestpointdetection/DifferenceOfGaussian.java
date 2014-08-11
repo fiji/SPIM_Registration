@@ -25,6 +25,7 @@ import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.process.cuda.CUDADevice;
 import spim.process.cuda.CUDASeparableConvolution;
 import spim.process.cuda.CUDATools;
 import spim.process.cuda.NativeLibraryTools;
@@ -50,7 +51,7 @@ public class DifferenceOfGaussian extends DifferenceOf
 	 * -1 == CPU
 	 * 0 ... n == CUDA device i
 	 */
-	ArrayList< Integer > deviceList = null;
+	ArrayList< CUDADevice > deviceList = null;
 	boolean useCUDA = false;
 	CUDASeparableConvolution cuda = null;
 
@@ -99,13 +100,13 @@ public class DifferenceOfGaussian extends DifferenceOf
 
 						if ( viewId == null )
 						{
-							IOFunctions.println( "An error occured. Count not find the corresponding ViewSetup for angle: " + 
+							IOFunctions.println( "An error occured. Count not find the corresponding ViewSetup for angle: " +
 								a.getId() + " channel: " + c.getId() + " illum: " + i.getId() );
-						
+
 							continue;
 						}
 						
-						final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
+						final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription(
 								viewId.getTimePointId(), viewId.getViewSetupId() );
 
 						if ( !viewDescription.isPresent() )
@@ -113,13 +114,13 @@ public class DifferenceOfGaussian extends DifferenceOf
 
 						IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Requesting Img from ImgLoader (tp=" + viewId.getTimePointId() + ", setup=" + viewId.getViewSetupId() + ")" );
 						final RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input = spimData.getSequenceDescription().getImgLoader().getFloatImage( viewId, false );
-												
+
 						long time2 = System.currentTimeMillis();
-						
+
 						benchmark.openFiles += time2 - time1;
-						
+
 						preSmooth( input );
-						
+
 						final Image< FloatType > img = ImgLib2.wrapFloatToImgLib1( (Img<net.imglib2.type.numeric.real.FloatType>)input );
 
 						//
@@ -140,7 +141,7 @@ public class DifferenceOfGaussian extends DifferenceOf
 								maxIntensity ) );
 						img.close();
 
-				        benchmark.computation += System.currentTimeMillis() - time2;
+						benchmark.computation += System.currentTimeMillis() - time2;
 					}
 					catch ( Exception  e )
 					{
@@ -329,10 +330,10 @@ public class DifferenceOfGaussian extends DifferenceOf
 			}
 			else
 			{
-				deviceList = new ArrayList< Integer >();
+				deviceList = new ArrayList< CUDADevice >();
 			}
 
-			final ArrayList< Integer > selectedDevices = CUDATools.queryCUDADetails( cuda, true );
+			final ArrayList< CUDADevice > selectedDevices = CUDATools.queryCUDADetails( cuda, true );
 
 			if ( selectedDevices == null || selectedDevices.size() == 0 )
 				return false;
@@ -340,19 +341,11 @@ public class DifferenceOfGaussian extends DifferenceOf
 				deviceList.addAll( selectedDevices );
 
 			// TODO: remove this, only for debug on non-CUDA machines >>>>
-			final byte[] name = new byte[ 256 ];
-			cuda.getNameDeviceCUDA( deviceList.get( 0 ), name );
-			String device = "";
-			for ( final byte b : name )
-				if ( b != 0 )
-					device += (char)b;
-			if ( device.startsWith( "CPU emulation" ) )
+			if ( deviceList.get( 0 ).getDeviceName().startsWith( "CPU emulation" ) )
 			{
-				final int numDev = deviceList.size();
-				deviceList.clear();
-				for ( int i = 0; i < numDev; ++i )
+				for ( int i = 0; i < deviceList.size(); ++i )
 				{
-					deviceList.add( -1-i );
+					deviceList.set( i, new CUDADevice( -1-i, deviceList.get( i ).getDeviceName(), deviceList.get( i ).getDeviceMemory(), deviceList.get( i ).getMajorComputeVersion(), deviceList.get( i ).getMinorComputeVersion() ) );
 					IOFunctions.println( "Running on cpu emulation, added " + ( -1-i ) + " as device" );
 				}
 			}

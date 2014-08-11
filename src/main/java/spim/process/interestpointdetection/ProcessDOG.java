@@ -141,7 +141,7 @@ public class ProcessDOG
 		}
 		else
 		{
-			finalPeaks = Localization.computeGaussLocalization( peaks, img, sigma, findMin, findMax, minPeakValue );
+			finalPeaks = Localization.computeGaussLocalization( peaks, null, sigma, findMin, findMax, minPeakValue );
 		}
 		
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Found " + finalPeaks.size() + " peaks." );
