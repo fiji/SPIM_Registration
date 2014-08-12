@@ -29,7 +29,6 @@ import spim.process.cuda.CUDADevice;
 import spim.process.cuda.CUDASeparableConvolution;
 import spim.process.cuda.CUDATools;
 import spim.process.cuda.NativeLibraryTools;
-import spim.process.fusion.deconvolution.EfficientBayesianBased;
 import spim.process.interestpointdetection.ProcessDOG;
 
 public class DifferenceOfGaussian extends DifferenceOf
@@ -42,18 +41,20 @@ public class DifferenceOfGaussian extends DifferenceOf
 	public static boolean defaultFindMin[];
 	public static boolean defaultFindMax[];
 
+	public static String[] computationOnChoice = new String[]{ "CPU (Java)", "GPU approximate (Nvidia CUDA via JNA)", "GPU accurate (Nvidia CUDA via JNA)" };
+	public static int defaultComputationChoiceIndex = 0;
+
 	double[] sigma;
 	double[] threshold;
 	boolean[] findMin;
 	boolean[] findMax;
 
 	/**
-	 * -1 == CPU
 	 * 0 ... n == CUDA device i
 	 */
 	ArrayList< CUDADevice > deviceList = null;
-	boolean useCUDA = false;
 	CUDASeparableConvolution cuda = null;
+	boolean accurateCUDA = false;
 
 	public DifferenceOfGaussian(
 			final SpimData2 spimData,
@@ -127,6 +128,9 @@ public class DifferenceOfGaussian extends DifferenceOf
 						// compute Difference-of-Mean
 						//
 						interestPoints.put(viewId, ProcessDOG.compute(
+								cuda,
+								deviceList,
+								accurateCUDA,
 								img,
 								(Img<net.imglib2.type.numeric.real.FloatType>)input,
 								(float)sigma[ c.getId() ],
@@ -307,16 +311,21 @@ public class DifferenceOfGaussian extends DifferenceOf
 	@Override
 	protected void addAddtionalParameters( final GenericDialog gd )
 	{
-		gd.addChoice( "Compute_on", EfficientBayesianBased.computationOnChoice, EfficientBayesianBased.computationOnChoice[ EfficientBayesianBased.defaultComputationTypeIndex ] );
+		gd.addChoice( "Compute_on", computationOnChoice, computationOnChoice[ defaultComputationChoiceIndex ] );
 		
 	}
 
 	@Override
 	protected boolean queryAddtionalParameters( final GenericDialog gd )
 	{
-		final int computationTypeIndex = EfficientBayesianBased.defaultComputationTypeIndex = gd.getNextChoiceIndex();
+		final int computationTypeIndex = defaultComputationChoiceIndex = gd.getNextChoiceIndex();
 
 		if ( computationTypeIndex == 1 )
+			accurateCUDA = false;
+		else
+			accurateCUDA = true;
+
+		if ( computationTypeIndex >= 1 )
 		{
 			final ArrayList< String > potentialNames = new ArrayList< String >();
 			potentialNames.add( "separable" );
@@ -326,6 +335,7 @@ public class DifferenceOfGaussian extends DifferenceOf
 			if ( cuda == null )
 			{
 				IOFunctions.println( "Cannot load CUDA JNA library." );
+				deviceList = null;
 				return false;
 			}
 			else
@@ -350,12 +360,10 @@ public class DifferenceOfGaussian extends DifferenceOf
 				}
 			}
 			// TODO: <<<< remove this, only for debug on non-CUDA machines
-
-			useCUDA = true;
 		}
 		else
 		{
-			useCUDA = false;
+			deviceList = null;
 		}
 
 		return true;

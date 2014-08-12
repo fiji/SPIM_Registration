@@ -87,6 +87,16 @@ public class Block
 		this.taskExecutor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
 	}
 
+	public long[] getBlockSize()
+	{
+		final long[] dim = new long[ blockSize.length ];
+
+		for ( int d = 0; d < dim.length; ++d )
+			dim[ d ] = blockSize[ d ];
+
+		return dim;
+	}
+
 	/**
 	 * @return - if the blocks that cover an area/volume/... are precise, i.e. if they are identical to performing the convolution on the entire image. Non-precise blocks do not need an outofbounds, they will not query data from outside of the blocked area.
 	 */

@@ -2,6 +2,7 @@ package spim.process.interestpointdetection;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianReal1;
@@ -14,11 +15,15 @@ import mpicbg.spim.segmentation.SimplePeak;
 import net.imglib2.img.Img;
 import net.imglib2.util.Util;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.process.cuda.CUDADevice;
+import spim.process.cuda.CUDASeparableConvolution;
 import spim.process.fusion.FusionHelper;
 
 public class ProcessDOG
 {
 	/**
+	 * @param deviceList - a list of CUDA capable devices (or null if classic CPU computation in Java)
+	 * @param accurateCUDA - use accurate CUDA implementation (including out of bounds or not)
 	 * @param img - ImgLib1 image
 	 * @param imglib2img - ImgLib2 image (based on same image data as the ImgLib1 image, must be a wrap)
 	 * @param sigma
@@ -33,7 +38,10 @@ public class ProcessDOG
 	 * @param maxIntensity
 	 * @return
 	 */
-	public static ArrayList< InterestPoint > compute( 
+	public static ArrayList< InterestPoint > compute(
+			final CUDASeparableConvolution cuda,
+			final List< CUDADevice > deviceList,
+			final boolean accurateCUDA,
 			final Image< FloatType > img,
 			final Img< net.imglib2.type.numeric.real.FloatType > imglib2img,
 			final float sigma, 
@@ -96,7 +104,15 @@ public class ProcessDOG
 		final double[] sigma2 = new double[]{ sigmaStepsDiffX[1], sigmaStepsDiffY[1], sigmaStepsDiffZ[1] };
 
 		// compute difference of gaussian
-		final DifferenceOfGaussianReal1<FloatType> dog = new DifferenceOfGaussianReal1<FloatType>( img, new OutOfBoundsStrategyMirrorFactory<FloatType>(), sigma1, sigma2, minInitialPeakValue, K_MIN1_INV );
+		
+		final DifferenceOfGaussianReal1<FloatType> dog;
+		
+		if ( deviceList == null )
+			dog = new DifferenceOfGaussianReal1<FloatType>( img, new OutOfBoundsStrategyMirrorFactory<FloatType>(), sigma1, sigma2, minInitialPeakValue, K_MIN1_INV );
+		else if ( accurateCUDA )
+			dog = new DifferenceOfGaussianCUDA( cuda, deviceList, img, imglib2img, new OutOfBoundsStrategyMirrorFactory<FloatType>(), sigma1, sigma2, minInitialPeakValue, K_MIN1_INV );
+		else
+			dog = new DifferenceOfGaussianCUDA( cuda, deviceList, img, imglib2img, sigma1, sigma2, minInitialPeakValue, K_MIN1_INV );
 		
 		// do quadratic fit??
 		if ( localization == 1 )
