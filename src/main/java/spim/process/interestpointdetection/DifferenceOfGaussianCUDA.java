@@ -11,12 +11,14 @@ import mpicbg.imglib.util.Util;
 import mpicbg.imglib.wrapper.ImgLib2;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Interval;
+import net.imglib2.RandomAccessible;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.basictypeaccess.array.FloatArray;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.multithreading.SimpleMultiThreading;
+import net.imglib2.view.Views;
 import spim.process.cuda.Block;
 import spim.process.cuda.BlockGenerator;
 import spim.process.cuda.BlockGeneratorVariableSizePrecise;
@@ -40,16 +42,16 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianReal1< FloatTy
 			final List< CUDADevice > devList,
 			final Image< FloatType > img1,
 			final Img< net.imglib2.type.numeric.real.FloatType > img2,
-			OutOfBoundsStrategyFactory<FloatType> outOfBoundsFactory,
+			final boolean accurate,
 			double[] sigma1, double[] sigma2, double minPeakValue,
 			double normalizationFactor)
 	{
-		super( img1, outOfBoundsFactory, sigma1, sigma2, minPeakValue, normalizationFactor );
+		super( img1, null, sigma1, sigma2, minPeakValue, normalizationFactor );
 
 		this.img2 = img2;
 		this.devList = devList;
 		this.cuda = cuda;
-		this.accurate = true;
+		this.accurate = accurate;
 
 		if ( devList.size() > 1 )
 		{
@@ -62,17 +64,6 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianReal1< FloatTy
 			this.setComputeConvolutionsParalell( false );
 			this.cudaDev1 = this.cudaDev2 = devList.get( 0 );
 		}
-	}
-
-	public DifferenceOfGaussianCUDA(
-			final CUDASeparableConvolution cuda,
-			final List< CUDADevice > devList,
-			final Image< FloatType > img1,
-			final Img< net.imglib2.type.numeric.real.FloatType > img2,
-			double[] sigma1, double[] sigma2, double minPeakValue,
-			double normalizationFactor)
-	{
-		this( cuda, devList, img1, img2, null, sigma1, sigma2, minPeakValue, normalizationFactor );
 	}
 
 	int countCUDA = 0;
@@ -155,13 +146,20 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianReal1< FloatTy
 			}
 			else
 			{
+				final RandomAccessible< net.imglib2.type.numeric.real.FloatType > input;
+				
+				if ( accurate )
+					input = Views.extendMirrorSingle( img );
+				else
+					input = img;
+				
 				for( final Block block : blocks )
 				{
 					long time = System.currentTimeMillis();
 					final ArrayImg< net.imglib2.type.numeric.real.FloatType, FloatArray > imgBlock = ArrayImgs.floats( block.getBlockSize() );
 
 					// copy the block
-					block.copyBlock( img, imgBlock );
+					block.copyBlock( input, imgBlock );
 					long copy = System.currentTimeMillis();
 					IOFunctions.println( "Copying block took " + ( copy - time ) + "ms" );
 

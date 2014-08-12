@@ -105,16 +105,14 @@ public class ProcessDOG
 		final double[] sigma2 = new double[]{ sigmaStepsDiffX[1], sigmaStepsDiffY[1], sigmaStepsDiffZ[1] };
 
 		// compute difference of gaussian
-		
+
 		final DifferenceOfGaussianReal1<FloatType> dog;
 		
 		if ( deviceList == null )
 			dog = new DifferenceOfGaussianReal1<FloatType>( img, new OutOfBoundsStrategyMirrorFactory<FloatType>(), sigma1, sigma2, minInitialPeakValue, K_MIN1_INV );
-		else if ( accurateCUDA )
-			dog = new DifferenceOfGaussianCUDA( cuda, deviceList, img, imglib2img, new OutOfBoundsStrategyMirrorFactory<FloatType>(), sigma1, sigma2, minInitialPeakValue, K_MIN1_INV );
 		else
-			dog = new DifferenceOfGaussianCUDA( cuda, deviceList, img, imglib2img, sigma1, sigma2, minInitialPeakValue, K_MIN1_INV );
-		
+			dog = new DifferenceOfGaussianCUDA( cuda, deviceList, img, imglib2img, accurateCUDA, sigma1, sigma2, minInitialPeakValue, K_MIN1_INV );
+
 		// do quadratic fit??
 		if ( localization == 1 )
 			dog.setKeepDoGImage( true );
@@ -123,7 +121,7 @@ public class ProcessDOG
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): computing difference-of-gausian (sigma=" + initialSigma + ", " +
 				"threshold=" + minPeakValue + ", sigma1=" + Util.printCoordinates( sigma1 ) + ", sigma2=" + Util.printCoordinates( sigma2 ) + ")" );
-		
+
 		dog.process();
 
 		ImageJFunctions.copyToImagePlus( dog.getDoGImage() ).show();
