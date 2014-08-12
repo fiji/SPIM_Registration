@@ -308,7 +308,6 @@ public class Block
 	private static final void paste3d( final int threadIdx, final int numThreads, final ArrayImg< FloatType, ? > target, final ArrayImg< FloatType, ? > block, 
 			final int[] effectiveOffset, final int[] effectiveSize, final int[] effectiveLocalOffset )
 	{
-		System.out.println( "paste3d" );
 		// min position in the output
 		final int minX = effectiveOffset[ 0 ];
 		final int minY = effectiveOffset[ 1 ];
