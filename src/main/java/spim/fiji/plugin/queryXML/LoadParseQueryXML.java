@@ -19,7 +19,7 @@ import spim.fiji.spimdata.XmlIoSpimData2;
 
 public class LoadParseQueryXML extends GenericLoadParseQueryXML< SpimData2, SequenceDescription, ViewSetup, ViewDescription, ImgLoader< ? > >
 {
-	static { GenericLoadParseQueryXML.defaultXMLfilename = "/Users/preibischs/Documents/Microscopy/SPIM/HisYFP-SPIM/dataset.xml"; }
+	static { GenericLoadParseQueryXML.defaultXMLfilename = "/media/preibisch/data/Microscopy/SPIM/HisYFP-SPIM/dataset.xml"; }
 	
 	public LoadParseQueryXML() { super( new XmlIoSpimData2() ); }
 

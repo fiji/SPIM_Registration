@@ -7,6 +7,7 @@ import java.util.List;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianReal1;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.spim.io.IOFunctions;
@@ -124,8 +125,8 @@ public class ProcessDOG
 				"threshold=" + minPeakValue + ", sigma1=" + Util.printCoordinates( sigma1 ) + ", sigma2=" + Util.printCoordinates( sigma2 ) + ")" );
 		
 		dog.process();
-		
-		//ImageJFunctions.copyToImagePlus( dog.getDoGImage() ).show();
+
+		ImageJFunctions.copyToImagePlus( dog.getDoGImage() ).show();
 		
 		final ArrayList< DifferenceOfGaussianPeak<FloatType> > peakListOld = dog.getPeaks();
 		final ArrayList< SimplePeak > peaks = new ArrayList< SimplePeak >();

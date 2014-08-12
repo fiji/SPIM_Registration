@@ -6,6 +6,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import mpicbg.imglib.util.Util;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.FinalInterval;
@@ -58,7 +59,7 @@ public class Block
 	final boolean isPrecise;
 
 	final Vector< ImagePortion > portions;
-	final int numThreads;
+	//final int numThreads;
 	final ExecutorService taskExecutor;
 
 	public Block(
@@ -75,7 +76,7 @@ public class Block
 		this.effectiveSize = effectiveSize.clone();
 		this.effectiveOffset = effectiveOffset.clone();
 		this.effectiveLocalOffset = effectiveLocalOffset.clone();
-		this.numThreads = Runtime.getRuntime().availableProcessors();
+		//this.numThreads = Runtime.getRuntime().availableProcessors();
 		this.isPrecise = isPrecise;
 
 		long n = blockSize[ 0 ];
@@ -122,7 +123,7 @@ public class Block
 				public Boolean call() throws Exception
 				{
 					if ( source.numDimensions() == 3 && ArrayImg.class.isInstance( block ) )
-						copy3dArray( threadIdx, numThreads, source, (ArrayImg< FloatType, ?>)block, offset );
+						copy3dArray( threadIdx, portions.size(), source, (ArrayImg< FloatType, ?>)block, offset );
 					else
 					{
 						final ImagePortion portion = portions.get( threadIdx );
@@ -163,7 +164,7 @@ public class Block
 				public Boolean call() throws Exception
 				{
 					if ( target.numDimensions() == 3 && ArrayImg.class.isInstance( target ) && ArrayImg.class.isInstance( block ) )
-						paste3d( threadIdx, numThreads, (ArrayImg< FloatType, ?>)target, (ArrayImg< FloatType, ?>)block, effectiveOffset, effectiveSize, effectiveLocalOffset );
+						paste3d( threadIdx, portions.size(), (ArrayImg< FloatType, ?>)target, (ArrayImg< FloatType, ?>)block, effectiveOffset, effectiveSize, effectiveLocalOffset );
 					else
 					{
 						final ImagePortion portion = portions.get( threadIdx );
@@ -240,10 +241,19 @@ public class Block
 		final FinalInterval interval = new FinalInterval( new long[] { offsetX, offsetY, offsetZ }, new long[] { offsetX + w - 1, offsetY + h - 1, offsetZ + d - 1 } );
 		final RandomAccess< FloatType > randomAccess = source.randomAccess( interval );
 
+		System.out.println( "Test" );
+		randomAccess.setPosition( new int[]{ -5, -5, -5 } );
+		System.out.println( randomAccess.get().get() );
+		
+		System.out.println( "Test2" );
+		
+		
 		final int[] tmp = new int[]{ offsetX, offsetY, 0 };
 
 		for ( int z = threadIdx; z < d; z += numThreads )
 		{
+			System.out.println( z );
+			
 			tmp[ 2 ] = z + offsetZ;
 			randomAccess.setPosition( tmp );
 

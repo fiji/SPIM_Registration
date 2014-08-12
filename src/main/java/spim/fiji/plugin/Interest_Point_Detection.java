@@ -40,7 +40,7 @@ import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 public class Interest_Point_Detection implements PlugIn
 {
 	public static ArrayList< InterestPointDetection > staticAlgorithms = new ArrayList< InterestPointDetection >();
-	public static int defaultAlgorithm = 0;
+	public static int defaultAlgorithm = 1;
 	public static boolean defaultDefineAnisotropy = false;
 	public static boolean defaultAdditionalSmoothing = false;
 	public static boolean defaultSetMinMax = false;

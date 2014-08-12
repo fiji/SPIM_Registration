@@ -15,6 +15,8 @@ import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.basictypeaccess.array.FloatArray;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.multithreading.SimpleMultiThreading;
 import spim.process.cuda.Block;
 import spim.process.cuda.BlockGenerator;
 import spim.process.cuda.BlockGeneratorVariableSizePrecise;
@@ -136,12 +138,18 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianReal1< FloatTy
 
 			if ( !accurate && blocks.length == 1 && ArrayImg.class.isInstance( img ) )
 			{
+				IOFunctions.println( "Conovlving image as one single block." );
+				long time = System.currentTimeMillis();
+
 				// copy the only directly into the result
 				blocks[ 0 ].copyBlock( img, result );
+				long copy = System.currentTimeMillis();
+				IOFunctions.println( "Copying data took " + ( copy - time ) + "ms" );
 
 				// convolve
 				final float[] resultF = ((FloatArray)((ArrayImg< net.imglib2.type.numeric.real.FloatType, ? > )result).update( null ) ).getCurrentStorageArray();
 				cudaconvolve.gauss( resultF, getImgSize( result ), sigma, OutOfBounds.EXTEND_BORDER_PIXELS, 0 );
+				IOFunctions.println( "Convolution took " + ( System.currentTimeMillis() - copy ) + "ms using device=" + cudaDevice.getDeviceName() + " (id=" + cudaDevice.getDeviceId() + ")" );
 
 				// no copy back required
 			}
@@ -149,17 +157,26 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianReal1< FloatTy
 			{
 				for( final Block block : blocks )
 				{
+					long time = System.currentTimeMillis();
 					final ArrayImg< net.imglib2.type.numeric.real.FloatType, FloatArray > imgBlock = ArrayImgs.floats( block.getBlockSize() );
 
 					// copy the block
 					block.copyBlock( img, imgBlock );
+					long copy = System.currentTimeMillis();
+					IOFunctions.println( "Copying block took " + ( copy - time ) + "ms" );
+
+					ImageJFunctions.show( imgBlock );
+					SimpleMultiThreading.threadHaltUnClean();
 
 					// convolve
 					final float[] imgBlockF = ((FloatArray)((ArrayImg< net.imglib2.type.numeric.real.FloatType, ? > )imgBlock).update( null ) ).getCurrentStorageArray();
 					cudaconvolve.gauss( imgBlockF, getImgSize( imgBlock ), sigma, OutOfBounds.EXTEND_BORDER_PIXELS, 0 );
+					long convolve = System.currentTimeMillis();
+					IOFunctions.println( "Convolution took " + ( convolve - copy ) + "ms using device=" + cudaDevice.getDeviceName() + " (id=" + cudaDevice.getDeviceId() + ")" );
 
 					// no copy back required
 					block.pasteBlock( result, imgBlock );
+					IOFunctions.println( "Pasting block took " + ( System.currentTimeMillis() - time ) + "ms" );
 				}
 			}
 
