@@ -308,13 +308,13 @@ public class Block
 	private static final void paste3d( final int threadIdx, final int numThreads, final ArrayImg< FloatType, ? > target, final ArrayImg< FloatType, ? > block, 
 			final int[] effectiveOffset, final int[] effectiveSize, final int[] effectiveLocalOffset )
 	{
+		System.out.println( "paste3d" );
 		// min position in the output
 		final int minX = effectiveOffset[ 0 ];
 		final int minY = effectiveOffset[ 1 ];
 		final int minZ = effectiveOffset[ 2 ];
 
 		// max+1 of the output area
-		final int maxX = effectiveSize[ 0 ] + minX;
 		final int maxY = effectiveSize[ 1 ] + minY;
 		final int maxZ = effectiveSize[ 2 ] + minZ;
 
@@ -345,16 +345,18 @@ public class Block
 			int iBlock = zBlock * hb * wb + minYb * wb + minXb;
 			
 			for ( int y = minY; y < maxY; ++y )
-			{			
-				for ( int x = minX; x < maxX; ++x )
-					targetArray[ iTarget++ ] = blockArray[ iBlock++ ];
+			{
+				copyX( blockArray, targetArray, sX, iTarget, iBlock );
 
-				iTarget -= sX;
 				iTarget += w;
-				
-				iBlock -= sX;
 				iBlock += wb;
 			}
 		}
+	}
+	
+	private static final void copyX( final float[] blockArray, final float[] targetArray, final int count, int iTarget, int iBlock )
+	{
+		for ( int x = 0; x < count; ++x )
+			targetArray[ iTarget++ ] = blockArray[ iBlock++ ];
 	}
 }

@@ -163,9 +163,6 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianReal1< FloatTy
 					long copy = System.currentTimeMillis();
 					IOFunctions.println( "Copying block took " + ( copy - time ) + "ms" );
 
-					ImageJFunctions.show( imgBlock );
-					SimpleMultiThreading.threadHaltUnClean();
-
 					// convolve
 					final float[] imgBlockF = ((FloatArray)((ArrayImg< net.imglib2.type.numeric.real.FloatType, ? > )imgBlock).update( null ) ).getCurrentStorageArray();
 					cudaconvolve.gauss( imgBlockF, getImgSize( imgBlock ), sigma, OutOfBounds.EXTEND_BORDER_PIXELS, 0 );
@@ -174,7 +171,7 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianReal1< FloatTy
 
 					// no copy back required
 					block.pasteBlock( result, imgBlock );
-					IOFunctions.println( "Pasting block took " + ( System.currentTimeMillis() - time ) + "ms" );
+					IOFunctions.println( "Pasting block took " + ( System.currentTimeMillis() - convolve ) + "ms" );
 				}
 			}
 
