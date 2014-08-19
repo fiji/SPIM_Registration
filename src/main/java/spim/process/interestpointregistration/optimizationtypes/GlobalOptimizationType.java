@@ -245,7 +245,8 @@ public abstract class GlobalOptimizationType
 	{
 		for ( final ViewId id : set.getViews() )
 			for ( final ChannelProcess c : channelsToProcess )
-				spimData.getViewInterestPoints().getViewInterestPointLists( id ).getInterestPointList( c.getLabel() ).saveCorrespondingInterestPoints();		
+				if ( spimData.getSequenceDescription().getViewDescription( id ).getViewSetup().getChannel().getId() == c.getChannel().getId() )
+					spimData.getViewInterestPoints().getViewInterestPointLists( id ).getInterestPointList( c.getLabel() ).saveCorrespondingInterestPoints();		
 	}
 	
 	/**
@@ -259,7 +260,8 @@ public abstract class GlobalOptimizationType
 	{
 		for ( final ViewId id : set.getViews() )
 			for ( final ChannelProcess c : channelsToProcess )
-				spimData.getViewInterestPoints().getViewInterestPointLists( id ).getInterestPointList( c.getLabel() ).getCorrespondingInterestPoints().clear();		
+				if ( spimData.getSequenceDescription().getViewDescription( id ).getViewSetup().getChannel().getId() == c.getChannel().getId() )
+					spimData.getViewInterestPoints().getViewInterestPointLists( id ).getInterestPointList( c.getLabel() ).getCorrespondingInterestPoints().clear();
 	}
 
 }
