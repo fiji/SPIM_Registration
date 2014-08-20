@@ -13,10 +13,7 @@ import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.registration.ViewTransform;
 import mpicbg.spim.data.registration.ViewTransformAffine;
-import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
-import mpicbg.spim.data.sequence.FinalVoxelDimensions;
-import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.MissingViews;
 import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
@@ -25,7 +22,6 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
-import net.imglib2.FinalDimensions;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
@@ -224,33 +220,9 @@ public class AppendSpimData2 implements ImgExport
 		for ( final ViewSetup vs : newViewSetups )
 			maxId = Math.max( maxId, vs.getId() );
 
-		// on top of that we have a lot of missing viewsetups (the combination of new angles/illumnations with old angles/illuminations)
-		final List< ViewSetup > nonExistentSetups = new ArrayList< ViewSetup >();
 		
 		for ( final Channel channel : spimData.getSequenceDescription().getAllChannelsOrdered() )
 		{
-			for ( final Angle oldAngle : XMLTIFFImgTitler.getAllAngles( viewSetups ) )
-				for ( final Illumination newIllum : XMLTIFFImgTitler.getAllIlluminations( newViewSetups ) )
-				{
-					final ViewSetup nonExistentViewSetup = new ViewSetup( ++maxId, null, new FinalDimensions( 0, 0, 0 ), new FinalVoxelDimensions( "um", 1, 1, 1 ), channel, oldAngle, newIllum );
-					
-					for ( final TimePoint t : spimData.getSequenceDescription().getTimePoints().getTimePointsOrdered() )
-						missingViews.add( new ViewId( t.getId(), nonExistentViewSetup.getId() ) );
-					
-					nonExistentSetups.add( nonExistentViewSetup );
-				}
-
-			for ( final Angle newAngle : XMLTIFFImgTitler.getAllAngles( newViewSetups ) )
-				for ( final Illumination oldIllum : XMLTIFFImgTitler.getAllIlluminations( viewSetups ) )
-				{
-					final ViewSetup nonExistentViewSetup = new ViewSetup( ++maxId, null, new FinalDimensions( 0, 0, 0 ), new FinalVoxelDimensions( "um", 1, 1, 1 ), channel, newAngle, oldIllum );
-					
-					for ( final TimePoint t : spimData.getSequenceDescription().getTimePoints().getTimePointsOrdered() )
-						missingViews.add( new ViewId( t.getId(), nonExistentViewSetup.getId() ) );
-					
-					nonExistentSetups.add( nonExistentViewSetup );
-				}
-
 			// all the timepoints that are not processed also contribute non-existing viewsetups
 			for ( final TimePoint t : spimData.getSequenceDescription().getTimePoints().getTimePointsOrdered() )
 			{
@@ -264,9 +236,6 @@ public class AppendSpimData2 implements ImgExport
 
 		// add all the newly fused viewsetups
 		viewSetups.addAll( newViewSetups );
-
-		// add all the nonexistent viewSetups
-		viewSetups.addAll( nonExistentSetups );
 
 		// instantiate the sequencedescription
 		final SequenceDescription sequenceDescription = new SequenceDescription( timepoints, viewSetups, spimData.getSequenceDescription().getImgLoader(), new MissingViews( missingViews ) );
