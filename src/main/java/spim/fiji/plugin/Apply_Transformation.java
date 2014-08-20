@@ -484,6 +484,11 @@ public class Apply_Transformation implements PlugIn
 									{
 										final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
 										
+										// this happens only if a viewsetup is not present in any timepoint
+										// (e.g. after appending fusion to a dataset)
+										if ( viewId == null )
+											continue;
+
 										final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
 												viewId.getTimePointId(), viewId.getViewSetupId() );
 
@@ -702,15 +707,12 @@ public class Apply_Transformation implements PlugIn
 					{
 						// bureaucracy
 						final ViewId viewId = SpimData2.getViewId( sequenceDescription, t, c, a, i );
-						
+
+						// this happens only if a viewsetup is not present in any timepoint
+						// (e.g. after appending fusion to a dataset)
 						if ( viewId == null )
-						{
-							IOFunctions.println( "An error occured. Could not find the corresponding ViewSetup for timepoint: " + t.getName() + " angle: " + 
-									a.getName() + " channel: " + c.getName() + " illum: " + i.getName() );
-						
-							return Double.NaN;
-						}
-						
+							continue;
+
 						final ViewDescription viewDescription = sequenceDescription.getViewDescription( 
 								viewId.getTimePointId(), viewId.getViewSetupId() );
 

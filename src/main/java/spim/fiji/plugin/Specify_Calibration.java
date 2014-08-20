@@ -46,6 +46,12 @@ public class Specify_Calibration implements PlugIn
 				for ( final Illumination i : result.getIlluminationsToProcess() )
 				{
 					final ViewId viewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c, a, i );
+
+					// this happens only if a viewsetup is not present in any timepoint
+					// (e.g. after appending fusion to a dataset)
+					if ( viewId == null )
+						continue;
+
 					final ViewDescription desc = result.getData().getSequenceDescription().getViewDescription( viewId ); 
 					final ViewSetup viewSetup = desc.getViewSetup();
 					final String name = "angle: " + a.getName() + " channel: " + c.getName() + " illum: " + i.getName() + 

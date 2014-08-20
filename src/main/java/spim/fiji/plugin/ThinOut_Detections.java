@@ -120,6 +120,12 @@ public class ThinOut_Detections implements PlugIn
 					for ( final Angle a : anglesToProcess )
 					{
 						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, channel.getChannel(), a, i );
+
+						// this happens only if a viewsetup is not present in any timepoint
+						// (e.g. after appending fusion to a dataset)
+						if ( viewId == null )
+							continue;
+
 						final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( viewId );
 						
 						if ( !vd.isPresent() )
@@ -297,6 +303,12 @@ public class ThinOut_Detections implements PlugIn
 				for ( final Angle a : anglesToProcess )
 				{
 					final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, channel.getChannel(), a, i );
+
+					// this happens only if a viewsetup is not present in any timepoint
+					// (e.g. after appending fusion to a dataset)
+					if ( viewId == null )
+						continue;
+					
 					final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( viewId );
 					
 					if ( !vd.isPresent() )

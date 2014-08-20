@@ -137,6 +137,11 @@ public class Visualize_Detections implements PlugIn
 					{
 						final ViewId viewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c.getChannel(), a, i );
 						
+						// this happens only if a viewsetup is not present in any timepoint
+						// (e.g. after appending fusion to a dataset)
+						if ( viewId == null )
+							continue;
+
 						// get the viewdescription
 						final ViewDescription viewDescription = result.getData().getSequenceDescription().getViewDescription( 
 								viewId.getTimePointId(), viewId.getViewSetupId() );

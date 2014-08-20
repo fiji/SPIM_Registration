@@ -84,12 +84,10 @@ public class Display_View implements PlugIn
 		final ViewId viewId = SpimData2.getViewId( result.getData().getSequenceDescription(), tp, channel, angle, illumination );
 		final String name = "angle: " + angle.getName() + " channel: " + channel.getName() + " illum: " + illumination.getName() + " timepoint: " + tp.getName();
 		
+		// this happens only if a viewsetup is not present in any timepoint
+		// (e.g. after appending fusion to a dataset)
 		if ( viewId == null )
-		{
-			IOFunctions.println( "An error occured. Count not find the corresponding ViewSetup for " + name );
-			
 			return;
-		}
 		
 		// get the viewdescription
 		final ViewDescription viewDescription = result.getData().getSequenceDescription().getViewDescription( 

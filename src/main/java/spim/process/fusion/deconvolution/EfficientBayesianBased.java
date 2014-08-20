@@ -991,6 +991,12 @@ public class EfficientBayesianBased extends Fusion
 					for ( final Angle a : anglesToProcess )
 					{
 						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
+
+						// this happens only if a viewsetup is not present in any timepoint
+						// (e.g. after appending fusion to a dataset)
+						if ( viewId == null )
+							continue;
+
 						final ViewDescription desc = spimData.getSequenceDescription().getViewDescription( viewId ); 
 						
 						if ( desc.isPresent() )
