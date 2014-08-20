@@ -1,7 +1,7 @@
 package spim.process.fusion.deconvolution;
 
-import net.imglib2.type.numeric.real.FloatType;
 import mpicbg.spim.data.sequence.Channel;
+import net.imglib2.type.numeric.real.FloatType;
 
 public class ChannelPSF
 {

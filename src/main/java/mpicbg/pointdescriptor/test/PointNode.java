@@ -1,7 +1,7 @@
 package mpicbg.pointdescriptor.test;
 
-import fiji.util.node.Leaf;
 import mpicbg.models.Point;
+import fiji.util.node.Leaf;
 
 public class PointNode extends Point implements Leaf<PointNode>
 {

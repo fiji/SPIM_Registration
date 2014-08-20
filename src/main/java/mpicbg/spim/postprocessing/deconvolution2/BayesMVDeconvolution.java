@@ -10,8 +10,6 @@ import java.util.Date;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import net.imglib2.util.Util;
-
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
@@ -22,6 +20,7 @@ import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.postprocessing.deconvolution2.LRFFT.PSFTYPE;
+import net.imglib2.util.Util;
 
 public class BayesMVDeconvolution implements Deconvolver
 {

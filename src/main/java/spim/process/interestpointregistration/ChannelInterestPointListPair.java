@@ -5,7 +5,6 @@ import java.util.List;
 
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
-
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 
 public class ChannelInterestPointListPair

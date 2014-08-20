@@ -3,7 +3,6 @@ package spim.process.interestpointdetection;
 import java.util.ArrayList;
 import java.util.Date;
 
-import net.imglib2.img.Img;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.integer.LongType;
 import mpicbg.imglib.type.numeric.real.FloatType;
@@ -12,6 +11,7 @@ import mpicbg.spim.segmentation.DOM;
 import mpicbg.spim.segmentation.IntegralImage3d;
 import mpicbg.spim.segmentation.InteractiveIntegral;
 import mpicbg.spim.segmentation.SimplePeak;
+import net.imglib2.img.Img;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.fusion.FusionHelper;
 

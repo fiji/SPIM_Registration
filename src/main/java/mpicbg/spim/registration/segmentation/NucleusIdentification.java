@@ -1,5 +1,7 @@
 package mpicbg.spim.registration.segmentation;
 
+import java.util.ArrayList;
+
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.detection.DetectionIdentification;

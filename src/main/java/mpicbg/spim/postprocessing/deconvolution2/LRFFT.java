@@ -3,10 +3,6 @@ package mpicbg.spim.postprocessing.deconvolution2;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import spim.process.cuda.CUDAFourierConvolution;
-import net.imglib2.exception.ImgLibException;
-import net.imglib2.img.Img;
-import net.imglib2.img.imageplus.ImagePlusImg;
 import mpicbg.imglib.algorithm.fft.FourierConvolution;
 import mpicbg.imglib.algorithm.mirror.MirrorImage;
 import mpicbg.imglib.container.ContainerFactory;
@@ -27,6 +23,10 @@ import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.wrapper.ImgLib1;
 import mpicbg.imglib.wrapper.ImgLib2;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.exception.ImgLibException;
+import net.imglib2.img.Img;
+import net.imglib2.img.imageplus.ImagePlusImg;
+import spim.process.cuda.CUDAFourierConvolution;
 
 public class LRFFT 
 {

@@ -1,12 +1,12 @@
 package spim.fiji.plugin;
 
-import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import ij.plugin.PlugIn;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.io.IOFunctions;
+import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 
 public class Test_Recording implements PlugIn
 {
