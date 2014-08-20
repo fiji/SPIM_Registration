@@ -148,20 +148,20 @@ public class ManualBoundingBox extends BoundingBox
 			IOFunctions.println( "Invalid coordinates, min cannot be larger than max" );
 			return false;
 		}
-		
+
 		if ( !fusion.parseAdditionalParameters( gd ) )
 			return false;
-		
+
 		if ( !imgExport.parseAdditionalParameters( gd, spimData ) )
 			return false;
-		
+
 		BoundingBox.defaultMin[ 0 ] = min[ 0 ];
 		BoundingBox.defaultMin[ 1 ] = min[ 1 ];
 		BoundingBox.defaultMin[ 2 ] = min[ 2 ];
 		BoundingBox.defaultMax[ 0 ] = max[ 0 ];
 		BoundingBox.defaultMax[ 1 ] = max[ 1 ];
 		BoundingBox.defaultMax[ 2 ] = max[ 2 ];
-		
+
 		return true;
 	}
 
@@ -275,6 +275,7 @@ public class ManualBoundingBox extends BoundingBox
 			max[ 2 ] = Long.parseLong( maxZ.getText() );
 
 			// update sliders if necessary
+			/*
 			if ( min[ 0 ] > max[ 0 ] )
 				if ( s == Source.MINX )
 					maxX.setText( "" + min[ 0 ] );
@@ -292,6 +293,7 @@ public class ManualBoundingBox extends BoundingBox
 					maxZ.setText( "" + min[ 2 ] );
 				else
 					minZ.setText( "" + max[ 2 ] );
+			*/
 
 			if ( supportsDownsampling )
 				downsampling = Integer.parseInt( downsample.getText() );
