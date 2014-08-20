@@ -242,7 +242,12 @@ public abstract class DifferenceOf extends InterestPointDetection
 		final Angle angle = angles.get( defaultAngleChoice = gd.getNextChoiceIndex() );
 		final Illumination illumination = illuminations.get( defaultIlluminationChoice = gd.getNextChoiceIndex() );
 		
-		return SpimData2.getViewId( spimData.getSequenceDescription(), tp, channel, angle, illumination );
+		final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), tp, channel, angle, illumination );
+		
+		if ( viewId == null )
+			IOFunctions.println( "This ViewSetup is not present." );
+		
+		return viewId;
 	}
 		
 	/**

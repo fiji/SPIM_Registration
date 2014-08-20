@@ -87,7 +87,10 @@ public class Display_View implements PlugIn
 		// this happens only if a viewsetup is not present in any timepoint
 		// (e.g. after appending fusion to a dataset)
 		if ( viewId == null )
+		{
+			IOFunctions.println( "This ViewSetup is not present for this timepoint: angle: " + name );
 			return;
+		}
 		
 		// get the viewdescription
 		final ViewDescription viewDescription = result.getData().getSequenceDescription().getViewDescription( 
@@ -95,7 +98,10 @@ public class Display_View implements PlugIn
 
 		// check if this viewid is present in the current timepoint
 		if ( !viewDescription.isPresent() )
+		{
 			IOFunctions.println( "This ViewSetup is not present for this timepoint: angle: " + name );
+			return;
+		}
 		
 		// display it
 		DisplayImage export = new DisplayImage( virtual );
