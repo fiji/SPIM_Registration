@@ -5,7 +5,7 @@ public class Calibration
 	final int w, h, d;
 	final double calX, calY, calZ;
 	
-	public Calibration( final int w, final int d, final int h, final double calX, final double calY, final double calZ )
+	public Calibration( final int w, final int h, final int d, final double calX, final double calY, final double calZ )
 	{
 		this.w = w;
 		this.h = h;
