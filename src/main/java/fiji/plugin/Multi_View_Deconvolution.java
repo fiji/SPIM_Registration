@@ -12,8 +12,6 @@ import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Date;
 
-import spim.fiji.plugin.GUIHelper;
-import spim.process.cuda.CUDAFourierConvolution;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.container.cell.CellContainerFactory;
 import mpicbg.imglib.image.Image;
@@ -33,6 +31,8 @@ import mpicbg.spim.postprocessing.deconvolution2.LRFFT.PSFTYPE;
 import mpicbg.spim.postprocessing.deconvolution2.LRInput;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
+import spim.fiji.plugin.GUIHelper;
+import spim.process.cuda.CUDAFourierConvolution;
 
 import com.sun.jna.Native;
 

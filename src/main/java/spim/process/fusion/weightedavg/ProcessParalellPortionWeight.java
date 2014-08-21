@@ -2,9 +2,6 @@ package spim.process.fusion.weightedavg;
 
 import java.util.ArrayList;
 
-import spim.fiji.plugin.fusion.BoundingBox;
-import spim.process.fusion.FusionHelper;
-import spim.process.fusion.ImagePortion;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
@@ -16,6 +13,9 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
+import spim.fiji.plugin.fusion.BoundingBox;
+import spim.process.fusion.FusionHelper;
+import spim.process.fusion.ImagePortion;
 
 /**
  * Fuse one portion of a paralell fusion, supports one weight function

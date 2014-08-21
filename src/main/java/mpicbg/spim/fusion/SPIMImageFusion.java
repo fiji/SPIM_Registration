@@ -2,9 +2,9 @@ package mpicbg.spim.fusion;
 
 import ij.ImagePlus;
 
-import javax.vecmath.Point3f;
-
 import java.util.ArrayList;
+
+import javax.vecmath.Point3f;
 
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;

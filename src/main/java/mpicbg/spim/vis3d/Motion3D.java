@@ -1,5 +1,9 @@
 package mpicbg.spim.vis3d;
 
+import ij.ImagePlus;
+import ij3d.Content;
+import ij3d.Image3DUniverse;
+
 import java.awt.AWTException;
 import java.awt.Dimension;
 import java.awt.Rectangle;
@@ -32,10 +36,6 @@ import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.ProgramConfiguration;
 
 import com.sun.j3d.utils.geometry.Sphere;
-
-import ij.ImagePlus;
-import ij3d.Content;
-import ij3d.Image3DUniverse;
 
 public class Motion3D
 {

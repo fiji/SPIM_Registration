@@ -1,9 +1,10 @@
 package spim.process.fusion.export;
 
-import java.util.List;
-
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
+
+import java.util.List;
+
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewSetup;
 import net.imglib2.RandomAccessibleInterval;

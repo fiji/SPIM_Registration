@@ -13,6 +13,13 @@ package mpicbg.spim.io;
  * @version 1.0
  */
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Date;
+
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.container.cell.CellContainerFactory;
 import mpicbg.imglib.interpolation.linear.LinearInterpolatorFactory;
@@ -22,13 +29,6 @@ import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.spim.registration.ViewStructure;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.lang.reflect.Field;
 
 public class ConfigurationParserSPIM
 {

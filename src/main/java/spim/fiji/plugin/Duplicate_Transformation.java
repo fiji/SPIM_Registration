@@ -333,6 +333,11 @@ public class Duplicate_Transformation implements PlugIn
 								final ViewId sourceViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), source, c, a, i );
 								final ViewId targetViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), targets.get( j ), c, a, i );
 								
+								// this happens only if a viewsetup is not present in any timepoint
+								// (e.g. after appending fusion to a dataset)
+								if ( sourceViewId == null || targetViewId == null )
+									continue;
+
 								duplicateTransformations( transformations, sourceViewId, targetViewId, result.getData() );
 							}
 				}
@@ -435,6 +440,11 @@ public class Duplicate_Transformation implements PlugIn
 								final ViewId sourceViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, source, a, i );
 								final ViewId targetViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, targets.get( j ), a, i );
 								
+								// this happens only if a viewsetup is not present in any timepoint
+								// (e.g. after appending fusion to a dataset)
+								if ( sourceViewId == null || targetViewId == null )
+									continue;
+
 								duplicateTransformations( transformations, sourceViewId, targetViewId, result.getData() );
 							}
 				}
@@ -537,6 +547,11 @@ public class Duplicate_Transformation implements PlugIn
 								final ViewId sourceViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c, a, source );
 								final ViewId targetViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c, a, targets.get( j ) );
 								
+								// this happens only if a viewsetup is not present in any timepoint
+								// (e.g. after appending fusion to a dataset)
+								if ( sourceViewId == null || targetViewId == null )
+									continue;
+
 								duplicateTransformations( transformations, sourceViewId, targetViewId, result.getData() );
 							}
 				}
@@ -639,6 +654,11 @@ public class Duplicate_Transformation implements PlugIn
 								final ViewId sourceViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c, source, i );
 								final ViewId targetViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c, targets.get( j ), i );
 								
+								// this happens only if a viewsetup is not present in any timepoint
+								// (e.g. after appending fusion to a dataset)
+								if ( sourceViewId == null || targetViewId == null )
+									continue;
+
 								duplicateTransformations( transformations, sourceViewId, targetViewId, result.getData() );
 							}
 				}

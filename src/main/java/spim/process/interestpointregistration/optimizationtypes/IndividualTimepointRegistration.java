@@ -5,15 +5,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import spim.fiji.spimdata.SpimData2;
-import spim.process.interestpointregistration.ChannelInterestPointList;
-import spim.process.interestpointregistration.ChannelInterestPointListPair;
-import spim.process.interestpointregistration.ChannelProcess;
 import mpicbg.models.AbstractModel;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
+import spim.fiji.spimdata.SpimData2;
+import spim.process.interestpointregistration.ChannelInterestPointList;
+import spim.process.interestpointregistration.ChannelInterestPointListPair;
+import spim.process.interestpointregistration.ChannelProcess;
 
 /**
  * A registration type where each timepoint is registered individually

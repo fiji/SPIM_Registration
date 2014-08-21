@@ -2,12 +2,11 @@ package spim.process.interestpointregistration.geometrichashing3d;
 
 import java.util.ArrayList;
 
-import spim.process.interestpointregistration.Detection;
-
 import mpicbg.models.Point;
 import mpicbg.pointdescriptor.LocalCoordinateSystemPointDescriptor;
 import mpicbg.pointdescriptor.exception.NoSuitablePointsException;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
+import spim.process.interestpointregistration.Detection;
 import fiji.util.KDTree;
 import fiji.util.NNearestNeighborSearch;
 import fiji.util.node.Leaf;

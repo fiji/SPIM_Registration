@@ -62,12 +62,10 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 					// bureaucracy
 					final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), referenceTimepoint, c.getChannel(), a, i );
 					
+					// this happens only if a viewsetup is not present in any timepoint
+					// (e.g. after appending fusion to a dataset)
 					if ( viewId == null )
-					{
-						throw new RuntimeException( "An error occured. Could not find the corresponding ViewSetup for reference timepoint: " + 
-								referenceTimepoint.getId() + " angle: " + 
-								a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
-					}
+						continue;
 
 					final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
 							viewId.getTimePointId(), viewId.getViewSetupId() );

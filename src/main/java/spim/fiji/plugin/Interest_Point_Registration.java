@@ -443,14 +443,10 @@ public class Interest_Point_Registration implements PlugIn
 				{
 					final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, channel, a, i );
 					
-					// could the viewid be resolved? this should always work
+					// this happens only if a viewsetup is not present in any timepoint
+					// (e.g. after appending fusion to a dataset)
 					if ( viewId == null )
-					{
-						IOFunctions.println( "An error occured. Count not find the corresponding ViewSetup for angle: " + 
-							a.getName() + " channel: " + channel.getName() + " illum: " + i.getName() );
-						
-						return null;
-					}
+						continue;
 					
 					// get the viewdescription
 					final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 

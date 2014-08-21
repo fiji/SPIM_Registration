@@ -230,6 +230,9 @@ public abstract class DifferenceOf extends InterestPointDetection
 		gd.addChoice( "Angle", angleNames, angleNames[ defaultAngleChoice ] );
 		gd.addChoice( "Illumination", illuminationNames, illuminationNames[ defaultIlluminationChoice ] );
 
+		gd.addMessage( "" );
+		gd.addMessage( "Note: Be sure that the view that you select is present at this timepoint!" );
+		
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
@@ -240,9 +243,9 @@ public abstract class DifferenceOf extends InterestPointDetection
 		final Illumination illumination = illuminations.get( defaultIlluminationChoice = gd.getNextChoiceIndex() );
 		
 		final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), tp, channel, angle, illumination );
-
+		
 		if ( viewId == null )
-			IOFunctions.println( "An error occured. Count not find the corresponding ViewSetup for angle: " + angle.getName() + " channel: " + channel.getName() + " illum: " + illumination.getName() + " timepoint: " + tp.getName() );
+			IOFunctions.println( "This ViewSetup is not present." );
 		
 		return viewId;
 	}

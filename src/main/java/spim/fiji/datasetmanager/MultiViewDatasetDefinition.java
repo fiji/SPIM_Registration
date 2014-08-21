@@ -1,7 +1,7 @@
 package spim.fiji.datasetmanager;
 
-import spim.fiji.spimdata.SpimData2;
 import mpicbg.spim.data.SpimData;
+import spim.fiji.spimdata.SpimData2;
 
 public interface MultiViewDatasetDefinition
 {

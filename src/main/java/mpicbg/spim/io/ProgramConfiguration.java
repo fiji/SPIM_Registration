@@ -2,8 +2,6 @@ package mpicbg.spim.io;
 
 import java.util.ArrayList;
 
-import mpicbg.spim.io.ConfigurationParserException;
-
 /**
  * <p>
  * Title:

@@ -13,7 +13,6 @@ import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.registration.ViewTransform;
 import mpicbg.spim.data.registration.ViewTransformAffine;
-import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.MissingViews;
 import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
@@ -219,18 +218,14 @@ public class AppendSpimData2 implements ImgExport
 
 		for ( final ViewSetup vs : newViewSetups )
 			maxId = Math.max( maxId, vs.getId() );
-
 		
-		for ( final Channel channel : spimData.getSequenceDescription().getAllChannelsOrdered() )
+		// all the timepoints that are not processed are missing views
+		for ( final TimePoint t : spimData.getSequenceDescription().getTimePoints().getTimePointsOrdered() )
 		{
-			// all the timepoints that are not processed also contribute non-existing viewsetups
-			for ( final TimePoint t : spimData.getSequenceDescription().getTimePoints().getTimePointsOrdered() )
+			if ( !timepointsToProcess.contains( t ) )
 			{
-				if ( !timepointsToProcess.contains( t ) )
-				{
-					for ( final ViewSetup newSetup : newViewSetups )
-						missingViews.add( new ViewId( t.getId(), newSetup.getId() ) );
-				}
+				for ( final ViewSetup newSetup : newViewSetups )
+					missingViews.add( new ViewId( t.getId(), newSetup.getId() ) );
 			}
 		}
 

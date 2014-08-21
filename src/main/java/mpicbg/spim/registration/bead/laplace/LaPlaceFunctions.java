@@ -3,9 +3,6 @@ package mpicbg.spim.registration.bead.laplace;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import Jama.EigenvalueDecomposition;
-import Jama.Matrix;
-
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor3D;
@@ -15,6 +12,8 @@ import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.models.NoninvertibleModelException;
 import mpicbg.spim.io.IOFunctions;
+import Jama.EigenvalueDecomposition;
+import Jama.Matrix;
 
 final public class LaPlaceFunctions 
 {

@@ -1,7 +1,5 @@
 package mpicbg.pointdescriptor.test;
 
-import fiji.util.KDTree;
-import fiji.util.NNearestNeighborSearch;
 import ij3d.Content;
 import ij3d.Image3DUniverse;
 
@@ -33,6 +31,8 @@ import mpicbg.spim.vis3d.VisualizationFunctions;
 import mpicbg.spim.vis3d.VisualizeBeads;
 import mpicbg.util.TransformUtils;
 import customnode.CustomLineMesh;
+import fiji.util.KDTree;
+import fiji.util.NNearestNeighborSearch;
 
 public class TestPointDescriptor
 {
