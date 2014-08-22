@@ -23,6 +23,7 @@ import mpicbg.spim.segmentation.InteractiveDoG;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
+import spim.fiji.plugin.util.GenericDialogAppender;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.cuda.CUDADevice;
@@ -313,7 +314,7 @@ public class DifferenceOfGaussian extends DifferenceOf
 	}
 
 	@Override
-	protected boolean queryAddtionalParameters( final GenericDialog gd )
+	protected boolean queryAdditionalParameters( final GenericDialog gd )
 	{
 		final int computationTypeIndex = defaultComputationChoiceIndex = gd.getNextChoiceIndex();
 

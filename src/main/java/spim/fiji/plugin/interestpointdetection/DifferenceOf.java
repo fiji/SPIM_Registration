@@ -57,7 +57,7 @@ public abstract class DifferenceOf extends InterestPointDetection
 	}
 
 	protected abstract void addAddtionalParameters( final GenericDialog gd );
-	protected abstract boolean queryAddtionalParameters( final GenericDialog gd );
+	protected abstract boolean queryAdditionalParameters( final GenericDialog gd );
 	
 	@Override
 	public boolean queryParameters( final boolean defineAnisotropy, final boolean additionalSmoothing, final boolean setMinMax )
@@ -176,7 +176,7 @@ public abstract class DifferenceOf extends InterestPointDetection
 			imageSigmaX = imageSigmaY = imageSigmaZ = 0.5;
 		}
 
-		if ( !queryAddtionalParameters( gd ) )
+		if ( !queryAdditionalParameters( gd ) )
 			return false;
 		else
 			return true;

@@ -302,5 +302,5 @@ public class DifferenceOfMean extends DifferenceOf
 	protected void addAddtionalParameters( final GenericDialog gd ) {}
 
 	@Override
-	protected boolean queryAddtionalParameters( final GenericDialog gd ) { return true; }
+	protected boolean queryAdditionalParameters( final GenericDialog gd ) { return true; }
 }
