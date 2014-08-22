@@ -32,8 +32,10 @@ import spim.process.cuda.CUDATools;
 import spim.process.cuda.NativeLibraryTools;
 import spim.process.interestpointdetection.ProcessDOG;
 
-public class DifferenceOfGaussian extends DifferenceOf
+public class DifferenceOfGaussian extends DifferenceOf implements GenericDialogAppender
 {
+	public static double defaultUseGPUMem = 75;
+
 	public static double defaultS = 1.8;
 	public static double defaultT = 0.008;
 
@@ -49,6 +51,8 @@ public class DifferenceOfGaussian extends DifferenceOf
 	double[] threshold;
 	boolean[] findMin;
 	boolean[] findMax;
+
+	double percentGPUMem = defaultUseGPUMem;
 
 	/**
 	 * 0 ... n == CUDA device i
@@ -129,6 +133,7 @@ public class DifferenceOfGaussian extends DifferenceOf
 								cuda,
 								deviceList,
 								accurateCUDA,
+								percentGPUMem,
 								img,
 								(Img<net.imglib2.type.numeric.real.FloatType>)input,
 								(float)sigma[ c.getId() ],
@@ -364,6 +369,20 @@ public class DifferenceOfGaussian extends DifferenceOf
 			deviceList = null;
 		}
 
+		return true;
+	}
+
+	@Override
+	public void addQuery( final GenericDialog gd )
+	{
+		gd.addMessage( "" );
+		gd.addSlider( "Percent_of_GPU_Memory_to_use", 1, 100, defaultUseGPUMem );
+	}
+
+	@Override
+	public boolean parseDialog( final GenericDialog gd )
+	{
+		this.percentGPUMem = defaultUseGPUMem = gd.getNextNumber();
 		return true;
 	}
 }

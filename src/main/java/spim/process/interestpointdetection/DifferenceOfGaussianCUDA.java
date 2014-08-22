@@ -30,11 +30,13 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianNewPeakFinder
 	final List< CUDADevice > devList;
 	final CUDASeparableConvolution cuda;
 	final boolean accurate;
-
+	final double percentGPUMem;
+	
 	final CUDADevice cudaDev1, cudaDev2;
 
 	public DifferenceOfGaussianCUDA(
 			final CUDASeparableConvolution cuda,
+			final double percentGPUMem,
 			final List< CUDADevice > devList,
 			final Image< FloatType > img1,
 			final Img< net.imglib2.type.numeric.real.FloatType > img2,
@@ -45,6 +47,7 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianNewPeakFinder
 		super( img1, null, sigma1, sigma2, minPeakValue, normalizationFactor );
 
 		this.img2 = img2;
+		this.percentGPUMem = percentGPUMem;
 		this.devList = devList;
 		this.cuda = cuda;
 		this.accurate = accurate;
@@ -70,12 +73,12 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianNewPeakFinder
 		if ( countCUDA == 0 )
 		{
 			countCUDA = 1;
-			return new CUDAOutput( img2, cudaDev1, cuda, accurate, sigma );
+			return new CUDAOutput( img2, percentGPUMem, cudaDev1, cuda, accurate, sigma );
 		}
 		else
 		{
 			countCUDA = 0;
-			return new CUDAOutput( img2, cudaDev2, cuda, accurate, sigma );
+			return new CUDAOutput( img2, percentGPUMem, cudaDev2, cuda, accurate, sigma );
 		}
 	}
 
@@ -86,15 +89,18 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianNewPeakFinder
 		final CUDASeparableConvolutionFunctions cudaconvolve;
 		final boolean accurate;
 		final double[] sigma;
+		final double percentGPUMem;
 
 		public CUDAOutput(
 				final Img< net.imglib2.type.numeric.real.FloatType > img,
+				final double percentGPUMem,
 				final CUDADevice cudaDevice,
 				final CUDASeparableConvolution cuda,
 				final boolean accurate,
 				final double[] sigma )
 		{
 			this.img = img;
+			this.percentGPUMem = percentGPUMem;
 			this.result = img.factory().create( img, new net.imglib2.type.numeric.real.FloatType() );
 			this.cudaDevice = cudaDevice;
 			this.accurate = accurate;
@@ -110,7 +116,7 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianNewPeakFinder
 		public boolean process()
 		{
 			// do not operate at the edge, 80% of the memory is a good idea I think
-			final long memAvail = Math.round( cudaDevice.getFreeDeviceMemory() * 0.75 );
+			final long memAvail = Math.round( cudaDevice.getFreeDeviceMemory() * ( percentGPUMem / 100.0 ) );
 			final long imgBytes = numPixels() * 4 * 2; // float, two images on the card at once
 
 			final int[] numBlocksDim = computeNumBlocksDim( memAvail, imgBytes, img.numDimensions(), "CUDA-Device " + cudaDevice.getDeviceId() );

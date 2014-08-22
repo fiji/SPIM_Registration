@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
-import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianReal1;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
@@ -42,6 +40,7 @@ public class ProcessDOG
 			final CUDASeparableConvolution cuda,
 			final List< CUDADevice > deviceList,
 			final boolean accurateCUDA,
+			final double percentGPUMem,
 			final Image< FloatType > img,
 			final Img< net.imglib2.type.numeric.real.FloatType > imglib2img,
 			final float sigma, 
@@ -110,7 +109,7 @@ public class ProcessDOG
 		if ( deviceList == null )
 			dog = new DifferenceOfGaussianNewPeakFinder( img, new OutOfBoundsStrategyMirrorFactory<FloatType>(), sigma1, sigma2, minInitialPeakValue, K_MIN1_INV );
 		else
-			dog = new DifferenceOfGaussianCUDA( cuda, deviceList, img, imglib2img, accurateCUDA, sigma1, sigma2, minInitialPeakValue, K_MIN1_INV );
+			dog = new DifferenceOfGaussianCUDA( cuda, percentGPUMem, deviceList, img, imglib2img, accurateCUDA, sigma1, sigma2, minInitialPeakValue, K_MIN1_INV );
 
 		// do quadratic fit??
 		if ( localization == 1 )
