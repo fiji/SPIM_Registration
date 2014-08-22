@@ -108,7 +108,7 @@ public class CUDATools
 			final GenericDialog gdCUDA = new GenericDialog( "Choose CUDA/CPUs devices to use" );
 			
 			for ( int i = 0; i < deviceList.length; ++i )
-				gdCUDA.addCheckbox( "GPU " + (i+1) + " of " + deviceList.length  + ": " + deviceList[ i ], deviceChoice.get( i ) );
+				gdCUDA.addCheckbox( "GPU_" + (i+1) + " of " + deviceList.length  + ": " + deviceList[ i ], deviceChoice.get( i ) );
 
 			gdCUDA.showDialog();
 
@@ -145,7 +145,7 @@ public class CUDATools
 
 			final String desc[] = new String[ deviceList.length ];
 			for ( int i = 0; i < deviceList.length; ++i )
-				desc[ i ] = "GPU_" + (i+1) + " of " + deviceList.length  + ": " + deviceList[ i ];
+				desc[ i ] = "GPU " + (i+1) + " of " + deviceList.length  + ": " + deviceList[ i ];
 
 			gdCUDA.addChoice( "Device", desc, desc[ standardDevice ] );
 
