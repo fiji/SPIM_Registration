@@ -120,17 +120,12 @@ public class ProcessDOG
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): computing difference-of-gausian (sigma=" + initialSigma + ", " +
 				"threshold=" + minPeakValue + ", sigma1=" + Util.printCoordinates( sigma1 ) + ", sigma2=" + Util.printCoordinates( sigma2 ) + ")" );
 
-		try
-		{
+		if ( deviceList == null )
+			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Computing DoG image (CPU)." );
+		else
+			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Computing DoG image (GPU)." );
+		
 		dog.process();
-
-		//ImageJFunctions.copyToImagePlus( dog.getDoGImage() ).show();
-		}
-		catch (Exception e )
-		{
-			IOFunctions.println(e );
-			e.printStackTrace();
-		}
 		final ArrayList< SimplePeak > peaks = dog.getSimplePeaks();
 
 		/*

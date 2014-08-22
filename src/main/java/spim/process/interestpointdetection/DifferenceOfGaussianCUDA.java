@@ -157,23 +157,23 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianNewPeakFinder
 				
 				for( final Block block : blocks )
 				{
-					long time = System.currentTimeMillis();
+					//long time = System.currentTimeMillis();
 					final ArrayImg< net.imglib2.type.numeric.real.FloatType, FloatArray > imgBlock = ArrayImgs.floats( block.getBlockSize() );
 
 					// copy the block
 					block.copyBlock( input, imgBlock );
-					long copy = System.currentTimeMillis();
-					IOFunctions.println( "Copying block took " + ( copy - time ) + "ms" );
+					//long copy = System.currentTimeMillis();
+					//IOFunctions.println( "Copying block took " + ( copy - time ) + "ms" );
 
 					// convolve
 					final float[] imgBlockF = ((FloatArray)((ArrayImg< net.imglib2.type.numeric.real.FloatType, ? > )imgBlock).update( null ) ).getCurrentStorageArray();
 					cudaconvolve.gauss( imgBlockF, getImgSize( imgBlock ), sigma, OutOfBounds.EXTEND_BORDER_PIXELS, 0 );
-					long convolve = System.currentTimeMillis();
-					IOFunctions.println( "Convolution took " + ( convolve - copy ) + "ms using device=" + cudaDevice.getDeviceName() + " (id=" + cudaDevice.getDeviceId() + ")" );
+					//long convolve = System.currentTimeMillis();
+					//IOFunctions.println( "Convolution took " + ( convolve - copy ) + "ms using device=" + cudaDevice.getDeviceName() + " (id=" + cudaDevice.getDeviceId() + ")" );
 
 					// no copy back required
-					block.pasteBlock( result, imgBlock );
-					IOFunctions.println( "Pasting block took " + ( System.currentTimeMillis() - convolve ) + "ms" );
+					//block.pasteBlock( result, imgBlock );
+					//IOFunctions.println( "Pasting block took " + ( System.currentTimeMillis() - convolve ) + "ms" );
 				}
 			}
 

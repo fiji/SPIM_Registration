@@ -1,6 +1,7 @@
 package spim.process.interestpointdetection;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianReal1;
@@ -29,7 +30,7 @@ public class DifferenceOfGaussianNewPeakFinder extends DifferenceOfGaussianReal1
 	@Override
 	public ArrayList<DifferenceOfGaussianPeak< FloatType>> findPeaks( final Image< FloatType > laPlace )
 	{
-		IOFunctions.println( "using new peak finder." );
+		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Detecting peaks." );
 		peaks = InteractiveIntegral.findPeaks( laPlace, (float)min );
 
 		return new ArrayList<DifferenceOfGaussianPeak< FloatType>>();

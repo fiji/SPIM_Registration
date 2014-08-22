@@ -346,7 +346,8 @@ public class DifferenceOfGaussian extends DifferenceOf implements GenericDialogA
 				deviceList = new ArrayList< CUDADevice >();
 			}
 
-			final ArrayList< CUDADevice > selectedDevices = CUDATools.queryCUDADetails( cuda, true, this );
+			// multiple CUDA devices sometimes crashes, no idea why yet ...
+			final ArrayList< CUDADevice > selectedDevices = CUDATools.queryCUDADetails( cuda, false, this );
 
 			if ( selectedDevices == null || selectedDevices.size() == 0 )
 				return false;
