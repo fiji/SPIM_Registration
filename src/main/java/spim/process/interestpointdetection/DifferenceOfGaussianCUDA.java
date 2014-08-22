@@ -172,7 +172,7 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianNewPeakFinder
 					//IOFunctions.println( "Convolution took " + ( convolve - copy ) + "ms using device=" + cudaDevice.getDeviceName() + " (id=" + cudaDevice.getDeviceId() + ")" );
 
 					// no copy back required
-					//block.pasteBlock( result, imgBlock );
+					block.pasteBlock( result, imgBlock );
 					//IOFunctions.println( "Pasting block took " + ( System.currentTimeMillis() - convolve ) + "ms" );
 				}
 			}
@@ -233,7 +233,7 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianNewPeakFinder
 			{
 				String out =
 						start + ", mem=" + memAvail / (1024*1024) + 
-						"MB (" + Math.round( percentGPUMem * 100 ) + "%), required mem=" + memReq / (1024*1024) + "MB, need to split up into " + numBlocks + " blocks: ";
+						"MB (" + Math.round( percentGPUMem / 100 ) + "%), required mem=" + memReq / (1024*1024) + "MB, need to split up into " + numBlocks + " blocks: ";
 	
 				for ( int d = 0; d < numBlocksDim.length; ++d )
 				{
