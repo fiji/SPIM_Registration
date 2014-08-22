@@ -119,7 +119,7 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianNewPeakFinder
 			final long memAvail = Math.round( cudaDevice.getFreeDeviceMemory() * ( percentGPUMem / 100.0 ) );
 			final long imgBytes = numPixels() * 4 * 2; // float, two images on the card at once
 
-			final int[] numBlocksDim = computeNumBlocksDim( memAvail, imgBytes, img.numDimensions(), "CUDA-Device " + cudaDevice.getDeviceId() );
+			final int[] numBlocksDim = computeNumBlocksDim( memAvail, imgBytes, percentGPUMem, img.numDimensions(), "CUDA-Device " + cudaDevice.getDeviceId() );
 			final BlockGenerator< Block > generator;
 
 			if ( accurate )
@@ -203,7 +203,7 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianNewPeakFinder
 			return dim;
 		}
 
-		public static int[] computeNumBlocksDim( final long memAvail, final long memReq, final int n, final String start )
+		public static int[] computeNumBlocksDim( final long memAvail, final long memReq, final double percentGPUMem, final int n, final String start )
 		{
 			final int numBlocks = (int)( memReq / memAvail + Math.min( 1, memReq % memAvail ) );
 			final double blocksPerDim = Math.pow( numBlocks, 1 / n );
@@ -233,7 +233,7 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianNewPeakFinder
 			{
 				String out =
 						start + ", mem=" + memAvail / (1024*1024) + 
-						"MB (80%), required mem=" + memReq / (1024*1024) + "MB, need to split up into " + numBlocks + " blocks: ";
+						"MB (" + Math.round( percentGPUMem * 100 ) + "%), required mem=" + memReq / (1024*1024) + "MB, need to split up into " + numBlocks + " blocks: ";
 	
 				for ( int d = 0; d < numBlocksDim.length; ++d )
 				{
@@ -302,6 +302,6 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianNewPeakFinder
 	public static void main( String[] args )
 	{
 		for ( int i = 1; i < 20; ++i )
-		CUDAOutput.computeNumBlocksDim( 1024l * 1024l*1024l, i * 1000l * 1024l*1024l, 3, "" );
+		CUDAOutput.computeNumBlocksDim( 1024l * 1024l*1024l, i * 1000l * 1024l*1024l, 80, 3, "" );
 	}
 }
