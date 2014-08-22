@@ -567,16 +567,16 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		gd.addStringField( "Image_File_Pattern", defaultFileNamePattern, 40 );
 
 		if ( hasMultipleTimePoints > 0 )
-			gd.addStringField( "Timepoints", defaultTimepoints, 15 );
+			gd.addStringField( "Timepoints_", defaultTimepoints, 15 );
 		
 		if ( hasMultipleChannels > 0 )
-			gd.addStringField( "Channels", defaultChannels, 15 );
+			gd.addStringField( "Channels_", defaultChannels, 15 );
 
 		if ( hasMultipleIlluminations > 0 )
-			gd.addStringField( "Illumination_directions", defaultIlluminations, 15 );
+			gd.addStringField( "Illumination_directions_", defaultIlluminations, 15 );
 		
 		if ( hasMultipleAngles > 0 )
-			gd.addStringField( "Acquisition_angles", defaultAngles, 15 );
+			gd.addStringField( "Acquisition_angles_", defaultAngles, 15 );
 		
 		gd.addChoice( "Calibration", calibrationChoice, calibrationChoice[ defaultCalibration ] );
 		
@@ -897,17 +897,13 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		gd.addMessage( "File reader: " + getTitle(), new Font( Font.SANS_SERIF, Font.BOLD, 14 ) );
 
 		gd.addMessage( "" );		
-		
-		if ( supportsMultipleTimepointsPerFile() )
-			gd.addMessage( "Supports multiple timepoints per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), green );
-		else
-			gd.addMessage( "NO support for multiple timepoints per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), red );
 
 		if ( supportsMultipleTimepointsPerFile() )
 		{
 			if ( getDefaultMultipleTimepoints() >= dimensionChoiceTimePointsTrue.length )
 				setDefaultMultipleTimepoints( 0 );
 
+			gd.addMessage( "Supports multiple timepoints per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), green );
 			gd.addChoice( "Multiple_timepoints", dimensionChoiceTimePointsTrue, dimensionChoiceTimePointsTrue[ getDefaultMultipleTimepoints() ] );
 		}
 		else
@@ -915,50 +911,67 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			if ( getDefaultMultipleTimepoints() >= dimensionChoiceTimePointsFalse.length )
 				setDefaultMultipleTimepoints( 0 );
 
+			gd.addMessage( "NO support for multiple timepoints per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), red );
 			gd.addChoice( "Multiple_timepoints", dimensionChoiceTimePointsFalse, dimensionChoiceTimePointsFalse[ getDefaultMultipleTimepoints() ] );
 		}
 
 		gd.addMessage( "" );
 
 		if ( supportsMultipleChannelsPerFile() )
+		{
+			if ( getDefaultMultipleChannels() >= dimensionChoiceChannelsTrue.length )
+				setDefaultMultipleChannels( 0 );
+
 			gd.addMessage( "Supports multiple channels per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), green );
-		else
-			gd.addMessage( "NO support for multiple channels per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), red );
-
-		if ( supportsMultipleChannelsPerFile() )
 			gd.addChoice( "Multiple_channels", dimensionChoiceChannelsTrue, dimensionChoiceChannelsTrue[ getDefaultMultipleChannels() ] );
+		}
 		else
+		{
+			if ( getDefaultMultipleChannels() >= dimensionChoiceChannelsFalse.length )
+				setDefaultMultipleChannels( 0 );
+
+			gd.addMessage( "NO support for multiple channels per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), red );
 			gd.addChoice( "Multiple_channels", dimensionChoiceChannelsFalse, dimensionChoiceChannelsFalse[ getDefaultMultipleChannels() ] );
+		}
 
 		gd.addMessage( "" );
 
 		if ( supportsMultipleIlluminationsPerFile() )
+		{
+			if ( getDefaultMultipleIlluminations() >= dimensionChoiceIlluminationsTrue.length )
+				setDefaultMultipleIlluminations( 0 );
+
 			gd.addMessage( "Supports multiple illumination directions per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), green );
-		else
-			gd.addMessage( "NO support for multiple illumination directions per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), red );
-
-		if ( supportsMultipleIlluminationsPerFile() )
 			gd.addChoice( "_____Multiple_illumination_directions", dimensionChoiceIlluminationsTrue, dimensionChoiceIlluminationsTrue[ getDefaultMultipleIlluminations() ] );
+		}
 		else
+		{
+			if ( getDefaultMultipleIlluminations() >= dimensionChoiceIlluminationsFalse.length )
+				setDefaultMultipleIlluminations( 0 );
+
+			gd.addMessage( "NO support for multiple illumination directions per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), red );
 			gd.addChoice( "_____Multiple_illumination_directions", dimensionChoiceIlluminationsFalse, dimensionChoiceIlluminationsFalse[ getDefaultMultipleIlluminations() ] );
+		}
 
 		gd.addMessage( "" );
-		
-		if ( supportsMultipleAnglesPerFile() )
-			gd.addMessage( "Supports multiple angles per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), green );
-		else
-			gd.addMessage( "NO support for multiple angles per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), red );
 
 		if ( supportsMultipleAnglesPerFile() )
+		{
+			if ( getDefaultMultipleAngles() >= dimensionChoiceAnglesTrue.length )
+				setDefaultMultipleAngles( 0 );
+
+			gd.addMessage( "Supports multiple angles per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), green );
 			gd.addChoice( "Multiple_angles", dimensionChoiceAnglesTrue, dimensionChoiceAnglesTrue[ getDefaultMultipleAngles() ] );
+		}
 		else
+		{
+			if ( getDefaultMultipleAngles() >= dimensionChoiceAnglesFalse.length )
+				setDefaultMultipleAngles( 0 );
+
+			gd.addMessage( "NO support for multiple angles per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), red );
 			gd.addChoice( "Multiple_angles", dimensionChoiceAnglesFalse, dimensionChoiceAnglesFalse[ getDefaultMultipleAngles() ] );
-		/*
-		gd.addCheckbox( "Dataset_with_multiple_timepoints", defaultHasMultipleTimePoints );
-		gd.addCheckbox( "Dataset_with_multiple_channels", defaultHasMultipleChannels );
-		gd.addCheckbox( "Dataset_with_multiple_illumination_directions", defaultHasMultipleIlluminations );
-		gd.addCheckbox( "Dataset_with_multiple_angles", defaultHasMultipleAngles );
-		*/
+		}
+
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
@@ -973,13 +986,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		setDefaultMultipleChannels( hasMultipleChannels );
 		setDefaultMultipleIlluminations( hasMultipleIlluminations );
 		setDefaultMultipleAngles( hasMultipleAngles );
-		
-		/*
-		hasMultipleTimePoints = defaultHasMultipleTimePoints = gd.getNextBoolean();
-		hasMultipleChannels = defaultHasMultipleChannels = gd.getNextBoolean();
-		hasMultipleIlluminations = defaultHasMultipleIlluminations = gd.getNextBoolean();
-		hasMultipleAngles = defaultHasMultipleAngles = gd.getNextBoolean();
-		*/
+
 		return true;
 	}	
 }

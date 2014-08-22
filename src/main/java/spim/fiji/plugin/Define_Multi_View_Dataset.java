@@ -71,7 +71,7 @@ public class Define_Multi_View_Dataset implements PlugIn
 		
 		gd1.addChoice( "Type_of_dataset: ", titles, titles[ defaultDatasetDef ] );
 		Choice choice = (Choice)gd1.getChoices().lastElement();
-		gd1.addStringField( "XML filename", defaultXMLName, 30 );
+		gd1.addStringField( "XML_filename", defaultXMLName, 30 );
 		
 		final MyMultiLineLabel label = MyMultiLineLabel.addMessage( gd1,
 				formatEntry( datasetDefinitions.get( defaultDatasetDef ).getExtendedDescription(), numCharacters, numLinesDocumentation ),
