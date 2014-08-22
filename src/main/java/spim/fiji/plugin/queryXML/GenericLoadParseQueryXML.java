@@ -28,7 +28,7 @@ import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.io.IOFunctions;
-import spim.fiji.plugin.GUIHelper;
+import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.NamePattern;
 import fiji.util.gui.GenericDialogPlus;
 

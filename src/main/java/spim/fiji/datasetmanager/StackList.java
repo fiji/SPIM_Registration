@@ -42,7 +42,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.Apply_Transformation;
-import spim.fiji.plugin.GUIHelper;
+import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.NamePattern;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.imgloaders.StackImgLoader;

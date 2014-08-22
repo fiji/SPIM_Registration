@@ -23,7 +23,7 @@ import mpicbg.spim.io.ConfigurationParserException;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.io.TextFileAccess;
-import spim.fiji.plugin.GUIHelper;
+import spim.fiji.plugin.util.GUIHelper;
 import spimopener.SPIMExperiment;
 
 public class Multi_View_Fusion implements PlugIn

@@ -33,7 +33,7 @@ import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.io.SPIMConfiguration.SegmentationTypes;
 import mpicbg.spim.segmentation.InteractiveDoG;
 import mpicbg.spim.segmentation.InteractiveIntegral;
-import spim.fiji.plugin.GUIHelper;
+import spim.fiji.plugin.util.GUIHelper;
 import spimopener.SPIMExperiment;
 
 public class Bead_Registration implements PlugIn 

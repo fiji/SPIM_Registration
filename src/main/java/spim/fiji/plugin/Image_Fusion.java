@@ -13,6 +13,7 @@ import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
+import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import spim.process.fusion.boundingbox.AutomaticBoundingBox;

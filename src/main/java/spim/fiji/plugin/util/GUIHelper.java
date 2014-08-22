@@ -1,4 +1,4 @@
-package spim.fiji.plugin;
+package spim.fiji.plugin.util;
 
 import ij.IJ;
 import ij.gui.GenericDialog;

@@ -21,6 +21,7 @@ import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.util.Util;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
+import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
 import spim.fiji.spimdata.XmlIoSpimData2;

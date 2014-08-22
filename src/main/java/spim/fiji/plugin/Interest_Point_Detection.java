@@ -21,6 +21,7 @@ import spim.fiji.plugin.interestpointdetection.DifferenceOfGaussian;
 import spim.fiji.plugin.interestpointdetection.DifferenceOfMean;
 import spim.fiji.plugin.interestpointdetection.InterestPointDetection;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
+import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;

@@ -31,7 +31,7 @@ import mpicbg.spim.postprocessing.deconvolution2.LRFFT.PSFTYPE;
 import mpicbg.spim.postprocessing.deconvolution2.LRInput;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
-import spim.fiji.plugin.GUIHelper;
+import spim.fiji.plugin.util.GUIHelper;
 import spim.process.cuda.CUDAFourierConvolution;
 
 import com.sun.jna.Native;

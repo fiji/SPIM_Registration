@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import mpicbg.models.AffineModel3D;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
-import spim.fiji.plugin.GUIHelper;
+import spim.fiji.plugin.util.GUIHelper;
 
 public class Apply_External_Transformation implements PlugIn 
 {

@@ -26,6 +26,7 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.view.Views;
 import spim.fiji.ImgLib2Temp;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
+import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;

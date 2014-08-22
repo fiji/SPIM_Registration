@@ -7,7 +7,7 @@ import java.io.FilenameFilter;
 import java.util.ArrayList;
 
 import mpicbg.spim.io.IOFunctions;
-import spim.fiji.plugin.GUIHelper;
+import spim.fiji.plugin.util.GUIHelper;
 
 import com.sun.jna.Library;
 import com.sun.jna.Native;

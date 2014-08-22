@@ -15,7 +15,7 @@ import net.imglib2.algorithm.gauss3.Gauss3;
 import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
-import spim.fiji.plugin.GUIHelper;
+import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 
 public abstract class DifferenceOf extends InterestPointDetection
