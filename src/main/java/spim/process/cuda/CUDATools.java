@@ -5,6 +5,7 @@ import ij.gui.GenericDialog;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import spim.fiji.plugin.util.GenericDialogAppender;
 import mpicbg.spim.io.IOFunctions;
 
 public class CUDATools
@@ -21,6 +22,17 @@ public class CUDATools
 	 * @return - a list of CUDA device Id's to be used
 	 */
 	public static ArrayList< CUDADevice > queryCUDADetails( final CUDAStandardFunctions cuda, final boolean askForMultipleDevices )
+	{
+		return queryCUDADetails( cuda, askForMultipleDevices, null );
+	}
+	
+	/**
+	 * @param cuda
+	 * @param askForMultipleDevices
+	 * @param additionalQueries
+	 * @return - a list of CUDA device Id's to be used
+	 */
+	public static ArrayList< CUDADevice > queryCUDADetails( final CUDAStandardFunctions cuda, final boolean askForMultipleDevices, final GenericDialogAppender additionalQueries )
 	{
 		final int numDevices = cuda.getNumDevicesCUDA();
 
@@ -110,6 +122,9 @@ public class CUDATools
 			for ( int i = 0; i < deviceList.length; ++i )
 				gdCUDA.addCheckbox( "GPU_" + (i+1) + " of " + deviceList.length  + ": " + deviceList[ i ], deviceChoice.get( i ) );
 
+			if ( additionalQueries != null )
+				additionalQueries.addQuery( gdCUDA );
+
 			gdCUDA.showDialog();
 
 			if ( gdCUDA.wasCanceled() )
@@ -128,6 +143,10 @@ public class CUDATools
 					deviceChoice.set( i , false );
 				}
 			}
+			
+			if ( additionalQueries != null )
+				if ( !additionalQueries.parseDialog( gdCUDA ) )
+					return null;
 
 			if ( selectedDevices.size() == 0 )
 			{
@@ -149,12 +168,19 @@ public class CUDATools
 
 			gdCUDA.addChoice( "Device", desc, desc[ standardDevice ] );
 
+			if ( additionalQueries != null )
+				additionalQueries.addQuery( gdCUDA );
+
 			gdCUDA.showDialog();
 
 			if ( gdCUDA.wasCanceled() )
 				return null;
 
 			selectedDevices.add( deviceList[ standardDevice = gdCUDA.getNextChoiceIndex() ] );
+
+			if ( additionalQueries != null )
+				if ( !additionalQueries.parseDialog( gdCUDA ) )
+					return null;
 		}
 
 		Collections.sort( selectedDevices );
