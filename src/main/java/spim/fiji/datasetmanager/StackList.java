@@ -904,9 +904,19 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			gd.addMessage( "NO support for multiple timepoints per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), red );
 
 		if ( supportsMultipleTimepointsPerFile() )
+		{
+			if ( getDefaultMultipleTimepoints() >= dimensionChoiceTimePointsTrue.length )
+				setDefaultMultipleTimepoints( 0 );
+
 			gd.addChoice( "Multiple_timepoints", dimensionChoiceTimePointsTrue, dimensionChoiceTimePointsTrue[ getDefaultMultipleTimepoints() ] );
+		}
 		else
-			gd.addChoice( "Multiple_timepoints", dimensionChoiceTimePointsFalse, dimensionChoiceTimePointsTrue[ getDefaultMultipleTimepoints() ] );
+		{
+			if ( getDefaultMultipleTimepoints() >= dimensionChoiceTimePointsFalse.length )
+				setDefaultMultipleTimepoints( 0 );
+
+			gd.addChoice( "Multiple_timepoints", dimensionChoiceTimePointsFalse, dimensionChoiceTimePointsFalse[ getDefaultMultipleTimepoints() ] );
+		}
 
 		gd.addMessage( "" );
 
@@ -918,7 +928,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		if ( supportsMultipleChannelsPerFile() )
 			gd.addChoice( "Multiple_channels", dimensionChoiceChannelsTrue, dimensionChoiceChannelsTrue[ getDefaultMultipleChannels() ] );
 		else
-			gd.addChoice( "Multiple_channels", dimensionChoiceChannelsFalse, dimensionChoiceChannelsTrue[ getDefaultMultipleChannels() ] );
+			gd.addChoice( "Multiple_channels", dimensionChoiceChannelsFalse, dimensionChoiceChannelsFalse[ getDefaultMultipleChannels() ] );
 
 		gd.addMessage( "" );
 
@@ -930,7 +940,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		if ( supportsMultipleIlluminationsPerFile() )
 			gd.addChoice( "_____Multiple_illumination_directions", dimensionChoiceIlluminationsTrue, dimensionChoiceIlluminationsTrue[ getDefaultMultipleIlluminations() ] );
 		else
-			gd.addChoice( "_____Multiple_illumination_directions", dimensionChoiceIlluminationsFalse, dimensionChoiceIlluminationsTrue[ getDefaultMultipleIlluminations() ] );
+			gd.addChoice( "_____Multiple_illumination_directions", dimensionChoiceIlluminationsFalse, dimensionChoiceIlluminationsFalse[ getDefaultMultipleIlluminations() ] );
 
 		gd.addMessage( "" );
 		
@@ -942,7 +952,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		if ( supportsMultipleAnglesPerFile() )
 			gd.addChoice( "Multiple_angles", dimensionChoiceAnglesTrue, dimensionChoiceAnglesTrue[ getDefaultMultipleAngles() ] );
 		else
-			gd.addChoice( "Multiple_angles", dimensionChoiceAnglesFalse, dimensionChoiceAnglesTrue[ getDefaultMultipleAngles() ] );
+			gd.addChoice( "Multiple_angles", dimensionChoiceAnglesFalse, dimensionChoiceAnglesFalse[ getDefaultMultipleAngles() ] );
 		/*
 		gd.addCheckbox( "Dataset_with_multiple_timepoints", defaultHasMultipleTimePoints );
 		gd.addCheckbox( "Dataset_with_multiple_channels", defaultHasMultipleChannels );
