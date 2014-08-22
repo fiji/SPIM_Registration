@@ -59,6 +59,17 @@ public class CUDATools
 			deviceName.trim();
 
 			final long mem = cuda.getMemDeviceCUDA( i );
+			long freeMem;
+			
+			try
+			{
+				freeMem = cuda.getFreeMemDeviceCUDA( i );
+			}
+			catch (UnsatisfiedLinkError e )
+			{
+				IOFunctions.println( "Using an outdated version of the CUDA libs, cannot query free memory. Assuming total memory." );
+				freeMem = mem;
+			}
 			final int majorVersion = cuda.getCUDAcomputeCapabilityMajorVersion( i );
 			final int minorVersion = cuda.getCUDAcomputeCapabilityMinorVersion( i );
 			final int compCap =  10 * majorVersion + minorVersion;
@@ -72,7 +83,7 @@ public class CUDATools
 			if ( mem > highestMemory )
 				highestMemory = mem;
 
-			deviceList[ i ] = new CUDADevice( i, deviceName, mem, majorVersion, minorVersion );
+			deviceList[ i ] = new CUDADevice( i, deviceName, mem, freeMem, majorVersion, minorVersion );
 		}
 		
 		// get the CPU specs

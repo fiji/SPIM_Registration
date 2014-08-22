@@ -110,7 +110,7 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianNewPeakFinder
 		public boolean process()
 		{
 			// do not operate at the edge, 80% of the memory is a good idea I think
-			final long memAvail = Math.round( cudaDevice.getDeviceMemory() * 0.8 );
+			final long memAvail = Math.round( cudaDevice.getFreeDeviceMemory() * 0.75 );
 			final long imgBytes = numPixels() * 4 * 2; // float, two images on the card at once
 
 			final int[] numBlocksDim = computeNumBlocksDim( memAvail, imgBytes, img.numDimensions(), "CUDA-Device " + cudaDevice.getDeviceId() );

@@ -352,7 +352,7 @@ public class DifferenceOfGaussian extends DifferenceOf
 			{
 				for ( int i = 0; i < deviceList.size(); ++i )
 				{
-					deviceList.set( i, new CUDADevice( -1-i, deviceList.get( i ).getDeviceName(), deviceList.get( i ).getDeviceMemory(), deviceList.get( i ).getMajorComputeVersion(), deviceList.get( i ).getMinorComputeVersion() ) );
+					deviceList.set( i, new CUDADevice( -1-i, deviceList.get( i ).getDeviceName(), deviceList.get( i ).getTotalDeviceMemory(), deviceList.get( i ).getFreeDeviceMemory(), deviceList.get( i ).getMajorComputeVersion(), deviceList.get( i ).getMinorComputeVersion() ) );
 					IOFunctions.println( "Running on cpu emulation, added " + ( -1-i ) + " as device" );
 				}
 			}

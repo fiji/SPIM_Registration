@@ -159,5 +159,6 @@ public class NativeLibraryTools
 		CUDAStandardFunctions c = loadNativeLibrary( CUDAStandardFunctions.class );
 		
 		IOFunctions.println( "devices: " + c.getNumDevicesCUDA() );
+		CUDATools.queryCUDADetails( c, true );
 	}
 }

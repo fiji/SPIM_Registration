@@ -940,7 +940,7 @@ public class EfficientBayesianBased extends Fusion
 		
 		if ( computationTypeIndex == 0 )
 		{
-			deviceList.add( new CUDADevice( -1, "CPU", Runtime.getRuntime().maxMemory(), 0, 0 ) );
+			deviceList.add( new CUDADevice( -1, "CPU", Runtime.getRuntime().maxMemory(), Runtime.getRuntime().freeMemory(), 0, 0 ) );
 			useCUDA = false;
 		}
 		else
