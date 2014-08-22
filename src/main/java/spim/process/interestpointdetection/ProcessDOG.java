@@ -105,10 +105,10 @@ public class ProcessDOG
 
 		// compute difference of gaussian
 
-		final DifferenceOfGaussianReal1<FloatType> dog;
+		final DifferenceOfGaussianNewPeakFinder dog;
 		
 		if ( deviceList == null )
-			dog = new DifferenceOfGaussianReal1<FloatType>( img, new OutOfBoundsStrategyMirrorFactory<FloatType>(), sigma1, sigma2, minInitialPeakValue, K_MIN1_INV );
+			dog = new DifferenceOfGaussianNewPeakFinder( img, new OutOfBoundsStrategyMirrorFactory<FloatType>(), sigma1, sigma2, minInitialPeakValue, K_MIN1_INV );
 		else
 			dog = new DifferenceOfGaussianCUDA( cuda, deviceList, img, imglib2img, accurateCUDA, sigma1, sigma2, minInitialPeakValue, K_MIN1_INV );
 
@@ -121,12 +121,22 @@ public class ProcessDOG
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): computing difference-of-gausian (sigma=" + initialSigma + ", " +
 				"threshold=" + minPeakValue + ", sigma1=" + Util.printCoordinates( sigma1 ) + ", sigma2=" + Util.printCoordinates( sigma2 ) + ")" );
 
+		try
+		{
 		dog.process();
 
 		//ImageJFunctions.copyToImagePlus( dog.getDoGImage() ).show();
-		
-		final ArrayList< DifferenceOfGaussianPeak<FloatType> > peakListOld = dog.getPeaks();
+		}
+		catch (Exception e )
+		{
+			IOFunctions.println(e );
+			e.printStackTrace();
+		}
+		final ArrayList< SimplePeak > peaks = dog.getSimplePeaks();
+
+		/*
 		final ArrayList< SimplePeak > peaks = new ArrayList< SimplePeak >();
+		final ArrayList< DifferenceOfGaussianPeak<FloatType> > peakListOld = dog.getPeaks();
 		final int n = img.getNumDimensions();
 
 		for ( final DifferenceOfGaussianPeak<FloatType> peak : peakListOld )
@@ -141,6 +151,7 @@ public class ProcessDOG
 				peaks.add( new SimplePeak( location, peak.getValue().get(), peak.isMin(), peak.isMax() ) );
 			}
 		}
+		*/
 
 		final ArrayList< InterestPoint > finalPeaks;
 

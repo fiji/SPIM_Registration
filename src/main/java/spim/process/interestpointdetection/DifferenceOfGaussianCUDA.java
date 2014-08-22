@@ -3,7 +3,6 @@ package spim.process.interestpointdetection;
 import java.util.List;
 
 import mpicbg.imglib.algorithm.OutputAlgorithm;
-import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianReal1;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
@@ -25,7 +24,7 @@ import spim.process.cuda.CUDASeparableConvolution;
 import spim.process.cuda.CUDASeparableConvolutionFunctions;
 import spim.process.cuda.CUDASeparableConvolutionFunctions.OutOfBounds;
 
-public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianReal1< FloatType >
+public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianNewPeakFinder
 {
 	final Img< net.imglib2.type.numeric.real.FloatType > img2;
 	final List< CUDADevice > devList;
