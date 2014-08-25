@@ -116,7 +116,9 @@ public class DifferenceOfGaussian extends DifferenceOf implements GenericDialogA
 							continue;
 
 						IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Requesting Img from ImgLoader (tp=" + viewId.getTimePointId() + ", setup=" + viewId.getViewSetupId() + ")" );
-						final RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input = spimData.getSequenceDescription().getImgLoader().getFloatImage( viewId, false );
+						final RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input =
+								downsample(
+										spimData.getSequenceDescription().getImgLoader().getFloatImage( viewId, false ) );
 
 						long time2 = System.currentTimeMillis();
 
@@ -129,7 +131,8 @@ public class DifferenceOfGaussian extends DifferenceOf implements GenericDialogA
 						//
 						// compute Difference-of-Mean
 						//
-						interestPoints.put(viewId, ProcessDOG.compute(
+						final ArrayList< InterestPoint > ips = 
+							ProcessDOG.compute(
 								cuda,
 								deviceList,
 								accurateCUDA,
@@ -145,8 +148,13 @@ public class DifferenceOfGaussian extends DifferenceOf implements GenericDialogA
 								findMin[ c.getId() ],
 								findMax[ c.getId() ],
 								minIntensity,
-								maxIntensity ) );
+								maxIntensity );
+
 						img.close();
+
+						correctForDownsampling( ips );
+
+						interestPoints.put( viewId, ips );
 
 						benchmark.computation += System.currentTimeMillis() - time2;
 					}
@@ -230,8 +238,9 @@ public class DifferenceOfGaussian extends DifferenceOf implements GenericDialogA
 			return false;
 		}
 
-		RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > img = 
-				spimData.getSequenceDescription().getImgLoader().getFloatImage( view, false );
+		RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > img =
+				downsample(
+						spimData.getSequenceDescription().getImgLoader().getFloatImage( view, false ) );
 				
 		if ( img == null )
 		{
@@ -307,8 +316,10 @@ public class DifferenceOfGaussian extends DifferenceOf implements GenericDialogA
 	@Override
 	public String getParameters( final int channelId )
 	{
-		return "DOG s=" + sigma[ channelId ] + " t=" + threshold[ channelId ] + " min=" + findMin[ channelId ] + " max=" + findMax[ channelId ] + 
-				" imageSigmaX=" + imageSigmaX + " imageSigmaY=" + imageSigmaY + " imageSigmaZ=" + imageSigmaZ;
+		return "DOG s=" + sigma[ channelId ] + " t=" + threshold[ channelId ] + " min=" + findMin[ channelId ] + " max=" + findMax[ channelId ] +
+				" imageSigmaX=" + imageSigmaX + " imageSigmaY=" + imageSigmaY + " imageSigmaZ=" + imageSigmaZ + " downsampleXY=" + downsampleXY +
+				" downsampleZ=" + downsampleZ + " additionalSigmaX=" + additionalSigmaX  + " additionalSigmaY=" + additionalSigmaY + 
+				" additionalSigmaZ=" + additionalSigmaZ;
 	}
 
 	@Override

@@ -42,6 +42,7 @@ public class Interest_Point_Detection implements PlugIn
 {
 	public static ArrayList< InterestPointDetection > staticAlgorithms = new ArrayList< InterestPointDetection >();
 	public static int defaultAlgorithm = 1;
+	public static boolean defaultDownSample = true;
 	public static boolean defaultDefineAnisotropy = false;
 	public static boolean defaultAdditionalSmoothing = false;
 	public static boolean defaultSetMinMax = false;
@@ -99,6 +100,7 @@ public class Interest_Point_Detection implements PlugIn
 			gd.addMessage( "" );
 		}
 		
+		gd.addCheckbox( "Downsample_images prior to segmentation", defaultDownSample );
 		gd.addCheckbox( "Define_anisotropy for segmentation", defaultDefineAnisotropy );
 		gd.addCheckbox( "Additional_smoothing", defaultAdditionalSmoothing );
 		gd.addCheckbox( "Set_minimal_and_maximal_intensity", defaultSetMinMax );
@@ -133,7 +135,8 @@ public class Interest_Point_Detection implements PlugIn
 		{
 			channelsToProcess.add( channels.get( 0 ) );
 		}
-		
+
+		final boolean downsample = defaultDownSample = gd.getNextBoolean();
 		final boolean defineAnisotropy = defaultDefineAnisotropy = gd.getNextBoolean();
 		final boolean additionalSmoothing = defaultAdditionalSmoothing = gd.getNextBoolean();
 		final boolean setMinMax = defaultSetMinMax = gd.getNextBoolean();
@@ -146,7 +149,7 @@ public class Interest_Point_Detection implements PlugIn
 				result.getTimePointsToProcess() );
 		
 		// the interest point detection should query its parameters
-		if ( !ipd.queryParameters( defineAnisotropy, additionalSmoothing, setMinMax ) )
+		if ( !ipd.queryParameters( downsample, defineAnisotropy, additionalSmoothing, setMinMax ) )
 			return;
 		
 		// now extract all the detections

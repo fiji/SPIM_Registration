@@ -2,6 +2,7 @@ package spim.fiji.plugin.interestpointdetection;
 
 import ij.gui.GenericDialog;
 
+import java.util.Date;
 import java.util.List;
 
 import mpicbg.spim.data.sequence.Angle;
@@ -13,16 +14,24 @@ import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.gauss3.Gauss3;
 import net.imglib2.exception.IncompatibleTypeException;
+import net.imglib2.img.Img;
+import net.imglib2.img.ImgFactory;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.process.interestpointdetection.Downsample;
 
 public abstract class DifferenceOf extends InterestPointDetection
-{	
+{
+	public static String[] downsampleChoice = { "1x", "2x", "4x", "8x" };
 	public static String[] localizationChoice = { "None", "3-dimensional quadratic fit", "Gaussian mask localization fit" };	
 	public static String[] brightnessChoice = { "Very weak & small (beads)", "Weak & small (beads)", "Comparable to Sample & small (beads)", "Strong & small (beads)", "Advanced ...", "Interactive ..." };
 	
+	public static int defaultDownsampleXYIndex = 1;
+	public static int defaultDownsampleZIndex = 0;
+
 	public static int defaultLocalization = 1;
 	public static int[] defaultBrightness = null;
 	
@@ -44,7 +53,7 @@ public abstract class DifferenceOf extends InterestPointDetection
 	protected double imageSigmaX, imageSigmaY, imageSigmaZ;
 	protected double additionalSigmaX, additionalSigmaY, additionalSigmaZ;
 	protected double minIntensity, maxIntensity;
-	protected int localization;
+	protected int localization, downsampleXY, downsampleZ;
 
 	public DifferenceOf(
 			final SpimData2 spimData,
@@ -60,7 +69,7 @@ public abstract class DifferenceOf extends InterestPointDetection
 	protected abstract boolean queryAdditionalParameters( final GenericDialog gd );
 	
 	@Override
-	public boolean queryParameters( final boolean defineAnisotropy, final boolean additionalSmoothing, final boolean setMinMax )
+	public boolean queryParameters( final boolean downsample, final boolean defineAnisotropy, final boolean additionalSmoothing, final boolean setMinMax )
 	{
 		final List< Channel > channels = spimData.getSequenceDescription().getAllChannelsOrdered();
 
@@ -80,6 +89,12 @@ public abstract class DifferenceOf extends InterestPointDetection
 		
 		for ( int c = 0; c < channelsToProcess.size(); ++c )
 			gd.addChoice( "Interest_point_specification_(channel_" + channelsToProcess.get( c ).getName() + ")", brightnessChoice, brightnessChoice[ defaultBrightness[ channelsToProcess.get( c ).getId() ] ] );
+
+		if ( downsample )
+		{
+			gd.addChoice( "Downsample_XY", downsampleChoice, downsampleChoice[ defaultDownsampleXYIndex ] );
+			gd.addChoice( "Downsample_Z", downsampleChoice, downsampleChoice[ defaultDownsampleZIndex ] );
+		}
 
 		if ( defineAnisotropy )
 		{
@@ -123,6 +138,45 @@ public abstract class DifferenceOf extends InterestPointDetection
 			brightness[ c ] = defaultBrightness[ channel.getId() ] = gd.getNextChoiceIndex();			
 		}
 
+		if ( downsample )
+		{
+			int dsxy = defaultDownsampleXYIndex = gd.getNextChoiceIndex();
+			int dsz = defaultDownsampleZIndex = gd.getNextChoiceIndex();
+
+			if ( dsxy == 0 )
+				downsampleXY = 1;
+			else if ( dsxy == 1 )
+				downsampleXY = 2;
+			else if ( dsxy == 2 )
+				downsampleXY = 4;
+			else
+				downsampleXY = 8;
+
+			if ( dsz == 0 )
+				downsampleZ = 1;
+			else if ( dsz == 1 )
+				downsampleZ = 2;
+			else if ( dsz == 2 )
+				downsampleZ = 4;
+			else
+				downsampleZ = 8;
+		}
+		else
+		{
+			downsampleXY = downsampleZ = 1;
+		}
+
+		if ( defineAnisotropy )
+		{
+			imageSigmaX = defaultImageSigmaX = gd.getNextNumber();
+			imageSigmaY = defaultImageSigmaY = gd.getNextNumber();
+			imageSigmaZ = defaultImageSigmaZ = gd.getNextNumber();
+		}
+		else
+		{
+			imageSigmaX = imageSigmaY = imageSigmaZ = 0.5;
+		}
+
 		if ( additionalSmoothing )
 		{
 			additionalSigmaX = defaultAdditionalSigmaX = gd.getNextNumber();
@@ -163,17 +217,6 @@ public abstract class DifferenceOf extends InterestPointDetection
 				if ( !setInteractiveValues( channel ) )
 					return false;
 			}
-		}
-
-		if ( defineAnisotropy )
-		{
-			imageSigmaX = defaultImageSigmaX = gd.getNextNumber();
-			imageSigmaY = defaultImageSigmaY = gd.getNextNumber();
-			imageSigmaZ = defaultImageSigmaZ = gd.getNextNumber();
-		}
-		else
-		{
-			imageSigmaX = imageSigmaY = imageSigmaZ = 0.5;
 		}
 
 		if ( !queryAdditionalParameters( gd ) )
@@ -249,7 +292,7 @@ public abstract class DifferenceOf extends InterestPointDetection
 		
 		return viewId;
 	}
-		
+
 	/**
 	 * This is only necessary to make static objects so that the ImageJ dialog remembers choices
 	 * for the right channel
@@ -257,8 +300,51 @@ public abstract class DifferenceOf extends InterestPointDetection
 	 * @param numChannels - the TOTAL number of channels (not only the ones to process)
 	 */
 	protected abstract void init( final int numChannels );
-	
+
 	protected abstract boolean setDefaultValues( final Channel channel, final int brightness );
 	protected abstract boolean setAdvancedValues( final Channel channel );
 	protected abstract boolean setInteractiveValues( final Channel channel );
+
+	protected void correctForDownsampling( final List< InterestPoint > ips )
+	{
+		if ( downsampleXY == 1 && downsampleZ == 1 )
+			return;
+
+		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Correcting coordinates for downsampling" );
+
+		for ( final InterestPoint ip : ips )
+		{
+			ip.getL()[ 0 ] *= downsampleXY;
+			ip.getL()[ 1 ] *= downsampleXY;
+			ip.getL()[ 2 ] *= downsampleZ;
+
+			ip.getW()[ 0 ] *= downsampleXY;
+			ip.getW()[ 1 ] *= downsampleXY;
+			ip.getW()[ 2 ] *= downsampleZ;
+		}
+	}
+
+	protected RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > downsample( RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input )
+	{
+		final ImgFactory< net.imglib2.type.numeric.real.FloatType > f = ((Img<net.imglib2.type.numeric.real.FloatType>)input).factory();
+
+		if ( downsampleXY > 1 )
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() )  + "): Downsampling in XY " + downsampleXY + "x ..." );
+
+		for ( int dsx = downsampleXY; dsx > 1; dsx /= 2 )
+			input = Downsample.simple2x( input, f, new boolean[]{ true, false, false } );
+
+		for ( int dsy = downsampleXY; dsy > 1; dsy /= 2 )
+			input = Downsample.simple2x( input, f, new boolean[]{ false, true, false } );
+
+		if ( downsampleZ > 1 )
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() )  + "): Downsampling in Z " + downsampleXY + "x ..." );
+
+		for ( int dsz = downsampleZ; dsz > 1; dsz /= 2 )
+			input = Downsample.simple2x( input, f, new boolean[]{ false, false, true } );
+
+		return input;
+	}
+
+
 }

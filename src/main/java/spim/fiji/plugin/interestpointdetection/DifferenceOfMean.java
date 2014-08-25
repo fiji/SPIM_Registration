@@ -3,6 +3,7 @@ package spim.fiji.plugin.interestpointdetection;
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -99,7 +100,9 @@ public class DifferenceOfMean extends DifferenceOf
 							continue;
 
 						IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Requesting Img from ImgLoader (tp=" + viewId.getTimePointId() + ", setup=" + viewId.getViewSetupId() + ")" );
-						final RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input = spimData.getSequenceDescription().getImgLoader().getFloatImage( viewId, false );
+						final RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input =
+								downsample(
+										spimData.getSequenceDescription().getImgLoader().getFloatImage( viewId, false ) );
 
 						long time2 = System.currentTimeMillis();
 
@@ -112,7 +115,8 @@ public class DifferenceOfMean extends DifferenceOf
 						//
 						// compute Difference-of-Mean
 						//
-						interestPoints.put( viewId, ProcessDOM.compute(
+						final ArrayList< InterestPoint > ips =
+							ProcessDOM.compute(
 								img,
 								(Img<net.imglib2.type.numeric.real.FloatType>)input,
 								radius1[ c.getId() ],
@@ -125,8 +129,13 @@ public class DifferenceOfMean extends DifferenceOf
 								findMin[ c.getId() ],
 								findMax[ c.getId() ],
 								minIntensity,
-								maxIntensity ) );
+								maxIntensity );
+
 						img.close();
+
+						correctForDownsampling( ips );
+
+						interestPoints.put( viewId, ips );
 
 						benchmark.computation += System.currentTimeMillis() - time2;
 					}
@@ -214,8 +223,9 @@ public class DifferenceOfMean extends DifferenceOf
 			return false;
 		}
 		
-		RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > img = 
-				spimData.getSequenceDescription().getImgLoader().getFloatImage( view, false );
+		RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > img =
+				downsample(
+						spimData.getSequenceDescription().getImgLoader().getFloatImage( view, false ) );
 		
 		if ( img == null )
 		{
@@ -295,7 +305,9 @@ public class DifferenceOfMean extends DifferenceOf
 	public String getParameters( final int channelId )
 	{
 		return "DOM r1=" + radius1[ channelId ] + " t=" + threshold[ channelId ] + " min=" + findMin[ channelId ] + " max=" + findMax[ channelId ] + 
-				" imageSigmaX=" + imageSigmaX + " imageSigmaY=" + imageSigmaY + " imageSigmaZ=" + imageSigmaZ;
+				" imageSigmaX=" + imageSigmaX + " imageSigmaY=" + imageSigmaY + " imageSigmaZ=" + imageSigmaZ + " downsampleXY=" + downsampleXY +
+				" downsampleZ=" + downsampleZ + " additionalSigmaX=" + additionalSigmaX  + " additionalSigmaY=" + additionalSigmaY + 
+				" additionalSigmaZ=" + additionalSigmaZ;
 	}
 
 	@Override

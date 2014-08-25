@@ -74,12 +74,17 @@ public abstract class InterestPointDetection
 	/**
 	 * Query the necessary parameters for the interestpoint detection
 	 * 
+	 * @param downsample - whether to downsample the images before performing the blob detection
 	 * @param defineAnisotropy - whether to use/query for anisotropy in resolution of the data
 	 * @param additionalSmoothing - smooth in certain dimensions before computing the segmentation
 	 * @param setMinMax - whether to define minimal and maximal intensity relative to whom everything is normalized to [0...1]
 	 * @return
 	 */
-	public abstract boolean queryParameters( final boolean defineAnisotropy, final boolean additionalSmoothing, final boolean setMinMax );
+	public abstract boolean queryParameters(
+			final boolean downsample,
+			final boolean defineAnisotropy,
+			final boolean additionalSmoothing,
+			final boolean setMinMax );
 	
 	/**
 	 * @param spimData
