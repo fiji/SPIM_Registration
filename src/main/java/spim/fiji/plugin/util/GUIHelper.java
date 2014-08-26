@@ -33,6 +33,8 @@ public class GUIHelper
 	public static Font mediumstatusfont = new Font( Font.SANS_SERIF, Font.BOLD + Font.ITALIC, 12 );
 	public static Font smallStatusFont = new Font( Font.SANS_SERIF, Font.ITALIC, 11 );
 
+	public static Font staticfont = new Font( Font.MONOSPACED, Font.PLAIN, 12 );
+
 	final public static String myURL = "http://www.preibisch.net/";
 	final public static String paperURL = "http://www.nature.com/nmeth/journal/v7/n6/full/nmeth0610-418.html";
 	final public static String messagePaper = "Please note that the SPIM Registration is based on a publication.\n" +
@@ -209,5 +211,5 @@ public class GUIHelper
 				return true;
 		
 		return false;
-	}	
+	}
 }

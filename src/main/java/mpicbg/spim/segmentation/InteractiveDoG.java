@@ -488,12 +488,12 @@ public class InteractiveDoG implements PlugIn
 	protected void displaySliders()
 	{
 		final Frame frame = new Frame("Adjust Difference-of-Gaussian Values");
-		frame.setSize( 400, 300 );        
-		
-		/* Instantiation */		
+		frame.setSize( 400, 300 );
+
+		/* Instantiation */
 		final GridBagLayout layout = new GridBagLayout();
 		final GridBagConstraints c = new GridBagConstraints();
-				
+
 		final Scrollbar sigma1 = new Scrollbar ( Scrollbar.HORIZONTAL, sigmaInit, 10, 0, 10 + scrollbarSize );		
 	    this.sigma = computeValueFromScrollbarPosition( sigmaInit, sigmaMin, sigmaMax, scrollbarSize); 
 	    

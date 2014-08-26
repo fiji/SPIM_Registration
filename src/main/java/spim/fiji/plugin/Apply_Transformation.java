@@ -3,6 +3,8 @@ package spim.fiji.plugin;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -11,6 +13,7 @@ import java.util.Set;
 
 import javax.media.j3d.Transform3D;
 
+import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.registration.ViewTransform;
@@ -27,10 +30,12 @@ import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.util.Util;
+import spim.fiji.plugin.apply.BigDataViewerTransformationWindow;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
+import bdv.BigDataViewer;
 
 public class Apply_Transformation implements PlugIn
 {
@@ -40,7 +45,7 @@ public class Apply_Transformation implements PlugIn
 	public static boolean defaultSameModelAngles = false;
 	
 	public static int defaultModel = 2;
-	public static int defaultDefineAs = 1;
+	public static int defaultDefineAs = 2;
 	public static int defaultApplyTo = 1;
 	
 	public static String[] inputChoice = new String[]{
@@ -48,7 +53,7 @@ public class Apply_Transformation implements PlugIn
 		"Calibration (removes any existing transforms)",
 		"Current view transformations (appends to current transforms)" };	
 	public static String[] modelChoice = new String[]{ "Identity (no transformation)", "Translation", "Rigid", "Affine" };
-	public static String[] defineChoice = new String[] { "Matrix", "Rotation around axis" };
+	public static String[] defineChoice = new String[] { "Matrix", "Rotation around axis", "Interactively using the BigDataViewer" };
 	
 	public String[] axesChoice = new String[] { "x-axis", "y-axis", "z-axis" };
 	public static int[] defaultAxis = null;
@@ -126,7 +131,11 @@ public class Apply_Transformation implements PlugIn
 		
 		if ( multipleAngles )
 			gd.addCheckbox( "Same_transformation_for_all_angles", defaultSameModelAngles );
-		
+
+		gd.addMessage(
+				"Interactive application of transformations using the BigDataViewer is available when selecting a Rigid Model.",
+				GUIHelper.mediumstatusfont );
+
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
@@ -198,14 +207,62 @@ public class Apply_Transformation implements PlugIn
 			if ( !queryString( model, applyTo, minResolution, result, sameModelTimePoints, sameModelChannels, sameModelIlluminations, sameModelAngles ) )
 				return;
 		}
-		else
+		else if ( defineAs == 1 )
 		{
 			if ( !queryRotationAxis( model, applyTo, minResolution, result, sameModelTimePoints, sameModelChannels, sameModelIlluminations, sameModelAngles ) )
+				return;
+		}
+		else
+		{
+			if ( !queryBigDataViewer( result.getXMLFileName() ) )
 				return;
 		}
 		
 		// now save it
 		Interest_Point_Registration.saveXML( result.getData(), result.getXMLFileName() );
+	}
+
+	protected boolean queryBigDataViewer( final String xmlFileName )
+	{
+		try
+		{
+			final BigDataViewer bdv = new BigDataViewer( xmlFileName, "Set dataset transformation", null );
+
+			try
+			{
+				Thread.sleep( 1000 );
+			}
+			catch (InterruptedException e)
+			{
+				e.printStackTrace();
+			}
+
+			final BigDataViewerTransformationWindow bdvw = new BigDataViewerTransformationWindow( bdv );
+
+			do
+			{
+				try
+				{
+					Thread.sleep( 100 );
+				}
+				catch (InterruptedException e)
+				{
+					e.printStackTrace();
+				}
+			}
+			while ( bdvw.isRunning() );
+			
+			BigDataViewerTransformationWindow.disposeViewerWindow( bdv );
+
+		}
+		catch ( SpimDataException e )
+		{
+			IOFunctions.println( "Failed to run the BigDataViewer ... " );
+			e.printStackTrace();
+			return false;
+		}
+
+		return false;
 	}
 
 	protected boolean queryRotationAxis( final int model, final int applyTo, final double minResolution, final LoadParseQueryXML result, final boolean sameModelTimePoints, final boolean sameModelChannels, final boolean sameModelIlluminations, final boolean sameModelAngles )
@@ -769,6 +826,7 @@ public class Apply_Transformation implements PlugIn
 	 */
 	public static void main( final String[] args )
 	{
+		//new BigDataViewerTransformationWindow( null );
 		new Apply_Transformation().run( null );
 	}
 }
