@@ -826,7 +826,7 @@ public class Apply_Transformation implements PlugIn
 	 */
 	public static void main( final String[] args )
 	{
-		//new BigDataViewerTransformationWindow( null );
-		new Apply_Transformation().run( null );
+		new BigDataViewerTransformationWindow( null );
+		//new Apply_Transformation().run( null );
 	}
 }

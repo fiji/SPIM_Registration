@@ -34,6 +34,9 @@ public class BigDataViewerTransformationWindow
 
 	public BigDataViewerTransformationWindow( final BigDataViewer bdv )
 	{
+		if ( 1 == 1 )
+			throw new RuntimeException( "Not supported yet." );
+		
 		final Frame frame = new Frame( "Current Global Transformation" );
 		frame.setSize( 400, 200 );
 
