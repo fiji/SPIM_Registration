@@ -96,16 +96,6 @@ public abstract class DifferenceOf extends InterestPointDetection
 			gd.addChoice( "Downsample_Z", downsampleChoice, downsampleChoice[ defaultDownsampleZIndex ] );
 		}
 
-		if ( defineAnisotropy )
-		{
-			gd.addNumericField( "Image_Sigma_X", defaultImageSigmaX, 5 );
-			gd.addNumericField( "Image_Sigma_Y", defaultImageSigmaY, 5 );
-			gd.addNumericField( "Image_Sigma_Z", defaultImageSigmaZ, 5 );
-			
-			gd.addMessage( "Please consider that usually the lower resolution in z is compensated by a lower sampling rate in z.\n" +
-					"Only adjust the initial sigma's if this is not the case.", GUIHelper.mediumstatusfont );
-		}
-
 		if ( additionalSmoothing )
 		{
 			gd.addNumericField( "Presmooth_Sigma_X", defaultAdditionalSigmaX, 5 );
@@ -121,8 +111,18 @@ public abstract class DifferenceOf extends InterestPointDetection
 			gd.addNumericField( "Maximal_intensity", defaultMaxIntensity, 1 );
 		}
 
+		if ( defineAnisotropy )
+		{
+			gd.addNumericField( "Image_Sigma_X", defaultImageSigmaX, 5 );
+			gd.addNumericField( "Image_Sigma_Y", defaultImageSigmaY, 5 );
+			gd.addNumericField( "Image_Sigma_Z", defaultImageSigmaZ, 5 );
+			
+			gd.addMessage( "Please consider that usually the lower resolution in z is compensated by a lower sampling rate in z.\n" +
+					"Only adjust the initial sigma's if this is not the case.", GUIHelper.mediumstatusfont );
+		}
+
 		addAddtionalParameters( gd );
-		
+
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
@@ -166,17 +166,6 @@ public abstract class DifferenceOf extends InterestPointDetection
 			downsampleXY = downsampleZ = 1;
 		}
 
-		if ( defineAnisotropy )
-		{
-			imageSigmaX = defaultImageSigmaX = gd.getNextNumber();
-			imageSigmaY = defaultImageSigmaY = gd.getNextNumber();
-			imageSigmaZ = defaultImageSigmaZ = gd.getNextNumber();
-		}
-		else
-		{
-			imageSigmaX = imageSigmaY = imageSigmaZ = 0.5;
-		}
-
 		if ( additionalSmoothing )
 		{
 			additionalSigmaX = defaultAdditionalSigmaX = gd.getNextNumber();
@@ -217,6 +206,17 @@ public abstract class DifferenceOf extends InterestPointDetection
 				if ( !setInteractiveValues( channel ) )
 					return false;
 			}
+		}
+
+		if ( defineAnisotropy )
+		{
+			imageSigmaX = defaultImageSigmaX = gd.getNextNumber();
+			imageSigmaY = defaultImageSigmaY = gd.getNextNumber();
+			imageSigmaZ = defaultImageSigmaZ = gd.getNextNumber();
+		}
+		else
+		{
+			imageSigmaX = imageSigmaY = imageSigmaZ = 0.5;
 		}
 
 		if ( !queryAdditionalParameters( gd ) )
