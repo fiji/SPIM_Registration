@@ -338,7 +338,7 @@ public abstract class DifferenceOf extends InterestPointDetection
 			input = Downsample.simple2x( input, f, new boolean[]{ false, true, false } );
 
 		if ( downsampleZ > 1 )
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() )  + "): Downsampling in Z " + downsampleXY + "x ..." );
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() )  + "): Downsampling in Z " + downsampleZ + "x ..." );
 
 		for ( int dsz = downsampleZ; dsz > 1; dsz /= 2 )
 			input = Downsample.simple2x( input, f, new boolean[]{ false, false, true } );
