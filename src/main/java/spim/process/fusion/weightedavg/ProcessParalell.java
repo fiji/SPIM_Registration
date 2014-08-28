@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
+import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
@@ -27,6 +28,7 @@ import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
+import bdv.img.hdf5.Hdf5ImageLoader;
 
 public class ProcessParalell extends ProcessFusion
 {	
@@ -137,10 +139,14 @@ public class ProcessParalell extends ProcessFusion
 	@SuppressWarnings("unchecked")
 	protected static < T extends RealType< T > > RandomAccessibleInterval< T > getImage( final T type, final SpimData2 spimData, final ViewId view )
 	{
+		ImgLoader< ? > imgLoader = spimData.getSequenceDescription().getImgLoader();
+		if ( imgLoader instanceof Hdf5ImageLoader )
+			imgLoader = ( ( Hdf5ImageLoader ) imgLoader ).getMonolithicImageLoader();
+
 		if ( type instanceof FloatType )
-			return (RandomAccessibleInterval< T >)(Object)spimData.getSequenceDescription().getImgLoader().getFloatImage( view, false );
+			return (RandomAccessibleInterval< T >)imgLoader.getFloatImage( view, false );
 		else if ( type instanceof UnsignedShortType )
-			return (RandomAccessibleInterval< T >)(Object)spimData.getSequenceDescription().getImgLoader().getImage( view );
+			return (RandomAccessibleInterval< T >)imgLoader.getImage( view );
 		else
 			return null;
 	}
