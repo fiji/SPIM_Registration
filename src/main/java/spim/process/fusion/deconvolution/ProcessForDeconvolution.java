@@ -130,7 +130,10 @@ public class ProcessForDeconvolution
 			ePSF = loadPSFs( channel, viewDescriptions, psfFiles, transformLoadedPSFs );
 		else
 			ePSF = assignOtherChannel( channel, extractPSFLabels );
-		
+
+		if ( ePSF == null )
+			return false;
+
 		// remember the extracted or loaded PSFs
 		extractPSFLabels.get( channel ).setExtractPSFInstance( ePSF );
 
