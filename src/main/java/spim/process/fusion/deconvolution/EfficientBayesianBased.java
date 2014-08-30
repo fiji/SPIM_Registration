@@ -96,7 +96,7 @@ public class EfficientBayesianBased extends Fusion
 	int displayPSF;
 	boolean debugMode;
 	boolean adjustBlending;
-	
+
 	boolean useBlocks;
 	int[] blockSize;
 	boolean useCUDA;
@@ -111,14 +111,14 @@ public class EfficientBayesianBased extends Fusion
 	int psfSizeX = -1;
 	int psfSizeY = -1;
 	int psfSizeZ = -1;
-	
+
 	/**
 	 * 0 ... n == CUDA device i
 	 */
 	ArrayList< CUDADevice > deviceList = null;
 
 	Choice gpu, block, it;
-	
+
 	public EfficientBayesianBased(
 			final SpimData2 spimData,
 			final List<Angle> anglesToProcess,
