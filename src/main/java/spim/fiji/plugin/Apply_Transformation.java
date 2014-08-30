@@ -3,8 +3,6 @@ package spim.fiji.plugin;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,11 +40,11 @@ public class Apply_Transformation implements PlugIn
 	public static boolean defaultSameModelTimePoints = true;
 	public static boolean defaultSameModelChannels = true;
 	public static boolean defaultSameModelIlluminations = true;
-	public static boolean defaultSameModelAngles = false;
+	public static boolean defaultSameModelAngles = true;
 	
 	public static int defaultModel = 2;
 	public static int defaultDefineAs = 2;
-	public static int defaultApplyTo = 1;
+	public static int defaultApplyTo = 2;
 	
 	public static String[] inputChoice = new String[]{
 		"Identity transform (removes any existing transforms)",
@@ -214,7 +212,16 @@ public class Apply_Transformation implements PlugIn
 		}
 		else
 		{
-			if ( !queryBigDataViewer( result.getXMLFileName() ) )
+			if ( !sameModelAngles || !sameModelChannels || !sameModelIlluminations || !sameModelIlluminations )
+			{
+				IOFunctions.println( "You selected to not have the same transformation model for all views in the" );
+				IOFunctions.println( "previous dialog. This is not supported using the interactive setup using the" );
+				IOFunctions.println( "BigDataViewer. You can select single views in the xml open dialog though." );
+
+				return;
+			}
+
+			if ( !queryBigDataViewer( applyTo, minResolution, result ) )
 				return;
 		}
 		
@@ -222,11 +229,11 @@ public class Apply_Transformation implements PlugIn
 		Interest_Point_Registration.saveXML( result.getData(), result.getXMLFileName() );
 	}
 
-	protected boolean queryBigDataViewer( final String xmlFileName )
+	protected boolean queryBigDataViewer( final int applyTo, final double minResolution, final LoadParseQueryXML result )
 	{
 		try
 		{
-			final BigDataViewer bdv = new BigDataViewer( xmlFileName, "Set dataset transformation", null );
+			final BigDataViewer bdv = new BigDataViewer( result.getXMLFileName(), "Set dataset transformation", null );
 
 			try
 			{
@@ -251,9 +258,25 @@ public class Apply_Transformation implements PlugIn
 				}
 			}
 			while ( bdvw.isRunning() );
-			
+
 			BigDataViewerTransformationWindow.disposeViewerWindow( bdv );
 
+			if ( bdvw.wasCancelled() )
+				return false;
+
+			final ArrayList< double[] > models = new ArrayList< double[] >();
+			final ArrayList< String > modelDescriptions = new ArrayList< String >();
+
+			final AffineTransform3D t = bdvw.getTransform();
+			models.add( t.getRowPackedCopy() );
+			modelDescriptions.add( "Rigid transform defined by BigDataViewer" );
+
+			final HashMap< Entry, List< TimePoint > > timepoints = getTimePoints( result.getTimePointsToProcess(), true );
+			final HashMap< Entry, List< Channel > > channels = getChannels( result.getChannelsToProcess(), true );
+			final HashMap< Entry, List< Illumination > > illums = getIlluminations( result.getIlluminationsToProcess(), true );
+			final HashMap< Entry, List< Angle > > angles = getAngles( result.getAnglesToProcess(), true );
+
+			return applyModels( result.getData(), models, modelDescriptions, applyTo, minResolution, timepoints, channels, illums, angles );
 		}
 		catch ( SpimDataException e )
 		{
@@ -261,8 +284,6 @@ public class Apply_Transformation implements PlugIn
 			e.printStackTrace();
 			return false;
 		}
-
-		return false;
 	}
 
 	protected boolean queryRotationAxis( final int model, final int applyTo, final double minResolution, final LoadParseQueryXML result, final boolean sameModelTimePoints, final boolean sameModelChannels, final boolean sameModelIlluminations, final boolean sameModelAngles )
@@ -272,7 +293,7 @@ public class Apply_Transformation implements PlugIn
 			IOFunctions.println( "No rigid model selected." );
 			return false;
 		}
-		
+
 		final HashMap< Entry, List< TimePoint > > timepoints = getTimePoints( result.getTimePointsToProcess(), sameModelTimePoints );
 		final HashMap< Entry, List< Channel > > channels = getChannels( result.getChannelsToProcess(), sameModelChannels );
 		final HashMap< Entry, List< Illumination > > illums = getIlluminations( result.getIlluminationsToProcess(), sameModelIlluminations );
@@ -826,7 +847,7 @@ public class Apply_Transformation implements PlugIn
 	 */
 	public static void main( final String[] args )
 	{
-		new BigDataViewerTransformationWindow( null );
-		//new Apply_Transformation().run( null );
+		//new BigDataViewerTransformationWindow( null );
+		new Apply_Transformation().run( null );
 	}
 }
