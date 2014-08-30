@@ -161,7 +161,7 @@ public class EfficientBayesianBased extends Fusion
 			for ( final Channel c : channelsToProcess )
 			{
 				// fuse the images, create weights, extract PSFs we need for the deconvolution
-				pfd.fuseStacksAndGetPSFs(
+				if ( !pfd.fuseStacksAndGetPSFs(
 						t, c,
 						osemspeedupIndex,
 						osemSpeedUp,
@@ -169,7 +169,14 @@ public class EfficientBayesianBased extends Fusion
 						extractPSFLabels,
 						new long[]{ psfSizeX, psfSizeY, psfSizeZ },
 						psfFiles,
-						transformPSFs );
+						transformPSFs ) )
+				{
+					IOFunctions.println(
+							"FAILED to deconvolve timepoint=" + t.getName() + " (id=" + t.getId() + ")" +
+							", channel=" + c.getName() + " (id=" + c.getId() + ")" );
+
+					continue;
+				}
 				
 				// on the first run update the osemspeedup if necessary
 				if ( stack++ == 0 )
@@ -739,14 +746,14 @@ public class EfficientBayesianBased extends Fusion
 			{
 				if ( defaultSamePSFForAllChannels )
 				{
-					gd2.addFileField( "PSF_file", defaultPSFFileField.get( 0 ) );
+					gd2.addFileField( "PSF_file", defaultPSFFileField.get( 0 ), 50 );
 				}
 				else
 				{
 					int j = 0;
 					
 					for ( final Channel c : channelsToProcess )
-						gd2.addFileField( "PSF_file_(channel=" + c.getName() + ")", defaultPSFFileField.get( j++ ) );
+						gd2.addFileField( "PSF_file_(channel=" + c.getName() + ")", defaultPSFFileField.get( j++ ), 50 );
 				}
 			}
 			else
@@ -757,14 +764,14 @@ public class EfficientBayesianBased extends Fusion
 				{
 					for ( final Illumination i : illumsToProcess )
 						for ( final Angle a : anglesToProcess )
-							gd2.addFileField( "PSF_file_(angle=" + a.getName() + ", illum=" + i.getName() + ")", defaultPSFFileField.get( j++ ) );
+							gd2.addFileField( "PSF_file_(angle=" + a.getName() + ", illum=" + i.getName() + ")", defaultPSFFileField.get( j++ ), 50 );
 				}
 				else
 				{
 					for ( final Channel c : channelsToProcess )
 						for ( final Illumination i : illumsToProcess )
 							for ( final Angle a : anglesToProcess )
-								gd2.addFileField( "PSF_file_(angle=" + a.getName() + ", illum=" + i.getName() + ", channel=" + c.getName() + ")", defaultPSFFileField.get( j++ ) );					
+								gd2.addFileField( "PSF_file_(angle=" + a.getName() + ", illum=" + i.getName() + ", channel=" + c.getName() + ")", defaultPSFFileField.get( j++ ), 50 );
 				}
 			}
 			
@@ -788,10 +795,11 @@ public class EfficientBayesianBased extends Fusion
 			{
 				if ( defaultSamePSFForAllChannels )
 				{
+					// as many times the same filename as there are illuminations and angles
 					final ArrayList< String > files = new ArrayList< String >();
-					for ( int i = 0; i < numPSFs; ++i )
+					for ( int i = 0; i < anglesToProcess.size() * illumsToProcess.size(); ++i )
 						files.add( defaultPSFFileField.get( 0 ) );
-					
+
 					for ( final Channel c : channelsToProcess )
 						psfFiles.put( c, files );
 				}
@@ -802,10 +810,11 @@ public class EfficientBayesianBased extends Fusion
 					for ( final Channel c : channelsToProcess )
 					{
 						final ArrayList< String > files = new ArrayList< String >();
-						
-						for ( int i = 0; i < numPSFs; ++i )
+
+						// as many times the same filename as there are illuminations and angles
+						for ( int i = 0; i < anglesToProcess.size() * illumsToProcess.size(); ++i )
 							files.add( defaultPSFFileField.get( j ) );
-						
+
 						psfFiles.put( c, files );
 						++j;
 					}
