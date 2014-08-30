@@ -171,7 +171,6 @@ public class InterestPointList
 		catch ( final IOException e )
 		{
 			IOFunctions.println( "InterestPointList.loadCorrespondingInterestPoints(): " + e );
-			e.printStackTrace();
 			return false;
 		}
 	}
