@@ -267,7 +267,16 @@ public abstract class DifferenceOf extends InterestPointDetection
 		final String[] illuminationNames = new String[ illuminations.size() ];
 		for ( int i = 0; i < illuminations.size(); ++i )
 			illuminationNames[ i ] = illuminations.get( i ).getName();
-		
+
+		if ( defaultTimepointChoice >= timepointNames.length )
+			defaultTimepointChoice = 0;
+
+		if ( defaultAngleChoice >= angleNames.length )
+			defaultAngleChoice = 0;
+
+		if ( defaultIlluminationChoice >= illuminationNames.length )
+			defaultIlluminationChoice = 0;
+
 		gd.addMessage( text );
 		gd.addChoice( "Timepoint", timepointNames, timepointNames[ defaultTimepointChoice ] );
 		gd.addChoice( "Angle", angleNames, angleNames[ defaultAngleChoice ] );
