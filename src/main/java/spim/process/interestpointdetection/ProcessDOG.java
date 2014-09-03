@@ -103,13 +103,14 @@ public class ProcessDOG
 		final double[] sigma2 = new double[]{ sigmaStepsDiffX[1], sigmaStepsDiffY[1], sigmaStepsDiffZ[1] };
 
 		// compute difference of gaussian
-
-		final DifferenceOfGaussianNewPeakFinder dog;
+		DifferenceOfGaussianNewPeakFinder dog;
 		
 		if ( deviceList == null )
 			dog = new DifferenceOfGaussianNewPeakFinder( img, new OutOfBoundsStrategyMirrorFactory<FloatType>(), sigma1, sigma2, minInitialPeakValue, K_MIN1_INV );
 		else
 			dog = new DifferenceOfGaussianCUDA( cuda, percentGPUMem, deviceList, img, imglib2img, accurateCUDA, sigma1, sigma2, minInitialPeakValue, K_MIN1_INV );
+
+		dog.setComputeConvolutionsParalell( false );
 
 		// do quadratic fit??
 		if ( localization == 1 )
@@ -126,6 +127,7 @@ public class ProcessDOG
 			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Computing DoG image (GPU)." );
 		
 		dog.process();
+
 		final ArrayList< SimplePeak > peaks = dog.getSimplePeaks();
 
 		/*
@@ -164,6 +166,10 @@ public class ProcessDOG
 		}
 		
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Found " + finalPeaks.size() + " peaks." );
+
+		// explicitly call the garbage collection as there are some outofmemory issues when processing many timepoints
+		dog = null;
+		System.gc();
 
 		return finalPeaks;
 	}
