@@ -8,8 +8,6 @@ import ij.plugin.PlugIn;
 
 import java.awt.AWTEvent;
 import java.awt.Choice;
-import java.awt.Color;
-import java.awt.Font;
 import java.awt.event.ItemEvent;
 import java.io.File;
 import java.util.ArrayList;
@@ -72,15 +70,15 @@ public class Define_Multi_View_Dataset implements PlugIn
 			defaultDatasetDef = 0;
 		
 		gd1.addChoice( "Type_of_dataset: ", titles, titles[ defaultDatasetDef ] );
-		Choice choice = (Choice)gd1.getChoices().lastElement();
-		gd1.addStringField( "XML_filename_", defaultXMLName, 30 );
-		
+		//Choice choice = (Choice)gd1.getChoices().lastElement();
+		gd1.addStringField( "XML_filename", defaultXMLName, 30 );
+		/*
 		final MyMultiLineLabel label = MyMultiLineLabel.addMessage( gd1,
 				formatEntry( datasetDefinitions.get( defaultDatasetDef ).getExtendedDescription(), numCharacters, numLinesDocumentation ),
 				new Font( Font.MONOSPACED, Font.PLAIN, 11 ),
 				Color.BLACK );
 						
-		addListeners( gd1, choice, label, datasetDefinitions );
+		addListeners( gd1, choice, label, datasetDefinitions );*/
 		
 		GUIHelper.addWebsite( gd1 );
 		
