@@ -607,7 +607,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			gd.addStringField( "Acquisition_angles_", defaultAngles, 15 );
 
 		gd.addChoice( "Calibration_Type", calibrationChoice1, calibrationChoice1[ defaultCalibration1 ] );
-		gd.addChoice( "Calibration_Definition", calibrationChoice2, calibrationChoice1[ defaultCalibration2 ] );
+		gd.addChoice( "Calibration_Definition", calibrationChoice2, calibrationChoice2[ defaultCalibration2 ] );
 
 		gd.addChoice( "ImgLib2_data_container", imglib2Container, imglib2Container[ defaultContainer ] );
 		gd.addMessage(
