@@ -258,7 +258,13 @@ public class Visualize_Detections implements PlugIn
 				map.put( ip.getId(), ip );
 			
 			if ( ipl.getCorrespondingInterestPoints() == null || ipl.getCorrespondingInterestPoints().size() == 0 )
-				ipl.loadCorrespondingInterestPoints();
+			{
+				if ( !ipl.loadCorrespondingInterestPoints() )
+				{
+					IOFunctions.println( "No corresponding detections available, the dataset was not registered using these detections." );
+					return s;
+				}
+			}
 
 			IOFunctions.println( "Visualizing " + ipl.getCorrespondingInterestPoints().size() + " corresponding detections." );
 			
