@@ -93,17 +93,20 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	/* new int[]{ t, c, i, a } - indices */
 	protected ArrayList< int[] > exceptionIds;
 	
-	protected String[] calibrationChoice = new String[]{
-			"Same voxel-size for all views (load from first file)",
-			"Same voxel-size for all views (user defined)",
-			"Different voxel-sizes for each view (load from files)",
-			"Different voxel-sizes for each view (user defined)" };
+	protected String[] calibrationChoice1 = new String[]{
+			"Same voxel-size for all views",
+			"Different voxel-sizes for each view" };
+	protected String[] calibrationChoice2 = new String[]{
+			"Load voxel-size(s) from file(s)",
+			"Load voxel-size(s) from file(s) and display for verification",
+			"User define voxel-size(s)" };
 	public static String[] imglib2Container = new String[]{ "ArrayImg (faster)", "CellImg (slower, larger files supported)" };
 
 	public static int defaultContainer = 0;
 	public ImgFactory< ? extends NativeType< ? > > imgFactory;
-	public static int defaultCalibration = 0;
-	public int calibation;
+	public static int defaultCalibration1 = 0;
+	public static int defaultCalibration2 = 1;
+	public int calibration1, calibration2;
 	
 	protected HashMap< ViewSetupPrecursor, Calibration > calibrations = new HashMap< ViewSetupPrecursor, Calibration >();
 	
@@ -176,7 +179,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		{
 			if ( !queryGeneralInformation() )
 				return false;
-			
+
 			if ( defaultFileNamePattern == null )
 				defaultFileNamePattern = assembleDefaultPattern();
 
@@ -185,10 +188,10 @@ public abstract class StackList implements MultiViewDatasetDefinition
 
 			if ( showDebugFileNames && !debugShowFiles() )
 				return false;
-			
-			if ( ( calibation == 0 && !loadFirstCalibration() ) || ( calibation == 2 && !loadAllCalibrations() ) )
+
+			if ( ( calibration1 == 0 && calibration2 < 2 && !loadFirstCalibration() ) || ( calibration1 == 1  && calibration2 < 2 && !loadAllCalibrations() ) )
 				return false;
-			
+
 			if ( !queryDetails() )
 				return false;
 		} 
@@ -197,7 +200,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			IOFunctions.println( e.toString() );
 			return false;
 		}
-				
+
 		return true;
 	}
 
@@ -383,9 +386,14 @@ public abstract class StackList implements MultiViewDatasetDefinition
 
 	protected boolean queryDetails()
 	{
-		final GenericDialog gd = new GenericDialog( "Define dataset (3/3)" );
+		final GenericDialog gd;
 
-		if ( calibation < 2 )
+		if ( calibration2 == 0 )
+			gd = null;
+		else
+			gd = new GenericDialog( "Define dataset (3/3)" );
+
+		if ( calibration1 == 0 ) // same voxel-size for all views
 		{
 			Calibration cal = null;
 			
@@ -394,28 +402,35 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			else
 				for ( final Calibration c : calibrations.values() )
 					cal = c;
-					
-			gd.addMessage( "Calibration (voxel size)", new Font( Font.SANS_SERIF, Font.BOLD, 14 ) );			
-			if ( calibation == 0 )
-				gd.addMessage( "(read from file)", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
-			gd.addMessage( "" );
-			
-			gd.addNumericField( "Pixel_distance_x", cal.calX, 5 );
-			gd.addNumericField( "Pixel_distance_y", cal.calY, 5 );
-			gd.addNumericField( "Pixel_distance_z", cal.calZ, 5 );
-			gd.addStringField( "Pixel_unit", cal.calUnit );
-		
-			gd.showDialog();
-	
-			if ( gd.wasCanceled() )
-				return false;
 
-			cal.calX = gd.getNextNumber();
-			cal.calY = gd.getNextNumber();
-			cal.calZ = gd.getNextNumber();
+			if ( calibration2 > 0 ) // user define or verify the values
+			{
+				gd.addMessage( "Calibration (voxel size)", new Font( Font.SANS_SERIF, Font.BOLD, 14 ) );			
+				if ( calibration2 == 1 )
+					gd.addMessage( "(read from file)", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
+				gd.addMessage( "" );
+				
+				gd.addNumericField( "Pixel_distance_x", cal.calX, 5 );
+				gd.addNumericField( "Pixel_distance_y", cal.calY, 5 );
+				gd.addNumericField( "Pixel_distance_z", cal.calZ, 5 );
+				gd.addStringField( "Pixel_unit", cal.calUnit );
 			
-			cal.calUnit = gd.getNextString();
-			
+				gd.showDialog();
+		
+				if ( gd.wasCanceled() )
+					return false;
+	
+				cal.calX = gd.getNextNumber();
+				cal.calY = gd.getNextNumber();
+				cal.calZ = gd.getNextNumber();
+				
+				cal.calUnit = gd.getNextString();
+			}
+			else
+			{
+				IOFunctions.println( "Calibration (voxel-size) read from file: x:" + cal.calX + " y:" + cal.calY + " z:" + cal.calZ + " " + cal.calUnit );
+			}
+
 			// same calibrations for all views
 			calibrations.clear();			
 			for ( int c = 0; c < channelNameList.size(); ++c )
@@ -423,13 +438,16 @@ public abstract class StackList implements MultiViewDatasetDefinition
 					for ( int a = 0; a < angleNameList.size(); ++a )
 						calibrations.put( new ViewSetupPrecursor( c, i, a ),  cal );
 		}
-		else
+		else // different voxel-size for all views
 		{
-			gd.addMessage( "Calibrations", new Font( Font.SANS_SERIF, Font.BOLD, 14 ) );
-			if ( calibation == 2 )
-				gd.addMessage( "(read from file)", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
-			gd.addMessage( "" );
-			
+			if ( calibration2 > 0 ) // user define or verify the values
+			{
+				gd.addMessage( "Calibrations", new Font( Font.SANS_SERIF, Font.BOLD, 14 ) );
+				if ( calibration2 == 1 )
+					gd.addMessage( "(read from file)", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
+				gd.addMessage( "" );
+			}
+
 			for ( int c = 0; c < channelNameList.size(); ++c )
 				for ( int i = 0; i < illuminationsNameList.size(); ++i )
 					for ( int a = 0; a < angleNameList.size(); ++a )
@@ -439,7 +457,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 
 						if ( cal == null )
 						{
-							if ( calibation == 2 )
+							if ( calibration2 < 2 ) // load from file
 							{
 								IOFunctions.println( "Could not read calibration for view: " + vsp );
 								IOFunctions.println( "Replacing with uniform calibration." );
@@ -449,36 +467,46 @@ public abstract class StackList implements MultiViewDatasetDefinition
 							calibrations.put( vsp, cal );
 						}
 
-						gd.addMessage( "View [" + vsp + "]" );
-						
-						gd.addNumericField( "Pixel_distance_x", cal.calX, 5 );
-						gd.addNumericField( "Pixel_distance_y", cal.calY, 5 );
-						gd.addNumericField( "Pixel_distance_z", cal.calZ, 5 );
-						gd.addStringField( "Pixel_unit", cal.calUnit );
+						if ( calibration2 > 0 ) // user define or verify the values
+						{
+							gd.addMessage( "View [" + vsp + "]" );
 
-						gd.addMessage( "" );
+							gd.addNumericField( "Pixel_distance_x", cal.calX, 5 );
+							gd.addNumericField( "Pixel_distance_y", cal.calY, 5 );
+							gd.addNumericField( "Pixel_distance_z", cal.calZ, 5 );
+							gd.addStringField( "Pixel_unit", cal.calUnit );
+	
+							gd.addMessage( "" );
+						}
+						else
+						{
+							IOFunctions.println( "Calibration (voxel-size) read from file x:" + cal.calX + " y:" + cal.calY + " z:" + cal.calZ + " " + cal.calUnit + " for view " + vsp );
+						}
 					}
-			
-			GUIHelper.addScrollBars( gd );
-			
-			gd.showDialog();
-			
-			if ( gd.wasCanceled() )
-				return false;
 
-			for ( int c = 0; c < channelNameList.size(); ++c )
-				for ( int i = 0; i < illuminationsNameList.size(); ++i )
-					for ( int a = 0; a < angleNameList.size(); ++a )
-					{
-						final ViewSetupPrecursor vsp = new ViewSetupPrecursor( c, i, a );
-						final Calibration cal = calibrations.get( vsp );
-						
-						cal.calX = gd.getNextNumber();
-						cal.calY = gd.getNextNumber();
-						cal.calZ = gd.getNextNumber();
-						
-						cal.calUnit = gd.getNextString();
-					}			
+			if ( calibration2 > 0 ) // user define or verify the values
+			{
+				GUIHelper.addScrollBars( gd );
+	
+				gd.showDialog();
+	
+				if ( gd.wasCanceled() )
+					return false;
+
+				for ( int c = 0; c < channelNameList.size(); ++c )
+					for ( int i = 0; i < illuminationsNameList.size(); ++i )
+						for ( int a = 0; a < angleNameList.size(); ++a )
+						{
+							final ViewSetupPrecursor vsp = new ViewSetupPrecursor( c, i, a );
+							final Calibration cal = calibrations.get( vsp );
+							
+							cal.calX = gd.getNextNumber();
+							cal.calY = gd.getNextNumber();
+							cal.calZ = gd.getNextNumber();
+							
+							cal.calUnit = gd.getNextString();
+						}
+			}
 		}
 		
 		return true;
@@ -577,14 +605,16 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		
 		if ( hasMultipleAngles > 0 )
 			gd.addStringField( "Acquisition_angles_", defaultAngles, 15 );
-		
-		gd.addChoice( "Calibration", calibrationChoice, calibrationChoice[ defaultCalibration ] );
-		
+
+		gd.addChoice( "Calibration_Type", calibrationChoice1, calibrationChoice1[ defaultCalibration1 ] );
+		gd.addChoice( "Calibration_Definition", calibrationChoice2, calibrationChoice2[ defaultCalibration2 ] );
+
 		gd.addChoice( "ImgLib2_data_container", imglib2Container, imglib2Container[ defaultContainer ] );
-		gd.addMessage( "Use ArrayImg if -ALL- input views are smaller than ~2048x2048x500 px (2^31 px), or if the\n" +
-					   "program throws an OutOfMemory exception while processing.  CellImg is slower, but more\n" +
-				       "memory efficient and supports much larger file sizes only limited by the RAM of the machine.", 
-				       new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
+		gd.addMessage(
+				"Use ArrayImg if -ALL- input views are smaller than ~2048x2048x500 px (2^31 px), or if the\n" +
+				"program throws an OutOfMemory exception while processing.  CellImg is slower, but more\n" +
+				"memory efficient and supports much larger file sizes only limited by the RAM of the machine.", 
+				new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
 		
 		gd.addCheckbox( "Show_list of filenames (to debug and it allows to deselect individual files)", showDebugFileNames );
 		gd.addMessage( "Note: this might take a few seconds if thousands of files are present", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
@@ -660,7 +690,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			else
 			{
 				replaceIlluminations = null;
-				numDigitsIlluminations = 0;				
+				numDigitsIlluminations = 0;
 			}
 		}
 
@@ -692,8 +722,9 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		angleNameList = ( NamePattern.parseNameString( angles, true ) );
 
 		exceptionIds = new ArrayList< int[] >();
-		
-		defaultCalibration = calibation = gd.getNextChoiceIndex();
+
+		defaultCalibration1 = calibration1 = gd.getNextChoiceIndex();
+		defaultCalibration2 = calibration2 = gd.getNextChoiceIndex();
 
 		defaultContainer = gd.getNextChoiceIndex();
 		
