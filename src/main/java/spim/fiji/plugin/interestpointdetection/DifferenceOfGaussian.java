@@ -319,7 +319,7 @@ public class DifferenceOfGaussian extends DifferenceOf implements GenericDialogA
 		return "DOG s=" + sigma[ channelId ] + " t=" + threshold[ channelId ] + " min=" + findMin[ channelId ] + " max=" + findMax[ channelId ] +
 				" imageSigmaX=" + imageSigmaX + " imageSigmaY=" + imageSigmaY + " imageSigmaZ=" + imageSigmaZ + " downsampleXY=" + downsampleXY +
 				" downsampleZ=" + downsampleZ + " additionalSigmaX=" + additionalSigmaX  + " additionalSigmaY=" + additionalSigmaY + 
-				" additionalSigmaZ=" + additionalSigmaZ;
+				" additionalSigmaZ=" + additionalSigmaZ + " minIntensity=" + minIntensity + " maxIntensity=" + maxIntensity;
 	}
 
 	@Override
