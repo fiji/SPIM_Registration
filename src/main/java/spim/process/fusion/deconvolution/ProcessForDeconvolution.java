@@ -17,15 +17,12 @@ import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
-import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.realtransform.AffineTransform3D;
-import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.ImgLib2Temp;
 import spim.fiji.plugin.fusion.BoundingBox;
@@ -37,6 +34,7 @@ import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
 import spim.process.fusion.export.DisplayImage;
+import spim.process.fusion.weightedavg.ProcessFusion;
 import spim.process.fusion.weights.Blending;
 
 /**
@@ -167,7 +165,7 @@ public class ProcessForDeconvolution
 			if ( weightsOnly && !extractPSFs )
 				img = null;
 			else
-				img = getImage( new FloatType(), spimData, inputData, true );
+				img = ProcessFusion.getImage( new FloatType(), spimData, inputData, true );
 						
 			// split up into many parts for multithreading
 			final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( fusedImg.size(), Runtime.getRuntime().availableProcessors() * 4 );
@@ -480,7 +478,7 @@ public class ProcessForDeconvolution
 	}
 
 	protected Blending getBlending( final Interval interval, final int[] blendingBorder, final int[] blendingRange, final ViewDescription desc )
-	{		
+	{
 		final float[] blending = new float[ 3 ];
 		final float[] border = new float[ 3 ];
 		
@@ -493,16 +491,5 @@ public class ProcessForDeconvolution
 		border[ 2 ] = blendingBorder[ 2 ];
 
 		return new Blending( interval, border, blending );
-	}
-
-	@SuppressWarnings("unchecked")
-	protected static < T extends RealType< T > > RandomAccessibleInterval< T > getImage( final T type, final SpimData2 spimData, final ViewId view, final boolean normalize )
-	{
-		if ( (RealType)type instanceof FloatType )
-			return (RandomAccessibleInterval)spimData.getSequenceDescription().getImgLoader().getFloatImage( view, normalize );
-		else if ( (RealType)type instanceof UnsignedShortType )
-			return (RandomAccessibleInterval)spimData.getSequenceDescription().getImgLoader().getImage( view );
-		else
-			return null;
 	}
 }

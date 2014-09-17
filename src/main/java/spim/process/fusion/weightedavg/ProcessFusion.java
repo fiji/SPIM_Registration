@@ -3,12 +3,14 @@ package spim.process.fusion.weightedavg;
 import java.util.ArrayList;
 import java.util.List;
 
+import bdv.img.hdf5.Hdf5ImageLoader;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccessible;
@@ -20,6 +22,7 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.complex.ComplexFloatType;
+import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.ImgLib2Temp;
 import spim.fiji.plugin.fusion.BoundingBox;
@@ -149,4 +152,18 @@ public abstract class ProcessFusion
 		return transforms;
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public static < T extends RealType< T > > RandomAccessibleInterval< T > getImage( final T type, final SpimData2 spimData, final ViewId view, final boolean normalize )
+	{
+		ImgLoader< ? > imgLoader = spimData.getSequenceDescription().getImgLoader();
+		if ( imgLoader instanceof Hdf5ImageLoader )
+			imgLoader = ( ( Hdf5ImageLoader ) imgLoader ).getMonolithicImageLoader();
+
+		if ( (RealType)type instanceof FloatType )
+			return (RandomAccessibleInterval)imgLoader.getFloatImage( view, normalize );
+		else if ( (RealType)type instanceof UnsignedShortType )
+			return (RandomAccessibleInterval)imgLoader.getImage( view );
+		else
+			return null;
+	}
 }

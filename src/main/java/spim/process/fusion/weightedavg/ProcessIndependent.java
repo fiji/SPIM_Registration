@@ -11,10 +11,8 @@ import java.util.concurrent.Executors;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
-import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
-import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessible;
@@ -23,8 +21,6 @@ import net.imglib2.img.Img;
 import net.imglib2.interpolation.InterpolatorFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.integer.UnsignedShortType;
-import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.FusionHelper;
@@ -32,7 +28,6 @@ import spim.process.fusion.ImagePortion;
 import spim.process.fusion.export.FixedNameImgTitler;
 import spim.process.fusion.export.ImgExport;
 import spim.process.fusion.export.ImgExportTitle;
-import bdv.img.hdf5.Hdf5ImageLoader;
 
 /**
  * Fused individual images for each input stack, uses the exporter directly
@@ -104,7 +99,7 @@ public class ProcessIndependent extends ProcessFusion
 			
 			// same as in the paralell fusion now more or less
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Requesting Img from ImgLoader (tp=" + inputData.getTimePointId() + ", setup=" + inputData.getViewSetupId() + ")" );
-			final RandomAccessibleInterval< T > img = getImage( type, spimData, inputData );
+			final RandomAccessibleInterval< T > img = getImage( type, spimData, inputData, false );
 						
 			// split up into many parts for multithreading
 			final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( fusedImg.size(), Runtime.getRuntime().availableProcessors() * 4 );
@@ -145,20 +140,5 @@ public class ProcessIndependent extends ProcessFusion
 	protected int numBatches( final int numViews, final int sequentialViews )
 	{
 		return numViews / sequentialViews + Math.min( numViews % sequentialViews, 1 );
-	}
-
-	@SuppressWarnings("unchecked")
-	protected static < T extends RealType< T > > RandomAccessibleInterval< T > getImage( final T type, final SpimData2 spimData, final ViewId view )
-	{
-		ImgLoader< ? > imgLoader = spimData.getSequenceDescription().getImgLoader();
-		if ( imgLoader instanceof Hdf5ImageLoader )
-			imgLoader = ( ( Hdf5ImageLoader ) imgLoader ).getMonolithicImageLoader();
-
-		if ( (RealType) type instanceof FloatType )
-			return (RandomAccessibleInterval)imgLoader.getFloatImage( view, false );
-		else if ( (RealType)type instanceof UnsignedShortType )
-			return (RandomAccessibleInterval)imgLoader.getImage( view );
-		else
-			return null;
 	}
 }

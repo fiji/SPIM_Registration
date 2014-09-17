@@ -10,10 +10,8 @@ import java.util.concurrent.Executors;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
-import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
-import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
@@ -22,13 +20,11 @@ import net.imglib2.img.Img;
 import net.imglib2.interpolation.InterpolatorFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
-import bdv.img.hdf5.Hdf5ImageLoader;
 
 public class ProcessParalell extends ProcessFusion
 {	
@@ -80,7 +76,7 @@ public class ProcessParalell extends ProcessFusion
 		{
 			final ViewDescription vd = inputData.get( i );
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Requesting Img from ImgLoader (tp=" + vd.getTimePointId() + ", setup=" + vd.getViewSetupId() + ")" );
-			imgs.add( getImage( type, spimData, vd ) );
+			imgs.add( getImage( type, spimData, vd, false ) );
 		}
 		
 		// get all weighting methods
@@ -134,20 +130,5 @@ public class ProcessParalell extends ProcessFusion
 		taskExecutor.shutdown();
 		
 		return fusedImg;
-	}
-
-	@SuppressWarnings("unchecked")
-	protected static < T extends RealType< T > > RandomAccessibleInterval< T > getImage( final T type, final SpimData2 spimData, final ViewId view )
-	{
-		ImgLoader< ? > imgLoader = spimData.getSequenceDescription().getImgLoader();
-		if ( imgLoader instanceof Hdf5ImageLoader )
-			imgLoader = ( ( Hdf5ImageLoader ) imgLoader ).getMonolithicImageLoader();
-
-		if ( (RealType)type instanceof FloatType )
-			return (RandomAccessibleInterval)imgLoader.getFloatImage( view, false );
-		else if ( (RealType)type instanceof UnsignedShortType )
-			return (RandomAccessibleInterval)imgLoader.getImage( view );
-		else
-			return null;
 	}
 }
