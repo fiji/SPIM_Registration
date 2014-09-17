@@ -73,7 +73,9 @@ public class Resave_HDF5 implements PlugIn
 
 		Generic_Resave_HDF5.lastExportPath = LoadParseQueryXML.defaultXMLfilename;
 
-		final Parameters params = Generic_Resave_HDF5.getParameters( perSetupExportMipmapInfo.get( 0 ), true );
+		final int firstviewSetupId = xml.getData().getSequenceDescription().getViewSetupsOrdered().get( 0 ).getId();
+		final Parameters params = Generic_Resave_HDF5.getParameters( perSetupExportMipmapInfo.get( firstviewSetupId ), true );
+
 		if ( params == null )
 			return;
 

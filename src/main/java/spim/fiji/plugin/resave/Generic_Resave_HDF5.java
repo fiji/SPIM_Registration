@@ -89,7 +89,8 @@ public class Generic_Resave_HDF5 implements PlugIn
 
 		final Map< Integer, ExportMipmapInfo > perSetupExportMipmapInfo = ProposeMipmaps.proposeMipmaps( spimData.getSequenceDescription() );
 
-		final Parameters params = getParameters( perSetupExportMipmapInfo.get( 0 ), true );
+		final int firstviewSetupId = spimData.getSequenceDescription().getViewSetupsOrdered().get( 0 ).getId();
+		final Parameters params = getParameters( perSetupExportMipmapInfo.get( firstviewSetupId ), true );
 		if ( params == null )
 			return;
 
