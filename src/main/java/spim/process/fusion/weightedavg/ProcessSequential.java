@@ -234,10 +234,10 @@ public class ProcessSequential extends ProcessFusion
 		if ( imgLoader instanceof Hdf5ImageLoader )
 			imgLoader = ( ( Hdf5ImageLoader ) imgLoader ).getMonolithicImageLoader();
 
-		if ( type instanceof FloatType )
-			return (RandomAccessibleInterval< T >)imgLoader.getFloatImage( view, false );
-		else if ( type instanceof UnsignedShortType )
-			return (RandomAccessibleInterval< T >)imgLoader.getImage( view );
+		if ( (RealType)type instanceof FloatType )
+			return (RandomAccessibleInterval)imgLoader.getFloatImage( view, false );
+		else if ( (RealType)type instanceof UnsignedShortType )
+			return (RandomAccessibleInterval)imgLoader.getImage( view );
 		else
 			return null;
 	}

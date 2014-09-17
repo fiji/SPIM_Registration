@@ -498,10 +498,10 @@ public class ProcessForDeconvolution
 	@SuppressWarnings("unchecked")
 	protected static < T extends RealType< T > > RandomAccessibleInterval< T > getImage( final T type, final SpimData2 spimData, final ViewId view, final boolean normalize )
 	{
-		if ( type instanceof FloatType )
-			return (RandomAccessibleInterval< T >)spimData.getSequenceDescription().getImgLoader().getFloatImage( view, normalize );
-		else if ( type instanceof UnsignedShortType )
-			return (RandomAccessibleInterval< T >)spimData.getSequenceDescription().getImgLoader().getImage( view );
+		if ( (RealType)type instanceof FloatType )
+			return (RandomAccessibleInterval)spimData.getSequenceDescription().getImgLoader().getFloatImage( view, normalize );
+		else if ( (RealType)type instanceof UnsignedShortType )
+			return (RandomAccessibleInterval)spimData.getSequenceDescription().getImgLoader().getImage( view );
 		else
 			return null;
 	}
