@@ -39,7 +39,7 @@ public abstract class AbstractImgLoader implements ImgLoader< UnsignedShortType 
 			final double calX, final double calY, final double calZ )
 	{
 		imageMetaDataCache.put( viewId, new ValuePair< Dimensions, VoxelDimensions >(
-				new FinalDimensions( w, h, d ),
+				new FinalDimensions( new long[] { w, h, d } ),
 				new FinalVoxelDimensions( "", calX, calY, calZ ) ) );
 
 		// links the viewSetupId to the last added viewId, overwrites earlier entries
