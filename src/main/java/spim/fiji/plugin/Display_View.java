@@ -74,7 +74,7 @@ public class Display_View implements PlugIn
 			return;
 		
 		final Angle angle = angles.get( defaultAngleChoice = gd.getNextChoiceIndex() );
-		final Channel channel = channels.get( defaultAngleChoice = gd.getNextChoiceIndex() );
+		final Channel channel = channels.get( defaultChannelChoice = gd.getNextChoiceIndex() );
 		final Illumination illumination = illuminations.get( defaultIlluminationChoice = gd.getNextChoiceIndex() );
 		final TimePoint tp = timepoints.get( defaultTimepointChoice = gd.getNextChoiceIndex() );
 		final int pixelType = defaultPixelType = gd.getNextChoiceIndex();
