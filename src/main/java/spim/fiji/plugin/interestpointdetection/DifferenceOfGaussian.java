@@ -274,6 +274,9 @@ public class DifferenceOfGaussian extends DifferenceOf implements GenericDialogA
 		
 		imp.close();
 
+		if ( idog.wasCanceled() )
+			return false;
+
 		this.sigma[ channelId ] = defaultSigma[ channelId ] = idog.getInitialSigma();
 		this.threshold[ channelId ] = defaultThreshold[ channelId ] = idog.getThreshold();
 		this.findMin[ channelId ] = defaultFindMin[ channelId ] = idog.getLookForMinima();

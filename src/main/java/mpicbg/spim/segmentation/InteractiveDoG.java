@@ -110,7 +110,9 @@ public class InteractiveDoG implements PlugIn
 	public static enum ValueChange { SIGMA, THRESHOLD, SLICE, ROI, MINMAX, ALL }
 	
 	boolean isFinished = false;
+	boolean wasCanceled = false;
 	public boolean isFinished() { return isFinished; }
+	public boolean wasCanceled() { return wasCanceled; }
 	public double getInitialSigma() { return sigma; }
 	public void setInitialSigma( final float value ) 
 	{ 
@@ -488,7 +490,7 @@ public class InteractiveDoG implements PlugIn
 	protected void displaySliders()
 	{
 		final Frame frame = new Frame("Adjust Difference-of-Gaussian Values");
-		frame.setSize( 400, 300 );
+		frame.setSize( 400, 330 );
 
 		/* Instantiation */
 		final GridBagLayout layout = new GridBagLayout();
@@ -512,6 +514,7 @@ public class InteractiveDoG implements PlugIn
 	    final Label thresholdText = new Label( "Threshold = " + this.threshold, Label.CENTER );
 	    final Button apply = new Button( "Apply to Stack (will take some time)" );
 	    final Button button = new Button( "Done" );
+	    final Button cancel = new Button( "Cancel" );
 	    
 	    final Checkbox sigma2Enable = new Checkbox( "Enable Manual Adjustment of Sigma 2 ", enableSigma2 );
 	    final Checkbox min = new Checkbox( "Look for Minima (red)", lookForMinima );
@@ -563,11 +566,16 @@ public class InteractiveDoG implements PlugIn
 	    c.insets = new Insets(10,150,0,150);
 	    frame.add( button, c );
 
+	    ++c.gridy;
+	    c.insets = new Insets(10,150,0,150);
+	    frame.add( cancel, c );
+
 	    /* Configuration */
 	    sigma1.addAdjustmentListener( new SigmaListener( sigmaText1, sigmaMin, sigmaMax, scrollbarSize, sigma1, sigma2, sigmaText2 ) );
 	    sigma2.addAdjustmentListener( new Sigma2Listener( sigmaMin, sigmaMax, scrollbarSize, sigma2, sigmaText2 ) );
 	    threshold.addAdjustmentListener( new ThresholdListener( thresholdText, thresholdMin, thresholdMax ) );
-	    button.addActionListener( new DoneButtonListener( frame ) );
+	    button.addActionListener( new FinishedButtonListener( frame, false ) );
+	    cancel.addActionListener( new FinishedButtonListener( frame, true ) );
 		apply.addActionListener( new ApplyButtonListener() );
 		min.addItemListener( new MinListener() );
 		max.addItemListener( new MaxListener() );
@@ -736,18 +744,21 @@ public class InteractiveDoG implements PlugIn
 		}
 	}
 
-	protected class DoneButtonListener implements ActionListener
+	protected class FinishedButtonListener implements ActionListener
 	{
 		final Frame parent;
+		final boolean cancel;
 		
-		public DoneButtonListener( Frame parent )
+		public FinishedButtonListener( Frame parent, final boolean cancel )
 		{
 			this.parent = parent;
+			this.cancel = cancel;
 		}
 		
 		@Override
 		public void actionPerformed( final ActionEvent arg0 ) 
-		{ 
+		{
+			wasCanceled = cancel;
 			close( parent, sliceObserver, imp, roiListener );
 		}
 	}
@@ -956,7 +967,7 @@ public class InteractiveDoG implements PlugIn
 	{
 		new ImageJ();
 		
-		ImagePlus imp = new Opener().openImage( "/Users/preibischs/Documents/Microscopy/SPIM/HisYFP-SPIM/spim_TL18_Angle0_cropped.tif" );
+		ImagePlus imp = new Opener().openImage( "/home/preibisch/Documents/Microscopy/SPIM/Harvard/f11e6/exp3/img_Ch0_Angle0.tif.zip" );
 		//ImagePlus imp = new Opener().openImage( "D:/Documents and Settings/Stephan/My Documents/Downloads/1-315--0.08-isotropic-subvolume/1-315--0.08-isotropic-subvolume.tif" );
 		imp.show();
 		

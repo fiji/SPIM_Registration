@@ -99,7 +99,9 @@ public class InteractiveIntegral implements PlugIn
 	public static enum ValueChange { RADIUS, THRESHOLD, SLICE, MINMAX, ALL }
 	
 	boolean isFinished = false;
+	boolean wasCanceled = false;
 	public boolean isFinished() { return isFinished; }
+	public boolean wasCanceld() { return wasCanceled; }
 	public void setInitialRadii( int r1, int r2 ) 
 	{
 		if ( r2 <= r1 )
@@ -582,7 +584,7 @@ MainLoop:           while ( cursor.hasNext() )
 	protected void displaySliders()
 	{
 		final Frame frame = new Frame( "Adjust Difference-of-Mean Values" );
-		frame.setSize( 400, 300 );        
+		frame.setSize( 400, 330 );
 		
 		/* Instantiation */		
 		final GridBagLayout layout = new GridBagLayout();
@@ -605,7 +607,8 @@ MainLoop:           while ( cursor.hasNext() )
 	    	    
 	    final Label thresholdText = new Label( "Threshold = " + this.threshold, Label.CENTER );
 	    final Button button = new Button( "Done" );
-	    
+	    final Button cancel = new Button( "Cancel" );
+
 	    final Checkbox radius2Enable = new Checkbox( "Enable Manual Adjustment of Radius 2 ", enableRadius2 );
 	    final Checkbox min = new Checkbox( "Look for Minima (red)", lookForMinima );
 	    final Checkbox max = new Checkbox( "Look for Maxima (green)", lookForMaxima );
@@ -652,11 +655,16 @@ MainLoop:           while ( cursor.hasNext() )
 	    c.insets = new Insets(10,150,0,150);
 	    frame.add( button, c );
 
+	    ++c.gridy;
+	    c.insets = new Insets(10,150,0,150);
+	    frame.add( cancel, c );
+
 	    /* Configuration */
 	    radius1.addAdjustmentListener( new Radius1Listener( radiusText1, radiusMin, radiusMax, scrollbarSize, radius1, radius2, radiusText2 ) );
 	    radius2.addAdjustmentListener( new Radius2Listener( radiusMin, radiusMax, scrollbarSize, radius2, radiusText2 ) );
 	    threshold.addAdjustmentListener( new ThresholdListener( thresholdText, thresholdMin, thresholdMax ) );
-	    button.addActionListener( new DoneButtonListener( frame ) );
+	    button.addActionListener( new FinishButtonListener( frame, false ) );
+	    cancel.addActionListener( new FinishButtonListener( frame, true ) );
 		min.addItemListener( new MinListener() );
 		max.addItemListener( new MaxListener() );
 		radius2Enable.addItemListener( new EnableListener( radius2, radiusText2 ) );
@@ -747,18 +755,21 @@ MainLoop:           while ( cursor.hasNext() )
 		}
 	}
 
-	protected class DoneButtonListener implements ActionListener
+	protected class FinishButtonListener implements ActionListener
 	{
 		final Frame parent;
+		final boolean cancel;
 		
-		public DoneButtonListener( Frame parent )
+		public FinishButtonListener( final Frame parent, final boolean cancel )
 		{
 			this.parent = parent;
+			this.cancel = cancel;
 		}
 		
 		@Override
 		public void actionPerformed( final ActionEvent arg0 ) 
-		{ 
+		{
+			wasCanceled = cancel;
 			close( parent, sliceObserver, imp );
 		}
 	}

@@ -256,7 +256,10 @@ public class DifferenceOfMean extends DifferenceOf
 			SimpleMultiThreading.threadWait( 100 );
 		
 		imp.close();
-			
+
+		if ( ii.wasCanceld() )
+			return false;
+
 		this.radius1[ channelId ] = defaultRadius1[ channelId ] = ii.getRadius1();
 		this.radius2[ channelId ] = defaultRadius2[ channelId ] = ii.getRadius2();
 		this.threshold[ channelId ] = defaultThreshold[ channelId ] = ii.getThreshold();
