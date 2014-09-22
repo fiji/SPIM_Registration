@@ -403,23 +403,20 @@ public class Apply_Transformation implements PlugIn
 		final HashMap< Entry, List< Angle > > angles = getAngles( result.getAnglesToProcess(), sameModelAngles );
 		
 		final int numEntries = getNumEntries( timepoints, channels, illums, angles );
-		
-		if ( defaultModels == null )
+
+		IOFunctions.println( "Querying " + numEntries + " different transformation models." );
+
+		if ( defaultModels == null || defaultModels.size() == 0 || defaultModels.size() != numEntries )
 		{
 			defaultModels = new ArrayList< double[] >();
-			
+
 			for ( int i = 0; i < numEntries; ++i )
 				defaultModels.add( new double[]{ 1, 0, 0, 0,    0, 1, 0, 0,    0, 0, 1, 0 } );
 		}
-		else if ( defaultModels.size() < numEntries )
-		{
-			for ( int i = defaultModels.size(); i < numEntries; ++i )
-				defaultModels.add( new double[]{ 1, 0, 0, 0,    0, 1, 0, 0,    0, 0, 1, 0 } );
-		}
-		
+
 		final GenericDialog gd;
 		
-		if ( model == 0 )
+		if ( model == 0 ) // identity transform
 		{
 			gd = null;
 		}
@@ -481,7 +478,7 @@ public class Apply_Transformation implements PlugIn
 		if ( model == 0 )
 		{
 			for ( int j = 0; j < numEntries; ++j )
-				models.add( null );			
+				models.add( null );
 		}
 		else if ( model == 1 )
 		{
@@ -510,7 +507,7 @@ public class Apply_Transformation implements PlugIn
 				else
 				{
 					models.add( v );
-					modelDescriptions.add( "Rigid/Affine by matrix" );					
+					modelDescriptions.add( "Rigid/Affine by matrix" );
 				}
 			}
 		}
