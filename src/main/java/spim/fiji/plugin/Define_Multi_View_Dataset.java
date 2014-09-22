@@ -17,6 +17,7 @@ import spim.fiji.datasetmanager.LightSheetZ1;
 import spim.fiji.datasetmanager.MultiViewDatasetDefinition;
 import spim.fiji.datasetmanager.StackListImageJ;
 import spim.fiji.datasetmanager.StackListLOCI;
+import spim.fiji.plugin.queryXML.GenericLoadParseQueryXML;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.plugin.util.MyMultiLineLabel;
@@ -111,7 +112,7 @@ public class Define_Multi_View_Dataset implements PlugIn
 			{
 				io.save( spimData, xml );
 				IOFunctions.println( "Saved xml '" + xml + "'." );
-				LoadParseQueryXML.defaultXMLfilename = xml;
+				GenericLoadParseQueryXML.defaultXMLfilename = xml;
 			}
 			catch ( Exception e )
 			{

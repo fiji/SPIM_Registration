@@ -45,7 +45,7 @@ import fiji.util.gui.GenericDialogPlus;
  */
 public class GenericLoadParseQueryXML< AS extends AbstractSpimData< S >, S extends AbstractSequenceDescription< V, D, L >, V extends BasicViewSetup, D extends BasicViewDescription< V >, L extends BasicImgLoader< ? > >
 {
-	public static String defaultXMLfilename = "dataset.xml";
+	public static String defaultXMLfilename = "";
 		
 	protected static String goodMsg1 = "The selected XML file was parsed successfully";
 	protected static String warningMsg1 = "The selected file does not appear to be an xml. Press OK to try to parse anyways.";
