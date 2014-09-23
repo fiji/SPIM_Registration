@@ -55,10 +55,9 @@ public class GlobalOptimizationSubset
 			final GlobalOptimizationType type,
 			final SpimData2 spimData,
 			final List< ChannelProcess > channelsToProcess,
-			final String description,
-			final boolean considerTimePointsAsUnit )
+			final String description )
 	{
-		final HashMap< ViewId, Tile< M > > tiles = GlobalOpt.compute( model, type, this, considerTimePointsAsUnit );
+		final HashMap< ViewId, Tile< M > > tiles = GlobalOpt.compute( model, type, this, type.considerTimePointsAsUnit() );
 
 		if ( tiles == null )
 			return false;

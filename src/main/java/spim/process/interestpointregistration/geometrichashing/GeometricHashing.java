@@ -10,12 +10,10 @@ import mpicbg.spim.data.sequence.TimePoint;
 import spim.fiji.plugin.Interest_Point_Registration.RegistrationType;
 import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
 import spim.fiji.spimdata.SpimData2;
-import spim.process.interestpointregistration.PairwiseMatch;
 import spim.process.interestpointregistration.ChannelProcess;
+import spim.process.interestpointregistration.PairwiseMatch;
 import spim.process.interestpointregistration.RANSACParameters;
 import spim.process.interestpointregistration.TransformationModel;
-import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationSubset;
-import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationType;
 
 public class GeometricHashing extends InterestPointRegistration
 {
@@ -41,16 +39,8 @@ public class GeometricHashing extends InterestPointRegistration
 		return new GeometricHashingPairwise( pair, model, description, ransacParams );
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	protected boolean runGlobalOpt(final GlobalOptimizationSubset subset, 
-			final GlobalOptimizationType registrationType,
-			final SpimData2 spimData,
-			final List< ChannelProcess > channelsToProcess,
-			final boolean considerTimePointsAsUnit )
-	{
-		return subset.computeGlobalOpt( model.getModel(), registrationType, spimData, getChannelsToProcess(), getDescription() + ", " + model.getDescription(), considerTimePointsAsUnit );
-	}
+	protected TransformationModel getTransformationModel() { return model; }
 
 	@Override
 	public GeometricHashing newInstance(

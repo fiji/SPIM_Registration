@@ -18,6 +18,7 @@ import spim.fiji.plugin.Interest_Point_Registration.RegistrationType;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.interestpointregistration.PairwiseMatch;
 import spim.process.interestpointregistration.ChannelProcess;
+import spim.process.interestpointregistration.TransformationModel;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationSubset;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationType;
 
@@ -99,19 +100,29 @@ public abstract class InterestPointRegistration
 	protected abstract Callable< PairwiseMatch > pairwiseMatchingInstance( final PairwiseMatch pair, final String description );
 
 	/**
+	 * @return - the transformation model to be used for the global optimization
+	 */
+	protected abstract TransformationModel getTransformationModel();
+
+	/**
+	 * Run the global optimization on the subset
+	 * 
 	 * @param subset
 	 * @param registrationType
-	 * @param spimData
-	 * @param channelsToProcess
-	 * @param considerTimePointsAsUnit
 	 * @return - true if the global optimization could be run successfully, otherwise false (XML will not be saved if false)
 	 */
-	protected abstract boolean runGlobalOpt(
-			final GlobalOptimizationSubset subset, 
-			final GlobalOptimizationType registrationType,
-			final SpimData2 spimData,
-			final List< ChannelProcess > channelsToProcess,
-			final boolean considerTimePointsAsUnit );
+	@SuppressWarnings("unchecked")
+	final protected boolean runGlobalOpt(
+			final GlobalOptimizationSubset subset,
+			final GlobalOptimizationType registrationType )
+	{
+		return subset.computeGlobalOpt(
+				getTransformationModel().getModel(),
+				registrationType,
+				getSpimData(),
+				getChannelsToProcess(), 
+				getDescription() + ", " + getTransformationModel().getDescription() );
+	}
 
 	protected SpimData2 getSpimData() { return spimData1; }
 	public List< Angle > getAnglesToProcess() { return anglesToProcess1; }
@@ -205,7 +216,7 @@ public abstract class InterestPointRegistration
 			if ( registrationType.save() )
 				registrationType.saveCorrespondences( spimData, getChannelsToProcess(), subset );
 			
-			if ( runGlobalOpt( subset, registrationType, spimData, getChannelsToProcess(), registrationType.considerTimePointsAsUnit() ) )
+			if ( runGlobalOpt( subset, registrationType ) )
 				++successfulRuns;
 		}
 		
