@@ -87,7 +87,7 @@ public class IterativeClosestPoint extends InterestPointRegistration< IterativeC
 	}
 
 	@Override
-	public InterestPointRegistration newInstance(
+	public IterativeClosestPoint newInstance(
 			final SpimData2 spimData,
 			final List< Angle > anglesToProcess,
 			final List< ChannelProcess > channelsToProcess,

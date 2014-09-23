@@ -61,7 +61,7 @@ public class RGLDM extends InterestPointRegistration< RGLDMPairwise >
 	}
 
 	@Override
-	public InterestPointRegistration newInstance(
+	public RGLDM newInstance(
 			final SpimData2 spimData,
 			final List< Angle > anglesToProcess,
 			final List< ChannelProcess > channelsToProcess,
