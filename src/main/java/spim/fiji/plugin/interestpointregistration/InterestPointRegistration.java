@@ -96,7 +96,7 @@ public abstract class InterestPointRegistration
 	 * @param description - a description String which pairs are compared
 	 * @return - the object that will perform a pairwise matching and can return a result
 	 */
-	protected abstract Callable< PairwiseMatch > getPairwiseMatching( final PairwiseMatch pair, final String description );
+	protected abstract Callable< PairwiseMatch > pairwiseMatchingInstance( final PairwiseMatch pair, final String description );
 
 	/**
 	 * @param subset
@@ -163,7 +163,7 @@ public abstract class InterestPointRegistration
 		    			" angle=" + viewB.getViewSetup().getAngle().getName() + ", ch=" + viewB.getViewSetup().getChannel().getName() +
 		    			", illum=" + viewB.getViewSetup().getIllumination().getName() + "]";
 				
-				tasks.add( getPairwiseMatching( pair, description ) );
+				tasks.add( pairwiseMatchingInstance( pair, description ) );
 			}
 			try
 			{

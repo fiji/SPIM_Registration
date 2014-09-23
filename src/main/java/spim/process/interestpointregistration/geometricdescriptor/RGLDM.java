@@ -43,7 +43,7 @@ public class RGLDM extends InterestPointRegistration
 	}
 
 	@Override
-	protected RGLDMPairwise getPairwiseMatching( final PairwiseMatch pair, final String description )
+	protected RGLDMPairwise pairwiseMatchingInstance( final PairwiseMatch pair, final String description )
 	{
 		return new RGLDMPairwise( pair, model, description, ransacParams, parameters );
 	}

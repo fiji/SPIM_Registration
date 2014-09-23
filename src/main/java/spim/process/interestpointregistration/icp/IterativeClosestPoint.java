@@ -41,7 +41,7 @@ public class IterativeClosestPoint extends InterestPointRegistration
 	}
 
 	@Override
-	protected IterativeClosestPointPairwise getPairwiseMatching( final PairwiseMatch pair, final String description)
+	protected IterativeClosestPointPairwise pairwiseMatchingInstance( final PairwiseMatch pair, final String description)
 	{
 		return new IterativeClosestPointPairwise( pair, model, description, parameters );
 	}

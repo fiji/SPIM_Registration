@@ -36,7 +36,7 @@ public class GeometricHashing3d extends InterestPointRegistration
 	}
 
 	@Override
-	protected GeometricHashing3dPairwise getPairwiseMatching( final PairwiseMatch pair, final String description )
+	protected GeometricHashing3dPairwise pairwiseMatchingInstance( final PairwiseMatch pair, final String description )
 	{
 		return new GeometricHashing3dPairwise( pair, model, description, ransacParams );
 	}
