@@ -22,7 +22,7 @@ import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizati
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
-public class IterativeClosestPoint extends InterestPointRegistration< IterativeClosestPointPairwise >
+public class IterativeClosestPoint extends InterestPointRegistration
 {
 	public static int defaultModel = 2;	
 	public static boolean defaultRegularize = false;

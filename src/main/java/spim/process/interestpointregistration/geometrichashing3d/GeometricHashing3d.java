@@ -17,7 +17,7 @@ import spim.process.interestpointregistration.TransformationModel;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationSubset;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationType;
 
-public class GeometricHashing3d extends InterestPointRegistration< GeometricHashing3dPairwise >
+public class GeometricHashing3d extends InterestPointRegistration
 {
 	public static int defaultModel = 2;	
 	public static boolean defaultRegularize = false;

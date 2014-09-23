@@ -23,7 +23,7 @@ import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizati
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
-public class RGLDM extends InterestPointRegistration< RGLDMPairwise >
+public class RGLDM extends InterestPointRegistration
 {
 	public static int defaultModel = 2;
 	public static boolean defaultRegularize = false;

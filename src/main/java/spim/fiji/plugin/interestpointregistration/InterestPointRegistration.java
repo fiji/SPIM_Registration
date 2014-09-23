@@ -26,7 +26,7 @@ import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizati
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
-public abstract class InterestPointRegistration< T extends Callable< ChannelInterestPointListPair > >
+public abstract class InterestPointRegistration
 {
 	final SpimData2 spimData1;
 	final List< Angle > anglesToProcess1;
@@ -68,7 +68,7 @@ public abstract class InterestPointRegistration< T extends Callable< ChannelInte
 	/**
 	 * @return - a new instance without any special properties
 	 */
-	public abstract InterestPointRegistration<T> newInstance(
+	public abstract InterestPointRegistration newInstance(
 			final SpimData2 spimData,
 			final List< Angle > anglesToProcess,
 			final List< ChannelProcess > channelsToProcess,
@@ -80,7 +80,7 @@ public abstract class InterestPointRegistration< T extends Callable< ChannelInte
 	 */
 	public abstract String getDescription();
 
-	protected abstract T getPairwiseMatching( final ChannelInterestPointListPair pair, final String description );
+	protected abstract Callable< ChannelInterestPointListPair > getPairwiseMatching( final ChannelInterestPointListPair pair, final String description );
 	
 	/**
 	 * @param subset
@@ -131,7 +131,7 @@ public abstract class InterestPointRegistration< T extends Callable< ChannelInte
 			final ArrayList< ChannelInterestPointListPair > pairs = subset.getViewPairs();
 			
 			final ExecutorService taskExecutor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
-			final ArrayList< T > tasks = new ArrayList< T >(); // your tasks
+			final ArrayList< Callable< ChannelInterestPointListPair > > tasks = new ArrayList< Callable< ChannelInterestPointListPair > >(); // your tasks
 			
 			for ( final ChannelInterestPointListPair pair : pairs )
 			{
