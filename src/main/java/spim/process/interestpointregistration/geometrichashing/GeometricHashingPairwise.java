@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.geometrichashing3d;
+package spim.process.interestpointregistration.geometrichashing;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -13,15 +13,15 @@ import spim.process.interestpointregistration.RANSAC;
 import spim.process.interestpointregistration.RANSACParameters;
 import spim.process.interestpointregistration.TransformationModel;
 
-public class GeometricHashing3dPairwise implements Callable< PairwiseMatch >
+public class GeometricHashingPairwise implements Callable< PairwiseMatch >
 {
 	final PairwiseMatch pair;
 	final TransformationModel model;
 	final RANSACParameters rp;
-	final GeometricHashing3dParameters gp;
+	final GeometricHashingParameters gp;
 	final String comparison;
 	
-	public GeometricHashing3dPairwise( final PairwiseMatch pair, final TransformationModel model, final String comparison, final RANSACParameters rp, final GeometricHashing3dParameters gp )
+	public GeometricHashingPairwise( final PairwiseMatch pair, final TransformationModel model, final String comparison, final RANSACParameters rp, final GeometricHashingParameters gp )
 	{ 
 		this.pair = pair;
 		this.rp = rp;
@@ -30,20 +30,20 @@ public class GeometricHashing3dPairwise implements Callable< PairwiseMatch >
 		this.comparison = comparison;
 	}
 
-	public GeometricHashing3dPairwise( final PairwiseMatch pair, final TransformationModel model, final String comparison, final RANSACParameters rp )
+	public GeometricHashingPairwise( final PairwiseMatch pair, final TransformationModel model, final String comparison, final RANSACParameters rp )
 	{
-		this( pair, model, comparison, rp, new GeometricHashing3dParameters() );
+		this( pair, model, comparison, rp, new GeometricHashingParameters() );
 	}
 
-	public GeometricHashing3dPairwise( final PairwiseMatch pair, final TransformationModel model, final String comparison )
+	public GeometricHashingPairwise( final PairwiseMatch pair, final TransformationModel model, final String comparison )
 	{
-		this( pair, model, comparison, new RANSACParameters(), new GeometricHashing3dParameters() );
+		this( pair, model, comparison, new RANSACParameters(), new GeometricHashingParameters() );
 	}
 	
 	@Override
 	public PairwiseMatch call() throws Exception 
 	{
-		final GeometricHasher3d hasher = new GeometricHasher3d();
+		final GeometricHasher hasher = new GeometricHasher();
 		
 		final ArrayList< Detection > listA = new ArrayList< Detection >();
 		final ArrayList< Detection > listB = new ArrayList< Detection >();

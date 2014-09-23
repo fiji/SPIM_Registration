@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.geometrichashing3d;
+package spim.process.interestpointregistration.geometrichashing;
 
 import ij.gui.GenericDialog;
 
@@ -17,7 +17,7 @@ import spim.process.interestpointregistration.TransformationModel;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationSubset;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationType;
 
-public class GeometricHashing3d extends InterestPointRegistration
+public class GeometricHashing extends InterestPointRegistration
 {
 	public static int defaultModel = 2;	
 	public static boolean defaultRegularize = false;
@@ -25,7 +25,7 @@ public class GeometricHashing3d extends InterestPointRegistration
 
 	protected RANSACParameters ransacParams;
 
-	public GeometricHashing3d(
+	public GeometricHashing(
 			final SpimData2 spimData,
 			final List< Angle > anglesToProcess,
 			final List< ChannelProcess > channelsToProcess,
@@ -36,9 +36,9 @@ public class GeometricHashing3d extends InterestPointRegistration
 	}
 
 	@Override
-	protected GeometricHashing3dPairwise pairwiseMatchingInstance( final PairwiseMatch pair, final String description )
+	protected GeometricHashingPairwise pairwiseMatchingInstance( final PairwiseMatch pair, final String description )
 	{
-		return new GeometricHashing3dPairwise( pair, model, description, ransacParams );
+		return new GeometricHashingPairwise( pair, model, description, ransacParams );
 	}
 
 	@SuppressWarnings("unchecked")
@@ -53,14 +53,14 @@ public class GeometricHashing3d extends InterestPointRegistration
 	}
 
 	@Override
-	public GeometricHashing3d newInstance(
+	public GeometricHashing newInstance(
 			final SpimData2 spimData,
 			final List< Angle > anglesToProcess,
 			final List< ChannelProcess > channelsToProcess,
 			final List< Illumination > illumsToProcess,
 			final List< TimePoint > timepointsToProcess )
 	{
-		return new GeometricHashing3d( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+		return new GeometricHashing( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
 	}
 
 	@Override

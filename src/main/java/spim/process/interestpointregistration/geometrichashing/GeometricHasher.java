@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.geometrichashing3d;
+package spim.process.interestpointregistration.geometrichashing;
 
 import java.util.ArrayList;
 
@@ -17,7 +17,7 @@ import fiji.util.node.Leaf;
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
-public class GeometricHasher3d
+public class GeometricHasher
 {
 	public ArrayList< PointMatchGeneric< Detection > > extractCorrespondenceCandidates( 
 			final ArrayList< Detection > nodeListA, 

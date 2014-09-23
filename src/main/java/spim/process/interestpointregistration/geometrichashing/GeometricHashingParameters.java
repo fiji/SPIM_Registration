@@ -1,6 +1,6 @@
-package spim.process.interestpointregistration.geometrichashing3d;
+package spim.process.interestpointregistration.geometrichashing;
 
-public class GeometricHashing3dParameters
+public class GeometricHashingParameters
 {
 	public static float differenceThreshold = 50; 
 	public static float ratioOfDistance = 10; 
@@ -9,14 +9,14 @@ public class GeometricHashing3dParameters
 	protected final float dt, rod;
 	protected final boolean ub;
 	
-	public GeometricHashing3dParameters()
+	public GeometricHashingParameters()
 	{
 		this.dt = differenceThreshold;
 		this.rod = ratioOfDistance;
 		this.ub = useAssociatedBeads;
 	}
 	
-	public GeometricHashing3dParameters( final float differenceThreshold, final float ratioOfDistance, final boolean useAssociatedBeads )
+	public GeometricHashingParameters( final float differenceThreshold, final float ratioOfDistance, final boolean useAssociatedBeads )
 	{
 		this.dt = differenceThreshold;
 		this.rod = ratioOfDistance;

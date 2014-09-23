@@ -31,7 +31,7 @@ import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.process.interestpointregistration.ChannelProcess;
 import spim.process.interestpointregistration.geometricdescriptor.RGLDM;
-import spim.process.interestpointregistration.geometrichashing3d.GeometricHashing3d;
+import spim.process.interestpointregistration.geometrichashing.GeometricHashing;
 import spim.process.interestpointregistration.icp.IterativeClosestPoint;
 import spim.process.interestpointregistration.optimizationtypes.AllToAllRegistration;
 import spim.process.interestpointregistration.optimizationtypes.AllToAllRegistrationWithRange;
@@ -79,7 +79,7 @@ public class Interest_Point_Registration implements PlugIn
 	static
 	{
 		IOFunctions.printIJLog = true;
-		staticAlgorithms.add( new GeometricHashing3d( null, null, null, null, null ) );
+		staticAlgorithms.add( new GeometricHashing( null, null, null, null, null ) );
 		staticAlgorithms.add( new RGLDM( null, null, null, null, null ) );
 		staticAlgorithms.add( new IterativeClosestPoint( null, null, null, null, null ) );
 	}
