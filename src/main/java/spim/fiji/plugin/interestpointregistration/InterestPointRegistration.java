@@ -79,12 +79,6 @@ public abstract class InterestPointRegistration< T extends Callable< ChannelInte
 	 * @return - to be displayed in the generic dialog
 	 */
 	public abstract String getDescription();
-	
-	protected SpimData2 getSpimData() { return spimData1; }
-	public List< Angle > getAnglesToProcess() { return anglesToProcess1; }
-	public List< ChannelProcess > getChannelsToProcess() { return channelsToProcess1; }
-	public List< Illumination > getIllumsToProcess() { return illumsToProcess1; }
-	public List< TimePoint > getTimepointsToProcess() { return timepointsToProcess1; }
 
 	protected abstract T getPairwiseMatching( final ChannelInterestPointListPair pair, final String description );
 	
@@ -102,6 +96,13 @@ public abstract class InterestPointRegistration< T extends Callable< ChannelInte
 			final SpimData2 spimData,
 			final List< ChannelProcess > channelsToProcess,
 			final boolean considerTimePointsAsUnit );
+
+
+	protected SpimData2 getSpimData() { return spimData1; }
+	public List< Angle > getAnglesToProcess() { return anglesToProcess1; }
+	public List< ChannelProcess > getChannelsToProcess() { return channelsToProcess1; }
+	public List< Illumination > getIllumsToProcess() { return illumsToProcess1; }
+	public List< TimePoint > getTimepointsToProcess() { return timepointsToProcess1; }
 
 	/**
 	 * Registers all timepoints
