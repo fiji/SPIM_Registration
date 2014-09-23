@@ -56,7 +56,6 @@ public class GlobalOptimizationSubset
 			final SpimData2 spimData,
 			final List< ChannelProcess > channelsToProcess,
 			final String description,
-			final int inputTransform, // 0==calibration, 1==previous transform
 			final boolean considerTimePointsAsUnit )
 	{
 		final HashMap< ViewId, Tile< M > > tiles = GlobalOpt.compute( model, type, this, considerTimePointsAsUnit );
@@ -73,7 +72,7 @@ public class GlobalOptimizationSubset
 		
 		// TODO: Map back first tile as good as possible to original location???
 		if ( !type.fixFirstTile() && type.getReferenceTile( this ) != null && type.getMapBackModel() != null )
-			mapBackModel = computeMapBackModel( tiles, type, spimData, inputTransform );
+			mapBackModel = computeMapBackModel( tiles, type, spimData );
 		else
 			mapBackModel = null;
 
@@ -104,7 +103,7 @@ public class GlobalOptimizationSubset
 		return true;
 	}
 
-	protected < M extends Model< M > > AffineTransform3D computeMapBackModel( final HashMap< ViewId, Tile< M > > tiles, final GlobalOptimizationType type, final SpimData2 spimData, final int inputTransform )
+	protected < M extends Model< M > > AffineTransform3D computeMapBackModel( final HashMap< ViewId, Tile< M > > tiles, final GlobalOptimizationType type, final SpimData2 spimData )
 	{
 		final AbstractModel< ? > mapBackModel = type.getMapBackModel();
 		
@@ -135,19 +134,10 @@ public class GlobalOptimizationSubset
 			final float[][] pa = new float[ 4 ][ 3 ];
 			
 			// map coordinates to the actual input coordinates
-			if ( inputTransform == 1 )
-			{
-				final ViewRegistration inputModel = spimData.getViewRegistrations().getViewRegistration( referenceTile );
+			final ViewRegistration inputModel = spimData.getViewRegistrations().getViewRegistration( referenceTile );
 
-				for ( int i = 0; i < p.length; ++i )
-					inputModel.getModel().apply( p[ i ], pa[ i ] );
-			}
-			else
-			{
-				for ( int i = 0; i < p.length; ++i )
-					for ( int d = 0; d < p[ i ].length; ++d )
-						pa[ i ][ d ] = p[ i ][ d ];
-			}
+			for ( int i = 0; i < p.length; ++i )
+				inputModel.getModel().apply( p[ i ], pa[ i ] );
 			
 			final M outputModel = tiles.get( referenceTile ).getModel();
 			

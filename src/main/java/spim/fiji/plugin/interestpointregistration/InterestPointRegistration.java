@@ -2,16 +2,11 @@ package spim.fiji.plugin.interestpointregistration;
 
 import ij.gui.GenericDialog;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import mpicbg.spim.data.sequence.Angle;
-import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
-import mpicbg.spim.data.sequence.ViewDescription;
-import mpicbg.spim.data.sequence.ViewId;
-import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.plugin.Interest_Point_Registration.RegistrationType;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.interestpointregistration.ChannelProcess;
@@ -29,20 +24,15 @@ public abstract class InterestPointRegistration
 	final List< ChannelProcess > channelsToProcess1;
 	final List< Illumination > illumsToProcess1;
 	final List< TimePoint > timepointsToProcess1; 
-	
-	/*
-	 * type of input transform ( 0 == calibration, 1 == current transform, including calibration )
-	 */
-	private int inputTransform = 0;
-	
+
 	/*
 	 * ensure that the resolution of the world coordinates corresponds to the finest resolution
 	 * of any dimension, i.e. if the scaling is (x=0.73 / y=0.5 / z=2 ), one pixel will be 0.5um/px.
 	 * 
 	 * This only applies if the transformation is based on the calibration only!
 	 */
-	double min1 = Double.MAX_VALUE;
-	String unit1 = "";
+	//double min1 = Double.MAX_VALUE;
+	//String unit1 = "";
 		
 	public InterestPointRegistration(
 			final SpimData2 spimData,
@@ -103,74 +93,4 @@ public abstract class InterestPointRegistration
 	public List< ChannelProcess > getChannelsToProcess() { return channelsToProcess1; }
 	public List< Illumination > getIllumsToProcess() { return illumsToProcess1; }
 	public List< TimePoint > getTimepointsToProcess() { return timepointsToProcess1; }
-	protected double getMinResolution() { return min1; }
-	protected String getUnit() { return unit1; }
-	
-	protected void setMinResolution( final double min ) { this.min1 = min; }
-	protected void setUnit( final String unit ) { this.unit1 = unit; }
-	
-	/**
-	 * @param inputTransform type of input transform ( 0 == calibration, 1 == current transform, including calibration )
-	 */
-	public void setInitialTransformType( final int inputTransform ) { this.inputTransform = inputTransform; }
-		
-	/**
-	 * @return inputTransform type of input transform ( 0 == calibration, 1 == current transform, including calibration )
-	 */
-	public int getInitialTransformType() { return inputTransform; }
-	
-	/**
-	 * Should be called before registration to make sure all metadata is right
-	 * 
-	 * @return
-	 */
-	protected boolean assembleAllMetaData()
-	{
-		final SpimData2 spimData = getSpimData();
-		final List< TimePoint > timepointsToProcess = getTimepointsToProcess(); 
-		final List< ChannelProcess > channelsToProcess = getChannelsToProcess();
-		final List< Angle > anglesToProcess = getAnglesToProcess();
-		final List< Illumination > illumsToProcess = getIllumsToProcess();
-		
-		final ArrayList< Channel > channels = new ArrayList< Channel >();
-		for ( final ChannelProcess c : channelsToProcess )
-			channels.add( c.getChannel() );
-		
-		final double minResolution = Apply_Transformation.assembleAllMetaData( spimData.getSequenceDescription(), timepointsToProcess, channels, illumsToProcess, anglesToProcess );
-		
-		if ( Double.isNaN( minResolution ) )
-			return false;
-		
-		setMinResolution( minResolution );
-
-		// try to set the unit as well
-		for ( final TimePoint t : timepointsToProcess )
-			for ( final ChannelProcess c : channelsToProcess )
-				for ( final Illumination i : illumsToProcess )
-					for ( final Angle a : anglesToProcess )
-					{
-						// bureaucracy
-						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c.getChannel(), a, i );
-
-						// this happens only if a viewsetup is not present in any timepoint
-						// (e.g. after appending fusion to a dataset)
-						if ( viewId == null )
-							continue;
-
-						final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
-								viewId.getTimePointId(), viewId.getViewSetupId() );
-
-						if ( !viewDescription.isPresent() )
-							continue;
-
-						if ( viewDescription.getViewSetup().hasVoxelSize() )
-						{
-							final String unit = viewDescription.getViewSetup().getVoxelSize().unit();
-							if ( !( unit == null || unit.isEmpty() ) )
-							setUnit( unit );
-						}
-					}
-		
-		return true;
-	}
 }

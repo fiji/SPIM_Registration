@@ -56,10 +56,6 @@ public class Interest_Point_Registration implements PlugIn
 	
 	public enum RegistrationType { TIMEPOINTS_INDIVIDUALLY, TO_REFERENCE_TIMEPOINT, ALL_TO_ALL, ALL_TO_ALL_WITH_RANGE };
 
-	public static String[] inputChoice = new String[]{
-		"Calibration only (resets existing transform)",
-		"Current view transformations (appends to current transform)" };
-	
 	public static String[] fixFirstTileChoice = new String[]{
 		"Fix first tile",
 		"Do not fix tiles",
@@ -72,7 +68,6 @@ public class Interest_Point_Registration implements PlugIn
 	public static int defaultRange = 5;
 	public static int defaultReferenceTimepointIndex = -1;
 	public static boolean defaultRegisterReferenceFirst = false;
-	public static int defaultTransformInputChoice = 0;
 	public static boolean defaultConsiderTimepointAsUnit = false;
 	public static int defaultFixFirstTile = 0;
 	public static boolean defaultRemoveExistingCorrespondences = true;
@@ -260,9 +255,7 @@ public class Interest_Point_Registration implements PlugIn
 		{
 			gd.addSlider( "Range for all-to-all timepoint matching", 2, 10, defaultRange );
 		}
-		
-		gd.addChoice( "Register_based_on", inputChoice, inputChoice[ defaultTransformInputChoice ] );
-		
+
 		// for all registrations that include multiple timepointss
 		if ( registrationType != RegistrationType.TIMEPOINTS_INDIVIDUALLY )
 		{
@@ -303,8 +296,7 @@ public class Interest_Point_Registration implements PlugIn
 
 		if ( registrationType == RegistrationType.ALL_TO_ALL_WITH_RANGE )
 			range = defaultRange = (int)Math.round( gd.getNextNumber() );
-		
-		ipr.setInitialTransformType( defaultTransformInputChoice = gd.getNextChoiceIndex() );
+
 		final boolean considerTimepointsAsUnit;
 		if ( registrationType != RegistrationType.TIMEPOINTS_INDIVIDUALLY )
 			considerTimepointsAsUnit = defaultConsiderTimepointAsUnit = gd.getNextBoolean();

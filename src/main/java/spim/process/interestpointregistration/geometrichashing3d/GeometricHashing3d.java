@@ -49,7 +49,7 @@ public class GeometricHashing3d extends PairwiseGloballyOptimalRegistration< Geo
 			final List< ChannelProcess > channelsToProcess,
 			final boolean considerTimePointsAsUnit )
 	{
-		return subset.computeGlobalOpt( model.getModel(), registrationType, spimData, getChannelsToProcess(), getDescription() + ", " + model.getDescription(), getInitialTransformType(), considerTimePointsAsUnit );
+		return subset.computeGlobalOpt( model.getModel(), registrationType, spimData, getChannelsToProcess(), getDescription() + ", " + model.getDescription(), considerTimePointsAsUnit );
 	}
 
 	@Override

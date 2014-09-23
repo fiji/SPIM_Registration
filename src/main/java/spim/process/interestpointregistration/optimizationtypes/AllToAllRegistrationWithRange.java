@@ -26,14 +26,13 @@ public class AllToAllRegistrationWithRange extends GlobalOptimizationType
 		this.range = range;
 	}
 
+	@Override
 	public List< GlobalOptimizationSubset > getAllViewPairs(
 			final SpimData2 spimData,
 			final List< Angle > anglesToProcess,
 			final List< ChannelProcess > channelsToProcess,
 			final List< Illumination > illumsToProcess,
-			final List< TimePoint > timepointsToProcess,
-			final int inputTransform,
-			final double minResolution )
+			final List< TimePoint > timepointsToProcess )
 	{
 		final HashMap< ViewId, ChannelInterestPointList > allPointLists = new HashMap< ViewId, ChannelInterestPointList >();
 		
@@ -45,9 +44,7 @@ public class AllToAllRegistrationWithRange extends GlobalOptimizationType
 					anglesToProcess,
 					channelsToProcess,
 					illumsToProcess,
-					timepoint,
-					inputTransform,
-					minResolution );
+					timepoint );
 			
 			allPointLists.putAll( pointLists );
 		}

@@ -56,7 +56,7 @@ public class IterativeClosestPoint extends PairwiseGloballyOptimalRegistration< 
 			final List< ChannelProcess > channelsToProcess,
 			final boolean considerTimePointsAsUnit )
 	{
-		return subset.computeGlobalOpt( model.getModel(), registrationType, spimData, getChannelsToProcess(), getDescription() + ", " + model.getDescription(), getInitialTransformType(), considerTimePointsAsUnit );
+		return subset.computeGlobalOpt( model.getModel(), registrationType, spimData, getChannelsToProcess(), getDescription() + ", " + model.getDescription(), considerTimePointsAsUnit );
 	}
 
 	@Override

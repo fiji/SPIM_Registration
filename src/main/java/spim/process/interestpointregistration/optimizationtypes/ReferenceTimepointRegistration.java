@@ -93,9 +93,7 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 			final List< Angle > anglesToProcess,
 			final List< ChannelProcess > channelsToProcess,
 			final List< Illumination > illumsToProcess,
-			final List< TimePoint > timepointsToProcess,
-			final int inputTransform,
-			final double minResolution )
+			final List< TimePoint > timepointsToProcess )
 	{
 		final ArrayList< GlobalOptimizationSubset > list = new ArrayList< GlobalOptimizationSubset >();
 
@@ -104,9 +102,7 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 				anglesToProcess,
 				channelsToProcess,
 				illumsToProcess,
-				referenceTimepoint,
-				1, // always based on the current registration of the reference timepoint
-				minResolution );
+				referenceTimepoint );
 
 		for ( final TimePoint timepoint : timepointsToProcess )
 		{
@@ -118,9 +114,7 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 					anglesToProcess,
 					channelsToProcess,
 					illumsToProcess,
-					timepoint,
-					inputTransform,
-					minResolution );
+					timepoint );
 			
 			final ArrayList< ViewId > views = new ArrayList< ViewId >();
 			views.addAll( pointListsTimepoint.keySet() );

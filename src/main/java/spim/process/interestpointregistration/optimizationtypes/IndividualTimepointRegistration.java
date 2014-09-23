@@ -44,9 +44,7 @@ public class IndividualTimepointRegistration extends GlobalOptimizationType
 			final List< Angle > anglesToProcess,
 			final List< ChannelProcess > channelsToProcess,
 			final List< Illumination > illumsToProcess,
-			final List< TimePoint > timepointsToProcess,
-			final int inputTransform,
-			final double minResolution )
+			final List< TimePoint > timepointsToProcess )
 	{
 		final ArrayList< GlobalOptimizationSubset > list = new ArrayList< GlobalOptimizationSubset >();
 		
@@ -57,9 +55,7 @@ public class IndividualTimepointRegistration extends GlobalOptimizationType
 					anglesToProcess,
 					channelsToProcess,
 					illumsToProcess,
-					timepoint,
-					inputTransform,
-					minResolution );
+					timepoint );
 			
 			final ArrayList< ViewId > views = new ArrayList< ViewId >();
 			views.addAll( pointLists.keySet() );

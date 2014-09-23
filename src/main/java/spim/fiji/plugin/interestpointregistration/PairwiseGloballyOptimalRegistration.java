@@ -52,16 +52,6 @@ public abstract class PairwiseGloballyOptimalRegistration< T extends Callable< C
 	{
 		final SpimData2 spimData = getSpimData();
 
-		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Assembling metadata for all views involved in the registration" );
-
-		if ( !assembleAllMetaData() )
-		{
-			IOFunctions.println( "Could not assemble metadata. Stopping." );
-			return false;
-		}
-		
-		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Assembling metadata done, resolution of world coordinates is " + getMinResolution() + " " + getUnit() + "/px."  );
-
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Starting registration" );
 
 		// get a list of all pairs for this specific GlobalOptimizationType
@@ -70,9 +60,7 @@ public abstract class PairwiseGloballyOptimalRegistration< T extends Callable< C
 				getAnglesToProcess(),
 				getChannelsToProcess(),
 				getIllumsToProcess(),
-				getTimepointsToProcess(),
-				getInitialTransformType(),
-				getMinResolution() );
+				getTimepointsToProcess() );
 		
 		int successfulRuns = 0;
 		

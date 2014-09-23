@@ -28,9 +28,7 @@ public class AllToAllRegistration extends GlobalOptimizationType
 			final List< Angle > anglesToProcess,
 			final List< ChannelProcess > channelsToProcess,
 			final List< Illumination > illumsToProcess,
-			final List< TimePoint > timepointsToProcess,
-			final int inputTransform,
-			final double minResolution )
+			final List< TimePoint > timepointsToProcess )
 	{
 		final HashMap< ViewId, ChannelInterestPointList > allPointLists = new HashMap< ViewId, ChannelInterestPointList >();
 		
@@ -42,9 +40,7 @@ public class AllToAllRegistration extends GlobalOptimizationType
 					anglesToProcess,
 					channelsToProcess,
 					illumsToProcess,
-					timepoint,
-					inputTransform,
-					minResolution );
+					timepoint );
 			
 			allPointLists.putAll( pointLists );
 		}

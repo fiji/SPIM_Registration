@@ -15,7 +15,6 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 import net.imglib2.realtransform.AffineTransform3D;
-import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
@@ -60,9 +59,9 @@ public abstract class GlobalOptimizationType
 			final List< Angle > anglesToProcess,
 			final List< ChannelProcess > channelsToProcess,
 			final List< Illumination > illumsToProcess,
-			final List< TimePoint > timepointsToProcess,
-			final int inputTransform,
-			final double minResolution );
+			final List< TimePoint > timepointsToProcess//,
+			//final double minResolution
+			);
 
 	/**
 	 * @param viewId
@@ -114,7 +113,7 @@ public abstract class GlobalOptimizationType
 	public boolean considerTimePointsAsUnit() { return considerTimePointsAsUnit; }
 
 	/**
-	 * Creates lists of input points for the registration, depending if the input is the current transformation or just the calibration
+	 * Creates lists of input points for the registration, based on the current transformation of the views
 	 * 
 	 * Note: this always duplicates the location array from the input List< InterestPoint > !!!
 	 * 
@@ -125,9 +124,7 @@ public abstract class GlobalOptimizationType
 			final List< Angle > anglesToProcess,
 			final List< ChannelProcess > channelsToProcess,
 			final List< Illumination > illumsToProcess,
-			final TimePoint timepoint,
-			final int inputTransform,
-			final double minResolution )
+			final TimePoint timepoint )
 	{
 		final HashMap< ViewId, ChannelInterestPointList > interestPoints = new HashMap< ViewId, ChannelInterestPointList >();
 		final ViewRegistrations registrations = spimData.getViewRegistrations();
@@ -151,10 +148,6 @@ public abstract class GlobalOptimizationType
 				if ( !viewDescription.isPresent() )
 					continue;
 
-				// reset the registrations if required
-				if ( inputTransform == 0 )
-					Apply_Transformation.setModelToCalibration( spimData, viewId, minResolution );
-				
 				// assemble a new list
 				final ArrayList< InterestPoint > list = new ArrayList< InterestPoint >();
 
@@ -176,7 +169,7 @@ public abstract class GlobalOptimizationType
 						IOFunctions.println( "Interest points for label '" + c.getLabel() + "' could not be loaded for timepoint: " + timepoint.getId() + " angle: " + 
 								a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
 						
-						continue;						
+						continue;
 					}
 				}
 				
