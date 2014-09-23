@@ -8,7 +8,7 @@ import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import spim.fiji.plugin.Interest_Point_Registration.RegistrationType;
-import spim.fiji.plugin.interestpointregistration.PairwiseGloballyOptimalRegistration;
+import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.interestpointregistration.ChannelInterestPointListPair;
 import spim.process.interestpointregistration.ChannelProcess;
@@ -17,7 +17,7 @@ import spim.process.interestpointregistration.TransformationModel;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationSubset;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationType;
 
-public class GeometricHashing3d extends PairwiseGloballyOptimalRegistration< GeometricHashing3dPairwise >
+public class GeometricHashing3d extends InterestPointRegistration< GeometricHashing3dPairwise >
 {
 	public static int defaultModel = 2;	
 	public static boolean defaultRegularize = false;

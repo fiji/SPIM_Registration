@@ -46,7 +46,7 @@ import spim.process.interestpointregistration.optimizationtypes.ReferenceTimepoi
  */
 public class Interest_Point_Registration implements PlugIn
 {
-	public static ArrayList< InterestPointRegistration > staticAlgorithms = new ArrayList< InterestPointRegistration >();
+	public static ArrayList< InterestPointRegistration< ? > > staticAlgorithms = new ArrayList< InterestPointRegistration< ? > >();
 
 	public static String[] registrationTypes = {
 		"Register timepoints individually", 
@@ -220,7 +220,7 @@ public class Interest_Point_Registration implements PlugIn
 		for ( final ChannelProcess c : channelsToProcess )
 			IOFunctions.println( "registering channel: " + c.getChannel().getId()  + " label: '" + c.getLabel() + "'" );
 		
-		final InterestPointRegistration ipr = staticAlgorithms.get( algorithm ).newInstance(
+		final InterestPointRegistration< ? > ipr = staticAlgorithms.get( algorithm ).newInstance(
 				result.getData(),
 				result.getAnglesToProcess(),
 				channelsToProcess,
@@ -235,7 +235,7 @@ public class Interest_Point_Registration implements PlugIn
 		queryDetailedParameters( result, ipr, registrationType );
 	}
 	
-	protected void queryDetailedParameters( final LoadParseQueryXML result, final InterestPointRegistration ipr, final RegistrationType registrationType )
+	protected void queryDetailedParameters( final LoadParseQueryXML result, final InterestPointRegistration< ? > ipr, final RegistrationType registrationType )
 	{
 		final GenericDialog gd = new GenericDialog( "Register: " + registrationTypes[ registrationType.ordinal() ] );
 		
