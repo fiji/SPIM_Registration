@@ -48,14 +48,14 @@ public class GlobalOpt
 			final boolean considerTimePointsAsUnit )
 	{
 		// assemble all views and corresponding points
-		final ArrayList< ChannelInterestPointListPair > pairs = subset.getViewPairs();
+		final ArrayList< PairwiseMatch > pairs = subset.getViewPairs();
 		final ArrayList< ViewId > views = subset.getViews();
 		
 		// assign ViewIds to the individual Tiles (either one tile per view or one tile per timepoint)
 		final HashMap< ViewId, Tile< M > > map = assignViewsToTiles( model, views, considerTimePointsAsUnit );
 
 		// assign the pointmatches to all the tiles
-		for ( final ChannelInterestPointListPair pair : pairs )
+		for ( final PairwiseMatch pair : pairs )
 			GlobalOpt.addPointMatches( pair.getInliers(), map.get( pair.getViewIdA() ), map.get( pair.getViewIdB() ) );
 
 		// add and fix tiles as defined in the GlobalOptimizationType

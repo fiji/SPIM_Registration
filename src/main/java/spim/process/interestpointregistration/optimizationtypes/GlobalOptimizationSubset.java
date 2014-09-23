@@ -23,7 +23,7 @@ import net.imglib2.realtransform.AffineTransform3D;
 import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
-import spim.process.interestpointregistration.ChannelInterestPointListPair;
+import spim.process.interestpointregistration.PairwiseMatch;
 import spim.process.interestpointregistration.ChannelProcess;
 import spim.process.interestpointregistration.GlobalOpt;
 
@@ -38,13 +38,13 @@ import spim.process.interestpointregistration.GlobalOpt;
  */
 public class GlobalOptimizationSubset
 {
-	final ArrayList< ChannelInterestPointListPair > viewPairs;
+	final ArrayList< PairwiseMatch > viewPairs;
 	final String description;
 	
 	// will be populated once getViews() is called
 	ArrayList< ViewId > viewList;
 	
-	public GlobalOptimizationSubset( final ArrayList< ChannelInterestPointListPair > viewPairs, final String description )
+	public GlobalOptimizationSubset( final ArrayList< PairwiseMatch > viewPairs, final String description )
 	{
 		this.viewPairs = viewPairs;
 		this.description = description;
@@ -187,7 +187,7 @@ public class GlobalOptimizationSubset
 		
 		final Set< ViewId > viewSet = new HashSet< ViewId >();
 		
-		for ( final ChannelInterestPointListPair pair : getViewPairs() )
+		for ( final PairwiseMatch pair : getViewPairs() )
 		{
 			viewSet.add( pair.getViewIdA() );
 			viewSet.add( pair.getViewIdB() );
@@ -200,6 +200,6 @@ public class GlobalOptimizationSubset
 		return viewList;
 	}
 	
-	public ArrayList< ChannelInterestPointListPair > getViewPairs() { return viewPairs; }
+	public ArrayList< PairwiseMatch > getViewPairs() { return viewPairs; }
 	public String getDescription() { return description; }
 }

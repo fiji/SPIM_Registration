@@ -16,7 +16,7 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.Interest_Point_Registration.RegistrationType;
 import spim.fiji.spimdata.SpimData2;
-import spim.process.interestpointregistration.ChannelInterestPointListPair;
+import spim.process.interestpointregistration.PairwiseMatch;
 import spim.process.interestpointregistration.ChannelProcess;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationSubset;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationType;
@@ -34,6 +34,17 @@ public abstract class InterestPointRegistration
 	final List< Illumination > illumsToProcess1;
 	final List< TimePoint > timepointsToProcess1; 
 
+	/**
+	 * Instantiate the interest point registration. It is performed for a spimdata object on a
+	 * subset of angles, channels, illuminations and timepoints. Each channel is linked to a
+	 * certain type of detections (e.g. beads, nuclei), hence the {@link ChannelProcess} object.
+	 * 
+	 * @param spimData
+	 * @param anglesToProcess
+	 * @param channelsToProcess
+	 * @param illumsToProcess
+	 * @param timepointsToProcess
+	 */
 	public InterestPointRegistration(
 			final SpimData2 spimData,
 			final List< Angle > anglesToProcess,
@@ -80,8 +91,13 @@ public abstract class InterestPointRegistration
 	 */
 	public abstract String getDescription();
 
-	protected abstract Callable< ChannelInterestPointListPair > getPairwiseMatching( final ChannelInterestPointListPair pair, final String description );
-	
+	/**
+	 * @param pair - which pair to compare
+	 * @param description - a description String which pairs are compared
+	 * @return - the object that will perform a pairwise matching and can return a result
+	 */
+	protected abstract Callable< PairwiseMatch > getPairwiseMatching( final PairwiseMatch pair, final String description );
+
 	/**
 	 * @param subset
 	 * @param registrationType
@@ -97,7 +113,6 @@ public abstract class InterestPointRegistration
 			final List< ChannelProcess > channelsToProcess,
 			final boolean considerTimePointsAsUnit );
 
-
 	protected SpimData2 getSpimData() { return spimData1; }
 	public List< Angle > getAnglesToProcess() { return anglesToProcess1; }
 	public List< ChannelProcess > getChannelsToProcess() { return channelsToProcess1; }
@@ -105,7 +120,10 @@ public abstract class InterestPointRegistration
 	public List< TimePoint > getTimepointsToProcess() { return timepointsToProcess1; }
 
 	/**
-	 * Registers all timepoints
+	 * Registers all timepoints. No matter which matching is done it is always the same principle.
+	 * 
+	 * First all pairwise correspondences are established, and then a global optimization is computed.
+	 * The global optimization can is done in subsets, where the number of subsets >= 1.
 	 * 
 	 * @param registrationType - which kind of registration
 	 * @return
@@ -128,12 +146,12 @@ public abstract class InterestPointRegistration
 		
 		for ( final GlobalOptimizationSubset subset : list )
 		{
-			final ArrayList< ChannelInterestPointListPair > pairs = subset.getViewPairs();
+			final ArrayList< PairwiseMatch > pairs = subset.getViewPairs();
 			
 			final ExecutorService taskExecutor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
-			final ArrayList< Callable< ChannelInterestPointListPair > > tasks = new ArrayList< Callable< ChannelInterestPointListPair > >(); // your tasks
+			final ArrayList< Callable< PairwiseMatch > > tasks = new ArrayList< Callable< PairwiseMatch > >(); // your tasks
 			
-			for ( final ChannelInterestPointListPair pair : pairs )
+			for ( final PairwiseMatch pair : pairs )
 			{
 				// just for logging the names and results of pairwise comparison
 				final ViewDescription viewA = spimData.getSequenceDescription().getViewDescription( pair.getViewIdA() );
@@ -162,7 +180,7 @@ public abstract class InterestPointRegistration
 			// some statistics
 			int sumCandidates = 0;
 			int sumInliers = 0;
-			for ( final ChannelInterestPointListPair pair : pairs )
+			for ( final PairwiseMatch pair : pairs )
 			{
 				sumCandidates += pair.getCandidates().size();
 				sumInliers += pair.getInliers().size();

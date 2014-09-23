@@ -10,12 +10,12 @@ import spim.fiji.spimdata.interestpoints.InterestPoint;
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
-public class ChannelInterestPointList
+public class MatchPointList
 {
 	final List< InterestPoint > interestpointList;
 	final ChannelProcess channel;
 	
-	public ChannelInterestPointList( final List< InterestPoint > interestpointList, final ChannelProcess channel )
+	public MatchPointList( final List< InterestPoint > interestpointList, final ChannelProcess channel )
 	{
 		this.interestpointList = interestpointList;
 		this.channel = channel;

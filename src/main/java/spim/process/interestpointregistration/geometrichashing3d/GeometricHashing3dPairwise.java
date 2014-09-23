@@ -7,21 +7,21 @@ import java.util.concurrent.Callable;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.process.interestpointregistration.ChannelInterestPointListPair;
+import spim.process.interestpointregistration.PairwiseMatch;
 import spim.process.interestpointregistration.Detection;
 import spim.process.interestpointregistration.RANSAC;
 import spim.process.interestpointregistration.RANSACParameters;
 import spim.process.interestpointregistration.TransformationModel;
 
-public class GeometricHashing3dPairwise implements Callable< ChannelInterestPointListPair >
+public class GeometricHashing3dPairwise implements Callable< PairwiseMatch >
 {
-	final ChannelInterestPointListPair pair;
+	final PairwiseMatch pair;
 	final TransformationModel model;
 	final RANSACParameters rp;
 	final GeometricHashing3dParameters gp;
 	final String comparison;
 	
-	public GeometricHashing3dPairwise( final ChannelInterestPointListPair pair, final TransformationModel model, final String comparison, final RANSACParameters rp, final GeometricHashing3dParameters gp )
+	public GeometricHashing3dPairwise( final PairwiseMatch pair, final TransformationModel model, final String comparison, final RANSACParameters rp, final GeometricHashing3dParameters gp )
 	{ 
 		this.pair = pair;
 		this.rp = rp;
@@ -30,18 +30,18 @@ public class GeometricHashing3dPairwise implements Callable< ChannelInterestPoin
 		this.comparison = comparison;
 	}
 
-	public GeometricHashing3dPairwise( final ChannelInterestPointListPair pair, final TransformationModel model, final String comparison, final RANSACParameters rp )
+	public GeometricHashing3dPairwise( final PairwiseMatch pair, final TransformationModel model, final String comparison, final RANSACParameters rp )
 	{
 		this( pair, model, comparison, rp, new GeometricHashing3dParameters() );
 	}
 
-	public GeometricHashing3dPairwise( final ChannelInterestPointListPair pair, final TransformationModel model, final String comparison )
+	public GeometricHashing3dPairwise( final PairwiseMatch pair, final TransformationModel model, final String comparison )
 	{
 		this( pair, model, comparison, new RANSACParameters(), new GeometricHashing3dParameters() );
 	}
 	
 	@Override
-	public ChannelInterestPointListPair call() throws Exception 
+	public PairwiseMatch call() throws Exception 
 	{
 		final GeometricHasher3d hasher = new GeometricHasher3d();
 		

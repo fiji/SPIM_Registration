@@ -11,8 +11,8 @@ import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.spimdata.SpimData2;
-import spim.process.interestpointregistration.ChannelInterestPointList;
-import spim.process.interestpointregistration.ChannelInterestPointListPair;
+import spim.process.interestpointregistration.MatchPointList;
+import spim.process.interestpointregistration.PairwiseMatch;
 import spim.process.interestpointregistration.ChannelProcess;
 
 public class AllToAllRegistrationWithRange extends GlobalOptimizationType
@@ -34,12 +34,12 @@ public class AllToAllRegistrationWithRange extends GlobalOptimizationType
 			final List< Illumination > illumsToProcess,
 			final List< TimePoint > timepointsToProcess )
 	{
-		final HashMap< ViewId, ChannelInterestPointList > allPointLists = new HashMap< ViewId, ChannelInterestPointList >();
+		final HashMap< ViewId, MatchPointList > allPointLists = new HashMap< ViewId, MatchPointList >();
 		
 		// collect all point lists from all timepoints
 		for ( final TimePoint timepoint : timepointsToProcess )
 		{
-			final HashMap< ViewId, ChannelInterestPointList > pointLists = this.getInterestPoints(
+			final HashMap< ViewId, MatchPointList > pointLists = this.getInterestPoints(
 					spimData,
 					anglesToProcess,
 					channelsToProcess,
@@ -55,7 +55,7 @@ public class AllToAllRegistrationWithRange extends GlobalOptimizationType
 		Collections.sort( views );
 
 		// all pairs that need to be compared
-		final ArrayList< ChannelInterestPointListPair > viewPairs = new ArrayList< ChannelInterestPointListPair >();		
+		final ArrayList< PairwiseMatch > viewPairs = new ArrayList< PairwiseMatch >();		
 
 		for ( int a = 0; a < views.size() - 1; ++a )
 			for ( int b = a + 1; b < views.size(); ++b )
@@ -65,13 +65,13 @@ public class AllToAllRegistrationWithRange extends GlobalOptimizationType
 				
 				if ( Math.abs( viewIdA.getTimePointId() - viewIdB.getTimePointId() ) <= range )
 				{
-					final ChannelInterestPointList listA = allPointLists.get( viewIdA );
-					final ChannelInterestPointList listB = allPointLists.get( viewIdB );
+					final MatchPointList listA = allPointLists.get( viewIdA );
+					final MatchPointList listB = allPointLists.get( viewIdB );
 					
 					// in case we consider timepoints as units and the pair has the same timepoint, do not add;
 					// i.e. add the pair always if the above statement is false
 					if ( !( considerTimePointsAsUnit && ( viewIdA.getTimePointId() == viewIdB.getTimePointId() ) ) )
-						viewPairs.add( new ChannelInterestPointListPair( viewIdA, viewIdB, listA, listB ) );
+						viewPairs.add( new PairwiseMatch( viewIdA, viewIdB, listA, listB ) );
 				}
 			}
 

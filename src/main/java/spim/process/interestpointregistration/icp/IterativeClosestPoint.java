@@ -10,7 +10,7 @@ import mpicbg.spim.data.sequence.TimePoint;
 import spim.fiji.plugin.Interest_Point_Registration.RegistrationType;
 import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
 import spim.fiji.spimdata.SpimData2;
-import spim.process.interestpointregistration.ChannelInterestPointListPair;
+import spim.process.interestpointregistration.PairwiseMatch;
 import spim.process.interestpointregistration.ChannelProcess;
 import spim.process.interestpointregistration.TransformationModel;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationSubset;
@@ -41,7 +41,7 @@ public class IterativeClosestPoint extends InterestPointRegistration
 	}
 
 	@Override
-	protected IterativeClosestPointPairwise getPairwiseMatching( final ChannelInterestPointListPair pair, final String description)
+	protected IterativeClosestPointPairwise getPairwiseMatching( final PairwiseMatch pair, final String description)
 	{
 		return new IterativeClosestPointPairwise( pair, model, description, parameters );
 	}

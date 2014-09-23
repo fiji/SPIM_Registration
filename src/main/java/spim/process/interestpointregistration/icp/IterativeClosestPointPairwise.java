@@ -17,18 +17,18 @@ import mpicbg.pointdescriptor.exception.NoSuitablePointsException;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.process.interestpointregistration.ChannelInterestPointListPair;
+import spim.process.interestpointregistration.PairwiseMatch;
 import spim.process.interestpointregistration.Detection;
 import spim.process.interestpointregistration.TransformationModel;
 
-public class IterativeClosestPointPairwise implements Callable< ChannelInterestPointListPair >
+public class IterativeClosestPointPairwise implements Callable< PairwiseMatch >
 {
-	final ChannelInterestPointListPair pair;
+	final PairwiseMatch pair;
 	final TransformationModel model;
 	final IterativeClosestPointParameters ip;
 	final String comparison;
 
-	public IterativeClosestPointPairwise( final ChannelInterestPointListPair pair, final TransformationModel model, final String comparison, final IterativeClosestPointParameters ip  )
+	public IterativeClosestPointPairwise( final PairwiseMatch pair, final TransformationModel model, final String comparison, final IterativeClosestPointParameters ip  )
 	{
 		this.pair = pair;
 		this.ip = ip;
@@ -37,7 +37,7 @@ public class IterativeClosestPointPairwise implements Callable< ChannelInterestP
 	}
 
 	@Override
-	public ChannelInterestPointListPair call() throws Exception
+	public PairwiseMatch call() throws Exception
 	{
 		final ArrayList< Detection > listA = new ArrayList< Detection >();
 		final ArrayList< Detection > listB = new ArrayList< Detection >();
@@ -111,7 +111,7 @@ public class IterativeClosestPointPairwise implements Callable< ChannelInterestP
 		return pair;
 	}
 
-	public static void failWith( final String algo, final String exType, final ChannelInterestPointListPair pair, final Exception e )
+	public static void failWith( final String algo, final String exType, final PairwiseMatch pair, final Exception e )
 	{
 		IOFunctions.println(
 				algo + " failed with " + exType + " matching " + 

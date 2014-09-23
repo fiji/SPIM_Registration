@@ -12,8 +12,8 @@ import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.spimdata.SpimData2;
-import spim.process.interestpointregistration.ChannelInterestPointList;
-import spim.process.interestpointregistration.ChannelInterestPointListPair;
+import spim.process.interestpointregistration.MatchPointList;
+import spim.process.interestpointregistration.PairwiseMatch;
 import spim.process.interestpointregistration.ChannelProcess;
 
 public class ReferenceTimepointRegistration extends GlobalOptimizationType
@@ -97,7 +97,7 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 	{
 		final ArrayList< GlobalOptimizationSubset > list = new ArrayList< GlobalOptimizationSubset >();
 
-		final HashMap< ViewId, ChannelInterestPointList > pointListsReferenceTimepoint = this.getInterestPoints(
+		final HashMap< ViewId, MatchPointList > pointListsReferenceTimepoint = this.getInterestPoints(
 				spimData,
 				anglesToProcess,
 				channelsToProcess,
@@ -109,7 +109,7 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 			if ( timepoint == referenceTimepoint )
 				continue;
 			
-			final HashMap< ViewId, ChannelInterestPointList > pointListsTimepoint = this.getInterestPoints(
+			final HashMap< ViewId, MatchPointList > pointListsTimepoint = this.getInterestPoints(
 					spimData,
 					anglesToProcess,
 					channelsToProcess,
@@ -120,18 +120,18 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 			views.addAll( pointListsTimepoint.keySet() );
 			Collections.sort( views );
 			
-			final ArrayList< ChannelInterestPointListPair > viewPairs = new ArrayList< ChannelInterestPointListPair >();
+			final ArrayList< PairwiseMatch > viewPairs = new ArrayList< PairwiseMatch >();
 			
 			// all correspondences between the reference timepoint and the current timepoint
 			for ( int a = 0; a < views.size(); ++a )
 			{
 				final ViewId viewIdA = views.get( a );
-				final ChannelInterestPointList listA = pointListsTimepoint.get( viewIdA );
+				final MatchPointList listA = pointListsTimepoint.get( viewIdA );
 				
 				for ( final ViewId viewIdB : fixedTiles )
 				{
-					final ChannelInterestPointList listB = pointListsReferenceTimepoint.get( viewIdB );
-					viewPairs.add( new ChannelInterestPointListPair( viewIdA, viewIdB, listA, listB ) );					
+					final MatchPointList listB = pointListsReferenceTimepoint.get( viewIdB );
+					viewPairs.add( new PairwiseMatch( viewIdA, viewIdB, listA, listB ) );					
 				}
 			}
 			
@@ -145,10 +145,10 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 						final ViewId viewIdA = views.get( a );
 						final ViewId viewIdB = views.get( b );
 						
-						final ChannelInterestPointList listA = pointListsTimepoint.get( viewIdA );
-						final ChannelInterestPointList listB = pointListsTimepoint.get( viewIdB );
+						final MatchPointList listA = pointListsTimepoint.get( viewIdA );
+						final MatchPointList listB = pointListsTimepoint.get( viewIdB );
 						
-						viewPairs.add( new ChannelInterestPointListPair( viewIdA, viewIdB, listA, listB ) );
+						viewPairs.add( new PairwiseMatch( viewIdA, viewIdB, listA, listB ) );
 					}
 			}
 			

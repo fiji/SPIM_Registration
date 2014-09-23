@@ -7,21 +7,21 @@ import java.util.concurrent.Callable;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.process.interestpointregistration.ChannelInterestPointListPair;
+import spim.process.interestpointregistration.PairwiseMatch;
 import spim.process.interestpointregistration.Detection;
 import spim.process.interestpointregistration.RANSAC;
 import spim.process.interestpointregistration.RANSACParameters;
 import spim.process.interestpointregistration.TransformationModel;
 
-public class RGLDMPairwise implements Callable< ChannelInterestPointListPair >
+public class RGLDMPairwise implements Callable< PairwiseMatch >
 {	
-	final ChannelInterestPointListPair pair;
+	final PairwiseMatch pair;
 	final TransformationModel model;
 	final RANSACParameters rp;
 	final RGLDMParameters dp;
 	final String comparison;
 
-	public RGLDMPairwise( final ChannelInterestPointListPair pair, final TransformationModel model, final String comparison, final RANSACParameters rp, final RGLDMParameters dp  )
+	public RGLDMPairwise( final PairwiseMatch pair, final TransformationModel model, final String comparison, final RANSACParameters rp, final RGLDMParameters dp  )
 	{
 		this.pair = pair;
 		this.rp = rp;
@@ -31,7 +31,7 @@ public class RGLDMPairwise implements Callable< ChannelInterestPointListPair >
 	}
 	
 	@Override
-	public ChannelInterestPointListPair call() throws Exception
+	public PairwiseMatch call() throws Exception
 	{
 		final RGLDMMatcher matcher = new RGLDMMatcher();
 		

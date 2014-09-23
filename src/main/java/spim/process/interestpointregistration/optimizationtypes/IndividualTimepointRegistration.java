@@ -11,8 +11,8 @@ import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.spimdata.SpimData2;
-import spim.process.interestpointregistration.ChannelInterestPointList;
-import spim.process.interestpointregistration.ChannelInterestPointListPair;
+import spim.process.interestpointregistration.MatchPointList;
+import spim.process.interestpointregistration.PairwiseMatch;
 import spim.process.interestpointregistration.ChannelProcess;
 
 /**
@@ -50,7 +50,7 @@ public class IndividualTimepointRegistration extends GlobalOptimizationType
 		
 		for ( final TimePoint timepoint : timepointsToProcess )
 		{
-			final HashMap< ViewId, ChannelInterestPointList > pointLists = this.getInterestPoints(
+			final HashMap< ViewId, MatchPointList > pointLists = this.getInterestPoints(
 					spimData,
 					anglesToProcess,
 					channelsToProcess,
@@ -61,7 +61,7 @@ public class IndividualTimepointRegistration extends GlobalOptimizationType
 			views.addAll( pointLists.keySet() );
 			Collections.sort( views );
 			
-			final ArrayList< ChannelInterestPointListPair > viewPairs = new ArrayList< ChannelInterestPointListPair >();
+			final ArrayList< PairwiseMatch > viewPairs = new ArrayList< PairwiseMatch >();
 			
 			// the views of the timepoint that is processed
 			// add this only if we do not consider timepoints to be units
@@ -74,10 +74,10 @@ public class IndividualTimepointRegistration extends GlobalOptimizationType
 						final ViewId viewIdA = views.get( a );
 						final ViewId viewIdB = views.get( b );
 						
-						final ChannelInterestPointList listA = pointLists.get( viewIdA );
-						final ChannelInterestPointList listB = pointLists.get( viewIdB );
+						final MatchPointList listA = pointLists.get( viewIdA );
+						final MatchPointList listB = pointLists.get( viewIdB );
 						
-						viewPairs.add( new ChannelInterestPointListPair( viewIdA, viewIdB, listA, listB ) );
+						viewPairs.add( new PairwiseMatch( viewIdA, viewIdB, listA, listB ) );
 					}
 			}
 			list.add( new GlobalOptimizationSubset( viewPairs, "individual timepoint registration: " + timepoint.getName() + "(id=" + timepoint.getId() + ")" ) );

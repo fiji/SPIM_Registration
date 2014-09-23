@@ -21,8 +21,8 @@ import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
-import spim.process.interestpointregistration.ChannelInterestPointList;
-import spim.process.interestpointregistration.ChannelInterestPointListPair;
+import spim.process.interestpointregistration.MatchPointList;
+import spim.process.interestpointregistration.PairwiseMatch;
 import spim.process.interestpointregistration.ChannelProcess;
 import spim.process.interestpointregistration.Detection;
 
@@ -117,14 +117,14 @@ public abstract class GlobalOptimizationType
 	 * 
 	 * @param timepoint
 	 */
-	public HashMap< ViewId, ChannelInterestPointList > getInterestPoints(
+	public HashMap< ViewId, MatchPointList > getInterestPoints(
 			final SpimData2 spimData,
 			final List< Angle > anglesToProcess,
 			final List< ChannelProcess > channelsToProcess,
 			final List< Illumination > illumsToProcess,
 			final TimePoint timepoint )
 	{
-		final HashMap< ViewId, ChannelInterestPointList > interestPoints = new HashMap< ViewId, ChannelInterestPointList >();
+		final HashMap< ViewId, MatchPointList > interestPoints = new HashMap< ViewId, MatchPointList >();
 		final ViewRegistrations registrations = spimData.getViewRegistrations();
 		final ViewInterestPoints interestpoints = spimData.getViewInterestPoints();
 		
@@ -185,7 +185,7 @@ public abstract class GlobalOptimizationType
 					list.add( new InterestPoint( p.getId(), l ) );
 				}
 				
-				interestPoints.put( viewId, new ChannelInterestPointList( list, c ) );
+				interestPoints.put( viewId, new MatchPointList( list, c ) );
 			}
 		
 		return interestPoints;
@@ -198,9 +198,9 @@ public abstract class GlobalOptimizationType
 	 * 
 	 * @param pairs
 	 */
-	public void addCorrespondences( final SpimData2 spimData, final ArrayList< ChannelInterestPointListPair > pairs )
+	public void addCorrespondences( final SpimData2 spimData, final ArrayList< PairwiseMatch > pairs )
 	{
-		for ( final ChannelInterestPointListPair pair : pairs )
+		for ( final PairwiseMatch pair : pairs )
 		{
 			final ArrayList< PointMatchGeneric< Detection > > correspondences = pair.getInliers();
 			

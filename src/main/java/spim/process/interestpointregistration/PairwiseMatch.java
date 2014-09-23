@@ -7,15 +7,15 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 
-public class ChannelInterestPointListPair
+public class PairwiseMatch
 {
-	final ChannelInterestPointList listA, listB;
+	final MatchPointList listA, listB;
 	final ViewId viewIdA, viewIdB;
 	
 	float error = -1;
 	ArrayList< PointMatchGeneric< Detection > > candidates, inliers;
 	
-	public ChannelInterestPointListPair( final ViewId viewIdA, final ViewId viewIdB, final ChannelInterestPointList listA, final ChannelInterestPointList listB )
+	public PairwiseMatch( final ViewId viewIdA, final ViewId viewIdB, final MatchPointList listA, final MatchPointList listB )
 	{
 		this.listA = listA;
 		this.listB = listB;
@@ -23,8 +23,8 @@ public class ChannelInterestPointListPair
 		this.viewIdB = viewIdB;
 	}
 	
-	public ChannelInterestPointList getChannelInterestPointListA() { return listA; }
-	public ChannelInterestPointList getChannelInterestPointListB() { return listB; }
+	public MatchPointList getMatchPointListA() { return listA; }
+	public MatchPointList getMatchPointListB() { return listB; }
 	public ChannelProcess getChannelProcessedA() { return listA.getChannelProcessed(); }
 	public ChannelProcess getChannelProcessedB() { return listB.getChannelProcessed(); }
 	public List< InterestPoint > getListA() { return listA.getInterestpointList(); }
