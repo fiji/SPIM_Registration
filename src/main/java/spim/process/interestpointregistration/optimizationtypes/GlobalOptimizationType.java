@@ -59,9 +59,7 @@ public abstract class GlobalOptimizationType
 			final List< Angle > anglesToProcess,
 			final List< ChannelProcess > channelsToProcess,
 			final List< Illumination > illumsToProcess,
-			final List< TimePoint > timepointsToProcess//,
-			//final double minResolution
-			);
+			final List< TimePoint > timepointsToProcess );
 
 	/**
 	 * @param viewId
