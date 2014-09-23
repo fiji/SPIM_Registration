@@ -25,15 +25,6 @@ public abstract class InterestPointRegistration
 	final List< Illumination > illumsToProcess1;
 	final List< TimePoint > timepointsToProcess1; 
 
-	/*
-	 * ensure that the resolution of the world coordinates corresponds to the finest resolution
-	 * of any dimension, i.e. if the scaling is (x=0.73 / y=0.5 / z=2 ), one pixel will be 0.5um/px.
-	 * 
-	 * This only applies if the transformation is based on the calibration only!
-	 */
-	//double min1 = Double.MAX_VALUE;
-	//String unit1 = "";
-		
 	public InterestPointRegistration(
 			final SpimData2 spimData,
 			final List< Angle > anglesToProcess,
