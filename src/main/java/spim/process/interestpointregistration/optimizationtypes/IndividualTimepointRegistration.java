@@ -5,15 +5,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import mpicbg.models.AbstractModel;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.spimdata.SpimData2;
+import spim.process.interestpointregistration.ChannelProcess;
 import spim.process.interestpointregistration.MatchPointList;
 import spim.process.interestpointregistration.PairwiseMatch;
-import spim.process.interestpointregistration.ChannelProcess;
 
 /**
  * A registration type where each timepoint is registered individually
@@ -23,39 +22,36 @@ import spim.process.interestpointregistration.ChannelProcess;
  */
 public class IndividualTimepointRegistration extends GlobalOptimizationType
 {
-	public IndividualTimepointRegistration( final boolean remove, final boolean add, final boolean save, final boolean fixFirstTile, final AbstractModel<?> mapBackModel )
-	{ 
-		super( remove, add, save, false, fixFirstTile, mapBackModel );
+	public IndividualTimepointRegistration(
+			final SpimData2 spimData,
+			final List< Angle > anglesToProcess,
+			final List< ChannelProcess > channelsToProcess,
+			final List< Illumination > illumsToProcess,
+			final List< TimePoint > timepointsToProcess,
+			final boolean save )
+	{
+		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess, save, false );
 	}
 
 	@Override
 	public boolean isFixedTile( final ViewId viewId, final GlobalOptimizationSubset set )
 	{
-		// fix first tile
+		return fixedTiles.contains( viewId );
+		/*// fix first tile
 		if ( fixFirstTile && viewId == set.getViews().get( 0 ) )
 			return true;
 		else
-			return false;
+			return false;*/
 	}
 
 	@Override
-	public List< GlobalOptimizationSubset > getAllViewPairs(
-			final SpimData2 spimData,
-			final List< Angle > anglesToProcess,
-			final List< ChannelProcess > channelsToProcess,
-			final List< Illumination > illumsToProcess,
-			final List< TimePoint > timepointsToProcess )
+	public List< GlobalOptimizationSubset > assembleAllViewPairs()
 	{
 		final ArrayList< GlobalOptimizationSubset > list = new ArrayList< GlobalOptimizationSubset >();
 		
 		for ( final TimePoint timepoint : timepointsToProcess )
 		{
-			final HashMap< ViewId, MatchPointList > pointLists = this.getInterestPoints(
-					spimData,
-					anglesToProcess,
-					channelsToProcess,
-					illumsToProcess,
-					timepoint );
+			final HashMap< ViewId, MatchPointList > pointLists = this.getInterestPoints( timepoint );
 			
 			final ArrayList< ViewId > views = new ArrayList< ViewId >();
 			views.addAll( pointLists.keySet() );
@@ -85,7 +81,4 @@ public class IndividualTimepointRegistration extends GlobalOptimizationType
 		
 		return list;
 	}
-
-	@Override
-	public ViewId getReferenceTile( final GlobalOptimizationSubset set ) { return set.getViews().get( 0 ); }
 }

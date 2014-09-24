@@ -100,7 +100,7 @@ public abstract class InterestPointRegistration
 	protected abstract Callable< PairwiseMatch > pairwiseMatchingInstance( final PairwiseMatch pair, final String description );
 
 	/**
-	 * @return - the transformation model to be used for the global optimization
+	 * @return - the transformation model to be used for the global optimization, and in most cases also for RANSAC
 	 */
 	protected abstract TransformationModel getTransformationModel();
 
@@ -146,12 +146,7 @@ public abstract class InterestPointRegistration
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Starting registration" );
 
 		// get a list of all pairs for this specific GlobalOptimizationType
-		final List< GlobalOptimizationSubset > list = registrationType.getAllViewPairs(
-				spimData,
-				getAnglesToProcess(),
-				getChannelsToProcess(),
-				getIllumsToProcess(),
-				getTimepointsToProcess() );
+		final List< GlobalOptimizationSubset > list = registrationType.getAllViewPairs();
 		
 		int successfulRuns = 0;
 		
@@ -206,15 +201,15 @@ public abstract class InterestPointRegistration
 			
 			// first remove existing correspondences
 			if ( registrationType.remove() )
-				registrationType.clearExistingCorrespondences( spimData, getChannelsToProcess(), subset );
+				registrationType.clearExistingCorrespondences( subset );
 
 			// now add all corresponding interest points
 			if ( registrationType.add() )
-				registrationType.addCorrespondences( spimData, pairs );
+				registrationType.addCorrespondences( pairs );
 			
 			// save the files
 			if ( registrationType.save() )
-				registrationType.saveCorrespondences( spimData, getChannelsToProcess(), subset );
+				registrationType.saveCorrespondences( subset );
 			
 			if ( runGlobalOpt( subset, registrationType ) )
 				++successfulRuns;

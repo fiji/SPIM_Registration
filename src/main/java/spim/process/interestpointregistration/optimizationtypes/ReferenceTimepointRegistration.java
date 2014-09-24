@@ -19,21 +19,21 @@ import spim.process.interestpointregistration.ChannelProcess;
 public class ReferenceTimepointRegistration extends GlobalOptimizationType
 {
 	final TimePoint referenceTimepoint;
-	final HashSet< ViewId > fixedTiles;
-	
+
 	public ReferenceTimepointRegistration(
 			final SpimData2 spimData,
 			final List< Angle > anglesToProcess,
 			final List< ChannelProcess > channelsToProcess,
 			final List< Illumination > illumsToProcess,
+			final List< TimePoint > timepointsToProcess,
 			final TimePoint referenceTimepoint,
-			final boolean remove, final boolean add, final boolean save,
+			final boolean save,
 			final boolean considerTimePointsAsUnit )
-	{ 
-		super( remove, add, save, considerTimePointsAsUnit, true, null );
+	{
+		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess, save, considerTimePointsAsUnit );
 
+		this.setFixedTiles( assembleFixedTiles( spimData, anglesToProcess, channelsToProcess, illumsToProcess, referenceTimepoint ) );
 		this.referenceTimepoint = referenceTimepoint;
-		this.fixedTiles = assembleFixedTiles( spimData, anglesToProcess, channelsToProcess, illumsToProcess, referenceTimepoint );
 	}
 	
 	/**
@@ -46,7 +46,7 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 	 * @param referenceTimepoint
 	 * @return
 	 */
-	protected HashSet< ViewId > assembleFixedTiles(
+	protected static HashSet< ViewId > assembleFixedTiles(
 			final SpimData2 spimData,
 			final List< Angle > anglesToProcess,
 			final List< ChannelProcess > channelsToProcess,
@@ -88,33 +88,18 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 	public TimePoint getReferenceTimepoint() { return referenceTimepoint; }
 
 	@Override
-	public List< GlobalOptimizationSubset > getAllViewPairs(
-			final SpimData2 spimData,
-			final List< Angle > anglesToProcess,
-			final List< ChannelProcess > channelsToProcess,
-			final List< Illumination > illumsToProcess,
-			final List< TimePoint > timepointsToProcess )
+	public List< GlobalOptimizationSubset > assembleAllViewPairs()
 	{
 		final ArrayList< GlobalOptimizationSubset > list = new ArrayList< GlobalOptimizationSubset >();
 
-		final HashMap< ViewId, MatchPointList > pointListsReferenceTimepoint = this.getInterestPoints(
-				spimData,
-				anglesToProcess,
-				channelsToProcess,
-				illumsToProcess,
-				referenceTimepoint );
+		final HashMap< ViewId, MatchPointList > pointListsReferenceTimepoint = this.getInterestPoints( referenceTimepoint );
 
 		for ( final TimePoint timepoint : timepointsToProcess )
 		{
 			if ( timepoint == referenceTimepoint )
 				continue;
 			
-			final HashMap< ViewId, MatchPointList > pointListsTimepoint = this.getInterestPoints(
-					spimData,
-					anglesToProcess,
-					channelsToProcess,
-					illumsToProcess,
-					timepoint );
+			final HashMap< ViewId, MatchPointList > pointListsTimepoint = this.getInterestPoints( timepoint );
 			
 			final ArrayList< ViewId > views = new ArrayList< ViewId >();
 			views.addAll( pointListsTimepoint.keySet() );
@@ -160,5 +145,5 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 	}
 
 	@Override
-	public ViewId getReferenceTile( final GlobalOptimizationSubset set ) { return null; }
+	public ViewId getMapBackReferenceTile( final GlobalOptimizationSubset set ) { return null; }
 }

@@ -2,7 +2,10 @@ package spim.process.interestpointregistration.optimizationtypes;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import mpicbg.models.AbstractModel;
 import mpicbg.spim.data.registration.ViewRegistration;
@@ -21,10 +24,10 @@ import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
-import spim.process.interestpointregistration.MatchPointList;
-import spim.process.interestpointregistration.PairwiseMatch;
 import spim.process.interestpointregistration.ChannelProcess;
 import spim.process.interestpointregistration.Detection;
+import spim.process.interestpointregistration.MatchPointList;
+import spim.process.interestpointregistration.PairwiseMatch;
 
 /**
  * A certain type of global optimization, must be able to define all view pairs
@@ -34,32 +37,56 @@ import spim.process.interestpointregistration.Detection;
  */
 public abstract class GlobalOptimizationType
 {
-	protected boolean save, remove, add;
-	final protected boolean considerTimePointsAsUnit, fixFirstTile;
-	final AbstractModel<?> mapBackModel;
+	public static boolean remove = true, add = true;
+	protected boolean save;
+	final protected boolean considerTimePointsAsUnit;
+
+	final SpimData2 spimData;
+	final List< Angle > anglesToProcess;
+	final List< ChannelProcess > channelsToProcess;
+	final List< Illumination > illumsToProcess;
+	final List< TimePoint > timepointsToProcess;
+
+	final List< GlobalOptimizationSubset > subsets;
+
+	Set< ViewId > fixedTiles;
+	Map< GlobalOptimizationSubset, ViewId > referenceTiles;
+	AbstractModel<?> mapBackModel;
 	
 	public GlobalOptimizationType(
-			final boolean remove,
-			final boolean add,
-			final boolean save,
-			final boolean considerTimePointsAsUnit,
-			final boolean fixFirstTile,
-			final AbstractModel<?> mapBackModel )
-	{ 
-		this.remove = remove;
-		this.add = add;
-		this.save = save;
-		this.considerTimePointsAsUnit = considerTimePointsAsUnit;
-		this.fixFirstTile = fixFirstTile;
-		this.mapBackModel = mapBackModel;
-	}
-	
-	public abstract List< GlobalOptimizationSubset > getAllViewPairs(
 			final SpimData2 spimData,
 			final List< Angle > anglesToProcess,
 			final List< ChannelProcess > channelsToProcess,
 			final List< Illumination > illumsToProcess,
-			final List< TimePoint > timepointsToProcess );
+			final List< TimePoint > timepointsToProcess,
+			final boolean save,
+			final boolean considerTimePointsAsUnit )
+	{
+		this.spimData = spimData;
+		this.anglesToProcess = anglesToProcess;
+		this.channelsToProcess = channelsToProcess;
+		this.illumsToProcess = illumsToProcess;
+		this.timepointsToProcess = timepointsToProcess;
+
+		this.save = save;
+		this.considerTimePointsAsUnit = considerTimePointsAsUnit;
+
+		this.fixedTiles = new HashSet< ViewId >();
+		this.referenceTiles = new HashMap< GlobalOptimizationSubset, ViewId >();
+		this.mapBackModel = null;
+
+		this.subsets = assembleAllViewPairs();
+	}
+
+	/**
+	 * @return - assembles the list of subsets and points for the registration
+	 */
+	public abstract List< GlobalOptimizationSubset > assembleAllViewPairs();
+
+	/**
+	 * @return - the list of all subsets for the global optimization
+	 */
+	public List< GlobalOptimizationSubset > getAllViewPairs(){ return subsets; }
 
 	/**
 	 * @param viewId
@@ -67,11 +94,6 @@ public abstract class GlobalOptimizationType
 	 * @return - true if a certain tile is fixed for global optimization, otherwise false
 	 */
 	public abstract boolean isFixedTile( final ViewId viewId, final GlobalOptimizationSubset set );
-	
-	/**
-	 * @return - if the first tile was fixed or not
-	 */
-	public boolean fixFirstTile() { return fixFirstTile; }
 
 	/**
 	 * In case there is one tile which would be reference tile, return this one - can be null.
@@ -81,15 +103,47 @@ public abstract class GlobalOptimizationType
 	 * @param set - the current set that will be globally optimized
 	 * @return
 	 */
-	public abstract ViewId getReferenceTile( final GlobalOptimizationSubset set );
-	
+	public ViewId getMapBackReferenceTile( final GlobalOptimizationSubset set ) { return referenceTiles == null ? null : referenceTiles.get( set ); }
+
+	/**
+	 * @param set - for which subset
+	 * @param referenceTile - set reference tile for mapping back
+	 */
+	public void setMapBackReferenceTile( final GlobalOptimizationSubset set, final ViewId referenceTile )
+	{
+		if ( this.referenceTiles == null )
+			this.referenceTiles = new HashMap< GlobalOptimizationSubset, ViewId >();
+
+		this.referenceTiles.put( set, referenceTile );
+	}
+
+	/**
+	 * @param referenceTiles - set all reference tiles
+	 */
+	public void setMapBackReferenceTiles( final Map< GlobalOptimizationSubset, ViewId > referenceTiles ) { this.referenceTiles = referenceTiles; }
+
 	/**
 	 * The transformation model used to map back to the reference frame (can be null)
 	 * 
 	 * @return - a new instance of the model
 	 */
 	public AbstractModel<?> getMapBackModel() { return mapBackModel; }
-	
+
+	/**
+	 * @param model - The transformation model used to map back to the reference frame (can be null)
+	 */
+	public void setMapBackModel( final AbstractModel<?> model ) { this.mapBackModel = model; }
+
+	/**
+	 * @return - the set of fixed tiles, can be empty
+	 */
+	public Set< ViewId > getFixedTiles() { return fixedTiles; }
+
+	/**
+	 * @param fixedTiles - the set of fixed tiles, can be empty, but not NULL
+	 */
+	public void setFixedTiles( final Set< ViewId > fixedTiles ) { this.fixedTiles = fixedTiles; }
+
 	/** 
 	 * @return - true if previous correspondences should be removed
 	 */
@@ -110,6 +164,8 @@ public abstract class GlobalOptimizationType
 	 */
 	public boolean considerTimePointsAsUnit() { return considerTimePointsAsUnit; }
 
+	public SpimData2 getSpimData() { return spimData; }
+
 	/**
 	 * Creates lists of input points for the registration, based on the current transformation of the views
 	 * 
@@ -117,12 +173,7 @@ public abstract class GlobalOptimizationType
 	 * 
 	 * @param timepoint
 	 */
-	public HashMap< ViewId, MatchPointList > getInterestPoints(
-			final SpimData2 spimData,
-			final List< Angle > anglesToProcess,
-			final List< ChannelProcess > channelsToProcess,
-			final List< Illumination > illumsToProcess,
-			final TimePoint timepoint )
+	public HashMap< ViewId, MatchPointList > getInterestPoints( final TimePoint timepoint )
 	{
 		final HashMap< ViewId, MatchPointList > interestPoints = new HashMap< ViewId, MatchPointList >();
 		final ViewRegistrations registrations = spimData.getViewRegistrations();
@@ -198,24 +249,24 @@ public abstract class GlobalOptimizationType
 	 * 
 	 * @param pairs
 	 */
-	public void addCorrespondences( final SpimData2 spimData, final ArrayList< PairwiseMatch > pairs )
+	public void addCorrespondences( final ArrayList< PairwiseMatch > pairs )
 	{
 		for ( final PairwiseMatch pair : pairs )
 		{
 			final ArrayList< PointMatchGeneric< Detection > > correspondences = pair.getInliers();
-			
+
 			final String labelA = pair.getChannelProcessedA().getLabel();
 			final String labelB = pair.getChannelProcessedB().getLabel();
-			
+
 			final ViewId viewA = pair.getViewIdA();
 			final ViewId viewB = pair.getViewIdB();
-			
+
 			final InterestPointList listA = spimData.getViewInterestPoints().getViewInterestPointLists( viewA ).getInterestPointList( labelA );				
 			final InterestPointList listB = spimData.getViewInterestPoints().getViewInterestPointLists( viewB ).getInterestPointList( labelB );
-			
+
 			final List< CorrespondingInterestPoints > corrListA = listA.getCorrespondingInterestPoints();
 			final List< CorrespondingInterestPoints > corrListB = listB.getCorrespondingInterestPoints();
-			
+
 			for ( final PointMatchGeneric< Detection > d : correspondences )
 			{
 				final Detection dA = d.getPoint1();
@@ -227,9 +278,9 @@ public abstract class GlobalOptimizationType
 				corrListA.add( correspondingToA );
 				corrListB.add( correspondingToB );
 			}
-		}		
+		}
 	}
-	
+
 	/**
 	 * Save all lists of existing correspondences for those that are compared here
 	 * 
@@ -237,14 +288,14 @@ public abstract class GlobalOptimizationType
 	 *
 	 * @param set
 	 */
-	public void saveCorrespondences( final SpimData2 spimData, final List< ChannelProcess > channelsToProcess, final GlobalOptimizationSubset set )
+	public void saveCorrespondences( final GlobalOptimizationSubset set )
 	{
 		for ( final ViewId id : set.getViews() )
 			for ( final ChannelProcess c : channelsToProcess )
 				if ( spimData.getSequenceDescription().getViewDescription( id ).getViewSetup().getChannel().getId() == c.getChannel().getId() )
 					spimData.getViewInterestPoints().getViewInterestPointLists( id ).getInterestPointList( c.getLabel() ).saveCorrespondingInterestPoints();		
 	}
-	
+
 	/**
 	 * Clear all lists of existing correspondences for those that are compared here
 	 * 
@@ -252,12 +303,11 @@ public abstract class GlobalOptimizationType
 	 *
 	 * @param set
 	 */
-	public void clearExistingCorrespondences( final SpimData2 spimData, final List< ChannelProcess > channelsToProcess, final GlobalOptimizationSubset set )
+	public void clearExistingCorrespondences( final GlobalOptimizationSubset set )
 	{
 		for ( final ViewId id : set.getViews() )
 			for ( final ChannelProcess c : channelsToProcess )
 				if ( spimData.getSequenceDescription().getViewDescription( id ).getViewSetup().getChannel().getId() == c.getChannel().getId() )
 					spimData.getViewInterestPoints().getViewInterestPointLists( id ).getInterestPointList( c.getLabel() ).getCorrespondingInterestPoints().clear();
 	}
-
 }

@@ -70,7 +70,7 @@ public class GlobalOptimizationSubset
 		final AffineTransform3D mapBackModel;
 		
 		// TODO: Map back first tile as good as possible to original location???
-		if ( !type.fixFirstTile() && type.getReferenceTile( this ) != null && type.getMapBackModel() != null )
+		if ( type.getMapBackReferenceTile( this ) != null && type.getMapBackModel() != null )
 			mapBackModel = computeMapBackModel( tiles, type, spimData );
 		else
 			mapBackModel = null;
@@ -116,7 +116,7 @@ public class GlobalOptimizationSubset
 		{
 			IOFunctions.println( "Mapping back to reference frame using a " + mapBackModel.getClass().getSimpleName() );
 			
-			final ViewId referenceTile = type.getReferenceTile( this );
+			final ViewId referenceTile = type.getMapBackReferenceTile( this );
 			final ViewDescription referenceTileViewDescription = spimData.getSequenceDescription().getViewDescription( referenceTile );
 			final ViewSetup referenceTileSetup = referenceTileViewDescription.getViewSetup();
 			Dimensions size = ViewSetupUtils.getSizeOrLoad( referenceTileSetup, referenceTileViewDescription.getTimePoint(), spimData.getSequenceDescription().getImgLoader() );
