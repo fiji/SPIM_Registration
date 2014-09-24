@@ -60,7 +60,10 @@ public class AllToAllRegistrationWithRange extends GlobalOptimizationType
 				final ViewId viewIdA = views.get( a );
 				final ViewId viewIdB = views.get( b );
 				
-				if ( Math.abs( viewIdA.getTimePointId() - viewIdB.getTimePointId() ) <= range )
+				// only compare those to views if not both are fixed and timepoints are within range
+				if (
+					!isFixedTile( viewIdA ) && !isFixedTile( viewIdB ) &&
+					Math.abs( viewIdA.getTimePointId() - viewIdB.getTimePointId() ) <= range )
 				{
 					final MatchPointList listA = allPointLists.get( viewIdA );
 					final MatchPointList listB = allPointLists.get( viewIdB );

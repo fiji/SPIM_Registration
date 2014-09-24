@@ -55,13 +55,17 @@ public class AllToAllRegistration extends GlobalOptimizationType
 				final ViewId viewIdA = views.get( a );
 				final ViewId viewIdB = views.get( b );
 				
-				final MatchPointList listA = allPointLists.get( viewIdA );
-				final MatchPointList listB = allPointLists.get( viewIdB );
-				
-				// in case we consider timepoints as units and the pair has the same timepoint, do not add;
-				// i.e. add the pair always if the above statement is false
-				if ( !( considerTimePointsAsUnit() && ( viewIdA.getTimePointId() == viewIdB.getTimePointId() ) ) )
-					viewPairs.add( new PairwiseMatch( viewIdA, viewIdB, listA, listB ) );
+				// only compare those to views if not both are fixed
+				if ( !isFixedTile( viewIdA ) && !isFixedTile( viewIdB ) )
+				{
+					final MatchPointList listA = allPointLists.get( viewIdA );
+					final MatchPointList listB = allPointLists.get( viewIdB );
+					
+					// in case we consider timepoints as units and the pair has the same timepoint, do not add;
+					// i.e. add the pair always if the above statement is false
+					if ( !( considerTimePointsAsUnit() && ( viewIdA.getTimePointId() == viewIdB.getTimePointId() ) ) )
+						viewPairs.add( new PairwiseMatch( viewIdA, viewIdB, listA, listB ) );
+				}
 			}
 
 		final ArrayList< GlobalOptimizationSubset > list = new ArrayList< GlobalOptimizationSubset >();

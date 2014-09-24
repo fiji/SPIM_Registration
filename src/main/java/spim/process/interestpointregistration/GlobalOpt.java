@@ -231,7 +231,7 @@ public class GlobalOpt
 			final Tile< M > tile = map.get( viewId );
 
 			// if one of the views that maps to this tile is fixed, fix this tile if it is not already fixed
-			if ( registrationType.isFixedTile( viewId, subset ) && !tc.getFixedTiles().contains( tile ) )
+			if ( registrationType.isFixedTile( viewId ) && !tc.getFixedTiles().contains( tile ) )
 			{
 				if ( considerTimePointsAsUnit )
 					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Fixing timepoint-tile (timepointId = " + viewId.getTimePointId() + ")" );

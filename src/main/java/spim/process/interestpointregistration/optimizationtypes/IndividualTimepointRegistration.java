@@ -59,10 +59,14 @@ public class IndividualTimepointRegistration extends GlobalOptimizationType
 						final ViewId viewIdA = views.get( a );
 						final ViewId viewIdB = views.get( b );
 						
-						final MatchPointList listA = pointLists.get( viewIdA );
-						final MatchPointList listB = pointLists.get( viewIdB );
-						
-						viewPairs.add( new PairwiseMatch( viewIdA, viewIdB, listA, listB ) );
+						// only compare those to views if not both are fixed
+						if ( !isFixedTile( viewIdA ) && !isFixedTile( viewIdB ) )
+						{
+							final MatchPointList listA = pointLists.get( viewIdA );
+							final MatchPointList listB = pointLists.get( viewIdB );
+	
+							viewPairs.add( new PairwiseMatch( viewIdA, viewIdB, listA, listB ) );
+						}
 					}
 			}
 			list.add( new GlobalOptimizationSubset( viewPairs, "individual timepoint registration: " + timepoint.getName() + "(id=" + timepoint.getId() + ")" ) );

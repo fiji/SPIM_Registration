@@ -90,10 +90,9 @@ public abstract class GlobalOptimizationType
 
 	/**
 	 * @param viewId
-	 * @param set
-	 * @return - true if a certain tile is fixed for global optimization, otherwise false
+	 * @return - true if a certain tile is fixed, otherwise false
 	 */
-	public boolean isFixedTile( final ViewId viewId, final GlobalOptimizationSubset set ) { return fixedTiles.contains( viewId ); }
+	public boolean isFixedTile( final ViewId viewId ) { return fixedTiles.contains( viewId ); }
 
 	/**
 	 * @return - the set of fixed tiles, can be empty

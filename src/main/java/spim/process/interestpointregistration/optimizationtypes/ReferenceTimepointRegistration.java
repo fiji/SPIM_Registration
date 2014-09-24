@@ -110,7 +110,7 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 				for ( final ViewId viewIdB : fixedTiles )
 				{
 					final MatchPointList listB = pointListsReferenceTimepoint.get( viewIdB );
-					viewPairs.add( new PairwiseMatch( viewIdA, viewIdB, listA, listB ) );					
+					viewPairs.add( new PairwiseMatch( viewIdA, viewIdB, listA, listB ) );
 				}
 			}
 			
