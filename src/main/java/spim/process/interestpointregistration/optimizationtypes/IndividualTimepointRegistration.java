@@ -34,17 +34,6 @@ public class IndividualTimepointRegistration extends GlobalOptimizationType
 	}
 
 	@Override
-	public boolean isFixedTile( final ViewId viewId, final GlobalOptimizationSubset set )
-	{
-		return fixedTiles.contains( viewId );
-		/*// fix first tile
-		if ( fixFirstTile && viewId == set.getViews().get( 0 ) )
-			return true;
-		else
-			return false;*/
-	}
-
-	@Override
 	public List< GlobalOptimizationSubset > assembleAllViewPairs()
 	{
 		final ArrayList< GlobalOptimizationSubset > list = new ArrayList< GlobalOptimizationSubset >();

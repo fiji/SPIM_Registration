@@ -79,12 +79,6 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 		return fixedTiles;
 	}
 
-	@Override
-	public boolean isFixedTile( final ViewId viewId, final GlobalOptimizationSubset set )
-	{
-		return fixedTiles.contains( viewId );
-	}
-
 	public TimePoint getReferenceTimepoint() { return referenceTimepoint; }
 
 	@Override

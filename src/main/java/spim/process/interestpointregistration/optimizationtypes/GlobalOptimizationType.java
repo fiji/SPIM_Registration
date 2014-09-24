@@ -81,7 +81,7 @@ public abstract class GlobalOptimizationType
 	/**
 	 * @return - assembles the list of subsets and points for the registration
 	 */
-	public abstract List< GlobalOptimizationSubset > assembleAllViewPairs();
+	protected abstract List< GlobalOptimizationSubset > assembleAllViewPairs();
 
 	/**
 	 * @return - the list of all subsets for the global optimization
@@ -93,7 +93,17 @@ public abstract class GlobalOptimizationType
 	 * @param set
 	 * @return - true if a certain tile is fixed for global optimization, otherwise false
 	 */
-	public abstract boolean isFixedTile( final ViewId viewId, final GlobalOptimizationSubset set );
+	public boolean isFixedTile( final ViewId viewId, final GlobalOptimizationSubset set ) { return fixedTiles.contains( viewId ); }
+
+	/**
+	 * @return - the set of fixed tiles, can be empty
+	 */
+	public Set< ViewId > getFixedTiles() { return fixedTiles; }
+
+	/**
+	 * @param fixedTiles - the set of fixed tiles, can be empty, but not NULL
+	 */
+	public void setFixedTiles( final Set< ViewId > fixedTiles ) { this.fixedTiles = fixedTiles; }
 
 	/**
 	 * In case there is one tile which would be reference tile, return this one - can be null.
@@ -133,16 +143,6 @@ public abstract class GlobalOptimizationType
 	 * @param model - The transformation model used to map back to the reference frame (can be null)
 	 */
 	public void setMapBackModel( final AbstractModel<?> model ) { this.mapBackModel = model; }
-
-	/**
-	 * @return - the set of fixed tiles, can be empty
-	 */
-	public Set< ViewId > getFixedTiles() { return fixedTiles; }
-
-	/**
-	 * @param fixedTiles - the set of fixed tiles, can be empty, but not NULL
-	 */
-	public void setFixedTiles( final Set< ViewId > fixedTiles ) { this.fixedTiles = fixedTiles; }
 
 	/** 
 	 * @return - true if previous correspondences should be removed

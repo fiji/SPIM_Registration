@@ -69,16 +69,4 @@ public class AllToAllRegistration extends GlobalOptimizationType
 		
 		return list;
 	}
-
-	@Override
-	public boolean isFixedTile( final ViewId viewId, final GlobalOptimizationSubset set )
-	{
-		return fixedTiles.contains( viewId );
-		/*
-		// fix first tile
-		if ( fixFirstTile && viewId == set.getViews().get( 0 ) )
-			return true;
-		else
-			return false;*/
-	}
 }
