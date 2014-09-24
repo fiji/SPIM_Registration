@@ -51,7 +51,7 @@ public class IndividualTimepointRegistration extends GlobalOptimizationType
 			// the views of the timepoint that is processed
 			// add this only if we do not consider timepoints to be units
 			// Note: if considerTimePointsAsUnits == true, there are no pairs
-			if ( !considerTimePointsAsUnit )
+			if ( !considerTimePointsAsUnit() )
 			{
 				for ( int a = 0; a < views.size() - 1; ++a )
 					for ( int b = a + 1; b < views.size(); ++b )

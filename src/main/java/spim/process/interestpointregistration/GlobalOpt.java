@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 import javax.media.j3d.Transform3D;
 import javax.vecmath.Matrix4f;
@@ -48,8 +49,8 @@ public class GlobalOpt
 			final boolean considerTimePointsAsUnit )
 	{
 		// assemble all views and corresponding points
-		final ArrayList< PairwiseMatch > pairs = subset.getViewPairs();
-		final ArrayList< ViewId > views = subset.getViews();
+		final List< PairwiseMatch > pairs = subset.getViewPairs();
+		final List< ViewId > views = subset.getViews();
 		
 		// assign ViewIds to the individual Tiles (either one tile per view or one tile per timepoint)
 		final HashMap< ViewId, Tile< M > > map = assignViewsToTiles( model, views, considerTimePointsAsUnit );
@@ -213,7 +214,7 @@ public class GlobalOpt
 	}
 	
 	protected static < M extends Model< M > > TileConfiguration addAndFixTiles(
-			final ArrayList< ViewId > views,
+			final List< ViewId > views,
 			final HashMap< ViewId, Tile< M > > map,
 			final GlobalOptimizationType registrationType,
 			final GlobalOptimizationSubset subset,
@@ -253,7 +254,7 @@ public class GlobalOpt
 	
 	protected static < M extends Model< M > > HashMap< ViewId, Tile< M > > assignViewsToTiles(
 			final M model,
-			final ArrayList< ViewId > views,
+			final List< ViewId > views,
 			final boolean considerTimePointsAsUnit )
 	{
 		final HashMap< ViewId, Tile< M > > map = new HashMap< ViewId, Tile< M > >();

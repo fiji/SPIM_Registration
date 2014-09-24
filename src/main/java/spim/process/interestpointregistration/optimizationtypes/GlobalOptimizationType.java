@@ -173,7 +173,7 @@ public abstract class GlobalOptimizationType
 	 * 
 	 * @param timepoint
 	 */
-	public HashMap< ViewId, MatchPointList > getInterestPoints( final TimePoint timepoint )
+	protected HashMap< ViewId, MatchPointList > getInterestPoints( final TimePoint timepoint )
 	{
 		final HashMap< ViewId, MatchPointList > interestPoints = new HashMap< ViewId, MatchPointList >();
 		final ViewRegistrations registrations = spimData.getViewRegistrations();
@@ -249,7 +249,7 @@ public abstract class GlobalOptimizationType
 	 * 
 	 * @param pairs
 	 */
-	public void addCorrespondences( final ArrayList< PairwiseMatch > pairs )
+	public void addCorrespondences( final List< PairwiseMatch > pairs )
 	{
 		for ( final PairwiseMatch pair : pairs )
 		{

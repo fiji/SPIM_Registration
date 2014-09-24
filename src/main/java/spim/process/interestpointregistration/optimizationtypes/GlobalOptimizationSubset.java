@@ -179,7 +179,7 @@ public class GlobalOptimizationSubset
 	/**
 	 * @return - all views that are part of the subset and will receive a transformation model
 	 */
-	public ArrayList< ViewId > getViews()
+	public List< ViewId > getViews()
 	{
 		if ( viewList != null )
 			return viewList;
@@ -199,6 +199,6 @@ public class GlobalOptimizationSubset
 		return viewList;
 	}
 	
-	public ArrayList< PairwiseMatch > getViewPairs() { return viewPairs; }
+	public List< PairwiseMatch > getViewPairs() { return viewPairs; }
 	public String getDescription() { return description; }
 }

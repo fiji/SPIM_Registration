@@ -152,7 +152,7 @@ public abstract class InterestPointRegistration
 		
 		for ( final GlobalOptimizationSubset subset : list )
 		{
-			final ArrayList< PairwiseMatch > pairs = subset.getViewPairs();
+			final List< PairwiseMatch > pairs = subset.getViewPairs();
 			
 			final ExecutorService taskExecutor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
 			final ArrayList< Callable< PairwiseMatch > > tasks = new ArrayList< Callable< PairwiseMatch > >(); // your tasks
