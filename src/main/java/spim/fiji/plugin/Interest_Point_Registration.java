@@ -84,6 +84,9 @@ public class Interest_Point_Registration implements PlugIn
 	public static boolean defaultSameFixedViews = true;
 	public static boolean defaultSameReferenceView = true;
 
+	public static boolean[] defaultFixedTiles = null;
+	public static int defaultReferenceTile = 0;
+
 	final static protected String warningLabel = " (WARNING: Only available for "; 
 	
 	static
@@ -451,10 +454,16 @@ public class Interest_Point_Registration implements PlugIn
 						return false;
 					}
 
+					if ( defaultFixedTiles == null || defaultFixedTiles.length != setupList.size() )
+						defaultFixedTiles = new boolean[ setupList.size() ];
+
 					final GenericDialog gd2 = new GenericDialog( "Select ViewSetups to be fixed for each of the timepoints" );
 
-					for ( final ViewSetup vs : setupList )
-						gd2.addCheckbox( "Angle_" + vs.getAngle().getName() + "_Channel_" + vs.getChannel().getName() + "_Illum_" + vs.getIllumination().getName(), false );
+					for ( int i = 0; i < setupList.size(); ++i )
+					{
+						final ViewSetup vs = setupList.get( i );
+						gd2.addCheckbox( "Angle_" + vs.getAngle().getName() + "_Channel_" + vs.getChannel().getName() + "_Illum_" + vs.getIllumination().getName(), defaultFixedTiles[ i ] );
+					}
 
 					GUIHelper.addScrollBars( gd2 );
 
@@ -462,11 +471,10 @@ public class Interest_Point_Registration implements PlugIn
 					if ( gd2.wasCanceled() )
 						return false;
 
-					for ( final ViewSetup vs : setupList )
-						if ( gd2.getNextBoolean() )
+					for ( int i = 0; i < setupList.size(); ++i )
+						if ( defaultFixedTiles[ i ] = gd2.getNextBoolean() )
 							for ( final GlobalOptimizationSubset subset : subsets )
-								fixedTiles.add( new ViewId( subset.getViews().get( 0 ).getTimePointId(), vs.getId() ) );
-					
+								fixedTiles.add( new ViewId( subset.getViews().get( 0 ).getTimePointId(), setupList.get( i ).getId() ) );
 				}
 				else
 				{
@@ -554,13 +562,16 @@ public class Interest_Point_Registration implements PlugIn
 						choices[ i ] = "Angle_" + vs.getAngle().getName() + "_Channel_" + vs.getChannel().getName() + "_Illum_" + vs.getIllumination().getName();
 					}
 
-					gd2.addChoice( "Select_Reference_ViewSetup", choices, choices[ 0 ] );
+					if ( defaultReferenceTile >= choices.length )
+						defaultReferenceTile = 0;
+
+					gd2.addChoice( "Select_Reference_ViewSetup", choices, choices[ defaultReferenceTile ] );
 
 					gd2.showDialog();
 					if ( gd2.wasCanceled() )
 						return false;
 
-					final int index = gd2.getNextChoiceIndex();
+					final int index = defaultReferenceTile = gd2.getNextChoiceIndex();
 
 					for ( final GlobalOptimizationSubset subset : subsets )
 						type.setMapBackReferenceTile( subset, new ViewId( subset.getViews().get( 0 ).getTimePointId(), setupList.get( index ).getId() ) );
@@ -612,13 +623,16 @@ public class Interest_Point_Registration implements PlugIn
 			choice[ i ] = "Angle:" + vs.getAngle().getName() + " Channel:" + vs.getChannel().getName() + " Illum:" + vs.getIllumination().getName() + " Timepoint:" + subset.getViews().get( i ).getTimePointId();
 		}
 
-		gd.addChoice( title.replace( " ", "_" ), choice, choice[ 0 ] );
+		if ( defaultReferenceTile >= choice.length )
+			defaultReferenceTile = 0;
+
+		gd.addChoice( title.replace( " ", "_" ), choice, choice[ defaultReferenceTile ] );
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
 			return false;
 
-		type.setMapBackReferenceTile( subset, subset.getViews().get( gd.getNextChoiceIndex() ) );
+		type.setMapBackReferenceTile( subset, subset.getViews().get( defaultReferenceTile = gd.getNextChoiceIndex() ) );
 
 		return true;
 	}
@@ -626,21 +640,25 @@ public class Interest_Point_Registration implements PlugIn
 	protected boolean askForFixedTiles( final GlobalOptimizationSubset subset, final GlobalOptimizationType type, final Set< ViewId > fixedTiles, final String title )
 	{
 		final GenericDialog gd = new GenericDialog( title );
-		
-		for ( final ViewId viewId : subset.getViews() )
+
+		if ( defaultFixedTiles == null || defaultFixedTiles.length != subset.getViews().size() )
+			defaultFixedTiles = new boolean[ subset.getViews().size() ];
+
+		for ( int i = 0; i < subset.getViews().size(); ++i )
 		{
+			final ViewId viewId = subset.getViews().get( i );
 			final ViewSetup vs = type.getSpimData().getSequenceDescription().getViewDescription( viewId ).getViewSetup();
-			gd.addCheckbox( "Angle_" + vs.getAngle().getName() + "_Channel_" + vs.getChannel().getName() + "_Illum_" + vs.getIllumination().getName() + "_Timepoint_" + viewId.getTimePointId(), false );
+			gd.addCheckbox( "Angle_" + vs.getAngle().getName() + "_Channel_" + vs.getChannel().getName() + "_Illum_" + vs.getIllumination().getName() + "_Timepoint_" + viewId.getTimePointId(), defaultFixedTiles[ i ] );
 		}
 		
 		gd.showDialog();
 		if ( gd.wasCanceled() )
 			return false;
 
-		for ( final ViewId viewId : subset.getViews() )
-			if ( gd.getNextBoolean() )
-				fixedTiles.add( viewId );
-
+		for ( int i = 0; i < subset.getViews().size(); ++i )
+			if ( defaultFixedTiles[ i ] = gd.getNextBoolean() )
+				fixedTiles.add( subset.getViews().get( i ) );
+		
 		return true;
 	}
 
