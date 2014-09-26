@@ -65,7 +65,12 @@ public class ExtractPSF< T extends RealType< T > >
 	 * @param minDim - along which dimension to project, if set to <0, the smallest dimension will be chosen
 	 * @return - the averaged, projected PSF
 	 */
-	public Img< T > computeMaxProjectionAveragePSF( final Img< T > avgPSF, int minDim )
+	public static < S extends RealType< S > > Img< S > computeMaxProjection( final Img< S > avgPSF, int minDim )
+	{
+		return computeMaxProjection( avgPSF, avgPSF.factory(), minDim );
+	}
+
+	public static < S extends RealType< S > > Img< S > computeMaxProjection( final RandomAccessibleInterval< S > avgPSF, final ImgFactory< S > factory, int minDim )
 	{
 		final long[] dimensions = new long[ avgPSF.numDimensions() ];
 		avgPSF.dimensions( dimensions );
@@ -97,10 +102,10 @@ public class ExtractPSF< T extends RealType< T > >
 			else
 				sizeProjection = dimensions[ d ];
 		
-		final Img< T > proj = avgPSF.factory().create( projDim, avgPSF.firstElement() );
+		final Img< S > proj = factory.create( projDim, Views.iterable( avgPSF ).firstElement() );
 		
-		final RandomAccess< T > psfIterator = avgPSF.randomAccess();
-		final Cursor< T > projIterator = proj.localizingCursor();
+		final RandomAccess< S > psfIterator = avgPSF.randomAccess();
+		final Cursor< S > projIterator = proj.localizingCursor();
 		
 		final int[] tmp = new int[ avgPSF.numDimensions() ];
 		

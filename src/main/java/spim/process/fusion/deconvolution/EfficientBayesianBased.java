@@ -443,7 +443,7 @@ public class EfficientBayesianBased extends Fusion
 
 			if ( displayPSF == 1 )
 			{
-				di.exportImage( ePSF.computeMaxProjectionAveragePSF( ePSF.computeAverageTransformedPSF(), -1 ), "Max projected avg transformed PSF's" );
+				di.exportImage( ePSF.computeMaxProjection( ePSF.computeAverageTransformedPSF(), -1 ), "Max projected avg transformed PSF's" );
 			}
 			else if ( displayPSF == 2 )
 			{
