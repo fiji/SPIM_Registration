@@ -109,14 +109,12 @@
 			<artifactId>formats-gpl</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>${bio-formats.groupId}</groupId>
+			<groupId>ome</groupId>
 			<artifactId>ome-xml</artifactId>
-			<version>${bio-formats.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>${bio-formats.groupId}</groupId>
+			<groupId>ome</groupId>
 			<artifactId>formats-common</artifactId>
-			<version>${bio-formats.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
