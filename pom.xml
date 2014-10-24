@@ -23,7 +23,7 @@
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
-	
+
 	<properties>
 		<bio-formats.groupId>ome</bio-formats.groupId>
 
