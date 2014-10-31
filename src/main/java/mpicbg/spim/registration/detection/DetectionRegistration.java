@@ -32,7 +32,7 @@ public class DetectionRegistration
 		{
 			final T detectionA = correspondences.get( i ).getPoint1();
 			final T detectionB = correspondences.get( i ).getPoint2();
-			final ArrayList<Integer> inconsistent = getOccurences( detectionA, detectionB, correspondences );
+			final ArrayList<Integer> inconsistent = DetectionRegistration.<S,T>getOccurences( detectionA, detectionB, correspondences );
 			
 			if ( inconsistent.size() > 0 )
 				for ( int index : inconsistent )
@@ -171,7 +171,7 @@ public class DetectionRegistration
 			final ArrayList<PointMatchGeneric<T>> inlierList, 
 			final Model<?> model )
 	{
-		return computeRANSAC( correspondenceCandidates, inlierList, model, 10, 0.1f, 3, 10000 );
+		return DetectionRegistration.<S,T>computeRANSAC( correspondenceCandidates, inlierList, model, 10, 0.1f, 3, 10000 );
 	}
 
 	public static <S extends DetectionIdentification<S,T>, T extends DetectionView<S,T> > String computeRANSAC( 
@@ -189,7 +189,7 @@ public class DetectionRegistration
 		/*
 		 * First remove the inconsistent correspondences
 		 */
-		removeInconsistentCorrespondences( correspondenceCandidates );
+		DetectionRegistration.<S,T>removeInconsistentCorrespondences( correspondenceCandidates );
 
 		// if there are not enough correspondences for the used model
 		if ( numCorrespondences < minNumCorrespondences )

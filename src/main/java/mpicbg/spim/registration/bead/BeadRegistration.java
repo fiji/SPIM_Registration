@@ -188,7 +188,7 @@ public class BeadRegistration
                     		final ArrayList< PointMatchGeneric<Bead> > correspondences = new ArrayList<PointMatchGeneric<Bead>>();
                     		final Model<?> model = viewA.getTile().getModel().copy();                    		
                     		
-                    		String result = DetectionRegistration.computeRANSAC( candidates, correspondences, model, conf.max_epsilon, conf.min_inlier_ratio, minInlierFactor, conf.numIterations );
+				String result = DetectionRegistration.<BeadIdentification,Bead>computeRANSAC( candidates, correspondences, model, conf.max_epsilon, conf.min_inlier_ratio, minInlierFactor, conf.numIterations );
                     		if ( debugLevel <= ViewStructure.DEBUG_MAIN )
                     			IOFunctions.println( viewA.getName() + "<->" + viewB.getName() +  ": " + result );                    		
 
@@ -357,7 +357,7 @@ public class BeadRegistration
                     		final ArrayList< PointMatchGeneric<Bead> > correspondences = new ArrayList<PointMatchGeneric<Bead>>();
                     		final Model<?> model = viewA.getTile().getModel().copy();                    		
                     		
-                    		String result = DetectionRegistration.computeRANSAC( candidates, correspondences, model, conf.max_epsilon, conf.min_inlier_ratio, minInlierFactor, conf.numIterations );
+				String result = DetectionRegistration.<BeadIdentification,Bead>computeRANSAC( candidates, correspondences, model, conf.max_epsilon, conf.min_inlier_ratio, minInlierFactor, conf.numIterations );
                     		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
                     			IOFunctions.println( viewA.getName() + "<->" + viewB.getName() +  ": " + result );                    		
 
