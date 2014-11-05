@@ -1,5 +1,6 @@
 package spim.fiji.plugin.queryXML;
 
+import fiji.util.gui.GenericDialogPlus;
 import ij.gui.GenericDialog;
 
 import java.awt.Color;
@@ -30,7 +31,6 @@ import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.NamePattern;
-import fiji.util.gui.GenericDialogPlus;
 
 /**
  * Interface for interactive parsing of spimdata XMLs

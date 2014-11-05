@@ -1,5 +1,8 @@
 package mpicbg.icp;
 
+import fiji.util.KDTree;
+import fiji.util.node.Leaf;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -10,8 +13,6 @@ import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
 import mpicbg.pointdescriptor.exception.NoSuitablePointsException;
-import fiji.util.KDTree;
-import fiji.util.node.Leaf;
 
 /**
  * Implementation of the ICP 

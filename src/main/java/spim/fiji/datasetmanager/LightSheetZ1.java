@@ -1,5 +1,7 @@
 package spim.fiji.datasetmanager;
 
+import fiji.util.gui.GenericDialogPlus;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -12,7 +14,6 @@ import loci.formats.in.ZeissCZIReader;
 import loci.formats.meta.IMetadata;
 import loci.formats.services.OMEXMLService;
 import spim.fiji.spimdata.SpimData2;
-import fiji.util.gui.GenericDialogPlus;
 
 public class LightSheetZ1 implements MultiViewDatasetDefinition
 {

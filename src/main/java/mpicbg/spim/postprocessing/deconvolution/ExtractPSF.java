@@ -1,5 +1,6 @@
 package mpicbg.spim.postprocessing.deconvolution;
 
+import fiji.plugin.Multi_View_Deconvolution;
 import ij.IJ;
 
 import java.util.ArrayList;
@@ -30,7 +31,6 @@ import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
 import mpicbg.spim.registration.bead.Bead;
 import mpicbg.spim.registration.bead.BeadRegistration;
-import fiji.plugin.Multi_View_Deconvolution;
 
 public class ExtractPSF
 {

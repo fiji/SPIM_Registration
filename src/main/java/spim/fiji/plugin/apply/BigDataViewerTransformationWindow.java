@@ -1,5 +1,8 @@
 package spim.fiji.plugin.apply;
 
+import bdv.BigDataViewer;
+import bdv.viewer.ViewerFrame;
+
 import java.awt.Button;
 import java.awt.Checkbox;
 import java.awt.Font;
@@ -21,8 +24,6 @@ import javax.media.j3d.Transform3D;
 import javax.swing.SwingUtilities;
 
 import net.imglib2.realtransform.AffineTransform3D;
-import bdv.BigDataViewer;
-import bdv.viewer.ViewerFrame;
 
 public class BigDataViewerTransformationWindow
 {

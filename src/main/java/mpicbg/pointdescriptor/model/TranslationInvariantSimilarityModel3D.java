@@ -1,12 +1,13 @@
 package mpicbg.pointdescriptor.model;
 
+import Jama.EigenvalueDecomposition;
+import Jama.Matrix;
+
 import java.util.Collection;
 
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.PointMatch;
-import Jama.EigenvalueDecomposition;
-import Jama.Matrix;
 
 /**
  * 3d-rigid transformation models to be applied to points in 3d-space.

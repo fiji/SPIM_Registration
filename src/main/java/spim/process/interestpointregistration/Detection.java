@@ -1,8 +1,8 @@
 package spim.process.interestpointregistration;
 
+import fiji.util.node.Leaf;
 import mpicbg.imglib.util.Util;
 import mpicbg.models.Point;
-import fiji.util.node.Leaf;
 
 /**
  * 

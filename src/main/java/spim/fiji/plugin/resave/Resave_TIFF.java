@@ -1,5 +1,6 @@
 package spim.fiji.plugin.resave;
 
+import bdv.export.ProgressWriter;
 import fiji.util.gui.GenericDialogPlus;
 import ij.plugin.PlugIn;
 
@@ -45,7 +46,6 @@ import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.process.fusion.export.Save3dTIFF;
-import bdv.export.ProgressWriter;
 
 public class Resave_TIFF implements PlugIn
 {

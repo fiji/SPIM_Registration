@@ -18,7 +18,6 @@ import spim.fiji.datasetmanager.MultiViewDatasetDefinition;
 import spim.fiji.datasetmanager.StackListImageJ;
 import spim.fiji.datasetmanager.StackListLOCI;
 import spim.fiji.plugin.queryXML.GenericLoadParseQueryXML;
-import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.plugin.util.MyMultiLineLabel;
 import spim.fiji.spimdata.SpimData2;

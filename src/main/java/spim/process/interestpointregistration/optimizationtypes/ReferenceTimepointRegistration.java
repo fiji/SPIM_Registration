@@ -12,9 +12,9 @@ import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.spimdata.SpimData2;
+import spim.process.interestpointregistration.ChannelProcess;
 import spim.process.interestpointregistration.MatchPointList;
 import spim.process.interestpointregistration.PairwiseMatch;
-import spim.process.interestpointregistration.ChannelProcess;
 
 public class ReferenceTimepointRegistration extends GlobalOptimizationType
 {

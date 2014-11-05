@@ -1,5 +1,7 @@
 package mpicbg.spim;
 
+import fiji.plugin.timelapsedisplay.RegistrationStatistics;
+
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -15,7 +17,6 @@ import mpicbg.spim.registration.ViewStructure;
 import mpicbg.spim.registration.bead.Bead;
 import mpicbg.spim.registration.bead.BeadIdentification;
 import mpicbg.spim.registration.bead.BeadRegistration;
-import fiji.plugin.timelapsedisplay.RegistrationStatistics;
 
 public class Reconstruction
 {

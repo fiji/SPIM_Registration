@@ -1,5 +1,9 @@
 package spim.fiji.plugin.resave;
 
+import bdv.export.ExportMipmapInfo;
+import bdv.export.ProgressWriter;
+import bdv.export.ProposeMipmaps;
+import bdv.img.hdf5.Hdf5ImageLoader;
 import ij.plugin.PlugIn;
 
 import java.io.File;
@@ -30,10 +34,6 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
-import bdv.export.ExportMipmapInfo;
-import bdv.export.ProgressWriter;
-import bdv.export.ProposeMipmaps;
-import bdv.img.hdf5.Hdf5ImageLoader;
 
 public class Resave_HDF5 implements PlugIn
 {

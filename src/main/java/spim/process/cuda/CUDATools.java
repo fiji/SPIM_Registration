@@ -5,8 +5,8 @@ import ij.gui.GenericDialog;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import spim.fiji.plugin.util.GenericDialogAppender;
 import mpicbg.spim.io.IOFunctions;
+import spim.fiji.plugin.util.GenericDialogAppender;
 
 public class CUDATools
 {

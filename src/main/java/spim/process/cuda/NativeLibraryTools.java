@@ -1,5 +1,9 @@
 package spim.process.cuda;
 
+import com.sun.jna.Library;
+import com.sun.jna.Native;
+
+import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 
 import java.io.File;
@@ -8,11 +12,6 @@ import java.util.ArrayList;
 
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.util.GUIHelper;
-
-import com.sun.jna.Library;
-import com.sun.jna.Native;
-
-import fiji.util.gui.GenericDialogPlus;
 
 public class NativeLibraryTools
 {

@@ -1,5 +1,6 @@
 package spim.process.fusion.export;
 
+import fiji.util.gui.GenericDialogPlus;
 import ij.gui.GenericDialog;
 
 import java.io.File;
@@ -32,7 +33,6 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.imgloaders.StackImgLoaderIJ;
 import spim.process.fusion.export.ExportSpimData2TIFF.FileNamePattern;
-import fiji.util.gui.GenericDialogPlus;
 
 public class AppendSpimData2 implements ImgExport
 {

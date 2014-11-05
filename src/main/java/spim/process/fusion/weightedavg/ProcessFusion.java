@@ -1,9 +1,10 @@
 package spim.process.fusion.weightedavg;
 
+import bdv.img.hdf5.Hdf5ImageLoader;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import bdv.img.hdf5.Hdf5ImageLoader;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;

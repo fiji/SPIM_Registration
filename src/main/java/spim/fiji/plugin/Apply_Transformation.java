@@ -1,5 +1,6 @@
 package spim.fiji.plugin;
 
+import bdv.BigDataViewer;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
@@ -33,7 +34,6 @@ import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
-import bdv.BigDataViewer;
 
 public class Apply_Transformation implements PlugIn
 {

@@ -1,11 +1,10 @@
 package spim.fiji.plugin.resave;
 
+import bdv.export.ProgressWriter;
 import ij.IJ;
 import ij.io.LogStream;
 
 import java.io.PrintStream;
-
-import bdv.export.ProgressWriter;
 
 public class ProgressWriterIJ implements ProgressWriter
 {

@@ -1,13 +1,13 @@
 package spim.fiji.plugin.util;
 
+import ij.ImagePlus;
+import ij.io.Opener;
+import ij.process.ImageProcessor;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.type.numeric.real.FloatType;
-import ij.ImagePlus;
-import ij.io.Opener;
-import ij.process.ImageProcessor;
 
 public class OpenImg
 {

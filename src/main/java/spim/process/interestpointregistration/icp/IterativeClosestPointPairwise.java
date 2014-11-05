@@ -17,8 +17,8 @@ import mpicbg.pointdescriptor.exception.NoSuitablePointsException;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.process.interestpointregistration.PairwiseMatch;
 import spim.process.interestpointregistration.Detection;
+import spim.process.interestpointregistration.PairwiseMatch;
 import spim.process.interestpointregistration.TransformationModel;
 
 public class IterativeClosestPointPairwise implements Callable< PairwiseMatch >

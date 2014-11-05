@@ -1,5 +1,7 @@
 package mpicbg.spim.io;
 
+import fiji.plugin.Multi_View_Deconvolution;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
@@ -19,7 +21,6 @@ import mpicbg.models.RigidModel3D;
 import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.registration.ViewStructure;
 import spimopener.SPIMExperiment;
-import fiji.plugin.Multi_View_Deconvolution;
 
 public class SPIMConfiguration
 {

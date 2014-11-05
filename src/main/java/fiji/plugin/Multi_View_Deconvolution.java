@@ -1,5 +1,7 @@
 package fiji.plugin;
 
+import com.sun.jna.Native;
+
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.ImagePlus;
@@ -33,8 +35,6 @@ import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.process.cuda.CUDAFourierConvolution;
-
-import com.sun.jna.Native;
 
 /**
  * 

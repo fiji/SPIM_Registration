@@ -1,5 +1,7 @@
 package spim.fiji.plugin.resave;
 
+import fiji.util.gui.GenericDialogPlus;
+
 import java.awt.Button;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
@@ -16,8 +18,6 @@ import java.util.regex.Pattern;
 
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
-
-import fiji.util.gui.GenericDialogPlus;
 
 public class PluginHelper
 {

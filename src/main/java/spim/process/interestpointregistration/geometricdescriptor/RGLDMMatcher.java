@@ -1,5 +1,8 @@
 package spim.process.interestpointregistration.geometricdescriptor;
 
+import fiji.util.KDTree;
+import fiji.util.NNearestNeighborSearch;
+
 import java.util.ArrayList;
 
 import mpicbg.pointdescriptor.AbstractPointDescriptor;
@@ -11,8 +14,6 @@ import mpicbg.pointdescriptor.similarity.SimilarityMeasure;
 import mpicbg.pointdescriptor.similarity.SquareDistance;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 import spim.process.interestpointregistration.Detection;
-import fiji.util.KDTree;
-import fiji.util.NNearestNeighborSearch;
 
 public class RGLDMMatcher
 {

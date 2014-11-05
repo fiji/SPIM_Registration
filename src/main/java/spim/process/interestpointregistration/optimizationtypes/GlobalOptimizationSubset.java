@@ -23,9 +23,9 @@ import net.imglib2.realtransform.AffineTransform3D;
 import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
-import spim.process.interestpointregistration.PairwiseMatch;
 import spim.process.interestpointregistration.ChannelProcess;
 import spim.process.interestpointregistration.GlobalOpt;
+import spim.process.interestpointregistration.PairwiseMatch;
 
 /**
  * Defines a subset of views that need to be matched and then a global optimization

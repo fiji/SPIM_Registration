@@ -1,5 +1,7 @@
 package mpicbg.spim.vis3d;
 
+import com.sun.j3d.utils.geometry.Sphere;
+
 import ij.ImagePlus;
 import ij3d.Content;
 import ij3d.Image3DUniverse;
@@ -34,8 +36,6 @@ import javax.vecmath.Vector3f;
 import mpicbg.spim.io.ConfigurationParserGeneral;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.ProgramConfiguration;
-
-import com.sun.j3d.utils.geometry.Sphere;
 
 public class Motion3D
 {

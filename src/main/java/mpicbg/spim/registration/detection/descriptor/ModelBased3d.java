@@ -1,5 +1,9 @@
 package mpicbg.spim.registration.detection.descriptor;
 
+import fiji.util.KDTree;
+import fiji.util.NNearestNeighborSearch;
+import fiji.util.node.Leaf;
+
 import java.util.ArrayList;
 
 import mpicbg.models.Point;
@@ -13,9 +17,6 @@ import mpicbg.pointdescriptor.similarity.SimilarityMeasure;
 import mpicbg.pointdescriptor.similarity.SquareDistance;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 import mpicbg.spim.registration.detection.DetectionView;
-import fiji.util.KDTree;
-import fiji.util.NNearestNeighborSearch;
-import fiji.util.node.Leaf;
 
 public class ModelBased3d<T extends DetectionView<?,T>> implements CorrespondenceExtraction<T>
 {

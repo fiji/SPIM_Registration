@@ -1,8 +1,8 @@
 package mpicbg.spim.registration.detection;
 
+import fiji.util.node.Leaf;
 import mpicbg.imglib.util.Util;
 import mpicbg.models.Point;
-import fiji.util.node.Leaf;
 
 public abstract class AbstractDetection< T extends AbstractDetection< T > > extends Point implements Leaf< T >
 {

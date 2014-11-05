@@ -1,5 +1,7 @@
 package mpicbg.spim.vis3d;
 
+import com.sun.j3d.utils.geometry.Sphere;
+
 import ij3d.Content;
 import ij3d.Image3DUniverse;
 
@@ -25,8 +27,6 @@ import mpicbg.models.Point;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.bead.Bead;
 import mpicbg.spim.registration.segmentation.Nucleus;
-
-import com.sun.j3d.utils.geometry.Sphere;
 
 public class VisualizationFunctions
 {

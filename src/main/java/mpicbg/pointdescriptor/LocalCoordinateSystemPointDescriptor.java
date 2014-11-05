@@ -1,5 +1,7 @@
 package mpicbg.pointdescriptor;
 
+import fiji.util.node.Leaf;
+
 import java.util.ArrayList;
 
 import javax.vecmath.Matrix3f;
@@ -8,7 +10,6 @@ import javax.vecmath.Vector3f;
 import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
 import mpicbg.pointdescriptor.exception.NoSuitablePointsException;
-import fiji.util.node.Leaf;
 
 public class LocalCoordinateSystemPointDescriptor < P extends Point > extends AbstractPointDescriptor< P, LocalCoordinateSystemPointDescriptor<P> > 
 		implements Leaf< LocalCoordinateSystemPointDescriptor<P> >

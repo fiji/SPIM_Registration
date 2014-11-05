@@ -1,5 +1,7 @@
 package mpicbg.spim.registration.detection.descriptor;
 
+import fiji.util.NNearestNeighborSearch;
+
 import java.util.ArrayList;
 
 import mpicbg.pointdescriptor.LocalCoordinateSystemPointDescriptor;
@@ -13,7 +15,6 @@ import mpicbg.pointdescriptor.similarity.SimilarityMeasure;
 import mpicbg.pointdescriptor.similarity.SquareDistance;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 import mpicbg.spim.registration.detection.DetectionView;
-import fiji.util.NNearestNeighborSearch;
 
 
 public class CoordSystemSecure3d<T extends DetectionView<?,T>> extends CoordSystem3d<T>

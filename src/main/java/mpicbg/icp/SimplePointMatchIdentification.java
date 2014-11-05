@@ -1,14 +1,15 @@
 package mpicbg.icp;
 
 
+import fiji.util.KDTree;
+import fiji.util.NearestNeighborSearch;
+import fiji.util.node.Leaf;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
-import fiji.util.KDTree;
-import fiji.util.NearestNeighborSearch;
-import fiji.util.node.Leaf;
 
 public class SimplePointMatchIdentification < P extends Point & Leaf<P> > implements PointMatchIdentification<P>
 {

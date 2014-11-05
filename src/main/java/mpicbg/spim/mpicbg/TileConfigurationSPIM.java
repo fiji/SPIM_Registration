@@ -1,5 +1,7 @@
 package mpicbg.spim.mpicbg;
 
+import com.sun.j3d.utils.geometry.Sphere;
+
 import ij3d.Image3DUniverse;
 
 import java.text.DecimalFormat;
@@ -49,8 +51,6 @@ import mpicbg.spim.vis3d.Viewer3dFunctions;
 import mpicbg.spim.vis3d.VisualizationFunctions;
 import mpicbg.spim.vis3d.VisualizationSketchTikZ;
 import mpicbg.util.TransformUtils;
-
-import com.sun.j3d.utils.geometry.Sphere;
 
 public class TileConfigurationSPIM
 {

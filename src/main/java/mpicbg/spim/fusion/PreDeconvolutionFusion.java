@@ -1,5 +1,7 @@
 package mpicbg.spim.fusion;
 
+import fiji.plugin.Multi_View_Deconvolution;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,7 +22,6 @@ import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.postprocessing.deconvolution.ExtractPSF;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
-import fiji.plugin.Multi_View_Deconvolution;
 
 public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconvolutionFusionInterface
 {
