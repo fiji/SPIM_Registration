@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>sc.fiji</groupId>
 		<artifactId>pom-fiji</artifactId>
-		<version>2.0.0-beta-0</version>
+		<version>5.0.2</version>
 		<relativePath />
 	</parent>
 
@@ -26,55 +26,36 @@
 	</licenses>
 
 	<properties>
-		<bio-formats.groupId>ome</bio-formats.groupId>
-
 		<!-- Prevent the plugin from being copied to ./plugins/ by default -->
 		<imagej.app.directory>path/to/Fiji.app/</imagej.app.directory>
 	</properties>
 
 	<dependencies>
+		<!-- FIXME: SNAPSHOT dependencies -->
 		<dependency>
-			<groupId>gov.nist.math</groupId>
-			<artifactId>jama</artifactId>
+			<groupId>sc.fiji</groupId>
+			<artifactId>spim_data</artifactId>
+			<version>1.0.0-beta-3-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>bigdataviewer-core</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>legacy-imglib1</artifactId>
+			<version>2.0.0-SNAPSHOT</version>
+		</dependency>
+
+		<!-- Fiji dependencies -->
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>3D_Viewer</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>fiji-lib</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>net.imagej</groupId>
-			<artifactId>ij</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.jfree</groupId>
-			<artifactId>jcommon</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.jfree</groupId>
-			<artifactId>jfreechart</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>mpicbg</groupId>
-			<artifactId>mpicbg</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>java3d</groupId>
-			<artifactId>j3d-core</artifactId>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>java3d</groupId>
-			<artifactId>j3d-core-utils</artifactId>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>java3d</groupId>
-			<artifactId>vecmath</artifactId>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>3D_Viewer</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -85,21 +66,18 @@
 			<artifactId>SPIM_Opener</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>net.java.dev.jna</groupId>
-			<artifactId>jna</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>spim_data</artifactId>
-			<version>1.0.0-beta-3-SNAPSHOT</version>
+			<artifactId>VIB-lib</artifactId>
+		</dependency>
+
+		<!-- ImgLib2 dependencies -->
+		<dependency>
+			<groupId>net.imglib2</groupId>
+			<artifactId>imglib2-algorithm-gpl</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>net.imglib2</groupId>
-			<artifactId>imglib2-algorithms-gpl</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>net.imglib2</groupId>
-			<artifactId>imglib2-algorithms</artifactId>
+			<artifactId>imglib2-algorithm</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>net.imglib2</groupId>
@@ -109,6 +87,14 @@
 			<groupId>net.imglib2</groupId>
 			<artifactId>imglib2-realtransform</artifactId>
 		</dependency>
+
+		<!-- ImageJ dependencies -->
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij</artifactId>
+		</dependency>
+
+		<!-- OME dependencies -->
 		<dependency>
 			<groupId>ome</groupId>
 			<artifactId>formats-api</artifactId>
@@ -129,18 +115,47 @@
 			<groupId>ome</groupId>
 			<artifactId>formats-common</artifactId>
 		</dependency>
+
+		<!-- Third party dependencies -->
 		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>bigdataviewer-core</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
+			<groupId>gov.nist.math</groupId>
+			<artifactId>jama</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>VIB-lib</artifactId>
+			<groupId>mpicbg</groupId>
+			<artifactId>mpicbg</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.java.dev.jna</groupId>
+			<artifactId>jna</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.jdom</groupId>
 			<artifactId>jdom2</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.jfree</groupId>
+			<artifactId>jcommon</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.jfree</groupId>
+			<artifactId>jfreechart</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>java3d</groupId>
+			<artifactId>j3d-core</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>java3d</groupId>
+			<artifactId>j3d-core-utils</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>java3d</groupId>
+			<artifactId>vecmath</artifactId>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 

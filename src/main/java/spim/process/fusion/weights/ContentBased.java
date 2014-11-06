@@ -72,7 +72,7 @@ public class ContentBased< T extends RealType< T > > implements RealRandomAccess
 		
 		// compute I*sigma1
 		FFTConvolution< FloatType > fftConv = new FFTConvolution<FloatType>( input, createGaussianKernel( sigma1 ), conv, imgFactory );
-		fftConv.run();
+		fftConv.convolve();
 		
 		// compute ( I - I*sigma1 )^2
 		final Cursor< FloatType > c = conv.cursor();
@@ -89,7 +89,7 @@ public class ContentBased< T extends RealType< T > > implements RealRandomAccess
 		
 		// compute ( ( I - I*sigma1 )^2 ) * sigma2
 		fftConv = new FFTConvolution<FloatType>( conv, createGaussianKernel( sigma2 ), imgFactory );
-		fftConv.run();
+		fftConv.convolve();
 
 		// normalize to [0...1]
 		FusionHelper.normalizeImage( conv );

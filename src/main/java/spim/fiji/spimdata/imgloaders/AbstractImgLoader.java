@@ -11,10 +11,10 @@ import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.Dimensions;
 import net.imglib2.FinalDimensions;
-import net.imglib2.Pair;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
 
 public abstract class AbstractImgLoader implements ImgLoader< UnsignedShortType >
