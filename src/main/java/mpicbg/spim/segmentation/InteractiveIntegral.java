@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import spim.Threads;
 import mpicbg.imglib.algorithm.integral.IntegralImageLong;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussian.SpecialPoint;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
@@ -352,8 +353,8 @@ public class InteractiveIntegral implements PlugIn
 	
 	public static ArrayList<SimplePeak> findPeaks( final Image<FloatType> laPlace, final float minValue )
 	{
-	    final AtomicInteger ai = new AtomicInteger( 0 );					
-	    final Thread[] threads = SimpleMultiThreading.newThreads( Runtime.getRuntime().availableProcessors() );
+	    final AtomicInteger ai = new AtomicInteger( 0 );
+	    final Thread[] threads = SimpleMultiThreading.newThreads( Threads.numThreads() );
 	    final int nThreads = threads.length;
 	    final int numDimensions = laPlace.getNumDimensions();
 	    

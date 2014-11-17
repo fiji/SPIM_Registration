@@ -23,7 +23,7 @@ public class LucyRichardsonMultiViewDeconvolution
 	
 	public static Image<FloatType> lucyRichardsonMultiView( final ArrayList<LucyRichardsonFFT> data, final int minIterations, final int maxIterations, final boolean multiplicative, final double lambda, final int numThreads )
 	{
-		//final int numThreads = Runtime.getRuntime().availableProcessors();
+		//final int numThreads = Threads.numThreads();
 		final int numViews = data.size();
 		//final long numPixels = data.get( 0 ).getImage().getNumPixels();		
 		//final double minValue = (1.0 / ( 10000.0 * numPixels ) );		

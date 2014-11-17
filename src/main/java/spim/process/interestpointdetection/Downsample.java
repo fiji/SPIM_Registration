@@ -21,6 +21,7 @@ import net.imglib2.iterator.ZeroMinIntervalIterator;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
+import spim.Threads;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
 
@@ -83,10 +84,10 @@ public class Downsample
 				//Views.iterable( Views.hyperSlice( Views.zeroMin( output ), d, 0 ) );
 
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( numLines, 1 );// Runtime.getRuntime().availableProcessors() * 2 );
+		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( numLines, Threads.numThreads() * 2 );
 
 		// set up executor service
-		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
+		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
 		final ArrayList< Callable< Void > > tasks = new ArrayList< Callable< Void > >();
 
 		for ( final ImagePortion portion : portions )

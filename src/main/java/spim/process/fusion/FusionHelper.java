@@ -21,6 +21,7 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
+import spim.Threads;
 import spim.fiji.spimdata.SpimData2;
 
 public class FusionHelper 
@@ -78,10 +79,10 @@ public class FusionHelper
 		final IterableInterval< T > iterable = Views.iterable( img );
 		
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( iterable.size(), Runtime.getRuntime().availableProcessors() * 2 );
+		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( iterable.size(), Threads.numThreads() * 2 );
 
 		// set up executor service
-		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
+		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
 		final ArrayList< Callable< float[] > > tasks = new ArrayList< Callable< float[] > >();
 
 		for ( final ImagePortion portion : portions )
@@ -177,10 +178,10 @@ public class FusionHelper
 		final IterableInterval< FloatType > iterable = Views.iterable( img );
 		
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( iterable.size(), Runtime.getRuntime().availableProcessors() * 2 );
+		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( iterable.size(), Threads.numThreads() * 2 );
 
 		// set up executor service
-		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
+		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
 		final ArrayList< Callable< String > > tasks = new ArrayList< Callable< String > >();
 
 		for ( final ImagePortion portion : portions )

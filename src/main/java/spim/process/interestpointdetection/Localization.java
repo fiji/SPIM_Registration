@@ -10,6 +10,7 @@ import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.segmentation.SimplePeak;
+import spim.Threads;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 
 public class Localization
@@ -53,7 +54,8 @@ public class Localization
 		final SubpixelLocalization<FloatType> spl = new SubpixelLocalization<FloatType>( domImg, peakList );
 		spl.setAllowMaximaTolerance( true );
 		spl.setMaxNumMoves( 10 );
-		
+		spl.setNumThreads( Threads.numThreads() );
+
 		if ( !spl.checkInput() || !spl.process() )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Warning! Failed to compute subpixel localization " + spl.getErrorMessage() );
 		

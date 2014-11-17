@@ -20,6 +20,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Date;
 
+import spim.Threads;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.container.cell.CellContainerFactory;
 import mpicbg.imglib.interpolation.linear.LinearInterpolatorFactory;
@@ -329,10 +330,10 @@ public class ConfigurationParserSPIM
 
 		// variable specific verification
 		if (conf.numberOfThreads < 1)
-			conf.numberOfThreads = Runtime.getRuntime().availableProcessors();				
+			conf.numberOfThreads = Threads.numThreads();
 		
 		if (conf.scaleSpaceNumberOfThreads < 1)
-			conf.scaleSpaceNumberOfThreads = Runtime.getRuntime().availableProcessors();				
+			conf.scaleSpaceNumberOfThreads = Threads.numThreads();
 
 		
 		// check the directory string

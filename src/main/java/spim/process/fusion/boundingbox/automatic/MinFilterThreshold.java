@@ -26,6 +26,7 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
+import spim.Threads;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.FusionHelper;
@@ -143,10 +144,10 @@ public class MinFilterThreshold
 		}
 
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( img.size(), Runtime.getRuntime().availableProcessors() * 2 );
+		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( img.size(), Threads.numThreads() * 2 );
 
 		// set up executor service
-		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
+		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
 		
 		final ArrayList< Callable< int[][] > > tasks = new ArrayList< Callable< int[][] > >();
 		
@@ -229,10 +230,10 @@ public class MinFilterThreshold
 		final Img< T > tmp2 = tmp1.factory().create( tmp1, tmp1.firstElement() );
 		
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( tmp1.size(), Runtime.getRuntime().availableProcessors() * 2 );
+		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( tmp1.size(), Threads.numThreads() * 2 );
 
 		// set up executor service
-		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
+		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
 
 		for ( int dim = 0; dim < n; ++dim )
 		{

@@ -24,6 +24,7 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
+import spim.Threads;
 import spim.fiji.ImgLib2Temp;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.spimdata.SpimData2;
@@ -168,10 +169,10 @@ public class ProcessForDeconvolution
 				img = ProcessFusion.getImage( new FloatType(), spimData, inputData, true );
 						
 			// split up into many parts for multithreading
-			final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( fusedImg.size(), Runtime.getRuntime().availableProcessors() * 4 );
+			final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( fusedImg.size(), Threads.numThreads() * 4 );
 
 			// set up executor service
-			final ExecutorService taskExecutor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
+			final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
 			final ArrayList< Callable< String > > tasks = new ArrayList< Callable< String > >();
 
 			for ( final ImagePortion portion : portions )
@@ -322,10 +323,10 @@ public class ProcessForDeconvolution
 		final Img< FloatType > wosem = overlapImg.factory().create( overlapImg, new FloatType() );
 		
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( weights.get( 0 ).size(), Runtime.getRuntime().availableProcessors() * 2 );
+		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( weights.get( 0 ).size(), Threads.numThreads() * 2 );
 
 		// set up executor service
-		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
+		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
 		final ArrayList< Callable< String > > tasks = new ArrayList< Callable< String > >();
 
 		for ( final ImagePortion portion : portions )
@@ -392,10 +393,10 @@ public class ProcessForDeconvolution
 	protected boolean normalizeWeightsAndComputeMinAvgViews( final ArrayList< Img< FloatType > > weights )
 	{
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( weights.get( 0 ).size(), Runtime.getRuntime().availableProcessors() * 2 );
+		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( weights.get( 0 ).size(), Threads.numThreads() * 2 );
 
 		// set up executor service
-		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
+		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
 		final ArrayList< Callable< double[] > > tasks = new ArrayList< Callable< double[] > >();
 		
 		for ( final ImagePortion portion : portions )

@@ -31,6 +31,7 @@ import mpicbg.spim.mpicbg.TileSPIM;
 import mpicbg.spim.registration.bead.BeadStructure;
 import mpicbg.spim.registration.bead.error.ViewErrorStatistics;
 import mpicbg.spim.registration.segmentation.NucleusStructure;
+import spim.Threads;
 import spimopener.SPIMExperiment;
 
 public class ViewDataBeads implements Comparable< ViewDataBeads >
@@ -580,7 +581,7 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 			return new float[]{ min, max };
 		}
 
-		final Vector< Chunk > threadChunks = SimpleMultiThreading.divideIntoChunks( image.getNumPixels(), Runtime.getRuntime().availableProcessors() );
+		final Vector< Chunk > threadChunks = SimpleMultiThreading.divideIntoChunks( image.getNumPixels(), Threads.numThreads() );
 		final int numThreads = threadChunks.size();
 
 		final AtomicInteger ai = new AtomicInteger(0);					

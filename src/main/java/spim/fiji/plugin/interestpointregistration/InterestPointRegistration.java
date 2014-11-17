@@ -14,6 +14,7 @@ import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.io.IOFunctions;
+import spim.Threads;
 import spim.fiji.plugin.Interest_Point_Registration.RegistrationType;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.interestpointregistration.ChannelProcess;
@@ -154,7 +155,7 @@ public abstract class InterestPointRegistration
 		{
 			final List< PairwiseMatch > pairs = subset.getViewPairs();
 			
-			final ExecutorService taskExecutor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
+			final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
 			final ArrayList< Callable< PairwiseMatch > > tasks = new ArrayList< Callable< PairwiseMatch > >(); // your tasks
 			
 			for ( final PairwiseMatch pair : pairs )

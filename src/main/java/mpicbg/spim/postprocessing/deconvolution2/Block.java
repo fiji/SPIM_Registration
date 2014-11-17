@@ -24,6 +24,7 @@ import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
+import spim.Threads;
 
 public class Block 
 {
@@ -76,7 +77,7 @@ public class Block
 		this.effectiveOffset = effectiveOffset.clone();
 		this.effectiveLocalOffset = effectiveLocalOffset.clone();
 		this.inside = inside;
-		this.numThreads = Runtime.getRuntime().availableProcessors();
+		this.numThreads = Threads.numThreads();
 		
 		long n = blockSize[ 0 ];
 		for ( int d = 1; d < numDimensions; ++d )

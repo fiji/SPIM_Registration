@@ -8,6 +8,7 @@ import java.util.Random;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import spim.Threads;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
@@ -52,7 +53,7 @@ public class AdjustInput
 
 	public static double[] normAllImages( final ArrayList<LRFFT> data )
 	{
-		final Vector< Chunk > threadChunks = SimpleMultiThreading.divideIntoChunks( data.get( 0 ).getImage().getNumPixels(), Runtime.getRuntime().availableProcessors() );
+		final Vector< Chunk > threadChunks = SimpleMultiThreading.divideIntoChunks( data.get( 0 ).getImage().getNumPixels(), Threads.numThreads() );
 		final int numThreads = threadChunks.size();
 		
 		IJ.log( new Date( System.currentTimeMillis() ) + ": numThreads = " + numThreads );

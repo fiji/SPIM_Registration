@@ -21,6 +21,7 @@ import net.imglib2.img.Img;
 import net.imglib2.interpolation.InterpolatorFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+import spim.Threads;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.FusionHelper;
@@ -102,10 +103,10 @@ public class ProcessIndependent extends ProcessFusion
 			final RandomAccessibleInterval< T > img = getImage( type, spimData, inputData, false );
 						
 			// split up into many parts for multithreading
-			final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( fusedImg.size(), Runtime.getRuntime().availableProcessors() * 4 );
+			final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( fusedImg.size(), Threads.numThreads() * 4 );
 
 			// set up executor service
-			final ExecutorService taskExecutor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
+			final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
 			final ArrayList< ProcessIndependentPortion< T > > tasks = new ArrayList< ProcessIndependentPortion< T > >();
 
 			for ( final ImagePortion portion : portions )

@@ -10,6 +10,7 @@ import java.util.Date;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import spim.Threads;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
@@ -242,7 +243,7 @@ public class BayesMVDeconvolution implements Deconvolver
 		IJ.log( "iteration: " + iteration + " (" + new Date(System.currentTimeMillis()) + ")" );
 		
 		final int numViews = data.size();
-		final Vector< Chunk > threadChunks = SimpleMultiThreading.divideIntoChunks( psi.getNumPixels(), Runtime.getRuntime().availableProcessors() );
+		final Vector< Chunk > threadChunks = SimpleMultiThreading.divideIntoChunks( psi.getNumPixels(), Threads.numThreads() );
 		final int numThreads = threadChunks.size();
 		
 		final Image< FloatType > lastIteration;

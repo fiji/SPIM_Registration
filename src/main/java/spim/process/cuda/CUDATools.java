@@ -99,7 +99,7 @@ public class CUDATools
 		}
 		
 		// get the CPU specs
-		// final String cpuSpecs = "CPU (" + Runtime.getRuntime().availableProcessors() + " cores, " + Runtime.getRuntime().maxMemory()/(1024*1024) + " MB RAM available)";
+		// final String cpuSpecs = "CPU (" + Threads.numThreads() + " cores, " + Runtime.getRuntime().maxMemory()/(1024*1024) + " MB RAM available)";
 
 		final ArrayList< CUDADevice > selectedDevices = new ArrayList< CUDADevice >();
 

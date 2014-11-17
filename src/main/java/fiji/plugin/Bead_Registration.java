@@ -33,6 +33,7 @@ import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.io.SPIMConfiguration.SegmentationTypes;
 import mpicbg.spim.segmentation.InteractiveDoG;
 import mpicbg.spim.segmentation.InteractiveIntegral;
+import spim.Threads;
 import spim.fiji.plugin.util.GUIHelper;
 import spimopener.SPIMExperiment;
 
@@ -1101,10 +1102,10 @@ public class Bead_Registration implements PlugIn
 
 		// variable specific verification
 		if (conf.numberOfThreads < 1)
-			conf.numberOfThreads = Runtime.getRuntime().availableProcessors();
+			conf.numberOfThreads = Threads.numThreads();
 
 		if (conf.scaleSpaceNumberOfThreads < 1)
-			conf.scaleSpaceNumberOfThreads = Runtime.getRuntime().availableProcessors();
+			conf.scaleSpaceNumberOfThreads = Threads.numThreads();
 
 		try
 		{

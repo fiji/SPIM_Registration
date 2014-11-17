@@ -17,6 +17,7 @@ import net.imglib2.img.basictypeaccess.array.FloatArray;
 import net.imglib2.iterator.LocalizingZeroMinIntervalIterator;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
+import spim.Threads;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
 
@@ -75,7 +76,7 @@ public class Block
 		this.effectiveSize = effectiveSize.clone();
 		this.effectiveOffset = effectiveOffset.clone();
 		this.effectiveLocalOffset = effectiveLocalOffset.clone();
-		//this.numThreads = Runtime.getRuntime().availableProcessors();
+		//this.numThreads = Threads.numThreads();
 		this.isPrecise = isPrecise;
 
 		long n = blockSize[ 0 ];
@@ -83,8 +84,8 @@ public class Block
 			n *= blockSize[ d ];
 
 		// split up into many parts for multithreading
-		this.portions = FusionHelper.divideIntoPortions( n, Runtime.getRuntime().availableProcessors() * 2 );
-		this.taskExecutor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
+		this.portions = FusionHelper.divideIntoPortions( n, Threads.numThreads() * 2 );
+		this.taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
 	}
 
 	public long[] getBlockSize()

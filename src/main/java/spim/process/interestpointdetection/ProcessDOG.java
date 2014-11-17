@@ -12,6 +12,7 @@ import mpicbg.spim.registration.bead.laplace.LaPlaceFunctions;
 import mpicbg.spim.segmentation.SimplePeak;
 import net.imglib2.img.Img;
 import net.imglib2.util.Util;
+import spim.Threads;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.cuda.CUDADevice;
 import spim.process.cuda.CUDASeparableConvolution;
@@ -111,6 +112,7 @@ public class ProcessDOG
 			dog = new DifferenceOfGaussianCUDA( cuda, percentGPUMem, deviceList, img, imglib2img, accurateCUDA, sigma1, sigma2, minInitialPeakValue, K_MIN1_INV );
 
 		dog.setComputeConvolutionsParalell( false );
+		dog.setNumThreads( Threads.numThreads() );
 
 		// do quadratic fit??
 		if ( localization == 1 )

@@ -22,6 +22,7 @@ import mpicbg.imglib.type.numeric.integer.LongType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
 import mpicbg.spim.registration.ViewDataBeads;
+import spim.Threads;
 
 public class DOM 
 {
@@ -51,8 +52,8 @@ public class DOM
 		final int h = domImg.getDimension( 1 ) - ( Math.max( sy1, sy2 ) / 2 ) * 2;
 		final int d = domImg.getDimension( 2 ) - ( Math.max( sz1, sz2 ) / 2 ) * 2;
 
-		final AtomicInteger ai = new AtomicInteger(0);					
-        final Thread[] threads = SimpleMultiThreading.newThreads();
+		final AtomicInteger ai = new AtomicInteger(0);
+        final Thread[] threads = SimpleMultiThreading.newThreads( Threads.numThreads() );
 		final int numThreads = threads.length;
         
         for (int ithread = 0; ithread < threads.length; ++ithread)

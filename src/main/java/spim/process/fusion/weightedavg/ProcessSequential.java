@@ -23,6 +23,7 @@ import net.imglib2.interpolation.InterpolatorFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
+import spim.Threads;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.FusionHelper;
@@ -116,10 +117,10 @@ public class ProcessSequential extends ProcessFusion
 				weights.add( getAllWeights( imgs.get( i ), inputData.get( i ), spimData.getSequenceDescription().getImgLoader() ) );
 			
 			// split up into many parts for multithreading
-			final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( fusedImg.size(), Runtime.getRuntime().availableProcessors() * 4 );
+			final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( fusedImg.size(), Threads.numThreads() * 4 );
 
 			// set up executor service
-			final ExecutorService taskExecutor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
+			final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
 			final ArrayList< ProcessSequentialPortion< T > > tasks = new ArrayList< ProcessSequentialPortion< T > >();
 
 			if ( weights.get( 0 ).size() == 0 ) // no weights
@@ -169,10 +170,10 @@ public class ProcessSequential extends ProcessFusion
 	protected < T extends RealType< T > > void mergeFinalImage( final Img< T > img, final Img< FloatType > weights )
 	{
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( img.size(), Runtime.getRuntime().availableProcessors() * 4 );
+		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( img.size(), Threads.numThreads() * 4 );
 
 		// set up executor service
-		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
+		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
 		final ArrayList< Callable< String > > tasks = new ArrayList< Callable< String > >();
 
 		for ( final ImagePortion portion : portions )
