@@ -32,16 +32,15 @@
 	</properties>
 
 	<dependencies>
-		<!-- FIXME: SNAPSHOT dependencies -->
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>spim_data</artifactId>
-			<version>1.0.0-beta-3-SNAPSHOT</version>
+			<version>1.0.0-beta-3</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>bigdataviewer-core</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
+			<version>1.0.0</version>
 		</dependency>
 
 		<!-- Fiji dependencies -->
@@ -125,6 +124,12 @@
 		<dependency>
 			<groupId>mpicbg</groupId>
 			<artifactId>mpicbg</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>jama</groupId>
+					<artifactId>jama</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>net.java.dev.jna</groupId>
@@ -194,5 +199,64 @@
 			<url>http://maven.imagej.net/content/groups/public</url>
 		</repository>
 	</repositories>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<configuration>
+					<rules>
+						<banDuplicateClasses>
+							<dependencies>
+								<dependency>
+									<artifactId>imglib2-algorithm</artifactId>
+									<ignoreClasses>
+										<ignoreClass>net/imglib2/algorithm/region/localneighborhood/*</ignoreClass>
+									</ignoreClasses>
+								</dependency>
+								<dependency>
+									<artifactId>slf4j-log4j12</artifactId>
+									<ignoreClasses>
+										<ignoreClass>org/slf4j/impl/*</ignoreClass>
+									</ignoreClasses>
+								</dependency>
+								<dependency>
+									<artifactId>slf4j-api</artifactId>
+									<ignoreClasses>
+										<ignoreClass>org/slf4j/*</ignoreClass>
+									</ignoreClasses>
+								</dependency>
+								<dependency>
+									<artifactId>jcodings</artifactId>
+									<ignoreClasses>
+										<ignoreClass>org/jcodings/*</ignoreClass>
+									</ignoreClasses>
+								</dependency>
+								<dependency>
+									<artifactId>jnr-constants</artifactId>
+									<ignoreClasses>
+										<ignoreClass>com/kenai/constantine/*</ignoreClass>
+										<ignoreClass>jnr/constants/*</ignoreClass>
+									</ignoreClasses>
+								</dependency>
+								<dependency>
+									<artifactId>jnr-ffi</artifactId>
+									<ignoreClasses>
+										<ignoreClass>jnr/ffi/*</ignoreClass>
+									</ignoreClasses>
+								</dependency>
+								<dependency>
+									<artifactId>joda-time</artifactId>
+									<ignoreClasses>
+										<ignoreClass>*</ignoreClass>
+									</ignoreClasses>
+								</dependency>
+							</dependencies>
+						</banDuplicateClasses>
+					</rules>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 
 </project>
