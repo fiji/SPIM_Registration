@@ -72,7 +72,7 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 			System.out.println( r.getSeriesCount() );
 									
 			
-			for (int angle=0; angle<r.getSeriesCount(); angle++)
+			for ( int angle = 0; angle < r.getSeriesCount(); ++angle )
 			{
 				r.setSeries( angle );
 				
@@ -82,11 +82,13 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 				System.out.println( "y: " + r.getSizeY() );
 				System.out.println( "z: " + r.getSizeZ() );
 				System.out.println( "t: " + r.getSizeT() );
-				System.out.println( "c: " + r.getSizeC() );
 				
+				// Illuminations are contained within the channel count; to
+				// find the number of illuminations for the current angle:
 				Modulo moduloC = r.getModuloC();
 				int illuminations = moduloC.length();
-				
+
+				System.out.println( "c: " + r.getSizeC() / moduloC.length() );
 				System.out.println( "i: " + illuminations );
 			}
 			
@@ -133,8 +135,8 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 	public static void main( String[] args )
 	{
 		//defaultFirstFile = "/Volumes/My Passport/worm7/Track1(3).czi";
-		defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/130706_Aiptasia8.czi";
-		//defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/abe_Arabidopsis1.czi";
+		//defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/130706_Aiptasia8.czi";
+		defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/abe_Arabidopsis1.czi";
 		new LightSheetZ1().createDataset();
 	}
 }
