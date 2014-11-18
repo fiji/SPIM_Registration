@@ -28,6 +28,7 @@
 	<properties>
 		<!-- Prevent the plugin from being copied to ./plugins/ by default -->
 		<imagej.app.directory>path/to/Fiji.app/</imagej.app.directory>
+		<bio-formats.version>5.0.6</bio-formats.version>
 	</properties>
 
 	<dependencies>
