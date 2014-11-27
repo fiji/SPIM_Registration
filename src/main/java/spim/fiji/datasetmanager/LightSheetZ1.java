@@ -84,9 +84,7 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		{
 			r.setId( firstFile.getAbsolutePath() );
 
-			// files used in this acquisition
-			final String[] files = r.getSeriesUsedFiles();
-
+			final Hashtable< String, Object > metaData = r.getGlobalMetadata();
 			final int numA = r.getSeriesCount();
 
 			// make sure every angle has the same amount of timepoints, channels, illuminations
@@ -94,13 +92,17 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 			int numC = -1;
 			int numI = -1;
 
-			for ( int angle = 0; angle < numA; ++angle )
+			for ( int a = 0; a < numA; ++a )
 			{
-				r.setSeries( angle );
+				r.setSeries( a );
 
-				System.out.println( "x: " + r.getSizeX() );
-				System.out.println( "y: " + r.getSizeY() );
-				System.out.println( "z: " + r.getSizeZ() );
+				int w = r.getSizeX();
+				int h = r.getSizeY();
+				int d = (int)Math.round( Double.parseDouble( metaData.get( "Information|Image|V|View|SizeZ #" + (a+1) ).toString() ) );
+
+				System.out.println( "w: " + w );
+				System.out.println( "h: " + h );
+				System.out.println( "d: " + d );
 
 				if ( numT >= 0 && numT != r.getSizeT() )
 				{
@@ -153,9 +155,8 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 			int channels[] = new int[ numC ];
 			int angles[] = new int[ numA ];
 			double calX, calY, calZ;
+			final String[] files = r.getSeriesUsedFiles();
 
-			final Hashtable< String, Object > metaData = r.getGlobalMetadata();
-			
 			Object tmp = metaData.get( "Experiment|AcquisitionBlock|AcquisitionModeSetup|Objective #1" );
 			objective = (tmp != null) ? tmp.toString() : "Unknown Objective";
 
@@ -239,6 +240,7 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 			System.out.println( "calX: " + calX );
 			System.out.println( "calY: " + calY );
 			System.out.println( "calZ: " + calZ );
+
 			//printMetaData( metaData );
 
 			r.close();
@@ -262,8 +264,7 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		ArrayList< String > entries = new ArrayList<String>();
 
 		for ( final String s : metaData.keySet() )
-			if ( s.startsWith( "Experiment|AcquisitionBlock" ) )
-				entries.add( "'" + s + "': " + metaData.get( s ) );
+			entries.add( "'" + s + "': " + metaData.get( s ) );
 
 		Collections.sort( entries );
 
