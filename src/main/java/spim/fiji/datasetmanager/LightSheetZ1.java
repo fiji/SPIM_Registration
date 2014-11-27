@@ -1,5 +1,6 @@
 package spim.fiji.datasetmanager;
 
+import java.awt.Font;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import loci.formats.services.OMEXMLService;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.util.Util;
 import ome.xml.model.primitives.PositiveFloat;
+import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import fiji.util.gui.GenericDialogPlus;
 
@@ -46,7 +48,7 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 	@Override
 	public SpimData2 createDataset()
 	{
-		final GenericDialogPlus gd = new GenericDialogPlus( "Define Lightsheet Z.1 Dataset" );
+		GenericDialogPlus gd = new GenericDialogPlus( "Define Lightsheet Z.1 Dataset" );
 
 		gd.addFileField( "First_CZI file of the dataset", defaultFirstFile, 50 );
 
@@ -90,6 +92,59 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 				return null;
 			}
 
+			printMetaData( r );
+
+			r.close();
+
+			gd = new GenericDialogPlus( "Lightsheet Z.1 Properties" );
+
+			gd.addMessage( "Angles (" + meta.numAngles() + " present)", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
+			gd.addMessage( "" );
+
+			for ( int a = 0; a < meta.numAngles(); ++a )
+				gd.addNumericField( "Angle_" + (a+1), meta.angles()[ a ], 0, 4, "degrees" );
+
+			gd.addMessage( "Channels (" + meta.numChannels() + " present)", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
+			gd.addMessage( "" );
+
+			for ( int c = 0; c < meta.numChannels(); ++c )
+				gd.addNumericField( "Channel_" + (c+1), meta.channels()[ c ], 0 );
+
+			gd.addMessage( "Illumination Directions (" + meta.numIlluminations() + " present)", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
+			gd.addMessage( "" );
+
+			for ( int i = 0; i < meta.numIlluminations(); ++i )
+				gd.addNumericField( "_______Illumination_" + (i+1), 0, 0 );
+
+			gd.addMessage( "Timepoints (" + meta.numTimepoints() + " present)", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
+
+			gd.addMessage( "Calibration", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
+			gd.addMessage(
+					"Pixel Distance X: " + meta.calX() + " " + meta.calUnit() + "\n" +
+					"Pixel Distance Y: " + meta.calY() + " " + meta.calUnit() + "\n" +
+					"Pixel Distance Z: " + meta.calZ() + " " + meta.calUnit() + "\n" );
+
+			gd.addMessage( "Additional Meta Data", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
+
+			String s =
+					"Acquisition Objective: " + meta.objective() + "\n" +
+					"Rotation axis: " + meta.rotationAxisName() + " axis\n" + 
+					(meta.lightsheetThickness() < 0 ? "" : "Lighsheet thickness: " + meta.lightsheetThickness + " um\n") +
+					"Dataset directory: " + new File( meta.files()[ 0 ] ).getParent() + "\n" +
+					"Dataset files: \n";
+
+			for ( int i = 0; i < meta.files().length; ++i )
+				s += "     " + new File( meta.files()[ i ] ).getName() + "\n";
+
+			gd.addMessage( s, new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
+
+			GUIHelper.addScrollBars( gd );
+
+			gd.showDialog();
+			
+			if ( gd.wasCanceled() )
+				return null;
+
 			System.out.println( "num angles: " + meta.numAngles() );
 			System.out.println( "num channels: " + meta.numChannels() );
 			System.out.println( "num illums: " + meta.numIlluminations() );
@@ -105,9 +160,6 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 			System.out.println( "calY: " + meta.calY() );
 			System.out.println( "calZ: " + meta.calZ() );
 
-			//printMetaData( r );
-
-			r.close();
 			
 		}
 		catch ( Exception e )
@@ -172,7 +224,7 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		private int angles[];
 		private int numT = -1;
 		private int numI = -1;
-		private double calX, calY, calZ;
+		private double calX, calY, calZ, lightsheetThickness;
 		private String[] files;
 		private HashMap< Integer, int[] > imageSizes;
 
@@ -189,6 +241,19 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		public int[] channels() { return channels; }
 		public int[] angles() { return angles; }
 		public HashMap< Integer, int[] > imageSizes() { return imageSizes; }
+		public String calUnit() { return "um"; }
+		public double lightsheetThickness() { return lightsheetThickness; }
+		public String rotationAxisName()
+		{
+			if ( rotationAxis == 0 )
+				return "X";
+			else if ( rotationAxis == 1 )
+				return "Y";
+			else if ( rotationAxis == 2 )
+				return "Z";
+			else
+				return "Unknown";
+		}
 
 		public boolean loadMetaData( final IFormatReader r )
 		{
@@ -290,6 +355,20 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 					rotationAxis = 1;
 				else if ( Integer.parseInt( axes[ 2 ] ) == 1 )
 					rotationAxis = 2;
+			}
+
+			for ( final String key : metaData.keySet() )
+			{
+				if ( key.startsWith( "LsmTag|Name #" ) && metaData.get( key ).toString().trim().equals( "LightSheetThickness" ) )
+				{
+					String lookup = "LsmTag " + key.substring( key.indexOf( '#' ), key.length() );
+					tmp = metaData.get( lookup );
+
+					if ( tmp != null )
+						lightsheetThickness = Double.parseDouble( tmp.toString() );
+					else
+						lightsheetThickness = -1;
+				}
 			}
 
 			final MetadataRetrieve retrieve = (MetadataRetrieve)r.getMetadataStore();
