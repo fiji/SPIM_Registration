@@ -1,28 +1,26 @@
 package spim.fiji.datasetmanager;
 
-import fiji.util.gui.GenericDialogPlus;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Hashtable;
 
-import ome.xml.meta.MetadataStore;
-import ome.xml.model.primitives.PositiveFloat;
 import loci.common.services.DependencyException;
 import loci.common.services.ServiceException;
 import loci.common.services.ServiceFactory;
 import loci.formats.ChannelSeparator;
-import loci.formats.CoreMetadata;
 import loci.formats.IFormatReader;
 import loci.formats.Modulo;
-import loci.formats.in.ZeissCZIReader;
 import loci.formats.meta.IMetadata;
 import loci.formats.meta.MetadataRetrieve;
 import loci.formats.services.OMEXMLService;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.util.Util;
+import ome.xml.model.primitives.PositiveFloat;
 import spim.fiji.spimdata.SpimData2;
+import fiji.util.gui.GenericDialogPlus;
 
 public class LightSheetZ1 implements MultiViewDatasetDefinition
 {
@@ -84,13 +82,126 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		{
 			r.setId( firstFile.getAbsolutePath() );
 
+			final LightSheetZ1MetaData meta = new LightSheetZ1MetaData();
+			
+			if ( !meta.loadMetaData( r ) )
+			{
+				IOFunctions.println( "Failed to analyze file." );
+				return null;
+			}
+
+			System.out.println( "num angles: " + meta.numAngles() );
+			System.out.println( "num channels: " + meta.numChannels() );
+			System.out.println( "num illums: " + meta.numIlluminations() );
+			System.out.println( "num timepoints: " + meta.numTimepoints() );
+			
+			System.out.println( "Obj: " + meta.objective() );
+			for ( int c = 0; c < meta.numChannels(); ++c )
+				System.out.println( "Channel " + c + ": " + meta.channels()[ c ] );
+			for ( int a = 0; a < meta.numAngles(); ++a )
+				System.out.println( "Angle " + a + ": " + meta.angles()[ a ] + ", dim=" + Util.printCoordinates( meta.imageSizes().get( a ) ) );
+			System.out.println( "Rotation axis dimension: " + meta.rotationAxis() );
+			System.out.println( "calX: " + meta.calX() );
+			System.out.println( "calY: " + meta.calY() );
+			System.out.println( "calZ: " + meta.calZ() );
+
+			//printMetaData( r );
+
+			r.close();
+			
+		}
+		catch ( Exception e )
+		{
+			IOFunctions.println( "File '" + firstFile.getAbsolutePath() + "' could not be opened: " + e );
+			IOFunctions.println( "Stopping" );
+
+			e.printStackTrace();
+			return null;
+		}
+
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public static void printMetaData( final IFormatReader r )
+	{
+		final Hashtable< String, Object > metaData = r.getGlobalMetadata();
+
+		ArrayList< String > entries = new ArrayList<String>();
+
+		for ( final String s : metaData.keySet() )
+			entries.add( "'" + s + "': " + metaData.get( s ) );
+
+		Collections.sort( entries );
+
+		for ( final String s : entries )
+			System.out.println( s );
+	}
+
+	public static boolean createOMEXMLMetadata( final IFormatReader r )
+	{
+		try 
+		{
+			final ServiceFactory serviceFactory = new ServiceFactory();
+			final OMEXMLService service = serviceFactory.getInstance( OMEXMLService.class );
+			final IMetadata omexmlMeta = service.createOMEXMLMetadata();
+			r.setMetadataStore(omexmlMeta);
+		}
+		catch (final ServiceException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+		catch (final DependencyException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+		
+		return true;
+	}
+
+	@Override
+	public LightSheetZ1 newInstance() { return new LightSheetZ1(); }
+
+	public static class LightSheetZ1MetaData
+	{
+		private String objective = "";
+		private int rotationAxis = -1;
+		private int channels[];
+		private int angles[];
+		private int numT = -1;
+		private int numI = -1;
+		private double calX, calY, calZ;
+		private String[] files;
+		private HashMap< Integer, int[] > imageSizes;
+
+		public int numChannels() { return channels.length; }
+		public int numAngles() { return angles.length; }
+		public int numIlluminations() { return numI; }
+		public int numTimepoints() { return numT; }
+		public String objective() { return objective; }
+		public int rotationAxis() { return rotationAxis; }
+		public double calX() { return calX; }
+		public double calY() { return calY; }
+		public double calZ() { return calZ; }
+		public String[] files() { return files; }
+		public int[] channels() { return channels; }
+		public int[] angles() { return angles; }
+		public HashMap< Integer, int[] > imageSizes() { return imageSizes; }
+
+		public boolean loadMetaData( final IFormatReader r )
+		{
 			final Hashtable< String, Object > metaData = r.getGlobalMetadata();
 			final int numA = r.getSeriesCount();
 
 			// make sure every angle has the same amount of timepoints, channels, illuminations
-			int numT = -1;
+			this.numT = -1;
+			this.numI = -1;
 			int numC = -1;
-			int numI = -1;
+			
+			// also collect the image sizes for each angle
+			this.imageSizes = new HashMap< Integer, int[] >();
 
 			for ( int a = 0; a < numA; ++a )
 			{
@@ -100,15 +211,12 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 				int h = r.getSizeY();
 				int d = (int)Math.round( Double.parseDouble( metaData.get( "Information|Image|V|View|SizeZ #" + (a+1) ).toString() ) );
 
-				System.out.println( "w: " + w );
-				System.out.println( "h: " + h );
-				System.out.println( "d: " + d );
+				imageSizes.put( a, new int[]{ w, h, d } );
 
 				if ( numT >= 0 && numT != r.getSizeT() )
 				{
 					IOFunctions.println( "Number of timepoints inconsistent across angles. Stopping." );
-					r.close();
-					return null;
+					return false;
 				}
 				else
 				{
@@ -122,8 +230,7 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 				if ( numI >= 0 && numI != moduloC.length() )
 				{
 					IOFunctions.println( "Number of illumination directions inconsistent across angles. Stopping." );
-					r.close();
-					return null;
+					return false;
 				}
 				else
 				{
@@ -133,8 +240,7 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 				if ( numC >= 0 && numC != r.getSizeC() / moduloC.length() )
 				{
 					IOFunctions.println( "Number of channels directions inconsistent across angles. Stopping." );
-					r.close();
-					return null;
+					return false;
 				}
 				else
 				{
@@ -142,20 +248,12 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 				}
 			}
 
-			System.out.println( "num angles: " + numA );
-			System.out.println( "num channels: " + numC );
-			System.out.println( "num illums: " + numI );
-			System.out.println( "num timepoints: " + numT );
-
 			//
 			// query details
 			//
-			String objective = "";
-			int rotationAxis = -1;
-			int channels[] = new int[ numC ];
-			int angles[] = new int[ numA ];
-			double calX, calY, calZ;
-			final String[] files = r.getSeriesUsedFiles();
+			this.channels = new int[ numC ];
+			this.angles = new int[ numA ];
+			this.files = r.getSeriesUsedFiles();
 
 			Object tmp = metaData.get( "Experiment|AcquisitionBlock|AcquisitionModeSetup|Objective #1" );
 			objective = (tmp != null) ? tmp.toString() : "Unknown Objective";
@@ -231,74 +329,10 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 			}
 			calZ = cal;
 
-			System.out.println( "Obj: " + objective );
-			for ( int c = 0; c < numC; ++c )
-				System.out.println( "Channel " + c + ": " + channels[ c ] );
-			for ( int a = 0; a < numA; ++a )
-				System.out.println( "Angle " + a + ": " + angles[ a ] );
-			System.out.println( "Rotation axis: " + rotationAxis );
-			System.out.println( "calX: " + calX );
-			System.out.println( "calY: " + calY );
-			System.out.println( "calZ: " + calZ );
-
-			//printMetaData( metaData );
-
-			r.close();
-			
+			return true;
 		}
-		catch ( Exception e )
-		{
-			IOFunctions.println( "File '" + firstFile.getAbsolutePath() + "' could not be opened: " + e );
-			IOFunctions.println( "Stopping" );
-
-			e.printStackTrace();
-			return null;
-		}
-
-		// TODO Auto-generated method stub
-		return null;
 	}
 
-	private static void printMetaData( final Hashtable< String, Object > metaData )
-	{
-		ArrayList< String > entries = new ArrayList<String>();
-
-		for ( final String s : metaData.keySet() )
-			entries.add( "'" + s + "': " + metaData.get( s ) );
-
-		Collections.sort( entries );
-
-		for ( final String s : entries )
-			System.out.println( s );
-	}
-
-	public static boolean createOMEXMLMetadata( final IFormatReader r )
-	{
-		try 
-		{
-			final ServiceFactory serviceFactory = new ServiceFactory();
-			final OMEXMLService service = serviceFactory.getInstance( OMEXMLService.class );
-			final IMetadata omexmlMeta = service.createOMEXMLMetadata();
-			r.setMetadataStore(omexmlMeta);
-		}
-		catch (final ServiceException e)
-		{
-			e.printStackTrace();
-			return false;
-		}
-		catch (final DependencyException e)
-		{
-			e.printStackTrace();
-			return false;
-		}
-		
-		return true;
-	}
-
-
-	@Override
-	public LightSheetZ1 newInstance() { return new LightSheetZ1(); }
-	
 	public static void main( String[] args )
 	{
 		//defaultFirstFile = "/Volumes/My Passport/worm7/Track1(3).czi";
