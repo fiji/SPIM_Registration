@@ -405,7 +405,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 
 			if ( calibration2 > 0 ) // user define or verify the values
 			{
-				gd.addMessage( "Calibration (voxel size)", new Font( Font.SANS_SERIF, Font.BOLD, 14 ) );			
+				gd.addMessage( "Calibration (voxel size)", new Font( Font.SANS_SERIF, Font.BOLD, 14 ) );
 				if ( calibration2 == 1 )
 					gd.addMessage( "(read from file)", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
 				gd.addMessage( "" );
