@@ -24,8 +24,9 @@ public class LightSheetZ1MetaData
 	private String objective = "";
 	private String calUnit = "um";
 	private int rotationAxis = -1;
-	private int channels[];
-	private int angles[];
+	private String channels[];
+	private String angles[];
+	private String illuminations[];
 	private int numT = -1;
 	private int numI = -1;
 	private double calX, calY, calZ, lightsheetThickness = -1;
@@ -48,8 +49,9 @@ public class LightSheetZ1MetaData
 	public double calY() { return calY; }
 	public double calZ() { return calZ; }
 	public String[] files() { return files; }
-	public int[] channels() { return channels; }
-	public int[] angles() { return angles; }
+	public String[] channels() { return channels; }
+	public String[] angles() { return angles; }
+	public String[] illuminations() { return illuminations; }
 	public HashMap< Integer, int[] > imageSizes() { return imageSizes; }
 	public String calUnit() { return calUnit; }
 	public double lightsheetThickness() { return lightsheetThickness; }
@@ -163,9 +165,13 @@ public class LightSheetZ1MetaData
 		//
 		// query non-essential details
 		//
-		this.channels = new int[ numC ];
-		this.angles = new int[ numA ];
+		this.channels = new String[ numC ];
+		this.angles = new String[ numA ];
+		this.illuminations = new String[ numI ];
 		this.files = r.getSeriesUsedFiles();
+
+		for ( int i = 0; i < numI; ++i )
+			illuminations[ i ] = String.valueOf( i );
 
 		Object tmp;
 
@@ -177,38 +183,43 @@ public class LightSheetZ1MetaData
 			for ( int c = 0; c < numC; ++c )
 			{
 				tmp = metaData.get( "Information|Image|Channel|Wavelength #" + ( c+1 ) );
-				channels[ c ] = (tmp != null) ? (int)Math.round( Double.parseDouble( tmp.toString() ) ) : c;
+				// round and cast back to String
+				channels[ c ] = (tmp != null) ? String.valueOf( (int)Math.round( Double.parseDouble( tmp.toString() ) ) ) : String.valueOf( c );
 			}
 		}
 		catch ( Exception e )
 		{
 			IOFunctions.println( "An error occured parsing the objective used: " + e + "\n. Proceeding." );
 			for ( int c = 0; c < numC; ++c )
-				channels[ c ] = c;
+				channels[ c ] = String.valueOf( c );
 		}
 
 		try
 		{
 			boolean allAnglesNegative = true;
+			final int[] anglesTmp = new int[ numA ];
 
 			for ( int a = 0; a < numA; ++a )
 			{
 				tmp = metaData.get( "Information|Image|V|View|Offset #" + ( a+1 ) );
-				angles[ a ] = (tmp != null) ? (int)Math.round( Double.parseDouble( tmp.toString() ) ) : a;
+				anglesTmp[ a ] = (tmp != null) ? (int)Math.round( Double.parseDouble( tmp.toString() ) ) : a;
 
-				if ( angles[ a ] > 0 )
+				if ( anglesTmp[ a ] > 0 )
 					allAnglesNegative = false;
 			}
 
 			if ( allAnglesNegative )
 				for ( int a = 0; a < numA; ++a )
-					angles[ a ] *= -1;
+					anglesTmp[ a ] *= -1;
+
+			for ( int a = 0; a < numA; ++a )
+				angles[ a ] = String.valueOf( anglesTmp[ a ] );
 		}
 		catch ( Exception e )
 		{
 			IOFunctions.println( "An error occured parsing the rotation angles: " + e + "\n. Proceeding." );
 			for ( int a = 0; a < numA; ++a )
-				angles[ a ] = a;
+				angles[ a ] = String.valueOf( a );
 		}
 
 		try

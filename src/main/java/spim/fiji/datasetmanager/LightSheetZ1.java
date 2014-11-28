@@ -5,7 +5,13 @@ import ij.gui.GenericDialog;
 
 import java.awt.Font;
 import java.io.File;
+import java.util.ArrayList;
 
+import mpicbg.spim.data.SpimData;
+import mpicbg.spim.data.sequence.MissingViews;
+import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.TimePoints;
+import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
@@ -54,8 +60,62 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		if ( !showDialogs( meta ) )
 			return null;
 
+		// assemble timepints, viewsetups, missingviews and the imgloader
+		final TimePoints timepoints = this.createTimePoints( meta );
+		//final ArrayList< ViewSetup > setups = this.createViewSetups();
+		//final MissingViews missingViews = this.createMissingViews();
+
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	/**
+	 * Creates the List of {@link ViewSetup} for the {@link SpimData} object.
+	 * The {@link ViewSetup} are defined independent of the {@link TimePoint},
+	 * each {@link TimePoint} should have the same {@link ViewSetup}s. The {@link MissingViews}
+	 * class defines if some of them are missing for some of the {@link TimePoint}s
+	 *
+	 * @return
+	 */
+	protected ArrayList< ViewSetup > createViewSetups( final LightSheetZ1MetaData meta )
+	{
+		/*
+		final ArrayList< Channel > channels = new ArrayList< Channel >();
+		for ( int c = 0; c < meta.numChannels(); ++c )
+			channels.add( new Channel( c, String.valueOf( meta.channels()[ c ] ) ) );
+
+		final ArrayList< Illumination > illuminations = new ArrayList< Illumination >();
+		for ( int i = 0; i < meta.numIlluminations(); ++i )
+			illuminations.add( new Illumination( i, meta.i ) );
+
+		final ArrayList< Angle > angles = new ArrayList< Angle >();
+		for ( int a = 0; a < angleNameList.size(); ++a )
+			angles.add( new Angle( a, angleNameList.get( a ) ) );
+
+		final ArrayList< ViewSetup > viewSetups = new ArrayList< ViewSetup >();
+		for ( final Channel c : channels )
+			for ( final Illumination i : illuminations )
+				for ( final Angle a : angles )
+				{
+					final Calibration cal = calibrations.get( new ViewSetupPrecursor( c.getId(), i.getId(), a.getId() ) );
+					final VoxelDimensions voxelSize = new FinalVoxelDimensions( cal.calUnit, cal.calX, cal.calY, cal.calZ );
+					viewSetups.add( new ViewSetup( viewSetups.size(), null, null, voxelSize, c, a, i ) );
+				}
+
+		return viewSetups;*/ return null;
+	}
+
+	/**
+	 * Creates the {@link TimePoints} for the {@link SpimData} object
+	 */
+	protected TimePoints createTimePoints( final LightSheetZ1MetaData meta )
+	{
+		final ArrayList< TimePoint > timepoints = new ArrayList< TimePoint >();
+
+		for ( int t = 0; t < meta.numTimepoints(); ++t )
+			timepoints.add( new TimePoint( t ) );
+
+		return new TimePoints( timepoints );
 	}
 
 	protected boolean showDialogs( final LightSheetZ1MetaData meta )
@@ -66,19 +126,19 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		gd.addMessage( "" );
 
 		for ( int a = 0; a < meta.numAngles(); ++a )
-			gd.addNumericField( "Angle_" + (a+1) + ":", meta.angles()[ a ], 0 );
+			gd.addStringField( "Angle_" + (a+1) + ":", meta.angles()[ a ] );
 
 		gd.addMessage( "Channels (" + meta.numChannels() + " present)", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
 		gd.addMessage( "" );
 
 		for ( int c = 0; c < meta.numChannels(); ++c )
-			gd.addNumericField( "Channel_" + (c+1) + ":", meta.channels()[ c ], 0 );
+			gd.addStringField( "Channel_" + (c+1) + ":", meta.channels()[ c ] );
 
 		gd.addMessage( "Illumination Directions (" + meta.numIlluminations() + " present)", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
 		gd.addMessage( "" );
 
 		for ( int i = 0; i < meta.numIlluminations(); ++i )
-			gd.addNumericField( "_______Illumination_" + (i+1) + ":", 0, 0 );
+			gd.addStringField( "_______Illumination_" + (i+1) + ":", meta.illuminations()[ i ] );
 
 		gd.addMessage( "Timepoints (" + meta.numTimepoints() + " present)", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
 
@@ -111,6 +171,15 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		
 		if ( gd.wasCanceled() )
 			return false;
+
+		for ( int a = 0; a < meta.numAngles(); ++a )
+			meta.angles()[ a ] = gd.getNextString();
+
+		for ( int c = 0; c < meta.numChannels(); ++c )
+			meta.channels()[ c ] = gd.getNextString();
+
+		for ( int i = 0; i < meta.numIlluminations(); ++i )
+			meta.illuminations()[ i ] = gd.getNextString();
 
 		final boolean modifyCal = defaultModifyCal = gd.getNextBoolean();
 		final boolean modifyAxis = defaultRotAxis = gd.getNextBoolean();
