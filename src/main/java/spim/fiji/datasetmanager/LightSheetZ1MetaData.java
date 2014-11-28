@@ -1,5 +1,7 @@
 package spim.fiji.datasetmanager;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Hashtable;
 
@@ -12,6 +14,7 @@ import ome.xml.model.primitives.PositiveFloat;
 public class LightSheetZ1MetaData
 {
 	private String objective = "";
+	private String calUnit = "um";
 	private int rotationAxis = -1;
 	private int channels[];
 	private int angles[];
@@ -20,6 +23,12 @@ public class LightSheetZ1MetaData
 	private double calX, calY, calZ, lightsheetThickness = -1;
 	private String[] files;
 	private HashMap< Integer, int[] > imageSizes;
+
+	public void setRotationAxis( final int rotAxis ) { this.rotationAxis = rotAxis; }
+	public void setCalX( final double calX ) { this.calX = calX; }
+	public void setCalY( final double calY ) { this.calY = calY; }
+	public void setCalZ( final double calZ ) { this.calZ = calZ; }
+	public void setCalUnit( final String calUnit ) { this.calUnit = calUnit; }
 
 	public int numChannels() { return channels.length; }
 	public int numAngles() { return angles.length; }
@@ -34,7 +43,7 @@ public class LightSheetZ1MetaData
 	public int[] channels() { return channels; }
 	public int[] angles() { return angles; }
 	public HashMap< Integer, int[] > imageSizes() { return imageSizes; }
-	public String calUnit() { return "um"; }
+	public String calUnit() { return calUnit; }
 	public double lightsheetThickness() { return lightsheetThickness; }
 	public String rotationAxisName()
 	{
@@ -257,4 +266,20 @@ public class LightSheetZ1MetaData
 
 		return true;
 	}
+
+	public static void printMetaData( final IFormatReader r )
+	{
+		final Hashtable< String, Object > metaData = r.getGlobalMetadata();
+
+		ArrayList< String > entries = new ArrayList<String>();
+
+		for ( final String s : metaData.keySet() )
+			entries.add( "'" + s + "': " + metaData.get( s ) );
+
+		Collections.sort( entries );
+
+		for ( final String s : entries )
+			System.out.println( s );
+	}
+
 }
