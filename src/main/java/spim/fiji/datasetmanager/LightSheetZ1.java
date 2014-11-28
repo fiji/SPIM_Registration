@@ -1,22 +1,14 @@
 package spim.fiji.datasetmanager;
 
+import fiji.util.gui.GenericDialogPlus;
 import ij.gui.GenericDialog;
 
 import java.awt.Font;
 import java.io.File;
-import java.io.IOException;
 
-import loci.common.services.DependencyException;
-import loci.common.services.ServiceException;
-import loci.common.services.ServiceFactory;
-import loci.formats.ChannelSeparator;
-import loci.formats.IFormatReader;
-import loci.formats.meta.IMetadata;
-import loci.formats.services.OMEXMLService;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
-import fiji.util.gui.GenericDialogPlus;
 
 public class LightSheetZ1 implements MultiViewDatasetDefinition
 {
@@ -46,68 +38,22 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 	@Override
 	public SpimData2 createDataset()
 	{
-		GenericDialogPlus gd = new GenericDialogPlus( "Define Lightsheet Z.1 Dataset" );
+		final File cziFile = queryCZIFile();
 
-		gd.addFileField( "First_CZI file of the dataset", defaultFirstFile, 50 );
-
-		gd.showDialog();
-
-		if ( gd.wasCanceled() )
+		if ( cziFile == null )
 			return null;
 
-		final File firstFile = new File( defaultFirstFile = gd.getNextString() );
+		final LightSheetZ1MetaData meta = new LightSheetZ1MetaData();
 
-		if ( !firstFile.exists() )
+		if ( !meta.loadMetaData( cziFile ) )
 		{
-			IOFunctions.println( "File '" + firstFile.getAbsolutePath() + "' does not exist. Stopping" );
-			return null;
-		}
-		else
-		{
-			IOFunctions.println( "Investigating file '" + firstFile.getAbsolutePath() + "'." );
-		}
-
-		// should I use the ZeissCZIReader here directly?
-		final IFormatReader r = new ChannelSeparator();// new ZeissCZIReader();
-
-		// is that still necessary?
-		if ( !createOMEXMLMetadata( r ) )
-		{
-			try { r.close(); } catch (IOException e) { e.printStackTrace(); }
-			IOFunctions.println( "Creating MetaDataStore failed. Stopping" );
+			IOFunctions.println( "Failed to analyze file." );
 			return null;
 		}
 
-		LightSheetZ1MetaData meta = new LightSheetZ1MetaData();
-
-		try
-		{
-			r.setId( firstFile.getAbsolutePath() );
-
-			if ( !meta.loadMetaData( r ) )
-			{
-				IOFunctions.println( "Failed to analyze file." );
-				return null;
-			}
-
-			//LightSheetZ1MetaData.printMetaData( r );
-
-			r.close();
-			
-		}
-		catch ( Exception e )
-		{
-			IOFunctions.println( "File '" + firstFile.getAbsolutePath() + "' could not be opened: " + e );
-			IOFunctions.println( "Stopping" );
-
-			e.printStackTrace();
-			meta = null;
-		}
-
-		if ( meta == null || !showDialogs( meta ) )
+		if ( !showDialogs( meta ) )
 			return null;
 
-		
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -209,27 +155,29 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		return true;
 	}
 
-	public static boolean createOMEXMLMetadata( final IFormatReader r )
+	protected File queryCZIFile()
 	{
-		try 
+		GenericDialogPlus gd = new GenericDialogPlus( "Define Lightsheet Z.1 Dataset" );
+	
+		gd.addFileField( "First_CZI file of the dataset", defaultFirstFile, 50 );
+	
+		gd.showDialog();
+	
+		if ( gd.wasCanceled() )
+			return null;
+	
+		final File firstFile = new File( defaultFirstFile = gd.getNextString() );
+	
+		if ( !firstFile.exists() )
 		{
-			final ServiceFactory serviceFactory = new ServiceFactory();
-			final OMEXMLService service = serviceFactory.getInstance( OMEXMLService.class );
-			final IMetadata omexmlMeta = service.createOMEXMLMetadata();
-			r.setMetadataStore(omexmlMeta);
+			IOFunctions.println( "File '" + firstFile.getAbsolutePath() + "' does not exist. Stopping" );
+			return null;
 		}
-		catch (final ServiceException e)
+		else
 		{
-			e.printStackTrace();
-			return false;
+			IOFunctions.println( "Investigating file '" + firstFile.getAbsolutePath() + "'." );
+			return firstFile;
 		}
-		catch (final DependencyException e)
-		{
-			e.printStackTrace();
-			return false;
-		}
-		
-		return true;
 	}
 
 	@Override

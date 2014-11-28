@@ -1,13 +1,21 @@
 package spim.fiji.datasetmanager;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Hashtable;
 
+import loci.common.services.DependencyException;
+import loci.common.services.ServiceException;
+import loci.common.services.ServiceFactory;
+import loci.formats.ChannelSeparator;
 import loci.formats.IFormatReader;
 import loci.formats.Modulo;
+import loci.formats.meta.IMetadata;
 import loci.formats.meta.MetadataRetrieve;
+import loci.formats.services.OMEXMLService;
 import mpicbg.spim.io.IOFunctions;
 import ome.xml.model.primitives.PositiveFloat;
 
@@ -57,8 +65,33 @@ public class LightSheetZ1MetaData
 			return "Unknown";
 	}
 
-	public boolean loadMetaData( final IFormatReader r )
+	public boolean loadMetaData( final File cziFile )
 	{
+		// should I use the ZeissCZIReader here directly?
+		final IFormatReader r = new ChannelSeparator();// new ZeissCZIReader();
+
+		if ( !createOMEXMLMetadata( r ) )
+		{
+			try { r.close(); } catch (IOException e) { e.printStackTrace(); }
+			IOFunctions.println( "Creating MetaDataStore failed. Stopping" );
+			return false;
+		}
+
+		try
+		{
+			r.setId( cziFile.getAbsolutePath() );
+			//printMetaData( r );
+		}
+		catch ( Exception e )
+		{
+			IOFunctions.println( "File '" + cziFile.getAbsolutePath() + "' could not be opened: " + e );
+			IOFunctions.println( "Stopping" );
+
+			e.printStackTrace();
+			try { r.close(); } catch (IOException e1) { e1.printStackTrace(); }
+			return false;
+		}
+
 		final Hashtable< String, Object > metaData = r.getGlobalMetadata();
 		final int numA = r.getSeriesCount();
 
@@ -85,6 +118,7 @@ public class LightSheetZ1MetaData
 				if ( numT >= 0 && numT != r.getSizeT() )
 				{
 					IOFunctions.println( "Number of timepoints inconsistent across angles. Stopping." );
+					r.close();
 					return false;
 				}
 				else
@@ -99,6 +133,7 @@ public class LightSheetZ1MetaData
 				if ( numI >= 0 && numI != moduloC.length() )
 				{
 					IOFunctions.println( "Number of illumination directions inconsistent across angles. Stopping." );
+					r.close();
 					return false;
 				}
 				else
@@ -109,6 +144,7 @@ public class LightSheetZ1MetaData
 				if ( numC >= 0 && numC != r.getSizeC() / moduloC.length() )
 				{
 					IOFunctions.println( "Number of channels directions inconsistent across angles. Stopping." );
+					r.close();
 					return false;
 				}
 				else
@@ -120,6 +156,7 @@ public class LightSheetZ1MetaData
 		catch ( Exception e )
 		{
 			IOFunctions.println( "An error occured parsing the main meta data: " + e + "\n. Stopping." );
+			try { r.close(); } catch (IOException e1) { e1.printStackTrace(); }
 			return false;
 		}
 
@@ -264,6 +301,8 @@ public class LightSheetZ1MetaData
 			calX = calY = calZ = 1;
 		};
 
+		try { r.close(); } catch (IOException e) { e.printStackTrace(); }
+
 		return true;
 	}
 
@@ -282,4 +321,26 @@ public class LightSheetZ1MetaData
 			System.out.println( s );
 	}
 
+	public static boolean createOMEXMLMetadata( final IFormatReader r )
+	{
+		try 
+		{
+			final ServiceFactory serviceFactory = new ServiceFactory();
+			final OMEXMLService service = serviceFactory.getInstance( OMEXMLService.class );
+			final IMetadata omexmlMeta = service.createOMEXMLMetadata();
+			r.setMetadataStore(omexmlMeta);
+		}
+		catch (final ServiceException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+		catch (final DependencyException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+
+		return true;
+	}
 }
