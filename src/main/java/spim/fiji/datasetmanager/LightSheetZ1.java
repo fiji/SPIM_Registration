@@ -224,17 +224,18 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		gd.addMessage( "" );
 		gd.addCheckbox( "Modify_rotation_axis", defaultRotAxis );
 
-		String s =
+		gd.addMessage(
 				"Acquisition Objective: " + meta.objective() + "\n" +
 				"Rotation axis: " + meta.rotationAxisName() + " axis\n" + 
 				(meta.lightsheetThickness() < 0 ? "" : "Lighsheet thickness: " + meta.lightsheetThickness() + " um\n") +
-				"Dataset directory: " + new File( meta.files()[ 0 ] ).getParent() + "\n" +
-				"Dataset files: \n";
+				"Pixel type: " + meta.pixelTypeString() + "(" + meta.bytesPerPixel() + " bytes per pixel)",
+				new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
+		
+		IOFunctions.println( "Dataset directory: " + new File( meta.files()[ 0 ] ).getParent() );
+		IOFunctions.println( "Dataset files:" );
 
 		for ( int i = 0; i < meta.files().length; ++i )
-			s += "     " + new File( meta.files()[ i ] ).getName() + "\n";
-
-		gd.addMessage( s, new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
+			IOFunctions.println( new File( meta.files()[ i ] ).getName() );
 
 		GUIHelper.addScrollBars( gd );
 
