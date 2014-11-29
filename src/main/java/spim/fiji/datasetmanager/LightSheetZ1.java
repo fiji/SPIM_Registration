@@ -228,7 +228,7 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 				"Acquisition Objective: " + meta.objective() + "\n" +
 				"Rotation axis: " + meta.rotationAxisName() + " axis\n" + 
 				(meta.lightsheetThickness() < 0 ? "" : "Lighsheet thickness: " + meta.lightsheetThickness() + " um\n") +
-				"Pixel type: " + meta.pixelTypeString() + "(" + meta.bytesPerPixel() + " bytes per pixel)",
+				"Pixel type: " + meta.pixelTypeString() + " (" + meta.bytesPerPixel() + " byte per pixel)",
 				new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
 		
 		IOFunctions.println( "Dataset directory: " + new File( meta.files()[ 0 ] ).getParent() );
