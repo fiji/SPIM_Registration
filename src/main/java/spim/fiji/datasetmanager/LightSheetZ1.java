@@ -13,6 +13,7 @@ import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.Illumination;
+import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.MissingViews;
 import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
@@ -26,9 +27,11 @@ import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.imgloaders.LightSheetZ1ImgLoader;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
 public class LightSheetZ1 implements MultiViewDatasetDefinition
@@ -85,9 +88,8 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 
 		// instantiate the sequencedescription
 		final SequenceDescription sequenceDescription = new SequenceDescription( timepoints, setups, null, missingViews );
-		// TODO: ImgLoader
-		//final ImgLoader< UnsignedShortType > imgLoader = createAndInitImgLoader( ".", new File( directory ), imgFactory, sequenceDescription );
-		//sequenceDescription.setImgLoader( imgLoader );
+		final ImgLoader< UnsignedShortType > imgLoader = new LightSheetZ1ImgLoader( cziFile, imgFactory, sequenceDescription );
+		sequenceDescription.setImgLoader( imgLoader );
 
 		// get the minimal resolution of all calibrations
 		final double minResolution = Math.min( Math.min( meta.calX(), meta.calY() ), meta.calZ() );
