@@ -11,6 +11,7 @@ import loci.common.services.DependencyException;
 import loci.common.services.ServiceException;
 import loci.common.services.ServiceFactory;
 import loci.formats.ChannelSeparator;
+import loci.formats.FormatTools;
 import loci.formats.IFormatReader;
 import loci.formats.Modulo;
 import loci.formats.meta.IMetadata;
@@ -32,7 +33,10 @@ public class LightSheetZ1MetaData
 	private double calX, calY, calZ, lightsheetThickness = -1;
 	private String[] files;
 	private HashMap< Integer, int[] > imageSizes;
-
+	private int pixelType = -1;
+	private int bytesPerPixel = -1; 
+	private String pixelTypeString = "";
+	
 	public void setRotationAxis( final int rotAxis ) { this.rotationAxis = rotAxis; }
 	public void setCalX( final double calX ) { this.calX = calX; }
 	public void setCalY( final double calY ) { this.calY = calY; }
@@ -55,6 +59,9 @@ public class LightSheetZ1MetaData
 	public HashMap< Integer, int[] > imageSizes() { return imageSizes; }
 	public String calUnit() { return calUnit; }
 	public double lightsheetThickness() { return lightsheetThickness; }
+	public int pixelType() { return pixelType; }
+	public int bytesPerPixel() { return bytesPerPixel; }
+	public String pixelTypeString() { return pixelTypeString; }
 	public String rotationAxisName()
 	{
 		if ( rotationAxis == 0 )
@@ -82,6 +89,22 @@ public class LightSheetZ1MetaData
 		try
 		{
 			r.setId( cziFile.getAbsolutePath() );
+
+			this.pixelType = r.getPixelType();
+			this.bytesPerPixel = FormatTools.getBytesPerPixel( pixelType ); 
+			this.pixelTypeString = FormatTools.getPixelTypeString( pixelType );
+
+			if ( !( pixelType == FormatTools.UINT8 || pixelType == FormatTools.UINT16 || pixelType == FormatTools.UINT32 || pixelType == FormatTools.FLOAT ) )
+			{
+				IOFunctions.println(
+						"LightSheetZ1MetaData.loadMetaData(): PixelType " + pixelTypeString +
+						" not supported yet. Please send me an email about this: stephan.preibisch@gmx.de - stopping." );
+
+				r.close();
+
+				return false;
+			}
+
 			//printMetaData( r );
 		}
 		catch ( Exception e )
