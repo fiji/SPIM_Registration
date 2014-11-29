@@ -7,18 +7,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Hashtable;
 
-import loci.common.services.DependencyException;
-import loci.common.services.ServiceException;
-import loci.common.services.ServiceFactory;
-import loci.formats.ChannelSeparator;
 import loci.formats.FormatTools;
 import loci.formats.IFormatReader;
 import loci.formats.Modulo;
-import loci.formats.meta.IMetadata;
 import loci.formats.meta.MetadataRetrieve;
-import loci.formats.services.OMEXMLService;
 import mpicbg.spim.io.IOFunctions;
 import ome.xml.model.primitives.PositiveFloat;
+import spim.fiji.spimdata.imgloaders.LightSheetZ1ImgLoader;
 
 public class LightSheetZ1MetaData
 {
@@ -36,7 +31,8 @@ public class LightSheetZ1MetaData
 	private int pixelType = -1;
 	private int bytesPerPixel = -1; 
 	private String pixelTypeString = "";
-	
+	private boolean isLittleEndian;
+
 	public void setRotationAxis( final int rotAxis ) { this.rotationAxis = rotAxis; }
 	public void setCalX( final double calX ) { this.calX = calX; }
 	public void setCalY( final double calY ) { this.calY = calY; }
@@ -62,6 +58,7 @@ public class LightSheetZ1MetaData
 	public int pixelType() { return pixelType; }
 	public int bytesPerPixel() { return bytesPerPixel; }
 	public String pixelTypeString() { return pixelTypeString; }
+	public boolean isLittleEndian() { return isLittleEndian; }
 	public String rotationAxisName()
 	{
 		if ( rotationAxis == 0 )
@@ -76,10 +73,9 @@ public class LightSheetZ1MetaData
 
 	public boolean loadMetaData( final File cziFile )
 	{
-		// should I use the ZeissCZIReader here directly?
-		final IFormatReader r = new ChannelSeparator();// new ZeissCZIReader();
+		final IFormatReader r = LightSheetZ1ImgLoader.instantiateImageReader();
 
-		if ( !createOMEXMLMetadata( r ) )
+		if ( !LightSheetZ1ImgLoader.createOMEXMLMetadata( r ) )
 		{
 			try { r.close(); } catch (IOException e) { e.printStackTrace(); }
 			IOFunctions.println( "Creating MetaDataStore failed. Stopping" );
@@ -93,6 +89,7 @@ public class LightSheetZ1MetaData
 			this.pixelType = r.getPixelType();
 			this.bytesPerPixel = FormatTools.getBytesPerPixel( pixelType ); 
 			this.pixelTypeString = FormatTools.getPixelTypeString( pixelType );
+			this.isLittleEndian = r.isLittleEndian();
 
 			if ( !( pixelType == FormatTools.UINT8 || pixelType == FormatTools.UINT16 || pixelType == FormatTools.UINT32 || pixelType == FormatTools.FLOAT ) )
 			{
@@ -353,28 +350,5 @@ public class LightSheetZ1MetaData
 
 		for ( final String s : entries )
 			System.out.println( s );
-	}
-
-	public static boolean createOMEXMLMetadata( final IFormatReader r )
-	{
-		try 
-		{
-			final ServiceFactory serviceFactory = new ServiceFactory();
-			final OMEXMLService service = serviceFactory.getInstance( OMEXMLService.class );
-			final IMetadata omexmlMeta = service.createOMEXMLMetadata();
-			r.setMetadataStore(omexmlMeta);
-		}
-		catch (final ServiceException e)
-		{
-			e.printStackTrace();
-			return false;
-		}
-		catch (final DependencyException e)
-		{
-			e.printStackTrace();
-			return false;
-		}
-
-		return true;
 	}
 }
