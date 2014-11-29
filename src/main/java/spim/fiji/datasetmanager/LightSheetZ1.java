@@ -8,13 +8,26 @@ import java.io.File;
 import java.util.ArrayList;
 
 import mpicbg.spim.data.SpimData;
+import mpicbg.spim.data.registration.ViewRegistrations;
+import mpicbg.spim.data.sequence.Angle;
+import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.FinalVoxelDimensions;
+import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.MissingViews;
+import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.TimePoints;
 import mpicbg.spim.data.sequence.ViewSetup;
+import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.img.ImgFactory;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.cell.CellImgFactory;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
 public class LightSheetZ1 implements MultiViewDatasetDefinition
 {
@@ -60,13 +73,37 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		if ( !showDialogs( meta ) )
 			return null;
 
+		final String directory = cziFile.getParent();
+		final ImgFactory< ? extends NativeType< ? > > imgFactory = selectImgFactory( meta );
+
 		// assemble timepints, viewsetups, missingviews and the imgloader
 		final TimePoints timepoints = this.createTimePoints( meta );
-		//final ArrayList< ViewSetup > setups = this.createViewSetups();
-		//final MissingViews missingViews = this.createMissingViews();
+		final ArrayList< ViewSetup > setups = this.createViewSetups( meta );
+		final MissingViews missingViews = null;
 
-		// TODO Auto-generated method stub
-		return null;
+		// instantiate the sequencedescription
+		final SequenceDescription sequenceDescription = new SequenceDescription( timepoints, setups, null, missingViews );
+		// TODO: ImgLoader
+		//final ImgLoader< UnsignedShortType > imgLoader = createAndInitImgLoader( ".", new File( directory ), imgFactory, sequenceDescription );
+		//sequenceDescription.setImgLoader( imgLoader );
+
+		// get the minimal resolution of all calibrations
+		final double minResolution = Math.min( Math.min( meta.calX(), meta.calY() ), meta.calZ() );
+
+		IOFunctions.println( "Minimal resolution in all dimensions is: " + minResolution );
+		IOFunctions.println( "(The smallest resolution in any dimension; the distance between two pixels in the output image will be that wide)" );
+		
+		// create the initial view registrations (they are all the identity transform)
+		final ViewRegistrations viewRegistrations = StackList.createViewRegistrations( sequenceDescription.getViewDescriptions(), minResolution );
+		
+		// create the initial view interest point object
+		final ViewInterestPoints viewInterestPoints = new ViewInterestPoints();
+		viewInterestPoints.createViewInterestPoints( sequenceDescription.getViewDescriptions() );
+
+		// finally create the SpimData itself based on the sequence description and the view registration
+		final SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints );
+
+		return spimData;
 	}
 
 	/**
@@ -79,30 +116,28 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 	 */
 	protected ArrayList< ViewSetup > createViewSetups( final LightSheetZ1MetaData meta )
 	{
-		/*
 		final ArrayList< Channel > channels = new ArrayList< Channel >();
 		for ( int c = 0; c < meta.numChannels(); ++c )
-			channels.add( new Channel( c, String.valueOf( meta.channels()[ c ] ) ) );
+			channels.add( new Channel( c, meta.channels()[ c ] ) );
 
 		final ArrayList< Illumination > illuminations = new ArrayList< Illumination >();
 		for ( int i = 0; i < meta.numIlluminations(); ++i )
-			illuminations.add( new Illumination( i, meta.i ) );
+			illuminations.add( new Illumination( i, meta.illuminations()[ i ] ) );
 
 		final ArrayList< Angle > angles = new ArrayList< Angle >();
-		for ( int a = 0; a < angleNameList.size(); ++a )
-			angles.add( new Angle( a, angleNameList.get( a ) ) );
+		for ( int a = 0; a < meta.numAngles(); ++a )
+			angles.add( new Angle( a, meta.angles()[ a ] ) );
 
 		final ArrayList< ViewSetup > viewSetups = new ArrayList< ViewSetup >();
 		for ( final Channel c : channels )
 			for ( final Illumination i : illuminations )
 				for ( final Angle a : angles )
 				{
-					final Calibration cal = calibrations.get( new ViewSetupPrecursor( c.getId(), i.getId(), a.getId() ) );
-					final VoxelDimensions voxelSize = new FinalVoxelDimensions( cal.calUnit, cal.calX, cal.calY, cal.calZ );
+					final VoxelDimensions voxelSize = new FinalVoxelDimensions( meta.calUnit(), meta.calX(), meta.calY(), meta.calZ() );
 					viewSetups.add( new ViewSetup( viewSetups.size(), null, null, voxelSize, c, a, i ) );
 				}
 
-		return viewSetups;*/ return null;
+		return viewSetups;
 	}
 
 	/**
@@ -118,6 +153,39 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		return new TimePoints( timepoints );
 	}
 
+	protected ImgFactory< ? extends NativeType< ? > > selectImgFactory( final LightSheetZ1MetaData meta )
+	{
+		long maxNumPixels = 0;
+
+		for ( int a = 0; a < meta.numAngles(); ++a )
+		{
+			final int[] dim = meta.imageSizes().get( a );
+
+			long n = 1;
+
+			for ( int d = 0; d < dim.length; ++d )
+				n *= (long)dim[ d ];
+
+			maxNumPixels = Math.max( n, maxNumPixels );
+		}
+
+		int smallerLog2 = (int)Math.ceil( Math.log( maxNumPixels ) / Math.log( 2 ) );
+
+		String s = "Maximum number of pixels in any view: n=" + maxNumPixels + 
+				" (2^" + (smallerLog2-1) + " < n < 2^" + smallerLog2 + " px), ";
+
+		if ( smallerLog2 <= 31 )
+		{
+			IOFunctions.println( s + "using ArrayImg." );
+			return new ArrayImgFactory< FloatType >();
+		}
+		else
+		{
+			IOFunctions.println( s + "using CellImg(256)." );
+			return new CellImgFactory< FloatType >( 256 );
+		}
+	}
+	
 	protected boolean showDialogs( final LightSheetZ1MetaData meta )
 	{
 		GenericDialog gd = new GenericDialog( "Lightsheet Z.1 Properties" );
