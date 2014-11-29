@@ -12,17 +12,16 @@ import loci.formats.FormatTools;
 import loci.formats.IFormatReader;
 import loci.formats.meta.IMetadata;
 import loci.formats.services.OMEXMLService;
+import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
+import mpicbg.spim.data.generic.sequence.BasicViewDescription;
+import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
-import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
-import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
-import net.imglib2.Dimensions;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
@@ -37,7 +36,7 @@ import spim.fiji.datasetmanager.LightSheetZ1MetaData;
 public class LightSheetZ1ImgLoader extends AbstractImgLoader
 {
 	final File cziFile;
-	final SequenceDescription sequenceDescription;
+	final AbstractSequenceDescription<?, ?, ?> sequenceDescription;
 
 	// once the metadata is loaded for one view, it is available for all other ones
 	LightSheetZ1MetaData meta;
@@ -45,15 +44,17 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 	public LightSheetZ1ImgLoader(
 			final File cziFile,
 			final ImgFactory< ? extends NativeType< ? > > imgFactory,
-			final SequenceDescription sequenceDescription )
+			final AbstractSequenceDescription<?, ?, ?> sequenceDescription )
 	{
 		super();
 		this.cziFile = cziFile;
 		this.sequenceDescription = sequenceDescription;
-		
+
 		setImgFactory( imgFactory );
 	}
-	
+
+	public File getCZIFile() { return cziFile; }
+
 	@Override
 	public RandomAccessibleInterval< FloatType > getFloatImage( final ViewId view, final boolean normalize )
 	{
@@ -86,8 +87,7 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 
 			// update the MetaDataCache of the AbstractImgLoader
 			// this does not update the XML ViewSetup but has to be called explicitly before saving
-			final ViewDescription vd = sequenceDescription.getViewDescription( view );
-			final int[] dim = meta.imageSizes().get( vd.getViewSetup().getAngle().getId() );
+			final int[] dim = meta.imageSizes().get( getAngle( sequenceDescription, view ).getId() );
 			updateMetaDataCache(
 					view, dim[ 0 ], dim[ 1 ], dim[ 2 ],
 					meta.calX(), meta.calY(), meta.calZ() );
@@ -112,8 +112,7 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 			
 			// update the MetaDataCache of the AbstractImgLoader
 			// this does not update the XML ViewSetup but has to be called explicitly before saving
-			final ViewDescription vd = sequenceDescription.getViewDescription( view );
-			final int[] dim = meta.imageSizes().get( vd.getViewSetup().getAngle().getId() );
+			final int[] dim = meta.imageSizes().get( getAngle( sequenceDescription, view ).getId() );
 			updateMetaDataCache(
 					view, dim[ 0 ], dim[ 1 ], dim[ 2 ],
 					meta.calX(), meta.calY(), meta.calZ() );
@@ -143,8 +142,7 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 
 		// update the MetaDataCache of the AbstractImgLoader
 		// this does not update the XML ViewSetup but has to be called explicitly before saving
-		final ViewDescription vd = sequenceDescription.getViewDescription( view );
-		final int[] dim = meta.imageSizes().get( vd.getViewSetup().getAngle().getId() );
+		final int[] dim = meta.imageSizes().get( getAngle( sequenceDescription, view ).getId() );
 		
 		updateMetaDataCache(
 				view, dim[ 0 ], dim[ 1 ], dim[ 2 ],
@@ -165,42 +163,43 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 			}
 		}
 
-		final ViewDescription vd = sequenceDescription.getViewDescription( view );
-		final ViewSetup vs = vd.getViewSetup();
+		final BasicViewDescription< ? > vd = sequenceDescription.getViewDescriptions().get( view );
+		final BasicViewSetup vs = vd.getViewSetup();
 
 		final TimePoint t = vd.getTimePoint();
-		final Angle a = vs.getAngle();
-		final Channel c = vs.getChannel();
-		final Illumination i = vs.getIllumination();
+		final Angle a = getAngle( vd );
+		final Channel c = getChannel( vd );
+		final Illumination i = getIllumination( vd );
 
-		if ( !vs.hasSize() )
+		final int[] dim;
+		
+		if ( vs.hasSize() )
 		{
-			loadMetaData( view );
-			updateXMLMetaData( vs, false );
+			dim = new int[ vs.getSize().numDimensions() ];
+			for ( int d = 0; d < vs.getSize().numDimensions(); ++d )
+				dim[ d ] = (int)vs.getSize().dimension( d );
+		}
+		else
+		{
+			dim = meta.imageSizes().get( a.getId() );
 		}
 
-		if ( !vs.hasSize() )
-		{
-			IOFunctions.println( "Failed to load meta data for CZI dataset: " + cziFile.getAbsolutePath() + ". Stopping." );
-			return null;
-		}
-
-		final Dimensions dim = vs.getSize();
 		final Img< T > img = imgFactory.imgFactory( type ).create( dim, type );
 
 		if ( img == null )
 			throw new RuntimeException( "Could not instantiate " + getImgFactory().getClass().getSimpleName() + " for '" + cziFile + "' viewId=" + view.getViewSetupId() + ", tpId=" + view.getTimePointId() + ", most likely out of memory." );
 
 		IOFunctions.println(
-				new Date( System.currentTimeMillis() ) + ": Opening '" + cziFile.getName() + "' [" + dim.dimension( 0 ) + "x" + dim.dimension( 1 ) + "x" + dim.dimension( 2 ) +
+				new Date( System.currentTimeMillis() ) + ": Opening '" + cziFile.getName() + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] +
 				" angle=" + a.getName() + " ch=" + c.getName() + " illum=" + i.getName() + " tp=" + t.getName() + " type=" + meta.pixelTypeString() + 
 				" img=" + img.getClass().getSimpleName() + "<" + type.getClass().getSimpleName() + ">]" );
 
 		final boolean isLittleEndian = meta.isLittleEndian();
 		final boolean isArray = ArrayImg.class.isInstance( img );
 		final int pixelType = meta.pixelType();
-		final int width = (int)dim.dimension( 0 );
-		final int height = (int)dim.dimension( 1 );
+		final int width = dim[ 0 ];
+		final int height = dim[ 1 ];
+		final int depth = dim[ 2 ];
 		final int numPx = width * height;
 		final IFormatReader r = LightSheetZ1ImgLoader.instantiateImageReader();
 
@@ -217,7 +216,7 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 			// compute the right channel from channelId & illuminationId
 			int ch = c.getId() * meta.numIlluminations() + i.getId();
 
-			for ( int z = 0; z < (int)dim.dimension( 2 ); ++z )
+			for ( int z = 0; z < depth; ++z )
 			{
 				final Cursor< T > cursor = Views.iterable( Views.hyperSlice( img, 2, z ) ).localizingCursor();
 
@@ -378,5 +377,43 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 		}
 
 		return true;
+	}
+
+	protected static Angle getAngle( final AbstractSequenceDescription< ?, ?, ? > seqDesc, final ViewId view )
+	{
+		return getAngle( seqDesc.getViewDescriptions().get( view ) );
+	}
+
+	protected static Angle getAngle( final BasicViewDescription< ? > vd )
+	{
+		final BasicViewSetup vs = vd.getViewSetup();
+		final Angle angle = vs.getAttribute( Angle.class );
+
+		if ( angle == null )
+			throw new RuntimeException( "This XML does not have the 'Angle' attribute for their ViewSetup. Cannot continue." );
+
+		return angle;
+	}
+
+	protected static Channel getChannel( final BasicViewDescription< ? > vd )
+	{
+		final BasicViewSetup vs = vd.getViewSetup();
+		final Channel channel = vs.getAttribute( Channel.class );
+
+		if ( channel == null )
+			throw new RuntimeException( "This XML does not have the 'Channel' attribute for their ViewSetup. Cannot continue." );
+
+		return channel;
+	}
+
+	protected static Illumination getIllumination( final BasicViewDescription< ? > vd )
+	{
+		final BasicViewSetup vs = vd.getViewSetup();
+		final Illumination illumination = vs.getAttribute( Illumination.class );
+
+		if ( illumination == null )
+			throw new RuntimeException( "This XML does not have the 'Illumination' attribute for their ViewSetup. Cannot continue." );
+
+		return illumination;
 	}
 }
