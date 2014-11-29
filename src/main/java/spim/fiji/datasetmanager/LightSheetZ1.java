@@ -130,7 +130,28 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 
 		final ArrayList< Angle > angles = new ArrayList< Angle >();
 		for ( int a = 0; a < meta.numAngles(); ++a )
-			angles.add( new Angle( a, meta.angles()[ a ] ) );
+		{
+			final Angle angle = new Angle( a, meta.angles()[ a ] );
+			
+			try
+			{
+				final double degrees = Double.parseDouble( meta.angles()[ a ] );
+				double[] axis = null;
+
+				if ( meta.rotationAxis() == 0 )
+					axis = new double[]{ 1, 0, 0 };
+				else if ( meta.rotationAxis() == 1 )
+					axis = new double[]{ 0, 1, 0 };
+				else if ( meta.rotationAxis() == 2 )
+					axis = new double[]{ 0, 0, 1 };
+
+				if ( axis != null && !Double.isNaN( degrees ) &&  !Double.isInfinite( degrees ) )
+					angle.setRotation( axis, degrees );
+			}
+			catch ( Exception e ) {};
+
+			angles.add( angle );
+		}
 
 		final ArrayList< ViewSetup > viewSetups = new ArrayList< ViewSetup >();
 		for ( final Channel c : channels )
