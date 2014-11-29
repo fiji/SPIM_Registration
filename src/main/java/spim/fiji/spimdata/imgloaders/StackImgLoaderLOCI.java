@@ -353,7 +353,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		return new CalibratedImg<T>( img, calX, calY, calZ );			
 	}
 
-	private static final float getFloatValue( final byte[] b, final int i, final boolean isLittleEndian )
+	protected static final float getFloatValue( final byte[] b, final int i, final boolean isLittleEndian )
 	{
 		if ( isLittleEndian )
 			return Float.intBitsToFloat( ((b[i+3] & 0xff) << 24)  + ((b[i+2] & 0xff) << 16)  +  ((b[i+1] & 0xff) << 8)  + (b[i] & 0xff) );
@@ -361,7 +361,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 			return Float.intBitsToFloat( ((b[i] & 0xff) << 24)  + ((b[i+1] & 0xff) << 16)  +  ((b[i+2] & 0xff) << 8)  + (b[i+3] & 0xff) );
 	}
 
-	private static final int getIntValue( final byte[] b, final int i, final boolean isLittleEndian )
+	protected static final int getIntValue( final byte[] b, final int i, final boolean isLittleEndian )
 	{
 		if ( isLittleEndian )
 			return ( ((b[i+3] & 0xff) << 24)  + ((b[i+2] & 0xff) << 16)  +  ((b[i+1] & 0xff) << 8)  + (b[i] & 0xff) );
@@ -369,12 +369,12 @@ public class StackImgLoaderLOCI extends StackImgLoader
 			return ( ((b[i] & 0xff) << 24)  + ((b[i+1] & 0xff) << 16)  +  ((b[i+2] & 0xff) << 8)  + (b[i+3] & 0xff) );
 	}
 	
-	private static final short getShortValue( final byte[] b, final int i, final boolean isLittleEndian )
+	protected static final short getShortValue( final byte[] b, final int i, final boolean isLittleEndian )
 	{
 		return (short)getShortValueInt( b, i, isLittleEndian );
 	}
 
-	private static final int getShortValueInt( final byte[] b, final int i, final boolean isLittleEndian )
+	protected static final int getShortValueInt( final byte[] b, final int i, final boolean isLittleEndian )
 	{
 		if ( isLittleEndian )
 			return ((((b[i+1] & 0xff) << 8)) + (b[i] & 0xff));
