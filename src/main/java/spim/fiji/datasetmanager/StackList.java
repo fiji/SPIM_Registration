@@ -243,7 +243,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		IOFunctions.println( "(The smallest resolution in any dimension; the distance between two pixels in the output image will be that wide)" );
 		
 		// create the initial view registrations (they are all the identity transform)
-		final ViewRegistrations viewRegistrations = this.createViewRegistrations( sequenceDescription.getViewDescriptions(), minResolution );
+		final ViewRegistrations viewRegistrations = createViewRegistrations( sequenceDescription.getViewDescriptions(), minResolution );
 		
 		// create the initial view interest point object
 		final ViewInterestPoints viewInterestPoints = new ViewInterestPoints();
@@ -251,9 +251,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 
 		// finally create the SpimData itself based on the sequence description and the view registration
 		final SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints );
-				
-		// apply the 
-		
+
 		return spimData;
 	}
 
@@ -264,7 +262,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	 * @param minResolution - the smallest resolution in any dimension (distance between two pixels in the output image will be that wide)
 	 * @return
 	 */
-	protected ViewRegistrations createViewRegistrations( final Map< ViewId, ViewDescription > viewDescriptionList, final double minResolution )
+	protected static ViewRegistrations createViewRegistrations( final Map< ViewId, ViewDescription > viewDescriptionList, final double minResolution )
 	{
 		final HashMap< ViewId, ViewRegistration > viewRegistrationList = new HashMap< ViewId, ViewRegistration >();
 		
@@ -711,7 +709,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			else
 			{
 				replaceAngles = null;
-				numDigitsAngles = 0;									
+				numDigitsAngles = 0;
 			}
 		}
 
