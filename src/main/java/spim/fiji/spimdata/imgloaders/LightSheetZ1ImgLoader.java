@@ -1,5 +1,7 @@
 package spim.fiji.spimdata.imgloaders;
 
+import ij.IJ;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
@@ -218,6 +220,8 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 
 			for ( int z = 0; z < depth; ++z )
 			{
+				IJ.showProgress( (double)z / (double)depth );
+
 				final Cursor< T > cursor = Views.iterable( Views.hyperSlice( img, 2, z ) ).localizingCursor();
 
 				r.openBytes( r.getIndex( z, ch, t.getId() ), b );
@@ -261,6 +265,8 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 			}
 
 			r.close();
+
+			IJ.showProgress( 1 );
 		}
 		catch ( Exception e )
 		{
