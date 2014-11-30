@@ -29,6 +29,7 @@ import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Util;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.imgloaders.LightSheetZ1ImgLoader;
@@ -259,6 +260,10 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 
 		for ( int i = 0; i < meta.files().length; ++i )
 			IOFunctions.println( new File( meta.files()[ i ] ).getName() );
+
+		IOFunctions.println( "Image sizes:" );
+		for ( int a = 0; a < meta.numAngles(); ++a )
+			IOFunctions.println( "Angle " + meta.angles()[ a ] + ": " + Util.printCoordinates( meta.imageSizes().get( a ) ) );
 
 		GUIHelper.addScrollBars( gd );
 
