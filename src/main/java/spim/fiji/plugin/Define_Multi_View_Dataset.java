@@ -26,7 +26,7 @@ import spim.fiji.spimdata.XmlIoSpimData2;
 public class Define_Multi_View_Dataset implements PlugIn
 {
 	final public static ArrayList< MultiViewDatasetDefinition > staticDatasetDefinitions = new ArrayList< MultiViewDatasetDefinition >();
-	public static int defaultDatasetDef = 0;
+	public static int defaultDatasetDef = 2;
 	public static String defaultXMLName = "dataset.xml";
 
 	final int numLinesDocumentation = 15;
