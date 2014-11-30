@@ -1,5 +1,6 @@
 package spim.fiji.spimdata.imgloaders;
 
+import ij.IJ;
 import ij.ImagePlus;
 import ij.io.Opener;
 import ij.process.ImageProcessor;
@@ -293,14 +294,16 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		}
 		else
 			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Opening '" + path + "' [" + width + "x" + height + "x" + depth + " ch=" + c + " tp=" + t + " type=" + pixelTypeString + " image=" + img.getClass().getSimpleName() + "<" + type.getClass().getSimpleName() + ">]" );
-				
+
 		final byte[] b = new byte[width * height * bytesPerPixel];
-		
+
 		final int planeX = 0;
 		final int planeY = 1;
-								
+
 		for ( int z = 0; z < depth; ++z )
-		{	
+		{
+			IJ.showProgress( (double)z / (double)depth );
+
 			final Cursor< T > cursor = Views.iterable( Views.hyperSlice( img, 2, z ) ).localizingCursor();
 			
 			r.openBytes( r.getIndex( z, c, t ), b );	
@@ -346,11 +349,13 @@ public class StackImgLoaderLOCI extends StackImgLoader
 					cursor.get().setReal( getFloatValue( b, ( cursor.getIntPosition( planeX )+ cursor.getIntPosition( planeY )*width )*4, isLittleEndian ) );
 				}
 			}
-		}				
-		
+		}
+
 		r.close();
-		
-		return new CalibratedImg<T>( img, calX, calY, calZ );			
+
+		IJ.showProgress( 1 );
+
+		return new CalibratedImg<T>( img, calX, calY, calZ );
 	}
 
 	protected static final float getFloatValue( final byte[] b, final int i, final boolean isLittleEndian )
