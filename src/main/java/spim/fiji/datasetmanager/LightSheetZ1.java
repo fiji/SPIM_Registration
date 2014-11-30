@@ -44,7 +44,7 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 	public static boolean defaultRotAxis = false;
 
 	@Override
-	public String getTitle() { return "Zeiss Lightsheet Z.1 Dataset"; }
+	public String getTitle() { return "Zeiss Lightsheet Z.1 Dataset (LOCI Bioformats)"; }
 
 	@Override
 	public String getExtendedDescription()
