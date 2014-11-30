@@ -159,7 +159,7 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 		{
 			meta = new LightSheetZ1MetaData();
 
-			if ( !meta.loadMetaData( cziFile ) )
+			if ( !meta.loadMetaData( cziFile, true ) )
 			{
 				IOFunctions.println( "Failed to analyze file: '" + cziFile.getAbsolutePath() + "'." );
 				meta = null;
@@ -205,14 +205,21 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 		final int height = dim[ 1 ];
 		final int depth = dim[ 2 ];
 		final int numPx = width * height;
-		final IFormatReader r = LightSheetZ1ImgLoader.instantiateImageReader();
+		final IFormatReader r;
+
+		// if we already loaded the metadata in this run, use the opened file
+		if ( meta.getReader() == null )
+			r = LightSheetZ1ImgLoader.instantiateImageReader();
+		else
+			r = meta.getReader();
 
 		final byte[] b = new byte[ numPx * meta.bytesPerPixel() ];
 
 		try
 		{
-			// open the file
-			r.setId( cziFile.getAbsolutePath() );
+			// open the file if not already done
+			if ( meta.getReader() == null )
+				r.setId( cziFile.getAbsolutePath() );
 
 			// set the right angle
 			r.setSeries( a.getId() );

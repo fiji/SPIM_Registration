@@ -32,6 +32,7 @@ public class LightSheetZ1MetaData
 	private int bytesPerPixel = -1; 
 	private String pixelTypeString = "";
 	private boolean isLittleEndian;
+	private IFormatReader r = null;
 
 	public void setRotationAxis( final int rotAxis ) { this.rotationAxis = rotAxis; }
 	public void setCalX( final double calX ) { this.calX = calX; }
@@ -59,6 +60,7 @@ public class LightSheetZ1MetaData
 	public int bytesPerPixel() { return bytesPerPixel; }
 	public String pixelTypeString() { return pixelTypeString; }
 	public boolean isLittleEndian() { return isLittleEndian; }
+	public IFormatReader getReader() { return r; }
 	public String rotationAxisName()
 	{
 		if ( rotationAxis == 0 )
@@ -72,6 +74,11 @@ public class LightSheetZ1MetaData
 	}
 
 	public boolean loadMetaData( final File cziFile )
+	{
+		return loadMetaData( cziFile, false );
+	}
+
+	public boolean loadMetaData( final File cziFile, final boolean keepFileOpen )
 	{
 		final IFormatReader r = LightSheetZ1ImgLoader.instantiateImageReader();
 
@@ -330,9 +337,12 @@ public class LightSheetZ1MetaData
 		{
 			IOFunctions.println( "An error occured parsing the calibration: " + e + "\n. Proceeding." );
 			calX = calY = calZ = 1;
-		};
+		}
 
-		try { r.close(); } catch (IOException e) { e.printStackTrace(); }
+		if ( !keepFileOpen )
+			try { r.close(); } catch (IOException e) { e.printStackTrace(); }
+		else
+			this.r = r;
 
 		return true;
 	}
