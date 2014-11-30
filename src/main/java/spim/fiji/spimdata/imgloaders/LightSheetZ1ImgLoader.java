@@ -153,6 +153,8 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 
 	protected < T extends RealType< T > & NativeType< T > > Img< T > openCZI( final T type, final ViewId view ) throws Exception
 	{
+		IOFunctions.println( "Investigating file '" + cziFile.getAbsolutePath() + "'." );
+
 		if ( meta == null )
 		{
 			meta = new LightSheetZ1MetaData();
