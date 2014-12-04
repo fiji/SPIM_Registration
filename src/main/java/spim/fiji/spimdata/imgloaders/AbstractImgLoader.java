@@ -14,8 +14,9 @@ import net.imglib2.FinalDimensions;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
-import net.imglib2.util.Pair;
-import net.imglib2.util.ValuePair;
+
+import spim.fiji.ImgLib2Temp.Pair;
+import spim.fiji.ImgLib2Temp.ValuePair;
 
 public abstract class AbstractImgLoader implements ImgLoader< UnsignedShortType >
 {
