@@ -193,7 +193,14 @@ public class Interest_Point_Detection implements PlugIn
 			if ( data.getSequenceDescription().getImgLoader() instanceof AbstractImgLoader )
 			{
 				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Updating metadata ... " );
-				( (AbstractImgLoader)data.getSequenceDescription().getImgLoader() ).updateXMLMetaData( data, false );
+				try
+				{
+					( (AbstractImgLoader)data.getSequenceDescription().getImgLoader() ).updateXMLMetaData( data, false );
+				}
+				catch( Exception e )
+				{
+					IOFunctions.println( "Failed to update metadata, this should not happen: " + e );
+				}
 			}
 			
 			// save the xml

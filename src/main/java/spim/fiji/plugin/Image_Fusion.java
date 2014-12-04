@@ -136,8 +136,15 @@ public class Image_Fusion implements PlugIn
 		{
 			boolean updated = false;
 			
-			for ( final ViewSetup setup : result.getData().getSequenceDescription().getViewSetupsOrdered() )
-				updated |= ( (AbstractImgLoader)result.getData().getSequenceDescription().getImgLoader() ).updateXMLMetaData( setup, false );
+			try
+			{
+				for ( final ViewSetup setup : result.getData().getSequenceDescription().getViewSetupsOrdered() )
+					updated |= ( (AbstractImgLoader)result.getData().getSequenceDescription().getImgLoader() ).updateXMLMetaData( setup, false );
+			}
+			catch( Exception e )
+			{
+				IOFunctions.println( "Failed to update metadata, this should not happen: " + e );
+			}
 			
 			if ( updated )
 			{
