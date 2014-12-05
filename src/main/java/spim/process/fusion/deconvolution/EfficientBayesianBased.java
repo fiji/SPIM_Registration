@@ -155,8 +155,18 @@ public class EfficientBayesianBased extends Fusion
 		BayesMVDeconvolution.debug = debugMode;
 		BayesMVDeconvolution.debugInterval = debugInterval;
 
+		String illumName = "_Ill" + illumsToProcess.get( 0 ).getName();
+
+		for ( int i = 1; i < illumsToProcess.size(); ++i )
+			illumName += "," + illumsToProcess.get( i ).getName();
+
+		String angleName = "_Ang" + anglesToProcess.get( 0 ).getName();
+
+		for ( int i = 1; i < anglesToProcess.size(); ++i )
+			angleName += "," + anglesToProcess.get( i ).getName();
+
 		int stack = 0;
-		
+
 		for ( final TimePoint t : timepointsToProcess )
 			for ( final Channel c : channelsToProcess )
 			{
@@ -216,7 +226,7 @@ public class EfficientBayesianBased extends Fusion
 					deconvolved = LRFFT.wrap( new BayesMVDeconvolution( deconvolutionData, iterationType, numIterations, 0, osemSpeedUp, osemspeedupIndex, "deconvolved" ).getPsi() );
 
 				// export the final image
-				titler.setTitle( "TP" + t.getName() + "_Ch" + c.getName() );
+				titler.setTitle( "TP" + t.getName() + "_Ch" + c.getName() + illumName + angleName );
 				exporter.exportImage(
 						deconvolved,
 						bb,
