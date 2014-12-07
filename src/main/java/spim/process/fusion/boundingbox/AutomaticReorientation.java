@@ -94,8 +94,13 @@ public class AutomaticReorientation extends ManualBoundingBox
 		// ask which channels have the objects we are searching for
 		final List< Channel > channels = spimData.getSequenceDescription().getAllChannelsOrdered();
 
+		boolean labelsWereReset = false;
+
 		if ( Interest_Point_Registration.defaultChannelLabels == null || Interest_Point_Registration.defaultChannelLabels.length != channels.size() )
+		{
 			Interest_Point_Registration.defaultChannelLabels = new int[ channels.size() ];
+			labelsWereReset = true;
+		}
 
 		final ArrayList< String[] > channelLabels = new ArrayList< String[] >();
 		int j = 0;
@@ -114,7 +119,10 @@ public class AutomaticReorientation extends ManualBoundingBox
 
 			if ( Interest_Point_Registration.defaultChannelLabels[ j ] >= labels.length )
 				Interest_Point_Registration.defaultChannelLabels[ j ] = 0;
-			
+
+			if ( labelsWereReset && labels[ Interest_Point_Registration.defaultChannelLabels[ j ] ].contains( "bead" ) )
+				Interest_Point_Registration.defaultChannelLabels[ j ] = labels.length - 1;
+
 			gd.addChoice( "Interest_points_channel_" + channel.getName(), labels, labels[ Interest_Point_Registration.defaultChannelLabels[ j++ ] ] );
 			channelLabels.add( labels );
 		}
@@ -125,7 +133,7 @@ public class AutomaticReorientation extends ManualBoundingBox
 		gd.addMessage( "" );
 		gd.addMessage(
 				"Note: The detections themselves should not lie on the edge of the bounding box, please define how\n" +
-				"much bigger [in percent of largest dimension] the bounding box should be. If you want to define it\n" +
+				"much bigger [in percent of the largest dimension] the bounding box should be. If you want to define it\n" +
 				"in pixels, use the following dialog and put 0% here.", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
 		gd.addSlider( "Additional_size [%]", 0, 100, defaultPercent );
 
