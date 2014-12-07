@@ -8,8 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 
 import net.imglib2.realtransform.AffineTransform3D;
-
 import mpicbg.imglib.util.Util;
+import mpicbg.models.Point;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.registration.ViewTransform;
@@ -173,7 +173,7 @@ public class AutomaticReorientation extends ManualBoundingBox
 		
 		if ( reorientate == 3 )
 		{
-			final Pair< float[], float[] > minmax = detemineSizeSimple( channelsToUse, detections );
+			final Pair< float[], float[] > minmax = determineSizeSimple( channelsToUse, detections );
 
 			final float[] minF = minmax.getA();
 			final float[] maxF = minmax.getB();
@@ -200,13 +200,38 @@ public class AutomaticReorientation extends ManualBoundingBox
 		}
 		else
 		{
+			determineOptimalBoundingBox( channelsToUse, detections );
 			new RuntimeException( "Not implemented yet." );
 		}
 
 		return super.queryParameters( fusion, imgExport );
 	}
 
-	protected Pair< float[], float[] > detemineSizeSimple( final ArrayList< ChannelProcess > channelsToUse, final int detections )
+	protected void determineOptimalBoundingBox( final ArrayList< ChannelProcess > channelsToUse, final int detections )
+	{
+		final List< float[] > points = getAllDetectionsInGlobalCoordinates( channelsToUse, detections );
+
+		// identify most distant points
+		double maxDist = -1;
+		float[] p1, p2;
+
+		for ( int i = 0; i < points.size() - 1; ++i )
+			for ( int j = i + 1; j < points.size(); ++j )
+			{
+				//squareDistance( p1[ 0 ], p1[ 1 ], p1[ 2 ], p2[ 0 ], p2[ 1 ], p2[ 2 ] );
+			}
+	}
+
+	final static public float squareDistance( final float p1x, final float p1y, final float p1z, final float p2x, final float p2y, final float p2z )
+	{
+		final double dx = p1x - p2x;
+		final double dy = p1y - p2y;
+		final double dz = p1z - p2z;
+		
+		return ( float )( dx*dx + dy*dy + dz*dz );
+	}
+
+	protected Pair< float[], float[] > determineSizeSimple( final ArrayList< ChannelProcess > channelsToUse, final int detections )
 	{
 		final List< float[] > points = getAllDetectionsInGlobalCoordinates( channelsToUse, detections );
 
