@@ -132,7 +132,9 @@ public class Image_Fusion implements PlugIn
 			return;
 
 		fusion.fuseData( boundingBox, imgExport );
-		
+
+		boundingBox.cleanUp( result );
+
 		// save the XML if metadata was updated
 		if ( result.getData().getSequenceDescription().getImgLoader() instanceof AbstractImgLoader )
 		{

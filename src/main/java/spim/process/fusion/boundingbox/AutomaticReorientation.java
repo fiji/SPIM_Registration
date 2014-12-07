@@ -3,7 +3,9 @@ package spim.process.fusion.boundingbox;
 import ij.gui.GenericDialog;
 
 import java.awt.Font;
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -32,7 +34,9 @@ import spim.fiji.plugin.Interest_Point_Registration;
 import spim.fiji.plugin.Visualize_Detections;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
+import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
@@ -56,6 +60,8 @@ public class AutomaticReorientation extends ManualBoundingBox
 	public static int defaultDetections = 1;
 	public static double defaultPercent = 10;
 
+	int reorientate;
+
 	public AutomaticReorientation(
 			final SpimData2 spimData,
 			final List<Angle> anglesToProcess,
@@ -64,6 +70,30 @@ public class AutomaticReorientation extends ManualBoundingBox
 			final List<TimePoint> timepointsToProcess )
 	{
 		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+	}
+
+	/**
+	 * Called before the XML is potentially saved
+	 */
+	public void cleanUp( LoadParseQueryXML result )
+	{
+		if ( reorientate == 0 || reorientate == 1 )
+		{
+			// save the xml
+			final XmlIoSpimData2 io = new XmlIoSpimData2();
+			
+			final String xml = new File( result.getData().getBasePath(), new File( result.getXMLFileName() ).getName() ).getAbsolutePath();
+			try 
+			{
+				io.save( result.getData(), xml );
+				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + xml + "' (applied the transformation to mimimize the bounding box)." );
+			}
+			catch ( Exception e )
+			{
+				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + xml + "': " + e );
+				e.printStackTrace();
+			}
+		}
 	}
 
 	@Override
@@ -142,7 +172,7 @@ public class AutomaticReorientation extends ManualBoundingBox
 		if ( gd.wasCanceled() )
 			return false;
 
-		final int reorientate = defaultReorientate = gd.getNextChoiceIndex();
+		this.reorientate = defaultReorientate = gd.getNextChoiceIndex();
 
 		// assemble which channels have been selected with with label
 		final ArrayList< ChannelProcess > channelsToUse = new ArrayList< ChannelProcess >();
@@ -600,6 +630,6 @@ public class AutomaticReorientation extends ManualBoundingBox
 	@Override
 	public String getDescription()
 	{
-		return "Automatically reorientate and estimate (experimental)";
+		return "Automatically reorientate and estimate based on sample features";
 	}
 }
