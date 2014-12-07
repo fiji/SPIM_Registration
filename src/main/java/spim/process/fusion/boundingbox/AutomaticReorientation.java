@@ -54,9 +54,7 @@ public class AutomaticReorientation extends ManualBoundingBox
 	public static int defaultReorientate = 0;
 	public static boolean defaultSaveReorientation = true;
 	public static int defaultDetections = 1;
-	public static double defaultPercentX = 20;
-	public static double defaultPercentY = 20;
-	public static double defaultPercentZ = 20;
+	public static double defaultPercent = 10;
 
 	public AutomaticReorientation(
 			final SpimData2 spimData,
@@ -123,15 +121,13 @@ public class AutomaticReorientation extends ManualBoundingBox
 
 		gd.addChoice( "Use", Visualize_Detections.detectionsChoice, Visualize_Detections.detectionsChoice[ defaultDetections ] );
 
-		// details about the bouding box
+		// details about the bounding box
 		gd.addMessage( "" );
 		gd.addMessage(
 				"Note: The detections themselves should not lie on the edge of the bounding box, please define how\n" +
-				"much bigger [in percent] the bounding box should be. If you want to define it in pixels, use the\n" +
-				"following dialog and put 0% here.", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
-		gd.addSlider( "Additional_size_x [%]", 0, 100, defaultPercentX );
-		gd.addSlider( "Additional_size_y [%]", 0, 100, defaultPercentY );
-		gd.addSlider( "Additional_size_z [%]", 0, 100, defaultPercentZ );
+				"much bigger [in percent of largest dimension] the bounding box should be. If you want to define it\n" +
+				"in pixels, use the following dialog and put 0% here.", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
+		gd.addSlider( "Additional_size [%]", 0, 100, defaultPercent );
 
 		gd.showDialog();
 
@@ -168,10 +164,7 @@ public class AutomaticReorientation extends ManualBoundingBox
 		}
 
 		final int detections = defaultDetections = gd.getNextChoiceIndex();
-
-		final double percentX = defaultPercentX = gd.getNextNumber();
-		final double percentY = defaultPercentY = gd.getNextNumber();
-		final double percentZ = defaultPercentZ = gd.getNextNumber();
+		final double percent = defaultPercent = gd.getNextNumber();
 
 		for ( final ChannelProcess c : channelsToUse )
 			IOFunctions.println( "using from channel: " + c.getChannel().getId()  + " label: '" + c.getLabel() + "', " + (detections == 0 ? "all detections." : "only corresponding detections.") );
@@ -255,17 +248,19 @@ public class AutomaticReorientation extends ManualBoundingBox
 		final int[] min = new int[ 3 ];
 		final int[] max = new int[ 3 ];
 
-		float addX = (maxF[ 0 ] - minF[ 0 ]) * (float)( percentX/100.0 ) / 2;
-		float addY = (maxF[ 1 ] - minF[ 1 ]) * (float)( percentY/100.0 ) / 2;
-		float addZ = (maxF[ 2 ] - minF[ 2 ]) * (float)( percentZ/100.0 ) / 2;
+		float addX = (maxF[ 0 ] - minF[ 0 ]) * (float)( percent/100.0 ) / 2;
+		float addY = (maxF[ 1 ] - minF[ 1 ]) * (float)( percent/100.0 ) / 2;
+		float addZ = (maxF[ 2 ] - minF[ 2 ]) * (float)( percent/100.0 ) / 2;
 
-		min[ 0 ] = Math.round( minF[ 0 ] - addX );
-		min[ 1 ] = Math.round( minF[ 1 ] - addY );
-		min[ 2 ] = Math.round( minF[ 2 ] - addZ );
+		final float add = Math.max( addX, Math.max( addY, addZ ) );
 
-		max[ 0 ] = Math.round( maxF[ 0 ] + addX );
-		max[ 1 ] = Math.round( maxF[ 1 ] + addY );
-		max[ 2 ] = Math.round( maxF[ 2 ] + addZ );
+		min[ 0 ] = Math.round( minF[ 0 ] - add );
+		min[ 1 ] = Math.round( minF[ 1 ] - add );
+		min[ 2 ] = Math.round( minF[ 2 ] - add );
+
+		max[ 0 ] = Math.round( maxF[ 0 ] + add );
+		max[ 1 ] = Math.round( maxF[ 1 ] + add );
+		max[ 2 ] = Math.round( maxF[ 2 ] + add );
 
 		IOFunctions.println( "Min (with addition): " + Util.printCoordinates( min ) );
 		IOFunctions.println( "Max (with addition): " + Util.printCoordinates( max ) );
