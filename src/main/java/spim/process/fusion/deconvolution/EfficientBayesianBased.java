@@ -426,7 +426,13 @@ public class EfficientBayesianBased extends Fusion
 			}
 		}
 		else
-			IOFunctions.println( "PSF will be read from disc, number of PSF's to load " + psfFiles.size() );
+		{
+			int size = 0;
+			for ( final Channel c : psfFiles.keySet() )
+				size += psfFiles.get( c ).size();
+
+			IOFunctions.println( "PSF will be read from disc, number of PSF's loaded: " + size );
+		}
 		
 		if ( debugMode )
 			IOFunctions.println( "Debugging every " + debugInterval + " iterations." );
