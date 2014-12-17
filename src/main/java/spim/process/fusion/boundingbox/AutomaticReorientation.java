@@ -214,12 +214,18 @@ public class AutomaticReorientation extends ManualBoundingBox
 		{
 			final Pair< float[], float[] > minmax = determineSizeSimple( channelsToUse, detections );
 
+			if ( minmax == null )
+				return false;
+
 			minF = minmax.getA();
 			maxF = minmax.getB();
 		}
 		else
 		{
 			final Pair< AffineTransform3D, float[] > pair = determineOptimalBoundingBox( channelsToUse, detections );
+
+			if ( pair == null )
+				return false;
 
 			//
 			// set the registration for all or some of the views
@@ -318,6 +324,12 @@ public class AutomaticReorientation extends ManualBoundingBox
 	protected Pair< AffineTransform3D, float[] > determineOptimalBoundingBox( final ArrayList< ChannelProcess > channelsToUse, final int detections )
 	{
 		final List< float[] > points = getAllDetectionsInGlobalCoordinates( channelsToUse, detections );
+
+		if ( points.size() < 1 )
+		{
+			IOFunctions.println( "At least one point is required. Stopping" );
+			return null;
+		}
 
 		// identify most distant points
 		float[] p1 = points.get( 0 );
@@ -493,6 +505,12 @@ public class AutomaticReorientation extends ManualBoundingBox
 	protected Pair< float[], float[] > determineSizeSimple( final ArrayList< ChannelProcess > channelsToUse, final int detections )
 	{
 		final List< float[] > points = getAllDetectionsInGlobalCoordinates( channelsToUse, detections );
+
+		if ( points.size() < 1 )
+		{
+			IOFunctions.println( "At least one point is required. Stopping" );
+			return null;
+		}
 
 		final float[] min = points.get( 0 ).clone();
 		final float[] max = min.clone();
