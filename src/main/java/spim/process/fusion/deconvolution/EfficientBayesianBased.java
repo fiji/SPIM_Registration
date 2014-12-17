@@ -710,7 +710,9 @@ public class EfficientBayesianBased extends Fusion
 		else
 		{
 			extractPSF = false;
-			this.extractPSFLabels = null;
+			this.extractPSFLabels = new HashMap< Channel, ChannelPSF >();
+			for ( final Channel c : channelsToProcess )
+				this.extractPSFLabels.put( c, new ChannelPSF( c ) );
 
 			final GenericDialogPlus gd = new GenericDialogPlus( "Load PSF File ..." );
 
