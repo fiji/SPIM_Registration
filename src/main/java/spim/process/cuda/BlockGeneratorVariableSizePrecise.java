@@ -13,9 +13,9 @@ import net.imglib2.util.Util;
  */
 public class BlockGeneratorVariableSizePrecise implements BlockGenerator< Block >
 {
-	final int[] numBlocks;
+	final long[] numBlocks;
 
-	public BlockGeneratorVariableSizePrecise( final int[] numBlocksDim )
+	public BlockGeneratorVariableSizePrecise( final long[] numBlocksDim )
 	{
 		this.numBlocks = numBlocksDim;
 	}
@@ -28,7 +28,7 @@ public class BlockGeneratorVariableSizePrecise implements BlockGenerator< Block 
 	 * @param kernelSize - the size of the kernel (has to be odd!)
 	 * @return
 	 */
-	public Block[] divideIntoBlocks( final int[] imgSize, final int[] kernelSize )
+	public Block[] divideIntoBlocks( final long[] imgSize, final long[] kernelSize )
 	{
 		final int numDimensions = imgSize.length;
 
@@ -37,7 +37,7 @@ public class BlockGeneratorVariableSizePrecise implements BlockGenerator< Block 
 		final LocalizingZeroMinIntervalIterator cursor = new LocalizingZeroMinIntervalIterator( numBlocks );
 		final ArrayList< Block > blockList = new ArrayList< Block >();
 
-		final int[] currentBlock = new int[ numDimensions ];
+		final long[] currentBlock = new long[ numDimensions ];
 
 		while ( cursor.hasNext() )
 		{
@@ -45,13 +45,13 @@ public class BlockGeneratorVariableSizePrecise implements BlockGenerator< Block 
 			cursor.localize( currentBlock );
 
 			// the blocksize
-			final int[] blockSize = new int[ numDimensions ];
+			final long[] blockSize = new long[ numDimensions ];
 
 			// compute the current offset
-			final int[] offset = new int[ numDimensions ];
-			final int[] effectiveOffset = new int[ numDimensions ];
-			final int[] effectiveSize = new int[ numDimensions ];
-			final int[] effectiveLocalOffset = new int[ numDimensions ];
+			final long[] offset = new long[ numDimensions ];
+			final long[] effectiveOffset = new long[ numDimensions ];
+			final long[] effectiveSize = new long[ numDimensions ];
+			final long[] effectiveLocalOffset = new long[ numDimensions ];
 
 			for ( int d = 0; d < numDimensions; ++d )
 			{
@@ -81,6 +81,6 @@ public class BlockGeneratorVariableSizePrecise implements BlockGenerator< Block 
 
 	public static void main( String[] args )
 	{
-		new BlockGeneratorVariableSizePrecise( new int[]{ 3, 2, 1 } ).divideIntoBlocks( new int[] { 1025, 1024, 117 }, new int[]{ 17, 17, 5 } );
+		new BlockGeneratorVariableSizePrecise( new long[]{ 3, 2, 1 } ).divideIntoBlocks( new long[] { 1025, 1024, 117 }, new long[]{ 17, 17, 5 } );
 	}
 }
