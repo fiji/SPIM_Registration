@@ -87,7 +87,7 @@ public class Interest_Point_Registration implements PlugIn
 	public static boolean[] defaultFixedTiles = null;
 	public static int defaultReferenceTile = 0;
 
-	final static protected String warningLabel = " (WARNING: Only available for "; 
+	public final static String warningLabel = " (WARNING: Only available for "; 
 	
 	static
 	{
@@ -692,6 +692,24 @@ public class Interest_Point_Registration implements PlugIn
 	 * @param spimData
 	 * @param timepointsToProcess
 	 * @param channel
+	 * @return
+	 */
+	public static String[] getAllInterestPointLabelsForChannel(
+			final SpimData2 spimData,
+			final List< TimePoint > timepointsToProcess,
+			final List< Angle > anglesToProcess,
+			final List< Illumination > illuminationsToProcess,
+			final Channel channel )
+	{
+		return getAllInterestPointLabelsForChannel( spimData, timepointsToProcess, anglesToProcess, illuminationsToProcess, channel, null );
+	}
+
+	/**
+	 * Goes through all ViewDescriptions and checks all available labels for interest point detection
+	 * 
+	 * @param spimData
+	 * @param timepointsToProcess
+	 * @param channel
 	 * @param doWhat - the text for not doing anything with this channel
 	 * @return
 	 */
@@ -736,30 +754,36 @@ public class Interest_Point_Registration implements PlugIn
 
 						if ( labels.containsKey( label ) )
 							count += labels.get( label );
-						
+
 						labels.put( label, count );
 					}
-					
+
 					// are they available in all viewdescriptions?
 					++countViewDescriptions;
 				}
 		
-		final String[] allLabels = new String[ labels.keySet().size() + 1 ];
+		final String[] allLabels;
+
+		if ( doWhat == null )
+			allLabels = new String[ labels.keySet().size() ];
+		else
+			allLabels = new String[ labels.keySet().size() + 1 ];
 		
 		int i = 0;
 		
 		for ( final String label : labels.keySet() )
 		{
 			allLabels[ i ] = label;
-			
+
 			if ( labels.get( label ) != countViewDescriptions )
 				allLabels[ i ] += warningLabel + labels.get( label ) + "/" + countViewDescriptions + " Views!)";
-			
+
 			++i;
 		}
-		
-		allLabels[ i ] = "[DO NOT " + doWhat + " this channel]";
-		
+
+		if ( doWhat != null )
+			allLabels[ i ] = "[DO NOT " + doWhat + " this channel]";
+
 		return allLabels;
 	}
 

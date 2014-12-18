@@ -36,7 +36,7 @@ import spim.process.interestpointregistration.ChannelProcess;
 
 public class Visualize_Detections implements PlugIn
 {
-	protected static String[] detectionsChoice = new String[]{ "All detections", "Corresponding detections" };
+	public static String[] detectionsChoice = new String[]{ "All detections", "Corresponding detections" };
 	public static int defaultDetections = 0;
 	public static double defaultDownsample = 1.0;
 	public static boolean defaultDisplayInput = false;
@@ -71,11 +71,11 @@ public class Visualize_Detections implements PlugIn
 					channel,
 					"visualize" );
 			
-			if ( channelLabels == null )
+			if ( labels == null )
 				return;
 			
-			if ( Interest_Point_Registration.defaultChannelLabels[ channel.getId() ] >= labels.length )
-				Interest_Point_Registration.defaultChannelLabels[ channel.getId() ] = 0;
+			if ( Interest_Point_Registration.defaultChannelLabels[ j ] >= labels.length )
+				Interest_Point_Registration.defaultChannelLabels[ j ] = 0;
 			
 			gd.addChoice( "Interest_points_channel_" + channel.getName(), labels, labels[ Interest_Point_Registration.defaultChannelLabels[ j++ ] ] );
 			channelLabels.add( labels );

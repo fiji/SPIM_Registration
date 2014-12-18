@@ -17,6 +17,7 @@ import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import spim.process.fusion.boundingbox.AutomaticBoundingBox;
+import spim.process.fusion.boundingbox.AutomaticReorientation;
 import spim.process.fusion.boundingbox.ManualBoundingBox;
 import spim.process.fusion.deconvolution.EfficientBayesianBased;
 import spim.process.fusion.export.AppendSpimData2;
@@ -46,6 +47,7 @@ public class Image_Fusion implements PlugIn
 		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, null, null, null, WeightedAvgFusionType.INDEPENDENT ) );
 		
 		staticBoundingBoxAlgorithms.add( new ManualBoundingBox( null, null, null, null, null ) );
+		staticBoundingBoxAlgorithms.add( new AutomaticReorientation( null, null, null, null, null ) );
 		staticBoundingBoxAlgorithms.add( new AutomaticBoundingBox( null, null, null, null, null ) );
 		
 		staticImgExportAlgorithms.add( new DisplayImage() );
@@ -130,7 +132,9 @@ public class Image_Fusion implements PlugIn
 			return;
 
 		fusion.fuseData( boundingBox, imgExport );
-		
+
+		boundingBox.cleanUp( result );
+
 		// save the XML if metadata was updated
 		if ( result.getData().getSequenceDescription().getImgLoader() instanceof AbstractImgLoader )
 		{

@@ -1,9 +1,5 @@
 package spim.fiji.plugin.resave;
 
-import bdv.export.ExportMipmapInfo;
-import bdv.export.ProgressWriter;
-import bdv.export.ProposeMipmaps;
-import bdv.img.hdf5.Hdf5ImageLoader;
 import ij.plugin.PlugIn;
 
 import java.io.File;
@@ -17,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 import mpicbg.spim.data.SpimDataException;
+import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.MissingViews;
@@ -34,6 +31,10 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import bdv.export.ExportMipmapInfo;
+import bdv.export.ProgressWriter;
+import bdv.export.ProposeMipmaps;
+import bdv.img.hdf5.Hdf5ImageLoader;
 
 public class Resave_HDF5 implements PlugIn
 {
@@ -69,7 +70,7 @@ public class Resave_HDF5 implements PlugIn
 			}
 		}
 
-		final Map< Integer, ExportMipmapInfo > perSetupExportMipmapInfo = ProposeMipmaps.proposeMipmaps( xml.getData().getSequenceDescription() );
+		final Map< Integer, ExportMipmapInfo > perSetupExportMipmapInfo = proposeMipmaps( xml.getViewSetupsToProcess() );
 
 		Generic_Resave_HDF5.lastExportPath = LoadParseQueryXML.defaultXMLfilename;
 
@@ -105,6 +106,15 @@ public class Resave_HDF5 implements PlugIn
 			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + params.getSeqFile() + "'." );
 		}
 	}
+
+	public static Map< Integer, ExportMipmapInfo > proposeMipmaps( final List< ? extends BasicViewSetup > viewsetups )
+	{
+		final HashMap< Integer, ExportMipmapInfo > perSetupExportMipmapInfo = new HashMap< Integer, ExportMipmapInfo >();
+		for ( final BasicViewSetup setup : viewsetups )
+			perSetupExportMipmapInfo.put( setup.getId(), ProposeMipmaps.proposeMipmaps( setup ) );
+		return perSetupExportMipmapInfo;
+	}
+
 
 	public static boolean loadDimensions( final SpimData2 spimData, final List< ViewSetup > viewsetups )
 	{
