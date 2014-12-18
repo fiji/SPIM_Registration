@@ -20,6 +20,18 @@ import java.awt.ScrollPane;
 import java.awt.Toolkit;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+
+import mpicbg.spim.data.SpimData;
+import mpicbg.spim.data.generic.sequence.BasicViewSetup;
+import mpicbg.spim.data.registration.ViewRegistration;
+import mpicbg.spim.data.registration.ViewRegistrations;
+import mpicbg.spim.data.sequence.SequenceDescription;
+import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewDescription;
 
 public class GUIHelper
 {
@@ -31,6 +43,7 @@ public class GUIHelper
 	public static Font largestatusfont = new Font( Font.SANS_SERIF, Font.BOLD + Font.ITALIC, 14 );
 	public static Font largefont = new Font( Font.SANS_SERIF, Font.BOLD, 14 );
 	public static Font mediumstatusfont = new Font( Font.SANS_SERIF, Font.BOLD + Font.ITALIC, 12 );
+	public static Font headline = new Font( Font.SANS_SERIF, Font.BOLD, 12 );
 	public static Font smallStatusFont = new Font( Font.SANS_SERIF, Font.ITALIC, 11 );
 
 	public static Font staticfont = new Font( Font.MONOSPACED, Font.PLAIN, 12 );
@@ -48,14 +61,71 @@ public class GUIHelper
 
 	public static void addWebsite( final GenericDialog gd ) { addWebsite( gd, messageWebsite ); }
 	public static void addWebsite( final GenericDialog gd, final String msg ) { addHyperLink( gd, msg, myURL ); }
-	
+
 	public static final void addHyperLink( final GenericDialog gd, final String msg, final String url )
 	{
 		gd.addMessage( msg, new Font( Font.SANS_SERIF, Font.ITALIC + Font.BOLD, 12 ) );
 		MultiLineLabel text =  (MultiLineLabel) gd.getMessage();
-		GUIHelper.addHyperLinkListener( text, url );		
+		GUIHelper.addHyperLinkListener( text, url );
 	}
-	
+
+	public static void displayRegistrationNames( final GenericDialog gd, final HashMap< String, Integer > names )
+	{
+		if ( names.keySet().size() == 0 )
+		{
+			gd.addMessage( "View Registrations could not be read. This should not happen." );
+			return;
+		}
+
+		gd.addMessage( "Title of last View Registrations", headline );
+
+		final ArrayList< String > n = new ArrayList< String >();
+
+		for ( final String name : names.keySet() )
+			n.add( name  + " (" + names.get( name ) + " views)" );
+
+		Collections.sort( n );
+
+		String text = n.get( 0 );
+
+		for ( int i = 1; i < n.size(); ++i )
+			text += "\n" + n.get( i );
+
+		gd.addMessage( text, smallStatusFont );
+	}
+
+	public static HashMap< String, Integer > assembleRegistrationNames( final SpimData data, final List< ? extends BasicViewSetup > setupList, final List< TimePoint > timepoints )
+	{
+		final ViewRegistrations vr = data.getViewRegistrations();
+		final SequenceDescription sd = data.getSequenceDescription();
+
+		final HashMap< String, Integer > names = new HashMap< String, Integer >();
+
+		for ( final TimePoint tp: timepoints )
+		{
+			for ( final BasicViewSetup setup : setupList )
+			{
+				final ViewDescription vd = sd.getViewDescription( tp.getId(), setup.getId() );
+
+				if ( !vd.isPresent() )
+					continue;
+
+				final ViewRegistration r = vr.getViewRegistration( vd );
+				final String rName = r.getTransformList().get( 0 ).getName();
+
+				if ( rName != null )
+				{
+					if ( names.containsKey( rName ) )
+						names.put( rName, names.get( rName ) + 1 );
+					else
+						names.put( rName, 1 );
+				}
+			}
+		}
+
+		return names;
+	}
+
 	public static final void addHyperLinkListener( final MultiLineLabel text, final String myURL )
 	{
 		if ( text != null && myURL != null )

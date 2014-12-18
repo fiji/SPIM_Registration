@@ -7,6 +7,7 @@ import ij.plugin.PlugIn;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
@@ -89,9 +90,17 @@ public class Image_Fusion implements PlugIn
 		gd.addChoice( "Type_of_image_fusion", fusionDescriptions, fusionDescriptions[ defaultFusionAlgorithm ] );
 		gd.addChoice( "Bounding_Box", boundingBoxDescriptions, boundingBoxDescriptions[ defaultBoundingBoxAlgorithm ] );
 		gd.addChoice( "Fused_image", imgExportDescriptions, imgExportDescriptions[ defaultImgExportAlgorithm ] );
-		
+
+		// assemble the last registration names of all viewsetups involved
+		final HashMap< String, Integer > names = GUIHelper.assembleRegistrationNames( result.getData(), result.getViewSetupsToProcess(), result.getTimePointsToProcess() );
 		gd.addMessage( "" );
+		GUIHelper.displayRegistrationNames( gd, names );
+		gd.addMessage( "" );
+
 		GUIHelper.addWebsite( gd );
+
+		if ( names.keySet().size() > 5 )
+			GUIHelper.addScrollBars( gd );
 		
 		gd.showDialog();
 

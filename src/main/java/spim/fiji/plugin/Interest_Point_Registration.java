@@ -120,7 +120,7 @@ public class Interest_Point_Registration implements PlugIn
 
 		// build up the dialog
 		final GenericDialog gd = new GenericDialog( "Basic Registration Parameters" );
-		
+
 		gd.addChoice( "Registration_algorithm", descriptions, descriptions[ defaultAlgorithm ] );
 
 		final String[] choicesGlobal;
@@ -168,7 +168,18 @@ public class Interest_Point_Registration implements PlugIn
 			gd.addChoice( "Interest_points_channel_" + channel.getName(), labels, labels[ defaultChannelLabels[ i++ ] ] );
 			channelLabels.add( labels );
 		}
+
+		// assemble the last registration names of all viewsetups involved
+		final HashMap< String, Integer > names = GUIHelper.assembleRegistrationNames( result.getData(), result.getViewSetupsToProcess(), result.getTimePointsToProcess() );
+		gd.addMessage( "" );
+		GUIHelper.displayRegistrationNames( gd, names );
+		gd.addMessage( "" );
+
 		GUIHelper.addWebsite( gd );
+
+		if ( names.keySet().size() > 5 )
+			GUIHelper.addScrollBars( gd );
+
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
