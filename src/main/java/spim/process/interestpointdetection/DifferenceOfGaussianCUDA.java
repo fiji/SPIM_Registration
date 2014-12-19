@@ -194,7 +194,7 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianNewPeakFinder
 			return dim;
 		}
 
-		protected static long[] getImgSize( final Interval img )
+		public static long[] getImgSize( final Interval img )
 		{
 			final long[] dim = new long[ img.numDimensions() ];
 			for ( int d = 0; d < img.numDimensions(); ++d )
@@ -210,7 +210,7 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianNewPeakFinder
 			return dim;
 		}
 
-		protected static int[] getImgSizeInt( final Interval img )
+		public static int[] getImgSizeInt( final Interval img )
 		{
 			final int[] dim = new int[ img.numDimensions() ];
 			for ( int d = 0; d < img.numDimensions(); ++d )
