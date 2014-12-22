@@ -43,7 +43,7 @@ public class Mirror
 		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
 		final ArrayList< Callable< Void > > tasks = new ArrayList< Callable< Void > >();
 
-		for ( final ImagePortion portion : portions )
+		for ( fina    l ImagePortion portion : portions )
 		{
 			tasks.add( new Callable< Void >() 
 			{
