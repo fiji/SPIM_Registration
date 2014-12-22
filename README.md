@@ -4,6 +4,8 @@ Selective Plane Illumination Microscopy ([SPIM, Science, 305(5686):1007-9](http:
 
 See also the [SPIM Registration page on the Fiji Wiki](http://fiji.sc/SPIM_Registration).
 
+For questions, bug reports, remarks and comments just use github here or send me an email: stephan.preibisch@einstein.yu.edu
+
 # Citation
 
 Please note that the SPIM reconstruction plugin available through Fiji, is based on publications. If you use it successfully for your research please be so kind to cite our work:

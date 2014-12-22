@@ -18,7 +18,7 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RealPoint;
-import net.imglib2.collection.KDTree;
+import net.imglib2.KDTree;
 import net.imglib2.neighborsearch.KNearestNeighborSearchOnKDTree;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.thinout.ChannelProcessThinOut;
