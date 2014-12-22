@@ -5,13 +5,17 @@ import java.util.Vector;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 
+import mpicbg.spim.io.IOFunctions;
+import net.imglib2.Cursor;
+import net.imglib2.RandomAccess;
+import net.imglib2.img.Img;
+import net.imglib2.type.Type;
 import spim.Threads;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
 
-import net.imglib2.img.Img;
+import com.lowagie.text.Image;
 
 /**
  * Mirrors an n-dimensional image along an axis (one of the dimensions).
@@ -26,7 +30,7 @@ public class Mirror
 	 * @param dimension - The axis to mirror (e.g. 0->x-Axis->horizontally, 1->y-axis->vertically)
 	 * @param numThreads - number of threads
 	 */
-	public static < T > boolean mirror( final Img< T > image, final int dimension, final int numThreads )
+	public static < T extends Type< T > > boolean mirror( final Img< T > image, final int dimension, final int numThreads )
 	{
 		final int n = image.numDimensions();
 
@@ -37,106 +41,71 @@ public class Mirror
 		final long maxMirror = image.dimension( dimension ) - 1;
 		final long sizeMirrorH = image.dimension( dimension ) / 2;
 
-		final AtomicInteger ai = new AtomicInteger( 0 );
-
 		// set up executor service
 		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
 		final ArrayList< Callable< Void > > tasks = new ArrayList< Callable< Void > >();
 
-		for ( fina    l ImagePortion portion : portions )
+		for ( final ImagePortion portion : portions )
 		{
 			tasks.add( new Callable< Void >() 
 			{
 				@Override
 				public Void call() throws Exception
 				{
-					final LocalizableCursor<T> cursorIn = image.createLocalizableCursor();
-					final LocalizableByDimCursor<T> cursorOut = image.createLocalizableByDimCursor();
-					final T temp = image.createType();
+					final Cursor< T > cursorIn = image.localizingCursor();
+					final RandomAccess< T > cursorOut = image.randomAccess();
+					final T temp = image.firstElement().createVariable();
 					final long[] position = new long[ n ];
-					
+
 					// set the cursorIn to right offset
-					final long startPosition = myChunk.getStartPosition();
-					final long loopSize = myChunk.getLoopSize();
-					
+					final long startPosition = portion.getStartPosition();
+					final long loopSize = portion.getLoopSize();
+
 					if ( startPosition > 0 )
-						cursorIn.fwd( startPosition );
-					
+						cursorIn.jumpFwd( startPosition );
+
 					// iterate over all pixels, if they are above the middle switch them with their counterpart
 					// from the other half in the respective dimension
 					for ( long i = 0; i < loopSize; ++i )
 					{
 						cursorIn.fwd();
-						cursorIn.getPosition( position );
-						
+						cursorIn.localize( position );
+
 						if ( position[ dimension ] <= sizeMirrorH )
 						{
 							// set the localizable to the correct mirroring position
 							position[ dimension ] = maxMirror - position[ dimension ];
 							cursorOut.setPosition( position );
-							
+
 							// do a triangle switching
-							final T in = cursorIn.getType();
-							final T out = cursorOut.getType();
-							
+							final T in = cursorIn.get();
+							final T out = cursorOut.get();
+
 							temp.set( in );
 							in.set( out );
 							out.set( temp );
 						}
 					}
+
+					return null;
 				}
 			});
 		}
-			
-		for (int ithread = 0; ithread < threads.length; ++ithread)
-			threads[ithread] = new Thread(new Runnable()
-			{
-				public void run()
-				{
-					// Thread ID
-					final int myNumber = ai.getAndIncrement();
-				
-					// get chunk of pixels to process
-					final Chunk myChunk = threadChunks.get( myNumber );
-				
-					final LocalizableCursor<T> cursorIn = image.createLocalizableCursor();
-					final LocalizableByDimCursor<T> cursorOut = image.createLocalizableByDimCursor();
-					final T temp = image.createType();
-					final long[] position = new long[ n ];
-					
-					// set the cursorIn to right offset
-					final long startPosition = myChunk.getStartPosition();
-					final long loopSize = myChunk.getLoopSize();
-					
-					if ( startPosition > 0 )
-						cursorIn.fwd( startPosition );
-					
-					// iterate over all pixels, if they are above the middle switch them with their counterpart
-					// from the other half in the respective dimension
-					for ( long i = 0; i < loopSize; ++i )
-					{
-						cursorIn.fwd();
-						cursorIn.getPosition( position );
-						
-						if ( position[ dimension ] <= sizeMirrorH )
-						{
-							// set the localizable to the correct mirroring position
-							position[ dimension ] = maxMirror - position[ dimension ];
-							cursorOut.setPosition( position );
-							
-							// do a triangle switching
-							final T in = cursorIn.getType();
-							final T out = cursorOut.getType();
-							
-							temp.set( in );
-							in.set( out );
-							out.set( temp );
-						}
-					}
-		
-                }
-            });
-        
-        SimpleMultiThreading.startAndJoin(threads);
+
+		try
+		{
+			// invokeAll() returns when all tasks are complete
+			taskExecutor.invokeAll( tasks );
+		}
+		catch ( final InterruptedException e )
+		{
+			IOFunctions.println( "Failed to compute downsampling: " + e );
+			e.printStackTrace();
+			return false;
+		}
+
+		taskExecutor.shutdown();
+
+		return true;
 	}
 }
