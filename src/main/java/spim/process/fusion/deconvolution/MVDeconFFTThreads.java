@@ -25,7 +25,7 @@ public class MVDeconFFTThreads
 		time = System.currentTimeMillis();
 		fftConvolution1.setImg( block );
 		fftConvolution1.setOutput( block );
-		fftConvolution1.run();
+		fftConvolution1.convolve();
 		System.out.println( " block " + i + "(CPU): compute " + (System.currentTimeMillis() - time) );
 
 		time = System.currentTimeMillis();
@@ -41,7 +41,7 @@ public class MVDeconFFTThreads
 
 		fftConvolution2.setImg( block );
 		fftConvolution2.setOutput( block );
-		fftConvolution2.run();
+		fftConvolution2.convolve();
 		
 		blockStruct.pasteBlock( result, block );
 	}

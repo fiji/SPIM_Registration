@@ -1,9 +1,11 @@
 package spim.process.fusion.deconvolution;
 
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import mpicbg.spim.io.IOFunctions;
+import mpicbg.spim.postprocessing.deconvolution2.LRInput;
 import net.imglib2.Cursor;
 import net.imglib2.algorithm.fft2.FFTConvolution;
 import net.imglib2.img.Img;
@@ -13,10 +15,8 @@ import net.imglib2.type.numeric.complex.ComplexFloatType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
-
 import spim.Threads;
 import spim.process.cuda.Block;
-import spim.process.cuda.BlockGenerator;
 import spim.process.cuda.BlockGeneratorFixedSizePrecise;
 import spim.process.cuda.CUDAFourierConvolution;
 
@@ -30,7 +30,8 @@ public class MVDeconFFT
 	Img< FloatType > viewContribution = null;
 	FFTConvolution<FloatType> fftConvolution1, fftConvolution2;
 	protected int numViews = 0;
-	
+
+	final protected ExecutorService service;
 	PSFTYPE iterationType;
 	ArrayList< MVDeconFFT > views;
 
@@ -56,6 +57,7 @@ public class MVDeconFFT
 		this.kernel1 = kernel;
 		this.weight = weight;
 		this.n = image.numDimensions();
+		this.service = FFTConvolution.createExecutorService( Threads.numThreads() );
 
 		this.deviceList = deviceList;
 		this.device0 = deviceList[ 0 ];
@@ -186,9 +188,9 @@ public class MVDeconFFT
 							output,
 							new ArrayImgFactory< ComplexFloatType >() );
 
-					conv1.setNumThreads( Threads.numThreads() );
+					conv1.setExecutorService( service );
 					conv1.setKeepImgFFT( false );
-					conv1.run();
+					conv1.convolve();
 
 					// and now convolve the result with P_w^{*}
 					input = output;
@@ -202,9 +204,9 @@ public class MVDeconFFT
 							output,
 							new ArrayImgFactory< ComplexFloatType >() );
 
-					conv2.setNumThreads( Threads.numThreads() );
+					conv2.setExecutorService( service );
 					conv2.setKeepImgFFT( false );
-					conv2.run();
+					conv2.convolve();
 
 					// multiply the result with P_v^{*} yielding the compound kernel
 					final Cursor< FloatType > cursor = tmp.cursor();
@@ -249,9 +251,9 @@ public class MVDeconFFT
 							output,
 							new ArrayImgFactory< ComplexFloatType >() );
 
-					conv.setNumThreads( Threads.numThreads() );
+					conv.setExecutorService( service );
 					conv.setKeepImgFFT( false );
-					conv.run();
+					conv.convolve();
 
 					// multiply with the kernel
 					final Cursor< FloatType > cursor = tmp.cursor();
@@ -288,21 +290,21 @@ public class MVDeconFFT
 				final Img< FloatType > block = factory.create( blockSize, new FloatType() );
 
 				this.fftConvolution1 = new FFTConvolution< FloatType >( block, this.kernel1 );
-				this.fftConvolution1.setNumThreads( Threads.numThreads() );
+				this.fftConvolution1.setExecutorService( service );
 				this.fftConvolution1.setKeepImgFFT( false );
 				
 				this.fftConvolution2 = new FFTConvolution< FloatType >( block, this.kernel2 );
-				this.fftConvolution2.setNumThreads( Threads.numThreads() );
+				this.fftConvolution2.setExecutorService( service );
 				this.fftConvolution2.setKeepImgFFT( false );
 			}
 			else
 			{
 				this.fftConvolution1 = new FFTConvolution< FloatType >( this.image, this.kernel1 );
-				this.fftConvolution1.setNumThreads( Threads.numThreads() );
+				this.fftConvolution1.setExecutorService( service );
 				this.fftConvolution1.setKeepImgFFT( false );
 				
 				this.fftConvolution2 = new FFTConvolution< FloatType >( this.image, this.kernel2 );
-				this.fftConvolution2.setNumThreads( Threads.numThreads() );
+				this.fftConvolution2.setExecutorService( service );
 				this.fftConvolution2.setKeepImgFFT( false );
 			}
 		}
@@ -328,7 +330,7 @@ public class MVDeconFFT
 		final Img< FloatType > invKernel = kernel.copy();
 
 		for ( int d = 0; d < invKernel.numDimensions(); ++d )
-			new MirrorImage< FloatType >( invKernel, d ).process();
+			Mirror.mirror( invKernel, d, Threads.numThreads() );
 
 		return invKernel;
 	}
@@ -395,7 +397,7 @@ public class MVDeconFFT
 				final FFTConvolution< FloatType > fftConv = fftConvolution1;
 				fftConv.setImg( image );
 				fftConv.setOutput( result );
-				fftConv.run();
+				fftConv.convolve();
 				System.out.println( " image: compute " + (System.currentTimeMillis() - time) );
 
 				return result;
@@ -465,7 +467,7 @@ public class MVDeconFFT
 				final FFTConvolution< FloatType > fftConv = fftConvolution2;
 				fftConv.setImg( image );
 				fftConv.setOutput( result );
-				fftConv.run();
+				fftConv.convolve();
 
 				return result;
 			}
