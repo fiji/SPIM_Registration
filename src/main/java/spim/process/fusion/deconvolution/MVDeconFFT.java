@@ -380,6 +380,8 @@ public class MVDeconFFT
 		{
 			if ( useBlocks )
 			{
+				// TODO: do not re-instantiate the image
+				// TODO: always use arrayimg for blocks
 				final Img< FloatType > result = image.factory().create( image, new FloatType() );
 				final Img< FloatType > block = factory.create( blockSize, new FloatType() );
 
@@ -391,6 +393,7 @@ public class MVDeconFFT
 			else
 			{
 				//IJ.log( "Using CPU only to compute as one block ... " );
+				// TODO: do not re-instantiate the image
 				final Img< FloatType > result = image.factory().create( image, new FloatType() );
 
 				long time = System.currentTimeMillis();
@@ -405,6 +408,8 @@ public class MVDeconFFT
 		}
 		else if ( useCUDA && numDevices == 1 )
 		{
+			// TODO: do not re-instantiate the image
+			// TODO: always use arrayimg for blocks
 			final Img< FloatType > result = image.factory().create( image, new FloatType() );
 			final Img< FloatType > block = factory.create( blockSize, new FloatType() );
 
@@ -415,6 +420,7 @@ public class MVDeconFFT
 		}
 		else
 		{
+			// TODO: do not re-instantiate the image
 			final Img< FloatType > result = image.factory().create( image, new FloatType() );
 
 			final AtomicInteger ai = new AtomicInteger();
@@ -452,6 +458,8 @@ public class MVDeconFFT
 		{
 			if ( useBlocks )
 			{
+				// TODO: do not re-instantiate the image
+				// TODO: always use arrayimg for blocks
 				final Img< FloatType > result = image.factory().create( image, new FloatType() );
 				final Img< FloatType > block = factory.create( blockSize, new FloatType() );
 
@@ -462,6 +470,7 @@ public class MVDeconFFT
 			}
 			else
 			{
+				// TODO: do not re-instantiate the image
 				final Img< FloatType > result = image.factory().create( image, new FloatType() );
 
 				final FFTConvolution< FloatType > fftConv = fftConvolution2;
@@ -474,6 +483,8 @@ public class MVDeconFFT
 		}
 		else if ( useCUDA && numDevices == 1 )
 		{
+			// TODO: do not re-instantiate the image
+			// TODO: always use arrayimg for blocks
 			final Img< FloatType > result = image.factory().create( image, new FloatType() );
 			final Img< FloatType > block = factory.create( blockSize, new FloatType() );
 
@@ -484,6 +495,7 @@ public class MVDeconFFT
 		}
 		else
 		{
+			// TODO: do not re-instantiate the image
 			final Img< FloatType > result = image.factory().create( image, new FloatType() );
 
 			final AtomicInteger ai = new AtomicInteger();
