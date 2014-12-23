@@ -32,16 +32,16 @@ public class StackImgLoaderIJ extends StackImgLoader
 		super( path, fileNamePattern, imgFactory, layoutTP, layoutChannels, layoutIllum, layoutAngles, sequenceDescription );
 	}
 
-	protected ImagePlus open( File file )
+	public static ImagePlus open( File file )
 	{
 		final ImagePlus imp = new Opener().openImage( file.getAbsolutePath() );
 
 		if ( imp == null )
 		{
 			IOFunctions.println( "Could not open file with ImageJ TIFF reader: '" + file.getAbsolutePath() + "'" );
-			return null;				
+			return null;
 		}
-		
+
 		return imp;
 	}
 	
