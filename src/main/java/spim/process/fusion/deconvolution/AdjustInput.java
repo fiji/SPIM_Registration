@@ -43,7 +43,7 @@ public class AdjustInput
 	 */
 	final public static double sumImage( final IterableInterval< FloatType > img )
 	{
-		final int numPortions = Threads.numThreads() * 4;
+		final int numPortions = Threads.numThreads() * 2;
 
 		final RealSum[] sums = new RealSum[ numPortions ];
 		final AtomicInteger ai = new AtomicInteger( 0 );
@@ -105,11 +105,10 @@ public class AdjustInput
 	public static double[] normAllImages( final ArrayList< MVDeconFFT > data )
 	{
 		final int nThreads = Threads.numThreads();
-		final int nPortions = nThreads * 4;
+		final int nPortions = nThreads * 2;
 
 		// split up into many parts for multithreading
 		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( data.get( 0 ).getImage().size(), nPortions );
-
 
 		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": numThreads = " + nThreads );
 
