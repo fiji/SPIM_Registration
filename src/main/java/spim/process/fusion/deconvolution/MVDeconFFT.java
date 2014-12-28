@@ -41,7 +41,10 @@ public class MVDeconFFT
 	final int[] blockSize, deviceList;
 	final int device0, numDevices;
 	final Block[] blocks;
-	final ImgFactory< FloatType > factory;
+
+	// the imgfactory used to instantiate the blocks, must be ArrayImg for CUDA
+	ImgFactory< FloatType > blockFactory;
+
 	/**
 	 * Used to determine if the Convolutions already have been computed for the current iteration
 	 */
@@ -51,6 +54,7 @@ public class MVDeconFFT
 			final Img< FloatType > image,
 			final Img< FloatType > weight,
 			final Img< FloatType > kernel,
+			final ImgFactory< FloatType > blockFactory,
 			final int[] deviceList, final boolean useBlocks, final int[] blockSize )
 	{
 		this.image = image;
@@ -99,7 +103,7 @@ public class MVDeconFFT
 
 			IOFunctions.println( "Number of blocks: " + this.blocks.length );
 
-			this.factory = new ArrayImgFactory< FloatType >();
+			this.blockFactory = new ArrayImgFactory< FloatType >();
 		}
 		else if ( this.useCUDA ) // and no blocks, i.e. one big block
 		{
@@ -122,13 +126,13 @@ public class MVDeconFFT
 
 			IOFunctions.println( "Number of blocks: " + this.blocks.length + " (1 single block for CUDA processing)." );
 
-			this.factory = new ArrayImgFactory< FloatType >();
+			this.blockFactory = new ArrayImgFactory< FloatType >();
 		}
 		else
 		{
 			this.blocks = null;
 			this.blockSize = null;
-			this.factory = null;
+			this.blockFactory = null;
 			this.useBlocks = false;
 		}
 	}
@@ -287,7 +291,7 @@ public class MVDeconFFT
 		{
 			if ( useBlocks )
 			{
-				final Img< FloatType > block = factory.create( blockSize, new FloatType() );
+				final Img< FloatType > block = blockFactory.create( blockSize, new FloatType() );
 
 				this.fftConvolution1 = new FFTConvolution< FloatType >( block, this.kernel1 );
 				this.fftConvolution1.setExecutorService( service );
@@ -380,7 +384,7 @@ public class MVDeconFFT
 		{
 			if ( useBlocks )
 			{
-				final Img< FloatType > block = factory.create( blockSize, new FloatType() );
+				final Img< FloatType > block = blockFactory.create( blockSize, new FloatType() );
 
 				for ( int i = 0; i < blocks.length; ++i )
 					MVDeconFFTThreads.convolve1BlockCPU( blocks[ i ], image, result, block, fftConvolution1, i );
@@ -402,7 +406,7 @@ public class MVDeconFFT
 		}
 		else if ( useCUDA && numDevices == 1 )
 		{
-			final Img< FloatType > block = factory.create( blockSize, new FloatType() );
+			final Img< FloatType > block = blockFactory.create( blockSize, new FloatType() );
 
 			for ( int i = 0; i < blocks.length; ++i )
 				MVDeconFFTThreads.convolve1BlockCUDA( blocks[ i ], device0, image, result, block, kernel1, i );
@@ -415,7 +419,7 @@ public class MVDeconFFT
 			final Thread[] threads = new Thread[ deviceList.length ];
 
 			for ( int i = 0; i < deviceList.length; ++i )
-				threads[ i ] = MVDeconFFTThreads.getCUDAThread1( ai, blocks, blockSize, image, result, deviceList[ i ], kernel1 );
+				threads[ i ] = MVDeconFFTThreads.getCUDAThread1( ai, blockFactory, blocks, blockSize, image, result, deviceList[ i ], kernel1 );
 
 			for ( int ithread = 0; ithread < threads.length; ++ithread )
 				threads[ ithread ].start();
@@ -446,7 +450,7 @@ public class MVDeconFFT
 		{
 			if ( useBlocks )
 			{
-				final Img< FloatType > block = factory.create( blockSize, new FloatType() );
+				final Img< FloatType > block = blockFactory.create( blockSize, new FloatType() );
 
 				for ( int i = 0; i < blocks.length; ++i )
 					MVDeconFFTThreads.convolve2BlockCPU( blocks[ i ], image, result, block, fftConvolution2 );
@@ -465,7 +469,7 @@ public class MVDeconFFT
 		}
 		else if ( useCUDA && numDevices == 1 )
 		{
-			final Img< FloatType > block = factory.create( blockSize, new FloatType() );
+			final Img< FloatType > block = blockFactory.create( blockSize, new FloatType() );
 
 			for ( int i = 0; i < blocks.length; ++i )
 				MVDeconFFTThreads.convolve2BlockCUDA( blocks[ i ], device0, image, result, block, kernel2 );
@@ -476,9 +480,9 @@ public class MVDeconFFT
 		{
 			final AtomicInteger ai = new AtomicInteger();
 			final Thread[] threads = new Thread[ deviceList.length ];
-			
+
 			for ( int i = 0; i < deviceList.length; ++i )
-				threads[ i ] = MVDeconFFTThreads.getCUDAThread2( ai, blocks, blockSize, image, result, deviceList[ i ], kernel2 );
+				threads[ i ] = MVDeconFFTThreads.getCUDAThread2( ai, blockFactory, blocks, blockSize, image, result, deviceList[ i ], kernel2 );
 
 			for ( int ithread = 0; ithread < threads.length; ++ithread )
 				threads[ ithread ].start();
