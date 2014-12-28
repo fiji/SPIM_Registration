@@ -2,13 +2,27 @@ package spim.process.fusion.deconvolution;
 
 import java.util.ArrayList;
 
+import net.imglib2.img.ImgFactory;
+import net.imglib2.type.numeric.real.FloatType;
 import spim.process.fusion.deconvolution.MVDeconFFT.PSFTYPE;
 
 public class MVDeconInput
 {
 	public final static float minValue = 0.0001f;
 	final ArrayList< MVDeconFFT > views = new ArrayList< MVDeconFFT >();
-	
+	final ImgFactory< FloatType > imgFactory;
+
+	/**
+	 * the imgfactory used for PSI, the temporary images and inputs
+	 * @param imgFactory
+	 */
+	public MVDeconInput( final ImgFactory< FloatType > imgFactory )
+	{
+		this.imgFactory = imgFactory;
+	}
+
+	public ImgFactory< FloatType > imgFactory() { return imgFactory; }
+
 	public void add( final MVDeconFFT view )
 	{
 		views.add( view );

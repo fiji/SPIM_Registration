@@ -374,28 +374,22 @@ public class MVDeconFFT
 	 * @param image - the image to convolve with
 	 * @return
 	 */
-	public Img< FloatType > convolve1( final Img< FloatType > image )
+	public void convolve1( final Img< FloatType > image, final Img< FloatType > result )
 	{
 		if ( useCPU )
 		{
 			if ( useBlocks )
 			{
-				// TODO: do not re-instantiate the image
-				// TODO: always use arrayimg for blocks
-				final Img< FloatType > result = image.factory().create( image, new FloatType() );
 				final Img< FloatType > block = factory.create( blockSize, new FloatType() );
 
 				for ( int i = 0; i < blocks.length; ++i )
 					MVDeconFFTThreads.convolve1BlockCPU( blocks[ i ], image, result, block, fftConvolution1, i );
 
-				return result;
+				return;
 			}
 			else
 			{
 				//IJ.log( "Using CPU only to compute as one block ... " );
-				// TODO: do not re-instantiate the image
-				final Img< FloatType > result = image.factory().create( image, new FloatType() );
-
 				long time = System.currentTimeMillis();
 				final FFTConvolution< FloatType > fftConv = fftConvolution1;
 				fftConv.setImg( image );
@@ -403,26 +397,20 @@ public class MVDeconFFT
 				fftConv.convolve();
 				System.out.println( " image: compute " + (System.currentTimeMillis() - time) );
 
-				return result;
+				return;
 			}
 		}
 		else if ( useCUDA && numDevices == 1 )
 		{
-			// TODO: do not re-instantiate the image
-			// TODO: always use arrayimg for blocks
-			final Img< FloatType > result = image.factory().create( image, new FloatType() );
 			final Img< FloatType > block = factory.create( blockSize, new FloatType() );
 
 			for ( int i = 0; i < blocks.length; ++i )
 				MVDeconFFTThreads.convolve1BlockCUDA( blocks[ i ], device0, image, result, block, kernel1, i );
 
-			return result;
+			return;
 		}
 		else
 		{
-			// TODO: do not re-instantiate the image
-			final Img< FloatType > result = image.factory().create( image, new FloatType() );
-
 			final AtomicInteger ai = new AtomicInteger();
 			final Thread[] threads = new Thread[ deviceList.length ];
 
@@ -442,7 +430,7 @@ public class MVDeconFFT
 				throw new RuntimeException(ie);
 			}
 
-			return result;
+			return;
 		}
 	}
 
@@ -452,52 +440,40 @@ public class MVDeconFFT
 	 * @param image - the image to convolve with
 	 * @return
 	 */
-	public Img< FloatType > convolve2( final Img< FloatType > image )
+	public void convolve2( final Img< FloatType > image, final Img< FloatType > result )
 	{
 		if ( useCPU )
 		{
 			if ( useBlocks )
 			{
-				// TODO: do not re-instantiate the image
-				// TODO: always use arrayimg for blocks
-				final Img< FloatType > result = image.factory().create( image, new FloatType() );
 				final Img< FloatType > block = factory.create( blockSize, new FloatType() );
 
 				for ( int i = 0; i < blocks.length; ++i )
 					MVDeconFFTThreads.convolve2BlockCPU( blocks[ i ], image, result, block, fftConvolution2 );
 
-				return result;
+				return;
 			}
 			else
 			{
-				// TODO: do not re-instantiate the image
-				final Img< FloatType > result = image.factory().create( image, new FloatType() );
-
 				final FFTConvolution< FloatType > fftConv = fftConvolution2;
 				fftConv.setImg( image );
 				fftConv.setOutput( result );
 				fftConv.convolve();
 
-				return result;
+				return;
 			}
 		}
 		else if ( useCUDA && numDevices == 1 )
 		{
-			// TODO: do not re-instantiate the image
-			// TODO: always use arrayimg for blocks
-			final Img< FloatType > result = image.factory().create( image, new FloatType() );
 			final Img< FloatType > block = factory.create( blockSize, new FloatType() );
 
 			for ( int i = 0; i < blocks.length; ++i )
 				MVDeconFFTThreads.convolve2BlockCUDA( blocks[ i ], device0, image, result, block, kernel2 );
 
-			return result;
+			return;
 		}
 		else
 		{
-			// TODO: do not re-instantiate the image
-			final Img< FloatType > result = image.factory().create( image, new FloatType() );
-
 			final AtomicInteger ai = new AtomicInteger();
 			final Thread[] threads = new Thread[ deviceList.length ];
 			
@@ -517,7 +493,7 @@ public class MVDeconFFT
 				throw new RuntimeException(ie);
 			}
 
-			return result;
+			return;
 		}
 	}
 }

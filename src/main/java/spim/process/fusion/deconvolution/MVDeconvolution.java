@@ -1,7 +1,6 @@
 package spim.process.fusion.deconvolution;
 
 import ij.CompositeImage;
-import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 
@@ -54,6 +53,9 @@ public class MVDeconvolution
 	// the multi-view deconvolved image
 	Img< FloatType > psi;
 
+	// temporary images that are reused for computation
+	final Img< FloatType > tmp1, tmp2;
+
 	// the input data
 	final MVDeconInput views;
 	ArrayList< MVDeconFFT > data;
@@ -81,7 +83,7 @@ public class MVDeconvolution
 					checkNumbers,
 					minValue,
 					data.get( 0 ).getImage(),
-					data.get( 0 ).getImage().factory() );
+					views.imgFactory );
 
 		final double[] result = AdjustInput.normAllImages( data );
 		this.avg = (float)result[ 0 ];
@@ -93,8 +95,8 @@ public class MVDeconvolution
 
 		adjustOSEMspeedup( views, osemspeedup );
 
-		IJ.log( "Average intensity in overlapping area: " + avg );
-		IJ.log( "OSEM acceleration: " + osemspeedup );
+		IOFunctions.println( "Average intensity in overlapping area: " + avg );
+		IOFunctions.println( "OSEM acceleration: " + osemspeedup );
 
 		// init all views
 		views.init( iterationType );
@@ -105,15 +107,17 @@ public class MVDeconvolution
 		//
 		if ( this.psi == null )
 		{
-			this.psi = data.get( 0 ).getImage().factory().create( data.get( 0 ).getImage(), data.get( 0 ).getImage().firstElement() );
+			this.psi = views.imgFactory.create( data.get( 0 ).getImage(), new FloatType() );
 
 			for ( final FloatType f : psi )
 				f.set( avg );
 		}
 
-		IOFunctions.println( "Deconvolved image container: " + psi.getClass().getSimpleName() );
+		// instantiate the temporary images
+		this.tmp1 = views.imgFactory.create( data.get( 0 ).getImage(), new FloatType() );
+		this.tmp2 = views.imgFactory.create( data.get( 0 ).getImage(), new FloatType() );
 
-		//this.stack = new ImageStack( this.psi.getDimension( 0 ), this.psi.getDimension( 1 ) );
+		IOFunctions.println( "Deconvolved image container: " + psi.getClass().getSimpleName() );
 
 		// run the deconvolution
 		while ( i < numIterations )
@@ -174,7 +178,6 @@ public class MVDeconvolution
 				f.set( Math.min( 1, f.get() * (float)osemspeedup ) ); // individual contribution never higher than 1
 		}
 	}
-
 
 	protected static Img< FloatType > loadInitialImage(
 			final String fileName,
@@ -268,13 +271,15 @@ public class MVDeconvolution
 	public Img< FloatType > getPsi() { return psi; }	
 	public int getCurrentIteration() { return i; }
 
-	public void runIteration() 
+	public void runIteration()
 	{
-		runIteration( psi, data, lambda, minValue, collectStatistics, i++ );
+		runIteration( psi, tmp1, tmp2, data, lambda, minValue, collectStatistics, i++ );
 	}
 
 	final private static void runIteration(
-			final Img< FloatType> psi,
+			final Img< FloatType > psi,
+			final Img< FloatType > tmp1, // a temporary image using the same ImgFactory as PSI
+			final Img< FloatType > tmp2, // a temporary image using the same ImgFactory as PSI
 			final ArrayList< MVDeconFFT > data,
 			final double lambda,
 			final float minValue,
@@ -304,11 +309,13 @@ public class MVDeconvolution
 
 			//
 			// convolve psi (current guess of the image) with the PSF of the current view
+			// [psi >> tmp1]
 			//
-			final Img< FloatType > psiBlurred = processingData.convolve1( psi );
+			processingData.convolve1( psi, tmp1 );
 
 			//
 			// compute quotient img/psiBlurred
+			// [tmp1, img >> tmp1]
 			//
 			for ( final ImagePortion portion : portions )
 			{
@@ -317,7 +324,7 @@ public class MVDeconvolution
 					@Override
 					public Void call() throws Exception
 					{
-						computeQuotient( portion.getStartPosition(), portion.getLoopSize(), psiBlurred, processingData );
+						computeQuotient( portion.getStartPosition(), portion.getLoopSize(), tmp1, processingData.getImage() );
 						return null;
 					}
 				});
@@ -327,11 +334,16 @@ public class MVDeconvolution
 
 			//
 			// blur the residuals image with the kernel
+			// (this cannot be don in-place as it might be computed in blocks sequentially,
+			// and the input for the n+1'th block cannot be formed by the written back output
+			// of the n'th block)
+			// [tmp1 >> tmp2]
 			//
-			final Img< FloatType > integral = processingData.convolve2( psiBlurred );
+			processingData.convolve2( tmp1, tmp2 );
 
 			//
 			// compute final values
+			// [psi, weights, tmp2 >> psi]
 			//
 			tasks.clear();
 
@@ -342,7 +354,7 @@ public class MVDeconvolution
 					@Override
 					public Void call() throws Exception
 					{
-						computeFinalValues( portion.getStartPosition(), portion.getLoopSize(), psi, integral, processingData.getWeight(), lambda );
+						computeFinalValues( portion.getStartPosition(), portion.getLoopSize(), psi, tmp2, processingData.getWeight(), lambda );
 						return null;
 					}
 				});
@@ -453,15 +465,15 @@ public class MVDeconvolution
 	 * @param start
 	 * @param loopSize
 	 * @param psiBlurred
-	 * @param processingData
+	 * @param observedImg
 	 */
 	private static final void computeQuotient(
 			final long start,
 			final long loopSize,
 			final Img< FloatType > psiBlurred,
-			final MVDeconFFT processingData )
+			final Img< FloatType > observedImg )
 	{
-		final Cursor< FloatType > cursorImg = processingData.getImage().cursor();
+		final Cursor< FloatType > cursorImg = observedImg.cursor();
 		final Cursor< FloatType > cursorPsiBlurred = psiBlurred.cursor();
 
 		cursorImg.jumpFwd( start );
@@ -497,6 +509,7 @@ public class MVDeconvolution
 			final Img< FloatType > weight,
 			final double lambda )
 	{
+		// TOOD: check that strategies are compatible! (weights could be different)
 		final Cursor< FloatType > cursorPsi = psi.cursor();
 		final Cursor< FloatType > cursorIntegral = integral.cursor();
 		final Cursor< FloatType > cursorWeight = weight.cursor();
