@@ -7,6 +7,7 @@ import ij.plugin.PlugIn;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
@@ -17,6 +18,7 @@ import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import spim.process.fusion.boundingbox.AutomaticBoundingBox;
+import spim.process.fusion.boundingbox.AutomaticReorientation;
 import spim.process.fusion.boundingbox.ManualBoundingBox;
 import spim.process.fusion.deconvolution.EfficientBayesianBased;
 import spim.process.fusion.export.AppendSpimData2;
@@ -46,6 +48,7 @@ public class Image_Fusion implements PlugIn
 		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, null, null, null, WeightedAvgFusionType.INDEPENDENT ) );
 		
 		staticBoundingBoxAlgorithms.add( new ManualBoundingBox( null, null, null, null, null ) );
+		staticBoundingBoxAlgorithms.add( new AutomaticReorientation( null, null, null, null, null ) );
 		staticBoundingBoxAlgorithms.add( new AutomaticBoundingBox( null, null, null, null, null ) );
 		
 		staticImgExportAlgorithms.add( new DisplayImage() );
@@ -87,9 +90,17 @@ public class Image_Fusion implements PlugIn
 		gd.addChoice( "Type_of_image_fusion", fusionDescriptions, fusionDescriptions[ defaultFusionAlgorithm ] );
 		gd.addChoice( "Bounding_Box", boundingBoxDescriptions, boundingBoxDescriptions[ defaultBoundingBoxAlgorithm ] );
 		gd.addChoice( "Fused_image", imgExportDescriptions, imgExportDescriptions[ defaultImgExportAlgorithm ] );
-		
+
+		// assemble the last registration names of all viewsetups involved
+		final HashMap< String, Integer > names = GUIHelper.assembleRegistrationNames( result.getData(), result.getViewSetupsToProcess(), result.getTimePointsToProcess() );
 		gd.addMessage( "" );
+		GUIHelper.displayRegistrationNames( gd, names );
+		gd.addMessage( "" );
+
 		GUIHelper.addWebsite( gd );
+
+		if ( names.keySet().size() > 5 )
+			GUIHelper.addScrollBars( gd );
 		
 		gd.showDialog();
 
@@ -130,7 +141,9 @@ public class Image_Fusion implements PlugIn
 			return;
 
 		fusion.fuseData( boundingBox, imgExport );
-		
+
+		boundingBox.cleanUp( result );
+
 		// save the XML if metadata was updated
 		if ( result.getData().getSequenceDescription().getImgLoader() instanceof AbstractImgLoader )
 		{

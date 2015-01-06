@@ -80,11 +80,21 @@ public class WeightedAverageFusion extends Fusion
 			process = new ProcessSequential( spimData, anglesToProcess, illumsToProcess, bb, useBlending, useContentBased, numParalellViews );
 		else
 			process = new ProcessIndependent( spimData, anglesToProcess, illumsToProcess, bb, exporter, newViewsetups );
-		
+
+		String illumName = "_Ill" + illumsToProcess.get( 0 ).getName();
+
+		for ( int i = 1; i < illumsToProcess.size(); ++i )
+			illumName += "," + illumsToProcess.get( i ).getName();
+
+		String angleName = "_Ang" + anglesToProcess.get( 0 ).getName();
+
+		for ( int i = 1; i < anglesToProcess.size(); ++i )
+			angleName += "," + anglesToProcess.get( i ).getName();
+
 		for ( final TimePoint t : timepointsToProcess )
 			for ( final Channel c : channelsToProcess )
 			{
-				titler.setTitle( "TP" + t.getName() + "_Ch" + c.getName() );
+				titler.setTitle( "TP" + t.getName() + "_Ch" + c.getName() + illumName + angleName );
 				if ( bb.getPixelType() == 0 )
 				{
 					exporter.exportImage(

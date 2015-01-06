@@ -15,6 +15,7 @@ import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.img.imageplus.ImagePlusImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.ComplexType;
+import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.export.ImgExport;
 
@@ -110,8 +111,13 @@ public abstract class BoundingBox implements Interval
 	/**
 	 * @return - to be displayed in the generic dialog
 	 */
-	public abstract String getDescription();	
-	
+	public abstract String getDescription();
+
+	/**
+	 * Called before the XML is potentially saved
+	 */
+	public abstract void cleanUp( LoadParseQueryXML result );
+
 	public int getDownSampling() { return downsampling; }
 	
 	public int getPixelType() { return pixelType; }

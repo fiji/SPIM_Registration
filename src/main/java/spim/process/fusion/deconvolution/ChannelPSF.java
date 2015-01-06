@@ -23,7 +23,14 @@ public class ChannelPSF
 		this.label = null;
 		this.otherChannel = otherPSF;
 	}
-	
+
+	public ChannelPSF( final Channel channel )
+	{
+		this.channel = channel;
+		this.label = null;
+		this.otherChannel = null;
+	}
+
 	public boolean isExtractedPSF() { return label != null;	}
 	public Channel getChannel() { return channel; }
 	public String getLabel() { return label; }

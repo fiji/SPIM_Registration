@@ -2,6 +2,10 @@
 
 Selective Plane Illumination Microscopy ([SPIM, Science, 305(5686):1007-9](http://www.sciencemag.org/content/305/5686/1007)) allows in toto imaging of large specimens by acquiring image stacks from multiple angles. However, to realize the full potential of these acquisitions the data needs to be reconstructed. This project implements several algorithms for the registration and fusion of multi-angle SPIM acquisitions.
 
+# Installation
+
+The easiest is to get the SPIM Reconstruction through the Fiji Updater. Simply activate the BigDataViewer Update Site (under Fiji>Help>Update Fiji>Manage Update Sites) and restart Fiji after all files have been downloaded and installed.
+
 See also the [SPIM Registration page on the Fiji Wiki](http://fiji.sc/SPIM_Registration).
 
 For questions, bug reports, remarks and comments just use github here or send me an email: stephan.preibisch@einstein.yu.edu

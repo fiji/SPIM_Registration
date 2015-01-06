@@ -95,7 +95,7 @@ public class GenericLoadParseQueryXML< AS extends AbstractSpimData< S >, S exten
 	{
 		this.io = io;
 		IOFunctions.println( "Using spimdata version: " + Version.getVersion() );
-		IOFunctions.println( "Using spimreconstruction version: 1.0b" );
+		IOFunctions.println( "Using spimreconstruction version: " + spim.Version.getVersion() );
 	}
 
 	/**
