@@ -4,6 +4,7 @@ import ij.gui.GenericDialog;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -123,7 +124,7 @@ public abstract class Fusion
 	public List< ViewSetup > getNewViewSetups()
 	{
 		final ArrayList< ViewSetup > newSetups = new ArrayList< ViewSetup >();
-		newSetups.addAll( newViewsetups.values() );
+		newSetups.addAll( new HashSet< ViewSetup >( newViewsetups.values() ) );
 		Collections.sort( newSetups );
 		
 		return newSetups;
