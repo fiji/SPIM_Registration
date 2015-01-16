@@ -41,7 +41,7 @@ public class XmlIoSpimData2 extends XmlIoAbstractSpimData< SequenceDescription, 
 		if ( xmlFilename.toLowerCase().endsWith( ".xml" ) )
 		{
 			xmlFilename =
-					xmlFilename.substring( 0, xmlFilename.length() - 4 ) + "." + this.clusterExt + ".xml" +
+					xmlFilename.substring( 0, xmlFilename.length() - 4 ) + "." + this.clusterExt +
 					xmlFilename.substring( xmlFilename.length() - 4, xmlFilename.length() );
 		}
 		else

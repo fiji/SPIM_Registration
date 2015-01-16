@@ -63,8 +63,8 @@ public class GenericLoadParseQueryXML<
 
 	public static final String[] clusterOptions1 = new String[]{
 		"Do not process on cluster",
-		"Save every XML with unique id generated from processed subset.",
-		"Save every XML with user-provided unique id." };
+		"Save every XML with unique id generated from processed subset",
+		"Save every XML with user-provided unique id" };
 
 	public static int defaultClusterOption1 = 1;
 
@@ -283,7 +283,7 @@ public class GenericLoadParseQueryXML<
 		}
 		else if ( clusterSaving == 1 )
 		{
-			this.clusterExt = createUniqueName();
+			this.clusterExt = "job_" + createUniqueName();
 		}
 		else
 		{
@@ -296,7 +296,7 @@ public class GenericLoadParseQueryXML<
 			if ( gdCluster.wasCanceled() )
 				return false;
 
-			this.clusterExt = gdCluster.getNextString();
+			this.clusterExt = "job_" + gdCluster.getNextString();
 		}
 
 		return true;
@@ -314,7 +314,7 @@ public class GenericLoadParseQueryXML<
 		for ( final BasicViewSetup v : getViewSetupsToProcess() )
 			idSum += v.getId();
 
-		return "job_" + ( System.nanoTime() + System.currentTimeMillis() + idSum );
+		return "" + ( System.nanoTime() + System.currentTimeMillis() + idSum );
 	}
 
 	/**
