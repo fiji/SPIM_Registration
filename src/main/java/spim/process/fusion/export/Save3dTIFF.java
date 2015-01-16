@@ -157,4 +157,7 @@ public class Save3dTIFF implements ImgExportTitle
 
 	@Override
 	public boolean finish() { return true; }
+
+	@Override
+	public void setClusterExt( final String clusterExt ) {}
 }

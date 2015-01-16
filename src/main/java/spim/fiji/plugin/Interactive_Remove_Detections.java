@@ -193,7 +193,7 @@ public class Interactive_Remove_Detections implements PlugIn
 		lists.addInterestPointList( newLabel, newIpl );
 
 		// now save it
-		Interest_Point_Registration.saveXML( result.getData(), result.getXMLFileName() );
+		Interest_Point_Registration.saveXML( result.getData(), result.getXMLFileName(), result.getClusterExtension() );
 	}
 
 	public static void main( final String[] args )

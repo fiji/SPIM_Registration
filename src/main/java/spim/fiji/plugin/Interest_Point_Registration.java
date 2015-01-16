@@ -401,13 +401,13 @@ public class Interest_Point_Registration implements PlugIn
 
 		// save the XML including transforms and correspondences
 		if ( !displayOnly )
-			saveXML( result.getData(), result.getXMLFileName() );
+			saveXML( result.getData(), result.getXMLFileName(), result.getClusterExtension() );
 	}
 	
-	public static void saveXML( final SpimData2 data, final String xmlFileName  )
+	public static void saveXML( final SpimData2 data, final String xmlFileName, final String clusterExtension  )
 	{
 		// save the xml
-		final XmlIoSpimData2 io = new XmlIoSpimData2();
+		final XmlIoSpimData2 io = new XmlIoSpimData2( clusterExtension );
 		
 		final String xml = new File( data.getBasePath(), new File( xmlFileName ).getName() ).getAbsolutePath();
 		try 

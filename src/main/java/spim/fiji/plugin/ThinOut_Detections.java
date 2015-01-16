@@ -83,7 +83,7 @@ public class ThinOut_Detections implements PlugIn
 			return;
 
 		// write new xml
-		final XmlIoSpimData2 io = new XmlIoSpimData2();
+		final XmlIoSpimData2 io = new XmlIoSpimData2( xml.getClusterExtension() );
 		
 		final String xmlFile = new File( xml.getData().getBasePath(), new File( xml.getXMLFileName() ).getName() ).getAbsolutePath();
 		try 

@@ -204,7 +204,7 @@ public class Interest_Point_Detection implements PlugIn
 			}
 			
 			// save the xml
-			final XmlIoSpimData2 io = new XmlIoSpimData2();
+			final XmlIoSpimData2 io = new XmlIoSpimData2( result.getClusterExtension() );
 			
 			final String xml = new File( data.getBasePath(), new File( result.getXMLFileName() ).getName() ).getAbsolutePath();
 			try 

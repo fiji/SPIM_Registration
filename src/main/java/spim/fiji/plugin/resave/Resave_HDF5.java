@@ -55,7 +55,7 @@ public class Resave_HDF5 implements PlugIn
 		if ( loadDimensions( xml.getData(), xml.getViewSetupsToProcess() ) )
 		{
 			// save the XML again with the dimensions loaded
-			final XmlIoSpimData2 io = new XmlIoSpimData2();
+			final XmlIoSpimData2 io = new XmlIoSpimData2( xml.getClusterExtension() );
 			
 			final String xmlFile = new File( xml.getData().getBasePath(), new File( xml.getXMLFileName() ).getName() ).getAbsolutePath();
 			try 

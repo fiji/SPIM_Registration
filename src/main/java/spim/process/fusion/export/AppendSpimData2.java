@@ -46,6 +46,11 @@ public class AppendSpimData2 implements ImgExport
 
 	String xmlFile;
 
+	String clusterExt = "";
+
+	@Override
+	public void setClusterExt( final String clusterExt ) { this.clusterExt = clusterExt; }
+
 	@Override
 	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval<T> img, final BoundingBox bb, final TimePoint tp, final ViewSetup vs )
 	{
@@ -80,7 +85,7 @@ public class AppendSpimData2 implements ImgExport
 	{
 		try
 		{
-			new XmlIoSpimData2().save( spimData, new File( xmlFile ).getAbsolutePath() );
+			new XmlIoSpimData2( clusterExt ).save( spimData, new File( xmlFile ).getAbsolutePath() );
 			
 			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + xmlFile + "'." );
 			return true;

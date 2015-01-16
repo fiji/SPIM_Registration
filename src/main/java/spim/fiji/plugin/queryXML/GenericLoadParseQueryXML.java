@@ -29,6 +29,7 @@ import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.io.IOFunctions;
+import spim.fiji.plugin.Toggle_Cluster_Options;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.NamePattern;
 
@@ -43,17 +44,30 @@ import spim.fiji.spimdata.NamePattern;
  * @param <D>
  * @param <L>
  */
-public class GenericLoadParseQueryXML< AS extends AbstractSpimData< S >, S extends AbstractSequenceDescription< V, D, L >, V extends BasicViewSetup, D extends BasicViewDescription< V >, L extends BasicImgLoader< ? > >
+public class GenericLoadParseQueryXML<
+		AS extends AbstractSpimData< S >,
+		S extends AbstractSequenceDescription< V, D, L >,
+		V extends BasicViewSetup,
+		D extends BasicViewDescription< V >,
+		L extends BasicImgLoader< ? >,
+		X extends XmlIoAbstractSpimData< S, AS > >
 {
 	public static String defaultXMLfilename = "";
-		
+
 	protected static String goodMsg1 = "The selected XML file was parsed successfully";
 	protected static String warningMsg1 = "The selected file does not appear to be an xml. Press OK to try to parse anyways.";
 	protected static String errorMsg1 = "An ERROR occured parsing this XML file! Please select a different XML (see log)";
 	protected static String neutralMsg1 = "No XML file selected.";	
 	protected static String noMsg2 = " ";
 	protected static String[] attributeChoiceList = new String[]{ "All *s", "Single * (Select from List)", "Multiple *s (Select from List)", "Range of *s (Specify by Name)" };
-	
+
+	public static final String[] clusterOptions1 = new String[]{
+		"Do not process on cluster",
+		"Save every XML with unique id generated from processed subset.",
+		"Save every XML with user-provided unique id." };
+
+	public static int defaultClusterOption1 = 1;
+
 	// remember as default
 	public static HashMap< String, Integer > defaultAttributeChoice = new HashMap< String, Integer >();
 	public static HashMap< String, Integer > defaultAttributeEntityIndex = new HashMap< String, Integer >();
@@ -64,7 +78,7 @@ public class GenericLoadParseQueryXML< AS extends AbstractSpimData< S >, S exten
 	protected HashMap< String, Integer > attributeChoice = new HashMap< String, Integer >();
 
 	// how to load the XML
-	final protected XmlIoAbstractSpimData< S, AS > io;
+	final protected X io;
 
 	// how to sort the attributes (if not by name)
 	protected Comparator< String > comparator = null;
@@ -87,11 +101,14 @@ public class GenericLoadParseQueryXML< AS extends AbstractSpimData< S >, S exten
 	// all instances of all entities per attribute
 	protected HashMap< String, List< Entity > > attributeInstancesToProcess;
 
+	// extension for the XML when saving
+	protected String clusterExt = null;
+
 	/**
 	 * Constructor for the class needs an appropriate IO module
 	 * @param xmlIoSpimData
 	 */
-	public GenericLoadParseQueryXML( final XmlIoAbstractSpimData< S, AS > io )
+	public GenericLoadParseQueryXML( final X io )
 	{
 		this.io = io;
 		IOFunctions.println( "Using spimdata version: " + Version.getVersion() );
@@ -101,7 +118,7 @@ public class GenericLoadParseQueryXML< AS extends AbstractSpimData< S >, S exten
 	/**
 	 * @return the i/o object used to parse the XML
 	 */
-	public XmlIoAbstractSpimData< S, AS > getIO() { return io; }
+	public X getIO() { return io; }
 	
 	/**
 	 * @return the SpimData object parsed from the xml
@@ -212,14 +229,21 @@ public class GenericLoadParseQueryXML< AS extends AbstractSpimData< S >, S exten
 			gd.addMessage( " " );
 		
 		for ( int i = 0; i < specifyAttributes.size(); ++i )
-		{			
+		{
 			final String attribute = specifyAttributes.get( i );
 			final String[] choices = makeChoiceList( attribute );
 			final int defaultChoice = defaultAttributeChoice.containsKey( attribute ) ? defaultAttributeChoice.get( attribute ) : 0;
 			
 			gd.addChoice( query + "_" + attribute, choices, choices[ defaultChoice ] );
 		}
-		
+
+		if ( Toggle_Cluster_Options.displayClusterProcessing )
+		{
+			gd.addMessage( "" );
+			gd.addChoice( "XML_Output", clusterOptions1, clusterOptions1[ defaultClusterOption1 ] );
+			gd.addMessage( "Note: Later on you need to merge the different XML's using Plugins>MultiView Reconstruction>Cluster>Merge Cluster Jobs", GUIHelper.smallStatusFont );
+		}
+
 		addListeners( gd, (TextField)gd.getStringFields().firstElement(), l1, l2 );
 		
 		gd.showDialog();
@@ -241,13 +265,58 @@ public class GenericLoadParseQueryXML< AS extends AbstractSpimData< S >, S exten
 			attributeChoice.put( attribute, choice );
 		}
 
+		final int clusterSaving;
+
+		// check for cluster options if selected
+		if ( Toggle_Cluster_Options.displayClusterProcessing )
+			clusterSaving = defaultClusterOption1 = gd.getNextChoiceIndex();
+		else
+			clusterSaving = 0;
+
 		// fill up angles, channels, illuminations, timepoints (all, if there is no further dialog)
 		if ( !queryDetails() )
 			return false;
 
+		if ( clusterSaving == 0 )
+		{
+			this.clusterExt = "";
+		}
+		else if ( clusterSaving == 1 )
+		{
+			this.clusterExt = createUniqueName();
+		}
+		else
+		{
+			final GenericDialog gdCluster = new GenericDialog( "Define unique ID" );
+			gdCluster.addStringField( "UNIQUE_ID", "" );
+			gdCluster.addMessage( "Note: Using an ID twice might result in overwriting of the XML files.", GUIHelper.smallStatusFont );
+
+			gd.showDialog();
+
+			if ( gd.wasCanceled() )
+				return false;
+
+			this.clusterExt = gd.getNextString();
+		}
+
 		return true;
 	}
-	
+
+	public String getClusterExtension() { return this.clusterExt; }
+
+	protected String createUniqueName()
+	{
+		long idSum = 1;
+
+		for ( final TimePoint t : getTimePointsToProcess() )
+			idSum *= t.getId();
+
+		for ( final BasicViewSetup v : getViewSetupsToProcess() )
+			idSum += v.getId();
+
+		return "job_" + ( System.nanoTime() + System.currentTimeMillis() + idSum );
+	}
+
 	/**
 	 * Querys a single element from the list
 	 * 
@@ -682,7 +751,7 @@ public class GenericLoadParseQueryXML< AS extends AbstractSpimData< S >, S exten
 	
 	protected void addListeners( final GenericDialog gd, final TextField tf, final Label label1, final Label label2  )
 	{
-		final GenericLoadParseQueryXML< ?,?,?,?,? > lpq = this;
+		final GenericLoadParseQueryXML< ?,?,?,?,?,? > lpq = this;
 		
 		// using TextListener instead
 		tf.addTextListener( new TextListener()

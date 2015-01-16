@@ -104,7 +104,7 @@ public class Define_Multi_View_Dataset implements PlugIn
 		else
 		{
 			//final XmlIoSpimData< TimePoint, ViewSetupBeads > io = XmlIoSpimData.createDefault();
-			final XmlIoSpimData2 io = new XmlIoSpimData2();
+			final XmlIoSpimData2 io = new XmlIoSpimData2( "" );
 			
 			final String xml = new File( spimData.getBasePath(), xmlFileName ).getAbsolutePath();
 			try 

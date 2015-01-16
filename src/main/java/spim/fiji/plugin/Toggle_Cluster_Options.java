@@ -1,8 +1,8 @@
 package spim.fiji.plugin;
 
-import mpicbg.spim.io.IOFunctions;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
+import mpicbg.spim.io.IOFunctions;
 
 public class Toggle_Cluster_Options implements PlugIn
 {

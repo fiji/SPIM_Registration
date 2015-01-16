@@ -149,7 +149,7 @@ public class Specify_Calibration implements PlugIn
 				}
 		
 		// save the xml
-		final XmlIoSpimData2 io = new XmlIoSpimData2();
+		final XmlIoSpimData2 io = new XmlIoSpimData2( result.getClusterExtension() );
 		
 		final String xml = new File( result.getData().getBasePath(), new File( result.getXMLFileName() ).getName() ).getAbsolutePath();
 		try 

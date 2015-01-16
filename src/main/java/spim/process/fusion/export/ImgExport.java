@@ -20,6 +20,9 @@ public interface ImgExport
 	 */
 	public boolean finish();
 
+	/** If an XML is written in the process **/
+	public void setClusterExt( final String clusterExt );
+
 	public void setXMLData( final List< TimePoint > timepointsToProcess, final List< ViewSetup > newViewSetups );
 
 	/**

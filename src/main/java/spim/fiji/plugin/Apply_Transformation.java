@@ -226,7 +226,7 @@ public class Apply_Transformation implements PlugIn
 		}
 		
 		// now save it
-		Interest_Point_Registration.saveXML( result.getData(), result.getXMLFileName() );
+		Interest_Point_Registration.saveXML( result.getData(), result.getXMLFileName(), result.getClusterExtension() );
 	}
 
 	protected boolean queryBigDataViewer( final int applyTo, final double minResolution, final LoadParseQueryXML result )

@@ -140,6 +140,7 @@ public class Image_Fusion implements PlugIn
 		if ( !imgExport.queryParameters( result.getData() ) )
 			return;
 
+		imgExport.setClusterExt( result.getClusterExtension() );
 		fusion.fuseData( boundingBox, imgExport );
 
 		boundingBox.cleanUp( result );
@@ -162,7 +163,7 @@ public class Image_Fusion implements PlugIn
 			if ( updated )
 			{
 				// save the xml
-				final XmlIoSpimData2 io = new XmlIoSpimData2();
+				final XmlIoSpimData2 io = new XmlIoSpimData2( result.getClusterExtension() );
 				
 				final String xml = new File( result.getData().getBasePath(), new File( result.getXMLFileName() ).getName() ).getAbsolutePath();
 				try 

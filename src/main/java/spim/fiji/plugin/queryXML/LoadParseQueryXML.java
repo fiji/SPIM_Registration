@@ -17,9 +17,9 @@ import mpicbg.spim.io.IOFunctions;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
 
-public class LoadParseQueryXML extends GenericLoadParseQueryXML< SpimData2, SequenceDescription, ViewSetup, ViewDescription, ImgLoader< ? > >
+public class LoadParseQueryXML extends GenericLoadParseQueryXML< SpimData2, SequenceDescription, ViewSetup, ViewDescription, ImgLoader< ? >, XmlIoSpimData2 >
 {
-	public LoadParseQueryXML() { super( new XmlIoSpimData2() ); }
+	public LoadParseQueryXML() { super( new XmlIoSpimData2( "" ) ); }
 
 	public boolean queryXML(
 			final String additionalTitle,
@@ -73,6 +73,22 @@ public class LoadParseQueryXML extends GenericLoadParseQueryXML< SpimData2, Sequ
 
 		return queryXML( additionalTitle, query, specifyAttributes );
 	}
+
+	@Override
+	public boolean queryXML(
+			final String additionalTitle,
+			String query,
+			List< String > specifyAttributes )
+	{
+		boolean success = super.queryXML( additionalTitle, query, specifyAttributes );
+
+		// make sure the internal IO is updated to reflect the cluster saving
+		if ( success )
+			this.getIO().setClusterExt( this.getClusterExtension() );
+
+		return success;
+	}
+
 	/**
 	 * @return All angles that should be processed
 	 */
@@ -90,6 +106,9 @@ public class LoadParseQueryXML extends GenericLoadParseQueryXML< SpimData2, Sequ
 	 */
 	@SuppressWarnings("unchecked")
 	public List< Illumination > getIlluminationsToProcess() { return (List< Illumination >)(Object)attributeInstancesToProcess.get( "illumination" ); }
+
+	//@Override
+	//public XmlIoSpimData2 getIO() { return (XmlIoSpimData2)io; }
 
 	public static void main( String args[] )
 	{

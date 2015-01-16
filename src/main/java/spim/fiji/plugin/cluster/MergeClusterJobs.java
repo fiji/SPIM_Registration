@@ -38,7 +38,7 @@ public class MergeClusterJobs
 
 		for ( final File xml : xmls )
 		{
-			final XmlIoSpimData2 io = new XmlIoSpimData2();
+			final XmlIoSpimData2 io = new XmlIoSpimData2( "" );
 			final SpimData2 data = io.load( xml.getAbsolutePath() );
 
 			instances.add( new ValuePair< XmlIoSpimData2, SpimData2 >( io, data ) );

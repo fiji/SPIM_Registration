@@ -148,7 +148,7 @@ public class Duplicate_Transformation implements PlugIn
 		}
 
 		// now save it in case something was applied
-		Interest_Point_Registration.saveXML( result.getData(), result.getXMLFileName() );
+		Interest_Point_Registration.saveXML( result.getData(), result.getXMLFileName(), result.getClusterExtension() );
 	}
 
 	protected void askForRegistrations( final GenericDialog gd )
