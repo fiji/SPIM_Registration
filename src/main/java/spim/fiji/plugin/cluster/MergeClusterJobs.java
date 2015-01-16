@@ -2,6 +2,7 @@ package spim.fiji.plugin.cluster;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -10,11 +11,11 @@ import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
-import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
-
+import mpicbg.spim.io.IOFunctions;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
+import spim.fiji.plugin.resave.Resave_TIFF;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
@@ -33,9 +34,10 @@ public class MergeClusterJobs
 	 * are present in all instances. It simply fills up the first one that can be written again. 
 	 * 
 	 * @param xmls
+	 * @param output - where to save the merged xml
 	 * @throws SpimDataException
 	 */
-	public static void merge( final List< File > xmls ) throws SpimDataException
+	public static void merge( final List< File > xmls, final File output ) throws SpimDataException
 	{
 		final ArrayList< Pair< XmlIoSpimData2, SpimData2 > > instances = new ArrayList< Pair< XmlIoSpimData2, SpimData2 > >();
 
@@ -57,9 +59,25 @@ public class MergeClusterJobs
 			final SpimData2 data = instances.get( i ).getB();
 
 			// 
-			// TODO: Update attributes of viewsetups 
+			// Update attributes of viewsetups 
 			//
+			for ( final ViewSetup v : data.getSequenceDescription().getViewSetupsOrdered() )
+			{
+				final ViewSetup vOut = dataOut.getSequenceDescription().getViewSetups().get( v.getId() );
 
+				if ( vOut == null )
+					throw new SpimDataException(
+							"Could not find corresponding ViewSetupId=" + v.getId() + " in xml '" + xmls.get( i ) + "'" );
+
+				if ( vOut.getSize() == null && v.getSize() != null )
+					vOut.setSize( v.getSize() );
+
+				if ( vOut.getVoxelSize() == null && v.getVoxelSize() != null )
+					vOut.setVoxelSize( v.getVoxelSize() );
+
+				if ( !vOut.getAngle().hasRotation() && v.getAngle().hasRotation() )
+					vOut.getAngle().setRotation( v.getAngle().getRotationAxis(), v.getAngle().getRotationAngleDegrees() );
+			}
 
 			//
 			// update viewregistrations, choose longest one
@@ -88,6 +106,8 @@ public class MergeClusterJobs
 			//
 			final ViewInterestPoints vip = data.getViewInterestPoints();
 
+			final ArrayList< String > filesToCopy = new ArrayList< String >();
+
 			for ( final TimePoint tp : data.getSequenceDescription().getTimePoints().getTimePointsOrdered() )
 				for ( final ViewSetup vs : data.getSequenceDescription().getViewSetupsOrdered() )
 				{
@@ -104,9 +124,27 @@ public class MergeClusterJobs
 						{
 							final InterestPointList ipl = map.get( label );
 							viplOut.addInterestPointList( label, ipl );
+
+							// which interestpoint lists to copy
+							filesToCopy.add( ipl.getFile().getName() );
 						}
 					}
 				}
+
+			// copy the interest points if necessary
+			Resave_TIFF.copyInterestPoints( data.getBasePath(), output.getParentFile(), filesToCopy );
+		}
+
+		// save the XML
+		try
+		{
+			ioOut.save( dataOut, output.getAbsolutePath() );
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + output + "'." );
+		}
+		catch ( Exception e )
+		{
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + output + "': " + e );
+			e.printStackTrace();
 		}
 	}
 
