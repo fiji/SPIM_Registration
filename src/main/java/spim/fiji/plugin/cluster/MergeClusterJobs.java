@@ -25,11 +25,6 @@ import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 public class MergeClusterJobs
 {
 	/**
-	 * Set this to true so that the option to process as individual cluster jobs shows up in the dialogs
-	 */
-	public static boolean displayClusterProcessing = false;
-
-	/**
 	 * This performs a merge of attributes of the different xml's only assuming the same instances of viewsetups and timepoints
 	 * are present in all instances. It simply fills up the first one that can be written again. 
 	 * 
