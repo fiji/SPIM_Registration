@@ -291,12 +291,12 @@ public class GenericLoadParseQueryXML<
 			gdCluster.addStringField( "UNIQUE_ID", "" );
 			gdCluster.addMessage( "Note: Using an ID twice might result in overwriting of the XML files.", GUIHelper.smallStatusFont );
 
-			gd.showDialog();
+			gdCluster.showDialog();
 
-			if ( gd.wasCanceled() )
+			if ( gdCluster.wasCanceled() )
 				return false;
 
-			this.clusterExt = gd.getNextString();
+			this.clusterExt = gdCluster.getNextString();
 		}
 
 		return true;
