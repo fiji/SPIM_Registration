@@ -49,6 +49,26 @@ public class MergeClusterJobs
 		final ViewRegistrations vrOut = dataOut.getViewRegistrations();
 		final ViewInterestPoints vipOut = dataOut.getViewInterestPoints();
 
+		//
+		// copy interest points for the first XML if necessary
+		//
+		final ArrayList< String > filesToCopy = new ArrayList< String >();
+
+		for ( final TimePoint tp : dataOut.getSequenceDescription().getTimePoints().getTimePointsOrdered() )
+			for ( final ViewSetup vs : dataOut.getSequenceDescription().getViewSetupsOrdered() )
+				if ( dataOut.getSequenceDescription().getViewDescription( tp.getId(), vs.getId() ).isPresent() )
+				{
+					final HashMap< String, InterestPointList > map = vipOut.getViewInterestPointLists( tp.getId(), vs.getId() ).getHashMap();
+					for ( final String label : map.keySet() )
+						filesToCopy.add( map.get( label ).getFile().getName() );
+				}
+
+		// copy the interest points if necessary
+		Resave_TIFF.copyInterestPoints( dataOut.getBasePath(), output.getParentFile(), filesToCopy );
+
+		//
+		// merge XML's and copy interest points for the rest of the XML's
+		//
 		for ( int i = 1; i < instances.size(); ++i )
 		{
 			final SpimData2 data = instances.get( i ).getB();
@@ -100,8 +120,7 @@ public class MergeClusterJobs
 			// update viewinterestpoints, add those who do not exist
 			//
 			final ViewInterestPoints vip = data.getViewInterestPoints();
-
-			final ArrayList< String > filesToCopy = new ArrayList< String >();
+			filesToCopy.clear();
 
 			for ( final TimePoint tp : data.getSequenceDescription().getTimePoints().getTimePointsOrdered() )
 				for ( final ViewSetup vs : data.getSequenceDescription().getViewSetupsOrdered() )
