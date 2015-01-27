@@ -38,15 +38,18 @@ public class XmlIoSpimData2 extends XmlIoAbstractSpimData< SequenceDescription, 
 	@Override
 	public void save( final SpimData2 spimData, String xmlFilename ) throws SpimDataException
 	{
-		if ( xmlFilename.toLowerCase().endsWith( ".xml" ) )
+		if ( clusterExt != null && clusterExt.length() > 0 )
 		{
-			xmlFilename =
-					xmlFilename.substring( 0, xmlFilename.length() - 4 ) + "." + this.clusterExt +
-					xmlFilename.substring( xmlFilename.length() - 4, xmlFilename.length() );
-		}
-		else
-		{
-			xmlFilename += this.clusterExt + ".xml";
+			if ( xmlFilename.toLowerCase().endsWith( ".xml" ) )
+			{
+				xmlFilename =
+						xmlFilename.substring( 0, xmlFilename.length() - 4 ) + "." + this.clusterExt +
+						xmlFilename.substring( xmlFilename.length() - 4, xmlFilename.length() );
+			}
+			else
+			{
+				xmlFilename += this.clusterExt + ".xml";
+			}
 		}
 
 		this.lastFileName = xmlFilename;
