@@ -241,7 +241,7 @@ public class GenericLoadParseQueryXML<
 		{
 			gd.addMessage( "" );
 			gd.addChoice( "XML_Output", clusterOptions1, clusterOptions1[ defaultClusterOption1 ] );
-			gd.addMessage( "Note: Later on you need to merge the different XML's using Plugins>MultiView Reconstruction>Cluster>Merge Cluster Jobs", GUIHelper.smallStatusFont );
+			gd.addMessage( "Note: Later on you need to merge the different XML's using Plugins>MultiView Reconstruction>Tools>Cluster>Merge Cluster Jobs", GUIHelper.smallStatusFont );
 		}
 
 		addListeners( gd, (TextField)gd.getStringFields().firstElement(), l1, l2 );
