@@ -22,7 +22,7 @@ public class Merge_Cluster_Jobs implements PlugIn
 {
 	public static String defaultContains1 = "job_";
 	public static String defaultContains2 = ".xml";
-	public static String defaultNewXML = null;
+	public static String defaultNewXML = "dataset_merged.xml";
 	public static String defaultMergeXMLDir = null;
 
 	Color color = GUIHelper.neutral;
@@ -45,10 +45,7 @@ public class Merge_Cluster_Jobs implements PlugIn
 		final TextField contains1 = (TextField)gd.getStringFields().get( 1 );
 		final TextField contains2 = (TextField)gd.getStringFields().get( 2 );
 
-		if ( defaultNewXML == null )
-			defaultNewXML = "";
-
-		gd.addFileField( "Merged_XML", defaultNewXML, 50 );
+		gd.addStringField( "Merged_XML", defaultNewXML, 50 );
 
 		// a first run
 		findFiles( new File( directory.getText() ), contains1.getText(), contains2.getText() );
@@ -75,7 +72,7 @@ public class Merge_Cluster_Jobs implements PlugIn
 		defaultMergeXMLDir = gd.getNextString();
 		defaultContains1 = gd.getNextString();
 		defaultContains2 = gd.getNextString();
-		final File newXML = new File( defaultNewXML = gd.getNextString() );
+		final File newXML = new File( directory.getText(), defaultNewXML = gd.getNextString() );
 
 		try
 		{
