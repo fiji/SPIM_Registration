@@ -4,9 +4,12 @@ import fiji.util.gui.GenericDialogPlus;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
+import java.awt.Checkbox;
 import java.awt.Color;
 import java.awt.Label;
 import java.awt.TextField;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.TextEvent;
 import java.awt.event.TextListener;
 import java.io.File;
@@ -24,6 +27,8 @@ public class Merge_Cluster_Jobs implements PlugIn
 	public static String defaultContains2 = ".xml";
 	public static String defaultNewXML = "dataset_merged.xml";
 	public static String defaultMergeXMLDir = null;
+	public static boolean defaultDeleteXMLs = false;
+	public static boolean defaultDisplayXMLs = true;
 
 	Color color = GUIHelper.neutral;
 	String message = "---";
@@ -46,23 +51,27 @@ public class Merge_Cluster_Jobs implements PlugIn
 		final TextField contains2 = (TextField)gd.getStringFields().get( 2 );
 
 		gd.addStringField( "Merged_XML", defaultNewXML, 50 );
+		gd.addCheckbox( "Display currently selected XML's in log window", defaultDisplayXMLs );
+
+		final Checkbox display = (Checkbox)gd.getCheckboxes().firstElement();
+		gd.addCheckbox( "Delete_XML's after successful merge", defaultDeleteXMLs );
 
 		// a first run
-		findFiles( new File( directory.getText() ), contains1.getText(), contains2.getText() );
+		findFiles( new File( directory.getText() ), contains1.getText(), contains2.getText(), defaultDisplayXMLs );
 
 		gd.addMessage( "" );
 		gd.addMessage( this.message, GUIHelper.largestatusfont, this.color );
 
 		final Label target = (Label)gd.getMessage();
 
-		addListeners( gd, directory, contains1, contains2, target );
+		addListeners( gd, directory, contains1, contains2, display, target );
 
 		gd.showDialog();
 
 		if ( gd.wasCanceled() )
 			return;
 
-		findFiles( new File( directory.getText() ), contains1.getText(), contains2.getText() );
+		findFiles( new File( directory.getText() ), contains1.getText(), contains2.getText(), false );
 
 		IOFunctions.println( "Attempting to merge the following XML's:" );
 
@@ -72,13 +81,25 @@ public class Merge_Cluster_Jobs implements PlugIn
 		defaultMergeXMLDir = gd.getNextString();
 		defaultContains1 = gd.getNextString();
 		defaultContains2 = gd.getNextString();
+		defaultDisplayXMLs = gd.getNextBoolean();
+		final boolean delete = defaultDeleteXMLs = gd.getNextBoolean();
 		final File newXML = new File( directory.getText(), defaultNewXML = gd.getNextString() );
 
 		try
 		{
 			MergeClusterJobs.merge( xmls, newXML );
 
-			IOFunctions.println( "Successfully merged all XML's into one new XML: + " + newXML.getAbsolutePath() );
+			IOFunctions.println( "Successfully merged all XML's into one new XML: " + newXML.getAbsolutePath() );
+
+			if ( delete )
+			{
+				IOFunctions.println( "Deleting all input XML's." );
+
+				for ( final File f : this.xmls )
+					f.delete();
+
+				IOFunctions.println( "Done." );
+			}
 		}
 		catch ( final SpimDataException e )
 		{
@@ -92,6 +113,7 @@ public class Merge_Cluster_Jobs implements PlugIn
 			final TextField directory,
 			final TextField contains1,
 			final TextField contains2,
+			final Checkbox display,
 			final Label label )
 	{
 		directory.addTextListener( new TextListener()
@@ -101,7 +123,7 @@ public class Merge_Cluster_Jobs implements PlugIn
 			{
 				if ( t.getID() == TextEvent.TEXT_VALUE_CHANGED )
 				{
-					findFiles( new File( directory.getText() ), contains1.getText(), contains2.getText() );
+					findFiles( new File( directory.getText() ), contains1.getText(), contains2.getText(), display.getState() );
 					update( label );
 				}
 			}
@@ -114,7 +136,7 @@ public class Merge_Cluster_Jobs implements PlugIn
 			{
 				if ( t.getID() == TextEvent.TEXT_VALUE_CHANGED )
 				{
-					findFiles( new File( directory.getText() ), contains1.getText(), contains2.getText() );
+					findFiles( new File( directory.getText() ), contains1.getText(), contains2.getText(), display.getState() );
 					update( label );
 				}
 			}
@@ -127,7 +149,20 @@ public class Merge_Cluster_Jobs implements PlugIn
 			{
 				if ( t.getID() == TextEvent.TEXT_VALUE_CHANGED )
 				{
-					findFiles( new File( directory.getText() ), contains1.getText(), contains2.getText() );
+					findFiles( new File( directory.getText() ), contains1.getText(), contains2.getText(), display.getState() );
+					update( label );
+				}
+			}
+		});
+
+		display.addItemListener( new ItemListener()
+		{
+			@Override
+			public void itemStateChanged( final ItemEvent i )
+			{
+				if ( i.getID() == ItemEvent.ITEM_STATE_CHANGED )
+				{
+					findFiles( new File( directory.getText() ), contains1.getText(), contains2.getText(), display.getState() );
 					update( label );
 				}
 			}
@@ -140,7 +175,7 @@ public class Merge_Cluster_Jobs implements PlugIn
 		label.setForeground( this.color );
 	}
 
-	protected void findFiles( final File dir, final String contains1, final String contains2 )
+	protected void findFiles( final File dir, final String contains1, final String contains2, final boolean display )
 	{
 		this.xmls.clear();
 
@@ -166,6 +201,14 @@ public class Merge_Cluster_Jobs implements PlugIn
 			{
 				this.message = "Found " + this.xmls.size() + " files that match the name pattern.";
 				this.color = GUIHelper.good;
+
+				if ( display )
+				{
+					IOFunctions.println( "Currently selected XML's: " );
+
+					for ( final File f : this.xmls )
+						IOFunctions.println( "  " + f.getAbsolutePath() );
+				}
 			}
 		}
 	}
