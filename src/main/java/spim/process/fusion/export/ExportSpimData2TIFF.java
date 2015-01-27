@@ -89,16 +89,18 @@ public class ExportSpimData2TIFF implements ImgExport
 	@Override
 	public boolean finish()
 	{
+		XmlIoSpimData2 io = new XmlIoSpimData2( clusterExt );
+
 		try
 		{
-			new XmlIoSpimData2( clusterExt ).save( spimData, new File( params.getXMLFile() ).getAbsolutePath() );
+			io.save( spimData, new File( params.getXMLFile() ).getAbsolutePath() );
 			
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + params.getXMLFile() + "'." );
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + io.lastFileName() + "'." );
 			return true;
 		}
 		catch ( SpimDataException e )
 		{
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + params.getXMLFile() + "'." );
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + io.lastFileName() + "'." );
 			e.printStackTrace();
 			return false;
 		}

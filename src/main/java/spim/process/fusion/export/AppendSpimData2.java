@@ -83,16 +83,18 @@ public class AppendSpimData2 implements ImgExport
 	@Override
 	public boolean finish()
 	{
+		XmlIoSpimData2 io = new XmlIoSpimData2( clusterExt );
+
 		try
 		{
-			new XmlIoSpimData2( clusterExt ).save( spimData, new File( xmlFile ).getAbsolutePath() );
+			io.save( spimData, new File( xmlFile ).getAbsolutePath() );
 			
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + xmlFile + "'." );
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + io.lastFileName() + "'." );
 			return true;
 		}
 		catch ( SpimDataException e )
 		{
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + xmlFile + "'." );
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + io.lastFileName() + "'." );
 			e.printStackTrace();
 			return false;
 		}

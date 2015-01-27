@@ -22,7 +22,7 @@ import spim.fiji.spimdata.interestpoints.XmlIoViewInterestPoints;
 public class XmlIoSpimData2 extends XmlIoAbstractSpimData< SequenceDescription, SpimData2 >
 {
 	final XmlIoViewInterestPoints xmlViewsInterestPoints;
-	String clusterExt;
+	String clusterExt, lastFileName;
 	public static int numBackups = 5;
 	
 	public XmlIoSpimData2( final String clusterExt )
@@ -48,6 +48,8 @@ public class XmlIoSpimData2 extends XmlIoAbstractSpimData< SequenceDescription, 
 		{
 			xmlFilename += this.clusterExt + ".xml";
 		}
+
+		this.lastFileName = xmlFilename;
 
 		// fist make a copy of the XML and save it to not loose it
 		if ( new File( xmlFilename ).exists() )
@@ -76,8 +78,9 @@ public class XmlIoSpimData2 extends XmlIoAbstractSpimData< SequenceDescription, 
 
 		super.save( spimData, xmlFilename );
 	}
-	
-	 
+
+	public String lastFileName() { return lastFileName; }
+
 	protected static void copyFile( final File inputFile, final File outputFile ) throws IOException
 	{
 		InputStream input = null;

@@ -169,11 +169,11 @@ public class Image_Fusion implements PlugIn
 				try 
 				{
 					io.save( result.getData(), xml );
-					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + xml + "' (image metadata was updated)." );
+					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + io.lastFileName() + "' (image metadata was updated)." );
 				}
 				catch ( Exception e )
 				{
-					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + xml + "': " + e );
+					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + io.lastFileName() + "': " + e );
 					e.printStackTrace();
 				}
 			}

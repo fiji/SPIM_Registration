@@ -86,11 +86,11 @@ public class AutomaticReorientation extends ManualBoundingBox
 			try 
 			{
 				io.save( result.getData(), xml );
-				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + xml + "' (applied the transformation to mimimize the bounding box)." );
+				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + io.lastFileName() + "' (applied the transformation to mimimize the bounding box)." );
 			}
 			catch ( Exception e )
 			{
-				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + xml + "': " + e );
+				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + io.lastFileName() + "': " + e );
 				e.printStackTrace();
 			}
 		}
