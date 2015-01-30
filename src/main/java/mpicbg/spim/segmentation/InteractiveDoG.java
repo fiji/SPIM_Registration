@@ -403,7 +403,7 @@ public class InteractiveDoG implements PlugIn
 		if ( imp.getProcessor() instanceof FloatProcessor )
 		{
 			for ( int z = 0; z < imp.getNSlices(); ++z )
-				img.add( (float[])imp.getStack().getProcessor( imp.getStackIndex( channel, z + 1, timepoint ) ).getPixels() );
+				img.add( ( (float[])imp.getStack().getProcessor( imp.getStackIndex( channel, z + 1, timepoint ) ).getPixels() ).clone() );
 		}
 		else if ( imp.getProcessor() instanceof ByteProcessor )
 		{
@@ -711,7 +711,9 @@ public class InteractiveDoG implements PlugIn
 
 			// convert ImgLib2 image to ImgLib1 image via the imageplus
 			final Image< FloatType > source = ImageJFunctions.wrapFloat( imp );
-			
+
+			IOFunctions.println( "Computing DoG ... " );
+
 			// test the parameters on the complete stack
 			final ArrayList<DifferenceOfGaussianPeak<FloatType>> peaks = 
 				DetectionSegmentation.extractBeadsLaPlaceImgLib( 
@@ -725,7 +727,9 @@ public class InteractiveDoG implements PlugIn
 			                                				lookForMaxima,
 			                                				lookForMinima,
 			                                				ViewStructure.DEBUG_MAIN );
-			
+
+			IOFunctions.println( "Drawing DoG result ... " );
+
 			// display as extra image
 			Image<FloatType> detections = source.createNewImage();
 			final LocalizableByDimCursor<FloatType> c = detections.createLocalizableByDimCursor();
@@ -737,13 +741,16 @@ public class InteractiveDoG implements PlugIn
 				c.setPosition( p );
 				c.getType().set( 1 );
 			}
-			
-			
+
+			IOFunctions.println( "Convolving DoG result ... " );
+
 			final GaussianConvolutionReal<FloatType> gauss = new GaussianConvolutionReal<FloatType>( detections, new OutOfBoundsStrategyValueFactory<FloatType>(), 2 );
 			gauss.process();
-			
+
 			detections = gauss.getResult();
-			
+
+			IOFunctions.println( "Showing DoG result ... " );
+
 			ImageJFunctions.show( detections );
 		}
 	}
