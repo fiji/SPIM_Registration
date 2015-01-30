@@ -101,7 +101,10 @@ public class InteractiveDoG implements PlugIn
 	float thresholdMin = 0.0001f;
 	float thresholdMax = 1f;
 	int thresholdInit = 500;
-	
+
+	double minIntensityImage = Double.NaN;
+	double maxIntensityImage = Double.NaN;
+
 	SliceObserver sliceObserver;
 	RoiListener roiListener;
 	ImagePlus imp;
@@ -161,7 +164,10 @@ public class InteractiveDoG implements PlugIn
 	}
 	public InteractiveDoG( final ImagePlus imp ) { this.imp = imp; }
 	public InteractiveDoG() {}
-	
+
+	public void setMinIntensityImage( final double min ) { this.minIntensityImage = min; }
+	public void setMaxIntensityImage( final double max ) { this.maxIntensityImage = max; }
+
 	@Override
 	public void run( String arg )
 	{
@@ -391,6 +397,11 @@ public class InteractiveDoG implements PlugIn
 	 */
 	public static FloatImagePlus< net.imglib2.type.numeric.real.FloatType > convertToFloat( final ImagePlus imp, int channel, int timepoint )
 	{
+		return convertToFloat( imp, channel, timepoint, Double.NaN, Double.NaN );
+	}
+
+	public static FloatImagePlus< net.imglib2.type.numeric.real.FloatType > convertToFloat( final ImagePlus imp, int channel, int timepoint, final double min, final double max )
+	{
 		// stupid 1-offset of imagej
 		channel++;
 		timepoint++;
@@ -449,7 +460,11 @@ public class InteractiveDoG implements PlugIn
 		}
 
 		final FloatImagePlus< net.imglib2.type.numeric.real.FloatType > i = createImgLib2( img, w, h );
-		FusionHelper.normalizeImage( i );
+
+		if ( Double.isNaN( min ) || Double.isNaN( max ) || Double.isInfinite( min ) || Double.isInfinite( max ) )
+			FusionHelper.normalizeImage( i );
+		else
+			FusionHelper.normalizeImage( i, (float)min, (float)max );
 
 		return i;
 	}
