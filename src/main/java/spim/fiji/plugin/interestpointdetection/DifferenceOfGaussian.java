@@ -258,7 +258,7 @@ public class DifferenceOfGaussian extends DifferenceOf implements GenericDialogA
 		imp.setSlice( imp.getStackSize() / 2 );
 		imp.setRoi( 0, 0, imp.getWidth()/3, imp.getHeight()/3 );		
 
-		final InteractiveDoG idog = new InteractiveDoG();
+		final InteractiveDoG idog = new InteractiveDoG( imp );
 		final int channelId = channel.getId();
 
 		idog.setSigma2isAdjustable( false );
