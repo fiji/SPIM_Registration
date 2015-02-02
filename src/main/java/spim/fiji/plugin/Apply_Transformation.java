@@ -513,7 +513,10 @@ public class Apply_Transformation implements PlugIn
 		}
 		
 		// set the defaults
-		defaultModels = models;
+		if ( model == 0 )
+			defaultModels = null;
+		else
+			defaultModels = models;
 		
 		// apply the models as asked
 		return applyModels( result.getData(), models, modelDescriptions, applyTo, minResolution, timepoints, channels, illums, angles );
