@@ -503,13 +503,14 @@ public class Interest_Point_Registration implements PlugIn
 		}
 		else
 		{
-			// no fixed tiles
+			// no fixed tiles or reference timepoint
 		}
 
-		type.setFixedTiles( fixedTiles );
+		if ( fixTilesIndex >= 0 )
+			type.setFixedTiles( fixedTiles );
 
 		IOFunctions.println( "Following tiles are fixed:" );
-		for ( final ViewId id : fixedTiles )
+		for ( final ViewId id : type.getFixedTiles() )
 		{
 			final ViewDescription vd = type.getSpimData().getSequenceDescription().getViewDescription( id );
 			final ViewSetup vs = vd.getViewSetup();
@@ -606,7 +607,7 @@ public class Interest_Point_Registration implements PlugIn
 			// no reference tile
 		}
 
-		IOFunctions.println( "Following tiles are reference tiles:" );
+		IOFunctions.println( "Following tiles are reference tiles (for mapping back if there are no fixed tiles):" );
 		for ( final GlobalOptimizationSubset subset : subsets )
 		{
 			final ViewId id = type.getMapBackReferenceTile( subset );
