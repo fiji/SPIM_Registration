@@ -47,7 +47,7 @@ public abstract class GlobalOptimizationType
 	final List< Illumination > illumsToProcess;
 	final List< TimePoint > timepointsToProcess;
 
-	final List< GlobalOptimizationSubset > subsets;
+	List< GlobalOptimizationSubset > subsets;
 
 	Set< ViewId > fixedTiles;
 	Map< GlobalOptimizationSubset, ViewId > referenceTiles;
@@ -75,7 +75,9 @@ public abstract class GlobalOptimizationType
 		this.referenceTiles = new HashMap< GlobalOptimizationSubset, ViewId >();
 		this.mapBackModel = null;
 
-		this.subsets = assembleAllViewPairs();
+		// we cannot call assemble from the constructor as some subclasses might not
+		// have set parameters passed by the constructor yet
+		this.subsets = null;
 	}
 
 	/**
@@ -86,7 +88,13 @@ public abstract class GlobalOptimizationType
 	/**
 	 * @return - the list of all subsets for the global optimization
 	 */
-	public List< GlobalOptimizationSubset > getAllViewPairs(){ return subsets; }
+	public List< GlobalOptimizationSubset > getAllViewPairs()
+	{
+		if ( subsets == null )
+			this.subsets = assembleAllViewPairs();
+
+		return subsets;
+	}
 
 	/**
 	 * @param viewId
