@@ -29,6 +29,7 @@ public class Merge_Cluster_Jobs implements PlugIn
 	public static String defaultMergeXMLDir = null;
 	public static boolean defaultDeleteXMLs = false;
 	public static boolean defaultDisplayXMLs = true;
+	public static boolean ignoreTileFiles = true;
 
 	Color color = GUIHelper.neutral;
 	String message = "---";
@@ -188,8 +189,16 @@ public class Merge_Cluster_Jobs implements PlugIn
 		{
 			for ( final String file : dir.list() )
 			{
-				if ( file.contains( contains1 ) && file.contains( contains2 ) )
-					this.xmls.add( new File( dir, file ) );
+				if ( ignoreTileFiles )
+				{
+					if ( file.contains( contains1 ) && file.contains( contains2 ) && !file.contains( "~" ) )
+						this.xmls.add( new File( dir, file ) );
+				}
+				else
+				{
+					if ( file.contains( contains1 ) && file.contains( contains2 ) )
+						this.xmls.add( new File( dir, file ) );
+				}
 			}
 
 			if ( this.xmls.size() == 0 )
