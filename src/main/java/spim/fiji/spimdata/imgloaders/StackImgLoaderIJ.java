@@ -34,6 +34,8 @@ public class StackImgLoaderIJ extends StackImgLoader
 
 	protected ImagePlus open( File file )
 	{
+		System.out.println( file );
+		
 		final ImagePlus imp = new Opener().openImage( file.getAbsolutePath() );
 
 		if ( imp == null )
@@ -58,8 +60,12 @@ public class StackImgLoaderIJ extends StackImgLoader
 	public RandomAccessibleInterval< FloatType > getFloatImage( final ViewId view, final boolean normalize )
 	{
 		final File file = getFile( view );
+
+		if ( file == null )
+			throw new RuntimeException( "Could not find file '" + file + "'." );
+
 		final ImagePlus imp = open( file );
-		
+
 		if ( imp == null )
 			throw new RuntimeException( "Could not load '" + file + "'." );
 
@@ -185,6 +191,10 @@ public class StackImgLoaderIJ extends StackImgLoader
 	public RandomAccessibleInterval< UnsignedShortType > getImage( final ViewId view )
 	{
 		final File file = getFile( view );
+
+		if ( file == null )
+			throw new RuntimeException( "Could not find file '" + file + "'." );
+
 		final ImagePlus imp = open( file );
 		
 		if ( imp == null )

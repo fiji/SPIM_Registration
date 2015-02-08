@@ -10,6 +10,7 @@ import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.IntegerPattern;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.io.IOFunctions;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.cell.CellImgFactory;
@@ -79,7 +80,11 @@ public abstract class StackImgLoader extends AbstractImgLoader
 			
 			if ( f.exists() )
 				return f;
+			else
+				IOFunctions.println( "File '" + f.getAbsolutePath() + "' does not exist." );
 		}
+
+		IOFunctions.println( "Could not find file for tp=" + timepoint + ", angle=" + angle + ", channel=" + channel + ", ill=" + illum );
 
 		return null;
 	}

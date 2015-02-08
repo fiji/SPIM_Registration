@@ -59,7 +59,10 @@ public class StackImgLoaderLOCI extends StackImgLoader
 	public RandomAccessibleInterval< FloatType > getFloatImage( final ViewId view, final boolean normalize )
 	{
 		final File file = getFile( view );
-		
+
+		if ( file == null )
+			throw new RuntimeException( "Could not find file '" + file + "'." );
+
 		try
 		{
 			final CalibratedImg< FloatType > img = openLOCI( file, new FloatType(), view );
@@ -112,7 +115,10 @@ public class StackImgLoaderLOCI extends StackImgLoader
 	public RandomAccessibleInterval< UnsignedShortType > getImage( final ViewId view )
 	{
 		final File file = getFile( view );
-		
+
+		if ( file == null )
+			throw new RuntimeException( "Could not find file '" + file + "'." );
+
 		try
 		{
 			final CalibratedImg< UnsignedShortType > img = openLOCI( file, new UnsignedShortType(), view );
