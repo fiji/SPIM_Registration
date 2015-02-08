@@ -53,6 +53,7 @@ public class GenericLoadParseQueryXML<
 		X extends XmlIoAbstractSpimData< S, AS > >
 {
 	public static String defaultXMLfilename = "";
+	public static boolean debugRandomClusterHash = false;
 
 	protected static String goodMsg1 = "The selected XML file was parsed successfully";
 	protected static String warningMsg1 = "The selected file does not appear to be an xml. Press OK to try to parse anyways.";
@@ -314,7 +315,19 @@ public class GenericLoadParseQueryXML<
 		for ( final BasicViewSetup v : getViewSetupsToProcess() )
 			idSum += v.getId();
 
-		return "" + ( System.nanoTime() + System.currentTimeMillis() + idSum );
+		long nano = System.nanoTime();
+		long millis = System.currentTimeMillis();
+		long finalHash = nano + millis + idSum;
+
+		if ( debugRandomClusterHash )
+		{
+			IOFunctions.println( "idsum=" + idSum );
+			IOFunctions.println( "nano=" + nano );
+			IOFunctions.println( "millis=" + millis );
+			IOFunctions.println( "final=" + finalHash );
+		}
+
+		return "" + finalHash;
 	}
 
 	/**
