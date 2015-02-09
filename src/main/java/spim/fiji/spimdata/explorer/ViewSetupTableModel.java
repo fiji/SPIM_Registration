@@ -88,16 +88,16 @@ public class ViewSetupTableModel extends AbstractTableModel
 				else if ( column == registrationColumn )
 				{
 					final int diff1 = viewRegistrations.getViewRegistration( arg0 ).getTransformList().size() - viewRegistrations.getViewRegistration( arg1 ).getTransformList().size();
-					final int diff2 = arg0.getViewSetupId() - arg1.getViewSetupId();
+					final int diff2 = arg0.getTimePointId() - arg1.getTimePointId();
 
-					return diff1 == 0 ? ( diff2 == 0 ? arg0.getTimePointId() - arg1.getTimePointId() : diff2 ) : diff1;
+					return diff1 == 0 ? ( diff2 == 0 ? arg0.getViewSetupId() - arg1.getViewSetupId() : diff2 ) : diff1;
 				}
 				else if ( column == interestPointsColumn && viewInterestPoints != null )
 				{
 					final int diff1 = viewInterestPoints.getViewInterestPointLists( arg0 ).getHashMap().keySet().size() - viewInterestPoints.getViewInterestPointLists( arg1 ).getHashMap().keySet().size();
-					final int diff2 = arg0.getViewSetupId() - arg1.getViewSetupId();
+					final int diff2 = arg0.getTimePointId() - arg1.getTimePointId();
 
-					return diff1 == 0 ? ( diff2 == 0 ? arg0.getTimePointId() - arg1.getTimePointId() : diff2 ) : diff1;
+					return diff1 == 0 ? ( diff2 == 0 ? arg0.getViewSetupId() - arg1.getViewSetupId() : diff2 ) : diff1;
 				}
 				else
 				{
