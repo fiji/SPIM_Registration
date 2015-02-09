@@ -18,7 +18,6 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableCellRenderer;
 
-import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
@@ -32,7 +31,6 @@ public class RegistrationExplorerPanel extends JPanel
 	
 	protected JTable table;
 	protected RegistrationTableModel tableModel;
-	protected SpimData data;
 	protected JLabel label;
 	
 	protected ArrayList< ViewTransform > cache;
@@ -45,7 +43,6 @@ public class RegistrationExplorerPanel extends JPanel
 	}
 
 	public RegistrationTableModel getTableModel() { return tableModel; }
-	public SpimData getSpimData() { return data; }
 	public JTable getTable() { return table; }
 	
 	public void updateViewDescription( final BasicViewDescription< ? > vd )
