@@ -8,26 +8,30 @@ import java.awt.event.WindowEvent;
 
 import javax.swing.JFrame;
 
-import mpicbg.spim.data.SpimData;
+import mpicbg.spim.data.generic.AbstractSpimData;
+import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
+import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.explorer.SelectedViewDescriptionListener;
 import spim.fiji.spimdata.explorer.ViewSetupExplorer;
 
-public class RegistrationExplorer implements SelectedViewDescriptionListener
+public class RegistrationExplorer< AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > >
+	implements SelectedViewDescriptionListener
 {
-	final SpimData data;
+	final AS data;
 	final String xml;
 	final JFrame frame;
 	final RegistrationExplorerPanel panel;
 	
-	public RegistrationExplorer( final SpimData data, final String xml )
+	public RegistrationExplorer( final AS data, final String xml, final X io )
 	{
 		this.data = data;
 		this.xml = xml;
 		
-		final ViewSetupExplorer viewSetupExplorer = new ViewSetupExplorer( data, xml );
+		final ViewSetupExplorer< AS, X > viewSetupExplorer = new ViewSetupExplorer< AS, X >( data, xml, io );
 		
 		frame = new JFrame( "Registration Explorer" );
 		panel = new RegistrationExplorerPanel( data.getViewRegistrations() );
@@ -67,11 +71,10 @@ public class RegistrationExplorer implements SelectedViewDescriptionListener
 	public static void main( String[] args )
 	{
 		final LoadParseQueryXML result = new LoadParseQueryXML();
-		
+
 		if ( !result.queryXML( "View Registration Explorer", "", false, false, false, false ) )
 			return;
-		
-		new RegistrationExplorer( result.getData(), result.getXMLFileName() );
-	}
 
+		new RegistrationExplorer< SpimData2, XmlIoSpimData2 >( result.getData(), result.getXMLFileName(), result.getIO() );
+	}
 }

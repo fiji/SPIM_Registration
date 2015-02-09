@@ -2,13 +2,17 @@ package spim.fiji.spimdata.explorer;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
 import javax.swing.DefaultListSelectionModel;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -16,28 +20,33 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 
-import mpicbg.spim.data.SpimData;
+import mpicbg.spim.data.SpimDataException;
+import mpicbg.spim.data.generic.AbstractSpimData;
+import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
+import mpicbg.spim.io.IOFunctions;
 
-public class ViewSetupExplorerPanel extends JPanel
+public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > > extends JPanel
 {
 	private static final long serialVersionUID = -3767947754096099774L;
 	
 	protected JTable table;
-	protected ViewSetupTableModel tableModel;
+	protected ViewSetupTableModel< AS > tableModel;
 	protected ArrayList< SelectedViewDescriptionListener > listeners;
-	protected SpimData data;
+	protected AS data;
 	final String xml;
-	
-	public ViewSetupExplorerPanel( final SpimData data, final String xml )
+	final X io;
+
+	public ViewSetupExplorerPanel( final AS data, final String xml, final X io )
 	{
 		this.listeners = new ArrayList< SelectedViewDescriptionListener >();
 		this.data = data;
 		this.xml = xml;
-		
+		this.io = io;
+
 		initComponent();
 	}
 
-	public SpimData getSpimData() { return data; }
+	public AS getSpimData() { return data; }
 
 	public void addListener( final SelectedViewDescriptionListener listener )
 	{
@@ -56,7 +65,7 @@ public class ViewSetupExplorerPanel extends JPanel
 	
 	public void initComponent()
 	{
-		tableModel = new ViewSetupTableModel( data );
+		tableModel = new ViewSetupTableModel< AS >( data );
 
 		table = new JTable();
 		table.setModel( tableModel );
@@ -113,5 +122,39 @@ public class ViewSetupExplorerPanel extends JPanel
 		this.add( new JScrollPane( table ), BorderLayout.CENTER );
 		
 		table.getSelectionModel().setSelectionInterval( 0, 0 );
+
+		addPopupMenu( table );
+	}
+
+	public void saveXML()
+	{
+		try
+		{
+			io.save( data, xml );
+			IOFunctions.println( "Saved XML '" + xml + "'." );
+		}
+		catch ( SpimDataException e )
+		{
+			IOFunctions.println( "Failed to save XML '" + xml + "': " + e );
+			e.printStackTrace();
+		}
+	}
+
+	protected void addPopupMenu( final JTable table )
+	{
+		final JPopupMenu popupMenu = new JPopupMenu();
+		final JMenuItem saveItem = new JMenuItem( "Save XML" );
+
+		saveItem.addActionListener( new ActionListener()
+		{
+			@Override
+			public void actionPerformed( final ActionEvent e )
+			{
+				saveXML();
+			}
+		});
+
+		popupMenu.add( saveItem );
+		table.setComponentPopupMenu( popupMenu );
 	}
 }

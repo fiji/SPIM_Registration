@@ -6,20 +6,18 @@ import java.util.Comparator;
 
 import javax.swing.table.AbstractTableModel;
 
-import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
-import mpicbg.spim.data.SpimData;
+import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.base.Entity;
 import mpicbg.spim.data.generic.base.NamedEntity;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.TimePoint;
-import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.data.sequence.ViewSetup;
+import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
-public class ViewSetupTableModel extends AbstractTableModel
+public class ViewSetupTableModel< AS extends AbstractSpimData< ? > > extends AbstractTableModel
 {
 	private static final long serialVersionUID = -6526338840427674269L;
 	
@@ -30,7 +28,7 @@ public class ViewSetupTableModel extends AbstractTableModel
 	final ViewRegistrations viewRegistrations;
 	final ViewInterestPoints viewInterestPoints;
 
-	public ViewSetupTableModel( final SpimData data )
+	public ViewSetupTableModel( final AS data )
 	{
 		columnNames = new ArrayList< String >();
 		columnNames.add( "Timepoint" );
@@ -56,10 +54,10 @@ public class ViewSetupTableModel extends AbstractTableModel
 		}
 
 		for ( final TimePoint t : data.getSequenceDescription().getTimePoints().getTimePointsOrdered() )
-			for ( final ViewSetup v : data.getSequenceDescription().getViewSetupsOrdered() )
+			for ( final BasicViewSetup v : data.getSequenceDescription().getViewSetupsOrdered() )
 			{
 				final ViewId viewId = new ViewId( t.getId(), v.getId() );
-				final ViewDescription viewDesc = data.getSequenceDescription().getViewDescription( viewId );
+				final BasicViewDescription< ? > viewDesc = data.getSequenceDescription().getViewDescriptions().get( viewId );
 
 				if ( viewDesc.isPresent() )
 					elements.add( viewDesc );
