@@ -612,7 +612,17 @@ public class EfficientBayesianBased extends Fusion
 
 			// get all interest point labels that have correspondences for all views that are processed
 			assembleAvailableCorrespondences( correspondences, new HashMap< Channel, Integer >(), true );
-			
+
+			int sumChannels = 0;
+			for ( final Channel c : correspondences.keySet() )
+				sumChannels += correspondences.get( c ).size();
+
+			if ( sumChannels == 0 )
+			{
+				IOFunctions.println( "No detections that have been registered are available to extract a PSF. Quitting." );
+				return false;
+			}
+
 			// make a list of those labels for the imagej dialog
 			// and set the default selections
 			final String[][] choices = new String[ channelsToProcess.size() ][];
