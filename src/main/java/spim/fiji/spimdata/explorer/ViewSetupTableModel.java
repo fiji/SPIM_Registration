@@ -11,6 +11,7 @@ import mpicbg.spim.data.generic.base.Entity;
 import mpicbg.spim.data.generic.base.NamedEntity;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
+import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
@@ -22,13 +23,20 @@ public class ViewSetupTableModel extends AbstractTableModel
 	
 	final ArrayList< BasicViewDescription< ? extends BasicViewSetup > > elements = new ArrayList< BasicViewDescription< ? extends BasicViewSetup > >();
 	final ArrayList< String > columnNames;
-	
+
+	final int registrationColumn;
+	final ViewRegistrations viewRegistrations;
+
 	public ViewSetupTableModel( final SpimData data )
 	{
 		columnNames = new ArrayList< String >();
 		columnNames.add( "Timepoint" );
 		columnNames.add( "View Id" );
 		columnNames.addAll( data.getSequenceDescription().getViewSetupsOrdered().get( 0 ).getAttributes().keySet() );
+		columnNames.add( "#Registrations" );
+
+		this.registrationColumn = columnNames.size() - 1;
+		this.viewRegistrations = data.getViewRegistrations();
 
 		for ( final TimePoint t : data.getSequenceDescription().getTimePoints().getTimePointsOrdered() )
 			for ( final ViewSetup v : data.getSequenceDescription().getViewSetupsOrdered() )
@@ -59,6 +67,13 @@ public class ViewSetupTableModel extends AbstractTableModel
 				{
 					final int diff = arg0.getViewSetupId() - arg1.getViewSetupId();
 					return diff == 0 ? arg0.getTimePointId() - arg1.getTimePointId() : diff;
+				}
+				else if ( column == registrationColumn )
+				{
+					final int diff1 = viewRegistrations.getViewRegistration( arg0 ).getTransformList().size() - viewRegistrations.getViewRegistration( arg1 ).getTransformList().size();
+					final int diff2 = arg0.getViewSetupId() - arg1.getViewSetupId();
+
+					return diff1 == 0 ? ( diff2 == 0 ? arg0.getTimePointId() - arg1.getTimePointId() : diff2 ) : diff1;
 				}
 				else
 				{
@@ -96,6 +111,8 @@ public class ViewSetupTableModel extends AbstractTableModel
 			return vd.getTimePoint().getId();
 		else if ( column == 1 )
 			return vd.getViewSetupId();
+		else if ( column == registrationColumn )
+			return this.viewRegistrations.getViewRegistration( vd ).getTransformList().size();
 		else
 		{
 			final Entity e = vd.getViewSetup().getAttributes().get( columnNames.get( column ) );
