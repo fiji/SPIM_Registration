@@ -35,6 +35,8 @@ public class Merge_Cluster_Jobs implements PlugIn
 	String message = "---";
 	ArrayList< File > xmls = new ArrayList< File >();
 
+	// run("Merge Cluster Jobs", "directory=/Users/preibischs/Downloads/A_SPIM_new_pipeline filename_contains=job_ filename_also_contains=.xml display merged_xml=dataset_merged.xml");
+
 	@Override
 	public void run( String arg0 )
 	{
@@ -72,19 +74,19 @@ public class Merge_Cluster_Jobs implements PlugIn
 		if ( gd.wasCanceled() )
 			return;
 
-		findFiles( new File( directory.getText() ), contains1.getText(), contains2.getText(), false );
+		final String dir = defaultMergeXMLDir = gd.getNextString();
+		final String cont1 = defaultContains1 = gd.getNextString();
+		final String cont2 = defaultContains2 = gd.getNextString();
+		defaultDisplayXMLs = gd.getNextBoolean();
+		final boolean delete = defaultDeleteXMLs = gd.getNextBoolean();
+		final File newXML = new File( dir, defaultNewXML = gd.getNextString() );
 
-		IOFunctions.println( "Attempting to merge the following XML's:" );
+		IOFunctions.println( "Attempting to merge the following XML's in directory '" + dir + "':" );
+
+		findFiles( new File( dir ), cont1, cont2, false );
 
 		for ( final File f : this.xmls )
 			IOFunctions.println( "  " + f.getAbsolutePath() );
-
-		defaultMergeXMLDir = gd.getNextString();
-		defaultContains1 = gd.getNextString();
-		defaultContains2 = gd.getNextString();
-		defaultDisplayXMLs = gd.getNextBoolean();
-		final boolean delete = defaultDeleteXMLs = gd.getNextBoolean();
-		final File newXML = new File( directory.getText(), defaultNewXML = gd.getNextString() );
 
 		try
 		{
