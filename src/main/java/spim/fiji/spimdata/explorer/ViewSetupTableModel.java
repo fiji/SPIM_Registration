@@ -28,6 +28,9 @@ public class ViewSetupTableModel< AS extends AbstractSpimData< ? > > extends Abs
 	final ViewRegistrations viewRegistrations;
 	final ViewInterestPoints viewInterestPoints;
 
+	public int registrationColumn() { return registrationColumn; }
+	public int interestPointsColumn() { return interestPointsColumn; }
+
 	public ViewSetupTableModel( final AS data )
 	{
 		columnNames = new ArrayList< String >();

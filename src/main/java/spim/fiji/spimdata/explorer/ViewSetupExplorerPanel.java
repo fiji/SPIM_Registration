@@ -112,10 +112,14 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 				}
 			};
 		});
-		
+
 		table.setPreferredScrollableViewportSize( new Dimension( 750, 300 ) );
 		table.getColumnModel().getColumn( 0 ).setPreferredWidth( 20 );
 		table.getColumnModel().getColumn( 1 ).setPreferredWidth( 15 );
+		table.getColumnModel().getColumn( tableModel.registrationColumn() ).setPreferredWidth( 25 );
+
+		if ( tableModel.interestPointsColumn() >= 0 )
+			table.getColumnModel().getColumn( tableModel.interestPointsColumn() ).setPreferredWidth( 30 );
 
 		this.setLayout( new BorderLayout() );
 		this.add( new JLabel( "XML: " + xml ), BorderLayout.NORTH );
