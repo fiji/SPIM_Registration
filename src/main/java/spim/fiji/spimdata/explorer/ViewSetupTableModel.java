@@ -6,6 +6,8 @@ import java.util.Comparator;
 
 import javax.swing.table.AbstractTableModel;
 
+import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.generic.base.Entity;
 import mpicbg.spim.data.generic.base.NamedEntity;
@@ -24,8 +26,9 @@ public class ViewSetupTableModel extends AbstractTableModel
 	final ArrayList< BasicViewDescription< ? extends BasicViewSetup > > elements = new ArrayList< BasicViewDescription< ? extends BasicViewSetup > >();
 	final ArrayList< String > columnNames;
 
-	final int registrationColumn;
+	final int registrationColumn, interestPointsColumn;
 	final ViewRegistrations viewRegistrations;
+	final ViewInterestPoints viewInterestPoints;
 
 	public ViewSetupTableModel( final SpimData data )
 	{
@@ -35,8 +38,22 @@ public class ViewSetupTableModel extends AbstractTableModel
 		columnNames.addAll( data.getSequenceDescription().getViewSetupsOrdered().get( 0 ).getAttributes().keySet() );
 		columnNames.add( "#Registrations" );
 
-		this.registrationColumn = columnNames.size() - 1;
-		this.viewRegistrations = data.getViewRegistrations();
+		registrationColumn = columnNames.size() - 1;
+		viewRegistrations = data.getViewRegistrations();
+
+		if ( SpimData2.class.isInstance( data ) )
+		{
+			final SpimData2 data2 = (SpimData2)data;
+			columnNames.add( "#InterestPoints" );
+
+			interestPointsColumn = columnNames.size() - 1;
+			viewInterestPoints = data2.getViewInterestPoints();
+		}
+		else
+		{
+			viewInterestPoints = null;
+			interestPointsColumn = -1;
+		}
 
 		for ( final TimePoint t : data.getSequenceDescription().getTimePoints().getTimePointsOrdered() )
 			for ( final ViewSetup v : data.getSequenceDescription().getViewSetupsOrdered() )
@@ -71,6 +88,13 @@ public class ViewSetupTableModel extends AbstractTableModel
 				else if ( column == registrationColumn )
 				{
 					final int diff1 = viewRegistrations.getViewRegistration( arg0 ).getTransformList().size() - viewRegistrations.getViewRegistration( arg1 ).getTransformList().size();
+					final int diff2 = arg0.getViewSetupId() - arg1.getViewSetupId();
+
+					return diff1 == 0 ? ( diff2 == 0 ? arg0.getTimePointId() - arg1.getTimePointId() : diff2 ) : diff1;
+				}
+				else if ( column == interestPointsColumn && viewInterestPoints != null )
+				{
+					final int diff1 = viewInterestPoints.getViewInterestPointLists( arg0 ).getHashMap().keySet().size() - viewInterestPoints.getViewInterestPointLists( arg1 ).getHashMap().keySet().size();
 					final int diff2 = arg0.getViewSetupId() - arg1.getViewSetupId();
 
 					return diff1 == 0 ? ( diff2 == 0 ? arg0.getTimePointId() - arg1.getTimePointId() : diff2 ) : diff1;
@@ -113,6 +137,8 @@ public class ViewSetupTableModel extends AbstractTableModel
 			return vd.getViewSetupId();
 		else if ( column == registrationColumn )
 			return this.viewRegistrations.getViewRegistration( vd ).getTransformList().size();
+		else if ( column == interestPointsColumn && viewInterestPoints != null )
+			return viewInterestPoints.getViewInterestPointLists( vd ).getHashMap().keySet().size();
 		else
 		{
 			final Entity e = vd.getViewSetup().getAttributes().get( columnNames.get( column ) );

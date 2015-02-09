@@ -104,7 +104,7 @@ public class ViewSetupExplorerPanel extends JPanel
 			};
 		});
 		
-		table.setPreferredScrollableViewportSize( new Dimension( 500, 300 ) );
+		table.setPreferredScrollableViewportSize( new Dimension( 750, 300 ) );
 		table.getColumnModel().getColumn( 0 ).setPreferredWidth( 20 );
 		table.getColumnModel().getColumn( 1 ).setPreferredWidth( 15 );
 
