@@ -63,6 +63,7 @@ public class RegistrationTableModel extends AbstractTableModel
 		return true;
 	}
 
+	@Override
 	public void setValueAt( final Object value, final int row, final int column )
 	{
 		final List< ViewTransform > vtList = viewRegistrations.getViewRegistration( currentVD ).getTransformList(); 
