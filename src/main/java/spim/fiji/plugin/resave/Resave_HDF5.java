@@ -35,6 +35,7 @@ import bdv.export.ExportMipmapInfo;
 import bdv.export.ProgressWriter;
 import bdv.export.ProposeMipmaps;
 import bdv.img.hdf5.Hdf5ImageLoader;
+import bdv.img.hdf5.Partition;
 
 public class Resave_HDF5 implements PlugIn
 {
@@ -47,7 +48,7 @@ public class Resave_HDF5 implements PlugIn
 	public void run( final String arg0 )
 	{
 		final LoadParseQueryXML xml = new LoadParseQueryXML();
-		
+
 		if ( !xml.queryXML( "Resaving as HDF5", "Resave", true, true, true, true ) )
 			return;
 
@@ -56,9 +57,9 @@ public class Resave_HDF5 implements PlugIn
 		{
 			// save the XML again with the dimensions loaded
 			final XmlIoSpimData2 io = new XmlIoSpimData2( xml.getClusterExtension() );
-			
+
 			final String xmlFile = new File( xml.getData().getBasePath(), new File( xml.getXMLFileName() ).getName() ).getAbsolutePath();
-			try 
+			try
 			{
 				io.save( xml.getData(), xmlFile );
 				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + io.lastFileName() + "'." );
@@ -86,16 +87,16 @@ public class Resave_HDF5 implements PlugIn
 		progressWriter.out().println( "starting export..." );
 
 		// write hdf5
-		Generic_Resave_HDF5.writeHDF5( reduceSpimData2( xml.getData(), xml.getTimePointsToProcess(), xml.getViewSetupsToProcess() ).getSequenceDescription(), params, perSetupExportMipmapInfo, progressWriter );
+		Generic_Resave_HDF5.writeHDF5( reduceSpimData2( xml.getData(), xml.getTimePointsToProcess(), xml.getViewSetupsToProcess() ), params, progressWriter );
 
 		// write xml sequence description
 		try
 		{
-			final List< String > filesToCopy = writeXML( xml, params.getSeqFile(), params.getHDF5File(), progressWriter );
+			final List< String > filesToCopy = writeXML( xml, params, progressWriter );
 
 			// copy the interest points if they exist
 			Resave_TIFF.copyInterestPoints( xml.getData().getBasePath(), params.getSeqFile().getParentFile(), filesToCopy );
-		} 
+		}
 		catch ( SpimDataException e )
 		{
 			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + params.getSeqFile() + "': " + e );
@@ -105,6 +106,8 @@ public class Resave_HDF5 implements PlugIn
 		{
 			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + params.getSeqFile() + "'." );
 		}
+		progressWriter.setProgress( 1.0 );
+		progressWriter.out().println( "done" );
 	}
 
 	public static Map< Integer, ExportMipmapInfo > proposeMipmaps( final List< ? extends BasicViewSetup > viewsetups )
@@ -119,17 +122,17 @@ public class Resave_HDF5 implements PlugIn
 	public static boolean loadDimensions( final SpimData2 spimData, final List< ViewSetup > viewsetups )
 	{
 		boolean loadedDimensions = false;
-		
+
 		for ( final ViewSetup vs : viewsetups )
 		{
 			if ( vs.getSize() == null )
 			{
 				IOFunctions.println( "Dimensions of viewsetup " + vs.getId() + " unknown. Loading them ... " );
-				
+
 				for ( final TimePoint t : spimData.getSequenceDescription().getTimePoints().getTimePointsOrdered() )
 				{
 					final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( t.getId(), vs.getId() );
-					
+
 					if ( vd.isPresent() )
 					{
 						vs.setSize( spimData.getSequenceDescription().getImgLoader().getImageSize( vd ) );
@@ -139,13 +142,13 @@ public class Resave_HDF5 implements PlugIn
 				}
 			}
 		}
-		
+
 		return loadedDimensions;
 	}
-	
+
 	/**
 	 * Reduces a given SpimData2 to the subset of timepoints and viewsetups as selected by the user, including the original imgloader.
-	 * 
+	 *
 	 * @param oldSpimData
 	 * @param timepointsToProcess
 	 * @param viewSetupsToProcess
@@ -169,7 +172,7 @@ public class Resave_HDF5 implements PlugIn
 
 		// a hashset for all viewsetups that remain
 		final Set< ViewId > views = new HashSet< ViewId >();
-		
+
 		for ( final TimePoint t : timepointsToProcess )
 			for ( final ViewSetup v : viewSetupsToProcess )
 				views.add( new ViewId( t.getId(), v.getId() ) );
@@ -188,13 +191,13 @@ public class Resave_HDF5 implements PlugIn
 		// re-assemble the registrations
 		final Map< ViewId, ViewRegistration > oldRegMap = oldSpimData.getViewRegistrations().getViewRegistrations();
 		final Map< ViewId, ViewRegistration > newRegMap = new HashMap< ViewId, ViewRegistration >();
-		
+
 		for ( final ViewId viewId : oldRegMap.keySet() )
 			if ( views.contains( viewId ) )
 				newRegMap.put( viewId, oldRegMap.get( viewId ) );
 
 		final ViewRegistrations viewRegistrations = new ViewRegistrations( newRegMap );
-		
+
 		// re-assemble the interestpoints and a list of filenames to copy
 		final Map< ViewId, ViewInterestPointLists > oldInterestPoints = oldSpimData.getViewInterestPoints().getViewInterestPoints();
 		final Map< ViewId, ViewInterestPointLists > newInterestPoints = new HashMap< ViewId, ViewInterestPointLists >();
@@ -202,9 +205,9 @@ public class Resave_HDF5 implements PlugIn
 		for ( final ViewId viewId : oldInterestPoints.keySet() )
 			if ( views.contains( viewId ) )
 				newInterestPoints.put( viewId, oldInterestPoints.get( viewId ) );
-		
+
 		final ViewInterestPoints viewsInterestPoints = new ViewInterestPoints( newInterestPoints );
-		
+
 		final SpimData2 newSpimData = new SpimData2(
 				oldSpimData.getBasePath(),
 				sequenceDescription,
@@ -216,23 +219,30 @@ public class Resave_HDF5 implements PlugIn
 
 	public static List< String > writeXML(
 			final LoadParseQueryXML lpq,
-			final File seqFile,
-			final File hdf5File,
+			final Parameters params,
 			final ProgressWriter progressWriter )
 		throws SpimDataException
 	{
 		// Re-assemble a new SpimData object containing the subset of viewsetups and timepoints selected
 		final List< String > filesToCopy = new ArrayList< String >();
-		final SpimData2 newSpimData = Resave_TIFF.assemblePartialSpimData2( lpq, seqFile.getParentFile(), filesToCopy );
-				
-		final Hdf5ImageLoader hdf5Loader = new Hdf5ImageLoader( hdf5File, null, null, false );
-		newSpimData.getSequenceDescription().setImgLoader( hdf5Loader );
-		newSpimData.setBasePath( seqFile.getParentFile() );
+		final SpimData2 newSpimData = Resave_TIFF.assemblePartialSpimData2( lpq, params.seqFile.getParentFile(), filesToCopy );
+		final ArrayList< Partition > partitions = Generic_Resave_HDF5.getPartitions( newSpimData, params );
 
-		lpq.getIO().save( newSpimData, seqFile.getAbsolutePath() );
-		
-		progressWriter.setProgress( 0.95 );
-		
+		final Hdf5ImageLoader hdf5Loader = new Hdf5ImageLoader( params.hdf5File, partitions, null, false );
+		newSpimData.getSequenceDescription().setImgLoader( hdf5Loader );
+		newSpimData.setBasePath( params.seqFile.getParentFile() );
+
+		try
+		{
+			lpq.getIO().save( newSpimData, params.seqFile.getAbsolutePath() );
+			progressWriter.setProgress( 0.95 );
+		}
+		catch ( final Exception e )
+		{
+			progressWriter.err().println( "Failed to write xml file " + params.seqFile );
+			e.printStackTrace( progressWriter.err() );
+		}
+
 		return filesToCopy;
 	}
 }
