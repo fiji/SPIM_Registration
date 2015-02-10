@@ -3,11 +3,13 @@ package spim.fiji.spimdata.explorer.interestpoint;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
 
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
+import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
@@ -29,7 +31,7 @@ public class InterestPointTableModel extends AbstractTableModel
 		this.columnNames.add( "Interest Point Label" );
 		this.columnNames.add( "#Detections" );
 		this.columnNames.add( "#Corresponding" );
-		this.columnNames.add( "#Total Corresponding" );
+		this.columnNames.add( "#Correspondences" );
 		this.columnNames.add( "Parameters" );
 
 		this.viewInterestPoints = viewInterestPoints;
@@ -111,20 +113,83 @@ public class InterestPointTableModel extends AbstractTableModel
 				return label;
 			else if ( column == 1 )
 				return numDetections( hash.get( label ) );
+			else if ( column == 2 )
+				return numCorresponding( hash.get( label ) );
+			else if ( column == 3 )
+				return numCorrespondences( hash.get( label ) );
 			else if ( column == 4 )
 				return hash.get( label ).getParameters();
 			else
-				return -1;//TODO
+				return -1;
 		}
+	}
+
+	protected int numCorresponding( final InterestPointList ipList )
+	{
+		List< InterestPoint > list = ipList.getInterestPoints();
+
+		if ( list == null || list.size() == 0 )
+		{
+			if ( !ipList.loadInterestPoints() )
+				return -1;
+			else
+				list = ipList.getInterestPoints();
+		}
+
+		List< CorrespondingInterestPoints > cList = ipList.getCorrespondingInterestPoints();
+
+		if ( cList == null || cList.size() == 0 )
+		{
+			if ( !ipList.loadCorrespondingInterestPoints() )
+				return -1;
+			else
+				cList = ipList.getCorrespondingInterestPoints();
+		}
+
+		final HashSet< Integer > cips = new HashSet< Integer >();
+
+		for ( final CorrespondingInterestPoints c : cList )
+			cips.add( c.getDetectionId() );
+
+		return cips.size();
+	}
+
+	protected int numCorrespondences( final InterestPointList ipList )
+	{
+		List< InterestPoint > list = ipList.getInterestPoints();
+
+		if ( list == null || list.size() == 0 )
+		{
+			if ( !ipList.loadInterestPoints() )
+				return -1;
+			else
+				list = ipList.getInterestPoints();
+		}
+
+		List< CorrespondingInterestPoints > cList = ipList.getCorrespondingInterestPoints();
+
+		if ( cList == null || cList.size() == 0 )
+		{
+			if ( !ipList.loadCorrespondingInterestPoints() )
+				return -1;
+			else
+				cList = ipList.getCorrespondingInterestPoints();
+		}
+
+		return cList.size();
 	}
 
 	protected int numDetections( final InterestPointList ipList )
 	{
-		final List< InterestPoint > list = ipList.getInterestPoints();
+		List< InterestPoint > list = ipList.getInterestPoints();
 
 		if ( list == null || list.size() == 0 )
+		{
 			if ( !ipList.loadInterestPoints() )
 				return -1;
+			else
+				list = ipList.getInterestPoints();
+		}
 
 		return list.size();
 	}
