@@ -81,14 +81,19 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		
 		// add listener to which row is selected
 		table.getSelectionModel().addListSelectionListener(
-			new ListSelectionListener() {
+			new ListSelectionListener()
+			{
+				int lastRow = -1;
+
 				@Override
 				public void valueChanged( final ListSelectionEvent arg0 )
 				{
 					final int row = ((DefaultListSelectionModel)(arg0.getSource())).getAnchorSelectionIndex();
-					
-					if ( arg0.getValueIsAdjusting() && row >= 0 && row < tableModel.getRowCount() )
+
+					if ( ( row != lastRow ) && row >= 0 && row < tableModel.getRowCount() )
 					{
+						lastRow = row;
+
 						// not using an iterator allows that listeners can close the frame and remove all listeners while they are called
 						for ( int i = 0; i < listeners.size(); ++i )
 							listeners.get( i ).seletedViewDescription( tableModel.getElements().get( row ) );
