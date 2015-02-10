@@ -25,6 +25,7 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
+import spim.fiji.plugin.Toggle_Cluster_Options;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.resave.Generic_Resave_HDF5.Parameters;
 import spim.fiji.spimdata.SpimData2;
@@ -47,10 +48,15 @@ public class Resave_HDF5 implements PlugIn
 	@Override
 	public void run( final String arg0 )
 	{
+		boolean rememberClusterProcessing = Toggle_Cluster_Options.displayClusterProcessing;
+		Toggle_Cluster_Options.displayClusterProcessing = false;
+
 		final LoadParseQueryXML xml = new LoadParseQueryXML();
 
 		if ( !xml.queryXML( "Resaving as HDF5", "Resave", true, true, true, true ) )
 			return;
+
+		Toggle_Cluster_Options.displayClusterProcessing = rememberClusterProcessing;
 
 		// load all dimensions if they are not known (required for estimating the mipmap layout)
 		if ( loadDimensions( xml.getData(), xml.getViewSetupsToProcess() ) )
@@ -90,21 +96,24 @@ public class Resave_HDF5 implements PlugIn
 		Generic_Resave_HDF5.writeHDF5( reduceSpimData2( xml.getData(), xml.getTimePointsToProcess(), xml.getViewSetupsToProcess() ), params, progressWriter );
 
 		// write xml sequence description
-		try
+		if ( !params.onlyRunSingleJob || params.jobId == 0 )
 		{
-			final List< String > filesToCopy = writeXML( xml, params, progressWriter );
+			try
+			{
+				final List< String > filesToCopy = writeXML( xml, params, progressWriter );
 
-			// copy the interest points if they exist
-			Resave_TIFF.copyInterestPoints( xml.getData().getBasePath(), params.getSeqFile().getParentFile(), filesToCopy );
-		}
-		catch ( SpimDataException e )
-		{
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + params.getSeqFile() + "': " + e );
-			throw new RuntimeException( e );
-		}
-		finally
-		{
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + params.getSeqFile() + "'." );
+				// copy the interest points if they exist
+				Resave_TIFF.copyInterestPoints( xml.getData().getBasePath(), params.getSeqFile().getParentFile(), filesToCopy );
+			}
+			catch ( SpimDataException e )
+			{
+				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + params.getSeqFile() + "': " + e );
+				throw new RuntimeException( e );
+			}
+			finally
+			{
+				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + params.getSeqFile() + "'." );
+			}
 		}
 		progressWriter.setProgress( 1.0 );
 		progressWriter.out().println( "done" );
