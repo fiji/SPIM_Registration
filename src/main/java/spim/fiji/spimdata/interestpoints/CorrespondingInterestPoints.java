@@ -7,7 +7,7 @@ import mpicbg.spim.data.sequence.ViewId;
  * 
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  */
-public class CorrespondingInterestPoints
+public class CorrespondingInterestPoints implements Comparable< CorrespondingInterestPoints >
 {
 	/**
 	 * The detection id of the interest point in this {@link InterestPointList}
@@ -56,4 +56,28 @@ public class CorrespondingInterestPoints
 	 * @return The detection id of the corresponding interest point in the {@link InterestPointList}
 	 */
 	final public int getCorrespondingDetectionId() { return correspondingDetectionId; }
+
+	/**
+	 * Order by {@link #getTimePointId() timepoint} id, then
+	 * {@link #getViewSetupId() setup} id, then detection id.
+	 */
+	@Override
+	public int compareTo( final CorrespondingInterestPoints o )
+	{
+		if ( getCorrespondingViewId().getTimePointId() == o.getCorrespondingViewId().getTimePointId() )
+		{
+			if ( getCorrespondingViewId().getViewSetupId() == o.getCorrespondingViewId().getViewSetupId() )
+			{
+				return getCorrespondingDetectionId() - o.getCorrespondingDetectionId();
+			}
+			else
+			{
+				return getCorrespondingViewId().getViewSetupId() - o.getCorrespondingViewId().getViewSetupId();
+			}
+		}
+		else
+		{
+			return getCorrespondingViewId().getTimePointId() - o.getCorrespondingViewId().getTimePointId();
+		}
+	}
 }
