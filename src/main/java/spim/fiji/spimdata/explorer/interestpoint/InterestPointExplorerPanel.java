@@ -7,6 +7,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
@@ -20,6 +22,11 @@ import javax.swing.table.DefaultTableCellRenderer;
 
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.registration.ViewTransform;
+import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.io.IOFunctions;
+import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
+import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
@@ -108,9 +115,42 @@ public class InterestPointExplorerPanel extends JPanel
 		final int[] selectedRows = table.getSelectedRows();
 		Arrays.sort( selectedRows );
 
-		final ViewInterestPointLists vs = tableModel.getViewInterestPoints().getViewInterestPointLists( vd );
+		final ViewInterestPoints vs = tableModel.getViewInterestPoints();
 
-		//TODO: remove interestpoints and correspondences
+		for ( final int row : selectedRows )
+		{
+			final String label = InterestPointTableModel.label( vs, vd, row );
+			final InterestPointList ipList = vs.getViewInterestPointLists( vd ).getInterestPointList( label );
+
+			IOFunctions.println( "Removing label '' for timepoint_id " + vd.getTimePointId() + " viewsetup_id " + vd.getViewSetupId() + " -- Parsing through all correspondences to remove any links to this interest point list." );
+
+			List< CorrespondingInterestPoints > correspondencesList = ipList.getCorrespondingInterestPoints();
+
+			if ( correspondencesList == null || correspondencesList.size() == 0 )
+			{
+				if ( ipList.loadCorrespondingInterestPoints() )
+					correspondencesList = ipList.getCorrespondingInterestPoints();
+			}
+
+			// sort by timepointid, setupid, and detectionid 
+			Collections.sort( correspondencesList );
+
+			for ( final CorrespondingInterestPoints c : correspondencesList )
+			{
+				final ViewId vCorr = c.getCorrespondingViewId();
+				final String lCorr = c.getCorrespodingLabel();
+				final int idCorr = c.getCorrespondingDetectionId();
+
+				List< InterestPoint > list = ipList.getInterestPoints();
+
+				if ( list == null || list.size() == 0 )
+				{
+					if ( ipList.loadInterestPoints() )
+						list = ipList.getInterestPoints();
+				}
+
+			}
+		}
 
 		// update everything
 		tableModel.fireTableDataChanged();

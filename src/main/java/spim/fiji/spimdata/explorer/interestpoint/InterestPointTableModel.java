@@ -75,7 +75,7 @@ public class InterestPointTableModel extends AbstractTableModel
 	{
 		if ( column == 4 )
 		{
-			final String label = label( currentVD, row );
+			final String label = label( viewInterestPoints, currentVD, row );
 
 			viewInterestPoints.getViewInterestPointLists( currentVD ).getInterestPointList( label ).setParameters( value.toString() );
 
@@ -84,7 +84,7 @@ public class InterestPointTableModel extends AbstractTableModel
 		}
 	}
 
-	protected String label( final BasicViewDescription< ? >vd, final int row )
+	public static String label( final ViewInterestPoints viewInterestPoints, final BasicViewDescription< ? >vd, final int row )
 	{
 		final ArrayList< String > labels = new ArrayList< String >();
 		labels.addAll( viewInterestPoints.getViewInterestPointLists( vd ).getHashMap().keySet() );
@@ -107,7 +107,7 @@ public class InterestPointTableModel extends AbstractTableModel
 		}
 		else
 		{
-			final String label = label( currentVD, row );
+			final String label = label( viewInterestPoints, currentVD, row );
 
 			if ( column == 0 )
 				return label;
