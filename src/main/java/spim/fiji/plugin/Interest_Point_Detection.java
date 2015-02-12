@@ -184,7 +184,10 @@ public class Interest_Point_Detection implements PlugIn
 					IOFunctions.println( "Error saving interest point list: " + new File( list.getBaseDir(), list.getFile().toString() + list.getInterestPointsExt() ) );
 					return;
 				}
-				
+
+				if ( !list.saveCorrespondingInterestPoints() )
+					IOFunctions.println( "Failed to clear corresponding interest point list: " + new File( list.getBaseDir(), list.getFile().toString() + list.getCorrespondencesExt() ) );
+
 				final ViewInterestPointLists vipl = data.getViewInterestPoints().getViewInterestPointLists( viewId );
 				vipl.addInterestPointList( label, list );
 			}
