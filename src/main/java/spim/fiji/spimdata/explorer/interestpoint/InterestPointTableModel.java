@@ -19,10 +19,11 @@ public class InterestPointTableModel extends AbstractTableModel
 	
 	final ViewInterestPoints viewInterestPoints;
 	final ArrayList< String > columnNames;
-	
+
 	BasicViewDescription< ? > currentVD;
-	
-	public InterestPointTableModel( final ViewInterestPoints viewInterestPoints )
+	final InterestPointExplorerPanel panel;
+
+	public InterestPointTableModel( final ViewInterestPoints viewInterestPoints, final InterestPointExplorerPanel panel )
 	{
 		this.columnNames = new ArrayList< String >();
 
@@ -34,6 +35,7 @@ public class InterestPointTableModel extends AbstractTableModel
 
 		this.viewInterestPoints = viewInterestPoints;
 		this.currentVD = null;
+		this.panel = panel;
 	}
 	
 	protected ViewInterestPoints getViewInterestPoints() { return viewInterestPoints; }
@@ -125,7 +127,7 @@ public class InterestPointTableModel extends AbstractTableModel
 	{
 		final HashSet< Integer > cips = new HashSet< Integer >();
 
-		for ( final CorrespondingInterestPoints c : InterestPointExplorerPanel.getCorrespondingInterestPoints( vip, v, label ) )
+		for ( final CorrespondingInterestPoints c : panel.getCorrespondingInterestPoints( vip, v, label ) )
 			cips.add( c.getDetectionId() );
 
 		return cips.size();
@@ -133,12 +135,12 @@ public class InterestPointTableModel extends AbstractTableModel
 
 	protected int numCorrespondences( final ViewInterestPoints vip, final ViewId v, final String label )
 	{
-		return InterestPointExplorerPanel.getCorrespondingInterestPoints( vip, v, label ).size();
+		return panel.getCorrespondingInterestPoints( vip, v, label ).size();
 	}
 
 	protected int numDetections( final ViewInterestPoints vip, final ViewId v, final String label )
 	{
-		return InterestPointExplorerPanel.getInterestPoints( vip, v, label ).size();
+		return panel.getInterestPoints( vip, v, label ).size();
 	}
 
 	@Override

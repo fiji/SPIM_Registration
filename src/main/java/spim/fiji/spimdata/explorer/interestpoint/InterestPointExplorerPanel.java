@@ -8,6 +8,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 import javax.swing.JLabel;
@@ -42,10 +43,13 @@ public class InterestPointExplorerPanel extends JPanel
 	protected ArrayList< Pair< InterestPointList, ViewId > > save;
 	protected ArrayList< Pair< InterestPointList, ViewId > > delete;
 
+	protected HashSet< InterestPointList > wasLoaded;
+
 	public InterestPointExplorerPanel( final ViewInterestPoints viewInterestPoints )
 	{
 		this.save = new ArrayList< Pair< InterestPointList, ViewId > >();
 		this.delete = new ArrayList< Pair< InterestPointList, ViewId > >();
+		this.wasLoaded = new HashSet< InterestPointList >();
 
 		initComponent( viewInterestPoints );
 	}
@@ -66,7 +70,7 @@ public class InterestPointExplorerPanel extends JPanel
 
 	public void initComponent( final ViewInterestPoints viewInterestPoints )
 	{
-		tableModel = new InterestPointTableModel( viewInterestPoints );
+		tableModel = new InterestPointTableModel( viewInterestPoints, this );
 
 		table = new JTable();
 		table.setModel( tableModel );
@@ -134,6 +138,7 @@ public class InterestPointExplorerPanel extends JPanel
 			ViewId lastViewIdCorr = null;
 			String lastLabelCorr = null;
 			List< CorrespondingInterestPoints > cList = null;
+			int size = 0;
 
 			for ( final CorrespondingInterestPoints pair : correspondencesList )
 			{
@@ -143,11 +148,12 @@ public class InterestPointExplorerPanel extends JPanel
 				final int idCorr = pair.getCorrespondingDetectionId();
 
 				// is it a new viewId? The load correspondence list for it
-				if ( lastViewIdCorr != viewIdCorr )
+				if ( lastViewIdCorr == null || !lastViewIdCorr.equals( viewIdCorr ) )
 				{
 					// but first remember the previous list for saving
 					if ( lastViewIdCorr != null )
 					{
+						IOFunctions.println( "Correspondences: " + size + " >>> " + cList.size() );
 						this.save.add( new ValuePair< InterestPointList, ViewId >(
 										vip.getViewInterestPointLists( lastViewIdCorr ).getInterestPointList( lastLabelCorr ),
 										lastViewIdCorr ) );
@@ -158,6 +164,7 @@ public class InterestPointExplorerPanel extends JPanel
 					lastViewIdCorr = viewIdCorr;
 					lastLabelCorr = labelCorr;
 					cList = getCorrespondingInterestPoints( vip, viewIdCorr, labelCorr );
+					size = cList.size();
 				}
 
 				// find the counterpart in the list that corresponds with pair.getDetectionId() and vd
@@ -165,7 +172,7 @@ public class InterestPointExplorerPanel extends JPanel
 				{
 					final CorrespondingInterestPoints cc = cList.get( i );
 					
-					if ( cc.getDetectionId() == idCorr && cc.getCorrespondingDetectionId() == pair.getDetectionId() && cc.getCorrespondingViewId() == vd )
+					if ( cc.getDetectionId() == idCorr && cc.getCorrespondingDetectionId() == pair.getDetectionId() && cc.getCorrespondingViewId().equals( vd ) )
 					{
 						// remove it here
 						cList.remove( i );
@@ -177,14 +184,17 @@ public class InterestPointExplorerPanel extends JPanel
 			// remember the list for saving
 			if ( lastViewIdCorr != null )
 			{
+				IOFunctions.println( "Correspondences: " + size + " >>> " + cList.size() );
 				this.save.add( new ValuePair< InterestPointList, ViewId >(
 								vip.getViewInterestPointLists( lastViewIdCorr ).getInterestPointList( lastLabelCorr ),
 								lastViewIdCorr ) );
 			}
 
-			// remove the deleted one
-			vip.getViewInterestPointLists( vd ).getInterestPointList( label ).getInterestPoints().clear();
-			vip.getViewInterestPointLists( vd ).getInterestPointList( label ).getCorrespondingInterestPoints().clear();
+			// remember to deleted the files
+			this.delete.add( new ValuePair< InterestPointList, ViewId >(
+					vip.getViewInterestPointLists( vd ).getInterestPointList( label ),
+					vd ) );
+
 			vip.getViewInterestPointLists( vd ).getHashMap().remove( label );
 		}
 
@@ -192,30 +202,39 @@ public class InterestPointExplorerPanel extends JPanel
 		tableModel.fireTableDataChanged();
 	}
 
-	public static List< InterestPoint > getInterestPoints( final ViewInterestPoints vip, final ViewId v, final String label )
+	public List< InterestPoint > getInterestPoints( final ViewInterestPoints vip, final ViewId v, final String label )
 	{
 		final InterestPointList ipList = vip.getViewInterestPointLists( v ).getInterestPointList( label );
 		List< InterestPoint > list = ipList.getInterestPoints();
 
-		if ( list == null || list.size() == 0 )
+		// TODO: horrible hack, if not loaded should be null and not empty!
+		if ( !wasLoaded.contains( ipList ) )
 		{
 			if ( ipList.loadInterestPoints() )
 				list = ipList.getInterestPoints();
+
+			ipList.loadCorrespondingInterestPoints();
+
+			wasLoaded.add( ipList );
 		}
 
 		return list;
 	}
 
-	public static List< CorrespondingInterestPoints > getCorrespondingInterestPoints( final ViewInterestPoints vip, final ViewId v, final String label )
+	public List< CorrespondingInterestPoints > getCorrespondingInterestPoints( final ViewInterestPoints vip, final ViewId v, final String label )
 	{
 		final InterestPointList ipList = vip.getViewInterestPointLists( v ).getInterestPointList( label );
-
 		List< CorrespondingInterestPoints > correspondencesList = ipList.getCorrespondingInterestPoints();
 
-		if ( correspondencesList == null || correspondencesList.size() == 0 )
+		// TODO: horrible hack, if not loaded should be null and not empty!
+		if ( !wasLoaded.contains( ipList ) )
 		{
 			if ( ipList.loadCorrespondingInterestPoints() )
 				correspondencesList = ipList.getCorrespondingInterestPoints();
+
+			ipList.loadInterestPoints();
+
+			wasLoaded.add( ipList );
 		}
 
 		return correspondencesList;

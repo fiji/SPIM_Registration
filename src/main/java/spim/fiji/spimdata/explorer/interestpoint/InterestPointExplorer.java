@@ -77,8 +77,14 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 	{
 		for ( final Pair< InterestPointList, ViewId > list : panel.save )
 		{
-			IOFunctions.println( "Saving correspondences in timepointid=" + list.getB().getTimePointId() + ", viewid=" + list.getB().getViewSetupId() );
-			list.getA().saveCorrespondingInterestPoints();
+			String output = "";
+
+			if ( list.getA().saveCorrespondingInterestPoints() )
+				output = "Saved ";
+			else
+				output = "FAILED to save ";
+
+			IOFunctions.println( output + "correspondences in timepointid=" + list.getB().getTimePointId() + ", viewid=" + list.getB().getViewSetupId() );
 		}
 
 		for ( final Pair< InterestPointList, ViewId > list : panel.delete )
