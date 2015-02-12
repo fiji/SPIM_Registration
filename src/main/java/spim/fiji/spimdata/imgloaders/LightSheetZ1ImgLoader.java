@@ -42,7 +42,8 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 
 	// once the metadata is loaded for one view, it is available for all other ones
 	LightSheetZ1MetaData meta;
-	
+	boolean isClosed = true;
+
 	public LightSheetZ1ImgLoader(
 			final File cziFile,
 			final ImgFactory< ? extends NativeType< ? > > imgFactory,
@@ -151,6 +152,21 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 				meta.calX(), meta.calY(), meta.calZ() );
 	}
 
+	public void finalize()
+	{
+		IOFunctions.println( "Closing czi: " + cziFile );
+
+		try
+		{
+			if ( meta != null && meta.getReader() != null )
+			{
+				meta.getReader().close();
+				isClosed = true;
+			}
+		}
+		catch (IOException e) {}
+	}
+
 	protected < T extends RealType< T > & NativeType< T > > Img< T > openCZI( final T type, final ViewId view ) throws Exception
 	{
 		IOFunctions.println( "Investigating file '" + cziFile.getAbsolutePath() + "'." );
@@ -163,7 +179,12 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 			{
 				IOFunctions.println( "Failed to analyze file: '" + cziFile.getAbsolutePath() + "'." );
 				meta = null;
+				isClosed = true;
 				return null;
+			}
+			else
+			{
+				isClosed = false;
 			}
 		}
 
@@ -218,11 +239,19 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 		try
 		{
 			// open the file if not already done
-			if ( meta.getReader() == null )
+			try
+			{
+				if ( meta.getReader() == null )
+					r.setId( cziFile.getAbsolutePath() );
+				
+				// set the right angle
+				r.setSeries( a.getId() );
+			}
+			catch ( IllegalStateException e )
+			{
 				r.setId( cziFile.getAbsolutePath() );
-
-			// set the right angle
-			r.setSeries( a.getId() );
+				r.setSeries( a.getId() );
+			}
 
 			// compute the right channel from channelId & illuminationId
 			int ch = c.getId() * meta.numIlluminations() + i.getId();
@@ -272,8 +301,6 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 						readFloats( b, cursor, width, isLittleEndian );
 				}
 			}
-
-			r.close();
 
 			IJ.showProgress( 1 );
 		}

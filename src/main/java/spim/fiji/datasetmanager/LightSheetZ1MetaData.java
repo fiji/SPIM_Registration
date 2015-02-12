@@ -109,7 +109,7 @@ public class LightSheetZ1MetaData
 				return false;
 			}
 
-			printMetaData( r );
+			//printMetaData( r );
 		}
 		catch ( Exception e )
 		{
