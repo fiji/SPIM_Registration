@@ -46,7 +46,7 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 		final Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
 
 		// Move the window
-		frame.setLocation( ( dim.width - frame.getSize().width ) / 2, ( dim.height - frame.getSize().height ) / 2 );
+		frame.setLocation( ( dim.width - frame.getSize().width ) / 2, ( dim.height - frame.getSize().height ) / 4 );
 
 		// this call also triggers the first update of the registration table
 		viewSetupExplorer.addListener( this );
