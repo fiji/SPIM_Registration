@@ -21,13 +21,13 @@ import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableCellRenderer;
 
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
-import mpicbg.spim.data.registration.ViewTransform;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+import spim.fiji.ImgLib2Temp.Pair;
+import spim.fiji.ImgLib2Temp.ValuePair;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
-import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
 public class InterestPointExplorerPanel extends JPanel
@@ -37,12 +37,15 @@ public class InterestPointExplorerPanel extends JPanel
 	protected JTable table;
 	protected InterestPointTableModel tableModel;
 	protected JLabel label;
-	
-	protected ArrayList< ViewTransform > cache;
-	
+
+	// when save is called save those files and delete the other ones
+	protected ArrayList< Pair< InterestPointList, ViewId > > save;
+	protected ArrayList< Pair< InterestPointList, ViewId > > delete;
+
 	public InterestPointExplorerPanel( final ViewInterestPoints viewInterestPoints )
 	{
-		this.cache = new ArrayList< ViewTransform >();
+		this.save = new ArrayList< Pair< InterestPointList, ViewId > >();
+		this.delete = new ArrayList< Pair< InterestPointList, ViewId > >();
 
 		initComponent( viewInterestPoints );
 	}
@@ -115,47 +118,109 @@ public class InterestPointExplorerPanel extends JPanel
 		final int[] selectedRows = table.getSelectedRows();
 		Arrays.sort( selectedRows );
 
-		final ViewInterestPoints vs = tableModel.getViewInterestPoints();
+		final ViewInterestPoints vip = tableModel.getViewInterestPoints();
 
 		for ( final int row : selectedRows )
 		{
-			final String label = InterestPointTableModel.label( vs, vd, row );
-			final InterestPointList ipList = vs.getViewInterestPointLists( vd ).getInterestPointList( label );
+			final String label = InterestPointTableModel.label( vip, vd, row );
 
 			IOFunctions.println( "Removing label '' for timepoint_id " + vd.getTimePointId() + " viewsetup_id " + vd.getViewSetupId() + " -- Parsing through all correspondences to remove any links to this interest point list." );
 
-			List< CorrespondingInterestPoints > correspondencesList = ipList.getCorrespondingInterestPoints();
-
-			if ( correspondencesList == null || correspondencesList.size() == 0 )
-			{
-				if ( ipList.loadCorrespondingInterestPoints() )
-					correspondencesList = ipList.getCorrespondingInterestPoints();
-			}
+			final List< CorrespondingInterestPoints > correspondencesList = getCorrespondingInterestPoints( vip, vd, label );
 
 			// sort by timepointid, setupid, and detectionid 
 			Collections.sort( correspondencesList );
 
-			for ( final CorrespondingInterestPoints c : correspondencesList )
+			ViewId lastViewIdCorr = null;
+			String lastLabelCorr = null;
+			List< CorrespondingInterestPoints > cList = null;
+
+			for ( final CorrespondingInterestPoints pair : correspondencesList )
 			{
-				final ViewId vCorr = c.getCorrespondingViewId();
-				final String lCorr = c.getCorrespodingLabel();
-				final int idCorr = c.getCorrespondingDetectionId();
+				// the next corresponding detection
+				final ViewId viewIdCorr = pair.getCorrespondingViewId();
+				final String labelCorr = pair.getCorrespodingLabel();
+				final int idCorr = pair.getCorrespondingDetectionId();
 
-				List< InterestPoint > list = ipList.getInterestPoints();
-
-				if ( list == null || list.size() == 0 )
+				// is it a new viewId? The load correspondence list for it
+				if ( lastViewIdCorr != viewIdCorr )
 				{
-					if ( ipList.loadInterestPoints() )
-						list = ipList.getInterestPoints();
+					// but first remember the previous list for saving
+					if ( lastViewIdCorr != null )
+					{
+						this.save.add( new ValuePair< InterestPointList, ViewId >(
+										vip.getViewInterestPointLists( lastViewIdCorr ).getInterestPointList( lastLabelCorr ),
+										lastViewIdCorr ) );
+					}
+
+					// remove in the new one
+					IOFunctions.println( "Removing correspondences in timepointid=" + viewIdCorr.getTimePointId() + ", viewid=" + viewIdCorr.getViewSetupId() );
+					lastViewIdCorr = viewIdCorr;
+					lastLabelCorr = labelCorr;
+					cList = getCorrespondingInterestPoints( vip, viewIdCorr, labelCorr );
 				}
 
+				// find the counterpart in the list that corresponds with pair.getDetectionId() and vd
+				for ( int i = 0; i < cList.size(); ++i )
+				{
+					final CorrespondingInterestPoints cc = cList.get( i );
+					
+					if ( cc.getDetectionId() == idCorr && cc.getCorrespondingDetectionId() == pair.getDetectionId() && cc.getCorrespondingViewId() == vd )
+					{
+						// remove it here
+						cList.remove( i );
+						break;
+					}
+				}
 			}
+
+			// remember the list for saving
+			if ( lastViewIdCorr != null )
+			{
+				this.save.add( new ValuePair< InterestPointList, ViewId >(
+								vip.getViewInterestPointLists( lastViewIdCorr ).getInterestPointList( lastLabelCorr ),
+								lastViewIdCorr ) );
+			}
+
+			// remove the deleted one
+			vip.getViewInterestPointLists( vd ).getInterestPointList( label ).getInterestPoints().clear();
+			vip.getViewInterestPointLists( vd ).getInterestPointList( label ).getCorrespondingInterestPoints().clear();
+			vip.getViewInterestPointLists( vd ).getHashMap().remove( label );
 		}
 
 		// update everything
 		tableModel.fireTableDataChanged();
 	}
-	
+
+	public static List< InterestPoint > getInterestPoints( final ViewInterestPoints vip, final ViewId v, final String label )
+	{
+		final InterestPointList ipList = vip.getViewInterestPointLists( v ).getInterestPointList( label );
+		List< InterestPoint > list = ipList.getInterestPoints();
+
+		if ( list == null || list.size() == 0 )
+		{
+			if ( ipList.loadInterestPoints() )
+				list = ipList.getInterestPoints();
+		}
+
+		return list;
+	}
+
+	public static List< CorrespondingInterestPoints > getCorrespondingInterestPoints( final ViewInterestPoints vip, final ViewId v, final String label )
+	{
+		final InterestPointList ipList = vip.getViewInterestPointLists( v ).getInterestPointList( label );
+
+		List< CorrespondingInterestPoints > correspondencesList = ipList.getCorrespondingInterestPoints();
+
+		if ( correspondencesList == null || correspondencesList.size() == 0 )
+		{
+			if ( ipList.loadCorrespondingInterestPoints() )
+				correspondencesList = ipList.getCorrespondingInterestPoints();
+		}
+
+		return correspondencesList;
+	}
+
 	protected void addPopupMenu( final JTable table )
 	{
 		final JPopupMenu popupMenu = new JPopupMenu();

@@ -4,15 +4,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
 
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
-import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
-import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
 public class InterestPointTableModel extends AbstractTableModel
@@ -98,8 +96,7 @@ public class InterestPointTableModel extends AbstractTableModel
 		if ( currentVD == null )
 			return column == 0 ? "No View Description selected" : "";
 
-		final ViewInterestPointLists vip = viewInterestPoints.getViewInterestPointLists( currentVD );
-		final HashMap< String, InterestPointList > hash = vip.getHashMap();
+		final HashMap< String, InterestPointList > hash = viewInterestPoints.getViewInterestPointLists( currentVD ).getHashMap();
 
 		if ( hash.keySet().size() == 0 )
 		{
@@ -112,11 +109,11 @@ public class InterestPointTableModel extends AbstractTableModel
 			if ( column == 0 )
 				return label;
 			else if ( column == 1 )
-				return numDetections( hash.get( label ) );
+				return numDetections( viewInterestPoints, currentVD, label );
 			else if ( column == 2 )
-				return numCorresponding( hash.get( label ) );
+				return numCorresponding( viewInterestPoints, currentVD, label );
 			else if ( column == 3 )
-				return numCorrespondences( hash.get( label ) );
+				return numCorrespondences( viewInterestPoints, currentVD, label );
 			else if ( column == 4 )
 				return hash.get( label ).getParameters();
 			else
@@ -124,74 +121,24 @@ public class InterestPointTableModel extends AbstractTableModel
 		}
 	}
 
-	protected int numCorresponding( final InterestPointList ipList )
+	protected int numCorresponding( final ViewInterestPoints vip, final ViewId v, final String label )
 	{
-		List< InterestPoint > list = ipList.getInterestPoints();
-
-		if ( list == null || list.size() == 0 )
-		{
-			if ( !ipList.loadInterestPoints() )
-				return -1;
-			else
-				list = ipList.getInterestPoints();
-		}
-
-		List< CorrespondingInterestPoints > cList = ipList.getCorrespondingInterestPoints();
-
-		if ( cList == null || cList.size() == 0 )
-		{
-			if ( !ipList.loadCorrespondingInterestPoints() )
-				return -1;
-			else
-				cList = ipList.getCorrespondingInterestPoints();
-		}
-
 		final HashSet< Integer > cips = new HashSet< Integer >();
 
-		for ( final CorrespondingInterestPoints c : cList )
+		for ( final CorrespondingInterestPoints c : InterestPointExplorerPanel.getCorrespondingInterestPoints( vip, v, label ) )
 			cips.add( c.getDetectionId() );
 
 		return cips.size();
 	}
 
-	protected int numCorrespondences( final InterestPointList ipList )
+	protected int numCorrespondences( final ViewInterestPoints vip, final ViewId v, final String label )
 	{
-		List< InterestPoint > list = ipList.getInterestPoints();
-
-		if ( list == null || list.size() == 0 )
-		{
-			if ( !ipList.loadInterestPoints() )
-				return -1;
-			else
-				list = ipList.getInterestPoints();
-		}
-
-		List< CorrespondingInterestPoints > cList = ipList.getCorrespondingInterestPoints();
-
-		if ( cList == null || cList.size() == 0 )
-		{
-			if ( !ipList.loadCorrespondingInterestPoints() )
-				return -1;
-			else
-				cList = ipList.getCorrespondingInterestPoints();
-		}
-
-		return cList.size();
+		return InterestPointExplorerPanel.getCorrespondingInterestPoints( vip, v, label ).size();
 	}
 
-	protected int numDetections( final InterestPointList ipList )
+	protected int numDetections( final ViewInterestPoints vip, final ViewId v, final String label )
 	{
-		List< InterestPoint > list = ipList.getInterestPoints();
-
-		if ( list == null || list.size() == 0 )
-		{
-			if ( !ipList.loadInterestPoints() )
-				return -1;
-			else
-				list = ipList.getInterestPoints();
-		}
-
-		return list.size();
+		return InterestPointExplorerPanel.getInterestPoints( vip, v, label ).size();
 	}
 
 	@Override

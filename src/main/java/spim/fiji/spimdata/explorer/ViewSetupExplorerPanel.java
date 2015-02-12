@@ -140,6 +140,10 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		try
 		{
 			io.save( data, xml );
+
+			for ( final SelectedViewDescriptionListener l : listeners )
+				l.save();
+
 			IOFunctions.println( "Saved XML '" + xml + "'." );
 		}
 		catch ( SpimDataException e )

@@ -61,7 +61,10 @@ public class RegistrationExplorer< AS extends AbstractSpimData< ? >, X extends X
 		// this call also triggers the first update of the registration table
 		viewSetupExplorer.addListener( this );
 	}
-		
+
+	@Override
+	public void save() {}
+
 	@Override
 	public void seletedViewDescription( final BasicViewDescription<? extends BasicViewSetup> viewDescription )
 	{
