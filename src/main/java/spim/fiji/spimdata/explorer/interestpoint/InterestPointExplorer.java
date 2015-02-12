@@ -3,8 +3,6 @@ package spim.fiji.spimdata.explorer.interestpoint;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Toolkit;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.File;
 
 import javax.swing.JFrame;
@@ -30,28 +28,16 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 	final JFrame frame;
 	final InterestPointExplorerPanel panel;
 
-	public InterestPointExplorer( final AS data, final String xml, final X io )
+	public InterestPointExplorer( final AS data, final String xml, final X io, final ViewSetupExplorer< AS, X > viewSetupExplorer )
 	{
 		this.data = data;
 		this.xml = xml;
-
-		final ViewSetupExplorer< AS, X > viewSetupExplorer = new ViewSetupExplorer< AS, X >( data, xml, io );
 
 		frame = new JFrame( "Interest Point Explorer" );
 		panel = new InterestPointExplorerPanel( data.getViewInterestPoints() );
 		frame.add( panel, BorderLayout.CENTER );
 
 		frame.setSize( panel.getPreferredSize() );
-		
-		frame.addWindowListener(
-				new WindowAdapter()
-				{
-					@Override
-					public void windowClosing( WindowEvent evt )
-					{
-						viewSetupExplorer.quit();
-					}
-				});
 
 		frame.pack();
 		frame.setVisible( true );
@@ -64,6 +50,11 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 
 		// this call also triggers the first update of the registration table
 		viewSetupExplorer.addListener( this );
+	}
+
+	public InterestPointExplorer( final AS data, final String xml, final X io )
+	{
+		this( data, xml, io, new ViewSetupExplorer< AS, X >( data, xml, io ) );
 	}
 
 	@Override
@@ -107,6 +98,13 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 
 		panel.save.clear();
 		panel.delete.clear();
+	}
+
+	@Override
+	public void quit()
+	{
+		frame.setVisible( false );
+		frame.dispose();
 	}
 
 	public static void main( String[] args )

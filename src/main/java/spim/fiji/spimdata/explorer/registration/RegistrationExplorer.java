@@ -3,8 +3,6 @@ package spim.fiji.spimdata.explorer.registration;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Toolkit;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 
 import javax.swing.JFrame;
 
@@ -26,28 +24,16 @@ public class RegistrationExplorer< AS extends AbstractSpimData< ? >, X extends X
 	final JFrame frame;
 	final RegistrationExplorerPanel panel;
 	
-	public RegistrationExplorer( final AS data, final String xml, final X io )
+	public RegistrationExplorer( final AS data, final String xml, final X io, final ViewSetupExplorer< AS, X > viewSetupExplorer )
 	{
 		this.data = data;
 		this.xml = xml;
-		
-		final ViewSetupExplorer< AS, X > viewSetupExplorer = new ViewSetupExplorer< AS, X >( data, xml, io );
-		
+
 		frame = new JFrame( "Registration Explorer" );
 		panel = new RegistrationExplorerPanel( data.getViewRegistrations() );
 		frame.add( panel, BorderLayout.CENTER );
 
 		frame.setSize( panel.getPreferredSize() );
-		
-		frame.addWindowListener(
-				new WindowAdapter()
-				{
-					@Override
-					public void windowClosing( WindowEvent evt )
-					{
-						viewSetupExplorer.quit();
-					}
-				});
 
 		frame.pack();
 		frame.setVisible( true );
@@ -62,6 +48,11 @@ public class RegistrationExplorer< AS extends AbstractSpimData< ? >, X extends X
 		viewSetupExplorer.addListener( this );
 	}
 
+	public RegistrationExplorer( final AS data, final String xml, final X io )
+	{
+		this( data, xml, io, new ViewSetupExplorer< AS, X >( data, xml, io ) );
+	}
+
 	@Override
 	public void save() {}
 
@@ -70,7 +61,14 @@ public class RegistrationExplorer< AS extends AbstractSpimData< ? >, X extends X
 	{
 		panel.updateViewDescription( viewDescription );
 	}
-	
+
+	@Override
+	public void quit()
+	{
+		frame.setVisible( false );
+		frame.dispose();
+	}
+
 	public static void main( String[] args )
 	{
 		final LoadParseQueryXML result = new LoadParseQueryXML();

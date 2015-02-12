@@ -1,6 +1,8 @@
 package spim.fiji.spimdata.explorer;
 
 import java.awt.BorderLayout;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 
 import javax.swing.JFrame;
@@ -30,13 +32,26 @@ public class ViewSetupExplorer< AS extends AbstractSpimData< ? >, X extends XmlI
 
 		frame.add( panel, BorderLayout.CENTER );
 		frame.setSize( panel.getPreferredSize() );
-		
+
+		frame.addWindowListener(
+				new WindowAdapter()
+				{
+					@Override
+					public void windowClosing( WindowEvent evt )
+					{
+						quit();
+					}
+				});
+
 		frame.pack();
 		frame.setVisible( true );
 	}
 	
 	public void quit()
 	{
+		for ( final SelectedViewDescriptionListener l : panel.getListeners() )
+			l.quit();
+
 		panel.getListeners().clear();
 		
 		frame.setVisible( false );
