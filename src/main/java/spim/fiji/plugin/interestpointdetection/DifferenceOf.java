@@ -2,13 +2,12 @@ package spim.fiji.plugin.interestpointdetection;
 
 import ij.gui.GenericDialog;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
-import mpicbg.spim.data.sequence.Illumination;
-import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessibleInterval;
@@ -34,14 +33,12 @@ public abstract class DifferenceOf extends InterestPointDetection
 
 	public static int defaultLocalization = 1;
 	public static int[] defaultBrightness = null;
-	
-	public static int defaultTimepointChoice = 0;
-	public static int defaultAngleChoice = 0;
-	public static int defaultIlluminationChoice = 0;
-	
+
 	public static double defaultImageSigmaX = 0.5;
 	public static double defaultImageSigmaY = 0.5;
 	public static double defaultImageSigmaZ = 0.5;
+
+	public static int defaultViewChoice = 0;
 
 	public static double defaultAdditionalSigmaX = 0.0;
 	public static double defaultAdditionalSigmaY = 0.0;
@@ -55,14 +52,13 @@ public abstract class DifferenceOf extends InterestPointDetection
 	protected double minIntensity, maxIntensity;
 	protected int localization, downsampleXY, downsampleZ;
 
-	public DifferenceOf(
-			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Channel> channelsToProcess,
-			final List<Illumination> illumsToProcess,
-			final List<TimePoint> timepointsToProcess)
+	final ArrayList< Channel > channelsToProcess;
+
+	public DifferenceOf( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
-		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+		super( spimData, viewIdsToProcess );
+
+		this.channelsToProcess = SpimData2.getAllChannelsSorted( spimData, viewIdsToProcess );
 	}
 
 	protected abstract void addAddtionalParameters( final GenericDialog gd );
@@ -86,7 +82,7 @@ public abstract class DifferenceOf extends InterestPointDetection
 			for ( int i = 0; i < channels.size(); ++i )
 				defaultBrightness[ i ] = 1;
 		}
-		
+
 		for ( int c = 0; c < channelsToProcess.size(); ++c )
 			gd.addChoice( "Interest_point_specification_(channel_" + channelsToProcess.get( c ).getName() + ")", brightnessChoice, brightnessChoice[ defaultBrightness[ channelsToProcess.get( c ).getId() ] ] );
 
@@ -252,53 +248,30 @@ public abstract class DifferenceOf extends InterestPointDetection
 	 */
 	protected ViewId getViewSelection( final String dialogHeader, final String text, final Channel channel )
 	{
+		final ArrayList< ViewDescription > views = SpimData2.getAllViewIdsForChannelSorted( spimData, viewIdsToProcess, channel );
+		final String[] viewChoice = new String[ views.size() ];
+
+		for ( int i = 0; i < views.size(); ++i )
+		{
+			final ViewDescription vd = views.get( i );
+			viewChoice[ i ] = "Timepoint " + vd.getTimePointId() + ", Angle " + vd.getViewSetup().getAngle().getName() + ", Illum " + vd.getViewSetup().getIllumination().getName() + ", ViewSetupId " + vd.getViewSetupId();
+		}
+
+		if ( defaultViewChoice >= views.size() )
+			defaultViewChoice = 0;
+
 		final GenericDialog gd = new GenericDialog( dialogHeader );
-		
-		final String[] timepointNames = new String[ timepointsToProcess.size() ];
-		for ( int i = 0; i < timepointNames.length; ++i )
-			timepointNames[ i ] = timepointsToProcess.get( i ).getName();
-		
-		final List< Angle > angles = spimData.getSequenceDescription().getAllAnglesOrdered();
-		final String[] angleNames = new String[ angles.size() ];
-		for ( int i = 0; i < angles.size(); ++i )
-			angleNames[ i ] = angles.get( i ).getName();
-		
-		final List< Illumination > illuminations = spimData.getSequenceDescription().getAllIlluminationsOrdered();
-		final String[] illuminationNames = new String[ illuminations.size() ];
-		for ( int i = 0; i < illuminations.size(); ++i )
-			illuminationNames[ i ] = illuminations.get( i ).getName();
-
-		if ( defaultTimepointChoice >= timepointNames.length )
-			defaultTimepointChoice = 0;
-
-		if ( defaultAngleChoice >= angleNames.length )
-			defaultAngleChoice = 0;
-
-		if ( defaultIlluminationChoice >= illuminationNames.length )
-			defaultIlluminationChoice = 0;
 
 		gd.addMessage( text );
-		gd.addChoice( "Timepoint", timepointNames, timepointNames[ defaultTimepointChoice ] );
-		gd.addChoice( "Angle", angleNames, angleNames[ defaultAngleChoice ] );
-		gd.addChoice( "Illumination", illuminationNames, illuminationNames[ defaultIlluminationChoice ] );
-
-		gd.addMessage( "" );
-		gd.addMessage( "Note: Be sure that the view that you select is present at this timepoint!" );
+		gd.addChoice( "View", viewChoice, viewChoice[ defaultViewChoice ] );
 		
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
 			return null;
-		
-		final TimePoint tp = timepointsToProcess.get( defaultTimepointChoice = gd.getNextChoiceIndex() );
-		final Angle angle = angles.get( defaultAngleChoice = gd.getNextChoiceIndex() );
-		final Illumination illumination = illuminations.get( defaultIlluminationChoice = gd.getNextChoiceIndex() );
-		
-		final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), tp, channel, angle, illumination );
-		
-		if ( viewId == null )
-			IOFunctions.println( "This ViewSetup is not present." );
-		
+
+		final ViewId viewId = views.get( defaultViewChoice = gd.getNextChoiceIndex() );
+
 		return viewId;
 	}
 

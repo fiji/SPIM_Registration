@@ -1,6 +1,11 @@
 package spim.fiji.spimdata;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 
 import mpicbg.spim.data.SpimData;
@@ -10,6 +15,7 @@ import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
@@ -72,5 +78,104 @@ public class SpimData2 extends SpimData
 		}
 
 		return null;
+	}
+
+	public static ArrayList< ViewId > getAllViewIdsSorted( final SpimData2 data, final List< ViewSetup > setups, final List< TimePoint > tps )
+	{
+		final ArrayList< ViewId > viewIds = new ArrayList< ViewId >();
+
+		for ( final TimePoint tp : tps )
+			for ( final ViewSetup vs : setups )
+			{
+				final ViewId v = new ViewId( tp.getId(), vs.getId() );
+				final ViewDescription vd = data.getSequenceDescription().getViewDescription( v );
+				
+				if ( vd.isPresent() )
+					viewIds.add( vd );
+			}
+
+		Collections.sort( viewIds );
+
+		return viewIds;
+	}
+
+	public static ArrayList< Channel > getAllChannelsSorted( final SpimData2 data, final Collection< ViewId > viewIds )
+	{
+		final HashSet< Channel > channelSet = new HashSet< Channel >();
+
+		for ( final ViewId v : viewIds )
+		{
+			final ViewDescription vd = data.getSequenceDescription().getViewDescription( v );
+			
+			if ( vd.isPresent() )
+				channelSet.add( vd.getViewSetup().getChannel() );
+		}
+
+		final ArrayList< Channel > channels = new ArrayList< Channel >();
+		channels.addAll( channelSet );
+		Collections.sort( channels );
+
+		return channels;
+	}
+
+	public static ArrayList< ViewDescription > getAllViewIdsForChannelSorted( final SpimData2 data, final Collection< ViewId > viewIds, final Channel channel )
+	{
+		final ArrayList< ViewDescription > views = new ArrayList< ViewDescription >();
+
+		for ( final ViewId id : viewIds )
+		{
+			final ViewDescription vd = data.getSequenceDescription().getViewDescription( id );
+			
+			if ( vd.isPresent() && vd.getViewSetup().getChannel().getId() == channel.getId() )
+				views.add( vd );
+		}
+
+		Collections.sort( views );
+
+		return views;
+	}
+
+	public static ArrayList< ViewDescription > getAllViewIdsForTimePointSorted( final SpimData2 data, final Collection< ViewId > viewIds, final TimePoint timepoint )
+	{
+		final ArrayList< ViewDescription > views = new ArrayList< ViewDescription >();
+
+		for ( final ViewId id : viewIds )
+		{
+			final ViewDescription vd = data.getSequenceDescription().getViewDescription( id );
+			
+			if ( vd.isPresent() && vd.getTimePointId() == timepoint.getId() )
+				views.add( vd );
+		}
+
+		Collections.sort( views );
+
+		return views;
+	}
+
+	public static ArrayList< TimePoint > getAllTimePointsSorted( final SpimData2 data, final Collection< ViewId > viewIds )
+	{
+		final HashSet< TimePoint > timepointSet = new HashSet< TimePoint >();
+
+		for ( final ViewId v : viewIds )
+		{
+			final ViewDescription vd = data.getSequenceDescription().getViewDescription( v );
+			
+			if ( vd.isPresent() )
+				timepointSet.add( vd.getTimePoint() );
+		}
+
+		final ArrayList< TimePoint > timepoints = new ArrayList< TimePoint >();
+		timepoints.addAll( timepointSet );
+		Collections.sort( timepoints,
+				new Comparator< TimePoint >()
+				{
+					@Override
+					public int compare( final TimePoint o1, final TimePoint o2 )
+					{
+						return o1.getId() - o2.getId();
+					}
+				});
+
+		return timepoints;
 	}
 }
