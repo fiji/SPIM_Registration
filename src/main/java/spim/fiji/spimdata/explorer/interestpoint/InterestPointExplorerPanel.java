@@ -59,11 +59,14 @@ public class InterestPointExplorerPanel extends JPanel
 	
 	public void updateViewDescription( final BasicViewDescription< ? > vd )
 	{
-		if ( label != null )
+		if ( vd != null && label != null )
 			this.label.setText("View Description --- Timepoint: " + vd.getTimePointId() + ", View Setup Id: " + vd.getViewSetupId() );
 
+		if ( vd == null )
+			this.label.setText( "No or multiple View Descriptions selected");
+
 		tableModel.updateViewDescription( vd );
-		
+
 		if ( table.getSelectedRowCount() == 0 )
 			table.getSelectionModel().setSelectionInterval( 0, 0 );
 	}

@@ -47,8 +47,11 @@ public class RegistrationExplorerPanel extends JPanel
 	
 	public void updateViewDescription( final BasicViewDescription< ? > vd )
 	{
-		if ( label != null )
+		if ( vd != null && label != null )
 			this.label.setText( "View Description --- Timepoint: " + vd.getTimePointId() + ", View Setup Id: " + vd.getViewSetupId() );
+
+		if ( vd == null )
+			this.label.setText( "No or multiple View Descriptions selected");
 
 		tableModel.updateViewDescription( vd );
 		
