@@ -1,5 +1,6 @@
 package spim.fiji.plugin;
 
+import spim.fiji.plugin.queryXML.GenericLoadParseQueryXML;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
@@ -15,7 +16,7 @@ public class Data_Explorer implements PlugIn
 	{
 		final LoadParseQueryXML result = new LoadParseQueryXML();
 
-		if ( !result.queryXML( "Interest Point Explorer", "", false, false, false, false ) )
+		if ( !result.queryXML( "XML Explorer", "", false, false, false, false ) )
 			return;
 
 		final ViewSetupExplorer< SpimData2, XmlIoSpimData2 > explorer = new ViewSetupExplorer<SpimData2, XmlIoSpimData2 >( result.getData(), result.getXMLFileName(), result.getIO() );
@@ -26,6 +27,7 @@ public class Data_Explorer implements PlugIn
 
 	public static void main( String[] args )
 	{
+		GenericLoadParseQueryXML.defaultXMLfilename = "/Users/preibischs/Documents/Microscopy/SPIM/HisYFP-SPIM//dataset.xml";
 		new Data_Explorer().run( null );
 	}
 }
