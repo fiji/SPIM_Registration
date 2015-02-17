@@ -133,9 +133,24 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 			}
 		});
 
+		final JButton info = new JButton( "Info" );
+		info.addActionListener( new ActionListener()
+		{
+			@Override
+			public void actionPerformed( final ActionEvent e )
+			{
+				if ( info.isEnabled() )
+					showInfoBox();
+			}
+		});
+
+		final JPanel buttons = new JPanel( new BorderLayout() );
+		buttons.add( info, BorderLayout.WEST );
+		buttons.add( save, BorderLayout.EAST );
+
 		final JPanel header = new JPanel( new BorderLayout() );
 		header.add( new JLabel( "XML: " + xml ), BorderLayout.WEST );
-		header.add( save, BorderLayout.EAST );
+		header.add( buttons, BorderLayout.EAST );
 		this.add( header, BorderLayout.NORTH );
 		this.add( new JScrollPane( table ), BorderLayout.CENTER );
 
@@ -187,6 +202,11 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 	}
 
 	public HashSet< BasicViewDescription< ? extends BasicViewSetup > > getSelectedRows() { return selectedRows; }
+
+	public void showInfoBox()
+	{
+		new ViewSetupExplorerInfoBox< AS >( data, xml );
+	}
 
 	public void saveXML()
 	{
