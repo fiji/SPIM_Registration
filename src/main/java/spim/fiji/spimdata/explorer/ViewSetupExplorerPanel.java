@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -35,6 +37,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 	protected AS data;
 	final String xml;
 	final X io;
+	final boolean isMac;
 
 	public ViewSetupExplorerPanel( final AS data, final String xml, final X io )
 	{
@@ -42,6 +45,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		this.data = data;
 		this.xml = xml.replace( "\\", "/" ).replace( "//", "/" ).replace( "/./", "/" );
 		this.io = io;
+		this.isMac = System.getProperty( "os.name" ).toLowerCase().contains( "mac" );
 
 		initComponent();
 	}
@@ -114,6 +118,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 				}
 			});
 
+
 		// check out if the user clicked on the column header and potentially sorting by that
 		table.getTableHeader().addMouseListener( new MouseAdapter()
 		{
@@ -130,6 +135,9 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 				}
 			};
 		});
+
+		if ( isMac )
+			addAppleA();
 
 		table.setPreferredScrollableViewportSize( new Dimension( 750, 300 ) );
 		table.getColumnModel().getColumn( 0 ).setPreferredWidth( 20 );
@@ -197,5 +205,34 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 
 		popupMenu.add( saveItem );
 		table.setComponentPopupMenu( popupMenu );
+	}
+
+	protected void addAppleA()
+	{
+		table.addKeyListener( new KeyListener()
+		{
+			boolean appleKeyDown = false;
+
+			@Override
+			public void keyTyped( KeyEvent arg0 )
+			{
+				if ( appleKeyDown && arg0.getKeyChar() == 'a' )
+					table.selectAll();
+			}
+
+			@Override
+			public void keyReleased( KeyEvent arg0 )
+			{
+				if ( arg0.getKeyCode() == 157 )
+					appleKeyDown = false;
+			}
+
+			@Override
+			public void keyPressed(KeyEvent arg0)
+			{
+				if ( arg0.getKeyCode() == 157 )
+					appleKeyDown = true;
+			}
+		});
 	}
 }
