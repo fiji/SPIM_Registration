@@ -6,6 +6,7 @@ import ij.gui.GenericDialog;
 import java.awt.Color;
 import java.awt.Label;
 import java.awt.TextField;
+import java.awt.event.ActionListener;
 import java.awt.event.TextEvent;
 import java.awt.event.TextListener;
 import java.text.ParseException;
@@ -105,6 +106,12 @@ public class GenericLoadParseQueryXML<
 	// extension for the XML when saving
 	protected String clusterExt = null;
 
+	// add a button on demand
+	protected String buttonText = null;
+	protected ActionListener listener = null;
+	protected GenericDialog gd = null;
+	protected boolean returnfalse = false;
+
 	/**
 	 * Constructor for the class needs an appropriate IO module
 	 * @param xmlIoSpimData
@@ -175,7 +182,16 @@ public class GenericLoadParseQueryXML<
 	public boolean queryXML( final List< String > specifyAttributes ) { return queryXML( "", "Process", specifyAttributes ); } 
 	public boolean queryXML( final String query ) { return queryXML( "", query, null ); } 
 	public boolean queryXML( final String query, final List< String > specifyAttributes ) { return queryXML( "", query, specifyAttributes ); } 
-	
+
+	public void addButton( final String buttonText, final ActionListener listener )
+	{
+		this.buttonText = buttonText;
+		this.listener = listener;
+	}
+
+	public GenericDialog getGenericDialog() { return gd; }
+	public void setReturnFalse( final boolean value ) { this.returnfalse = value; }
+
 	/**
 	 * Asks the user for a valid XML (real time parsing)
 	 * 
@@ -246,10 +262,19 @@ public class GenericLoadParseQueryXML<
 		}
 
 		addListeners( gd, (TextField)gd.getStringFields().firstElement(), l1, l2 );
-		
+
+		if ( buttonText != null && listener != null )
+		{
+			gd.addMessage( "" );
+			gd.addMessage( "OR" );
+			gd.addMessage( "" );
+			gd.addButton( buttonText, listener );
+			this.gd = gd;
+		}
+
 		gd.showDialog();
 		
-		if ( gd.wasCanceled() )
+		if ( gd.wasCanceled() || returnfalse )
 			return false;
 		
 		String xmlFilename = defaultXMLfilename = gd.getNextString();
