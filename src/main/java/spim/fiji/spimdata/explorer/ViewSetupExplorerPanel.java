@@ -8,7 +8,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
-import javax.swing.DefaultListSelectionModel;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
@@ -40,7 +40,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 	{
 		this.listeners = new ArrayList< SelectedViewDescriptionListener >();
 		this.data = data;
-		this.xml = xml;
+		this.xml = xml.replace( "\\", "/" ).replace( "//", "/" ).replace( "/./", "/" );
 		this.io = io;
 
 		initComponent();
@@ -70,7 +70,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		table = new JTable();
 		table.setModel( tableModel );
 		table.setSurrendersFocusOnKeystroke( true );
-		table.setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
+		table.setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );//.SINGLE_SELECTION );
 		
 		final DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
 		centerRenderer.setHorizontalAlignment( JLabel.CENTER );
@@ -78,7 +78,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		// center all columns
 		for ( int column = 0; column < tableModel.getColumnCount(); ++column )
 			table.getColumnModel().getColumn( column ).setCellRenderer( centerRenderer );
-		
+
 		// add listener to which row is selected
 		table.getSelectionModel().addListSelectionListener(
 			new ListSelectionListener()
@@ -88,15 +88,28 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 				@Override
 				public void valueChanged( final ListSelectionEvent arg0 )
 				{
-					final int row = ((DefaultListSelectionModel)(arg0.getSource())).getAnchorSelectionIndex();
+					//System.out.println( table.getSelectedRowCount() );
+					//System.out.println( table.getSelectedRow() );
 
-					if ( ( row != lastRow ) && row >= 0 && row < tableModel.getRowCount() )
+					if ( table.getSelectedRowCount() != 1 )
 					{
-						lastRow = row;
+						lastRow = -1;
 
-						// not using an iterator allows that listeners can close the frame and remove all listeners while they are called
 						for ( int i = 0; i < listeners.size(); ++i )
-							listeners.get( i ).seletedViewDescription( tableModel.getElements().get( row ) );
+							listeners.get( i ).seletedViewDescription( null );
+					}
+					else
+					{
+						final int row = table.getSelectedRow();//((DefaultListSelectionModel)(arg0.getSource())).getAnchorSelectionIndex();
+
+						if ( ( row != lastRow ) && row >= 0 && row < tableModel.getRowCount() )
+						{
+							lastRow = row;
+
+							// not using an iterator allows that listeners can close the frame and remove all listeners while they are called
+							for ( int i = 0; i < listeners.size(); ++i )
+								listeners.get( i ).seletedViewDescription( tableModel.getElements().get( row ) );
+						}
 					}
 				}
 			});
@@ -127,9 +140,24 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 			table.getColumnModel().getColumn( tableModel.interestPointsColumn() ).setPreferredWidth( 30 );
 
 		this.setLayout( new BorderLayout() );
-		this.add( new JLabel( "XML: " + xml ), BorderLayout.NORTH );
+
+		final JButton save = new JButton( "Save" );
+		save.addActionListener( new ActionListener()
+		{
+			@Override
+			public void actionPerformed( final ActionEvent e )
+			{
+				if ( save.isEnabled() )
+					saveXML();
+			}
+		});
+
+		final JPanel header = new JPanel( new BorderLayout() );
+		header.add( new JLabel( "XML: " + xml ), BorderLayout.WEST );
+		header.add( save, BorderLayout.EAST );
+		this.add( header, BorderLayout.NORTH );
 		this.add( new JScrollPane( table ), BorderLayout.CENTER );
-		
+
 		table.getSelectionModel().setSelectionInterval( 0, 0 );
 
 		addPopupMenu( table );
