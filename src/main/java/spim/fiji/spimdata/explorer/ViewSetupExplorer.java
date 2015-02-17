@@ -45,6 +45,9 @@ public class ViewSetupExplorer< AS extends AbstractSpimData< ? >, X extends XmlI
 
 		frame.pack();
 		frame.setVisible( true );
+
+		// set the initial focus to the table
+		panel.table.requestFocus();
 	}
 	
 	public void quit()
