@@ -8,6 +8,7 @@ import ij.process.ImageProcessor;
 import java.io.File;
 import java.util.Date;
 
+import spim.fiji.datasetmanager.StackListImageJ;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
@@ -34,14 +35,12 @@ public class StackImgLoaderIJ extends StackImgLoader
 
 	protected ImagePlus open( File file )
 	{
-		System.out.println( file );
-		
 		final ImagePlus imp = new Opener().openImage( file.getAbsolutePath() );
 
 		if ( imp == null )
 		{
 			IOFunctions.println( "Could not open file with ImageJ TIFF reader: '" + file.getAbsolutePath() + "'" );
-			return null;				
+			return null;
 		}
 		
 		return imp;
@@ -266,5 +265,11 @@ public class StackImgLoaderIJ extends StackImgLoader
 				imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight, imp.getCalibration().pixelDepth );
 
 		imp.close();
+	}
+
+	@Override
+	public String toString()
+	{
+		return new StackListImageJ().getTitle() + ", ImgFactory=" + imgFactory.getClass().getSimpleName();
 	}
 }

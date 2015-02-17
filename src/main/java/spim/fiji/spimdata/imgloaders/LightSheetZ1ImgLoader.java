@@ -33,6 +33,7 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
+import spim.fiji.datasetmanager.LightSheetZ1;
 import spim.fiji.datasetmanager.LightSheetZ1MetaData;
 
 public class LightSheetZ1ImgLoader extends AbstractImgLoader
@@ -457,5 +458,11 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 			throw new RuntimeException( "This XML does not have the 'Illumination' attribute for their ViewSetup. Cannot continue." );
 
 		return illumination;
+	}
+
+	@Override
+	public String toString()
+	{
+		return new LightSheetZ1().getTitle() + ", ImgFactory=" + imgFactory.getClass().getSimpleName();
 	}
 }

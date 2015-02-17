@@ -35,6 +35,7 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import ome.xml.model.primitives.PositiveFloat;
+import spim.fiji.datasetmanager.StackListLOCI;
 
 public class StackImgLoaderLOCI extends StackImgLoader
 {
@@ -518,4 +519,11 @@ public class StackImgLoaderLOCI extends StackImgLoader
 			return null;
 		}
 	}
+
+	@Override
+	public String toString()
+	{
+		return new StackListLOCI().getTitle() + ", ImgFactory=" + imgFactory.getClass().getSimpleName();
+	}
+
 }
