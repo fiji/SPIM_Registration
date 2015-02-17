@@ -46,7 +46,6 @@ public class Interest_Point_Detection implements PlugIn
 	public static boolean defaultDefineAnisotropy = false;
 	public static boolean defaultAdditionalSmoothing = false;
 	public static boolean defaultSetMinMax = false;
-	public static boolean[] defaultChannelChoice = null;
 	public static String defaultLabel = "beads";
 	
 	static
@@ -62,7 +61,7 @@ public class Interest_Point_Detection implements PlugIn
 		// ask for everything but the channels
 		final LoadParseQueryXML result = new LoadParseQueryXML();
 		
-		if ( !result.queryXML( "perfoming interest point detection", true, false, true, true ) )
+		if ( !result.queryXML( "perfoming interest point detection", true, true, true, true ) )
 			return;
 		
 		// ask which channels have the objects we are searching for
@@ -81,25 +80,15 @@ public class Interest_Point_Detection implements PlugIn
 		
 		gd.addChoice( "Type_of_interest_point_detection", descriptions, descriptions[ defaultAlgorithm ] );
 		gd.addStringField( "Label_interest_points", defaultLabel );
-		
-		if ( channels.size() > 1 )
-		{
-			if ( defaultChannelChoice == null || defaultChannelChoice.length != channels.size() )
-			{
-				defaultChannelChoice = new boolean[ channels.size() ];
-				for ( int i = 0; i < channels.size(); ++i )
-					defaultChannelChoice[ i ] = true;
-			}
-			
-			gd.addMessage( "" );
-			gd.addMessage( "Choose channels to detect interest points in", GUIHelper.largefont );
-			
-			for ( int i = 0; i < channels.size(); ++i )
-				gd.addCheckbox( "Channel_" + channels.get( i ).getName(), defaultChannelChoice[ i ] );
 
-			gd.addMessage( "" );
-		}
+		gd.addMessage( "" );
+		gd.addMessage( "Channels to detect interest points in", GUIHelper.largefont );
 		
+		for ( int i = 0; i < channels.size(); ++i )
+			gd.addMessage( "Channel " + channels.get( i ).getName(), GUIHelper.smallStatusFont );
+
+		gd.addMessage( "" );
+
 		gd.addCheckbox( "Downsample_images prior to segmentation", defaultDownSample );
 		gd.addCheckbox( "Define_anisotropy for segmentation", defaultDefineAnisotropy );
 		gd.addCheckbox( "Additional_smoothing", defaultAdditionalSmoothing );
@@ -118,23 +107,9 @@ public class Interest_Point_Detection implements PlugIn
 		// how are the detections called (e.g. beads, nuclei, ...)
 		final String label = defaultLabel = gd.getNextString();
 		final ArrayList< Channel> channelsToProcess = new ArrayList< Channel >();
-		
-		if ( channels.size() > 1 )
-		{
-			for ( int i = 0; i < channels.size(); ++i )
-				if ( defaultChannelChoice[ i ] = gd.getNextBoolean() )
-					channelsToProcess.add( channels.get( i ) );
-			
-			if ( channelsToProcess.size() == 0 )
-			{
-				IOFunctions.println( "No channels selected. Quitting." );
-				return;
-			}
-		}
-		else
-		{
-			channelsToProcess.add( channels.get( 0 ) );
-		}
+
+		for ( int i = 0; i < channels.size(); ++i )
+			channelsToProcess.add( channels.get( i ) );
 
 		final boolean downsample = defaultDownSample = gd.getNextBoolean();
 		final boolean defineAnisotropy = defaultDefineAnisotropy = gd.getNextBoolean();
