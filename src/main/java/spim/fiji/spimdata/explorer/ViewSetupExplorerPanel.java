@@ -90,45 +90,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 			table.getColumnModel().getColumn( column ).setCellRenderer( centerRenderer );
 
 		// add listener to which row is selected
-		table.getSelectionModel().addListSelectionListener(
-			new ListSelectionListener()
-			{
-				int lastRow = -1;
-
-				@Override
-				public void valueChanged( final ListSelectionEvent arg0 )
-				{
-					if ( table.getSelectedRowCount() != 1 )
-					{
-						lastRow = -1;
-
-						for ( int i = 0; i < listeners.size(); ++i )
-							listeners.get( i ).seletedViewDescription( null );
-
-						selectedRows.clear();
-
-						for ( final int row : table.getSelectedRows() )
-							selectedRows.add( tableModel.getElements().get( row ) );
-					}
-					else
-					{
-						final int row = table.getSelectedRow();
-
-						if ( ( row != lastRow ) && row >= 0 && row < tableModel.getRowCount() )
-						{
-							lastRow = row;
-
-							// not using an iterator allows that listeners can close the frame and remove all listeners while they are called
-							final BasicViewDescription< ? extends BasicViewSetup > vd = tableModel.getElements().get( row );
-							for ( int i = 0; i < listeners.size(); ++i )
-								listeners.get( i ).seletedViewDescription( vd );
-
-							selectedRows.clear();
-							selectedRows.add(vd );
-						}
-					}
-				}
-			});
+		table.getSelectionModel().addListSelectionListener( getSelectionListener() );
 
 		// check out if the user clicked on the column header and potentially sorting by that
 		table.getTableHeader().addMouseListener( new MouseAdapter()
@@ -180,6 +142,48 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		table.getSelectionModel().setSelectionInterval( 0, 0 );
 
 		addPopupMenu( table );
+	}
+
+	protected ListSelectionListener getSelectionListener()
+	{
+		return new ListSelectionListener()
+		{
+			int lastRow = -1;
+
+			@Override
+			public void valueChanged( final ListSelectionEvent arg0 )
+			{
+				if ( table.getSelectedRowCount() != 1 )
+				{
+					lastRow = -1;
+
+					for ( int i = 0; i < listeners.size(); ++i )
+						listeners.get( i ).seletedViewDescription( null );
+
+					selectedRows.clear();
+
+					for ( final int row : table.getSelectedRows() )
+						selectedRows.add( tableModel.getElements().get( row ) );
+				}
+				else
+				{
+					final int row = table.getSelectedRow();
+
+					if ( ( row != lastRow ) && row >= 0 && row < tableModel.getRowCount() )
+					{
+						lastRow = row;
+
+						// not using an iterator allows that listeners can close the frame and remove all listeners while they are called
+						final BasicViewDescription< ? extends BasicViewSetup > vd = tableModel.getElements().get( row );
+						for ( int i = 0; i < listeners.size(); ++i )
+							listeners.get( i ).seletedViewDescription( vd );
+
+						selectedRows.clear();
+						selectedRows.add(vd );
+					}
+				}
+			}
+		};
 	}
 
 	public HashSet< BasicViewDescription< ? extends BasicViewSetup > > getSelectedRows() { return selectedRows; }
