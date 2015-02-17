@@ -1,15 +1,12 @@
 package spim.fiji.spimdata.explorer;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.UIManager;
 
-import net.imglib2.Dimensions;
-import net.imglib2.util.Util;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.base.Entity;
 import mpicbg.spim.data.generic.base.NamedEntity;
@@ -17,6 +14,8 @@ import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import net.imglib2.Dimensions;
+import net.imglib2.util.Util;
 
 public class ViewSetupExplorerInfoBox< AS extends AbstractSpimData< ? > >
 {
@@ -70,7 +69,7 @@ public class ViewSetupExplorerInfoBox< AS extends AbstractSpimData< ? > >
 				text.append( "Voxel Dimensions: ");
 				for ( int d = 0; d < vDim.numDimensions() - 1; ++d )
 					text.append( Double.toString( vDim.dimension( d ) ) + " x " );
-				text.append( Double.toString( vDim.dimension( dim.numDimensions() - 1 ) ) + vDim.unit() + "\n" );
+				text.append( Double.toString( vDim.dimension( vDim.numDimensions() - 1 ) ) + vDim.unit() + "\n" );
 			}
 			
 			for ( final String attrib : vs.getAttributes().keySet() )
@@ -100,9 +99,7 @@ public class ViewSetupExplorerInfoBox< AS extends AbstractSpimData< ? > >
 			tps += t.getId() + ", ";
 
 		text.append( tps.substring( 0, tps.length() - 2 ) + "\n" );
-
 		frame.add( new JScrollPane( text ), BorderLayout.CENTER );
-		frame.setSize( new Dimension( 500, 300 ) );
 
 		frame.pack();
 		frame.setVisible( true );
