@@ -9,6 +9,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -25,6 +26,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
+import mpicbg.spim.data.generic.sequence.BasicViewDescription;
+import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.io.IOFunctions;
 
 public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > > extends JPanel
@@ -39,6 +42,8 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 	final X io;
 	final boolean isMac;
 
+	final protected HashSet< BasicViewDescription< ? extends BasicViewSetup > > selectedRows;
+
 	public ViewSetupExplorerPanel( final AS data, final String xml, final X io )
 	{
 		this.listeners = new ArrayList< SelectedViewDescriptionListener >();
@@ -46,6 +51,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		this.xml = xml.replace( "\\", "/" ).replace( "//", "/" ).replace( "/./", "/" );
 		this.io = io;
 		this.isMac = System.getProperty( "os.name" ).toLowerCase().contains( "mac" );
+		this.selectedRows = new HashSet< BasicViewDescription< ? extends BasicViewSetup > >();
 
 		initComponent();
 	}
@@ -74,7 +80,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		table = new JTable();
 		table.setModel( tableModel );
 		table.setSurrendersFocusOnKeystroke( true );
-		table.setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );//.SINGLE_SELECTION );
+		table.setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
 		
 		final DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
 		centerRenderer.setHorizontalAlignment( JLabel.CENTER );
@@ -92,32 +98,37 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 				@Override
 				public void valueChanged( final ListSelectionEvent arg0 )
 				{
-					//System.out.println( table.getSelectedRowCount() );
-					//System.out.println( table.getSelectedRow() );
-
 					if ( table.getSelectedRowCount() != 1 )
 					{
 						lastRow = -1;
 
 						for ( int i = 0; i < listeners.size(); ++i )
 							listeners.get( i ).seletedViewDescription( null );
+
+						selectedRows.clear();
+
+						for ( final int row : table.getSelectedRows() )
+							selectedRows.add( tableModel.getElements().get( row ) );
 					}
 					else
 					{
-						final int row = table.getSelectedRow();//((DefaultListSelectionModel)(arg0.getSource())).getAnchorSelectionIndex();
+						final int row = table.getSelectedRow();
 
 						if ( ( row != lastRow ) && row >= 0 && row < tableModel.getRowCount() )
 						{
 							lastRow = row;
 
 							// not using an iterator allows that listeners can close the frame and remove all listeners while they are called
+							final BasicViewDescription< ? extends BasicViewSetup > vd = tableModel.getElements().get( row );
 							for ( int i = 0; i < listeners.size(); ++i )
-								listeners.get( i ).seletedViewDescription( tableModel.getElements().get( row ) );
+								listeners.get( i ).seletedViewDescription( vd );
+
+							selectedRows.clear();
+							selectedRows.add(vd );
 						}
 					}
 				}
 			});
-
 
 		// check out if the user clicked on the column header and potentially sorting by that
 		table.getTableHeader().addMouseListener( new MouseAdapter()
@@ -170,6 +181,8 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 
 		addPopupMenu( table );
 	}
+
+	public HashSet< BasicViewDescription< ? extends BasicViewSetup > > getSelectedRows() { return selectedRows; }
 
 	public void saveXML()
 	{
