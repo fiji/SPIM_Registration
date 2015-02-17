@@ -13,6 +13,8 @@ import java.io.File;
 import java.util.ArrayList;
 
 import mpicbg.spim.io.IOFunctions;
+import spim.fiji.ImgLib2Temp.Pair;
+import spim.fiji.ImgLib2Temp.ValuePair;
 import spim.fiji.datasetmanager.LightSheetZ1;
 import spim.fiji.datasetmanager.MultiViewDatasetDefinition;
 import spim.fiji.datasetmanager.StackListImageJ;
@@ -46,7 +48,7 @@ public class Define_Multi_View_Dataset implements PlugIn
 		defineDataset( true );
 	}
 
-	public SpimData2 defineDataset( final boolean save )
+	public Pair< SpimData2, String > defineDataset( final boolean save )
 	{
 		final ArrayList< MultiViewDatasetDefinition > datasetDefinitions = new ArrayList< MultiViewDatasetDefinition >();
 		
@@ -120,7 +122,7 @@ public class Define_Multi_View_Dataset implements PlugIn
 					GenericLoadParseQueryXML.defaultXMLfilename = xml;
 				}
 
-				return spimData;
+				return new ValuePair< SpimData2, String >( spimData, xml );
 			}
 			catch ( Exception e )
 			{
