@@ -8,11 +8,10 @@ import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
-import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessible;
@@ -44,13 +43,12 @@ public class ProcessIndependent extends ProcessFusion
 	
 	public ProcessIndependent(
 			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Illumination> illumsToProcess,
+			final List< ViewId > viewIdsToProcess,
 			final BoundingBox bb,
 			final ImgExport export,
 			final Map< ViewSetup, ViewSetup > newViewsetups )
 	{
-		super( spimData, anglesToProcess, illumsToProcess, bb, false, false );
+		super( spimData, viewIdsToProcess, bb, false, false );
 		
 		this.export = export;
 		this.newViewsetups = newViewsetups;
@@ -79,7 +77,7 @@ public class ProcessIndependent extends ProcessFusion
 	{
 		// get all views that are fused
 		final ArrayList< ViewDescription > allInputData =
-				FusionHelper.assembleInputData( spimData, timepoint, channel, anglesToProcess, illumsToProcess );
+				FusionHelper.assembleInputData( spimData, timepoint, channel, viewIdsToProcess );
 		
 		// we will need to run some batches until all is fused
 		for ( int i = 0; i < allInputData.size(); ++i )

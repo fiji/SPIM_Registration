@@ -13,6 +13,7 @@ import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import net.imglib2.FinalDimensions;
@@ -73,26 +74,22 @@ public class WeightedAverageFusion extends Fusion
 		final ProcessFusion process;
 		
 		if ( getFusionType() == WeightedAvgFusionType.FUSEDATA && numParalellViews == 0 )
-			process = new ProcessParalell( spimData, anglesToProcess, illumsToProcess, bb, useBlending, useContentBased );
+			process = new ProcessParalell( spimData, viewIdsToProcess, bb, useBlending, useContentBased );
 		else if ( getFusionType() == WeightedAvgFusionType.FUSEDATA )
-			process = new ProcessSequential( spimData, anglesToProcess, illumsToProcess, bb, useBlending, useContentBased, numParalellViews );
+			process = new ProcessSequential( spimData, viewIdsToProcess, bb, useBlending, useContentBased, numParalellViews );
 		else
-			process = new ProcessIndependent( spimData, anglesToProcess, illumsToProcess, bb, exporter, newViewsetups );
+			process = new ProcessIndependent( spimData, viewIdsToProcess, bb, exporter, newViewsetups );
 
-		String illumName = "_Ill" + illumsToProcess.get( 0 ).getName();
-
-		for ( int i = 1; i < illumsToProcess.size(); ++i )
-			illumName += "," + illumsToProcess.get( i ).getName();
-
-		String angleName = "_Ang" + anglesToProcess.get( 0 ).getName();
-
-		for ( int i = 1; i < anglesToProcess.size(); ++i )
-			angleName += "," + anglesToProcess.get( i ).getName();
 
 		for ( final TimePoint t : timepointsToProcess )
-			for ( final Channel c : channelsToProcess )
+			for ( final ViewDescription vd : SpimData2.getAllViewIdsForTimePointSorted( spimData, viewIdsToProcess, t ) )
 			{
-				titler.setTitle( "TP" + t.getName() + "_Ch" + c.getName() + illumName + angleName );
+				final Channel c = vd.getViewSetup().getChannel();
+
+				final List< Angle > anglesToProcess = SpimData2.getAllAnglesForChannelTimepointSorted( spimData, viewIdsToProcess, c, t );
+				final List< Illumination > illumsToProcess = SpimData2.getAllIlluminationsForChannelTimepointSorted( spimData, viewIdsToProcess, c, t );
+
+				titler.setTitle( "TP" + t.getName() + "_Ch" + c.getName() + getIllumName( illumsToProcess ) + getAngleName( anglesToProcess ) );
 				if ( bb.getPixelType() == 0 )
 				{
 					exporter.exportImage(
@@ -112,6 +109,26 @@ public class WeightedAverageFusion extends Fusion
 			}
 
 		return true;
+	}
+
+	protected String getIllumName( final List< Illumination > illumsToProcess )
+	{
+		String illumName = "_Ill" + illumsToProcess.get( 0 ).getName();
+
+		for ( int i = 1; i < illumsToProcess.size(); ++i )
+			illumName += "," + illumsToProcess.get( i ).getName();
+
+		return illumName;
+	}
+
+	protected String getAngleName( final List< Angle > anglesToProcess )
+	{
+		String angleName = "_Ang" + anglesToProcess.get( 0 ).getName();
+
+		for ( int i = 1; i < anglesToProcess.size(); ++i )
+			angleName += "," + anglesToProcess.get( i ).getName();
+
+		return angleName;
 	}
 
 	@Override

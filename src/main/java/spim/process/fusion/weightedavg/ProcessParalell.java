@@ -7,11 +7,10 @@ import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
-import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
@@ -31,13 +30,12 @@ public class ProcessParalell extends ProcessFusion
 {	
 	public ProcessParalell(
 			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Illumination> illumsToProcess,
+			final List< ViewId > viewIdsToProcess,
 			final BoundingBox bb,
 			final boolean useBlending,
 			final boolean useContentBased )
 	{
-		super( spimData, anglesToProcess, illumsToProcess, bb, useBlending, useContentBased );
+		super( spimData, viewIdsToProcess, bb, useBlending, useContentBased );
 	}
 
 	/** 
@@ -69,7 +67,7 @@ public class ProcessParalell extends ProcessFusion
 		
 		// get all views that are fused
 		final ArrayList< ViewDescription > inputData =
-				FusionHelper.assembleInputData( spimData, timepoint, channel, anglesToProcess, illumsToProcess );
+				FusionHelper.assembleInputData( spimData, timepoint, channel, viewIdsToProcess );
 
 		final ArrayList< RandomAccessibleInterval< T > > imgs = new ArrayList< RandomAccessibleInterval< T > >();
 

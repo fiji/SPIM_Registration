@@ -99,6 +99,82 @@ public class SpimData2 extends SpimData
 		return viewIds;
 	}
 
+	public static ArrayList< Angle > getAllAnglesForChannelTimepointSorted( final SpimData2 data, final Collection< ViewId > viewIds, final Channel c, final TimePoint t )
+	{
+		final HashSet< Angle > angleSet = new HashSet< Angle >();
+
+		for ( final ViewId v : viewIds )
+		{
+			final ViewDescription vd = data.getSequenceDescription().getViewDescription( v );
+			
+			if ( vd.isPresent() && v.getTimePointId() == t.getId() && vd.getViewSetup().getChannel().getId() == c.getId() )
+				angleSet.add( vd.getViewSetup().getAngle() );
+		}
+
+		final ArrayList< Angle > angles = new ArrayList< Angle >();
+		angles.addAll( angleSet );
+		Collections.sort( angles );
+
+		return angles;
+	}
+
+	public static ArrayList< Angle > getAllAnglesSorted( final SpimData2 data, final Collection< ViewId > viewIds )
+	{
+		final HashSet< Angle > angleSet = new HashSet< Angle >();
+
+		for ( final ViewId v : viewIds )
+		{
+			final ViewDescription vd = data.getSequenceDescription().getViewDescription( v );
+			
+			if ( vd.isPresent() )
+				angleSet.add( vd.getViewSetup().getAngle() );
+		}
+
+		final ArrayList< Angle > angles = new ArrayList< Angle >();
+		angles.addAll( angleSet );
+		Collections.sort( angles );
+
+		return angles;
+	}
+
+	public static ArrayList< Illumination > getAllIlluminationsForChannelTimepointSorted( final SpimData2 data, final Collection< ViewId > viewIds, final Channel c, final TimePoint t )
+	{
+		final HashSet< Illumination > illumSet = new HashSet< Illumination >();
+
+		for ( final ViewId v : viewIds )
+		{
+			final ViewDescription vd = data.getSequenceDescription().getViewDescription( v );
+			
+			if ( vd.isPresent() && v.getTimePointId() == t.getId() && vd.getViewSetup().getChannel().getId() == c.getId() )
+				illumSet.add( vd.getViewSetup().getIllumination() );
+		}
+
+		final ArrayList< Illumination > illums = new ArrayList< Illumination >();
+		illums.addAll( illumSet );
+		Collections.sort( illums );
+
+		return illums;
+	}
+
+	public static ArrayList< Illumination > getAllIlluminationsSorted( final SpimData2 data, final Collection< ViewId > viewIds )
+	{
+		final HashSet< Illumination > illumSet = new HashSet< Illumination >();
+
+		for ( final ViewId v : viewIds )
+		{
+			final ViewDescription vd = data.getSequenceDescription().getViewDescription( v );
+			
+			if ( vd.isPresent() )
+				illumSet.add( vd.getViewSetup().getIllumination() );
+		}
+
+		final ArrayList< Illumination > illums = new ArrayList< Illumination >();
+		illums.addAll( illumSet );
+		Collections.sort( illums );
+
+		return illums;
+	}
+
 	public static ArrayList< Channel > getAllChannelsSorted( final SpimData2 data, final Collection< ViewId > viewIds )
 	{
 		final HashSet< Channel > channelSet = new HashSet< Channel >();

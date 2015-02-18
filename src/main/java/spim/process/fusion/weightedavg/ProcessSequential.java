@@ -8,11 +8,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
-import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessible;
@@ -35,14 +34,13 @@ public class ProcessSequential extends ProcessFusion
 	
 	public ProcessSequential(
 			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Illumination> illumsToProcess,
+			final List< ViewId > viewIdsToProcess,
 			final BoundingBox bb,
 			final boolean useBlending,
 			final boolean useContentBased,
 			final int numSequentialViews )
 	{
-		super( spimData, anglesToProcess, illumsToProcess, bb, useBlending, useContentBased );
+		super( spimData, viewIdsToProcess, bb, useBlending, useContentBased );
 		
 		this.numSequentialViews = numSequentialViews;
 	}
@@ -85,7 +83,7 @@ public class ProcessSequential extends ProcessFusion
 		
 		// get all views that are fused
 		final ArrayList< ViewDescription > allInputData =
-				FusionHelper.assembleInputData( spimData, timepoint, channel, anglesToProcess, illumsToProcess );
+				FusionHelper.assembleInputData( spimData, timepoint, channel, viewIdsToProcess );
 		
 		// we will need to run some batches until all is fused
 		for ( int batch = 0; batch < numBatches( allInputData.size(), numSequentialViews ); ++batch )
