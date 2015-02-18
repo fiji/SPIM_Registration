@@ -10,10 +10,9 @@ import java.awt.event.TextEvent;
 import java.util.List;
 import java.util.Vector;
 
-import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
-import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.plugin.util.GUIHelper;
@@ -31,14 +30,9 @@ public class AutomaticBoundingBox extends ManualBoundingBox
 	public static boolean defaultLoadSequentially = true;
 	public static boolean defaultDisplaySegmentationImage = false;
 
-	public AutomaticBoundingBox(
-			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Channel> channelsToProcess,
-			final List<Illumination> illumsToProcess,
-			final List<TimePoint> timepointsToProcess )
+	public AutomaticBoundingBox( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
-		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+		super( spimData, viewIdsToProcess );
 	}
 
 	@Override
@@ -48,7 +42,7 @@ public class AutomaticBoundingBox extends ManualBoundingBox
 		final double[] minBB = new double[ 3 ];
 		final double[] maxBB = new double[ 3 ];
 		
-		ManualBoundingBox.computeMaximalBoundingBox( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess, minBB, maxBB );
+		ManualBoundingBox.computeMaximalBoundingBox( spimData, viewIdsToProcess, minBB, maxBB );
 	
 		// compute dimensions and update size for this instance
 		final long[] dim = new long[ maxBB.length ];
@@ -61,7 +55,10 @@ public class AutomaticBoundingBox extends ManualBoundingBox
 		}
 		
 		final GenericDialog gd = new GenericDialog( "Automatically define Bounding Box" );
-		
+
+		final List< TimePoint > timepointsToProcess = SpimData2.getAllTimePointsSorted( spimData, viewIdsToProcess );
+		final List< Channel > channelsToProcess = SpimData2.getAllChannelsSorted( spimData, viewIdsToProcess );
+
 		final String[] timepoints = assembleTimepoints( timepointsToProcess );
 		final String[] channels = assembleChannels( channelsToProcess );
 
@@ -104,8 +101,7 @@ public class AutomaticBoundingBox extends ManualBoundingBox
 		// compute approx bounding box
 		final MinFilterThreshold automatic = new MinFilterThreshold(
 				spimData,
-				anglesToProcess,
-				illumsToProcess,
+				viewIdsToProcess,
 				channel,
 				timepoint,
 				this,
@@ -195,14 +191,9 @@ public class AutomaticBoundingBox extends ManualBoundingBox
 	}
 
 	@Override
-	public AutomaticBoundingBox newInstance(
-			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Channel> channelsToProcess,
-			final List<Illumination> illumsToProcess,
-			final List<TimePoint> timepointsToProcess)
+	public AutomaticBoundingBox newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
-		return new AutomaticBoundingBox( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+		return new AutomaticBoundingBox( spimData, viewIdsToProcess );
 	}
 
 	@Override

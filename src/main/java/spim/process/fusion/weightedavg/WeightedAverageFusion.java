@@ -13,6 +13,7 @@ import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import net.imglib2.FinalDimensions;
 import net.imglib2.RandomAccessible;
@@ -43,15 +44,12 @@ public class WeightedAverageFusion extends Fusion
 
 	public WeightedAverageFusion(
 			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Channel> channelsToProcess,
-			final List<Illumination> illumsToProcess,
-			final List<TimePoint> timepointsToProcess, 
+			final List< ViewId > viewIdsToProcess,
 			final WeightedAvgFusionType type )
 	{
-		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
-		
-		this.type = type;		
+		super( spimData, viewIdsToProcess );
+
+		this.type = type;
 	}
 	
 	public WeightedAvgFusionType getFusionType() { return type; }
@@ -123,14 +121,9 @@ public class WeightedAverageFusion extends Fusion
 	}
 
 	@Override
-	public WeightedAverageFusion newInstance(
-			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Channel> channelsToProcess,
-			final List<Illumination> illumsToProcess,
-			final List<TimePoint> timepointsToProcess )
+	public WeightedAverageFusion newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
-		return new WeightedAverageFusion( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess, type );
+		return new WeightedAverageFusion( spimData, viewIdsToProcess, type );
 	}
 
 	@Override
@@ -162,8 +155,8 @@ public class WeightedAverageFusion extends Fusion
 			int maxViews = 0;
 			
 			for ( final TimePoint t : timepointsToProcess )
-				for ( final Channel c : channelsToProcess )
-					maxViews = Math.max( maxViews, FusionHelper.assembleInputData( spimData, t, c, anglesToProcess, illumsToProcess).size() );
+				for ( final Channel c : SpimData2.getAllChannelsSorted( spimData, viewIdsToProcess ) )
+					maxViews = Math.max( maxViews, FusionHelper.assembleInputData( spimData, t, c, viewIdsToProcess ).size() );
 			
 			// any choice but all views
 			final String[] views = new String[ maxViews ];

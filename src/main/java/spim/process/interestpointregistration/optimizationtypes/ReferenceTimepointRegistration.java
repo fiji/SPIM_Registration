@@ -6,8 +6,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-import mpicbg.spim.data.sequence.Angle;
-import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
@@ -22,17 +20,14 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 
 	public ReferenceTimepointRegistration(
 			final SpimData2 spimData,
-			final List< Angle > anglesToProcess,
+			final List< ViewId > viewIdsToProcess,
 			final List< ChannelProcess > channelsToProcess,
-			final List< Illumination > illumsToProcess,
-			final List< TimePoint > timepointsToProcess,
 			final TimePoint referenceTimepoint,
-			final boolean save,
 			final boolean considerTimePointsAsUnit )
 	{
-		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess, save, considerTimePointsAsUnit );
+		super( spimData, viewIdsToProcess, channelsToProcess, considerTimePointsAsUnit );
 
-		this.setFixedTiles( assembleFixedTiles( spimData, anglesToProcess, channelsToProcess, illumsToProcess, referenceTimepoint ) );
+		this.setFixedTiles( assembleFixedTiles( spimData, viewIdsToProcess, channelsToProcess, referenceTimepoint ) );
 		this.referenceTimepoint = referenceTimepoint;
 	}
 	
@@ -48,33 +43,19 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 	 */
 	protected static HashSet< ViewId > assembleFixedTiles(
 			final SpimData2 spimData,
-			final List< Angle > anglesToProcess,
+			final List< ViewId > viewIdsToProcess,
 			final List< ChannelProcess > channelsToProcess,
-			final List< Illumination > illumsToProcess,
 			final TimePoint referenceTimepoint )
 	{
 		final HashSet< ViewId > fixedTiles = new HashSet< ViewId >();
 		
-		for ( final Angle a : anglesToProcess )
-			for ( final Illumination i : illumsToProcess )
-				for ( final ChannelProcess c : channelsToProcess )
-				{
-					// bureaucracy
-					final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), referenceTimepoint, c.getChannel(), a, i );
-					
-					// this happens only if a viewsetup is not present in any timepoint
-					// (e.g. after appending fusion to a dataset)
-					if ( viewId == null )
-						continue;
+		for ( final ViewDescription vd : SpimData2.getAllViewIdsForTimePointSorted( spimData, viewIdsToProcess, referenceTimepoint ) )
+		{
+			if ( !vd.isPresent() )
+				continue;
 
-					final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
-							viewId.getTimePointId(), viewId.getViewSetupId() );
-	
-					if ( !viewDescription.isPresent() )
-						continue;
-					
-					fixedTiles.add( viewId );
-				}
+			fixedTiles.add( vd );
+		}
 
 		return fixedTiles;
 	}
@@ -88,7 +69,7 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 
 		final HashMap< ViewId, MatchPointList > pointListsReferenceTimepoint = this.getInterestPoints( referenceTimepoint );
 
-		for ( final TimePoint timepoint : timepointsToProcess )
+		for ( final TimePoint timepoint : SpimData2.getAllTimePointsSorted( spimData, viewIdsToProcess ) )
 		{
 			if ( timepoint == referenceTimepoint )
 				continue;

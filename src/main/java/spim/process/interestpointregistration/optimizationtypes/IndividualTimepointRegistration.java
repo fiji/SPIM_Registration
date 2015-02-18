@@ -5,8 +5,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import mpicbg.spim.data.sequence.Angle;
-import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.spimdata.SpimData2;
@@ -24,13 +22,10 @@ public class IndividualTimepointRegistration extends GlobalOptimizationType
 {
 	public IndividualTimepointRegistration(
 			final SpimData2 spimData,
-			final List< Angle > anglesToProcess,
-			final List< ChannelProcess > channelsToProcess,
-			final List< Illumination > illumsToProcess,
-			final List< TimePoint > timepointsToProcess,
-			final boolean save )
+			final List< ViewId > viewIdsToProcess,
+			final List< ChannelProcess > channelsToProcess )
 	{
-		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess, save, false );
+		super( spimData, viewIdsToProcess, channelsToProcess, false );
 	}
 
 	@Override
@@ -38,7 +33,7 @@ public class IndividualTimepointRegistration extends GlobalOptimizationType
 	{
 		final ArrayList< GlobalOptimizationSubset > list = new ArrayList< GlobalOptimizationSubset >();
 		
-		for ( final TimePoint timepoint : timepointsToProcess )
+		for ( final TimePoint timepoint : SpimData2.getAllTimePointsSorted( spimData, viewIdsToProcess ) )
 		{
 			final HashMap< ViewId, MatchPointList > pointLists = this.getInterestPoints( timepoint );
 			

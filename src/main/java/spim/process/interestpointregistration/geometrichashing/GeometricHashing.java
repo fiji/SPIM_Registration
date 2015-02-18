@@ -4,9 +4,7 @@ import ij.gui.GenericDialog;
 
 import java.util.List;
 
-import mpicbg.spim.data.sequence.Angle;
-import mpicbg.spim.data.sequence.Illumination;
-import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.plugin.Interest_Point_Registration.RegistrationType;
 import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
 import spim.fiji.spimdata.SpimData2;
@@ -25,12 +23,10 @@ public class GeometricHashing extends InterestPointRegistration
 
 	public GeometricHashing(
 			final SpimData2 spimData,
-			final List< Angle > anglesToProcess,
-			final List< ChannelProcess > channelsToProcess,
-			final List< Illumination > illumsToProcess,
-			final List< TimePoint > timepointsToProcess )
+			final List< ViewId > viewIdsToProcess,
+			final List< ChannelProcess > channelsToProcess )
 	{
-		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+		super( spimData, viewIdsToProcess, channelsToProcess );
 	}
 
 	@Override
@@ -45,12 +41,10 @@ public class GeometricHashing extends InterestPointRegistration
 	@Override
 	public GeometricHashing newInstance(
 			final SpimData2 spimData,
-			final List< Angle > anglesToProcess,
-			final List< ChannelProcess > channelsToProcess,
-			final List< Illumination > illumsToProcess,
-			final List< TimePoint > timepointsToProcess )
+			final List< ViewId > viewIdsToProcess,
+			final List< ChannelProcess > channelsToProcess )
 	{
-		return new GeometricHashing( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+		return new GeometricHashing( spimData, viewIdsToProcess, channelsToProcess );
 	}
 
 	@Override

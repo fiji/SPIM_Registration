@@ -8,9 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
-import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
@@ -39,23 +37,10 @@ public abstract class Fusion
 	protected Map< ViewSetup, ViewSetup > newViewsetups = null;
 
 	/**
-	 * which angles to process, set in queryParameters
+	 * which ViewId to process, set in queryParameters
 	 */
-	final protected List< Angle > anglesToProcess;
+	final protected List< ViewId > viewIdsToProcess;
 
-	/**
-	 * which channels to process, set in queryParameters
-	 */
-	final protected List< Channel > channelsToProcess;
-
-	/**
-	 * which illumination directions to process, set in queryParameters
-	 */
-	final protected List< Illumination > illumsToProcess;
-
-	/**
-	 * which timepoints to process, set in queryParameters
-	 */
 	final protected List< TimePoint > timepointsToProcess;
 
 	final protected SpimData2 spimData;
@@ -64,24 +49,16 @@ public abstract class Fusion
 	
 	/**
 	 * @param spimData
-	 * @param anglesToPrcoess - which angles to segment
-	 * @param channelsToProcess - which channels to segment in
-	 * @param illumsToProcess - which illumination directions to segment
-	 * @param timepointsToProcess - which timepoints were selected
+	 * @param viewIdsToProcess - which viewIds to fuse
 	 */
 	public Fusion(
 			final SpimData2 spimData,
-			final List< Angle > anglesToProcess,
-			final List< Channel> channelsToProcess,
-			final List< Illumination > illumsToProcess,
-			final List< TimePoint > timepointsToProcess )
+			final List< ViewId > viewIdsToProcess )
 	{
 		this.spimData = spimData;
-		this.anglesToProcess = anglesToProcess;
-		this.channelsToProcess = channelsToProcess;
-		this.illumsToProcess = illumsToProcess;
-		this.timepointsToProcess = timepointsToProcess;
-		
+		this.viewIdsToProcess = viewIdsToProcess;
+		this.timepointsToProcess = SpimData2.getAllTimePointsSorted( spimData, viewIdsToProcess );
+
 		if ( spimData == null )
 		{
 			avgPixels = 0;
@@ -180,18 +157,10 @@ public abstract class Fusion
 
 	/**
 	 * @param spimData
-	 * @param anglesToPrcoess - which angles to segment
-	 * @param channelsToProcess - which channels to segment in
-	 * @param illumsToProcess - which illumination directions to segment
-	 * @param timepointsToProcess - which timepoints were selected
+	 * @param viewIdsToPrcoess - which viewIds to fuse
 	 * @return - a new instance without any special properties
 	 */
-	public abstract Fusion newInstance(
-			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Channel> channelsToProcess,
-			final List<Illumination> illumsToProcess,
-			final List<TimePoint> timepointsToProcess );
+	public abstract Fusion newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess );
 	
 	/**
 	 * @return - to be displayed in the generic dialog
@@ -202,58 +171,43 @@ public abstract class Fusion
 	{
 		long avgSize = 0;
 		int countImgs = 0;
-		
-		for ( final TimePoint t : timepointsToProcess )
-			for ( final Channel c : channelsToProcess )
-				for ( final Angle a : anglesToProcess )
-					for ( final Illumination i : illumsToProcess )
-					{
-						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
 
-						// this happens only if a viewsetup is not present in any timepoint
-						// (e.g. after appending fusion to a dataset)
-						if ( viewId == null )
-							continue;
+		for ( final ViewId viewId : viewIdsToProcess  )
+		{
+			final ViewDescription desc = spimData.getSequenceDescription().getViewDescription( viewId );
 
-						final ViewDescription desc = spimData.getSequenceDescription().getViewDescription( viewId );
+			if ( desc.isPresent() )
+			{
+				final ViewSetup viewSetup = desc.getViewSetup();
+				final long numPixel = Intervals.numElements( ViewSetupUtils.getSizeOrLoad( viewSetup, desc.getTimePoint(), spimData.getSequenceDescription().getImgLoader() ) );
 
-						if ( desc.isPresent() )
-						{
-							final ViewSetup viewSetup = desc.getViewSetup();
-							final long numPixel = Intervals.numElements( ViewSetupUtils.getSizeOrLoad( viewSetup, desc.getTimePoint(), spimData.getSequenceDescription().getImgLoader() ) );
-
-							avgSize += numPixel;
-							++countImgs;
-						}
-					}
+				avgSize += numPixel;
+				++countImgs;
+			}
+		}
 		
 		return avgSize / countImgs;
 	}
 
+	/**
+	 * @return - max num views per fused image
+	 */
 	protected int computeMaxNumViews()
 	{
 		int maxViews = 0;
 		
 		for ( final TimePoint t : timepointsToProcess )
-			for ( final Channel c : channelsToProcess )
+			for ( final Channel c : SpimData2.getAllChannelsSorted( spimData, viewIdsToProcess ) )
 			{
 				int views = 0;
-				
-				for ( final Angle a : anglesToProcess )
-					for ( final Illumination i : illumsToProcess )
-					{
-						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
 
-						// this happens only if a viewsetup is not present in any timepoint
-						// (e.g. after appending fusion to a dataset)
-						if ( viewId == null )
-							continue;
-
-						final ViewDescription desc = spimData.getSequenceDescription().getViewDescription( viewId );
-						
-						if ( desc.isPresent() )
-							++views;
-					}
+				for ( final ViewId viewId : viewIdsToProcess )
+				{
+					final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( viewId );
+					
+					if ( vd.isPresent() && vd.getTimePointId() == t.getId() && vd.getViewSetup().getChannel().getId() == c.getId() )
+						++views;
+				}
 				
 				maxViews = Math.max( maxViews, views );
 			}

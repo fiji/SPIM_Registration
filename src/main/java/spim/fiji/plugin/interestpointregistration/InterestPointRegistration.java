@@ -9,10 +9,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import mpicbg.spim.data.sequence.Angle;
-import mpicbg.spim.data.sequence.Illumination;
-import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.Threads;
 import spim.fiji.plugin.Interest_Point_Registration.RegistrationType;
@@ -31,10 +29,8 @@ import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizati
 public abstract class InterestPointRegistration
 {
 	final SpimData2 spimData1;
-	final List< Angle > anglesToProcess1;
-	final List< ChannelProcess > channelsToProcess1;
-	final List< Illumination > illumsToProcess1;
-	final List< TimePoint > timepointsToProcess1; 
+	final List< ViewId > viewIdsToProcess;
+	final List< ChannelProcess > channelsToProcess;
 
 	/**
 	 * Instantiate the interest point registration. It is performed for a spimdata object on a
@@ -42,23 +38,14 @@ public abstract class InterestPointRegistration
 	 * certain type of detections (e.g. beads, nuclei), hence the {@link ChannelProcess} object.
 	 * 
 	 * @param spimData
-	 * @param anglesToProcess
-	 * @param channelsToProcess
-	 * @param illumsToProcess
-	 * @param timepointsToProcess
+	 * @param viewIdsToProcess - which view id's to register
+	 * @param channelsToProcess - which Channel uses which label for registration
 	 */
-	public InterestPointRegistration(
-			final SpimData2 spimData,
-			final List< Angle > anglesToProcess,
-			final List< ChannelProcess > channelsToProcess,
-			final List< Illumination > illumsToProcess,
-			final List< TimePoint > timepointsToProcess )
+	public InterestPointRegistration( final SpimData2 spimData, final List< ViewId > viewIdsToProcess, final List< ChannelProcess > channelsToProcess )
 	{
 		this.spimData1 = spimData;
-		this.anglesToProcess1 = anglesToProcess;
-		this.channelsToProcess1 = channelsToProcess;
-		this.illumsToProcess1 = illumsToProcess;
-		this.timepointsToProcess1 = timepointsToProcess;
+		this.viewIdsToProcess = viewIdsToProcess;
+		this.channelsToProcess = channelsToProcess;
 	}
 
 	/**
@@ -81,12 +68,7 @@ public abstract class InterestPointRegistration
 	/**
 	 * @return - a new instance without any special properties
 	 */
-	public abstract InterestPointRegistration newInstance(
-			final SpimData2 spimData,
-			final List< Angle > anglesToProcess,
-			final List< ChannelProcess > channelsToProcess,
-			final List< Illumination > illumsToProcess,
-			final List< TimePoint > timepointsToProcess );
+	public abstract InterestPointRegistration newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess, final List< ChannelProcess > channelsToProcess );
 	
 	/**
 	 * @return - to be displayed in the generic dialog
@@ -121,15 +103,13 @@ public abstract class InterestPointRegistration
 				getTransformationModel().getModel(),
 				registrationType,
 				getSpimData(),
-				getChannelsToProcess(), 
+				getChannelsToProcess(),
 				getDescription() + ", " + getTransformationModel().getDescription() );
 	}
 
 	protected SpimData2 getSpimData() { return spimData1; }
-	public List< Angle > getAnglesToProcess() { return anglesToProcess1; }
-	public List< ChannelProcess > getChannelsToProcess() { return channelsToProcess1; }
-	public List< Illumination > getIllumsToProcess() { return illumsToProcess1; }
-	public List< TimePoint > getTimepointsToProcess() { return timepointsToProcess1; }
+	public List< ViewId > getViewIdsToProcess() { return viewIdsToProcess; }
+	public List< ChannelProcess > getChannelsToProcess() { return channelsToProcess; }
 
 	/**
 	 * Registers all timepoints. No matter which matching is done it is always the same principle.
@@ -138,9 +118,10 @@ public abstract class InterestPointRegistration
 	 * The global optimization can is done in subsets, where the number of subsets >= 1.
 	 * 
 	 * @param registrationType - which kind of registration
+	 * @param save - if you want to save the correspondence files
 	 * @return
 	 */
-	public boolean register( final GlobalOptimizationType registrationType )
+	public boolean register( final GlobalOptimizationType registrationType, final boolean save )
 	{
 		final SpimData2 spimData = getSpimData();
 
@@ -209,7 +190,7 @@ public abstract class InterestPointRegistration
 				registrationType.addCorrespondences( pairs );
 			
 			// save the files
-			if ( registrationType.save() )
+			if ( save )
 				registrationType.saveCorrespondences( subset );
 			
 			if ( runGlobalOpt( subset, registrationType ) )

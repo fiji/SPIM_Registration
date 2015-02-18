@@ -26,12 +26,11 @@ import java.util.HashMap;
 import java.util.List;
 
 import mpicbg.spim.data.SpimData;
-import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.SequenceDescription;
-import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
 
 public class GUIHelper
 {
@@ -94,32 +93,29 @@ public class GUIHelper
 		gd.addMessage( text, smallStatusFont );
 	}
 
-	public static HashMap< String, Integer > assembleRegistrationNames( final SpimData data, final List< ? extends BasicViewSetup > setupList, final List< TimePoint > timepoints )
+	public static HashMap< String, Integer > assembleRegistrationNames( final SpimData data, final List< ViewId > viewIds )
 	{
 		final ViewRegistrations vr = data.getViewRegistrations();
 		final SequenceDescription sd = data.getSequenceDescription();
 
 		final HashMap< String, Integer > names = new HashMap< String, Integer >();
 
-		for ( final TimePoint tp: timepoints )
+		for ( final ViewId viewId: viewIds )
 		{
-			for ( final BasicViewSetup setup : setupList )
+			final ViewDescription vd = sd.getViewDescription( viewId );
+
+			if ( !vd.isPresent() )
+				continue;
+
+			final ViewRegistration r = vr.getViewRegistration( vd );
+			final String rName = r.getTransformList().get( 0 ).getName();
+
+			if ( rName != null )
 			{
-				final ViewDescription vd = sd.getViewDescription( tp.getId(), setup.getId() );
-
-				if ( !vd.isPresent() )
-					continue;
-
-				final ViewRegistration r = vr.getViewRegistration( vd );
-				final String rName = r.getTransformList().get( 0 ).getName();
-
-				if ( rName != null )
-				{
-					if ( names.containsKey( rName ) )
-						names.put( rName, names.get( rName ) + 1 );
-					else
-						names.put( rName, 1 );
-				}
+				if ( names.containsKey( rName ) )
+					names.put( rName, names.get( rName ) + 1 );
+				else
+					names.put( rName, 1 );
 			}
 		}
 

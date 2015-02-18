@@ -119,14 +119,9 @@ public class EfficientBayesianBased extends Fusion
 
 	Choice gpu, block, it;
 
-	public EfficientBayesianBased(
-			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Channel> channelsToProcess,
-			final List<Illumination> illumsToProcess,
-			final List<TimePoint> timepointsToProcess )
+	public EfficientBayesianBased( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
-		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+		super( spimData, viewIdsToProcess );
 		
 		// we want the arrayimg by default
 		BoundingBox.defaultImgType = 0;
@@ -336,14 +331,9 @@ public class EfficientBayesianBased extends Fusion
 	}
 
 	@Override
-	public Fusion newInstance(
-			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Channel> channelsToProcess,
-			final List<Illumination> illumsToProcess,
-			final List<TimePoint> timepointsToProcess)
+	public Fusion newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
-		return new EfficientBayesianBased( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+		return new EfficientBayesianBased( spimData, viewIdsToProcess );
 	}
 
 	@Override

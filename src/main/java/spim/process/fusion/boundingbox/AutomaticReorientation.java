@@ -20,10 +20,7 @@ import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.registration.ViewTransform;
 import mpicbg.spim.data.registration.ViewTransformAffine;
-import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
-import mpicbg.spim.data.sequence.Illumination;
-import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
@@ -62,14 +59,9 @@ public class AutomaticReorientation extends ManualBoundingBox
 
 	int reorientate;
 
-	public AutomaticReorientation(
-			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Channel> channelsToProcess,
-			final List<Illumination> illumsToProcess,
-			final List<TimePoint> timepointsToProcess )
+	public AutomaticReorientation( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
-		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+		super( spimData, viewIdsToProcess );
 	}
 
 	/**
@@ -138,9 +130,7 @@ public class AutomaticReorientation extends ManualBoundingBox
 		{
 			final String[] labels = Interest_Point_Registration.getAllInterestPointLabelsForChannel(
 					spimData,
-					timepointsToProcess,
-					anglesToProcess,
-					illumsToProcess,
+					viewIdsToProcess,
 					channel,
 					"use any detections from" );
 
@@ -232,55 +222,35 @@ public class AutomaticReorientation extends ManualBoundingBox
 			//
 			IOFunctions.println( "Final transformation model: " + pair.getA() );
 
-			final List< TimePoint > tps;
-			final List< Channel > chns;
-			final List< Illumination > ills;
-			final List< Angle > angls;
+			final List< ViewId > viewIdsToApply;
 
 			if ( reorientate == 0 ) // apply to all views
 			{
-				tps = spimData.getSequenceDescription().getTimePoints().getTimePointsOrdered();
-				chns = spimData.getSequenceDescription().getAllChannelsOrdered();
-				ills = spimData.getSequenceDescription().getAllIlluminationsOrdered();
-				angls = spimData.getSequenceDescription().getAllAnglesOrdered();
-
-				IOFunctions.println( "Will be applied only to all views and saved to the XML." );
+				viewIdsToApply = SpimData2.getAllViewIdsSorted( spimData, spimData.getSequenceDescription().getViewSetupsOrdered(), spimData.getSequenceDescription().getTimePoints().getTimePointsOrdered() );
+				IOFunctions.println( "Will be applied only to all views and remembered/saved to the XML." );
 			}
 			else // apply only to fused views
 			{
-				tps = timepointsToProcess;
-				chns = channelsToProcess;
-				ills = illumsToProcess;
-				angls = anglesToProcess;
+				viewIdsToApply = viewIdsToProcess;
 
 				if ( reorientate == 1 )
-					IOFunctions.println( "Will be applied only to fused views and saved to the XML." );
+					IOFunctions.println( "Will be applied only to fused views and remembered/saved to the XML." );
 				else
-					IOFunctions.println( "Will be temporarily applied only to fused views (NOT saved to XML)." );
+					IOFunctions.println( "Will be temporarily applied only to fused views (NOT remembered in the XML)." );
 			}
 
-			for ( final TimePoint t : tps )
-				for ( final Channel c : chns )
-					for ( final Illumination i : ills )
-						for ( final Angle a : angls )
-						{
-							final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
+			for ( final ViewId viewId : viewIdsToApply )
+			{
+				final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( viewId );
+				
+				if ( !vd.isPresent() )
+					continue;
 
-							// this happens only if a viewsetup is not present in any timepoint
-							// (e.g. after appending fusion to a dataset)
-							if ( viewId == null )
-								continue;
-
-							final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( viewId );
-							
-							if ( !vd.isPresent() )
-								continue;
-
-							// get the registration
-							final ViewRegistration r = spimData.getViewRegistrations().getViewRegistration( viewId );
-							r.preconcatenateTransform( new ViewTransformAffine( reorientationDescription, pair.getA() ) );
-							r.updateModel();
-						}
+				// get the registration
+				final ViewRegistration r = spimData.getViewRegistrations().getViewRegistration( viewId );
+				r.preconcatenateTransform( new ViewTransformAffine( reorientationDescription, pair.getA() ) );
+				r.updateModel();
+			}
 
 			minF = new float[]{ pair.getB()[ 0 ], pair.getB()[ 1 ], pair.getB()[ 2 ] };
 			maxF = new float[]{ pair.getB()[ 3 ], pair.getB()[ 4 ], pair.getB()[ 5 ] };
@@ -532,68 +502,59 @@ public class AutomaticReorientation extends ManualBoundingBox
 	{
 		final ArrayList< float[] > ipList = new ArrayList< float[] >();
 
-		for ( final TimePoint t : timepointsToProcess )
-			for ( final ChannelProcess c : channelsToUse )
-				for ( final Illumination i : illumsToProcess )
-					for ( final Angle a : anglesToProcess )
+		for ( final ChannelProcess c : channelsToUse )
+			for ( final ViewDescription vd : SpimData2.getAllViewIdsForChannelSorted( spimData, viewIdsToProcess, c.getChannel() ) )
+			{
+				if ( !vd.isPresent() )
+					continue;
+
+				// get the registration
+				final ViewRegistration r = spimData.getViewRegistrations().getViewRegistration( vd );
+				r.updateModel();
+				final AffineTransform3D transform = r.getModel();
+
+				// get the list of detections
+				final ViewInterestPointLists vipl = spimData.getViewInterestPoints().getViewInterestPointLists( vd );
+				final InterestPointList ipl = vipl.getInterestPointList( c.getLabel() );
+
+				if ( ipl.getInterestPoints() == null )
+					ipl.loadInterestPoints();
+
+				final List< InterestPoint > list = ipl.getInterestPoints();
+		
+				// use all detections
+				if ( detections == 0 )
+				{
+					for ( final InterestPoint p : list )
 					{
-						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c.getChannel(), a, i );
-
-						// this happens only if a viewsetup is not present in any timepoint
-						// (e.g. after appending fusion to a dataset)
-						if ( viewId == null )
-							continue;
-
-						final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( viewId );
-						
-						if ( !vd.isPresent() )
-							continue;
-
-						// get the registration
-						final ViewRegistration r = spimData.getViewRegistrations().getViewRegistration( viewId );
-						r.updateModel();
-						final AffineTransform3D transform = r.getModel();
-
-						// get the list of detections
-						final ViewInterestPointLists vipl = spimData.getViewInterestPoints().getViewInterestPointLists( viewId );
-						final InterestPointList ipl = vipl.getInterestPointList( c.getLabel() );
-
-						ipl.loadInterestPoints();
-
-						final List< InterestPoint > list = ipl.getInterestPoints();
-
-						// use all detections
-						if ( detections == 0 )
-						{
-							for ( final InterestPoint p : list )
-							{
-								final float[] source = p.getL();
-								final float[] target = new float[ source.length ];
-								transform.apply( source, target );
-								ipList.add( target );
-							}
-						}
-						else // use only those who have correspondences
-						{
-							ipl.loadCorrespondingInterestPoints();
-
-							final HashMap< Integer, InterestPoint > map = new HashMap< Integer, InterestPoint >();
-
-							for ( final InterestPoint ip : list )
-								map.put( ip.getId(), ip );
-
-							final List< CorrespondingInterestPoints > list2 = ipl.getCorrespondingInterestPoints();
-
-							for ( final CorrespondingInterestPoints cp : list2 )
-							{
-								final InterestPoint p = map.get( cp.getDetectionId() );
-								final float[] source = p.getL();
-								final float[] target = new float[ source.length ];
-								transform.apply( source, target );
-								ipList.add( target );
-							}
-						}
+						final float[] source = p.getL();
+						final float[] target = new float[ source.length ];
+						transform.apply( source, target );
+						ipList.add( target );
 					}
+				}
+				else // use only those who have correspondences
+				{
+					if ( ipl.getCorrespondingInterestPoints() == null )
+						ipl.loadCorrespondingInterestPoints();
+
+					final HashMap< Integer, InterestPoint > map = new HashMap< Integer, InterestPoint >();
+
+					for ( final InterestPoint ip : list )
+						map.put( ip.getId(), ip );
+
+					final List< CorrespondingInterestPoints > list2 = ipl.getCorrespondingInterestPoints();
+
+					for ( final CorrespondingInterestPoints cp : list2 )
+					{
+						final InterestPoint p = map.get( cp.getDetectionId() );
+						final float[] source = p.getL();
+						final float[] target = new float[ source.length ];
+						transform.apply( source, target );
+						ipList.add( target );
+					}
+				}
+			}
 
 		return ipList;
 	}
@@ -605,44 +566,29 @@ public class AutomaticReorientation extends ManualBoundingBox
 		int isReorientated = 0;
 		int sumViews = 0;
 
-		for ( final TimePoint t : timepointsToProcess )
-			for ( final Channel c : channelsToProcess )
-				for ( final Illumination i : illumsToProcess )
-					for ( final Angle a : anglesToProcess )
-					{
-						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
+		for ( final ViewId viewId : viewIdsToProcess )
+		{
+			final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( viewId );
+			
+			if ( !vd.isPresent() )
+				continue;
 
-						// this happens only if a viewsetup is not present in any timepoint
-						// (e.g. after appending fusion to a dataset)
-						if ( viewId == null )
-							continue;
+			final ViewRegistration vr = vrs.getViewRegistration( viewId );
+			final ViewTransform vt = vr.getTransformList().get( 0 );
 
-						final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( viewId );
-						
-						if ( !vd.isPresent() )
-							continue;
+			++sumViews;
 
-						final ViewRegistration vr = vrs.getViewRegistration( viewId );
-						final ViewTransform vt = vr.getTransformList().get( 0 );
-
-						++sumViews;
-
-						if ( vt.hasName() && vt.getName().startsWith( reorientationDescription ) )
-								++isReorientated;
-					}
+			if ( vt.hasName() && vt.getName().startsWith( reorientationDescription ) )
+					++isReorientated;
+		}
 
 		return new ValuePair< Integer, Integer >( isReorientated, sumViews );
 	}
 
 	@Override
-	public AutomaticReorientation newInstance(
-			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Channel> channelsToProcess,
-			final List<Illumination> illumsToProcess,
-			final List<TimePoint> timepointsToProcess)
+	public AutomaticReorientation newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
-		return new AutomaticReorientation( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+		return new AutomaticReorientation( spimData, viewIdsToProcess );
 	}
 
 	@Override

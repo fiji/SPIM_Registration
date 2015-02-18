@@ -2,10 +2,7 @@ package spim.fiji.plugin.fusion;
 
 import java.util.List;
 
-import mpicbg.spim.data.sequence.Angle;
-import mpicbg.spim.data.sequence.Channel;
-import mpicbg.spim.data.sequence.Illumination;
-import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.Interval;
 import net.imglib2.Positionable;
 import net.imglib2.RealPositionable;
@@ -37,24 +34,9 @@ public abstract class BoundingBox implements Interval
 	protected int imgtype = 1;
 
 	/**
-	 * which angles to process, set in queryParameters
+	 * which viewIds to process, set in queryParameters
 	 */
-	protected final List< Angle > anglesToProcess;
-
-	/**
-	 * which channels to process, set in queryParameters
-	 */
-	protected final List< Channel> channelsToProcess;
-
-	/**
-	 * which illumination directions to process, set in queryParameters
-	 */
-	protected final List< Illumination > illumsToProcess;
-
-	/**
-	 * which timepoints to process, set in queryParameters
-	 */
-	protected final List< TimePoint > timepointsToProcess;
+	protected final List< ViewId > viewIdsToProcess;
 
 	protected final SpimData2 spimData;
 	
@@ -63,23 +45,12 @@ public abstract class BoundingBox implements Interval
 
 	/**
 	 * @param spimData
-	 * @param anglesToPrcoess - which angles to segment
-	 * @param channelsToProcess - which channels to segment in
-	 * @param illumsToProcess - which illumination directions to segment
-	 * @param timepointsToProcess - which timepoints were selected
+	 * @param viewIdsToProcess - which view ids to fuse
 	 */
-	public BoundingBox(
-			final SpimData2 spimData,
-			final List< Angle > anglesToProcess,
-			final List< Channel> channelsToProcess,
-			final List< Illumination > illumsToProcess,
-			final List< TimePoint > timepointsToProcess )
+	public BoundingBox( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
 		this.spimData = spimData;
-		this.anglesToProcess = anglesToProcess;
-		this.channelsToProcess = channelsToProcess;
-		this.illumsToProcess = illumsToProcess;
-		this.timepointsToProcess = timepointsToProcess;
+		this.viewIdsToProcess = viewIdsToProcess;
 		
 		this.min = defaultMin.clone();
 		this.max = defaultMax.clone();
@@ -95,18 +66,10 @@ public abstract class BoundingBox implements Interval
 
 	/**
 	 * @param spimData
-	 * @param anglesToPrcoess - which angles to segment
-	 * @param channelsToProcess - which channels to segment in
-	 * @param illumsToProcess - which illumination directions to segment
-	 * @param timepointsToProcess - which timepoints were selected
+	 * @param viewIdsToProcess - which view ids to fuse
 	 * @return - a new instance without any special properties
 	 */
-	public abstract BoundingBox newInstance(
-			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Channel> channelsToProcess,
-			final List<Illumination> illumsToProcess,
-			final List<TimePoint> timepointsToProcess );
+	public abstract BoundingBox newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess );
 
 	/**
 	 * @return - to be displayed in the generic dialog

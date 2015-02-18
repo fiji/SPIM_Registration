@@ -14,10 +14,6 @@ import java.util.List;
 import java.util.Vector;
 
 import mpicbg.spim.data.registration.ViewRegistration;
-import mpicbg.spim.data.sequence.Angle;
-import mpicbg.spim.data.sequence.Channel;
-import mpicbg.spim.data.sequence.Illumination;
-import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
@@ -33,14 +29,9 @@ import spim.process.fusion.export.ImgExport;
 
 public class ManualBoundingBox extends BoundingBox
 {	
-	public ManualBoundingBox(
-			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Channel> channelsToProcess,
-			final List<Illumination> illumsToProcess,
-			final List<TimePoint> timepointsToProcess)
+	public ManualBoundingBox( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
-		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+		super( spimData, viewIdsToProcess );
 	}
 
 	@Override
@@ -49,7 +40,7 @@ public class ManualBoundingBox extends BoundingBox
 		final double[] minBB = new double[ 3 ];
 		final double[] maxBB = new double[ 3 ];
 		
-		computeMaximalBoundingBox( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess, minBB, maxBB );
+		computeMaximalBoundingBox( spimData, viewIdsToProcess, minBB, maxBB );
 
 		for ( int d = 0; d < minBB.length; ++d )
 		{
@@ -336,13 +327,7 @@ public class ManualBoundingBox extends BoundingBox
 		}
 	}
 
-	public static void computeMaximalBoundingBox(
-			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Channel> channelsToProcess,
-			final List<Illumination> illumsToProcess,
-			final List<TimePoint> timepointsToProcess,
-			final double[] minBB, final double[] maxBB )
+	public static void computeMaximalBoundingBox(  final SpimData2 spimData, final List< ViewId > viewIdsToProcess, final double[] minBB, final double[] maxBB )
 	{
 		for ( int d = 0; d < minBB.length; ++d )
 		{
@@ -352,53 +337,37 @@ public class ManualBoundingBox extends BoundingBox
 
 		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Estimating Bounding Box for Fusion. If size of images is not known (they were never opened before), some of them need to be opened once to determine their size.");
 
-		for ( final TimePoint t: timepointsToProcess )
-			for ( final Channel c : channelsToProcess )
-				for ( final Illumination i : illumsToProcess )
-					for ( final Angle a : anglesToProcess )
-					{
-						// bureaucracy
-						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
+		for ( final ViewId viewId : viewIdsToProcess )
+		{
+			final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
+					viewId.getTimePointId(), viewId.getViewSetupId() );
 
-						// this happens only if a viewsetup is not present in any timepoint
-						// (e.g. after appending fusion to a dataset)
-						if ( viewId == null )
-							continue;
-						
-						final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
-								viewId.getTimePointId(), viewId.getViewSetupId() );
-		
-						if ( !viewDescription.isPresent() )
-							continue;
+			if ( !viewDescription.isPresent() )
+				continue;
 
-						final Dimensions size = ViewSetupUtils.getSizeOrLoad( viewDescription.getViewSetup(), viewDescription.getTimePoint(), spimData.getSequenceDescription().getImgLoader() );
-						final double[] min = new double[]{ 0, 0, 0 };
-						final double[] max = new double[]{
-								size.dimension( 0 ) - 1,
-								size.dimension( 1 ) - 1,
-								size.dimension( 2 ) - 1 };
-						
-						final ViewRegistration r = spimData.getViewRegistrations().getViewRegistration( viewId );
-						r.updateModel();
-						final FinalRealInterval interval = r.getModel().estimateBounds( new FinalRealInterval( min, max ) );
-						
-						for ( int d = 0; d < minBB.length; ++d )
-						{
-							minBB[ d ] = Math.min( minBB[ d ], interval.realMin( d ) );
-							maxBB[ d ] = Math.max( maxBB[ d ], interval.realMax( d ) );
-						}
-					}		
+			final Dimensions size = ViewSetupUtils.getSizeOrLoad( viewDescription.getViewSetup(), viewDescription.getTimePoint(), spimData.getSequenceDescription().getImgLoader() );
+			final double[] min = new double[]{ 0, 0, 0 };
+			final double[] max = new double[]{
+					size.dimension( 0 ) - 1,
+					size.dimension( 1 ) - 1,
+					size.dimension( 2 ) - 1 };
+			
+			final ViewRegistration r = spimData.getViewRegistrations().getViewRegistration( viewId );
+			r.updateModel();
+			final FinalRealInterval interval = r.getModel().estimateBounds( new FinalRealInterval( min, max ) );
+			
+			for ( int d = 0; d < minBB.length; ++d )
+			{
+				minBB[ d ] = Math.min( minBB[ d ], interval.realMin( d ) );
+				maxBB[ d ] = Math.max( maxBB[ d ], interval.realMax( d ) );
+			}
+		}
 	}
 
 	@Override
-	public ManualBoundingBox newInstance(
-			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Channel> channelsToProcess,
-			final List<Illumination> illumsToProcess,
-			final List<TimePoint> timepointsToProcess )
+	public ManualBoundingBox newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
-		return new ManualBoundingBox( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+		return new ManualBoundingBox( spimData, viewIdsToProcess );
 	}
 
 	@Override
