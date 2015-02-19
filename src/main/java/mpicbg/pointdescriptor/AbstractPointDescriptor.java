@@ -3,7 +3,7 @@ package mpicbg.pointdescriptor;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
-import mpicbg.imglib.util.Util;
+import net.imglib2.util.Util;
 import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
 import mpicbg.pointdescriptor.exception.NoSuitablePointsException;
@@ -53,7 +53,7 @@ public abstract class AbstractPointDescriptor< P extends Point, F extends Abstra
 
 		/* Set up the Descriptor with relative distances */
 		this.descriptorPoints = new ArrayList< LinkedPoint< P > >( neighbors.size() );		
-		final float[] basis;
+		final double[] basis;
 		
 		if ( useWorldCoordinatesForDescriptorBuildUp() )
 			basis = basisPoint.getW().clone();
@@ -62,7 +62,7 @@ public abstract class AbstractPointDescriptor< P extends Point, F extends Abstra
 		
 		for ( final P absolute : orderedNearestNeighboringPoints )
 		{
-			final float[] localCoordinates;
+			final double[] localCoordinates;
 			
 			if ( useWorldCoordinatesForDescriptorBuildUp() )
 				localCoordinates = absolute.getW().clone();
@@ -125,8 +125,8 @@ public abstract class AbstractPointDescriptor< P extends Point, F extends Abstra
 	{
 		for ( final Point point : descriptorPoints )
 		{
-			final float[] l = point.getL();
-			final float[] w = point.getW();
+			final double[] l = point.getL();
+			final double[] w = point.getW();
 			
 			for ( int d = 0; d < l.length; ++d )
 				w[ d ] = l[ d ];

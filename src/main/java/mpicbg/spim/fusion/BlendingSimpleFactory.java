@@ -7,17 +7,17 @@ import mpicbg.spim.registration.ViewDataBeads;
 
 public class BlendingSimpleFactory implements CombinedPixelWeightenerFactory<BlendingSimple>
 {
-	final float boundary, percentScaling;
-	final float[] boundaryArray;
+	final double boundary, percentScaling;
+	final double[] boundaryArray;
 	
-	public BlendingSimpleFactory( final float boundary, final float percentScaling )
+	public BlendingSimpleFactory( final double boundary, final double percentScaling )
 	{
 		this.boundary = boundary;
 		this.boundaryArray = null;
 		this.percentScaling = percentScaling;
 	}
 	
-	public BlendingSimpleFactory( final float[] boundary, final float percentScaling )
+	public BlendingSimpleFactory( final double[] boundary, final double percentScaling )
 	{
 		this.boundaryArray = boundary;
 		this.boundary = 0;

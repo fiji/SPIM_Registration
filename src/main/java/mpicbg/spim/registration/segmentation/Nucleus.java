@@ -1,6 +1,6 @@
 package mpicbg.spim.registration.segmentation;
 
-import mpicbg.imglib.util.Util;
+import net.imglib2.util.Util;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.detection.DetectionView;
 
@@ -9,21 +9,21 @@ public class Nucleus extends DetectionView<NucleusIdentification, Nucleus>
 	private static final long serialVersionUID = 1L;
 
 	protected double weight = 1;
-	float diameter = 1;
+	double diameter = 1;
 
-	public Nucleus( final int id, final float[] location, final ViewDataBeads myView ) 
+	public Nucleus( final int id, final double[] location, final ViewDataBeads myView ) 
 	{
 		super( id, location, myView );
 	}
 
-	public void setDiameter( final float diameter ) { this.diameter = diameter; }
-	public float getDiameter() { return diameter; }
+	public void setDiameter( final double diameter ) { this.diameter = diameter; }
+	public double getDiameter() { return diameter; }
 	
 	Object assignedObject;
 	public void setAssignedObject( final Object o ) { this.assignedObject = o; }
 	public Object getAssignedObject() { return this.assignedObject; }
 
-	public void set( final float v, final int k ) 
+	public void set( final double v, final int k ) 
 	{
 		if ( useW )
 			w[ k ] = v;

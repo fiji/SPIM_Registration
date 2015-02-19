@@ -20,6 +20,7 @@ import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.media.j3d.TransparencyAttributes;
 import javax.vecmath.Color3f;
+import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
@@ -230,7 +231,7 @@ public class VisualizationFunctions
 		
 		// init the structures needed to code the position of the beads
 		final Transform3D transform = new Transform3D();
-		final Point3f translation = new Point3f();
+		final Point3d translation = new Point3d();
 
 		// add all beads
 		for ( Iterator<Bead> i = beads.iterator(); i.hasNext(); )
@@ -309,7 +310,7 @@ public class VisualizationFunctions
 		
 		// init the structures needed to code the position of the beads
 		final Transform3D transform = new Transform3D();
-		final Point3f translation = new Point3f();
+		final Point3d translation = new Point3d();
 
 		// add all beads
 		for ( Iterator<Nucleus> i = nuclei.iterator(); i.hasNext(); )
@@ -402,7 +403,7 @@ public class VisualizationFunctions
 		
 		// init the structures needed to code the position of the beads
 		final Transform3D transform = new Transform3D();
-		final Point3f translation = new Point3f();
+		final Point3d translation = new Point3d();
 
 		// add all beads
 		for ( Iterator<Point> i = points.iterator(); i.hasNext(); )

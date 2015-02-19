@@ -4,9 +4,9 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import javax.vecmath.Matrix4f;
-import javax.vecmath.Quat4f;
-import javax.vecmath.Vector3f;
+import javax.vecmath.Matrix4d;
+import javax.vecmath.Quat4d;
+import javax.vecmath.Vector3d;
 
 import mpicbg.models.Model;
 import mpicbg.models.NotEnoughDataPointsException;
@@ -211,7 +211,7 @@ public class DetectionRegistration
 			
 			final LinkedPoint<T> p1 = new LinkedPoint<T>( detectionA.getL(), detectionA.getW(), detectionA );
 			final LinkedPoint<T> p2 = new LinkedPoint<T>( detectionB.getL(), detectionB.getW(), detectionB );
-			final float weight = correspondence.getWeight(); 
+			final double weight = correspondence.getWeight(); 
 
 			candidates.add( new PointMatchGeneric<LinkedPoint<T>>( p1, p2, weight ) );
 		}
@@ -267,11 +267,11 @@ public class DetectionRegistration
 		}
 	}
 
-	protected static Quat4f getQuaternion( final RigidModel3D model )
+	protected static Quat4d getQuaternion( final RigidModel3D model )
 	{
-        final Matrix4f matrix = new Matrix4f();
+        final Matrix4d matrix = new Matrix4d();
         TransformUtils.getTransform3D( model ).get( matrix );	        	        
-        final Quat4f quaternion = new Quat4f();	        
+        final Quat4d quaternion = new Quat4d();	        
         quaternion.set( matrix );
 
         return quaternion;
@@ -279,14 +279,14 @@ public class DetectionRegistration
 	
 	public static double getApproximateRotationAngle( final RigidModel3D model )
 	{
-		final Quat4f qu = getQuaternion( model );
+		final Quat4d qu = getQuaternion( model );
 		return Math.toDegrees( Math.acos( qu.getW() ) * 2 );
 	}
 
-	public static Vector3f getApproximateAxis( final RigidModel3D model )
+	public static Vector3d getApproximateAxis( final RigidModel3D model )
 	{        
-		final Quat4f qu = getQuaternion( model );
-        final Vector3f n = new Vector3f(qu.getX(),qu.getY(), qu.getZ());
+		final Quat4d qu = getQuaternion( model );
+        final Vector3d n = new Vector3d(qu.getX(),qu.getY(), qu.getZ());
         n.normalize();
         
 		return n;      		

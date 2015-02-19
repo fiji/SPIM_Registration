@@ -15,8 +15,8 @@ public class ManhattanDistance implements SimilarityMeasure
 		
 		for ( final PointMatch match : matches )
 		{
-			final float[] t1 = match.getP2().getW();
-			final float[] t2 = match.getP1().getW();
+			final double[] t1 = match.getP2().getW();
+			final double[] t2 = match.getP1().getW();
 		
 			for ( int d = 0; d < numDimensions; ++d )
 				difference += Math.abs( t1[ d ] - t2[ d ] );

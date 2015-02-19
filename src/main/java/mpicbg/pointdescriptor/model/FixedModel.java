@@ -14,14 +14,14 @@ public class FixedModel extends TranslationInvariantModel<FixedModel>
 {
 	static final protected int MIN_NUM_MATCHES = 1;
 
-	protected float
-		m00 = 1.0f, m01 = 0.0f, m02 = 0.0f, m03 = 0.0f,
-		m10 = 0.0f, m11 = 1.0f, m12 = 0.0f, m13 = 0.0f,
-		m20 = 0.0f, m21 = 0.0f, m22 = 1.0f, m23 = 0.0f;
+	protected double
+		m00 = 1.0, m01 = 0.0, m02 = 0.0, m03 = 0.0,
+		m10 = 0.0, m11 = 1.0, m12 = 0.0, m13 = 0.0,
+		m20 = 0.0, m21 = 0.0, m22 = 1.0, m23 = 0.0;
 	
-	public FixedModel( final float m00, final float m01, final float m02, final float m03,
-			           final float m10, final float m11, final float m12, final float m13,
-			           final float m20, final float m21, final float m22, final float m23 )
+	public FixedModel( final double m00, final double m01, final double m02, final double m03,
+			           final double m10, final double m11, final double m12, final double m13,
+			           final double m20, final double m21, final double m22, final double m23 )
 	{
 		this.m00 = m00;
 		this.m01 = m01;
@@ -83,20 +83,20 @@ public class FixedModel extends TranslationInvariantModel<FixedModel>
 	final public int getMinNumMatches(){ return MIN_NUM_MATCHES; }
 	
 	@Override
-	final public float[] apply( final float[] l )
+	final public double[] apply( final double[] l )
 	{
-		final float[] transformed = l.clone();
+		final double[] transformed = l.clone();
 		applyInPlace( transformed );
 		return transformed;
 	}
 	
 	@Override
-	final public void applyInPlace( final float[] l )
+	final public void applyInPlace( final double[] l )
 	{
 		assert l.length == 3 : "3d 3x3 transformations can be applied to 3d points only.";
 		
-		final float l0 = l[ 0 ];
-		final float l1 = l[ 1 ];
+		final double l0 = l[ 0 ];
+		final double l1 = l[ 1 ];
 		l[ 0 ] = l0 * m00 + l1 * m01 + l[ 2 ] * m02 + m03;
 		l[ 1 ] = l0 * m10 + l1 * m11 + l[ 2 ] * m12 + m13;
 		l[ 2 ] = l0 * m20 + l1 * m21 + l[ 2 ] * m22 + m23;

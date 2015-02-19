@@ -91,13 +91,13 @@ public class XMLFunctions
 	 */
 	protected static Bead getBead( final Element beadElement, final int id ) 
 	{
-		//for each <p1>...<pn> element get float values of x,y,z 
-		final float x = getFloatValue( beadElement ,"x");
-		final float y = getFloatValue( beadElement ,"y");
-		final float z = getFloatValue( beadElement ,"z");
+		//for each <p1>...<pn> element get double values of x,y,z 
+		final double x = getDoubleValue( beadElement ,"x");
+		final double y = getDoubleValue( beadElement ,"y");
+		final double z = getDoubleValue( beadElement ,"z");
 		
 		//Create a new Employee with the value read from the xml nodes
-		final Bead e = new Bead( id, new float[]{ x, y, z }, null );
+		final Bead e = new Bead( id, new double[]{ x, y, z }, null );
 
 		return e;
 	}
@@ -132,10 +132,10 @@ public class XMLFunctions
 	 * @param tagName
 	 * @return
 	 */
-	protected static float getFloatValue( final Element ele, final String tagName) 
+	protected static double getDoubleValue( final Element ele, final String tagName) 
 	{
 		//in production application you would catch the exception
-		return Float.parseFloat( getTextValue( ele, tagName ) );
+		return Double.parseDouble( getTextValue( ele, tagName ) );
 	}
 	
 	public static Document parseXMLFile( final String xmlFile )

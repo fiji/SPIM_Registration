@@ -82,7 +82,7 @@ public class Reconstruction
 				// if we find more than one bead we average their positions
 				if ( correspondingBeadList.size() > 1 )
 				{
-					Point location = new Point( new float[]{0,0,0} );
+					Point location = new Point( new double[]{0,0,0} );
 					
 					for ( final Bead correspondingBead : correspondingBeadList )
 					{

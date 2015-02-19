@@ -29,7 +29,7 @@ public class ICP < P extends Point & Leaf<P> >
 	ArrayList<PointMatch> ambigousMatches;
 	PointMatchIdentification< P > pointMatchIdentifier;	
 	
-	float avgError, maxError;
+	double avgError, maxError;
 	int numMatches;
 	
 	/**
@@ -62,7 +62,7 @@ public class ICP < P extends Point & Leaf<P> >
 	 * @param reference - the {@link List} of reference points
 	 * @param distanceThreshold - the maximal distance of {@link SimplePointMatchIdentification}, so that the nearest neighbor of a point is still counted as a corresponding point
 	 */
-	public ICP( final List<P> target, final List<P> reference, final float distanceThreshold )
+	public ICP( final List<P> target, final List<P> reference, final double distanceThreshold )
 	{
 		this( target, reference, new SimplePointMatchIdentification<P>( distanceThreshold ) );
 	}
@@ -163,15 +163,15 @@ public class ICP < P extends Point & Leaf<P> >
 	
 	/**
 	 * Returns the average error of the last ICP iteration, or -1 if no iteration has been computed yet.
-	 * @return float - average error
+	 * @return double - average error
 	 */
-	public float getAverageError() { return avgError; }
+	public double getAverageError() { return avgError; }
 
 	/**
 	 * Returns the maximum error of a {@link PointMatch} of the last ICP iteration, or -1 if no iteration has been computed yet.
-	 * @return float - maximal error
+	 * @return double - maximal error
 	 */
-	public float getMaximalError() { return maxError; }
+	public double getMaximalError() { return maxError; }
 	
 	/**
 	 * Returns the number of {@link PointMatch}es of the last ICP iteration, or -1 if no iteration has been computed yet.

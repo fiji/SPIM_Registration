@@ -23,6 +23,7 @@ import javax.media.j3d.LineAttributes;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransparencyAttributes;
 import javax.vecmath.Color3f;
+import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
@@ -179,7 +180,7 @@ public class TileConfigurationSPIM
 	 * @param debugLevel defines if the Optimizer prints the output at the end of the process
 	 */
 	public void optimize(
-			final float maxAllowedError,
+			final double maxAllowedError,
 			final int maxIterations,
 			final int maxPlateauwidth,
 			final int debugLevel ) throws NotEnoughDataPointsException, IllDefinedDataPointsException 
@@ -244,7 +245,7 @@ public class TileConfigurationSPIM
 	 * @param debugLevel defines if the Optimizer prints the output at the end of the process
 	 */
 	public void optimizeWithSketchTikZ(
-			final float maxAllowedError,
+			final double maxAllowedError,
 			final int maxIterations,
 			final int maxPlateauwidth,
 			final int debugLevel ) throws NotEnoughDataPointsException, IllDefinedDataPointsException 
@@ -252,7 +253,7 @@ public class TileConfigurationSPIM
 		final ErrorStatistic observer = new ErrorStatistic( maxPlateauwidth + 1 );
 		
 		int i = 0;
-		final float factor = 0.005f;
+		final double factor = 0.005;
 		
 		boolean proceed = i < maxIterations;
 		
@@ -309,10 +310,10 @@ public class TileConfigurationSPIM
 					
 					for ( Bead bead : parent.getBeadStructure().getBeadList() )
 					{
-						float distance = bead.getDistance();
+						double distance = bead.getDistance();
 						if ( distance >= 0 )
 						{
-							int color = Math.round( (float)Math.log10( distance + 1 ) * 256f );
+							int color = (int)Math.round( Math.log10( distance + 1 ) * 256.0 );
 							
 							// max value == 100
 							if ( color > 511 )
@@ -396,7 +397,7 @@ public class TileConfigurationSPIM
 	 * @param debugLevel defines if the Optimizer prints the output at the end of the process
 	 */
 	public void optimizeWithSketchTikZNuclei(
-			final float maxAllowedError,
+			final double maxAllowedError,
 			final int maxIterations,
 			final int maxPlateauwidth,
 			final int debugLevel ) throws NotEnoughDataPointsException, IllDefinedDataPointsException 
@@ -410,7 +411,7 @@ public class TileConfigurationSPIM
 		// how many detailed iterations to show (one frame per updated angle)
 		final int numDetailedIterations = 5;
 		// till which error show one frame per iteration 
-		final float thresholdErrorFastMovie = 7.5f;
+		final double thresholdErrorFastMovie = 7.5;
 		// from the error threshold on, every how many iterations to do one frame
 		final int ratioFastMovie = 8;
 		
@@ -422,7 +423,7 @@ public class TileConfigurationSPIM
 		Collections.sort( tilesSorted );
 		
 		int i = 0, j = 0, frame = 0;
-		final float factor = 0.01f * 0.45f;
+		final double factor = 0.01 * 0.45;
 		
 		int freeTiles = 0;
 		for ( final Tile<?> tile : tiles )
@@ -494,10 +495,10 @@ public class TileConfigurationSPIM
 							
 							for ( Nucleus nucleus : parent.getNucleiStructure().getNucleiList() )
 							{
-								float distance = nucleus.getDistance();
+								double distance = nucleus.getDistance();
 								if ( distance >= 0 )
 								{
-									int color = Math.round( (float)Math.log10( distance + 1 ) * 256f );
+									int color = (int)Math.round( Math.log10( distance + 1 ) * 256.0 );
 									
 									// max value == 100
 									if ( color > 511 )
@@ -560,13 +561,13 @@ public class TileConfigurationSPIM
 	
 	/*
 	public void optimizeWithSketchTikZ(
-			float maxAllowedError,
+			double maxAllowedError,
 			int maxIterations,
 			int maxPlateauwidth,
 			ViewDataBeads[] views,
 			boolean showDetails ) throws NotEnoughDataPointsException, IllDefinedDataPointsException 
 	{
-		final float factor = 0.005f;
+		final double factor = 0.005;
 		ErrorStatistic observer = new ErrorStatistic( maxPlateauwidth + 1 );
 		
 		int i = 0;
@@ -616,10 +617,10 @@ public class TileConfigurationSPIM
 					
 					for ( Bead bead : parent.getBeadStructure().getBeadList() )
 					{
-						float distance = bead.getDistance();
+						double distance = bead.getDistance();
 						if ( distance >= 0 )
 						{
-							int color = Math.round( (float)Math.log10( distance + 1 ) * 256f );
+							int color = Math.round( (double)Math.log10( distance + 1 ) * 256f );
 							
 							// max value == 100
 							if ( color > 511 )
@@ -678,13 +679,13 @@ public class TileConfigurationSPIM
 	 *   from stopping at plateaus smaller than this value.
 	 */
 	public void optimizeWith3DViewer(
-			final float maxAllowedError,
+			final double maxAllowedError,
 			int maxIterations,
 			final int maxPlateauwidth,
 			final ArrayList<ViewDataBeads> views,
 			final int debugLevel ) throws NotEnoughDataPointsException, IllDefinedDataPointsException 
 	{
-		final float multiplicator = 0.16f;
+		final double multiplicator = 0.16;
 		
 		//ImageStack movie = null;
 		final Color3f beadColor = new Color3f( 0.3f, 0.3f, 0.3f );
@@ -799,7 +800,7 @@ public class TileConfigurationSPIM
 					
 					final Transform3D newTransform = new Transform3D();
 					final Vector3f vector = new Vector3f();
-					final Point3f translation = new Point3f();
+					final Point3d translation = new Point3d();
 					
 					for ( final BranchGroup branchGroup : parent.beadBranchGroups )
 					{
@@ -826,7 +827,7 @@ public class TileConfigurationSPIM
 							final Sphere sphere = (Sphere)beadTransformGroup.getChild(0);
 							final Appearance app = new Appearance();
 							
-							final float distance = beadTransformGroup.getBead().getDistance();
+							final double distance = beadTransformGroup.getBead().getDistance();
 							
 							if ( distance < 0 )
 							{

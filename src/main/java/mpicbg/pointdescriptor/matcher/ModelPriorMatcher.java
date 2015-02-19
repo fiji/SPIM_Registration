@@ -2,8 +2,9 @@ package mpicbg.pointdescriptor.matcher;
 
 import java.util.ArrayList;
 
-import javax.vecmath.Matrix3f;
-import javax.vecmath.Point3f;
+import javax.vecmath.Matrix3d;
+import javax.vecmath.Point3d;
+import javax.vecmath.Quat4d;
 import javax.vecmath.Quat4f;
 import javax.vecmath.Vector3f;
 
@@ -22,10 +23,10 @@ import mpicbg.util.TransformUtils;
 public class ModelPriorMatcher extends SimpleMatcher
 {
 	final RigidModel3D model;
-	final Point3f referenceAxis;
-	final float angle;
+	final Point3d referenceAxis;
+	final double angle;
 	
-	final Matrix3f referenceMatrix, invertedReferenceMatrix;
+	final Matrix3d referenceMatrix, invertedReferenceMatrix;
 	
 	public ModelPriorMatcher( final int numNeighbors, final RigidModel3D model )
 	{
@@ -33,10 +34,10 @@ public class ModelPriorMatcher extends SimpleMatcher
 	
 		this.model = model;
 		
-		this.referenceMatrix = new Matrix3f();                
+		this.referenceMatrix = new Matrix3d();                
         TransformUtils.getTransform3D( model ).get( referenceMatrix );
 
-        this.invertedReferenceMatrix = new Matrix3f( this.referenceMatrix );
+        this.invertedReferenceMatrix = new Matrix3d( this.referenceMatrix );
 		this.invertedReferenceMatrix.invert();
 
 		final Quat4f quaternion = new Quat4f();	     
@@ -45,7 +46,7 @@ public class ModelPriorMatcher extends SimpleMatcher
         this.angle = (float)Math.toDegrees( Math.acos( quaternion.getW() ) * 2 );
         final Vector3f axis = new Vector3f( quaternion.getX(), quaternion.getY(), quaternion.getZ() );
         axis.normalize();        
-        this.referenceAxis = new Point3f( axis );
+        this.referenceAxis = new Point3d( axis );
   	}
 
 	@Override
@@ -54,15 +55,15 @@ public class ModelPriorMatcher extends SimpleMatcher
 		final TranslationInvariantRigidModel3D matchModel = (TranslationInvariantRigidModel3D)fitResult;
 		
 		/* get input matrices and quaternion that we can alter */
-		final Quat4f quaternion = new Quat4f();
-		final Matrix3f templateMatrix = new Matrix3f();
-		matchModel.getMatrix3f( templateMatrix );
+		final Quat4d quaternion = new Quat4d();
+		final Matrix3d templateMatrix = new Matrix3d();
+		matchModel.getMatrix3d( templateMatrix );
 		
 		/* Compute the rotation angle between the two rigid 3d transformations */
 		templateMatrix.mul( invertedReferenceMatrix );		
         quaternion.set( templateMatrix );
         
-        final float angle = Math.max( 5, (float)Math.toDegrees( Math.acos( quaternion.getW() )  * 2 ) ) - 5;
+        final double angle = Math.max( 5, Math.toDegrees( Math.acos( quaternion.getW() )  * 2 ) ) - 5;
         
         /* Compute vector difference between the two rotation axes */
         //final Vector3f axis = new Vector3f( quaternion.getX(), quaternion.getY(), quaternion.getZ() );
@@ -70,7 +71,7 @@ public class ModelPriorMatcher extends SimpleMatcher
        	//final Point3f templateAxis = new Point3f( axis );
         //final float difference = templateAxis.distance( referenceAxis );
 
-        final float weight = ( 1.0f + 0.03f * angle * angle );
+        final double weight = ( 1.0f + 0.03f * angle * angle );
         
         
 		return weight; 

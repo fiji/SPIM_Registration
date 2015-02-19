@@ -11,7 +11,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 
-import mpicbg.imglib.util.Util;
 import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.RigidModel3D;
@@ -23,6 +22,7 @@ import mpicbg.spim.registration.bead.BeadIdentification;
 import mpicbg.spim.registration.segmentation.NucleiConfiguration;
 import mpicbg.spim.registration.segmentation.Nucleus;
 import mpicbg.spim.registration.segmentation.NucleusIdentification;
+import net.imglib2.util.Util;
 
 public class IOFunctions
 {
@@ -208,8 +208,8 @@ public class IOFunctions
 					nConf.readRegistration = false;
 				}
 				
-				final float[] l = new float[]{ Float.parseFloat(entries[2]), Float.parseFloat(entries[3]), Float.parseFloat(entries[4])};
-				final float[] w = new float[]{ Float.parseFloat(entries[5]), Float.parseFloat(entries[6]), Float.parseFloat(entries[7])};
+				final double[] l = new double[]{ Double.parseDouble(entries[2]), Double.parseDouble(entries[3]), Double.parseDouble(entries[4])};
+				final double[] w = new double[]{ Double.parseDouble(entries[5]), Double.parseDouble(entries[6]), Double.parseDouble(entries[7])};
 				final double weight = Double.parseDouble( entries[8] );
 				
 				Nucleus nucleus = new Nucleus( beadID, l, view );				
@@ -633,8 +633,8 @@ public class IOFunctions
 				}
 				
 				
-				final float[] l = new float[]{ Float.parseFloat(entries[2]), Float.parseFloat(entries[3]), Float.parseFloat(entries[4])};
-				final float[] w = new float[]{ Float.parseFloat(entries[5]), Float.parseFloat(entries[6]), Float.parseFloat(entries[7])};
+				final double[] l = new double[]{ Double.parseDouble(entries[2]), Double.parseDouble(entries[3]), Double.parseDouble(entries[4])};
+				final double[] w = new double[]{ Double.parseDouble(entries[5]), Double.parseDouble(entries[6]), Double.parseDouble(entries[7])};
 				final double weight = Double.parseDouble( entries[8] );
 				
 				Bead bead = new Bead( beadID, l, view );				
@@ -816,7 +816,7 @@ public class IOFunctions
 				PrintWriter out = TextFileAccess.openFileWrite( fileName );
 				
 				final AbstractAffineModel3D<?> model = (AbstractAffineModel3D<?>)view.getTile().getModel();
-				final float m[] = model.getMatrix( null );
+				final double m[] = model.getMatrix( null );
 				
 				out.println("m00: " + m[ 0 ] );
 				out.println("m01: " + m[ 1 ] );
@@ -894,8 +894,8 @@ public class IOFunctions
 	{
 		final AbstractAffineModel3D model = (AbstractAffineModel3D)view.getTile().getModel();
 		
-		// get 12 entry float array
-		final float m[] = model.getMatrix( null );
+		// get 12 entry double array
+		final double m[] = model.getMatrix( null );
 		
 		// the default if nothing is written
 		String savedModel = "AffineModel3D";
@@ -909,39 +909,39 @@ public class IOFunctions
 			{
 				String entry = in.readLine().trim();
 				if (entry.startsWith("m00:"))
-					m[ 0 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 0 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m01:"))
-					m[ 1 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 1 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m02:"))
-					m[ 2 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 2 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m03:"))
-					m[ 3 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 3 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m10:"))
-					m[ 4 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 4 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m11:"))
-					m[ 5 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 5 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m12:"))
-					m[ 6 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 6 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m13:"))
-					m[ 7 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 7 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m20:"))
-					m[ 8 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 8 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m21:"))
-					m[ 9 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 9 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m22:"))
-					m[ 10 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 10 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m23:"))
-					m[ 11 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 11 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("model:"))
 					savedModel = entry.substring(7, entry.length()).trim();
 				/*else if (entry.startsWith("m30:"))
-					m[ 12 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 12 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m31:"))
-					m[ 13 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 13 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m32:"))
-					m[ 14 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 14 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m33:"))
-					m[ 15 ] = Float.parseFloat(entry.substring(5, entry.length()));*/
+					m[ 15 ] = Double.parseDouble(entry.substring(5, entry.length()));*/
 				else if (entry.startsWith("minError:") )					 
 					view.getViewStructure().getGlobalErrorStatistics().setMinAlignmentError( Double.parseDouble(entry.substring(10, entry.length())) );
 				else if (entry.startsWith("maxError:") )
@@ -1013,7 +1013,7 @@ public class IOFunctions
 			final PrintWriter out = TextFileAccess.openFileWrite( file );
 			
 			// get the model parameters
-			final float[] matrixNew = newModel.getMatrix( null );
+			final double[] matrixNew = newModel.getMatrix( null );
 			
 			for ( final String entry : content )
 			{
@@ -1048,8 +1048,8 @@ public class IOFunctions
 			}
 			
 			// save the old models, just in case
-			final float[] matrixOld = oldModel.getMatrix( null );
-			final float[] matrixConcat = preConcatenated.getMatrix( null );
+			final double[] matrixOld = oldModel.getMatrix( null );
+			final double[] matrixConcat = preConcatenated.getMatrix( null );
 
 			out.println();
 			out.println( "Previous model: " + Util.printCoordinates( matrixOld ) );
@@ -1074,8 +1074,8 @@ public class IOFunctions
 		{
 			final BufferedReader in = TextFileAccess.openFileRead( file );
 			
-			// get 12 entry float array
-			final float m[] = new float[ 12 ];
+			// get 12 entry double array
+			final double m[] = new double[ 12 ];
 			
 			// the default if nothing is written
 			String savedModel = "AffineModel3D";
@@ -1085,29 +1085,29 @@ public class IOFunctions
 				String entry = in.readLine().trim();
 				
 				if (entry.startsWith("m00:"))
-					m[ 0 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 0 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m01:"))
-					m[ 1 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 1 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m02:"))
-					m[ 2 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 2 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m03:"))
-					m[ 3 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 3 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m10:"))
-					m[ 4 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 4 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m11:"))
-					m[ 5 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 5 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m12:"))
-					m[ 6 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 6 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m13:"))
-					m[ 7 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 7 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m20:"))
-					m[ 8 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 8 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m21:"))
-					m[ 9 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 9 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m22:"))
-					m[ 10 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 10 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m23:"))
-					m[ 11 ] = Float.parseFloat(entry.substring(5, entry.length()));
+					m[ 11 ] = Double.parseDouble(entry.substring(5, entry.length()));
 				else if (entry.startsWith("model:"))
 					savedModel = entry.substring(7, entry.length()).trim();
 			}

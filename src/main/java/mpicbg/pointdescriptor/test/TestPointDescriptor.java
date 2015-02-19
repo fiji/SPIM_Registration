@@ -1,8 +1,5 @@
 package mpicbg.pointdescriptor.test;
 
-import customnode.CustomLineMesh;
-import fiji.util.KDTree;
-import fiji.util.NNearestNeighborSearch;
 import ij3d.Content;
 import ij3d.Image3DUniverse;
 
@@ -17,7 +14,6 @@ import javax.vecmath.Point3f;
 import javax.vecmath.Quat4f;
 import javax.vecmath.Vector3f;
 
-import mpicbg.imglib.util.Util;
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.Point;
 import mpicbg.pointdescriptor.LinkedPoint;
@@ -33,15 +29,19 @@ import mpicbg.pointdescriptor.similarity.SquareDistance;
 import mpicbg.spim.vis3d.VisualizationFunctions;
 import mpicbg.spim.vis3d.VisualizeBeads;
 import mpicbg.util.TransformUtils;
+import net.imglib2.util.Util;
+import customnode.CustomLineMesh;
+import fiji.util.KDTree;
+import fiji.util.NNearestNeighborSearch;
 
 public class TestPointDescriptor
 {
 	protected static void add( final Point p1, final Point p2 )
 	{
-		final float[] l1 = p1.getL();
-		final float[] w1 = p1.getW();
-		final float[] l2 = p2.getL();
-		final float[] w2 = p2.getW();
+		final double[] l1 = p1.getL();
+		final double[] w1 = p1.getW();
+		final double[] l2 = p2.getL();
+		final double[] w2 = p2.getW();
 		
 		for ( int d = 0; d < l1.length; ++d )
 		{
@@ -52,13 +52,13 @@ public class TestPointDescriptor
 	
 	protected void addSimplePoints( final ArrayList<Point> points1, final ArrayList<Point> points2 )
 	{
-		points1.add( new Point( new float[]{ 0, 0, 0 } ) );
-		points1.add( new Point( new float[]{ 0, 0, 1.1f } ) );
-		points1.add( new Point( new float[]{ 0, 1.2f, 0 } ) );
-		points1.add( new Point( new float[]{ 1.3f, 0, 0 } ) );
-		points1.add( new Point( new float[]{ 1.3f, 1.4f, 0 } ) );
+		points1.add( new Point( new double[]{ 0, 0, 0 } ) );
+		points1.add( new Point( new double[]{ 0, 0, 1.1f } ) );
+		points1.add( new Point( new double[]{ 0, 1.2f, 0 } ) );
+		points1.add( new Point( new double[]{ 1.3f, 0, 0 } ) );
+		points1.add( new Point( new double[]{ 1.3f, 1.4f, 0 } ) );
 
-		final Point offset = new Point( new float[]{ 1, 2, 3 } );
+		final Point offset = new Point( new double[]{ 1, 2, 3 } );
 		
 		for ( final Iterator<Point> i = points1.iterator(); i.hasNext(); )
 		{
@@ -67,7 +67,7 @@ public class TestPointDescriptor
 			points2.add( p2 );
 		}
 
-		points1.add( new Point( new float[]{ 0.1f, 0.1f ,0.1f } ) );		
+		points1.add( new Point( new double[]{ 0.1f, 0.1f ,0.1f } ) );		
 	}
 	
 	protected void addAdvancedPoints( final ArrayList<Point> points1, final ArrayList<Point> points2 )
@@ -84,15 +84,15 @@ public class TestPointDescriptor
 		for ( int i = 0; i < commonPoints; ++i )
 		{
 			// all between 5 and 10
-			float v1 = rnd.nextFloat()*5 + 5;
-			float v2 = rnd.nextFloat()*5 + 5;
-			float v3 = rnd.nextFloat()*5 + 5;
-			float o1 = (rnd.nextFloat()-0.5f)/10;
-			float o2 = (rnd.nextFloat()-0.5f)/10;
-			float o3 = (rnd.nextFloat()-0.5f)/10;
+			double v1 = rnd.nextDouble()*5 + 5;
+			double v2 = rnd.nextDouble()*5 + 5;
+			double v3 = rnd.nextDouble()*5 + 5;
+			double o1 = (rnd.nextDouble()-0.5f)/10;
+			double o2 = (rnd.nextDouble()-0.5f)/10;
+			double o3 = (rnd.nextDouble()-0.5f)/10;
 						
-			final Point p1 = new Point( new float[]{ v1 + o1, v2 + o2, v3 + o3 } );
-			final Point p2 = new Point( new float[]{ v1 + offsetX, v2 + offsetY, v3 + offsetZ } );
+			final Point p1 = new Point( new double[]{ v1 + o1, v2 + o2, v3 + o3 } );
+			final Point p2 = new Point( new double[]{ v1 + offsetX, v2 + offsetY, v3 + offsetZ } );
 			
 			points1.add( p1 );
 			points2.add( p2 );	
@@ -100,17 +100,17 @@ public class TestPointDescriptor
 		
 		for ( int i = 0; i < randomPoints; ++i )		
 		{
-			float v1 = rnd.nextFloat()*90;
-			float v2 = rnd.nextFloat()*90;
-			float v3 = rnd.nextFloat()*90;
+			double v1 = rnd.nextDouble()*90;
+			double v2 = rnd.nextDouble()*90;
+			double v3 = rnd.nextDouble()*90;
 
-			final Point p1 = new Point( new float[]{ v1, v2, v3 } );
+			final Point p1 = new Point( new double[]{ v1, v2, v3 } );
 
-			v1 = rnd.nextFloat()*90;
-			v2 = rnd.nextFloat()*90;
-			v3 = rnd.nextFloat()*90;
+			v1 = rnd.nextDouble()*90;
+			v2 = rnd.nextDouble()*90;
+			v3 = rnd.nextDouble()*90;
 
-			final Point p2 = new Point( new float[]{ v1, v2, v3 } );
+			final Point p2 = new Point( new double[]{ v1, v2, v3 } );
 
 			points1.add( p1 );
 			points2.add( p2 );				
@@ -118,17 +118,17 @@ public class TestPointDescriptor
 
 		for ( int i = 0; i < randomPoints/10; ++i )		
 		{
-			float v1 = rnd.nextFloat()*5;
-			float v2 = rnd.nextFloat()*5;
-			float v3 = rnd.nextFloat()*5;
+			double v1 = rnd.nextDouble()*5;
+			double v2 = rnd.nextDouble()*5;
+			double v3 = rnd.nextDouble()*5;
 
-			final Point p1 = new Point( new float[]{ v1, v2, v3 } );
+			final Point p1 = new Point( new double[]{ v1, v2, v3 } );
 
-			v1 = rnd.nextFloat()*5;
-			v2 = rnd.nextFloat()*5;
-			v3 = rnd.nextFloat()*5;
+			v1 = rnd.nextDouble()*5;
+			v2 = rnd.nextDouble()*5;
+			v3 = rnd.nextDouble()*5;
 
-			final Point p2 = new Point( new float[]{ v1, v2, v3 } );
+			final Point p2 = new Point( new double[]{ v1, v2, v3 } );
 
 			points1.add( p1 );
 			points2.add( p2 );				
@@ -313,7 +313,7 @@ public class TestPointDescriptor
         System.out.println( Math.toDegrees( Math.acos( qu.getW() ) * 2 ) );
  	}
 	
-	public static void testStability( final int numNeighbors, final int numTrueMatches, final int numRandomPoints, final double nTimesBetter, final float stdev, boolean fastMatching, boolean showPoints )
+	public static void testStability( final int numNeighbors, final int numTrueMatches, final int numRandomPoints, final double nTimesBetter, final double stdev, boolean fastMatching, boolean showPoints )
 	{
 		final ArrayList<Point> truepoints1 = new ArrayList<Point>();
 		final ArrayList<Point> falsepoints1 = new ArrayList<Point>();
@@ -331,23 +331,23 @@ public class TestPointDescriptor
 		// Add point descriptors that are easy to find
 		//
 		final double cubeSizeTrue = ( cubeSize / pointsPercubePixel ) * numTrueMatches;
-		final float cubeTrueKantenLength = (float)Math.pow( cubeSizeTrue, 1.0/3.0 );
+		final double cubeTrueKantenLength = Math.pow( cubeSizeTrue, 1.0/3.0 );
 		
-		Point offset = new Point( new float[]{ -cubeTrueKantenLength/2, -cubeTrueKantenLength/2, -cubeTrueKantenLength/2 } );
-		//Point offset = new Point( new float[]{ 1.5f*cubeTrueKantenLength, 1.5f*cubeTrueKantenLength, 1.5f*cubeTrueKantenLength } );
+		Point offset = new Point( new double[]{ -cubeTrueKantenLength/2, -cubeTrueKantenLength/2, -cubeTrueKantenLength/2 } );
+		//Point offset = new Point( new double[]{ 1.5f*cubeTrueKantenLength, 1.5f*cubeTrueKantenLength, 1.5f*cubeTrueKantenLength } );
 		
 		for ( int n = 0; n < numTrueMatches; ++n )
 		{
-			final Point p = new Point( new float[]{ rnd.nextFloat()*cubeTrueKantenLength, rnd.nextFloat()*cubeTrueKantenLength, rnd.nextFloat()*cubeTrueKantenLength } );
+			final Point p = new Point( new double[]{ rnd.nextDouble()*cubeTrueKantenLength, rnd.nextDouble()*cubeTrueKantenLength, rnd.nextDouble()*cubeTrueKantenLength } );
 			add( p, offset );
 			points1.add( p );
 			truepoints1.add( p );
 			
 			final LinkedPoint<Point> p2 = new LinkedPoint<Point>( p.getL().clone(), p );
 			
-			p2.getL()[ 0 ] += stdev * (float)rnd.nextGaussian();
-			p2.getL()[ 1 ] += stdev * (float)rnd.nextGaussian();
-			p2.getL()[ 2 ] += 3 * stdev * (float)rnd.nextGaussian();
+			p2.getL()[ 0 ] += stdev * rnd.nextGaussian();
+			p2.getL()[ 1 ] += stdev * rnd.nextGaussian();
+			p2.getL()[ 2 ] += 3 * stdev * rnd.nextGaussian();
 			points2.add( p2 );
 		}
 		
@@ -356,24 +356,24 @@ public class TestPointDescriptor
 		//
 		final double cubeSizeFalse = ( cubeSize / pointsPercubePixel ) * numRandomPoints + cubeSizeTrue;
 		//final double cubeSizeFalse = ( cubeSize / pointsPercubePixel ) * numRandomPoints;
-		final float cubeFalseKantenLength = (float)Math.pow( cubeSizeFalse, 1.0/3.0 );
-		final float o = -cubeFalseKantenLength/2;
-		//final float o = -cubeFalseKantenLength;
+		final double cubeFalseKantenLength = Math.pow( cubeSizeFalse, 1.0/3.0 );
+		final double o = -cubeFalseKantenLength/2;
+		//final double o = -cubeFalseKantenLength;
 
 		for ( int n = 0; n < numRandomPoints; ++n )
 		{
-			float l[][] = new float[ 2 ][ 3 ];
+			double l[][] = new double[ 2 ][ 3 ];
 			
 			for ( int i = 0; i < l.length; ++i )
 			{
-				float[] li = l[ i ];
+				double[] li = l[ i ];
 				boolean worked = true;
 				do
 				{
 					worked = true;
-					li[0] = rnd.nextFloat()*cubeFalseKantenLength + o;
-					li[1] = rnd.nextFloat()*cubeFalseKantenLength + o;
-					li[2] = rnd.nextFloat()*cubeFalseKantenLength + o;
+					li[0] = rnd.nextDouble()*cubeFalseKantenLength + o;
+					li[1] = rnd.nextDouble()*cubeFalseKantenLength + o;
+					li[2] = rnd.nextDouble()*cubeFalseKantenLength + o;
 					
 					if ( ( li[0] >= -cubeTrueKantenLength/2 && li[0] < cubeTrueKantenLength/2 ) &&
 						 ( li[1] >= -cubeTrueKantenLength/2 && li[1] < cubeTrueKantenLength/2 ) &&
@@ -383,8 +383,8 @@ public class TestPointDescriptor
 				while ( !worked );
 			}
 			
-			final Point p1 = new Point( new float[]{ l[ 0 ][ 0 ], l[ 0 ][ 1 ], l[ 0 ][ 2 ] } );
-			final Point p2 = new Point( new float[]{ l[ 1 ][ 0 ], l[ 1 ][ 1 ], l[ 1 ][ 2 ] } );
+			final Point p1 = new Point( new double[]{ l[ 0 ][ 0 ], l[ 0 ][ 1 ], l[ 0 ][ 2 ] } );
+			final Point p2 = new Point( new double[]{ l[ 1 ][ 0 ], l[ 1 ][ 1 ], l[ 1 ][ 2 ] } );
 			points1.add( p1 );
 			falsepoints1.add( p1 );
 			points2.add( p2 );
@@ -399,13 +399,13 @@ public class TestPointDescriptor
 			Color3f colorFalse = new Color3f( 1f, 0.1f, 0.1f );
 			float size = .1f;
 						
-			CustomLineMesh c = new CustomLineMesh( getBoundingBox( -cubeFalseKantenLength/2, cubeFalseKantenLength/2 ), CustomLineMesh.PAIRWISE );
+			CustomLineMesh c = new CustomLineMesh( getBoundingBox( -(float)cubeFalseKantenLength/2, (float)cubeFalseKantenLength/2 ), CustomLineMesh.PAIRWISE );
 			c.setLineWidth( 2 );
 			c.setColor( colorFalse );
 			final Content content = univ.addCustomMesh( c, "BoundingBoxFalse" );			
 			content.showCoordinateSystem(false);			
 
-			CustomLineMesh c2 = new CustomLineMesh( getBoundingBox( -cubeTrueKantenLength/2, cubeTrueKantenLength/2 ), CustomLineMesh.PAIRWISE );
+			CustomLineMesh c2 = new CustomLineMesh( getBoundingBox( -(float)cubeTrueKantenLength/2, (float)cubeTrueKantenLength/2 ), CustomLineMesh.PAIRWISE );
 			//CustomLineMesh c2 = new CustomLineMesh( getBoundingBox( 1.5f*cubeTrueKantenLength, 2.5f*cubeTrueKantenLength ), CustomLineMesh.PAIRWISE );
 			c2.setLineWidth( 2 );
 			c2.setColor( colorTrue );
@@ -610,8 +610,8 @@ public class TestPointDescriptor
 		}
 		
 		/*
-		float[] a1 = a.getL();
-		float[] b1 = b.getL();
+		double[] a1 = a.getL();
+		double[] b1 = b.getL();
 		
 		if ( a1[ 0 ] == b1[ 0 ] && a1[ 1 ] == b1[ 1 ] && a1[ 2 ] == b1[ 2 ] )
 			return true;
@@ -633,7 +633,7 @@ public class TestPointDescriptor
 		//testQuaternions();
 		//new TestPointDescriptor();
 		
-		float stdev = 0.2f;
+		double stdev = 0.2f;
 		
 		//testStability( 3, 100, 0, 10.0, stdev, true, showPoints );
 						

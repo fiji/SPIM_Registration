@@ -1,9 +1,8 @@
 package mpicbg.spim.registration.bead;
 
 import javax.vecmath.Point3d;
-import javax.vecmath.Point3f;
 
-import mpicbg.imglib.util.Util;
+import net.imglib2.util.Util;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.detection.DetectionView;
 
@@ -16,15 +15,10 @@ public class Bead extends DetectionView< BeadIdentification, Bead >
 	
 	public Bead( final int id, final Point3d location, final ViewDataBeads myView )
 	{
-		super( id, new float[] { (float)location.x, (float)location.y, (float)location.z}, myView );
+		super( id, new double[] { location.x, location.y, location.z}, myView );
 	}
 
-	public Bead( final int id, final Point3f location, final ViewDataBeads myView )
-	{
-		super( id, new float[] { location.x, location.y, location.z}, myView );
-	}
-
-	public Bead( final int id, final float[] location, final ViewDataBeads myView )
+	public Bead( final int id, final double[] location, final ViewDataBeads myView )
 	{
 		super( id, location, myView );
 	}

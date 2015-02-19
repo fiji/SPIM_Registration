@@ -2,10 +2,10 @@ package mpicbg.pointdescriptor.matcher;
 
 import java.util.ArrayList;
 
-import javax.vecmath.Matrix3f;
-import javax.vecmath.Point3f;
-import javax.vecmath.Quat4f;
-import javax.vecmath.Vector3f;
+import javax.vecmath.Matrix3d;
+import javax.vecmath.Point3d;
+import javax.vecmath.Quat4d;
+import javax.vecmath.Vector3d;
 
 import mpicbg.models.PointMatch;
 import mpicbg.models.RigidModel3D;
@@ -15,10 +15,10 @@ import mpicbg.util.TransformUtils;
 public class ModelPriorSubsetMatcher extends SubsetMatcher
 {
 	final RigidModel3D model;
-	final Point3f referenceAxis;
+	final Point3d referenceAxis;
 	final float angle;
 	
-	final Matrix3f referenceMatrix, invertedReferenceMatrix;
+	final Matrix3d referenceMatrix, invertedReferenceMatrix;
 
 	public ModelPriorSubsetMatcher( final int subsetSize, final int numNeighbors, final RigidModel3D model )
 	{
@@ -26,19 +26,19 @@ public class ModelPriorSubsetMatcher extends SubsetMatcher
 		
 		this.model = model;
 		
-		this.referenceMatrix = new Matrix3f();                
+		this.referenceMatrix = new Matrix3d();                
         TransformUtils.getTransform3D( model ).get( referenceMatrix );
 
-        this.invertedReferenceMatrix = new Matrix3f( this.referenceMatrix );
+        this.invertedReferenceMatrix = new Matrix3d( this.referenceMatrix );
 		this.invertedReferenceMatrix.invert();
 
-		final Quat4f quaternion = new Quat4f();	     
+		final Quat4d quaternion = new Quat4d();	     
         quaternion.set( referenceMatrix );
         
         this.angle = (float)Math.toDegrees( Math.acos( quaternion.getW() ) * 2 );
-        final Vector3f axis = new Vector3f( quaternion.getX(), quaternion.getY(), quaternion.getZ() );
+        final Vector3d axis = new Vector3d( quaternion.getX(), quaternion.getY(), quaternion.getZ() );
         axis.normalize();        
-        this.referenceAxis = new Point3f( axis );
+        this.referenceAxis = new Point3d( axis );
 	}
 
 	@Override
@@ -47,9 +47,9 @@ public class ModelPriorSubsetMatcher extends SubsetMatcher
 		final TranslationInvariantRigidModel3D matchModel = (TranslationInvariantRigidModel3D)fitResult;
 		
 		/* get input matrices and quaternion that we can alter */
-		final Quat4f quaternion = new Quat4f();
-		final Matrix3f templateMatrix = new Matrix3f();
-		matchModel.getMatrix3f( templateMatrix );
+		final Quat4d quaternion = new Quat4d();
+		final Matrix3d templateMatrix = new Matrix3d();
+		matchModel.getMatrix3d( templateMatrix );
 		
 		/* Compute the rotation angle between the two rigid 3d transformations */
 		templateMatrix.mul( invertedReferenceMatrix );		

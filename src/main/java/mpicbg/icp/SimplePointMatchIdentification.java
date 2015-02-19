@@ -13,20 +13,20 @@ import mpicbg.models.PointMatch;
 
 public class SimplePointMatchIdentification < P extends Point & Leaf<P> > implements PointMatchIdentification<P>
 {
-	float distanceThresold;
+	double distanceThresold;
 
-	public SimplePointMatchIdentification( final float distanceThreshold )
+	public SimplePointMatchIdentification( final double distanceThreshold )
 	{
 		this.distanceThresold = distanceThreshold;
 	}
 
 	public SimplePointMatchIdentification()
 	{
-		this.distanceThresold = Float.MAX_VALUE;
+		this.distanceThresold = Double.MAX_VALUE;
 	}
 
-	public void setDistanceThreshold( final float distanceThreshold ) { this.distanceThresold = distanceThreshold; }
-	public float getDistanceThreshold() { return this.distanceThresold; }
+	public void setDistanceThreshold( final double distanceThreshold ) { this.distanceThresold = distanceThreshold; }
+	public double getDistanceThreshold() { return this.distanceThresold; }
 
 	@Override
 	public ArrayList<PointMatch> assignPointMatches( final List<P> target, final List<P> reference )

@@ -15,7 +15,7 @@ public abstract class DetectionView< S extends DetectionIdentification< S, T >, 
 	final protected ArrayList<S> ransacCorrespondence = new ArrayList<S>();
 	final protected ArrayList<S> icpCorrespondence = new ArrayList<S>();
 	
-	public DetectionView( final int id, final float[] location, final ViewDataBeads myView ) 
+	public DetectionView( final int id, final double[] location, final ViewDataBeads myView ) 
 	{
 		super( id, location );
 		this.myView = myView;

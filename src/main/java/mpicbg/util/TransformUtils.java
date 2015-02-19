@@ -1,7 +1,7 @@
 package mpicbg.util;
 
 import javax.media.j3d.Transform3D;
-import javax.vecmath.Matrix4f;
+import javax.vecmath.Matrix4d;
 import javax.vecmath.Vector3d;
 
 import mpicbg.imglib.util.Util;
@@ -20,20 +20,20 @@ public class TransformUtils
 	 * @param dimensions - the dimensions of the image
 	 * @param transform - the transformation
 	 *
-	 * @return - float[ numDimensions ][ 2 ], in the respective dimension d
-	 * float[ d ][ 0 ] is min, float[ d ][ 1 ] is max
+	 * @return - double[ numDimensions ][ 2 ], in the respective dimension d
+	 * double[ d ][ 0 ] is min, double[ d ][ 1 ] is max
 	 */
-	public static float[][] getMinMaxDim( final int[] dimensions, final CoordinateTransform transform )
+	public static double[][] getMinMaxDim( final int[] dimensions, final CoordinateTransform transform )
 	{
 		final int numDimensions = dimensions.length;
 
-		final float[] tmp = new float[ numDimensions ];
-		final float[][] minMaxDim = new float[ numDimensions ][ 2 ];
+		final double[] tmp = new double[ numDimensions ];
+		final double[][] minMaxDim = new double[ numDimensions ][ 2 ];
 
 		for ( int d = 0; d < numDimensions; ++d )
 		{
-			minMaxDim[ d ][ 0 ] = Float.MAX_VALUE;
-			minMaxDim[ d ][ 1 ] = -Float.MAX_VALUE;
+			minMaxDim[ d ][ 0 ] = Double.MAX_VALUE;
+			minMaxDim[ d ][ 1 ] = -Double.MAX_VALUE;
 		}
 
 		// recursively get all corner points of the image, assuming they will still be the extremum points
@@ -67,11 +67,11 @@ public class TransformUtils
 		return minMaxDim;
 	}
 	
-	public static Matrix4f getMatrix4f( final AffineModel3D model )
+	public static Matrix4d getMatrix4d( final AffineModel3D model )
 	{
-		final Matrix4f matrix = new Matrix4f();
+		final Matrix4d matrix = new Matrix4d();
 
-		final float[] m = new float[ 12 ];
+		final double[] m = new double[ 12 ];
 		model.getMatrix( m );
 
 		matrix.m00 = m[ 0 ];
@@ -94,11 +94,11 @@ public class TransformUtils
 		return matrix;
 	}
 
-	public static Matrix4f getMatrix4f( final RigidModel3D model )
+	public static Matrix4d getMatrix4d( final RigidModel3D model )
 	{
-		final Matrix4f matrix = new Matrix4f();
+		final Matrix4d matrix = new Matrix4d();
 
-		final float[] m = new float[ 12 ];
+		final double[] m = new double[ 12 ];
 		model.getMatrix( m );
 
 		matrix.m00 = m[ 0 ];
@@ -124,9 +124,9 @@ public class TransformUtils
 	public static Transform3D getTransform3D1( final AbstractAffineModel3D<?> model )
 	{
 		final Transform3D transform = new Transform3D();
-		final float[] m = model.getMatrix( null );
+		final double[] m = model.getMatrix( null );
 
-		final float[] m2 = new float[ 16 ];
+		final double[] m2 = new double[ 16 ];
 		transform.get( m2 );
 
 		for ( int i = 0; i < m.length; ++i )
@@ -140,9 +140,9 @@ public class TransformUtils
 	public static <M extends AbstractAffineModel3D<M>> Transform3D getTransform3D( final M model )
 	{
 		final Transform3D transform = new Transform3D();
-		final float[] m = model.getMatrix( null );
+		final double[] m = model.getMatrix( null );
 
-		final float[] m2 = new float[ 16 ];
+		final double[] m2 = new double[ 16 ];
 		transform.get( m2 );
 
 		for ( int i = 0; i < m.length; ++i )
@@ -155,7 +155,7 @@ public class TransformUtils
 
 	public static AffineModel3D getAffineModel3D( Transform3D transform )
 	{
-		final float[] m = new float[16];
+		final double[] m = new double[16];
 		transform.get( m );
 
 		AffineModel3D model = new AffineModel3D();
@@ -166,7 +166,7 @@ public class TransformUtils
 
 	public static RigidModel3D getRigidModel3D( Transform3D transform )
 	{
-		final float[] m = new float[16];
+		final double[] m = new double[16];
 		transform.get( m );
 
 		RigidModel3D model = new RigidModel3D();

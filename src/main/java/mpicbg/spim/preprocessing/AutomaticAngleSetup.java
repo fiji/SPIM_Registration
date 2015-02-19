@@ -3,10 +3,10 @@ package mpicbg.spim.preprocessing;
 import java.util.ArrayList;
 
 import javax.media.j3d.Transform3D;
-import javax.vecmath.AxisAngle4f;
-import javax.vecmath.Matrix3f;
+import javax.vecmath.AxisAngle4d;
+import javax.vecmath.Matrix3d;
 import javax.vecmath.Point3d;
-import javax.vecmath.Vector3f;
+import javax.vecmath.Vector3d;
 
 import mpicbg.models.AffineModel3D;
 import mpicbg.spim.io.IOFunctions;
@@ -26,27 +26,27 @@ public class AutomaticAngleSetup
 		
 		IOFunctions.println("Using view " + viewA.getName() + " and " + viewB.getName() + " for automatic angle setup." );
 		
-		final Vector3f rotationAxis = extractRotationAxis( (AffineModel3D)viewA.getTile().getModel(), (AffineModel3D)viewB.getTile().getModel() );
+		final Vector3d rotationAxis = extractRotationAxis( (AffineModel3D)viewA.getTile().getModel(), (AffineModel3D)viewB.getTile().getModel() );
 		//final float rotationAngle = extractRotationAngle( viewA.getTile().getModel(), viewB.getTile().getModel(), rotationAxis );
 		//IOFunctions.println( "rotation axis: " + rotationAxis + ", angle: " + rotationAngle );
 				
 		IOFunctions.println( "rotation axis: " + rotationAxis );		
 		rotationAxis.normalize();		
 		IOFunctions.println( "rotation axis normed: " + rotationAxis );
-		final Vector3f xAxis = new Vector3f( new float[] { 1, 0, 0 } );
+		final Vector3d xAxis = new Vector3d( new double[] { 1, 0, 0 } );
 				
 		IOFunctions.println( "Difference to xAxis: " + distance( rotationAxis, xAxis ) );
 		//testRotationAxis();
 		//getCommonAreaPerpendicularViews( viewA, viewB );
 	}
 	
-	public static float distance( final Vector3f a, final Vector3f b )
+	public static double distance( final Vector3d a, final Vector3d b )
 	{
-		final float dx = a.x - b.x;
-		final float dy = a.y - b.y;
-		final float dz = a.z - b.z;
+		final double dx = a.x - b.x;
+		final double dy = a.y - b.y;
+		final double dz = a.z - b.z;
 		
-		return (float) Math.sqrt( dx*dx + dy*dy + dz*dz );
+		return Math.sqrt( dx*dx + dy*dy + dz*dz );
 	}
 	
 	public static void testRotationAxis()
@@ -54,8 +54,8 @@ public class AutomaticAngleSetup
 		Transform3D a = new Transform3D();
 		Transform3D b = new Transform3D();
 
-		a.setRotation( new AxisAngle4f( new Vector3f( 1, 2, 3), (float)Math.toRadians( 45 ) ) );
-		b.setRotation( new AxisAngle4f( new Vector3f( 1, 2, 3), (float)Math.toRadians( 90 ) ) );
+		a.setRotation( new AxisAngle4d( new Vector3d( 1, 2, 3), Math.toRadians( 45 ) ) );
+		b.setRotation( new AxisAngle4d( new Vector3d( 1, 2, 3), Math.toRadians( 90 ) ) );
 		
 		Transform3D c = new Transform3D( a );
 		
@@ -64,37 +64,37 @@ public class AutomaticAngleSetup
 		IOFunctions.println(c);
 		IOFunctions.println(b);
 				
-		Vector3f roationAxis = extractRotationAxis ( TransformUtils.getAffineModel3D( a ), TransformUtils.getAffineModel3D( b )  );
+		Vector3d roationAxis = extractRotationAxis ( TransformUtils.getAffineModel3D( a ), TransformUtils.getAffineModel3D( b )  );
 
 		IOFunctions.println( roationAxis );				
 		IOFunctions.println( extractRotationAngle( TransformUtils.getAffineModel3D( a ), TransformUtils.getAffineModel3D( b ), roationAxis) );		
 		
 	}
 
-	public static float extractRotationAngle( final AffineModel3D modelA, final AffineModel3D modelB, final Vector3f rotationAxis )
+	public static double extractRotationAngle( final AffineModel3D modelA, final AffineModel3D modelB, final Vector3d rotationAxis )
 	{
 		final Transform3D transformA = TransformUtils.getTransform3D( modelA );
 		final Transform3D transformB = TransformUtils.getTransform3D( modelB );
 
 		// reset translational components
-		transformA.setTranslation( new Vector3f() );
-		transformB.setTranslation( new Vector3f() );
+		transformA.setTranslation( new Vector3d() );
+		transformB.setTranslation( new Vector3d() );
 		
 		final Transform3D connectingTransform = new Transform3D();
 		final Transform3D tmp = new Transform3D();
 		
-		final Matrix3f matrix1 = new Matrix3f();
-		final Matrix3f matrix2 = new Matrix3f();
+		final Matrix3d matrix1 = new Matrix3d();
+		final Matrix3d matrix2 = new Matrix3d();
 		
 		transformB.get( matrix2 );
 		
-		float minError = Float.MAX_VALUE;
-		float minAngle = -1;
+		double minError = Float.MAX_VALUE;
+		double minAngle = -1;
 		
-		for ( float angle = 0f; angle < 360.0f; angle += 1f )
+		for ( double angle = 0f; angle < 360.0f; angle += 1f )
 		{
 			connectingTransform.setIdentity();
-			connectingTransform.setRotation( new AxisAngle4f( rotationAxis, (float)Math.toRadians( angle ) ) );
+			connectingTransform.setRotation( new AxisAngle4d( rotationAxis, Math.toRadians( angle ) ) );
 		
 			tmp.set( transformA );
 			tmp.mul( connectingTransform );
@@ -103,7 +103,7 @@ public class AutomaticAngleSetup
 			
 			matrix1.sub( matrix2 );
 			
-			final float diff = matrix1.m00 * matrix1.m00 + matrix1.m01 * matrix1.m01 + matrix1.m02 * matrix1.m02 +
+			final double diff = matrix1.m00 * matrix1.m00 + matrix1.m01 * matrix1.m01 + matrix1.m02 * matrix1.m02 +
 							   matrix1.m10 * matrix1.m10 + matrix1.m11 * matrix1.m11 + matrix1.m12 * matrix1.m12 +
 							   matrix1.m20 * matrix1.m20 + matrix1.m21 * matrix1.m21 + matrix1.m22 * matrix1.m22;
 
@@ -125,23 +125,23 @@ public class AutomaticAngleSetup
 	 * @param model - the second affine transformation 
 	 * @return - the Vector containing the rotation axis
 	 */
-	public static Vector3f extractRotationAxis( final AffineModel3D model )
+	public static Vector3d extractRotationAxis( final AffineModel3D model )
 	{
-		final float[] matrix = model.getMatrix( null );
+		final double[] matrix = model.getMatrix( null );
 				
-		final float m00 = matrix[ 0 ];
-		final float m01 = matrix[ 1 ];
-		final float m02 = matrix[ 2 ];
-		final float m10 = matrix[ 4 ];
-		final float m11 = matrix[ 5 ];
-		final float m12 = matrix[ 6 ];
-		final float m20 = matrix[ 8 ];
-		final float m21 = matrix[ 9 ];
-		final float m22 = matrix[ 10 ];
+		final double m00 = matrix[ 0 ];
+		final double m01 = matrix[ 1 ];
+		final double m02 = matrix[ 2 ];
+		final double m10 = matrix[ 4 ];
+		final double m11 = matrix[ 5 ];
+		final double m12 = matrix[ 6 ];
+		final double m20 = matrix[ 8 ];
+		final double m21 = matrix[ 9 ];
+		final double m22 = matrix[ 10 ];
 		
-		final Vector3f rotationAxis = new Vector3f( 1, 0, 0 );
+		final Vector3d rotationAxis = new Vector3d( 1, 0, 0 );
 		
-		final float x = rotationAxis.x;		
+		final double x = rotationAxis.x;		
 		rotationAxis.y = ( ( 1 - m00 ) * ( 1 - m22 ) * x - m20 * m02 * x ) / ( m01 * ( 1 - m22 ) + m21 * m02 );
 		rotationAxis.z = ( ( 1 - m00 ) * ( 1 - m11 ) * x - m10 * m01 * x ) / ( m02 * ( 1 - m11 ) + m12 * m01 );
 		
@@ -176,34 +176,34 @@ public class AutomaticAngleSetup
 	 * @param modelB - the second affine transformation 
 	 * @return - the Vector containing the rotation axis
 	 */
-	public static Vector3f extractRotationAxis( final AffineModel3D modelA, final AffineModel3D modelB )
+	public static Vector3d extractRotationAxis( final AffineModel3D modelA, final AffineModel3D modelB )
 	{
-		final float[] matrixA = modelA.getMatrix( null );
-		final float[] matrixB = modelB.getMatrix( null );
+		final double[] matrixA = modelA.getMatrix( null );
+		final double[] matrixB = modelB.getMatrix( null );
 				
-		final float m00 = matrixA[ 0 ];
-		final float m01 = matrixA[ 1 ];
-		final float m02 = matrixA[ 2 ];
-		final float m10 = matrixA[ 4 ];
-		final float m11 = matrixA[ 5 ];
-		final float m12 = matrixA[ 6 ];
-		final float m20 = matrixA[ 8 ];
-		final float m21 = matrixA[ 9 ];
-		final float m22 = matrixA[ 10 ];
+		final double m00 = matrixA[ 0 ];
+		final double m01 = matrixA[ 1 ];
+		final double m02 = matrixA[ 2 ];
+		final double m10 = matrixA[ 4 ];
+		final double m11 = matrixA[ 5 ];
+		final double m12 = matrixA[ 6 ];
+		final double m20 = matrixA[ 8 ];
+		final double m21 = matrixA[ 9 ];
+		final double m22 = matrixA[ 10 ];
 
-		final float n00 = matrixB[ 0 ];
-		final float n01 = matrixB[ 1 ];
-		final float n02 = matrixB[ 2 ];
-		final float n10 = matrixB[ 4 ];
-		final float n11 = matrixB[ 5 ];
-		final float n12 = matrixB[ 6 ];
-		final float n20 = matrixB[ 8 ];
-		final float n21 = matrixB[ 9 ];
-		final float n22 = matrixB[ 10 ];
+		final double n00 = matrixB[ 0 ];
+		final double n01 = matrixB[ 1 ];
+		final double n02 = matrixB[ 2 ];
+		final double n10 = matrixB[ 4 ];
+		final double n11 = matrixB[ 5 ];
+		final double n12 = matrixB[ 6 ];
+		final double n20 = matrixB[ 8 ];
+		final double n21 = matrixB[ 9 ];
+		final double n22 = matrixB[ 10 ];
 		
-		final Vector3f rotationAxis = new Vector3f( 1, 0, 0 );
+		final Vector3d rotationAxis = new Vector3d( 1, 0, 0 );
 		
-		final float x = rotationAxis.x;		
+		final double x = rotationAxis.x;		
 		rotationAxis.y = ( ( m00 - n00 ) * ( m22 - n22 ) * x - ( n20 - m20 ) * ( n02 - m02 ) * x ) / 
 						 ( ( n01 - m01 ) * ( m22 - n22 ) + ( n21 - m21 ) * ( n02 - m02 ) );
 		rotationAxis.z = ( ( m00 - n00 ) * ( m11 - n11 ) * x - ( n10 - m10 ) * ( n01 - m01 ) * x ) / 
@@ -233,31 +233,31 @@ public class AutomaticAngleSetup
 		*/
 	}
 
-	public static Vector3f extractRotationAxis( final Matrix3f matrixA, final Matrix3f matrixB )
-	{				
-		final float m00 = matrixA.m00;
-		final float m01 = matrixA.m01;
-		final float m02 = matrixA.m02;
-		final float m10 = matrixA.m10;
-		final float m11 = matrixA.m11;
-		final float m12 = matrixA.m12;
-		final float m20 = matrixA.m20;
-		final float m21 = matrixA.m21;
-		final float m22 = matrixA.m22;
+	public static Vector3d extractRotationAxis( final Matrix3d matrixA, final Matrix3d matrixB )
+	{
+		final double m00 = matrixA.m00;
+		final double m01 = matrixA.m01;
+		final double m02 = matrixA.m02;
+		final double m10 = matrixA.m10;
+		final double m11 = matrixA.m11;
+		final double m12 = matrixA.m12;
+		final double m20 = matrixA.m20;
+		final double m21 = matrixA.m21;
+		final double m22 = matrixA.m22;
 
-		final float n00 = matrixB.m00;
-		final float n01 = matrixB.m01;
-		final float n02 = matrixB.m02;
-		final float n10 = matrixB.m10;
-		final float n11 = matrixB.m11;
-		final float n12 = matrixB.m12;
-		final float n20 = matrixB.m20;
-		final float n21 = matrixB.m21;
-		final float n22 = matrixB.m22;
+		final double n00 = matrixB.m00;
+		final double n01 = matrixB.m01;
+		final double n02 = matrixB.m02;
+		final double n10 = matrixB.m10;
+		final double n11 = matrixB.m11;
+		final double n12 = matrixB.m12;
+		final double n20 = matrixB.m20;
+		final double n21 = matrixB.m21;
+		final double n22 = matrixB.m22;
 		
-		final Vector3f rotationAxis = new Vector3f( 1, 0, 0 );
+		final Vector3d rotationAxis = new Vector3d( 1, 0, 0 );
 		
-		final float x = rotationAxis.x;		
+		final double x = rotationAxis.x;		
 		rotationAxis.y = ( ( m00 - n00 ) * ( m22 - n22 ) * x - ( n20 - m20 ) * ( n02 - m02 ) * x ) / 
 						 ( ( n01 - m01 ) * ( m22 - n22 ) + ( n21 - m21 ) * ( n02 - m02 ) );
 		rotationAxis.z = ( ( m00 - n00 ) * ( m11 - n11 ) * x - ( n10 - m10 ) * ( n01 - m01 ) * x ) / 
@@ -289,17 +289,17 @@ public class AutomaticAngleSetup
 
 	protected void getCommonAreaPerpendicularViews( final ViewDataBeads viewA, final ViewDataBeads viewB )
 	{
-		final float[][] minMaxDimViewA = TransformUtils.getMinMaxDim( viewA.getImageSize(), viewA.getTile().getModel() );
-		final float[][] minMaxDimViewB = TransformUtils.getMinMaxDim( viewB.getImageSize(), viewB.getTile().getModel() );
+		final double[][] minMaxDimViewA = TransformUtils.getMinMaxDim( viewA.getImageSize(), viewA.getTile().getModel() );
+		final double[][] minMaxDimViewB = TransformUtils.getMinMaxDim( viewB.getImageSize(), viewB.getTile().getModel() );
 		
-		//final float minX = minMaxDimViewB[ 0 ][ 0 ];
-		final float maxX = minMaxDimViewB[ 0 ][ 1 ];
+		//final double minX = minMaxDimViewB[ 0 ][ 0 ];
+		final double maxX = minMaxDimViewB[ 0 ][ 1 ];
 
-		final float minY = minMaxDimViewB[ 1 ][ 0 ];
-		final float maxY = minMaxDimViewB[ 1 ][ 1 ];
+		final double minY = minMaxDimViewB[ 1 ][ 0 ];
+		final double maxY = minMaxDimViewB[ 1 ][ 1 ];
 
-		final float minZ = minMaxDimViewA[ 2 ][ 0 ];
-		final float maxZ = minMaxDimViewA[ 2 ][ 1 ];
+		final double minZ = minMaxDimViewA[ 2 ][ 0 ];
+		final double maxZ = minMaxDimViewA[ 2 ][ 1 ];
 
 		IOFunctions.println( "X1: " + minMaxDimViewA[ 0 ][ 0 ] + " -> " + minMaxDimViewA[ 0 ][ 1 ] );
 		IOFunctions.println( "X2: " + minMaxDimViewB[ 0 ][ 0 ] + " -> " + minMaxDimViewB[ 0 ][ 1 ] );

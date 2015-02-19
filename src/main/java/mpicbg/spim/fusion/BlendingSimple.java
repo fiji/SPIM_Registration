@@ -8,12 +8,12 @@ public class BlendingSimple extends CombinedPixelWeightener<BlendingSimple>
 {
 	final int numDimensions;
 	final int numViews;
-	final float[] weights, border;
-	final float[][] scaling;
+	final double[] weights, border;
+	final double[][] scaling;
 
 	final int[][] imageSizes;
 
-	float percentScaling = 0.3f;
+	double percentScaling = 0.3;
 
 	protected BlendingSimple( final ArrayList<ViewDataBeads> views )
 	{
@@ -22,9 +22,9 @@ public class BlendingSimple extends CombinedPixelWeightener<BlendingSimple>
 		numViews = views.size();
 		numDimensions = views.get( 0 ).getNumDimensions();
 
-		weights = new float[ numViews ];
-		scaling = new float[ numViews ][ numDimensions ];
-		border = new float[]{ 15,15,15 };
+		weights = new double[ numViews ];
+		scaling = new double[ numViews ][ numDimensions ];
+		border = new double[]{ 15,15,15 };
 
 		// cache image sizes
 		imageSizes = new int[ numViews ][];
@@ -36,39 +36,39 @@ public class BlendingSimple extends CombinedPixelWeightener<BlendingSimple>
 			for ( int d = 0; d < numDimensions; ++d )
 				scaling[ i ][ d ] = 1;
 
-			scaling[ i ][ 2 ] = (float)views.get( i ).getZStretching();
+			scaling[ i ][ 2 ] = views.get( i ).getZStretching();
 		}
 		
 		//setBorder( 15 );
 	}
 	
-	public void setPercentScaling( final float p ) { this.percentScaling = p; }
+	public void setPercentScaling( final double p ) { this.percentScaling = p; }
 
-	public void setBorder( final float numPixels )
+	public void setBorder( final double numPixels )
 	{
 		for ( int d = 0; d < border.length; ++d )
 			border[ d ] = numPixels;
 	}
 
-	public void setBorder( final float[] numPixels )
+	public void setBorder( final double[] numPixels )
 	{
 		for ( int d = 0; d < border.length; ++d )
 			border[ d ] = numPixels[ d ];
 	}
 
-	public void setBlendingRange( final float ratio ) { this.percentScaling = ratio; }
+	public void setBlendingRange( final double ratio ) { this.percentScaling = ratio; }
 
 	
 	@Override
 	public void close() {}
 
 	@Override
-	public float getWeight( final int view )  { return weights[ view ]; }
+	public double getWeight( final int view )  { return weights[ view ]; }
 
 	@Override
 	public void updateWeights( final int[][] locations, final boolean[] useView )
 	{
-		final float[][] tmp = new float[ locations.length ][ locations[ 0 ].length ];
+		final double[][] tmp = new double[ locations.length ][ locations[ 0 ].length ];
 
 		for ( int i = 0; i < locations.length; ++i )
 			for ( int d = 0; d < locations[ 0 ].length; ++d )
@@ -78,7 +78,7 @@ public class BlendingSimple extends CombinedPixelWeightener<BlendingSimple>
 	}
 
 	@Override
-	public void updateWeights( final float[][] locations, final boolean[] useView )
+	public void updateWeights( final double[][] locations, final boolean[] useView )
 	{
 		/*
 		// check which location are inside its respective view
@@ -100,15 +100,15 @@ public class BlendingSimple extends CombinedPixelWeightener<BlendingSimple>
 		for ( int i = 0; i < useView.length; ++i )
 		{
 			if ( useView[ i ] )
-				weights[ i ] = (float)computeWeight( locations[ i ], imageSizes[ i ], border, scaling[ i ], percentScaling );
+				weights[ i ] = computeWeight( locations[ i ], imageSizes[ i ], border, scaling[ i ], percentScaling );
 			else
 				weights[ i ] = 0;
 		}
 	}
 
-	final public static double computeWeight( final int[] location, final int[] dimensions, final float[] border, final float[] dimensionScaling, final float percentScaling )
+	final public static double computeWeight( final int[] location, final int[] dimensions, final double[] border, final double[] dimensionScaling, final double percentScaling )
 	{
-		final float[] tmp = new float[ location.length ];
+		final double[] tmp = new double[ location.length ];
 
 		for ( int d = 0; d < location.length; ++d )
 			tmp[ d ] = location[ d ];
@@ -116,7 +116,7 @@ public class BlendingSimple extends CombinedPixelWeightener<BlendingSimple>
 		return computeWeight( tmp, dimensions, border, dimensionScaling, percentScaling );
 	}
 
-	final public static double computeWeight( final float[] location, final int[] dimensions, final float[] border, final float[] dimensionScaling, final float percentScaling )
+	final public static double computeWeight( final double[] location, final int[] dimensions, final double[] border, final double[] dimensionScaling, final double percentScaling )
 	{
 		// compute multiplicative distance to the respective borders [0...1]
 		double minDistance = 1;
@@ -138,7 +138,7 @@ public class BlendingSimple extends CombinedPixelWeightener<BlendingSimple>
 				value = Math.max( 0, Math.min( localImgPos - border[ dim ], (dimensions[ dim ] - 1) - localImgPos - border[ dim ] ) );
 			}
 
-			final float imgAreaBlend = Math.round( percentScaling * 0.5f * dimensions[ dim ] * dimensionScaling[ dim ] );
+			final double imgAreaBlend = Math.round( percentScaling * 0.5 * dimensions[ dim ] * dimensionScaling[ dim ] );
 
 			if ( value < imgAreaBlend )
 				value = value / imgAreaBlend;

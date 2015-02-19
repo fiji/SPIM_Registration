@@ -124,18 +124,18 @@ public abstract class SPIMImageFusion
 			final int[] dim = view.getImageSize();			
 			
 			// transform the corner points of the current view
-			final float[] minCoordinate = new float[]{ 0, 0, 0 };
-			final float[] maxCoordinate = new float[]{ dim[0], dim[1], dim[2] };
+			final double[] minCoordinate = new double[]{ 0, 0, 0 };
+			final double[] maxCoordinate = new double[]{ dim[0], dim[1], dim[2] };
 			
 			((AbstractAffineModel3D<?>)view.getTile().getModel()).estimateBounds( minCoordinate, maxCoordinate );
 
-			min.x = Math.min( minCoordinate[ 0 ], min.x );
-			min.y = Math.min( minCoordinate[ 1 ], min.y );
-			min.z = Math.min( minCoordinate[ 2 ], min.z );
+			min.x = (float)Math.min( minCoordinate[ 0 ], min.x );
+			min.y = (float)Math.min( minCoordinate[ 1 ], min.y );
+			min.z = (float)Math.min( minCoordinate[ 2 ], min.z );
 
-			max.x = Math.max( maxCoordinate[ 0 ], max.x );
-			max.y = Math.max( maxCoordinate[ 1 ], max.y );
-			max.z = Math.max( maxCoordinate[ 2 ], max.z );
+			max.x = (float)Math.max( maxCoordinate[ 0 ], max.x );
+			max.y = (float)Math.max( maxCoordinate[ 1 ], max.y );
+			max.z = (float)Math.max( maxCoordinate[ 2 ], max.z );
 		}
 		
 		size.sub(max, min);

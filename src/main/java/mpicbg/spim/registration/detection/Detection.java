@@ -7,12 +7,12 @@ public class Detection extends AbstractDetection<Detection>
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public Detection( final int id, final float[] location ) 
+	public Detection( final int id, final double[] location ) 
 	{
 		super(id, location);
 	}
 
-	public Detection( final int id, final float[] location, final float weight ) 
+	public Detection( final int id, final double[] location, final double weight ) 
 	{
 		super(id, location, weight);
 	}

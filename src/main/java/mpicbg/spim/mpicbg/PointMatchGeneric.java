@@ -7,22 +7,22 @@ public class PointMatchGeneric <P extends Point> extends PointMatch
 {
 	private static final long serialVersionUID = 1L;
 
-	public PointMatchGeneric( P p1, P p2, float[] weights, float strength )
+	public PointMatchGeneric( P p1, P p2, double[] weights, double strength )
 	{
 		super( p1, p2, weights, strength );
 	}
 	
-	public PointMatchGeneric( P p1, P p2, float[] weights )
+	public PointMatchGeneric( P p1, P p2, double[] weights )
 	{
 		super( p1, p2, weights );
 	}
 	
-	public PointMatchGeneric( P p1, P p2, float weight )
+	public PointMatchGeneric( P p1, P p2, double weight )
 	{
 		super( p1, p2, weight );
 	}
 
-	public PointMatchGeneric( P p1, P p2, float weight, float strength )
+	public PointMatchGeneric( P p1, P p2, double weight, double strength )
 	{
 		super( p1, p2, weight, strength );
 	}

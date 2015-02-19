@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
@@ -187,7 +188,7 @@ public class MappingFusionParalellMaxWeight extends SPIMImageFusion
                         final int myNumber = ai.getAndIncrement();
 
                         // temporary float array
-		            	final float[] tmp = new float[ 3 ];
+		            	final double[] tmp = new double[ 3 ];
 
 		        		// init combined pixel weighteners
 		        		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN && combinedWeightenerFactories.size() > 0 )
@@ -211,13 +212,13 @@ public class MappingFusionParalellMaxWeight extends SPIMImageFusion
 							for (int view = 0; view < isoW[i].length; view++)
 								isoIterators[i][view] = isoW[i][view].getResultIterator();
 
-		    			final Point3f[] tmpCoordinates = new Point3f[ numViews ];
+		    			final Point3d[] tmpCoordinates = new Point3d[ numViews ];
 		    			final int[][] loc = new int[ numViews ][ 3 ];
-		    			final float[][] locf = new float[ numViews ][ 3 ];
+		    			final double[][] locd = new double[ numViews ][ 3 ];
 		    			final boolean[] use = new boolean[ numViews ];
 
 		    			for ( int i = 0; i < numViews; ++i )
-		    				tmpCoordinates[ i ] = new Point3f();
+		    				tmpCoordinates[ i ] = new Point3d();
 
 		    			final LocalizableCursor<FloatType> it = fusedImage.createLocalizableCursor();
 
@@ -254,13 +255,13 @@ public class MappingFusionParalellMaxWeight extends SPIMImageFusion
 
 		    							mpicbg.spim.mpicbg.Java3d.applyInverseInPlace( models[i], tmpCoordinates[i], tmp );
 
-		    							loc[i][0] = Util.round( tmpCoordinates[i].x );
-		    							loc[i][1] = Util.round( tmpCoordinates[i].y );
-		    							loc[i][2] = Util.round( tmpCoordinates[i].z );
+		    							loc[i][0] = (int)Util.round( tmpCoordinates[i].x );
+		    							loc[i][1] = (int)Util.round( tmpCoordinates[i].y );
+		    							loc[i][2] = (int)Util.round( tmpCoordinates[i].z );
 
-		    							locf[i][0] = tmpCoordinates[i].x;
-		    							locf[i][1] = tmpCoordinates[i].y;
-		    							locf[i][2] = tmpCoordinates[i].z;
+		    							locd[i][0] = tmpCoordinates[i].x;
+		    							locd[i][1] = tmpCoordinates[i].y;
+		    							locd[i][2] = tmpCoordinates[i].z;
 
 		    							// do we hit the source image?
 										if ( loc[ i ][ 0 ] >= 0 && loc[ i ][ 1 ] >= 0 && loc[ i ][ 2 ] >= 0 &&
@@ -283,7 +284,7 @@ public class MappingFusionParalellMaxWeight extends SPIMImageFusion
 		    						// update combined weighteners
 									if (combW.length > 0)
 										for (final CombinedPixelWeightener<?> w : combW)
-											w.updateWeights(locf, use);
+											w.updateWeights(locd, use);
 
 									//float sumWeights = 0;
 		    						//float value = 0;

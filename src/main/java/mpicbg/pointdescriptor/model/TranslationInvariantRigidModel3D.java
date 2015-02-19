@@ -1,16 +1,15 @@
 package mpicbg.pointdescriptor.model;
 
-import Jama.EigenvalueDecomposition;
-import Jama.Matrix;
-
 import java.util.Collection;
 
-import javax.vecmath.Matrix3f;
-import javax.vecmath.Matrix4f;
+import javax.vecmath.Matrix3d;
+import javax.vecmath.Matrix4d;
 
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.PointMatch;
+import Jama.EigenvalueDecomposition;
+import Jama.Matrix;
 
 /**
  * 3d-rigid transformation models to be applied to points in 3d-space.
@@ -28,14 +27,14 @@ public class TranslationInvariantRigidModel3D extends TranslationInvariantModel<
 {
 	static final protected int MIN_NUM_MATCHES = 3;
 	
-	protected float
-		m00 = 1.0f, m01 = 0.0f, m02 = 0.0f, 
-		m10 = 0.0f, m11 = 1.0f, m12 = 0.0f, 
-		m20 = 0.0f, m21 = 0.0f, m22 = 1.0f;
+	protected double
+		m00 = 1.0, m01 = 0.0, m02 = 0.0,
+		m10 = 0.0, m11 = 1.0, m12 = 0.0,
+		m20 = 0.0, m21 = 0.0, m22 = 1.0;
 
 	final protected double[][] N = new double[4][4];
 	
-	public void getMatrix4f( final Matrix4f matrix )
+	public void getMatrix4d( final Matrix4d matrix )
 	{
 		matrix.m00 = m00;
 		matrix.m01 = m01;
@@ -55,7 +54,7 @@ public class TranslationInvariantRigidModel3D extends TranslationInvariantModel<
 		matrix.m33 = 0;
 	}
 
-	public void getMatrix3f( final Matrix3f matrix )
+	public void getMatrix3d( final Matrix3d matrix )
 	{
 		matrix.m00 = m00;
 		matrix.m01 = m01;
@@ -79,20 +78,20 @@ public class TranslationInvariantRigidModel3D extends TranslationInvariantModel<
 			throw new NotEnoughDataPointsException( matches.size() + " data points are not enough to estimate a 3d rigid model, at least " + MIN_NUM_MATCHES + " data points required." );
 
 		// calculate N
-		float Sxx, Sxy, Sxz, Syx, Syy, Syz, Szx, Szy, Szz;
+		double Sxx, Sxy, Sxz, Syx, Syy, Syz, Szx, Szy, Szz;
 		Sxx = Sxy = Sxz = Syx = Syy = Syz = Szx = Szy = Szz = 0;
 		
 		for ( final PointMatch m : matches )
 		{
-			final float[] p = m.getP1().getL(); 
-			final float[] q = m.getP2().getW();
+			final double[] p = m.getP1().getL(); 
+			final double[] q = m.getP2().getW();
 			
-			final float x1 = p[ 0 ];
-			final float y1 = p[ 1 ];
-			final float z1 = p[ 2 ];
-			final float x2 = q[ 0 ];
-			final float y2 = q[ 1 ];
-			final float z2 = q[ 2 ];
+			final double x1 = p[ 0 ];
+			final double y1 = p[ 1 ];
+			final double z1 = p[ 2 ];
+			final double x2 = q[ 0 ];
+			final double y2 = q[ 1 ];
+			final double z2 = q[ 2 ];
 			Sxx += x1 * x2;
 			Sxy += x1 * y2;
 			Sxz += x1 * z2;
@@ -146,10 +145,10 @@ public class TranslationInvariantRigidModel3D extends TranslationInvariantModel<
 			if (eigenvalues[i] > eigenvalues[index])
 				index = i;
 
-		final float q0 = (float)eigenVectors.get( 0, index ); 
-		final float qx = (float)eigenVectors.get( 1, index );
-		final float qy = (float)eigenVectors.get( 2, index );
-		final float qz = (float)eigenVectors.get( 3, index );
+		final double q0 = eigenVectors.get( 0, index ); 
+		final double qx = eigenVectors.get( 1, index );
+		final double qy = eigenVectors.get( 2, index );
+		final double qz = eigenVectors.get( 3, index );
 		
 		// computational result
 		
@@ -212,20 +211,20 @@ public class TranslationInvariantRigidModel3D extends TranslationInvariantModel<
 	final public int getMinNumMatches(){ return MIN_NUM_MATCHES; }
 	
 	@Override
-	final public float[] apply( final float[] l )
+	final public double[] apply( final double[] l )
 	{
-		final float[] transformed = l.clone();
+		final double[] transformed = l.clone();
 		applyInPlace( transformed );
 		return transformed;
 	}
 	
 	@Override
-	final public void applyInPlace( final float[] l )
+	final public void applyInPlace( final double[] l )
 	{
 		assert l.length == 3 : "3d affine transformations can be applied to 3d points only.";
 		
-		final float l0 = l[ 0 ];
-		final float l1 = l[ 1 ];
+		final double l0 = l[ 0 ];
+		final double l1 = l[ 1 ];
 		l[ 0 ] = l0 * m00 + l1 * m01 + l[ 2 ] * m02;
 		l[ 1 ] = l0 * m10 + l1 * m11 + l[ 2 ] * m12;
 		l[ 2 ] = l0 * m20 + l1 * m21 + l[ 2 ] * m22;
