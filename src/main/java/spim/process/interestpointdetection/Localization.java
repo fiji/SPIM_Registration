@@ -17,27 +17,27 @@ public class Localization
 {
 	public static ArrayList< InterestPoint > noLocalization( final ArrayList< SimplePeak > peaks, final boolean findMin, final boolean findMax )
 	{
-		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): NO subpixel localization" );					
+		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): NO subpixel localization" );
 
 		final int n = peaks.get( 0 ).location.length;
 		final ArrayList< InterestPoint > peaks2 = new ArrayList< InterestPoint >();
 		
 		int id = 0;
 		
-        for ( final SimplePeak peak : peaks )
-        {
-        	if ( ( peak.isMax && findMax ) || ( peak.isMin && findMin ) )
-        	{
-	        	final float[] pos = new float[ n ];
-	        	
-	        	for ( int d = 0; d < n; ++d )
-	        		pos[ d ] = peak.location[ d ];
-	        	
-	    		peaks2.add( new InterestPoint( id, pos ) );
-        	}
-        }
-        
-        return peaks2;
+		for ( final SimplePeak peak : peaks )
+		{
+			if ( ( peak.isMax && findMax ) || ( peak.isMin && findMin ) )
+			{
+				final double[] pos = new double[ n ];
+				
+				for ( int d = 0; d < n; ++d )
+					pos[ d ] = peak.location[ d ];
+				
+				peaks2.add( new InterestPoint( id, pos ) );
+			}
+		}
+		
+		return peaks2;
 	}
 
 	public static ArrayList< InterestPoint > computeQuadraticLocalization( final ArrayList< SimplePeak > peaks, final Image< FloatType > domImg, final boolean findMin, final boolean findMax, final float threshold )
@@ -59,8 +59,8 @@ public class Localization
 		if ( !spl.checkInput() || !spl.process() )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Warning! Failed to compute subpixel localization " + spl.getErrorMessage() );
 		
-		final float[] pos = new float[ domImg.getNumDimensions() ];
-		
+		final int n = domImg.getNumDimensions();
+
 		final ArrayList< InterestPoint > peaks2 = new ArrayList< InterestPoint >();
 		
 		int id = 0;
@@ -69,8 +69,11 @@ public class Localization
 		{
 			if ( Math.abs( detection.getValue().get() ) > threshold )
 			{
-				detection.getSubPixelPosition( pos );
-				peaks2.add( new InterestPoint( id++, pos.clone() ) );
+				final double[] tmp = new double[ n ];
+				for ( int d = 0; d < n; ++d )
+					tmp[ d ] = detection.getSubPixelPosition( d );
+
+				peaks2.add( new InterestPoint( id++, tmp ) );
 			}
 		}
 

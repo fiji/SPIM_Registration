@@ -191,10 +191,10 @@ public class InterestPointList
 				
 				final InterestPoint point = new InterestPoint( 
 						Integer.parseInt( p[ 0 ].trim() ),
-						new float[]{ 
-							Float.parseFloat( p[ 1 ].trim() ),
-							Float.parseFloat( p[ 2 ].trim() ),
-							Float.parseFloat( p[ 3 ].trim() ) } );
+						new double[]{ 
+							Double.parseDouble( p[ 1 ].trim() ),
+							Double.parseDouble( p[ 2 ].trim() ),
+							Double.parseDouble( p[ 3 ].trim() ) } );
 				
 				this.interestPoints.add( point );
 			}

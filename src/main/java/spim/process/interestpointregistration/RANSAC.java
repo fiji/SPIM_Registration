@@ -20,13 +20,13 @@ public class RANSAC
 			final ArrayList< PointMatchGeneric < Detection > > correspondenceCandidates, 
 			final ArrayList< PointMatchGeneric < Detection > > inlierList, 
 			final Model<?> model, 
-			final float maxEpsilon, 
-			final float minInlierRatio, 
-			final float minNumberInlierFactor, 
+			final double maxEpsilon, 
+			final double minInlierRatio, 
+			final double minNumberInlierFactor, 
 			final int numIterations )
 	{
 		final int numCorrespondences = correspondenceCandidates.size();
-		final int minNumCorrespondences = Math.max( model.getMinNumMatches(), Math.round( model.getMinNumMatches() * minNumberInlierFactor ) );
+		final int minNumCorrespondences = Math.max( model.getMinNumMatches(), (int)Math.round( model.getMinNumMatches() * minNumberInlierFactor ) );
 		
 		/*
 		 * First remove the inconsistent correspondences
@@ -54,7 +54,7 @@ public class RANSAC
 			
 			final LinkedPoint< Detection > pA = new LinkedPoint< Detection >( detectionA.getL(), detectionA.getW(), detectionA );
 			final LinkedPoint< Detection > pB = new LinkedPoint< Detection >( detectionB.getL(), detectionB.getW(), detectionB );
-			final float weight = correspondence.getWeight(); 
+			final double weight = correspondence.getWeight(); 
 
 			candidates.add( new PointMatchGeneric< LinkedPoint< Detection > >( pA, pB, weight ) );
 		}
@@ -81,7 +81,7 @@ public class RANSAC
 		}
 			
 		final NumberFormat nf = NumberFormat.getPercentInstance();
-		final float ratio = ((float)inliers.size() / (float)candidates.size());
+		final double ratio = (inliers.size() / candidates.size());
 		
 		if ( modelFound && inliers.size() >= minNumCorrespondences )
 		{			

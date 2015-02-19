@@ -10,12 +10,11 @@ import java.util.HashMap;
 import java.util.List;
 
 import javax.media.j3d.Transform3D;
-import javax.vecmath.AxisAngle4f;
-import javax.vecmath.Matrix4f;
-import javax.vecmath.Point3f;
-import javax.vecmath.Vector3f;
+import javax.vecmath.AxisAngle4d;
+import javax.vecmath.Matrix4d;
+import javax.vecmath.Point3d;
+import javax.vecmath.Vector3d;
 
-import mpicbg.imglib.util.Util;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.registration.ViewTransform;
@@ -28,6 +27,7 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.realtransform.AffineTransform3D;
+import net.imglib2.util.Util;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
 import spim.fiji.plugin.Interest_Point_Registration;
@@ -208,11 +208,11 @@ public class AutomaticReorientation extends ManualBoundingBox
 			IOFunctions.println( "using from channel: " + c.getChannel().getId()  + " label: '" + c.getLabel() + "', " + (detections == 0 ? "all detections." : "only corresponding detections.") );
 
 		// to be filled
-		final float[] minF, maxF;
+		final double[] minF, maxF;
 
 		if ( reorientate == 3 )
 		{
-			final Pair< float[], float[] > minmax = determineSizeSimple( channelsToUse, detections );
+			final Pair< double[], double[] > minmax = determineSizeSimple( channelsToUse, detections );
 
 			if ( minmax == null )
 				return false;
@@ -222,7 +222,7 @@ public class AutomaticReorientation extends ManualBoundingBox
 		}
 		else
 		{
-			final Pair< AffineTransform3D, float[] > pair = determineOptimalBoundingBox( channelsToUse, detections );
+			final Pair< AffineTransform3D, double[] > pair = determineOptimalBoundingBox( channelsToUse, detections );
 
 			if ( pair == null )
 				return false;
@@ -282,8 +282,8 @@ public class AutomaticReorientation extends ManualBoundingBox
 							r.updateModel();
 						}
 
-			minF = new float[]{ pair.getB()[ 0 ], pair.getB()[ 1 ], pair.getB()[ 2 ] };
-			maxF = new float[]{ pair.getB()[ 3 ], pair.getB()[ 4 ], pair.getB()[ 5 ] };
+			minF = new double[]{ pair.getB()[ 0 ], pair.getB()[ 1 ], pair.getB()[ 2 ] };
+			maxF = new double[]{ pair.getB()[ 3 ], pair.getB()[ 4 ], pair.getB()[ 5 ] };
 		}
 
 		IOFunctions.println( "Min (without addition): " + Util.printCoordinates( minF ) );
@@ -292,19 +292,19 @@ public class AutomaticReorientation extends ManualBoundingBox
 		final int[] min = new int[ 3 ];
 		final int[] max = new int[ 3 ];
 
-		float addX = (maxF[ 0 ] - minF[ 0 ]) * (float)( percent/100.0 ) / 2;
-		float addY = (maxF[ 1 ] - minF[ 1 ]) * (float)( percent/100.0 ) / 2;
-		float addZ = (maxF[ 2 ] - minF[ 2 ]) * (float)( percent/100.0 ) / 2;
+		double addX = (maxF[ 0 ] - minF[ 0 ]) * ( percent/100.0 ) / 2;
+		double addY = (maxF[ 1 ] - minF[ 1 ]) * ( percent/100.0 ) / 2;
+		double addZ = (maxF[ 2 ] - minF[ 2 ]) * ( percent/100.0 ) / 2;
 
-		final float add = Math.max( addX, Math.max( addY, addZ ) );
+		final double add = Math.max( addX, Math.max( addY, addZ ) );
 
-		min[ 0 ] = Math.round( minF[ 0 ] - add );
-		min[ 1 ] = Math.round( minF[ 1 ] - add );
-		min[ 2 ] = Math.round( minF[ 2 ] - add );
+		min[ 0 ] = (int)Math.round( minF[ 0 ] - add );
+		min[ 1 ] = (int)Math.round( minF[ 1 ] - add );
+		min[ 2 ] = (int)Math.round( minF[ 2 ] - add );
 
-		max[ 0 ] = Math.round( maxF[ 0 ] + add );
-		max[ 1 ] = Math.round( maxF[ 1 ] + add );
-		max[ 2 ] = Math.round( maxF[ 2 ] + add );
+		max[ 0 ] = (int)Math.round( maxF[ 0 ] + add );
+		max[ 1 ] = (int)Math.round( maxF[ 1 ] + add );
+		max[ 2 ] = (int)Math.round( maxF[ 2 ] + add );
 
 		IOFunctions.println( "Min (with addition): " + Util.printCoordinates( min ) );
 		IOFunctions.println( "Max (with addition): " + Util.printCoordinates( max ) );
@@ -321,9 +321,9 @@ public class AutomaticReorientation extends ManualBoundingBox
 	 * @param detections
 	 * @return - the transformation and minX, minY, minZ, maxX, maxY, maxZ as Pair
 	 */
-	protected Pair< AffineTransform3D, float[] > determineOptimalBoundingBox( final ArrayList< ChannelProcess > channelsToUse, final int detections )
+	protected Pair< AffineTransform3D, double[] > determineOptimalBoundingBox( final ArrayList< ChannelProcess > channelsToUse, final int detections )
 	{
-		final List< float[] > points = getAllDetectionsInGlobalCoordinates( channelsToUse, detections );
+		final List< double[] > points = getAllDetectionsInGlobalCoordinates( channelsToUse, detections );
 
 		if ( points.size() < 1 )
 		{
@@ -332,17 +332,17 @@ public class AutomaticReorientation extends ManualBoundingBox
 		}
 
 		// identify most distant points
-		float[] p1 = points.get( 0 );
-		float[] p2 = points.get( 1 );
+		double[] p1 = points.get( 0 );
+		double[] p2 = points.get( 1 );
 		double maxDist = squareDistance( p1[ 0 ], p1[ 1 ], p1[ 2 ], p2[ 0 ], p2[ 1 ], p2[ 2 ] );
 
 		for ( int i = 0; i < points.size() - 1; ++i )
 			for ( int j = i + 1; j < points.size(); ++j )
 			{
-				final float[] a = points.get( i );
-				final float[] b = points.get( j );
+				final double[] a = points.get( i );
+				final double[] b = points.get( j );
 
-				final float d = squareDistance( a[ 0 ], a[ 1 ], a[ 2 ], b[ 0 ], b[ 1 ], b[ 2 ] );
+				final double d = squareDistance( a[ 0 ], a[ 1 ], a[ 2 ], b[ 0 ], b[ 1 ], b[ 2 ] );
 
 				if ( d > maxDist )
 				{
@@ -360,7 +360,7 @@ public class AutomaticReorientation extends ManualBoundingBox
 				}
 			}
 
-		final Vector3f sv = new Vector3f( p2[ 0 ] - p1[ 0 ], p2[ 1 ] - p1[ 1 ], p2[ 2 ] - p1[ 2 ] );
+		final Vector3d sv = new Vector3d( p2[ 0 ] - p1[ 0 ], p2[ 1 ] - p1[ 1 ], p2[ 2 ] - p1[ 2 ] );
 		sv.normalize();
 
 		IOFunctions.println(
@@ -368,31 +368,31 @@ public class AutomaticReorientation extends ManualBoundingBox
 				" and " + Util.printCoordinates( p2 ) + ", vector=" + sv + ", volume=" +
 				testAxis( sv, points ).getA() / (1024*1024) + "MiPixels." );
 
-		final float[] vectorStep = new float[]{ 0.4f, 0.2f, 0.1f, 0.05f, 0.025f, 0.01f, 0.005f, 0.001f };
+		final double[] vectorStep = new double[]{ 0.4, 0.2, 0.1, 0.05, 0.025, 0.01, 0.005, 0.001 };
 
 		double minVolume = Double.MAX_VALUE;
-		float[] minBoundingBox = null;
+		double[] minBoundingBox = null;
 
 		for ( int stepIndex = 0; stepIndex < vectorStep.length; ++stepIndex )
 		{
-			final float step = vectorStep[ stepIndex ];
+			final double step = vectorStep[ stepIndex ];
 
 			// the best search vector found so far on this scale
-			final Vector3f bestSV = new Vector3f( sv );
+			final Vector3d bestSV = new Vector3d( sv );
 
 			for ( int zi = -1; zi <= 1; ++zi )
 				for ( int yi = -1; yi <= 1; ++yi )
 					for ( int xi = -1; xi <= 1; ++xi )
 					{
 						// compute the test vector
-						final Vector3f v = new Vector3f(
+						final Vector3d v = new Vector3d(
 								sv.x + xi * step,
 								sv.y + yi * step,
 								sv.z + zi * step );
 
 						v.normalize();
 
-						final Pair< Double, float[] > volume = testAxis( v, points );
+						final Pair< Double, double[] > volume = testAxis( v, points );
 
 						if ( volume.getA() < minVolume )
 						{
@@ -409,14 +409,14 @@ public class AutomaticReorientation extends ManualBoundingBox
 		}
 
 		// final mapping v onto the x axis
-		final Vector3f xAxis = new Vector3f( 1, 0, 0 );
-		final Matrix4f m = new Matrix4f();
+		final Vector3d xAxis = new Vector3d( 1, 0, 0 );
+		final Matrix4d m = new Matrix4d();
 		getRotation( sv, xAxis ).get( m );
 
 		final AffineTransform3D a = new AffineTransform3D();
 		a.set( m.m00, m.m01, m.m02, m.m03, m.m10, m.m11, m.m12, m.m13, m.m20, m.m21, m.m22, m.m23 );
 
-		return new ValuePair< AffineTransform3D, float[] >( a, minBoundingBox );
+		return new ValuePair< AffineTransform3D, double[] >( a, minBoundingBox );
 	}
 
 	
@@ -428,23 +428,23 @@ public class AutomaticReorientation extends ManualBoundingBox
 	 * @param points - all points
 	 * @return - the volume and minX, minY, minZ, maxX, maxY, maxZ as Pair
 	 */
-	protected Pair< Double, float[] > testAxis( final Vector3f v, final List< float[] > points )
+	protected Pair< Double, double[] > testAxis( final Vector3d v, final List< double[] > points )
 	{
 		// mapping v onto the x axis
-		final Vector3f xAxis = new Vector3f( 1, 0, 0 );
+		final Vector3d xAxis = new Vector3d( 1, 0, 0 );
 		final Transform3D t = getRotation( v, xAxis );
 
-		final Point3f tmp = new Point3f();
+		final Point3d tmp = new Point3d();
 
-		float minX = Float.MAX_VALUE;
-		float minY = Float.MAX_VALUE;
-		float minZ = Float.MAX_VALUE;
+		double minX = Double.MAX_VALUE;
+		double minY = Double.MAX_VALUE;
+		double minZ = Double.MAX_VALUE;
 
-		float maxX = -Float.MAX_VALUE;
-		float maxY = -Float.MAX_VALUE;
-		float maxZ = -Float.MAX_VALUE;
+		double maxX = -Double.MAX_VALUE;
+		double maxY = -Double.MAX_VALUE;
+		double maxZ = -Double.MAX_VALUE;
 
-		for ( final float[] p : points )
+		for ( final double[] p : points )
 		{
 			// transform onto the x-axis
 			tmp.set( p[ 0 ], p[ 1 ], p[ 2 ] );
@@ -459,9 +459,9 @@ public class AutomaticReorientation extends ManualBoundingBox
 			maxZ = Math.max( maxZ, tmp.z );
 		}
 
-		return new ValuePair< Double, float[] >(
-				(double)( maxX - minX ) * (double)( maxY - minY ) * (double)( maxZ - minZ ),
-				new float[]{ minX, minY, minZ, maxX, maxY, maxZ } );
+		return new ValuePair< Double, double[] >(
+				( maxX - minX ) * ( maxY - minY ) * ( maxZ - minZ ),
+				new double[]{ minX, minY, minZ, maxX, maxY, maxZ } );
 	}
 
 	/**
@@ -472,39 +472,40 @@ public class AutomaticReorientation extends ManualBoundingBox
 	 * @param v1
 	 * @return
 	 */
-	public static Transform3D getRotation( final Vector3f v0, final Vector3f v1 )
+	public static Transform3D getRotation( final Vector3d v0, final Vector3d v1 )
 	{
 		// the rotation axis is defined by the cross product
-		final Vector3f rotAxis = new Vector3f();
+		final Vector3d rotAxis = new Vector3d();
 		rotAxis.cross( v0, v1 );
 		rotAxis.normalize();
 
 		// if the cross product returns NaN, the vectors already point in the same direction,
 		// so we return the identity transform
-		if ( Float.isNaN( rotAxis.x ) )
+		if ( Double.isNaN( rotAxis.x ) )
 			return new Transform3D();
 
 		// the rotation angle is defined by the dot product (if normalized)
-		final float angle = v0.dot( v1 );
+		final double angle = v0.dot( v1 );
 
 		// Do an axis/angle 3d transformation
 		final Transform3D t = new Transform3D();
-		t.set( new AxisAngle4f( rotAxis, (float)Math.acos( angle ) ) );
+		t.set( new AxisAngle4d( rotAxis, Math.acos( angle ) ) );
 
 		return t;
 	}
-	final static public float squareDistance( final float p1x, final float p1y, final float p1z, final float p2x, final float p2y, final float p2z )
+
+	final static public double squareDistance( final double p1x, final double p1y, final double p1z, final double p2x, final double p2y, final double p2z )
 	{
 		final double dx = p1x - p2x;
 		final double dy = p1y - p2y;
 		final double dz = p1z - p2z;
 		
-		return ( float )( dx*dx + dy*dy + dz*dz );
+		return dx*dx + dy*dy + dz*dz;
 	}
 
-	protected Pair< float[], float[] > determineSizeSimple( final ArrayList< ChannelProcess > channelsToUse, final int detections )
+	protected Pair< double[], double[] > determineSizeSimple( final ArrayList< ChannelProcess > channelsToUse, final int detections )
 	{
-		final List< float[] > points = getAllDetectionsInGlobalCoordinates( channelsToUse, detections );
+		final List< double[] > points = getAllDetectionsInGlobalCoordinates( channelsToUse, detections );
 
 		if ( points.size() < 1 )
 		{
@@ -512,10 +513,10 @@ public class AutomaticReorientation extends ManualBoundingBox
 			return null;
 		}
 
-		final float[] min = points.get( 0 ).clone();
-		final float[] max = min.clone();
+		final double[] min = points.get( 0 ).clone();
+		final double[] max = min.clone();
 
-		for ( final float[] p : points )
+		for ( final double[] p : points )
 			for ( int d = 0; d < p.length; ++d )
 			{
 				min[ d ] = Math.min( min[ d ], p[ d ] );
@@ -525,12 +526,12 @@ public class AutomaticReorientation extends ManualBoundingBox
 		IOFunctions.println( "Min (direct): " + Util.printCoordinates( min ) );
 		IOFunctions.println( "Max (direct): " + Util.printCoordinates( max ) );
 
-		return new ValuePair< float[], float[] >( min, max );
+		return new ValuePair< double[], double[] >( min, max );
 	}
 
-	protected List< float[] > getAllDetectionsInGlobalCoordinates( final ArrayList< ChannelProcess > channelsToUse, final int detections )
+	protected List< double[] > getAllDetectionsInGlobalCoordinates( final ArrayList< ChannelProcess > channelsToUse, final int detections )
 	{
-		final ArrayList< float[] > ipList = new ArrayList< float[] >();
+		final ArrayList< double[] > ipList = new ArrayList< double[] >();
 
 		for ( final TimePoint t : timepointsToProcess )
 			for ( final ChannelProcess c : channelsToUse )
@@ -567,8 +568,8 @@ public class AutomaticReorientation extends ManualBoundingBox
 						{
 							for ( final InterestPoint p : list )
 							{
-								final float[] source = p.getL();
-								final float[] target = new float[ source.length ];
+								final double[] source = p.getL();
+								final double[] target = new double[ source.length ];
 								transform.apply( source, target );
 								ipList.add( target );
 							}
@@ -587,8 +588,8 @@ public class AutomaticReorientation extends ManualBoundingBox
 							for ( final CorrespondingInterestPoints cp : list2 )
 							{
 								final InterestPoint p = map.get( cp.getDetectionId() );
-								final float[] source = p.getL();
-								final float[] target = new float[ source.length ];
+								final double[] source = p.getL();
+								final double[] target = new double[ source.length ];
 								transform.apply( source, target );
 								ipList.add( target );
 							}

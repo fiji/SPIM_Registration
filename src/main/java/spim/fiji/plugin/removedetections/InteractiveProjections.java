@@ -34,7 +34,7 @@ import spim.process.fusion.deconvolution.ExtractPSF;
 
 public class InteractiveProjections
 {
-	public static float size = 2;
+	public static double size = 2;
 
 	protected boolean isRunning, wasCanceled;
 	protected ImagePlus imp;
@@ -120,8 +120,8 @@ public class InteractiveProjections
 
 		for ( final InterestPoint ip : ipList )
 		{
-			final float x = ip.getL()[ xDim ];
-			final float y = ip.getL()[ yDim ];
+			final double x = ip.getL()[ xDim ];
+			final double y = ip.getL()[ yDim ];
 			
 				final OvalRoi or = new OvalRoi( Math.round( x - size ), Math.round( y - size ), Math.round( size * 2 ), Math.round( size * 2 ) );
 				or.setStrokeColor( Color.green );
@@ -213,9 +213,9 @@ public class InteractiveProjections
 
 				for ( int i = ipList.size() - 1; i >= 0; --i )
 				{
-					final float[] l = ipList.get( i ).getL();
+					final double[] l = ipList.get( i ).getL();
 
-					final boolean contains = roi.contains( Math.round( l[ xDim ] ), Math.round( l[ yDim ] ) );
+					final boolean contains = roi.contains( (int)Math.round( l[ xDim ] ), (int)Math.round( l[ yDim ] ) );
 					
 					if ( inside && contains || !inside && !contains )
 						ipList.remove( i );

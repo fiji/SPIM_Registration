@@ -219,7 +219,7 @@ public class ProcessForDeconvolution
 			// extract PSFs if wanted
 			if ( extractPSFs )
 			{
-				final ArrayList< float[] > llist = getLocationsOfCorrespondingBeads( timepoint, inputData, extractPSFLabels.get( channel ).getLabel() );
+				final ArrayList< double[] > llist = getLocationsOfCorrespondingBeads( timepoint, inputData, extractPSFLabels.get( channel ).getLabel() );
 				
 				IOFunctions.println( "Extracting PSF for viewsetup " + inputData.getViewSetupId() + " using label '" + extractPSFLabels.get( channel ).getLabel() + "'" +
 						" (" +llist.size() + " corresponding detections available)" );
@@ -293,7 +293,7 @@ public class ProcessForDeconvolution
 		return otherChannelPSF.getExtractPSFInstance();
 	}
 
-	protected ArrayList< float[] > getLocationsOfCorrespondingBeads( final TimePoint tp, final ViewDescription inputData, final String label )
+	protected ArrayList< double[] > getLocationsOfCorrespondingBeads( final TimePoint tp, final ViewDescription inputData, final String label )
 	{
 		final InterestPointList iplist = spimData.getViewInterestPoints().getViewInterestPointLists( inputData ).getInterestPointList( label );
 		
@@ -303,7 +303,7 @@ public class ProcessForDeconvolution
 		for ( final CorrespondingInterestPoints cip : iplist.getCorrespondingInterestPoints() )
 			ipWithCorrespondences.add( cip.getDetectionId() );
 		
-		final ArrayList< float[] > llist = new ArrayList< float[] >();
+		final ArrayList< double[] > llist = new ArrayList< double[] >();
 		
 		// now go over all detections and see if they had correspondences
 		for ( final InterestPoint ip : iplist.getInterestPoints() )

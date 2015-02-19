@@ -237,7 +237,7 @@ public abstract class GlobalOptimizationType
 				
 				for ( final InterestPoint p : ptList )
 				{
-					final float[] l = new float[ 3 ];
+					final double[] l = new double[ 3 ];
 					m.apply( p.getL(), l );
 					
 					list.add( new InterestPoint( p.getId(), l ) );

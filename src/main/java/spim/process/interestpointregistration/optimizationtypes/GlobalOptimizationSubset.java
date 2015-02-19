@@ -82,7 +82,7 @@ public class GlobalOptimizationSubset
 			
 			// TODO: we assume that M is an Affine3D, which is not necessarily true
 			final Affine3D< ? > tilemodel = (Affine3D< ? >)tile.getModel();
-			final float[][] m = new float[ 3 ][ 4 ];
+			final double[][] m = new double[ 3 ][ 4 ];
 			tilemodel.toMatrix( m );
 			
 			final AffineTransform3D t = new AffineTransform3D();
@@ -123,14 +123,14 @@ public class GlobalOptimizationSubset
 			long w = size.dimension( 0 );
 			long h = size.dimension( 1 );
 
-			final float[][] p = new float[][]{
+			final double[][] p = new double[][]{
 					{ 0, 0, 0 },
 					{ w, 0, 0 },
 					{ 0, h, 0 },
 					{ w, h, 0 } };
 
 			// original coordinates == pa
-			final float[][] pa = new float[ 4 ][ 3 ];
+			final double[][] pa = new double[ 4 ][ 3 ];
 			
 			// map coordinates to the actual input coordinates
 			final ViewRegistration inputModel = spimData.getViewRegistrations().getViewRegistration( referenceTile );
@@ -141,7 +141,7 @@ public class GlobalOptimizationSubset
 			final M outputModel = tiles.get( referenceTile ).getModel();
 			
 			// transformed coordinates == pb
-			final float[][] pb = new float[ 4 ][ 3 ];
+			final double[][] pb = new double[ 4 ][ 3 ];
 
 			for ( int i = 0; i < p.length; ++i )
 				pb[ i ] = outputModel.apply( pa[ i ] );
@@ -163,7 +163,7 @@ public class GlobalOptimizationSubset
 			}
 
 			final AffineTransform3D mapBack = new AffineTransform3D();
-			final float[][] m = new float[ 3 ][ 4 ];
+			final double[][] m = new double[ 3 ][ 4 ];
 			((Affine3D<?>)mapBackModel).toMatrix( m );
 			
 			mapBack.set( m[0][0], m[0][1], m[0][2], + m[0][3],

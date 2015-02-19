@@ -143,7 +143,7 @@ public class ThinOut_Detections implements PlugIn
 						// we assume that the order of list2 and points is preserved!
 						final List< RealPoint > list1 = new ArrayList< RealPoint >();
 						final List< RealPoint > list2 = new ArrayList< RealPoint >();
-						final List< float[] > points = new ArrayList< float[] >();
+						final List< double[] > points = new ArrayList< double[] >();
 
 						for ( final InterestPoint ip : oldIpl.getInterestPoints() )
 						{

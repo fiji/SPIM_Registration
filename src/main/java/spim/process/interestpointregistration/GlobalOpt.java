@@ -160,11 +160,11 @@ public class GlobalOpt
 
 	public static Transform3D getTransform3D( final Affine3D< ? > affine )
 	{
-		final float[][] m = new float[ 3 ][ 4 ];
+		final double[][] m = new double[ 3 ][ 4 ];
 		((Affine3D<?>)affine).toMatrix( m );
 
 		final Transform3D transform = new Transform3D();
-		final float[] m2 = new float[ 16 ];
+		final double[] m2 = new double[ 16 ];
 		transform.get( m2 );
 		
 		m2[ 0 ] = m[0][0];
@@ -190,9 +190,9 @@ public class GlobalOpt
 	public static <M extends AbstractAffineModel3D<M>> Transform3D getTransform3D( final M model )
 	{
 		final Transform3D transform = new Transform3D();
-		final float[] m = model.getMatrix( null );
+		final double[] m = model.getMatrix( null );
 
-		final float[] m2 = new float[ 16 ];
+		final double[] m2 = new double[ 16 ];
 		transform.get( m2 );
 
 		for ( int i = 0; i < m.length; ++i )
@@ -205,7 +205,7 @@ public class GlobalOpt
 
 	public static String printAffine3D( final Affine3D< ? > model )
 	{
-		final float[][] m = new float[ 3 ][ 4 ];
+		final double[][] m = new double[ 3 ][ 4 ];
 		model.toMatrix( m );
 		
 		return m[0][0] + "," + m[0][1] + "," + m[0][2] + "," + m[0][3] + "," + 

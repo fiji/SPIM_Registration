@@ -120,13 +120,13 @@ public class ExtractPSF< T extends RealType< T > >
 
 			tmp[ minDim ] = -1;
 			
-			float maxValue = -Float.MAX_VALUE;
+			double maxValue = -Double.MAX_VALUE;
 			
 			psfIterator.setPosition( tmp );
 			for ( int i = 0; i < sizeProjection; ++i )
 			{
 				psfIterator.fwd( minDim );
-				final float value = psfIterator.get().getRealFloat();
+				final double value = psfIterator.get().getRealDouble();
 				
 				if ( value > maxValue )
 					maxValue = value;
@@ -221,7 +221,7 @@ public class ExtractPSF< T extends RealType< T > >
 			final RandomAccessibleInterval< T > img,
 			final ViewDescription viewDescription,
 			final AffineTransform3D model,
-			final ArrayList< float[] > locations,
+			final ArrayList< double[] > locations,
 			final long[] psfSize )
 	{
 		IOFunctions.println( "PSF size: " + Util.printCoordinates( psfSize ) );
@@ -240,8 +240,8 @@ public class ExtractPSF< T extends RealType< T > >
 
 	private static < T extends RealType< T > >void normalize( final IterableInterval< T > img )
 	{
-		double min = Float.MAX_VALUE;
-		double max = -Float.MAX_VALUE;
+		double min = Double.MAX_VALUE;
+		double max = -Double.MAX_VALUE;
 
 		for ( final T t : img )
 		{
@@ -276,14 +276,14 @@ public class ExtractPSF< T extends RealType< T > >
 		
 		final RealInterval minMaxDim = model.estimateBounds( psf );
 		
-		final float[] size = new float[ numDimensions ];		
+		final double[] size = new double[ numDimensions ];		
 		final long[] newSize = new long[ numDimensions ];		
-		final float[] offset = new float[ numDimensions ];
+		final double[] offset = new double[ numDimensions ];
 		
 		// the center of the psf has to be the center of the transformed psf as well
 		// this is important!
-		final float[] center = new float[ numDimensions ];
-		final float[] tmp = new float[ numDimensions ];
+		final double[] center = new double[ numDimensions ];
+		final double[] tmp = new double[ numDimensions ];
 
 		for ( int d = 0; d < numDimensions; ++d )
 			center[ d ] = psf.dimension( d ) / 2;
@@ -291,8 +291,8 @@ public class ExtractPSF< T extends RealType< T > >
 		model.apply( center, tmp );
 
 		for ( int d = 0; d < numDimensions; ++d )
-		{						
-			size[ d ] = (float)minMaxDim.realMax( d ) - (float) minMaxDim.realMin( d );
+		{
+			size[ d ] = minMaxDim.realMax( d ) - minMaxDim.realMin( d );
 			
 			newSize[ d ] = (int)size[ d ] + 1;
 			if ( newSize[ d ] % 2 == 0 )
@@ -316,7 +316,7 @@ public class ExtractPSF< T extends RealType< T > >
 	protected Img< T > extractPSFLocal(
 			final RandomAccessibleInterval< T > img,
 			final ImgFactory< T > psfFactory,
-			final ArrayList< float[] > locations,
+			final ArrayList< double[] > locations,
 			final long[] size )
 	{
 		final int numDimensions = size.length;
@@ -324,20 +324,20 @@ public class ExtractPSF< T extends RealType< T > >
 		final Img< T > psf = psfFactory.create( size, Views.iterable( img ).firstElement() );
 		
 		// Mirror produces some artifacts ... so we use periodic
-		final RealRandomAccess< T > interpolator = 
+		final RealRandomAccess< T > interpolator =
 				Views.interpolate( Views.extendPeriodic( img ), new NLinearInterpolatorFactory< T >() ).realRandomAccess();
 		
 		final Cursor< T > psfCursor = psf.localizingCursor();
 		
-		final long[] sizeHalf = size.clone();		
+		final long[] sizeHalf = size.clone();
 		for ( int d = 0; d < numDimensions; ++d )
 			sizeHalf[ d ] /= 2;
 		
 		final int[] tmpI = new int[ size.length ];
-		final float[] tmpF = new float[ size.length ];
+		final double[] tmpD = new double[ size.length ];
 
-		for ( final float[] position : locations )
-		{						
+		for ( final double[] position : locations )
+		{
 			psfCursor.reset();
 			
 			while ( psfCursor.hasNext() )
@@ -346,9 +346,9 @@ public class ExtractPSF< T extends RealType< T > >
 				psfCursor.localize( tmpI );
 
 				for ( int d = 0; d < numDimensions; ++d )
-					tmpF[ d ] = tmpI[ d ] - sizeHalf[ d ] + position[ d ];
+					tmpD[ d ] = tmpI[ d ] - sizeHalf[ d ] + position[ d ];
 				
-				interpolator.setPosition( tmpF );
+				interpolator.setPosition( tmpD );
 				
 				psfCursor.get().add( interpolator.get() );
 			}
@@ -357,7 +357,7 @@ public class ExtractPSF< T extends RealType< T > >
 		return psf;
 	}
 	
-	public static < T extends RealType< T > > Img< T > transform( final Img< T > image, final AffineTransform3D transformIn, final long[] newDim, final float[] offset )
+	public static < T extends RealType< T > > Img< T > transform( final Img< T > image, final AffineTransform3D transformIn, final long[] newDim, final double[] offset )
 	{
 		final int numDimensions = image.numDimensions();
 		final AffineTransform3D transform = transformIn.inverse(); 
@@ -368,8 +368,8 @@ public class ExtractPSF< T extends RealType< T > >
 		final Cursor<T> transformedIterator = transformed.localizingCursor();		
 		final RealRandomAccess<T> interpolator = Views.interpolate( Views.extendZero( image ), new NLinearInterpolatorFactory<T>() ).realRandomAccess();
 		
-		final float[] tmp1 = new float[ numDimensions ];
-		final float[] tmp2 = new float[ numDimensions ];
+		final double[] tmp1 = new double[ numDimensions ];
+		final double[] tmp2 = new double[ numDimensions ];
 
 		while (transformedIterator.hasNext())
 		{
@@ -406,10 +406,10 @@ public class ExtractPSF< T extends RealType< T > >
 	{
 		final long[] size = sizeIn.clone();
 
-		float min = Float.MAX_VALUE;
+		double min = Double.MAX_VALUE;
 
 		for ( final T f : img )
-			min = Math.min( min, f.getRealFloat() );
+			min = Math.min( min, f.getRealDouble() );
 
 		final Img< T > square = img.factory().create( size, img.firstElement() );
 

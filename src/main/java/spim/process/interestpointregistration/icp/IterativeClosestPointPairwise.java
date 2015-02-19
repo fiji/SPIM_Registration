@@ -5,8 +5,8 @@ import java.util.Date;
 import java.util.Random;
 import java.util.concurrent.Callable;
 
+import net.imglib2.util.Util;
 import mpicbg.icp.ICP;
-import mpicbg.imglib.util.Util;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.Model;
 import mpicbg.models.NotEnoughDataPointsException;
@@ -128,8 +128,8 @@ public class IterativeClosestPointPairwise implements Callable< PairwiseMatch >
 		final ArrayList< Detection > listA = new ArrayList< Detection >();
 		final ArrayList< Detection > listB = new ArrayList< Detection >();
 		
-		listA.add( new Detection( 0, new float[]{ 10, 10, 0 } ) );
-		listB.add( new Detection( 0, new float[]{ 11, 13, 0 } ) ); // d = 3.16
+		listA.add( new Detection( 0, new double[]{ 10, 10, 0 } ) );
+		listB.add( new Detection( 0, new double[]{ 11, 13, 0 } ) ); // d = 3.16
 
 		final Random rnd = new Random( 43534 );
 		final float maxError = 4;
@@ -139,8 +139,8 @@ public class IterativeClosestPointPairwise implements Callable< PairwiseMatch >
 			final float x = rnd.nextFloat() * 10000 + 150;
 			final float y = rnd.nextFloat() * 10000 + 150;
 			
-			listA.add( new Detection( i, new float[]{ x, y, 0 } ) );
-			listB.add( new Detection( i, new float[]{ x + 2, y + 4, 0 } ) ); // d = 4.472, will be less than 4 once the first one matched
+			listA.add( new Detection( i, new double[]{ x, y, 0 } ) );
+			listB.add( new Detection( i, new double[]{ x + 2, y + 4, 0 } ) ); // d = 4.472, will be less than 4 once the first one matched
 		}
 
 		// use the world and not the local coordinates

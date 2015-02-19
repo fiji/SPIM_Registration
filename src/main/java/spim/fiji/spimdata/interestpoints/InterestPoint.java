@@ -14,9 +14,9 @@ public class InterestPoint extends Point
 
 	protected final int id;
 
-	public InterestPoint( final int id, final float[] l )
+	public InterestPoint( final int id, final double[] l )
 	{
-		super( l );		
+		super( l );
 		this.id = id;
 	}
 	
