@@ -88,7 +88,12 @@ public abstract class DifferenceOf extends InterestPointDetection
 		}
 		
 		for ( int c = 0; c < channelsToProcess.size(); ++c )
-			gd.addChoice( "Interest_point_specification_(channel_" + channelsToProcess.get( c ).getName() + ")", brightnessChoice, brightnessChoice[ defaultBrightness[ channelsToProcess.get( c ).getId() ] ] );
+		{
+			if ( channelsToProcess.size() == 1 )
+				gd.addChoice( "Interest_point_specification (channel_" + channelsToProcess.get( c ).getName() + ")", brightnessChoice, brightnessChoice[ defaultBrightness[ channelsToProcess.get( c ).getId() ] ] );
+			else
+				gd.addChoice( "Interest_point_specification_(channel_" + channelsToProcess.get( c ).getName() + ")", brightnessChoice, brightnessChoice[ defaultBrightness[ channelsToProcess.get( c ).getId() ] ] );
+		}
 
 		if ( downsample )
 		{

@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.wrapper.ImgLib2;
 import mpicbg.spim.data.sequence.Angle;
@@ -22,7 +23,6 @@ import mpicbg.spim.segmentation.InteractiveIntegral;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.multithreading.SimpleMultiThreading;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.interestpointdetection.ProcessDOM;
