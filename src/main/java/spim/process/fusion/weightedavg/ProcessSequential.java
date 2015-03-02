@@ -63,6 +63,15 @@ public class ProcessSequential extends ProcessFusion
 	{
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Reserving memory for fused image.");
 
+		// get all views that are fused
+		final ArrayList< ViewDescription > allInputData =
+				FusionHelper.assembleInputData( spimData, timepoint, channel, viewIdsToProcess );
+
+		// it can be that for a certain comination of timepoint/channel there is nothing to do
+		// (e.g. fuse timepoint 1 channel 1 and timepoint 2 channel 2)
+		if ( allInputData.size() == 0 )
+			return null;
+
 		// try creating the output (type needs to be there to define T)
 		final Img< T > fusedImg = bb.getImgFactory( type ).create( bb.getDimensions(), type );
 
@@ -80,11 +89,7 @@ public class ProcessSequential extends ProcessFusion
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): WeightedAverageFusion: Cannot create weight image."  );
 			return null;
 		}
-		
-		// get all views that are fused
-		final ArrayList< ViewDescription > allInputData =
-				FusionHelper.assembleInputData( spimData, timepoint, channel, viewIdsToProcess );
-		
+
 		// we will need to run some batches until all is fused
 		for ( int batch = 0; batch < numBatches( allInputData.size(), numSequentialViews ); ++batch )
 		{

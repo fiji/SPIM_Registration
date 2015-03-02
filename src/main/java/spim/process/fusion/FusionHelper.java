@@ -8,7 +8,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
@@ -22,13 +24,33 @@ import net.imglib2.view.Views;
 import spim.Threads;
 import spim.fiji.spimdata.SpimData2;
 
-public class FusionHelper 
+public class FusionHelper
 {
 	/**
 	 * Do not instantiate
 	 */
 	private FusionHelper() {}
-	
+
+	public static String getIllumName( final List< Illumination > illumsToProcess )
+	{
+		String illumName = "_Ill" + illumsToProcess.get( 0 ).getName();
+
+		for ( int i = 1; i < illumsToProcess.size(); ++i )
+			illumName += "," + illumsToProcess.get( i ).getName();
+
+		return illumName;
+	}
+
+	public static String getAngleName( final List< Angle > anglesToProcess )
+	{
+		String angleName = "_Ang" + anglesToProcess.get( 0 ).getName();
+
+		for ( int i = 1; i < anglesToProcess.size(); ++i )
+			angleName += "," + anglesToProcess.get( i ).getName();
+
+		return angleName;
+	}
+
 	public static final boolean intersects( final float x, final float y, final float z, final int sx, final int sy, final int sz )
 	{
 		if ( x >= 0 && y >= 0 && z >= 0 && x < sx && y < sy && z < sz )

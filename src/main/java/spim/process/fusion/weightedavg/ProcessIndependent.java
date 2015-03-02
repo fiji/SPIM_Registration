@@ -78,7 +78,7 @@ public class ProcessIndependent extends ProcessFusion
 		// get all views that are fused
 		final ArrayList< ViewDescription > allInputData =
 				FusionHelper.assembleInputData( spimData, timepoint, channel, viewIdsToProcess );
-		
+
 		// we will need to run some batches until all is fused
 		for ( int i = 0; i < allInputData.size(); ++i )
 		{

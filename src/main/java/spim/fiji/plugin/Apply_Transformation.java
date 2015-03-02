@@ -5,6 +5,7 @@ import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +34,7 @@ import spim.fiji.plugin.apply.BigDataViewerTransformationWindow;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.SpimDataWrapper;
 import spim.fiji.spimdata.ViewSetupUtils;
 
 public class Apply_Transformation implements PlugIn
@@ -98,20 +100,34 @@ public class Apply_Transformation implements PlugIn
 		@Override
 		public int compareTo( final Entry o ) { return id - o.id; }
 	}
-	
+
 	@Override
 	public void run( final String arg0 )
 	{
 		// ask for everything
 		final LoadParseQueryXML result = new LoadParseQueryXML();
-		
+
 		if ( !result.queryXML( "applying a transformation", "Apply to", true, true, true, true ) )
 			return;
+
+		apply( result.getData(), SpimData2.getAllViewIdsSorted( result.getData(), result.getViewSetupsToProcess(), result.getTimePointsToProcess() ) );
+
+		// now save it
+		Interest_Point_Registration.saveXML( result.getData(), result.getXMLFileName(), result.getClusterExtension() );
+
+	}
+
+	public void apply( final SpimData2 data, final List< ViewId > viewIds )
+	{
+		final List< Angle > angles = SpimData2.getAllAnglesSorted( data, viewIds );
+		final List< Channel > channels = SpimData2.getAllChannelsSorted( data, viewIds );
+		final List< Illumination > illums = SpimData2.getAllIlluminationsSorted( data, viewIds );
+		final List< TimePoint > tps = SpimData2.getAllTimePointsSorted( data, viewIds );
 		
-		final boolean multipleTimePoints = result.getTimePointsToProcess().size() > 1;
-		final boolean multipleChannels = result.getChannelsToProcess().size() > 1;
-		final boolean multipleIlluminations = result.getIlluminationsToProcess().size() > 1;
-		final boolean multipleAngles = result.getAnglesToProcess().size() > 1;
+		final boolean multipleTimePoints = tps.size() > 1;
+		final boolean multipleChannels = channels.size() > 1;
+		final boolean multipleIlluminations = illums.size() > 1;
+		final boolean multipleAngles = angles.size() > 1;
 		
 		final GenericDialog gd = new GenericDialog( "Choose transformation model" );
 		
@@ -186,7 +202,7 @@ public class Apply_Transformation implements PlugIn
 		final double minResolution;
 		if ( applyTo == 1 )
 		{
-			minResolution = assembleAllMetaData( result.getData().getSequenceDescription(), result.getTimePointsToProcess(), result.getChannelsToProcess(), result.getIlluminationsToProcess(), result.getAnglesToProcess() );
+			minResolution = assembleAllMetaData( data.getSequenceDescription(), viewIds );
 			
 			if ( Double.isNaN( minResolution ) )
 			{
@@ -202,12 +218,12 @@ public class Apply_Transformation implements PlugIn
 		// query models and apply them
 		if ( defineAs == 0 )
 		{
-			if ( !queryString( model, applyTo, minResolution, result, sameModelTimePoints, sameModelChannels, sameModelIlluminations, sameModelAngles ) )
+			if ( !queryString( data, viewIds, model, applyTo, minResolution, sameModelTimePoints, sameModelChannels, sameModelIlluminations, sameModelAngles ) )
 				return;
 		}
 		else if ( defineAs == 1 )
 		{
-			if ( !queryRotationAxis( model, applyTo, minResolution, result, sameModelTimePoints, sameModelChannels, sameModelIlluminations, sameModelAngles ) )
+			if ( !queryRotationAxis( data, viewIds, model, applyTo, minResolution, sameModelTimePoints, sameModelChannels, sameModelIlluminations, sameModelAngles ) )
 				return;
 		}
 		else
@@ -221,19 +237,21 @@ public class Apply_Transformation implements PlugIn
 				return;
 			}
 
-			if ( !queryBigDataViewer( applyTo, minResolution, result ) )
+			if ( !queryBigDataViewer( data, viewIds, applyTo, minResolution ) )
 				return;
 		}
-		
-		// now save it
-		Interest_Point_Registration.saveXML( result.getData(), result.getXMLFileName(), result.getClusterExtension() );
 	}
 
-	protected boolean queryBigDataViewer( final int applyTo, final double minResolution, final LoadParseQueryXML result )
+	protected boolean queryBigDataViewer(
+			final SpimData2 data,
+			final List< ViewId > viewIds,
+			final int applyTo,
+			final double minResolution )
 	{
 		try
 		{
-			final BigDataViewer bdv = new BigDataViewer( result.getXMLFileName(), "Set dataset transformation", null );
+			// TODO: Remove the wrapper
+			final BigDataViewer bdv = new BigDataViewer( new SpimDataWrapper( data ), "Set dataset transformation", null );
 
 			try
 			{
@@ -271,12 +289,12 @@ public class Apply_Transformation implements PlugIn
 			models.add( t.getRowPackedCopy() );
 			modelDescriptions.add( "Rigid transform defined by BigDataViewer" );
 
-			final HashMap< Entry, List< TimePoint > > timepoints = getTimePoints( result.getTimePointsToProcess(), true );
-			final HashMap< Entry, List< Channel > > channels = getChannels( result.getChannelsToProcess(), true );
-			final HashMap< Entry, List< Illumination > > illums = getIlluminations( result.getIlluminationsToProcess(), true );
-			final HashMap< Entry, List< Angle > > angles = getAngles( result.getAnglesToProcess(), true );
+			final HashMap< Entry, List< TimePoint > > timepoints = getTimePoints( data, viewIds, true );
+			final HashMap< Entry, List< Channel > > channels = getChannels( data, viewIds, true );
+			final HashMap< Entry, List< Illumination > > illums = getIlluminations( data, viewIds, true );
+			final HashMap< Entry, List< Angle > > angles = getAngles( data, viewIds, true );
 
-			return applyModels( result.getData(), models, modelDescriptions, applyTo, minResolution, timepoints, channels, illums, angles );
+			return applyModels( data, viewIds,models, modelDescriptions, applyTo, minResolution, timepoints, channels, illums, angles );
 		}
 		catch ( SpimDataException e )
 		{
@@ -286,7 +304,16 @@ public class Apply_Transformation implements PlugIn
 		}
 	}
 
-	protected boolean queryRotationAxis( final int model, final int applyTo, final double minResolution, final LoadParseQueryXML result, final boolean sameModelTimePoints, final boolean sameModelChannels, final boolean sameModelIlluminations, final boolean sameModelAngles )
+	public boolean queryRotationAxis(
+			final SpimData2 data,
+			final List< ViewId > viewIds,
+			final int model,
+			final int applyTo,
+			final double minResolution,
+			final boolean sameModelTimePoints,
+			final boolean sameModelChannels,
+			final boolean sameModelIlluminations,
+			final boolean sameModelAngles )
 	{
 		if ( model != 2 )
 		{
@@ -294,11 +321,11 @@ public class Apply_Transformation implements PlugIn
 			return false;
 		}
 
-		final HashMap< Entry, List< TimePoint > > timepoints = getTimePoints( result.getTimePointsToProcess(), sameModelTimePoints );
-		final HashMap< Entry, List< Channel > > channels = getChannels( result.getChannelsToProcess(), sameModelChannels );
-		final HashMap< Entry, List< Illumination > > illums = getIlluminations( result.getIlluminationsToProcess(), sameModelIlluminations );
-		final HashMap< Entry, List< Angle > > angles = getAngles( result.getAnglesToProcess(), sameModelAngles );
-		
+		final HashMap< Entry, List< TimePoint > > timepoints = getTimePoints( data, viewIds, sameModelTimePoints );
+		final HashMap< Entry, List< Channel > > channels = getChannels( data, viewIds, sameModelChannels );
+		final HashMap< Entry, List< Illumination > > illums = getIlluminations( data, viewIds, sameModelIlluminations );
+		final HashMap< Entry, List< Angle > > angles = getAngles( data, viewIds, sameModelAngles );
+
 		final int numEntries = getNumEntries( timepoints, channels, illums, angles );
 
 		if ( defaultAxis == null || defaultDegrees == null || defaultAxis.length != numEntries || defaultDegrees.length != numEntries )
@@ -382,7 +409,7 @@ public class Apply_Transformation implements PlugIn
 			models.add( new double[]{
 					tmp[ 0 ], tmp[ 1 ], tmp[ 2 ], tmp[ 3 ],
 					tmp[ 4 ], tmp[ 5 ], tmp[ 6 ], tmp[ 7 ],
-					tmp[ 8 ], tmp[ 9 ], tmp[ 10 ], tmp[ 11 ] } );			
+					tmp[ 8 ], tmp[ 9 ], tmp[ 10 ], tmp[ 11 ] } );
 		}
 		
 		// set defaults
@@ -392,15 +419,24 @@ public class Apply_Transformation implements PlugIn
 		defaultModels = models;
 		
 		// apply the models as asked
-		return applyModels( result.getData(), models, modelDescriptions, applyTo, minResolution, timepoints, channels, illums, angles );
+		return applyModels( data, viewIds, models, modelDescriptions, applyTo, minResolution, timepoints, channels, illums, angles );
 	}
 
-	protected boolean queryString( final int model, final int applyTo, final double minResolution, final LoadParseQueryXML result, final boolean sameModelTimePoints, final boolean sameModelChannels, final boolean sameModelIlluminations, final boolean sameModelAngles )
+	public boolean queryString(
+			final SpimData2 data,
+			final List< ViewId > viewIds,
+			final int model,
+			final int applyTo,
+			final double minResolution,
+			final boolean sameModelTimePoints,
+			final boolean sameModelChannels,
+			final boolean sameModelIlluminations,
+			final boolean sameModelAngles )
 	{
-		final HashMap< Entry, List< TimePoint > > timepoints = getTimePoints( result.getTimePointsToProcess(), sameModelTimePoints );
-		final HashMap< Entry, List< Channel > > channels = getChannels( result.getChannelsToProcess(), sameModelChannels );
-		final HashMap< Entry, List< Illumination > > illums = getIlluminations( result.getIlluminationsToProcess(), sameModelIlluminations );
-		final HashMap< Entry, List< Angle > > angles = getAngles( result.getAnglesToProcess(), sameModelAngles );
+		final HashMap< Entry, List< TimePoint > > timepoints = getTimePoints( data, viewIds, sameModelTimePoints );
+		final HashMap< Entry, List< Channel > > channels = getChannels( data, viewIds, sameModelChannels );
+		final HashMap< Entry, List< Illumination > > illums = getIlluminations( data, viewIds, sameModelIlluminations );
+		final HashMap< Entry, List< Angle > > angles = getAngles( data, viewIds, sameModelAngles );
 		
 		final int numEntries = getNumEntries( timepoints, channels, illums, angles );
 
@@ -519,11 +555,12 @@ public class Apply_Transformation implements PlugIn
 			defaultModels = models;
 		
 		// apply the models as asked
-		return applyModels( result.getData(), models, modelDescriptions, applyTo, minResolution, timepoints, channels, illums, angles );
+		return applyModels( data, viewIds, models, modelDescriptions, applyTo, minResolution, timepoints, channels, illums, angles );
 	}
 	
 	protected boolean applyModels(
 			final SpimData2 spimData,
+			final List< ViewId > viewIds,
 			final ArrayList< double[] > models,
 			final ArrayList< String > modelDescriptions,
 			final int applyTo,
@@ -645,8 +682,10 @@ public class Apply_Transformation implements PlugIn
 		return t.keySet().size() * c.keySet().size() * i.keySet().size() * a.keySet().size();
 	}
 	
-	protected HashMap< Entry, List< TimePoint > > getTimePoints( final List< TimePoint > tps, final boolean sameModelTimePoints )
+	protected HashMap< Entry, List< TimePoint > > getTimePoints( final SpimData2 data, final List< ViewId > viewIds, final boolean sameModelTimePoints )
 	{
+		final List< TimePoint > tps = SpimData2.getAllTimePointsSorted( data, viewIds );
+
 		final HashMap< Entry, List< TimePoint > > h = new HashMap< Entry, List< TimePoint > >();
 		
 		if ( sameModelTimePoints && tps.size() > 1 )
@@ -665,10 +704,12 @@ public class Apply_Transformation implements PlugIn
 		return h;
 	}
 
-	protected HashMap< Entry, List< Channel > > getChannels( final List< Channel > channels, final boolean sameModelChannels )
+	protected HashMap< Entry, List< Channel > > getChannels( final SpimData2 data, final List< ViewId > viewIds, final boolean sameModelChannels )
 	{
+		final List< Channel > channels = SpimData2.getAllChannelsSorted( data, viewIds );
+
 		final HashMap< Entry, List< Channel > > h = new HashMap< Entry, List< Channel > >();
-		
+
 		if ( sameModelChannels && channels.size() > 1 )
 			h.put( new Entry( -1, "all_channels" ), channels );
 		else
@@ -685,8 +726,10 @@ public class Apply_Transformation implements PlugIn
 		return h;
 	}
 
-	protected HashMap< Entry, List< Illumination > > getIlluminations( final List< Illumination > illums, final boolean sameModelIlluminations )
+	protected HashMap< Entry, List< Illumination > > getIlluminations( final SpimData2 data, final List< ViewId > viewIds, final boolean sameModelIlluminations )
 	{
+		final List< Illumination > illums = SpimData2.getAllIlluminationsSorted( data, viewIds );
+
 		final HashMap< Entry, List< Illumination > > h = new HashMap< Entry, List< Illumination > >();
 		
 		if ( sameModelIlluminations && illums.size() > 1 )
@@ -705,8 +748,10 @@ public class Apply_Transformation implements PlugIn
 		return h;
 	}
 
-	protected HashMap< Entry, List< Angle > > getAngles( final List< Angle > angles, final boolean sameModelAngles )
+	protected HashMap< Entry, List< Angle > > getAngles( final SpimData2 data, final List< ViewId > viewIds, final boolean sameModelAngles )
 	{
+		final List< Angle > angles = SpimData2.getAllAnglesSorted( data, viewIds );
+
 		final HashMap< Entry, List< Angle > > h = new HashMap< Entry, List< Angle > >();
 		
 		if ( sameModelAngles && angles.size() > 1 )
@@ -772,72 +817,64 @@ public class Apply_Transformation implements PlugIn
 	 */
 	public static double assembleAllMetaData(
 			final SequenceDescription sequenceDescription,
-			final List< TimePoint > timepointsToProcess, 
-			final List< Channel > channelsToProcess,
-			final List< Illumination > illumsToProcess,
-			final List< Angle > anglesToProcess )
+			final Collection< ? extends ViewId > viewIdsToProcess )
 	{
 		double minResolution = Double.MAX_VALUE;
 		
-		for ( final TimePoint t : timepointsToProcess )
-			for ( final Channel c : channelsToProcess )
-				for ( final Illumination i : illumsToProcess )
-					for ( final Angle a : anglesToProcess )
-					{
-						// bureaucracy
-						final ViewId viewId = SpimData2.getViewId( sequenceDescription, t, c, a, i );
+		for ( final ViewId viewId : viewIdsToProcess )
+		{
+			final ViewDescription vd = sequenceDescription.getViewDescription( 
+					viewId.getTimePointId(), viewId.getViewSetupId() );
 
-						// this happens only if a viewsetup is not present in any timepoint
-						// (e.g. after appending fusion to a dataset)
-						if ( viewId == null )
-							continue;
+			if ( !vd.isPresent() )
+				continue;
+			
+			ViewSetup setup = vd.getViewSetup();
+			
+			// load metadata to update the registrations if required
+			// only use calibration as defined in the metadata
+			if ( !setup.hasVoxelSize() )
+			{
+				VoxelDimensions voxelSize = sequenceDescription.getImgLoader().getVoxelSize( viewId );
+				if ( voxelSize == null )
+				{
+					IOFunctions.println( "An error occured. Cannot load calibration for" +
+							" timepoint: " + vd.getTimePoint().getName() +
+							" angle: " + vd.getViewSetup().getAngle().getName() +
+							" channel: " + vd.getViewSetup().getChannel().getName() +
+							" illum: " + vd.getViewSetup().getIllumination().getName() );
+					
+					IOFunctions.println( "Quitting. Please set it manually when defining the dataset or by modifying the XML" );
+					
+					return Double.NaN;
+				}
+				setup.setVoxelSize( voxelSize );
+			}
 
-						final ViewDescription viewDescription = sequenceDescription.getViewDescription( 
-								viewId.getTimePointId(), viewId.getViewSetupId() );
-
-						if ( !viewDescription.isPresent() )
-							continue;
-						
-						ViewSetup setup = viewDescription.getViewSetup();
-						
-						// load metadata to update the registrations if required
-						// only use calibration as defined in the metadata
-						if ( !setup.hasVoxelSize() )
-						{
-							VoxelDimensions voxelSize = sequenceDescription.getImgLoader().getVoxelSize( viewId );
-							if ( voxelSize == null )
-							{
-								IOFunctions.println( "An error occured. Cannot load calibration for timepoint: " + t.getName() + " angle: " + 
-										a.getName() + " channel: " + c.getName() + " illum: " + i.getName() );
-								
-								IOFunctions.println( "Quitting. Please set it manually when defining the dataset or by modifying the XML" );
-								
-								return Double.NaN;
-							}
-							setup.setVoxelSize( voxelSize );
-						}
-
-						if ( !setup.hasVoxelSize() )
-						{
-							IOFunctions.println( "An error occured. No calibration available for timepoint: " + t.getName() + " angle: " + 
-									a.getName() + " channel: " + c.getName() + " illum: " + i.getName() );
-							
-							IOFunctions.println( "Quitting. Please set it manually when defining the dataset or by modifying the XML." );
-							IOFunctions.println( "Note: if you selected to load calibration independently for each image, it should." );
-							IOFunctions.println( "      have been loaded during interest point detection." );
-							
-							return Double.NaN;
-						}
-						
-						VoxelDimensions voxelSize = setup.getVoxelSize();
-						final double calX = voxelSize.dimension( 0 );
-						final double calY = voxelSize.dimension( 1 );
-						final double calZ = voxelSize.dimension( 2 );
-						
-						minResolution = Math.min( minResolution, calX );
-						minResolution = Math.min( minResolution, calY );
-						minResolution = Math.min( minResolution, calZ );
-					}
+			if ( !setup.hasVoxelSize() )
+			{
+				IOFunctions.println( "An error occured. No calibration available for" +
+						" timepoint: " + vd.getTimePoint().getName() +
+						" angle: " + vd.getViewSetup().getAngle().getName() +
+						" channel: " + vd.getViewSetup().getChannel().getName() +
+						" illum: " + vd.getViewSetup().getIllumination().getName() );
+				
+				IOFunctions.println( "Quitting. Please set it manually when defining the dataset or by modifying the XML." );
+				IOFunctions.println( "Note: if you selected to load calibration independently for each image, it should." );
+				IOFunctions.println( "      have been loaded during interest point detection." );
+				
+				return Double.NaN;
+			}
+			
+			VoxelDimensions voxelSize = setup.getVoxelSize();
+			final double calX = voxelSize.dimension( 0 );
+			final double calY = voxelSize.dimension( 1 );
+			final double calZ = voxelSize.dimension( 2 );
+			
+			minResolution = Math.min( minResolution, calX );
+			minResolution = Math.min( minResolution, calY );
+			minResolution = Math.min( minResolution, calZ );
+		}
 		
 		return minResolution;
 	}

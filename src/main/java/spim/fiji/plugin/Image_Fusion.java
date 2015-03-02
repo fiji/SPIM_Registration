@@ -46,9 +46,9 @@ public class Image_Fusion implements PlugIn
 	static
 	{
 		IOFunctions.printIJLog = true;
-		staticFusionAlgorithms.add( new EfficientBayesianBased( null, null, null, null, null ) );
-		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, null, null, null, WeightedAvgFusionType.FUSEDATA ) );
-		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, null, null, null, WeightedAvgFusionType.INDEPENDENT ) );
+		staticFusionAlgorithms.add( new EfficientBayesianBased( null, null ) );
+		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, WeightedAvgFusionType.FUSEDATA ) );
+		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, WeightedAvgFusionType.INDEPENDENT ) );
 		
 		staticBoundingBoxAlgorithms.add( new ManualBoundingBox( null, null ) );
 		staticBoundingBoxAlgorithms.add( new AutomaticReorientation( null, null ) );
@@ -151,7 +151,7 @@ public class Image_Fusion implements PlugIn
 		imgExport.setClusterExt( clusterExtension );
 		fusion.fuseData( boundingBox, imgExport );
 
-		boundingBox.cleanUp( result );
+		boundingBox.cleanUp( saveXML, new File( data.getBasePath(), new File( xmlFileName ).getName() ).getAbsolutePath(), clusterExtension );
 
 		// save the XML if metadata was updated
 		if ( data.getSequenceDescription().getImgLoader() instanceof AbstractImgLoader )
@@ -190,6 +190,8 @@ public class Image_Fusion implements PlugIn
 		imgExport.finish();
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Fusion finished." );
+
+		return true;
 	}
 
 	public static void main( final String[] args )

@@ -21,7 +21,6 @@ import net.imglib2.Dimensions;
 import net.imglib2.FinalRealInterval;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
-import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
@@ -374,5 +373,5 @@ public class ManualBoundingBox extends BoundingBox
 	public String getDescription() { return "Define manually"; }
 
 	@Override
-	public void cleanUp( final LoadParseQueryXML result ) {}
+	public void cleanUp( final boolean saveXML, final String xml, final String clusterExtension ) {}
 }

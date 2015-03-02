@@ -3,7 +3,6 @@ package spim.process.fusion.weightedavg;
 import ij.gui.GenericDialog;
 
 import java.awt.Choice;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +63,7 @@ public class WeightedAverageFusion extends Fusion
 	}
 	
 	@Override
-	public boolean fuseData( final BoundingBox bb, final ImgExport exporter ) 
+	public boolean fuseData( final BoundingBox bb, final ImgExport exporter )
 	{
 		// set up naming scheme
 		final FixedNameImgTitler titler = new FixedNameImgTitler( "" );
@@ -82,14 +81,12 @@ public class WeightedAverageFusion extends Fusion
 
 
 		for ( final TimePoint t : timepointsToProcess )
-			for ( final ViewDescription vd : SpimData2.getAllViewIdsForTimePointSorted( spimData, viewIdsToProcess, t ) )
+			for ( final Channel c : channelsToProcess )
 			{
-				final Channel c = vd.getViewSetup().getChannel();
-
 				final List< Angle > anglesToProcess = SpimData2.getAllAnglesForChannelTimepointSorted( spimData, viewIdsToProcess, c, t );
 				final List< Illumination > illumsToProcess = SpimData2.getAllIlluminationsForChannelTimepointSorted( spimData, viewIdsToProcess, c, t );
 
-				titler.setTitle( "TP" + t.getName() + "_Ch" + c.getName() + getIllumName( illumsToProcess ) + getAngleName( anglesToProcess ) );
+				titler.setTitle( "TP" + t.getName() + "_Ch" + c.getName() + FusionHelper.getIllumName( illumsToProcess ) + FusionHelper.getAngleName( anglesToProcess ) );
 				if ( bb.getPixelType() == 0 )
 				{
 					exporter.exportImage(
@@ -109,26 +106,6 @@ public class WeightedAverageFusion extends Fusion
 			}
 
 		return true;
-	}
-
-	protected String getIllumName( final List< Illumination > illumsToProcess )
-	{
-		String illumName = "_Ill" + illumsToProcess.get( 0 ).getName();
-
-		for ( int i = 1; i < illumsToProcess.size(); ++i )
-			illumName += "," + illumsToProcess.get( i ).getName();
-
-		return illumName;
-	}
-
-	protected String getAngleName( final List< Angle > anglesToProcess )
-	{
-		String angleName = "_Ang" + anglesToProcess.get( 0 ).getName();
-
-		for ( int i = 1; i < anglesToProcess.size(); ++i )
-			angleName += "," + anglesToProcess.get( i ).getName();
-
-		return angleName;
 	}
 
 	@Override
@@ -172,7 +149,7 @@ public class WeightedAverageFusion extends Fusion
 			int maxViews = 0;
 			
 			for ( final TimePoint t : timepointsToProcess )
-				for ( final Channel c : SpimData2.getAllChannelsSorted( spimData, viewIdsToProcess ) )
+				for ( final Channel c : channelsToProcess )
 					maxViews = Math.max( maxViews, FusionHelper.assembleInputData( spimData, t, c, viewIdsToProcess ).size() );
 			
 			// any choice but all views
@@ -236,9 +213,7 @@ public class WeightedAverageFusion extends Fusion
 		{
 			return assembleNewViewSetupsFusion(
 					spimData,
-					channelsToProcess,
-					illumsToProcess,
-					anglesToProcess,
+					viewIdsToProcess,
 					bb,
 					"Fused",
 					"Fused" );
@@ -247,9 +222,7 @@ public class WeightedAverageFusion extends Fusion
 		{
 			return assembleNewViewSetupsSequential(
 					spimData,
-					channelsToProcess,
-					illumsToProcess,
-					anglesToProcess,
+					viewIdsToProcess,
 					bb );
 		}
 	}
@@ -259,7 +232,7 @@ public class WeightedAverageFusion extends Fusion
 	 * The size of the List< ViewSetup > is therefore equal to the number of channels
 	 * 
 	 * @param spimData
-	 * @param channelsToProcess
+	 * @param viewIdsToProcess
 	 * @param bb
 	 * @param newViewSetupName
 	 * @param newAngleName
@@ -268,9 +241,7 @@ public class WeightedAverageFusion extends Fusion
 	 */
 	public static Map< ViewSetup, ViewSetup > assembleNewViewSetupsFusion(
 			final SpimData2 spimData,
-			final List< Channel > channelsToProcess,
-			final List< Illumination > illumsToProcess,
-			final List< Angle > anglesToProcess,
+			final List< ViewId > viewIdsToProcess,
 			final BoundingBox bb,
 			final String newAngleName,
 			final String newIlluminationName )
@@ -280,13 +251,16 @@ public class WeightedAverageFusion extends Fusion
 		int maxViewSetupIndex = -1;
 		int maxAngleIndex = -1;
 		int maxIllumIndex = -1;
-		
+
+		// make a new viewsetup
 		for ( final ViewSetup v : spimData.getSequenceDescription().getViewSetups().values() )
 			maxViewSetupIndex = Math.max( maxViewSetupIndex, v.getId() );
 
+		// that has a new angle
 		for ( final Angle a : spimData.getSequenceDescription().getAllAngles().values() )
 			maxAngleIndex = Math.max( maxAngleIndex, a.getId() );
 
+		// and a new illumination
 		for ( final Illumination i : spimData.getSequenceDescription().getAllIlluminations().values() )
 			maxIllumIndex = Math.max( maxIllumIndex, i.getId() );
 
@@ -298,30 +272,30 @@ public class WeightedAverageFusion extends Fusion
 		// get the minimal resolution of all calibrations relative to the downsampling
 		final double minResolution = Apply_Transformation.assembleAllMetaData(
 				spimData.getSequenceDescription(),
-				spimData.getSequenceDescription().getTimePoints().getTimePointsOrdered(),
-				spimData.getSequenceDescription().getAllChannelsOrdered(),
-				spimData.getSequenceDescription().getAllIlluminationsOrdered(),
-				spimData.getSequenceDescription().getAllAnglesOrdered() ) * bb.getDownSampling();
+				spimData.getSequenceDescription().getViewDescriptions().values() ) * bb.getDownSampling();
 
-		for ( final Channel channel : channelsToProcess )
+		// one new new viewsetup for every channel that is fused (where fused means combining one or more angles&illuminations into one new image)
+		for ( final Channel channel : SpimData2.getAllChannelsSorted( spimData, viewIdsToProcess ) )
 		{
-			final ViewSetup newSetup = new ViewSetup( 
+			final ViewSetup newSetup = new ViewSetup(
 					++maxViewSetupIndex,
 					null,
-					new FinalDimensions( bb.getDimensions() ), 
+					new FinalDimensions( bb.getDimensions() ),
 					new FinalVoxelDimensions ( unit, new double[]{ minResolution, minResolution, minResolution } ),
 					channel,
 					newAngle,
 					newIllum );
 			
-			// all viewsetups of the processed illuminations and angles map to the same new viewsetup
-			for ( final Illumination i : illumsToProcess )
-				for ( final Angle a : anglesToProcess )
-				{
-					map.put(
-						SpimData2.getViewSetup( spimData.getSequenceDescription().getViewSetupsOrdered(), channel, a, i ),
-						newSetup );
-				}
+			// all viewsetups of the current channel that are fused point to the same new viewsetup
+			for ( final ViewId viewId : viewIdsToProcess )
+			{
+				final ViewDescription oldVD = spimData.getSequenceDescription().getViewDescription( viewId );
+				final ViewSetup oldSetup = oldVD.getViewSetup();
+
+				// is this old setup from the current channel? then point to it
+				if ( oldVD.isPresent() && oldSetup.getChannel().getId() == channel.getId() )
+					map.put( oldSetup, newSetup );
+			}
 		}
 
 		return map;
@@ -341,13 +315,12 @@ public class WeightedAverageFusion extends Fusion
 	 */
 	public static Map< ViewSetup, ViewSetup > assembleNewViewSetupsSequential(
 			final SpimData2 spimData,
-			final List< Channel > channelsToProcess,
-			final List< Illumination > illumsToProcess,
-			final List< Angle > anglesToProcess,
+			final List< ViewId > viewIdsToProcess,
 			final BoundingBox bb )
 	{
 		final HashMap< ViewSetup, ViewSetup > map = new HashMap< ViewSetup, ViewSetup >();
 
+		// make many new view setups with new angles&illuminations
 		int maxViewSetupIndex = -1;
 		int maxAngleIndex = -1;
 		int maxIllumIndex = -1;
@@ -366,42 +339,68 @@ public class WeightedAverageFusion extends Fusion
 		// get the minimal resolution of all calibrations relative to the downsampling
 		final double minResolution = Apply_Transformation.assembleAllMetaData(
 				spimData.getSequenceDescription(),
-				spimData.getSequenceDescription().getTimePoints().getTimePointsOrdered(),
-				spimData.getSequenceDescription().getAllChannelsOrdered(),
-				spimData.getSequenceDescription().getAllIlluminationsOrdered(),
-				spimData.getSequenceDescription().getAllAnglesOrdered() ) * bb.getDownSampling();
+				spimData.getSequenceDescription().getViewDescriptions().values() ) * bb.getDownSampling();
 
-		final List< Angle > newAngles = new ArrayList< Angle >();
-		final List< Illumination > newIllums = new ArrayList< Illumination >();
+		// every combination of old angle and old illumination of each channel gets a new viewsetup
+		final List< Angle > oldAngles = SpimData2.getAllAnglesSorted( spimData, viewIdsToProcess );
+		final List< Illumination > oldIllums = SpimData2.getAllIlluminationsSorted( spimData, viewIdsToProcess );
 
-		for ( int i = 0; i < anglesToProcess.size(); ++i )
-			newAngles.add( new Angle(
+		final HashMap< Angle, Angle > mapOldToNewAngles = new HashMap< Angle, Angle >();
+		final HashMap< Illumination, Illumination > mapOldToNewIlluminations = new HashMap< Illumination, Illumination >();
+
+		//final List< Pair< Angle, Angle > > mapOldToNewAngles = new ArrayList< Pai r< Angle, Angle > >();
+		//final List< Pair< Illumination, Illumination > > mapOldToNewIlluminations = new ArrayList< Pair< Illumination, Illumination > >();
+
+		for ( int i = 0; i < oldAngles.size(); ++i )
+			mapOldToNewAngles.put(
+				oldAngles.get( i ),
+				new Angle(
 					maxAngleIndex + i + 1,
-					"Transf_" + anglesToProcess.get( i ).getName() + "_" + maxAngleIndex + i + 1,
-					anglesToProcess.get( i ).getRotationAngleDegrees(),
-					anglesToProcess.get( i ).getRotationAxis() ) );
+					"Transf_" + oldAngles.get( i ).getName() + "_" + maxAngleIndex + i + 1,
+					oldAngles.get( i ).getRotationAngleDegrees(),
+					oldAngles.get( i ).getRotationAxis() ) );
 
-		for ( int i = 0; i < illumsToProcess.size(); ++i )
-			newIllums.add( new Illumination(
+		for ( int i = 0; i < oldIllums.size(); ++i )
+			mapOldToNewIlluminations.put(
+				oldIllums.get( i ),
+				new Illumination(
 					maxIllumIndex + i + 1,
-					"Transf_" + illumsToProcess.get( i ).getName() + "_" + maxIllumIndex + i + 1 ) );
+					"Transf_" + oldIllums.get( i ).getName() + "_" + maxIllumIndex + i + 1 ) );
 
-		for ( final Channel channel : channelsToProcess )
-			for ( int i = 0; i < illumsToProcess.size(); ++i )
-				for ( int a = 0; a < anglesToProcess.size(); ++a )
+		// now every viewsetup of every viewdescription that is fused (maybe for several timepoints) gets a new viewsetup
+		for ( final ViewId viewId : viewIdsToProcess )
+		{
+			final ViewDescription oldVD = spimData.getSequenceDescription().getViewDescription( viewId );
+
+			if ( oldVD.isPresent() )
+			{
+				final ViewSetup oldSetup = oldVD.getViewSetup();
+
+				// no new viewsetup defined for this old viewsetup
+				if ( !map.containsKey( oldSetup ) )
 				{
-					final ViewSetup oldSetup = SpimData2.getViewSetup( spimData.getSequenceDescription().getViewSetupsOrdered(), channel, anglesToProcess.get( a ), illumsToProcess.get( i ) );
+					// get the new angle & illumination object
+					final Channel channel = oldSetup.getChannel();
+					final Angle oldAngle = oldSetup.getAngle();
+					final Illumination oldIllumination = oldSetup.getIllumination();
+
+					// make the new viewsetup
+					final Angle newAngle = mapOldToNewAngles.get( oldAngle );
+					final Illumination newIllumination = mapOldToNewIlluminations.get( oldIllumination );
+
 					final ViewSetup newSetup = new ViewSetup( 
 							++maxViewSetupIndex,
 							null,
 							new FinalDimensions( bb.getDimensions() ), 
 							new FinalVoxelDimensions ( unit, new double[]{ minResolution, minResolution, minResolution } ),
 							channel,
-							newAngles.get( a ),
-							newIllums.get( i ) );
+							newAngle,
+							newIllumination );
 
 					map.put( oldSetup, newSetup );
 				}
+			}
+		}
 
 		return map;
 	}

@@ -3,7 +3,6 @@ package spim.process.fusion.boundingbox;
 import ij.gui.GenericDialog;
 
 import java.awt.Font;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -31,7 +30,6 @@ import spim.fiji.plugin.Interest_Point_Registration;
 import spim.fiji.plugin.Visualize_Detections;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
-import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
@@ -67,17 +65,17 @@ public class AutomaticReorientation extends ManualBoundingBox
 	/**
 	 * Called before the XML is potentially saved
 	 */
-	public void cleanUp( LoadParseQueryXML result )
+	@Override
+	public void cleanUp( final boolean saveXML, final String xml, final String clusterExtension )
 	{
-		if ( reorientate == 0 || reorientate == 1 )
+		if ( saveXML && ( reorientate == 0 || reorientate == 1 ) )
 		{
 			// save the xml
-			final XmlIoSpimData2 io = new XmlIoSpimData2( result.getClusterExtension() );
-			
-			final String xml = new File( result.getData().getBasePath(), new File( result.getXMLFileName() ).getName() ).getAbsolutePath();
-			try 
+			final XmlIoSpimData2 io = new XmlIoSpimData2( clusterExtension );
+
+			try
 			{
-				io.save( result.getData(), xml );
+				io.save( spimData, xml );
 				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + io.lastFileName() + "' (applied the transformation to mimimize the bounding box)." );
 			}
 			catch ( Exception e )

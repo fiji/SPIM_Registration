@@ -42,6 +42,7 @@ public abstract class Fusion
 	final protected List< ViewId > viewIdsToProcess;
 
 	final protected List< TimePoint > timepointsToProcess;
+	final protected List< Channel > channelsToProcess;
 
 	final protected SpimData2 spimData;
 	final int maxNumViews;
@@ -58,6 +59,7 @@ public abstract class Fusion
 		this.spimData = spimData;
 		this.viewIdsToProcess = viewIdsToProcess;
 		this.timepointsToProcess = SpimData2.getAllTimePointsSorted( spimData, viewIdsToProcess );
+		this.channelsToProcess = SpimData2.getAllChannelsSorted( spimData, viewIdsToProcess );
 
 		if ( spimData == null )
 		{
@@ -197,7 +199,7 @@ public abstract class Fusion
 		int maxViews = 0;
 		
 		for ( final TimePoint t : timepointsToProcess )
-			for ( final Channel c : SpimData2.getAllChannelsSorted( spimData, viewIdsToProcess ) )
+			for ( final Channel c : channelsToProcess )
 			{
 				int views = 0;
 
