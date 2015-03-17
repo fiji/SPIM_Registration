@@ -102,7 +102,8 @@ public class DifferenceOfMean extends DifferenceOf
 						IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Requesting Img from ImgLoader (tp=" + viewId.getTimePointId() + ", setup=" + viewId.getViewSetupId() + ")" );
 						final RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input =
 								downsample(
-										spimData.getSequenceDescription().getImgLoader().getFloatImage( viewId, false ) );
+										spimData.getSequenceDescription().getImgLoader().getFloatImage( viewId, false ),
+										viewDescription.getViewSetup().getVoxelSize() );
 
 						long time2 = System.currentTimeMillis();
 
@@ -133,7 +134,7 @@ public class DifferenceOfMean extends DifferenceOf
 
 						img.close();
 
-						correctForDownsampling( ips );
+						correctForDownsampling( ips, viewDescription.getViewSetup().getVoxelSize() );
 
 						interestPoints.put( viewId, ips );
 
@@ -225,7 +226,8 @@ public class DifferenceOfMean extends DifferenceOf
 		
 		RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > img =
 				downsample(
-						spimData.getSequenceDescription().getImgLoader().getFloatImage( view, false ) );
+						spimData.getSequenceDescription().getImgLoader().getFloatImage( view, false ),
+						viewDescription.getViewSetup().getVoxelSize() );
 		
 		if ( img == null )
 		{

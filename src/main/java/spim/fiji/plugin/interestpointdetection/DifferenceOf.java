@@ -10,6 +10,7 @@ import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.gauss3.Gauss3;
@@ -25,7 +26,8 @@ import spim.process.interestpointdetection.Downsample;
 
 public abstract class DifferenceOf extends InterestPointDetection
 {
-	public static String[] downsampleChoice = { "1x", "2x", "4x", "8x" };
+	public static String[] downsampleChoiceXY = { "1x", "2x", "4x", "8x", "Match Z Resolution (less downsampling)", "Match Z Resolution (more downsampling)"  };
+	public static String[] downsampleChoiceZ = { "1x", "2x", "4x", "8x" };
 	public static String[] localizationChoice = { "None", "3-dimensional quadratic fit", "Gaussian mask localization fit" };	
 	public static String[] brightnessChoice = { "Very weak & small (beads)", "Weak & small (beads)", "Comparable to Sample & small (beads)", "Strong & small (beads)", "Advanced ...", "Interactive ..." };
 	
@@ -97,8 +99,8 @@ public abstract class DifferenceOf extends InterestPointDetection
 
 		if ( downsample )
 		{
-			gd.addChoice( "Downsample_XY", downsampleChoice, downsampleChoice[ defaultDownsampleXYIndex ] );
-			gd.addChoice( "Downsample_Z", downsampleChoice, downsampleChoice[ defaultDownsampleZIndex ] );
+			gd.addChoice( "Downsample_XY", downsampleChoiceXY, downsampleChoiceXY[ defaultDownsampleXYIndex ] );
+			gd.addChoice( "Downsample_Z", downsampleChoiceZ, downsampleChoiceZ[ defaultDownsampleZIndex ] );
 		}
 
 		if ( additionalSmoothing )
@@ -148,15 +150,6 @@ public abstract class DifferenceOf extends InterestPointDetection
 			int dsxy = defaultDownsampleXYIndex = gd.getNextChoiceIndex();
 			int dsz = defaultDownsampleZIndex = gd.getNextChoiceIndex();
 
-			if ( dsxy == 0 )
-				downsampleXY = 1;
-			else if ( dsxy == 1 )
-				downsampleXY = 2;
-			else if ( dsxy == 2 )
-				downsampleXY = 4;
-			else
-				downsampleXY = 8;
-
 			if ( dsz == 0 )
 				downsampleZ = 1;
 			else if ( dsz == 1 )
@@ -165,6 +158,19 @@ public abstract class DifferenceOf extends InterestPointDetection
 				downsampleZ = 4;
 			else
 				downsampleZ = 8;
+
+			if ( dsxy == 0 )
+				downsampleXY = 1;
+			else if ( dsxy == 1 )
+				downsampleXY = 2;
+			else if ( dsxy == 2 )
+				downsampleXY = 4;
+			else if ( dsxy == 3 )
+				downsampleXY = 8;
+			else if ( dsxy == 4 )
+				downsampleXY = 0;
+			else
+				downsampleXY = -1;
 		}
 		else
 		{
@@ -319,12 +325,17 @@ public abstract class DifferenceOf extends InterestPointDetection
 	protected abstract boolean setAdvancedValues( final Channel channel );
 	protected abstract boolean setInteractiveValues( final Channel channel );
 
-	protected void correctForDownsampling( final List< InterestPoint > ips )
+	protected void correctForDownsampling( final List< InterestPoint > ips, final VoxelDimensions v )
 	{
 		if ( downsampleXY == 1 && downsampleZ == 1 )
 			return;
 
-		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Correcting coordinates for downsampling" );
+		int downsampleXY = this.downsampleXY;
+
+		if ( downsampleXY < 1 )
+			downsampleXY = downsampleFactor( downsampleXY, downsampleZ, v );
+
+		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Correcting coordinates for downsampling (xy=" + downsampleXY + "x, z=" + downsampleZ + "x)" );
 
 		for ( final InterestPoint ip : ips )
 		{
@@ -338,9 +349,32 @@ public abstract class DifferenceOf extends InterestPointDetection
 		}
 	}
 
-	protected RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > downsample( RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input )
+	public int downsampleFactor( final int downsampleXY, final int downsampleZ, final VoxelDimensions v )
+	{
+		final double calXY = Math.min( v.dimension( 0 ), v.dimension( 1 ) );
+		final double calZ = v.dimension( 2 ) * downsampleZ;
+		final double log2ratio = Math.log( calZ / calXY ) / Math.log( 2 );
+
+		final double exp2;
+
+		if ( downsampleXY == 0 )
+			exp2 = Math.pow( 2, Math.floor( log2ratio ) );
+		else
+			exp2 = Math.pow( 2, Math.ceil( log2ratio ) );
+
+		return (int)Math.round( exp2 );
+	}
+	
+	protected RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > downsample(
+			RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input,
+			final VoxelDimensions v )
 	{
 		final ImgFactory< net.imglib2.type.numeric.real.FloatType > f = ((Img<net.imglib2.type.numeric.real.FloatType>)input).factory();
+
+		int downsampleXY = this.downsampleXY;
+
+		if ( downsampleXY < 1 )
+			downsampleXY = downsampleFactor( downsampleXY, downsampleZ, v );
 
 		if ( downsampleXY > 1 )
 			IOFunctions.println( "(" + new Date( System.currentTimeMillis() )  + "): Downsampling in XY " + downsampleXY + "x ..." );
