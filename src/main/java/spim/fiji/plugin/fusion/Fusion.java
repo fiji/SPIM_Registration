@@ -58,18 +58,29 @@ public abstract class Fusion
 	{
 		this.spimData = spimData;
 		this.viewIdsToProcess = viewIdsToProcess;
-		this.timepointsToProcess = SpimData2.getAllTimePointsSorted( spimData, viewIdsToProcess );
-		this.channelsToProcess = SpimData2.getAllChannelsSorted( spimData, viewIdsToProcess );
 
-		if ( spimData == null )
+		if ( viewIdsToProcess != null )
 		{
-			avgPixels = 0;
-			maxNumViews = 0;
+			this.timepointsToProcess = SpimData2.getAllTimePointsSorted( spimData, viewIdsToProcess );
+			this.channelsToProcess = SpimData2.getAllChannelsSorted( spimData, viewIdsToProcess );
+	
+			if ( spimData == null )
+			{
+				avgPixels = 0;
+				maxNumViews = 0;
+			}
+			else
+			{
+				avgPixels = computeAvgImageSize();
+				maxNumViews = computeMaxNumViews();
+			}
 		}
 		else
 		{
-			avgPixels = computeAvgImageSize();
-			maxNumViews = computeMaxNumViews();
+			this.timepointsToProcess = null;
+			this.channelsToProcess = null;
+			this.avgPixels = 0;
+			this.maxNumViews = 0;
 		}
 	}
 
