@@ -70,7 +70,7 @@ public class Visualize_Detections implements PlugIn
 			visualize( result.getData(), viewIds, params.channelsToProcess, params.detections, params.downsample, params.displayInput );
 	}
 
-	public Params queryDetails( final SpimData2 spimData, final List< ViewId > viewIds )
+	public static Params queryDetails( final SpimData2 spimData, final List< ViewId > viewIds )
 	{
 		// ask which channels have the objects we are searching for
 		final List< Channel > channels = spimData.getSequenceDescription().getAllChannelsOrdered();
@@ -145,7 +145,7 @@ public class Visualize_Detections implements PlugIn
 		return new Params( channelsToProcess, detections, downsample, displayInput );
 	}
 
-	public void visualize(
+	public static void visualize(
 			final SpimData2 spimData,
 			final List< ViewId > viewIds,
 			final ArrayList< ChannelProcess > channelsToProcess,
@@ -198,7 +198,7 @@ public class Visualize_Detections implements PlugIn
 			}
 	}
 	
-	protected Img< UnsignedShortType > renderSegmentations(
+	protected static Img< UnsignedShortType > renderSegmentations(
 			final SpimData2 data,
 			final ViewId viewId,
 			final String label,
