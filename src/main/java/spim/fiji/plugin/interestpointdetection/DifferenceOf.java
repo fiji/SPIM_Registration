@@ -60,7 +60,10 @@ public abstract class DifferenceOf extends InterestPointDetection
 	{
 		super( spimData, viewIdsToProcess );
 
-		this.channelsToProcess = SpimData2.getAllChannelsSorted( spimData, viewIdsToProcess );
+		if ( viewIdsToProcess != null )
+			this.channelsToProcess = SpimData2.getAllChannelsSorted( spimData, viewIdsToProcess );
+		else
+			this.channelsToProcess = null;
 	}
 
 	protected abstract void addAddtionalParameters( final GenericDialog gd );
