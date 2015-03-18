@@ -24,7 +24,6 @@ import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
-import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
@@ -40,20 +39,20 @@ public class InteractiveProjections
 	protected ImagePlus imp;
 	protected List< InterestPoint > ipList;
 
-	public InteractiveProjections( final LoadParseQueryXML result, final ViewDescription vd, final String label, final String newLabel, final int projectionDim )
+	public InteractiveProjections( final SpimData2 spimData, final ViewDescription vd, final String label, final String newLabel, final int projectionDim )
 	{
 		this.isRunning = true;
 		this.wasCanceled = false;
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + ": Loading image ..." );
-		RandomAccessibleInterval< FloatType > img = result.getData().getSequenceDescription().getImgLoader().getFloatImage( vd, false );
+		RandomAccessibleInterval< FloatType > img = spimData.getSequenceDescription().getImgLoader().getFloatImage( vd, false );
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + ": Computing max projection along dimension " + projectionDim + " ..." );
 		final Img< FloatType > maxProj = ExtractPSF.computeMaxProjection( img, new ArrayImgFactory< FloatType >(), projectionDim );
 		this.imp = showProjection( maxProj );
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + ": Loading & drawing interest points ..." );
-		this.ipList = loadInterestPoints( result.getData(), vd, label );
+		this.ipList = loadInterestPoints( spimData, vd, label );
 		drawProjectedInterestPoints( imp, ipList, projectionDim );
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + ": " + ipList.size() + " points displayed ... " );

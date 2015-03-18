@@ -15,6 +15,8 @@ import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+import spim.fiji.ImgLib2Temp.Pair;
+import spim.fiji.ImgLib2Temp.ValuePair;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.removedetections.InteractiveProjections;
 import spim.fiji.spimdata.SpimData2;
@@ -115,19 +117,31 @@ public class Interactive_Remove_Detections implements PlugIn
 		// yz == along x(0)
 		final int projectionDim = 2 - projection;
 
-		removeDetections( result, viewDescription, projectionDim );
+		final Pair< String, String > labels = queryLabelAndNewLabel( result.getData(), viewDescription );
+
+		if ( labels == null )
+			return;
+
+		if ( !removeDetections( result.getData(), viewDescription, projectionDim, labels.getA(), labels.getB() ) )
+			return;
+
+		// now save it
+		Interest_Point_Registration.saveXML( result.getData(), result.getXMLFileName(), result.getClusterExtension() );
 	}
 
-	protected void removeDetections( final LoadParseQueryXML result, final ViewDescription vd, final int projectionDim )
+	public static Pair< String, String > queryLabelAndNewLabel( final SpimData2 spimData, final ViewDescription vd )
 	{
-		final SpimData2 spimData = result.getData();
 		final ViewInterestPoints interestPoints = spimData.getViewInterestPoints();
 		final ViewInterestPointLists lists = interestPoints.getViewInterestPointLists( vd );
 
 		if ( lists.getHashMap().keySet().size() == 0 )
 		{
-			IOFunctions.println( "No interest points available for angle: " + vd.getViewSetup().getAngle().getName() + " channel: " + vd.getViewSetup().getChannel().getName() + " illum: " + vd.getViewSetup().getIllumination().getName() + " timepoint: " + vd.getTimePoint().getName() );
-			return;
+			IOFunctions.println(
+					"No interest points available for angle: " + vd.getViewSetup().getAngle().getName() +
+					" channel: " + vd.getViewSetup().getChannel().getName() +
+					" illum: " + vd.getViewSetup().getIllumination().getName() +
+					" timepoint: " + vd.getTimePoint().getName() );
+			return null;
 		}
 
 		final String[] labels = new String[ lists.getHashMap().keySet().size() ];
@@ -148,12 +162,20 @@ public class Interactive_Remove_Detections implements PlugIn
 
 		gd.showDialog();
 		if ( gd.wasCanceled() )
-			return;
+			return null;
 
 		final String label = labels[ defaultLabel = gd.getNextChoiceIndex() ];
 		final String newLabel = gd.getNextString();
 
-		final InteractiveProjections ip = new InteractiveProjections( result, vd, label, newLabel, projectionDim );
+		return new ValuePair< String, String>( label, newLabel );
+	}
+
+	public static boolean removeDetections( final SpimData2 spimData, final ViewDescription vd, final int projectionDim, final String label, final String newLabel )
+	{
+		final ViewInterestPoints interestPoints = spimData.getViewInterestPoints();
+		final ViewInterestPointLists lists = interestPoints.getViewInterestPointLists( vd );
+
+		final InteractiveProjections ip = new InteractiveProjections( spimData, vd, label, newLabel, projectionDim );
 
 		do
 		{
@@ -169,14 +191,14 @@ public class Interactive_Remove_Detections implements PlugIn
 		while ( ip.isRunning() );
 
 		if ( ip.wasCanceled() )
-			return;
+			return false;
 
 		final List< InterestPoint > ipList = ip.getInterestPointList();
 
 		if ( ipList.size() == 0 )
 		{
 			IOFunctions.println( "No detections remaining. Quitting." );
-			return;
+			return false;
 		}
 
 		// add new label
@@ -192,8 +214,7 @@ public class Interactive_Remove_Detections implements PlugIn
 
 		lists.addInterestPointList( newLabel, newIpl );
 
-		// now save it
-		Interest_Point_Registration.saveXML( result.getData(), result.getXMLFileName(), result.getClusterExtension() );
+		return true;
 	}
 
 	public static void main( final String[] args )
