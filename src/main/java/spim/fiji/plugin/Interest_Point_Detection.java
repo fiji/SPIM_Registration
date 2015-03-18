@@ -25,6 +25,7 @@ import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
+import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
@@ -185,17 +186,18 @@ public class Interest_Point_Detection implements PlugIn
 						new File( "interestpoints", "tpId_" + viewId.getTimePointId() + "_viewSetupId_" + viewId.getViewSetupId() + "." + label ) );
 				
 				list.setParameters( ipd.getParameters( channelId ) );
-				list.setInterestPoints( points.get( viewId ) );
+				list.setInterestPoints1( points.get( viewId ) );
 
 				if ( saveXML )
 				{
-					if ( !list.saveInterestPoints() )
+					if ( !list.saveInterestPoints1() )
 					{
 						IOFunctions.println( "Error saving interest point list: " + new File( list.getBaseDir(), list.getFile().toString() + list.getInterestPointsExt() ) );
 						return false;
 					}
 	
-					if ( !list.saveCorrespondingInterestPoints() )
+					list.setCorrespondingInterestPoints1( new ArrayList< CorrespondingInterestPoints >() );
+					if ( !list.saveCorrespondingInterestPoints1() )
 						IOFunctions.println( "Failed to clear corresponding interest point list: " + new File( list.getBaseDir(), list.getFile().toString() + list.getCorrespondencesExt() ) );
 				}
 

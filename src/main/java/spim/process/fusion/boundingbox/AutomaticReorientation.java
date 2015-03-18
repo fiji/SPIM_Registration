@@ -515,10 +515,10 @@ public class AutomaticReorientation extends ManualBoundingBox
 				final ViewInterestPointLists vipl = spimData.getViewInterestPoints().getViewInterestPointLists( vd );
 				final InterestPointList ipl = vipl.getInterestPointList( c.getLabel() );
 
-				if ( ipl.getInterestPoints() == null )
-					ipl.loadInterestPoints();
+				if ( ipl.getInterestPoints1() == null )
+					ipl.loadInterestPoints1();
 
-				final List< InterestPoint > list = ipl.getInterestPoints();
+				final List< InterestPoint > list = ipl.getInterestPoints1();
 		
 				// use all detections
 				if ( detections == 0 )
@@ -533,15 +533,15 @@ public class AutomaticReorientation extends ManualBoundingBox
 				}
 				else // use only those who have correspondences
 				{
-					if ( ipl.getCorrespondingInterestPoints() == null )
-						ipl.loadCorrespondingInterestPoints();
+					if ( ipl.getCorrespondingInterestPoints1() == null )
+						ipl.loadCorrespondingInterestPoints1();
 
 					final HashMap< Integer, InterestPoint > map = new HashMap< Integer, InterestPoint >();
 
 					for ( final InterestPoint ip : list )
 						map.put( ip.getId(), ip );
 
-					final List< CorrespondingInterestPoints > list2 = ipl.getCorrespondingInterestPoints();
+					final List< CorrespondingInterestPoints > list2 = ipl.getCorrespondingInterestPoints1();
 
 					for ( final CorrespondingInterestPoints cp : list2 )
 					{

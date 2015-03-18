@@ -196,9 +196,9 @@ public abstract class GlobalOptimizationType
 				continue;
 			}
 			
-			if ( lists.getInterestPointList( c.getLabel() ).getInterestPoints().size() == 0 )
+			if ( lists.getInterestPointList( c.getLabel() ).getInterestPoints1() == null )
 			{
-				if ( !lists.getInterestPointList( c.getLabel() ).loadInterestPoints() )
+				if ( !lists.getInterestPointList( c.getLabel() ).loadInterestPoints1() )
 				{
 					IOFunctions.println( "Interest points for label '" + c.getLabel() + "' could not be loaded for timepoint: " + timepoint.getId() + " angle: " + 
 							a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
@@ -207,7 +207,7 @@ public abstract class GlobalOptimizationType
 				}
 			}
 			
-			final List< InterestPoint > ptList = lists.getInterestPointList( c.getLabel() ).getInterestPoints();
+			final List< InterestPoint > ptList = lists.getInterestPointList( c.getLabel() ).getInterestPoints1();
 			
 			final ViewRegistration r = registrations.getViewRegistration( vd );
 			r.updateModel();
@@ -257,8 +257,8 @@ public abstract class GlobalOptimizationType
 			final InterestPointList listA = spimData.getViewInterestPoints().getViewInterestPointLists( viewA ).getInterestPointList( labelA );				
 			final InterestPointList listB = spimData.getViewInterestPoints().getViewInterestPointLists( viewB ).getInterestPointList( labelB );
 
-			final List< CorrespondingInterestPoints > corrListA = listA.getCorrespondingInterestPoints();
-			final List< CorrespondingInterestPoints > corrListB = listB.getCorrespondingInterestPoints();
+			final List< CorrespondingInterestPoints > corrListA = listA.getCorrespondingInterestPoints1();
+			final List< CorrespondingInterestPoints > corrListB = listB.getCorrespondingInterestPoints1();
 
 			for ( final PointMatchGeneric< Detection > d : correspondences )
 			{
@@ -286,7 +286,7 @@ public abstract class GlobalOptimizationType
 		for ( final ViewId id : set.getViews() )
 			for ( final ChannelProcess c : channelsToProcess )
 				if ( spimData.getSequenceDescription().getViewDescription( id ).getViewSetup().getChannel().getId() == c.getChannel().getId() )
-					spimData.getViewInterestPoints().getViewInterestPointLists( id ).getInterestPointList( c.getLabel() ).saveCorrespondingInterestPoints();		
+					spimData.getViewInterestPoints().getViewInterestPointLists( id ).getInterestPointList( c.getLabel() ).saveCorrespondingInterestPoints1();
 	}
 
 	/**
@@ -301,6 +301,6 @@ public abstract class GlobalOptimizationType
 		for ( final ViewId id : set.getViews() )
 			for ( final ChannelProcess c : channelsToProcess )
 				if ( spimData.getSequenceDescription().getViewDescription( id ).getViewSetup().getChannel().getId() == c.getChannel().getId() )
-					spimData.getViewInterestPoints().getViewInterestPointLists( id ).getInterestPointList( c.getLabel() ).getCorrespondingInterestPoints().clear();
+					spimData.getViewInterestPoints().getViewInterestPointLists( id ).getInterestPointList( c.getLabel() ).getCorrespondingInterestPoints1().clear();
 	}
 }

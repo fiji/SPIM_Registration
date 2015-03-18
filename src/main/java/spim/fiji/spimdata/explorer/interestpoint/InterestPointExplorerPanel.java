@@ -8,7 +8,6 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 
 import javax.swing.JLabel;
@@ -43,13 +42,10 @@ public class InterestPointExplorerPanel extends JPanel
 	protected ArrayList< Pair< InterestPointList, ViewId > > save;
 	protected ArrayList< Pair< InterestPointList, ViewId > > delete;
 
-	protected HashSet< InterestPointList > wasLoaded;
-
 	public InterestPointExplorerPanel( final ViewInterestPoints viewInterestPoints )
 	{
 		this.save = new ArrayList< Pair< InterestPointList, ViewId > >();
 		this.delete = new ArrayList< Pair< InterestPointList, ViewId > >();
-		this.wasLoaded = new HashSet< InterestPointList >();
 
 		initComponent( viewInterestPoints );
 	}
@@ -208,17 +204,15 @@ public class InterestPointExplorerPanel extends JPanel
 	public List< InterestPoint > getInterestPoints( final ViewInterestPoints vip, final ViewId v, final String label )
 	{
 		final InterestPointList ipList = vip.getViewInterestPointLists( v ).getInterestPointList( label );
-		List< InterestPoint > list = ipList.getInterestPoints();
+		List< InterestPoint > list = ipList.getInterestPoints1();
 
-		// TODO: horrible hack, if not loaded should be null and not empty!
-		if ( !wasLoaded.contains( ipList ) )
+		if ( list == null )
 		{
-			if ( ipList.loadInterestPoints() )
-				list = ipList.getInterestPoints();
+			if ( ipList.loadInterestPoints1() )
+				list = ipList.getInterestPoints1();
 
-			ipList.loadCorrespondingInterestPoints();
-
-			wasLoaded.add( ipList );
+			if ( ipList.getCorrespondingInterestPoints1() == null )
+				ipList.loadCorrespondingInterestPoints1();
 		}
 
 		return list;
@@ -227,17 +221,15 @@ public class InterestPointExplorerPanel extends JPanel
 	public List< CorrespondingInterestPoints > getCorrespondingInterestPoints( final ViewInterestPoints vip, final ViewId v, final String label )
 	{
 		final InterestPointList ipList = vip.getViewInterestPointLists( v ).getInterestPointList( label );
-		List< CorrespondingInterestPoints > correspondencesList = ipList.getCorrespondingInterestPoints();
+		List< CorrespondingInterestPoints > correspondencesList = ipList.getCorrespondingInterestPoints1();
 
-		// TODO: horrible hack, if not loaded should be null and not empty!
-		if ( !wasLoaded.contains( ipList ) )
+		if ( correspondencesList == null )
 		{
-			if ( ipList.loadCorrespondingInterestPoints() )
-				correspondencesList = ipList.getCorrespondingInterestPoints();
+			if ( ipList.loadCorrespondingInterestPoints1() )
+				correspondencesList = ipList.getCorrespondingInterestPoints1();
 
-			ipList.loadInterestPoints();
-
-			wasLoaded.add( ipList );
+			if ( ipList.getInterestPoints1() == null )
+				ipList.loadInterestPoints1();
 		}
 
 		return correspondencesList;

@@ -208,23 +208,23 @@ public class Visualize_Detections implements PlugIn
 	{		
 		final InterestPointList ipl = data.getViewInterestPoints().getViewInterestPointLists( viewId ).getInterestPointList( label );
 		
-		if ( ipl.getInterestPoints() == null || ipl.getInterestPoints().size() == 0 )
-			ipl.loadInterestPoints();
+		if ( ipl.getInterestPoints1() == null )
+			ipl.loadInterestPoints1();
 			
 		if ( interval == null )
 		{
-			final int n = ipl.getInterestPoints().get( 0 ).getL().length;
+			final int n = ipl.getInterestPoints1().get( 0 ).getL().length;
 			
 			final long[] min = new long[ n ];
 			final long[] max = new long[ n ];
 
 			for ( int d = 0; d < n; ++d )
 			{
-				min[ d ] = Math.round( ipl.getInterestPoints().get( 0 ).getL()[ d ] ) - 1;
-				max[ d ] = Math.round( ipl.getInterestPoints().get( 0 ).getL()[ d ] ) + 1;
+				min[ d ] = Math.round( ipl.getInterestPoints1().get( 0 ).getL()[ d ] ) - 1;
+				max[ d ] = Math.round( ipl.getInterestPoints1().get( 0 ).getL()[ d ] ) + 1;
 			}
 			
-			for ( final InterestPoint ip : ipl.getInterestPoints() )
+			for ( final InterestPoint ip : ipl.getInterestPoints1() )
 			{
 				for ( int d = 0; d < n; ++d )
 				{
@@ -256,9 +256,9 @@ public class Visualize_Detections implements PlugIn
 		
 		if ( detections == 0 )
 		{
-			IOFunctions.println( "Visualizing " + ipl.getInterestPoints().size() + " detections." );
+			IOFunctions.println( "Visualizing " + ipl.getInterestPoints1().size() + " detections." );
 			
-			for ( final InterestPoint ip : ipl.getInterestPoints() )
+			for ( final InterestPoint ip : ipl.getInterestPoints1() )
 			{
 				for ( int d = 0; d < n; ++d )
 					tmp[ d ] = Math.round( ip.getL()[ d ] / downsample );
@@ -271,21 +271,21 @@ public class Visualize_Detections implements PlugIn
 		{
 			final HashMap< Integer, InterestPoint > map = new HashMap< Integer, InterestPoint >();
 			
-			for ( final InterestPoint ip : ipl.getInterestPoints() )
+			for ( final InterestPoint ip : ipl.getInterestPoints1() )
 				map.put( ip.getId(), ip );
 			
-			if ( ipl.getCorrespondingInterestPoints() == null || ipl.getCorrespondingInterestPoints().size() == 0 )
+			if ( ipl.getCorrespondingInterestPoints1() == null )
 			{
-				if ( !ipl.loadCorrespondingInterestPoints() )
+				if ( !ipl.loadCorrespondingInterestPoints1() )
 				{
 					IOFunctions.println( "No corresponding detections available, the dataset was not registered using these detections." );
 					return s;
 				}
 			}
 
-			IOFunctions.println( "Visualizing " + ipl.getCorrespondingInterestPoints().size() + " corresponding detections." );
+			IOFunctions.println( "Visualizing " + ipl.getCorrespondingInterestPoints1().size() + " corresponding detections." );
 			
-			for ( final CorrespondingInterestPoints ip : ipl.getCorrespondingInterestPoints() )
+			for ( final CorrespondingInterestPoints ip : ipl.getCorrespondingInterestPoints1() )
 			{	
 				for ( int d = 0; d < n; ++d )
 					tmp[ d ] = Math.round( map.get( ip.getDetectionId() ).getL()[ d ] / downsample );
