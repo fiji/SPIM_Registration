@@ -208,9 +208,9 @@ public class Interactive_Remove_Detections implements PlugIn
 						lists.getInterestPointList( label ).getFile().getParentFile(),
 						"tpId_" + vd.getTimePointId() + "_viewSetupId_" + vd.getViewSetupId() + "." + newLabel ) );
 
-		newIpl.setInterestPoints1( ipList );
+		newIpl.setInterestPoints( ipList );
 		newIpl.setParameters( "manually removed detections from '" +label + "'" );
-		newIpl.saveInterestPoints1();
+		newIpl.saveInterestPoints();
 
 		lists.addInterestPointList( newLabel, newIpl );
 

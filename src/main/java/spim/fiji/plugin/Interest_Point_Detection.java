@@ -186,18 +186,18 @@ public class Interest_Point_Detection implements PlugIn
 						new File( "interestpoints", "tpId_" + viewId.getTimePointId() + "_viewSetupId_" + viewId.getViewSetupId() + "." + label ) );
 				
 				list.setParameters( ipd.getParameters( channelId ) );
-				list.setInterestPoints1( points.get( viewId ) );
+				list.setInterestPoints( points.get( viewId ) );
 
 				if ( saveXML )
 				{
-					if ( !list.saveInterestPoints1() )
+					if ( !list.saveInterestPoints() )
 					{
 						IOFunctions.println( "Error saving interest point list: " + new File( list.getBaseDir(), list.getFile().toString() + list.getInterestPointsExt() ) );
 						return false;
 					}
 	
-					list.setCorrespondingInterestPoints1( new ArrayList< CorrespondingInterestPoints >() );
-					if ( !list.saveCorrespondingInterestPoints1() )
+					list.setCorrespondingInterestPoints( new ArrayList< CorrespondingInterestPoints >() );
+					if ( !list.saveCorrespondingInterestPoints() )
 						IOFunctions.println( "Failed to clear corresponding interest point list: " + new File( list.getBaseDir(), list.getFile().toString() + list.getCorrespondencesExt() ) );
 				}
 

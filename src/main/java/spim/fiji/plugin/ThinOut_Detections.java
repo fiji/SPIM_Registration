@@ -103,8 +103,8 @@ public class ThinOut_Detections implements PlugIn
 				final ViewInterestPointLists vipl = vip.getViewInterestPointLists( viewId );
 				final InterestPointList oldIpl = vipl.getInterestPointList( channel.getLabel() );
 
-				if ( oldIpl.getInterestPoints1() == null )
-					oldIpl.loadInterestPoints1();
+				if ( oldIpl.getInterestPoints() == null )
+					oldIpl.loadInterestPoints();
 
 				final VoxelDimensions voxelSize = vd.getViewSetup().getVoxelSize();
 
@@ -114,7 +114,7 @@ public class ThinOut_Detections implements PlugIn
 				final List< RealPoint > list2 = new ArrayList< RealPoint >();
 				final List< float[] > points = new ArrayList< float[] >();
 
-				for ( final InterestPoint ip : oldIpl.getInterestPoints1() )
+				for ( final InterestPoint ip : oldIpl.getInterestPoints() )
 				{
 					list1.add ( new RealPoint(
 							ip.getL()[ 0 ] * voxelSize.dimension( 0 ),
@@ -151,7 +151,7 @@ public class ThinOut_Detections implements PlugIn
 					
 					if ( ( keepRange && d >= minDistance && d <= maxDistance ) || ( !keepRange && ( d < minDistance || d > maxDistance ) ) )
 					{
-						newIpl.getInterestPoints1().add( new InterestPoint( id++, points.get( j ).clone() ) );
+						newIpl.getInterestPoints().add( new InterestPoint( id++, points.get( j ).clone() ) );
 					}
 				}
 
@@ -163,9 +163,9 @@ public class ThinOut_Detections implements PlugIn
 				vipl.addInterestPointList( channel.getNewLabel(), newIpl );
 
 				IOFunctions.println( new Date( System.currentTimeMillis() ) + ": TP=" + vd.getTimePointId() + " ViewSetup=" + vd.getViewSetupId() + 
-						", Detections: " + oldIpl.getInterestPoints1().size() + " >>> " + newIpl.getInterestPoints1().size() );
+						", Detections: " + oldIpl.getInterestPoints().size() + " >>> " + newIpl.getInterestPoints().size() );
 
-				if ( !newIpl.saveInterestPoints1() )
+				if ( !newIpl.saveInterestPoints() )
 				{
 					IOFunctions.println( "Error saving interest point list: " + new File( newIpl.getBaseDir(), newIpl.getFile().toString() + newIpl.getInterestPointsExt() ) );
 					return false;
@@ -267,8 +267,8 @@ public class ThinOut_Detections implements PlugIn
 
 			final VoxelDimensions voxelSize = vd.getViewSetup().getVoxelSize();
 
-			if ( ipl.getInterestPoints1() == null )
-				ipl.loadInterestPoints1();
+			if ( ipl.getInterestPoints() == null )
+				ipl.loadInterestPoints();
 
 			if ( unit == null )
 				unit = vd.getViewSetup().getVoxelSize().unit();
@@ -276,7 +276,7 @@ public class ThinOut_Detections implements PlugIn
 			// assemble the list of points
 			final List< RealPoint > list = new ArrayList< RealPoint >();
 
-			for ( final InterestPoint ip : ipl.getInterestPoints1() )
+			for ( final InterestPoint ip : ipl.getInterestPoints() )
 			{
 				list.add ( new RealPoint(
 						ip.getL()[ 0 ] * voxelSize.dimension( 0 ),

@@ -156,10 +156,10 @@ public class InteractiveProjections
 		final ViewInterestPointLists lists = interestPoints.getViewInterestPointLists( id );
 		final InterestPointList list = lists.getInterestPointList( label );
 
-		if ( list.getInterestPoints1() == null )
-			list.loadInterestPoints1();
+		if ( list.getInterestPoints() == null )
+			list.loadInterestPoints();
 
-		return list.getInterestPoints1();
+		return list.getInterestPoints();
 	}
 
 	protected ImagePlus showProjection( final Img< FloatType > img )

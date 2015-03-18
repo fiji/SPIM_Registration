@@ -70,7 +70,7 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 		{
 			String output = "";
 
-			if ( list.getA().saveCorrespondingInterestPoints1() )
+			if ( list.getA().saveCorrespondingInterestPoints() )
 				output = "Saved ";
 			else
 				output = "FAILED to save ";

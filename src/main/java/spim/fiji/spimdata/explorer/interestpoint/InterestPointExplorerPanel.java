@@ -204,15 +204,15 @@ public class InterestPointExplorerPanel extends JPanel
 	public List< InterestPoint > getInterestPoints( final ViewInterestPoints vip, final ViewId v, final String label )
 	{
 		final InterestPointList ipList = vip.getViewInterestPointLists( v ).getInterestPointList( label );
-		List< InterestPoint > list = ipList.getInterestPoints1();
+		List< InterestPoint > list = ipList.getInterestPoints();
 
 		if ( list == null )
 		{
-			if ( ipList.loadInterestPoints1() )
-				list = ipList.getInterestPoints1();
+			if ( ipList.loadInterestPoints() )
+				list = ipList.getInterestPoints();
 
-			if ( ipList.getCorrespondingInterestPoints1() == null )
-				ipList.loadCorrespondingInterestPoints1();
+			if ( ipList.getCorrespondingInterestPoints() == null )
+				ipList.loadCorrespondingInterestPoints();
 		}
 
 		return list;
@@ -221,15 +221,15 @@ public class InterestPointExplorerPanel extends JPanel
 	public List< CorrespondingInterestPoints > getCorrespondingInterestPoints( final ViewInterestPoints vip, final ViewId v, final String label )
 	{
 		final InterestPointList ipList = vip.getViewInterestPointLists( v ).getInterestPointList( label );
-		List< CorrespondingInterestPoints > correspondencesList = ipList.getCorrespondingInterestPoints1();
+		List< CorrespondingInterestPoints > correspondencesList = ipList.getCorrespondingInterestPoints();
 
 		if ( correspondencesList == null )
 		{
-			if ( ipList.loadCorrespondingInterestPoints1() )
-				correspondencesList = ipList.getCorrespondingInterestPoints1();
+			if ( ipList.loadCorrespondingInterestPoints() )
+				correspondencesList = ipList.getCorrespondingInterestPoints();
 
-			if ( ipList.getInterestPoints1() == null )
-				ipList.loadInterestPoints1();
+			if ( ipList.getInterestPoints() == null )
+				ipList.loadInterestPoints();
 		}
 
 		return correspondencesList;
