@@ -35,27 +35,27 @@ public class InterestPointList
 	{
 		this.baseDir = baseDir;
 		this.file = file;
-		this.interestPoints = new ArrayList< InterestPoint >();
-		this.correspondingInterestPoints = new ArrayList< CorrespondingInterestPoints >();
+		this.interestPoints = null;
+		this.correspondingInterestPoints = null;
 		this.parameters = "";
 	}
 
 	/**
 	 * @return - the list of interest points, tries to load it from disk if not available
 	 */
-	public List< InterestPoint > getInterestPoints() { return this.interestPoints; }
+	public List< InterestPoint > getInterestPoints1() { return this.interestPoints; }
 
 	/**
 	 * @return - the list of corresponding interest points, tries to load it from disk if not available
 	 */
-	public List< CorrespondingInterestPoints > getCorrespondingInterestPoints() { return this.correspondingInterestPoints; }
+	public List< CorrespondingInterestPoints > getCorrespondingInterestPoints1() { return this.correspondingInterestPoints; }
 
 	public File getBaseDir() { return baseDir; }
 	public File getFile() { return file; }
 	public String getParameters() { return parameters; }
 	public void setParameters( final String parameters ) { this.parameters = parameters; }
-	public void setInterestPoints( final List< InterestPoint > list ) { this.interestPoints = list; }
-	public void setCorrespondingInterestPoints( final List< CorrespondingInterestPoints > list ) { this.correspondingInterestPoints = list; }
+	public void setInterestPoints1( final List< InterestPoint > list ) { this.interestPoints = list; }
+	public void setCorrespondingInterestPoints1( final List< CorrespondingInterestPoints > list ) { this.correspondingInterestPoints = list; }
 	
 	public void setFile( final File file ) { this.file = file; }
 	public void setBaseDir( final File baseDir ) { this.baseDir = baseDir; }
@@ -63,9 +63,9 @@ public class InterestPointList
 	public String getInterestPointsExt() { return ".ip.txt"; }
 	public String getCorrespondencesExt() { return ".corr.txt"; }
 	
-	public boolean saveInterestPoints()
+	public boolean saveInterestPoints1()
 	{
-		final List< InterestPoint > list = getInterestPoints();
+		final List< InterestPoint > list = getInterestPoints1();
 		
 		if ( list == null )
 			return false;
@@ -101,9 +101,9 @@ public class InterestPointList
 		}				
 	}
 
-	public boolean saveCorrespondingInterestPoints()
+	public boolean saveCorrespondingInterestPoints1()
 	{
-		final List< CorrespondingInterestPoints > list = getCorrespondingInterestPoints();
+		final List< CorrespondingInterestPoints > list = getCorrespondingInterestPoints1();
 		
 		if ( list == null )
 			return false;
@@ -139,7 +139,7 @@ public class InterestPointList
 		}				
 	}
 
-	public boolean loadCorrespondingInterestPoints()
+	public boolean loadCorrespondingInterestPoints1()
 	{
 		try 
 		{
@@ -175,7 +175,7 @@ public class InterestPointList
 		}
 	}
 
-	public boolean loadInterestPoints()
+	public boolean loadInterestPoints1()
 	{
 		try 
 		{
