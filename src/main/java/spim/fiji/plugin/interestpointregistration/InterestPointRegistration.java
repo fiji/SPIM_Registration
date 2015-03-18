@@ -182,17 +182,15 @@ public abstract class InterestPointRegistration
 			//
 			
 			// first remove existing correspondences
-			if ( registrationType.remove() )
-				registrationType.clearExistingCorrespondences( subset );
+			registrationType.clearExistingCorrespondences( subset );
 
 			// now add all corresponding interest points
-			if ( registrationType.add() )
-				registrationType.addCorrespondences( pairs );
-			
+			registrationType.addCorrespondences( pairs );
+
 			// save the files
 			if ( save )
 				registrationType.saveCorrespondences( subset );
-			
+
 			if ( runGlobalOpt( subset, registrationType ) )
 				++successfulRuns;
 		}

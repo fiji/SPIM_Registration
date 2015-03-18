@@ -38,7 +38,6 @@ import spim.process.interestpointregistration.PairwiseMatch;
  */
 public abstract class GlobalOptimizationType
 {
-	public static boolean remove = true, add = true;
 	final protected boolean considerTimePointsAsUnit;
 
 	final SpimData2 spimData;
@@ -144,16 +143,6 @@ public abstract class GlobalOptimizationType
 	public void setMapBackModel( final AbstractModel<?> model ) { this.mapBackModel = model; }
 
 	/** 
-	 * @return - true if previous correspondences should be removed
-	 */
-	public boolean remove() { return remove; }
-
-	/** 
-	 * @return - true if new correspondences should be added
-	 */
-	public boolean add() { return add; }
-
-	/** 
 	 * @return - true if timepoints should be considered as one unit
 	 */
 	public boolean considerTimePointsAsUnit() { return considerTimePointsAsUnit; }
@@ -257,8 +246,14 @@ public abstract class GlobalOptimizationType
 			final InterestPointList listA = spimData.getViewInterestPoints().getViewInterestPointLists( viewA ).getInterestPointList( labelA );				
 			final InterestPointList listB = spimData.getViewInterestPoints().getViewInterestPointLists( viewB ).getInterestPointList( labelB );
 
-			final List< CorrespondingInterestPoints > corrListA = listA.getCorrespondingInterestPoints();
-			final List< CorrespondingInterestPoints > corrListB = listB.getCorrespondingInterestPoints();
+			List< CorrespondingInterestPoints > corrListA = listA.getCorrespondingInterestPoints();
+			List< CorrespondingInterestPoints > corrListB = listB.getCorrespondingInterestPoints();
+
+			if ( corrListA == null )
+				corrListA = new ArrayList< CorrespondingInterestPoints >();
+
+			if ( corrListB == null )
+				corrListB = new ArrayList< CorrespondingInterestPoints >();
 
 			for ( final PointMatchGeneric< Detection > d : correspondences )
 			{
@@ -271,6 +266,9 @@ public abstract class GlobalOptimizationType
 				corrListA.add( correspondingToA );
 				corrListB.add( correspondingToB );
 			}
+
+			listA.setCorrespondingInterestPoints( corrListA );
+			listB.setCorrespondingInterestPoints( corrListB );
 		}
 	}
 
@@ -301,6 +299,6 @@ public abstract class GlobalOptimizationType
 		for ( final ViewId id : set.getViews() )
 			for ( final ChannelProcess c : channelsToProcess )
 				if ( spimData.getSequenceDescription().getViewDescription( id ).getViewSetup().getChannel().getId() == c.getChannel().getId() )
-					spimData.getViewInterestPoints().getViewInterestPointLists( id ).getInterestPointList( c.getLabel() ).getCorrespondingInterestPoints().clear();
+					spimData.getViewInterestPoints().getViewInterestPointLists( id ).getInterestPointList( c.getLabel() ).setCorrespondingInterestPoints( new ArrayList< CorrespondingInterestPoints>() );
 	}
 }
