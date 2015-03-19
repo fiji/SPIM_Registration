@@ -29,6 +29,7 @@ import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.spimdata.explorer.popup.DetectInterestPointsPopup;
 import spim.fiji.spimdata.explorer.popup.DisplayViewPopup;
@@ -74,6 +75,14 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 	public List< BasicViewDescription< ? extends BasicViewSetup > > selectedRows()
 	{
 		final ArrayList< BasicViewDescription< ? extends BasicViewSetup > > list = new ArrayList< BasicViewDescription< ? extends BasicViewSetup > >();
+		list.addAll( selectedRows );
+		Collections.sort( list );
+		return list;
+	}
+
+	public List< ViewId > selectedRowsViewId()
+	{
+		final ArrayList< ViewId > list = new ArrayList< ViewId >();
 		list.addAll( selectedRows );
 		Collections.sort( list );
 		return list;

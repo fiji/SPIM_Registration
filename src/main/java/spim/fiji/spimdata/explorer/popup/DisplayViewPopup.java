@@ -27,8 +27,8 @@ public class DisplayViewPopup extends JMenu implements ViewExplorerSetable
 	{
 		super( "Display View(s)" );
 
-		final JMenuItem as32bit = new JMenuItem( "As 32 Bit ... " );
-		final JMenuItem as16bit = new JMenuItem( "As 16 Bit ... " );
+		final JMenuItem as32bit = new JMenuItem( "As 32 Bit" );
+		final JMenuItem as16bit = new JMenuItem( "As 16 Bit" );
 
 		as16bit.addActionListener( new DisplayViewActionListener( true ) );
 		as32bit.addActionListener( new DisplayViewActionListener( false ) );
@@ -62,7 +62,7 @@ public class DisplayViewPopup extends JMenu implements ViewExplorerSetable
 				return;
 			}
 
-			List< BasicViewDescription< ? extends BasicViewSetup > > vds = panel.selectedRows();
+			final List< BasicViewDescription< ? extends BasicViewSetup > > vds = panel.selectedRows();
 
 			if (
 				vds.size() > askWhenMoreThan &&

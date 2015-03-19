@@ -107,6 +107,8 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 		frame.dispose();
 	}
 
+	public InterestPointExplorerPanel panel() { return panel; }
+
 	public static void main( String[] args )
 	{
 		final LoadParseQueryXML result = new LoadParseQueryXML();
