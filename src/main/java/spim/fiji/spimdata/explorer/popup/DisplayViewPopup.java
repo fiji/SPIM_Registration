@@ -2,15 +2,23 @@ package spim.fiji.spimdata.explorer.popup;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
+import mpicbg.spim.data.generic.sequence.BasicViewSetup;
+import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.io.IOFunctions;
+import spim.fiji.plugin.Display_View;
+import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 
 public class DisplayViewPopup extends JMenu implements ViewExplorerSetable
 {
+	public static final int askWhenMoreThan = 5;
 	private static final long serialVersionUID = 5234649267634013390L;
 
 	ViewSetupExplorerPanel< ?, ? > panel;
@@ -30,7 +38,7 @@ public class DisplayViewPopup extends JMenu implements ViewExplorerSetable
 	}
 
 	@Override
-	public JMenuItem setViewExplorer( final ViewSetupExplorerPanel<?, ?> panel )
+	public JMenuItem setViewExplorer( final ViewSetupExplorerPanel< ?, ? > panel )
 	{
 		this.panel = panel;
 		return this;
@@ -48,11 +56,41 @@ public class DisplayViewPopup extends JMenu implements ViewExplorerSetable
 		@Override
 		public void actionPerformed( final ActionEvent e )
 		{
-			// TODO Auto-generated method stub
-			System.out.println( "open 16bit: " + as16bit );
+			if ( panel == null )
+			{
+				IOFunctions.println( "Panel not set for " + this.getClass().getSimpleName() );
+				return;
+			}
+
+			List< BasicViewDescription< ? extends BasicViewSetup > > vds = panel.selectedRows();
+
+			if (
+				vds.size() > askWhenMoreThan &&
+				JOptionPane.showConfirmDialog(
+					null,
+					"Are you sure to display " + vds.size() + " views?",
+					"Warning",
+					JOptionPane.YES_NO_OPTION ) == JOptionPane.NO_OPTION )
+				return;
+
+			IOFunctions.println( "Opening as " + ( as16bit ? " 16 bit:" : "32 bit:" ) );
 
 			for ( final BasicViewDescription< ? > vd : panel.selectedRows() )
-				System.out.println( vd.getTimePointId() + " " + vd.getViewSetupId() );
+			{
+				IOFunctions.println( "Timepoint: " + vd.getTimePointId() + " ViewSetup: " + vd.getViewSetupId() );
+
+				final String name;
+
+				if ( SpimData2.class.isInstance( panel.getSpimData() ) )
+					name = Display_View.name( (ViewDescription)vd );
+				else
+					name = "Timepoint: " + vd.getTimePointId() + " ViewSetup: " + vd.getViewSetupId();
+	
+				if ( as16bit )
+					Display_View.display( panel.getSpimData(), vd, 1, name );
+				else
+					Display_View.display( panel.getSpimData(), vd, 0, name );
+			}
 		}
 	}
 }

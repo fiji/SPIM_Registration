@@ -5,6 +5,7 @@ import ij.plugin.PlugIn;
 
 import java.util.List;
 
+import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
@@ -120,9 +121,9 @@ public class Display_View implements PlugIn
 		return "angle: " + angle.getName() + " channel: " + channel.getName() + " illum: " + illumination.getName() + " timepoint: " + tp.getName();
 	}
 
-	public void display( final SpimData2 spimData, final ViewId viewId, final int pixelType, final String name )
+	public static void display( final AbstractSpimData< ? > spimData, final ViewId viewId, final int pixelType, final String name )
 	{
-		final ImgLoader< ? > imgLoader = spimData.getSequenceDescription().getImgLoader();
+		final ImgLoader< ? > imgLoader = (ImgLoader< ? >)spimData.getSequenceDescription().getImgLoader();
 		final ImgFactory< ? extends NativeType< ? > > factory;
 		final AbstractImgLoader il;
 
@@ -143,12 +144,12 @@ public class Display_View implements PlugIn
 		DisplayImage export = new DisplayImage();
 		
 		if ( pixelType == 0 )
-			export.exportImage( spimData.getSequenceDescription().getImgLoader().getFloatImage( viewId, false ), name );
+			export.exportImage( ((ImgLoader< ? >)spimData.getSequenceDescription().getImgLoader()).getFloatImage( viewId, false ), name );
 		else
 		{
 			@SuppressWarnings( "unchecked" )
 			RandomAccessibleInterval< UnsignedShortType > img =
-				( RandomAccessibleInterval< UnsignedShortType > ) spimData.getSequenceDescription().getImgLoader().getImage( viewId );
+				( RandomAccessibleInterval< UnsignedShortType > ) ((ImgLoader< ? >)spimData.getSequenceDescription().getImgLoader()).getImage( viewId );
 			export.exportImage( img, name );
 		}
 
