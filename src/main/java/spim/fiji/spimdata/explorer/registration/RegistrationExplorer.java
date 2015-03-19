@@ -69,6 +69,8 @@ public class RegistrationExplorer< AS extends AbstractSpimData< ? >, X extends X
 		frame.dispose();
 	}
 
+	public RegistrationExplorerPanel panel() { return panel; }
+
 	public static void main( String[] args )
 	{
 		final LoadParseQueryXML result = new LoadParseQueryXML();
