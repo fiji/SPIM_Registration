@@ -34,7 +34,7 @@ public class ModelLink// implements Type< ModelLink >
 		add( vd );
 	}
 
-	public List< ViewDescription > viewDescriptions() { return viewDescriptions(); }
+	public List< ViewDescription > viewDescriptions() { return vds; }
 	public double[] model() { return model; }
 	public String modelDescription() { return modelDesc; }
 	public Set< Angle > angles() { return as; }
