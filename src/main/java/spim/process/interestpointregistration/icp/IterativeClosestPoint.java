@@ -20,8 +20,8 @@ import spim.process.interestpointregistration.TransformationModel;
  */
 public class IterativeClosestPoint extends InterestPointRegistration
 {
-	public static int defaultModel = 2;	
-	public static boolean defaultRegularize = false;
+	public static int defaultModel = 2;
+	public static boolean defaultRegularize = true;
 	protected TransformationModel model = null;
 
 	protected IterativeClosestPointParameters parameters;

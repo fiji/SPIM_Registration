@@ -22,7 +22,7 @@ import spim.process.interestpointregistration.TransformationModel;
 public class RGLDM extends InterestPointRegistration
 {
 	public static int defaultModel = 2;
-	public static boolean defaultRegularize = false;
+	public static boolean defaultRegularize = true;
 	protected TransformationModel model = null;
 
 	protected RGLDMParameters parameters;
