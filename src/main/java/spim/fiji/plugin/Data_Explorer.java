@@ -63,6 +63,8 @@ public class Data_Explorer implements PlugIn
 
 		new InterestPointExplorer< SpimData2, XmlIoSpimData2 >( data, xml, io, explorer );
 		new RegistrationExplorer< SpimData2, XmlIoSpimData2 >( data, xml, io, explorer );
+
+		explorer.getFrame().toFront();
 	}
 
 	protected void setDefineNewDataset()
