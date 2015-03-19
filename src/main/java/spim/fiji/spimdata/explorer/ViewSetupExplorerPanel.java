@@ -9,11 +9,12 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
-import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
@@ -29,9 +30,21 @@ import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.io.IOFunctions;
+import spim.fiji.spimdata.explorer.popup.DetectInterestPointsPopup;
+import spim.fiji.spimdata.explorer.popup.DisplayViewPopup;
+import spim.fiji.spimdata.explorer.popup.ViewExplorerSetable;
 
 public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > > extends JPanel
 {
+	final static ArrayList< ViewExplorerSetable > staticPopups = new ArrayList< ViewExplorerSetable >();
+
+	static
+	{
+		IOFunctions.printIJLog = true;
+		staticPopups.add( new DisplayViewPopup() );
+		staticPopups.add( new DetectInterestPointsPopup() );
+	}
+
 	private static final long serialVersionUID = -3767947754096099774L;
 	
 	protected JTable table;
@@ -57,6 +70,14 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 	}
 
 	public AS getSpimData() { return data; }
+
+	public List< BasicViewDescription< ? extends BasicViewSetup > > selectedRows()
+	{
+		final ArrayList< BasicViewDescription< ? extends BasicViewSetup > > list = new ArrayList< BasicViewDescription< ? extends BasicViewSetup > >();
+		list.addAll( selectedRows );
+		Collections.sort( list );
+		return list;
+	}
 
 	public void addListener( final SelectedViewDescriptionListener listener )
 	{
@@ -229,18 +250,10 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 	protected void addPopupMenu( final JTable table )
 	{
 		final JPopupMenu popupMenu = new JPopupMenu();
-		final JMenuItem saveItem = new JMenuItem( "Save XML" );
 
-		saveItem.addActionListener( new ActionListener()
-		{
-			@Override
-			public void actionPerformed( final ActionEvent e )
-			{
-				saveXML();
-			}
-		});
+		for ( final ViewExplorerSetable item : staticPopups )
+			popupMenu.add( item.setViewExplorer( this ) );
 
-		popupMenu.add( saveItem );
 		table.setComponentPopupMenu( popupMenu );
 	}
 
