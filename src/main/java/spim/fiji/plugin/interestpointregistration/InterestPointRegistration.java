@@ -134,6 +134,8 @@ public abstract class InterestPointRegistration
 		
 		for ( final GlobalOptimizationSubset subset : list )
 		{
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Finding correspondences for subset: " + subset.getDescription() );
+					
 			final List< PairwiseMatch > pairs = subset.getViewPairs();
 			
 			final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
