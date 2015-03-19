@@ -65,7 +65,7 @@ public class SpimData2 extends SpimData
 			return new ViewId( t.getId(), viewSetup.getId() );
 	}
 
-	public static ViewSetup getViewSetup( final List< ViewSetup > list, final Channel c, final Angle a, final Illumination i )
+	public static ViewSetup getViewSetup( final List< ? extends ViewSetup > list, final Channel c, final Angle a, final Illumination i )
 	{
 		for ( final ViewSetup viewSetup : list )
 		{
@@ -80,7 +80,7 @@ public class SpimData2 extends SpimData
 		return null;
 	}
 
-	public static ArrayList< ViewSetup > getAllViewSetupsSorted( final SpimData2 data, final List< ViewId > viewIds )
+	public static ArrayList< ViewSetup > getAllViewSetupsSorted( final SpimData2 data, final List< ? extends ViewId > viewIds )
 	{
 		final HashSet< ViewSetup > setups = new HashSet< ViewSetup >();
 
@@ -100,7 +100,7 @@ public class SpimData2 extends SpimData
 		return setupList;
 	}
 
-	public static ArrayList< ViewId > getAllViewIdsSorted( final SpimData2 data, final List< ViewSetup > setups, final List< TimePoint > tps )
+	public static ArrayList< ViewId > getAllViewIdsSorted( final SpimData2 data, final List< ? extends ViewSetup > setups, final List< ? extends TimePoint > tps )
 	{
 		final ArrayList< ViewId > viewIds = new ArrayList< ViewId >();
 
@@ -119,7 +119,7 @@ public class SpimData2 extends SpimData
 		return viewIds;
 	}
 
-	public static ArrayList< Angle > getAllAnglesForChannelTimepointSorted( final SpimData2 data, final Collection< ViewId > viewIds, final Channel c, final TimePoint t )
+	public static ArrayList< Angle > getAllAnglesForChannelTimepointSorted( final SpimData2 data, final Collection< ? extends ViewId > viewIds, final Channel c, final TimePoint t )
 	{
 		final HashSet< Angle > angleSet = new HashSet< Angle >();
 
@@ -138,7 +138,7 @@ public class SpimData2 extends SpimData
 		return angles;
 	}
 
-	public static ArrayList< Angle > getAllAnglesSorted( final SpimData2 data, final Collection< ViewId > viewIds )
+	public static ArrayList< Angle > getAllAnglesSorted( final SpimData2 data, final Collection< ? extends ViewId > viewIds )
 	{
 		final HashSet< Angle > angleSet = new HashSet< Angle >();
 
@@ -157,7 +157,7 @@ public class SpimData2 extends SpimData
 		return angles;
 	}
 
-	public static ArrayList< Illumination > getAllIlluminationsForChannelTimepointSorted( final SpimData2 data, final Collection< ViewId > viewIds, final Channel c, final TimePoint t )
+	public static ArrayList< Illumination > getAllIlluminationsForChannelTimepointSorted( final SpimData2 data, final Collection< ? extends ViewId > viewIds, final Channel c, final TimePoint t )
 	{
 		final HashSet< Illumination > illumSet = new HashSet< Illumination >();
 
@@ -176,7 +176,7 @@ public class SpimData2 extends SpimData
 		return illums;
 	}
 
-	public static ArrayList< Illumination > getAllIlluminationsSorted( final SpimData2 data, final Collection< ViewId > viewIds )
+	public static ArrayList< Illumination > getAllIlluminationsSorted( final SpimData2 data, final Collection< ? extends ViewId > viewIds )
 	{
 		final HashSet< Illumination > illumSet = new HashSet< Illumination >();
 
@@ -195,7 +195,7 @@ public class SpimData2 extends SpimData
 		return illums;
 	}
 
-	public static ArrayList< Channel > getAllChannelsSorted( final SpimData2 data, final Collection< ViewId > viewIds )
+	public static ArrayList< Channel > getAllChannelsSorted( final SpimData2 data, final Collection< ? extends ViewId > viewIds )
 	{
 		final HashSet< Channel > channelSet = new HashSet< Channel >();
 
@@ -214,7 +214,7 @@ public class SpimData2 extends SpimData
 		return channels;
 	}
 
-	public static ArrayList< ViewDescription > getAllViewIdsForChannelSorted( final SpimData2 data, final Collection< ViewId > viewIds, final Channel channel )
+	public static ArrayList< ViewDescription > getAllViewIdsForChannelSorted( final SpimData2 data, final Collection< ? extends ViewId > viewIds, final Channel channel )
 	{
 		final ArrayList< ViewDescription > views = new ArrayList< ViewDescription >();
 
@@ -231,7 +231,7 @@ public class SpimData2 extends SpimData
 		return views;
 	}
 
-	public static ArrayList< ViewDescription > getAllViewIdsForChannelTimePointSorted( final SpimData2 data, final Collection< ViewId > viewIds, final Channel channel, final TimePoint timePoint )
+	public static ArrayList< ViewDescription > getAllViewIdsForChannelTimePointSorted( final SpimData2 data, final Collection< ? extends ViewId > viewIds, final Channel channel, final TimePoint timePoint )
 	{
 		final ArrayList< ViewDescription > views = new ArrayList< ViewDescription >();
 
@@ -248,7 +248,7 @@ public class SpimData2 extends SpimData
 		return views;
 	}
 
-	public static ArrayList< ViewDescription > getAllViewIdsForTimePointSorted( final SpimData2 data, final Collection< ViewId > viewIds, final TimePoint timepoint )
+	public static ArrayList< ViewDescription > getAllViewIdsForTimePointSorted( final SpimData2 data, final Collection< ? extends ViewId > viewIds, final TimePoint timepoint )
 	{
 		final ArrayList< ViewDescription > views = new ArrayList< ViewDescription >();
 
@@ -265,7 +265,7 @@ public class SpimData2 extends SpimData
 		return views;
 	}
 
-	public static ArrayList< TimePoint > getAllTimePointsSorted( final SpimData2 data, final Collection< ViewId > viewIds )
+	public static ArrayList< TimePoint > getAllTimePointsSorted( final SpimData2 data, final Collection< ? extends ViewId > viewIds )
 	{
 		final HashSet< TimePoint > timepointSet = new HashSet< TimePoint >();
 
