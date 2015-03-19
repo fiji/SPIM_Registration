@@ -407,7 +407,12 @@ public class Interest_Point_Registration implements PlugIn
 		if ( fixTilesIndex == 0 ) // all first tiles
 		{
 			for ( final GlobalOptimizationSubset subset : subsets )
-				fixedTiles.add( subset.getViews().get( 0 ) );
+			{
+				if ( subset.getViews().size() == 0 )
+					IOFunctions.println( "Nothing to do for: " + subset.getDescription() + ". No tiles fixed." );
+				else
+					fixedTiles.add( subset.getViews().get( 0 ) );
+			}
 		}
 		else if ( fixTilesIndex == 1 )
 		{
