@@ -35,8 +35,8 @@ public class InterestPointList
 	{
 		this.baseDir = baseDir;
 		this.file = file;
-		this.interestPoints = new ArrayList< InterestPoint >();
-		this.correspondingInterestPoints = new ArrayList< CorrespondingInterestPoints >();
+		this.interestPoints = null;
+		this.correspondingInterestPoints = null;
 		this.parameters = "";
 	}
 

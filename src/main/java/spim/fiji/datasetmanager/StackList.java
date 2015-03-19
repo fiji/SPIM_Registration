@@ -234,10 +234,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		// get the minimal resolution of all calibrations
 		final double minResolution = Apply_Transformation.assembleAllMetaData(
 				sequenceDescription,
-				timepoints.getTimePointsOrdered(),
-				sequenceDescription.getAllChannelsOrdered(),
-				sequenceDescription.getAllIlluminationsOrdered(),
-				sequenceDescription.getAllAnglesOrdered() );
+				sequenceDescription.getViewDescriptions().values() );
 
 		IOFunctions.println( "Minimal resolution in all dimensions over all views is: " + minResolution );
 		IOFunctions.println( "(The smallest resolution in any dimension; the distance between two pixels in the output image will be that wide)" );

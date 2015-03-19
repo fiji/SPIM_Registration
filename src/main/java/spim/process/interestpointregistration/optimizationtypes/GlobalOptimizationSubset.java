@@ -49,7 +49,15 @@ public class GlobalOptimizationSubset
 		this.viewPairs = viewPairs;
 		this.description = description;
 	}
-	
+
+	/**
+	 * @param model
+	 * @param type
+	 * @param spimData
+	 * @param channelsToProcess - just to annotate the registration
+	 * @param description
+	 * @return
+	 */
 	public < M extends Model< M > > boolean computeGlobalOpt(
 			final M model,
 			final GlobalOptimizationType type,

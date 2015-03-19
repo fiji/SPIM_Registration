@@ -11,9 +11,7 @@ import java.util.List;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.wrapper.ImgLib2;
-import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
-import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
@@ -22,7 +20,6 @@ import mpicbg.spim.segmentation.InteractiveIntegral;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.multithreading.SimpleMultiThreading;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.interestpointdetection.ProcessDOM;
@@ -46,107 +43,91 @@ public class DifferenceOfMean extends DifferenceOf
 	boolean[] findMin;
 	boolean[] findMax;
 	
-	public DifferenceOfMean(
-			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Channel> channelsToProcess,
-			final List<Illumination> illumsToProcess,
-			final List<TimePoint> timepointsToProcess )
+	public DifferenceOfMean( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
-		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+		super( spimData, viewIdsToProcess );
 	}
 
 	@Override
 	public String getDescription() { return "Difference-of-Mean (Integral image based)"; }
 
 	@Override
-	public DifferenceOfMean newInstance(
-			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Channel> channelsToProcess,
-			final List<Illumination> illumsToProcess,
-			final List<TimePoint> timepointsToProcess ) 
+	public DifferenceOfMean newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{ 
-		return new DifferenceOfMean( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+		return new DifferenceOfMean( spimData, viewIdsToProcess );
 	}
 
 	@Override
 	public HashMap< ViewId, List< InterestPoint > > findInterestPoints( final TimePoint t )
 	{
 		final HashMap< ViewId, List< InterestPoint > > interestPoints = new HashMap< ViewId, List< InterestPoint > >();
-		
-		for ( final Angle a : anglesToProcess )
-			for ( final Illumination i : illumsToProcess )
-				for ( final Channel c : channelsToProcess )
-				{
-					// make sure not everything crashes if one file is missing
-					try
-					{
-						//
-						// open the corresponding image (if present at this timepoint)
-						//
-						long time1 = System.currentTimeMillis();
-						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
 
-						// this happens only if a viewsetup is not present in any timepoint
-						// (e.g. after appending fusion to a dataset)
-						if ( viewId == null )
-							continue;
-						
-						final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
-								viewId.getTimePointId(), viewId.getViewSetupId() );
+		for ( final ViewDescription vd : SpimData2.getAllViewIdsForTimePointSorted( spimData, viewIdsToProcess, t ) )
+		{
+			// make sure not everything crashes if one file is missing
+			try
+			{
+				//
+				// open the corresponding image (if present at this timepoint)
+				//
+				long time1 = System.currentTimeMillis();
 
-						if ( !viewDescription.isPresent() )
-							continue;
+				if ( !vd.isPresent() )
+					continue;
 
-						IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Requesting Img from ImgLoader (tp=" + viewId.getTimePointId() + ", setup=" + viewId.getViewSetupId() + ")" );
-						final RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input =
-								downsample(
-										spimData.getSequenceDescription().getImgLoader().getFloatImage( viewId, false ) );
+				final Channel c = vd.getViewSetup().getChannel();
 
-						long time2 = System.currentTimeMillis();
+				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Requesting Img from ImgLoader (tp=" + vd.getTimePointId() + ", setup=" + vd.getViewSetupId() + ")" );
+				final RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input =
+						downsample(
+								spimData.getSequenceDescription().getImgLoader().getFloatImage( vd, false ),
+								vd.getViewSetup().getVoxelSize() );
 
-						benchmark.openFiles += time2 - time1;
+				long time2 = System.currentTimeMillis();
 
-						preSmooth( input );
-						
-						final Image< FloatType > img = ImgLib2.wrapFloatToImgLib1( (Img<net.imglib2.type.numeric.real.FloatType>)input );
+				benchmark.openFiles += time2 - time1;
 
-						//
-						// compute Difference-of-Mean
-						//
-						final ArrayList< InterestPoint > ips =
-							ProcessDOM.compute(
-								img,
-								(Img<net.imglib2.type.numeric.real.FloatType>)input,
-								radius1[ c.getId() ],
-								radius2[ c.getId() ],
-								(float)threshold[ c.getId() ],
-								localization,
-								imageSigmaX,
-								imageSigmaY,
-								imageSigmaZ,
-								findMin[ c.getId() ],
-								findMax[ c.getId() ],
-								minIntensity,
-								maxIntensity );
+				preSmooth( input );
+				
+				final Image< FloatType > img = ImgLib2.wrapFloatToImgLib1( (Img<net.imglib2.type.numeric.real.FloatType>)input );
 
-						img.close();
+				//
+				// compute Difference-of-Mean
+				//
+				final ArrayList< InterestPoint > ips =
+					ProcessDOM.compute(
+						img,
+						(Img<net.imglib2.type.numeric.real.FloatType>)input,
+						radius1[ c.getId() ],
+						radius2[ c.getId() ],
+						(float)threshold[ c.getId() ],
+						localization,
+						imageSigmaX,
+						imageSigmaY,
+						imageSigmaZ,
+						findMin[ c.getId() ],
+						findMax[ c.getId() ],
+						minIntensity,
+						maxIntensity );
 
-						correctForDownsampling( ips );
+				img.close();
 
-						interestPoints.put( viewId, ips );
+				correctForDownsampling( ips, vd.getViewSetup().getVoxelSize() );
 
-						benchmark.computation += System.currentTimeMillis() - time2;
-					}
-					catch ( Exception  e )
-					{
-						IOFunctions.println( "An error occured: " + e ); 
-						IOFunctions.println( "Failed to segment angle: " + 
-								a.getId() + " channel: " + c.getId() + " illum: " + i.getId() + ". Continuing with next one." );
-						e.printStackTrace();
-					}
-				}
+				interestPoints.put( vd, ips );
+
+				benchmark.computation += System.currentTimeMillis() - time2;
+			}
+			catch ( Exception  e )
+			{
+				IOFunctions.println( "An error occured (DOM): " + e ); 
+				IOFunctions.println( "Failed to segment angleId: " + 
+						vd.getViewSetup().getAngle().getId() + " channelId: " +
+						vd.getViewSetup().getChannel().getId() + " illumId: " +
+						vd.getViewSetup().getIllumination().getId() + ". Continuing with next one." );
+				e.printStackTrace();
+			}
+		}
 
 		return interestPoints;
 	}
@@ -225,7 +206,8 @@ public class DifferenceOfMean extends DifferenceOf
 		
 		RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > img =
 				downsample(
-						spimData.getSequenceDescription().getImgLoader().getFloatImage( view, false ) );
+						spimData.getSequenceDescription().getImgLoader().getFloatImage( view, false ),
+						viewDescription.getViewSetup().getVoxelSize() );
 		
 		if ( img == null )
 		{
@@ -253,8 +235,14 @@ public class DifferenceOfMean extends DifferenceOf
 		ii.run( null );
 		
 		while ( !ii.isFinished() )
-			SimpleMultiThreading.threadWait( 100 );
-		
+		{
+			try
+			{
+				Thread.sleep( 100 );
+			}
+			catch (InterruptedException e) {}
+		}
+
 		imp.close();
 
 		if ( ii.wasCanceld() )

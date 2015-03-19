@@ -1,14 +1,13 @@
 package spim.fiji.plugin;
 
-import bdv.BigDataViewer;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import javax.media.j3d.Transform3D;
 
@@ -27,13 +26,22 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.img.list.ListImg;
+import net.imglib2.img.list.ListImgFactory;
+import net.imglib2.img.list.ListRandomAccess;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.util.Util;
+import spim.fiji.ImgLib2Temp.Pair;
+import spim.fiji.ImgLib2Temp.ValuePair;
+import spim.fiji.plugin.apply.ApplyParameters;
 import spim.fiji.plugin.apply.BigDataViewerTransformationWindow;
+import spim.fiji.plugin.apply.ModelLink;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.SpimDataWrapper;
 import spim.fiji.spimdata.ViewSetupUtils;
+import bdv.BigDataViewer;
 
 public class Apply_Transformation implements PlugIn
 {
@@ -43,90 +51,89 @@ public class Apply_Transformation implements PlugIn
 	public static boolean defaultSameModelAngles = true;
 	
 	public static int defaultModel = 2;
-	public static int defaultDefineAs = 2;
+	public static int defaultDefineAs = 1;
 	public static int defaultApplyTo = 2;
 	
-	public static String[] inputChoice = new String[]{
+	public static String[] applyToChoice = new String[]{
 		"Identity transform (removes any existing transforms)",
 		"Calibration (removes any existing transforms)",
 		"Current view transformations (appends to current transforms)" };	
 	public static String[] modelChoice = new String[]{ "Identity (no transformation)", "Translation", "Rigid", "Affine" };
-	public static String[] defineChoice = new String[] { "Matrix", "Rotation around axis", "Interactively using the BigDataViewer" };
+	public static String[] defineAsChoice = new String[] { "Matrix", "Rotation around axis", "Interactively using the BigDataViewer" };
 	
 	public String[] axesChoice = new String[] { "x-axis", "y-axis", "z-axis" };
 	public static int[] defaultAxis = null;
 	public static double[] defaultDegrees = null;
-
 	public static ArrayList< double[] > defaultModels;
 
-	public class Entry implements Comparable< Entry >
-	{
-		public String title;
-		public int id;
-		
-		public Entry( final int id, final String title )
-		{
-			this.id = id;
-			this.title = title;
-		}
-		
-		public String getTitle() { return title; }
-		
-		@Override
-		public int hashCode() { return id; }
-		
-		@Override
-		public boolean equals( final Object o )
-		{
-			if ( o == null )
-			{
-				return false;
-			}
-			else if ( o instanceof Entry )
-			{
-				if ( ((Entry)o).id == id )
-					return true;
-				else
-					return false;
-			}
-			else
-			{
-				return false;
-			}
-		}
-		
-		@Override
-		public int compareTo( final Entry o ) { return id - o.id; }
-	}
-	
 	@Override
 	public void run( final String arg0 )
 	{
 		// ask for everything
 		final LoadParseQueryXML result = new LoadParseQueryXML();
-		
+
 		if ( !result.queryXML( "applying a transformation", "Apply to", true, true, true, true ) )
 			return;
-		
-		final boolean multipleTimePoints = result.getTimePointsToProcess().size() > 1;
-		final boolean multipleChannels = result.getChannelsToProcess().size() > 1;
-		final boolean multipleIlluminations = result.getIlluminationsToProcess().size() > 1;
-		final boolean multipleAngles = result.getAnglesToProcess().size() > 1;
-		
+
+		final SpimData2 data = result.getData();
+		final List< ViewId > viewIds = SpimData2.getAllViewIdsSorted( result.getData(), result.getViewSetupsToProcess(), result.getTimePointsToProcess() );
+
+		final ApplyParameters params = queryParams( data, viewIds );
+
+		if ( params == null )
+			return;
+
+		final Map< ViewDescription, Pair< double[], String > > modelLinks;
+
+		// query models and apply them
+		if ( params.defineAs == 0 ) // matrix
+			modelLinks = queryString( data, viewIds, params );
+		else if ( params.defineAs == 1 ) //Rotation around axis
+			modelLinks = queryRotationAxis( data, viewIds, params );
+		else // Interactively using the BigDataViewer
+			modelLinks = queryBigDataViewer( data, viewIds, params );
+
+		if ( modelLinks == null )
+			return;
+
+		applyModels( data, params.minResolution, params.applyTo, modelLinks );
+
+		// now save it
+		Interest_Point_Registration.saveXML( result.getData(), result.getXMLFileName(), result.getClusterExtension() );
+
+	}
+
+	/**
+	 * @param data
+	 * @param viewIds
+	 * @return - transformation model and explanation for each viewid, also sets global variables applyTo and minResolution
+	 */
+	public final ApplyParameters queryParams( final SpimData2 data, final List< ViewId > viewIds )
+	{
+		final List< Angle > angles = SpimData2.getAllAnglesSorted( data, viewIds );
+		final List< Channel > channels = SpimData2.getAllChannelsSorted( data, viewIds );
+		final List< Illumination > illums = SpimData2.getAllIlluminationsSorted( data, viewIds );
+		final List< TimePoint > tps = SpimData2.getAllTimePointsSorted( data, viewIds );
+
+		final boolean multipleTimePoints = tps.size() > 1;
+		final boolean multipleChannels = channels.size() > 1;
+		final boolean multipleIlluminations = illums.size() > 1;
+		final boolean multipleAngles = angles.size() > 1;
+
 		final GenericDialog gd = new GenericDialog( "Choose transformation model" );
-		
+
 		gd.addChoice( "Transformation model", modelChoice, modelChoice[ defaultModel ] );
-		gd.addChoice( "Apply on top of", inputChoice, inputChoice[ defaultApplyTo ] );
+		gd.addChoice( "Apply on top of", applyToChoice, applyToChoice[ defaultApplyTo ] );
 		
 		if ( multipleTimePoints )
 			gd.addCheckbox( "Same_transformation_for_all_timepoints", defaultSameModelTimePoints );
-		
+
 		if ( multipleChannels )
 			gd.addCheckbox( "Same_transformation_for_all_channels", defaultSameModelChannels );
-		
+
 		if ( multipleIlluminations )
 			gd.addCheckbox( "Same_transformation_for_all_illuminations", defaultSameModelIlluminations );
-		
+
 		if ( multipleAngles )
 			gd.addCheckbox( "Same_transformation_for_all_angles", defaultSameModelAngles );
 
@@ -137,103 +144,87 @@ public class Apply_Transformation implements PlugIn
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
-			return;
-	
-		final int model = defaultModel = gd.getNextChoiceIndex();
-		final int applyTo = defaultApplyTo = gd.getNextChoiceIndex();
-		final int defineAs;
+			return null;
+
+		final ApplyParameters params = new ApplyParameters();
+
+		params.model = defaultModel = gd.getNextChoiceIndex();
+		params.applyTo = defaultApplyTo = gd.getNextChoiceIndex();
 		
-		if ( model == 2 ) // rigid
+		if ( params.model == 2 ) // if rigid, ask how to define the rigid model
 		{
 			final GenericDialog gd2 = new GenericDialog( "Choose application for transformation model" );
-			gd2.addChoice( "Define as", defineChoice, defineChoice[ defaultDefineAs ] );
+			gd2.addChoice( "Define as", defineAsChoice, defineAsChoice[ defaultDefineAs ] );
 
 			gd2.showDialog();
 			
 			if ( gd2.wasCanceled() )
-				return;
+				return null;
 
-			defineAs = defaultDefineAs = gd2.getNextChoiceIndex();
+			params.defineAs = defaultDefineAs = gd2.getNextChoiceIndex();
 		}
 		else
 		{
-			defineAs = 0;
+			params.defineAs = 0; // for all others there is only matrix
 		}
-		
-		final boolean sameModelTimePoints, sameModelChannels, sameModelIlluminations, sameModelAngles;
-		
+
 		if ( multipleTimePoints )
-			sameModelTimePoints = defaultSameModelTimePoints = gd.getNextBoolean();
+			params.sameModelTimePoints = defaultSameModelTimePoints = gd.getNextBoolean();
 		else
-			sameModelTimePoints = true;
+			params.sameModelTimePoints = true;
 
 		if ( multipleChannels )
-			sameModelChannels = defaultSameModelChannels = gd.getNextBoolean();
+			params.sameModelChannels = defaultSameModelChannels = gd.getNextBoolean();
 		else
-			sameModelChannels = true;
-		
+			params.sameModelChannels = true;
+
 		if ( multipleIlluminations )
-			sameModelIlluminations = defaultSameModelIlluminations = gd.getNextBoolean();
+			params.sameModelIlluminations = defaultSameModelIlluminations = gd.getNextBoolean();
 		else
-			sameModelIlluminations = true;
-		
+			params.sameModelIlluminations = true;
+
 		if ( multipleAngles )
-			sameModelAngles = defaultSameModelAngles = gd.getNextBoolean();
+			params.sameModelAngles = defaultSameModelAngles = gd.getNextBoolean();
 		else
-			sameModelAngles = true;
-		
+			params.sameModelAngles = true;
+
 		// reset the transform to the calibration (x,y,z resolution), in this case we need to make sure the calibration is actually available
-		final double minResolution;
-		if ( applyTo == 1 )
+		if ( params.applyTo == 1 )
 		{
-			minResolution = assembleAllMetaData( result.getData().getSequenceDescription(), result.getTimePointsToProcess(), result.getChannelsToProcess(), result.getIlluminationsToProcess(), result.getAnglesToProcess() );
-			
-			if ( Double.isNaN( minResolution ) )
+			params.minResolution = assembleAllMetaData( data.getSequenceDescription(), viewIds );
+
+			if ( Double.isNaN( params.minResolution ) )
 			{
 				IOFunctions.println( "Could not assemble the calibration, quitting." );
-				return;
+				return null;
 			}
 		}
 		else
 		{
-			minResolution = 1;
+			params.minResolution = 1;
 		}
-		
-		// query models and apply them
-		if ( defineAs == 0 )
-		{
-			if ( !queryString( model, applyTo, minResolution, result, sameModelTimePoints, sameModelChannels, sameModelIlluminations, sameModelAngles ) )
-				return;
-		}
-		else if ( defineAs == 1 )
-		{
-			if ( !queryRotationAxis( model, applyTo, minResolution, result, sameModelTimePoints, sameModelChannels, sameModelIlluminations, sameModelAngles ) )
-				return;
-		}
-		else
-		{
-			if ( !sameModelAngles || !sameModelChannels || !sameModelIlluminations || !sameModelIlluminations )
-			{
-				IOFunctions.println( "You selected to not have the same transformation model for all views in the" );
-				IOFunctions.println( "previous dialog. This is not supported using the interactive setup using the" );
-				IOFunctions.println( "BigDataViewer. You can select single views in the xml open dialog though." );
 
-				return;
-			}
-
-			if ( !queryBigDataViewer( applyTo, minResolution, result ) )
-				return;
-		}
-		
-		// now save it
-		Interest_Point_Registration.saveXML( result.getData(), result.getXMLFileName(), result.getClusterExtension() );
+		return params;
 	}
 
-	protected boolean queryBigDataViewer( final int applyTo, final double minResolution, final LoadParseQueryXML result )
+	public Map< ViewDescription, Pair< double[], String > > queryBigDataViewer(
+			final SpimData2 data,
+			final List< ViewId > viewIds,
+			final ApplyParameters params )
 	{
+		if ( !params.sameModelAngles || !params.sameModelChannels || !params.sameModelIlluminations || !params.sameModelIlluminations )
+		{
+			IOFunctions.println( "You selected to not have the same transformation model for all views in the" );
+			IOFunctions.println( "previous dialog. This is not supported using the interactive setup using the" );
+			IOFunctions.println( "BigDataViewer. You can select single views in the xml open dialog though." );
+
+			return null;
+		}
+
 		try
 		{
-			final BigDataViewer bdv = new BigDataViewer( result.getXMLFileName(), "Set dataset transformation", null );
+			// TODO: Remove the wrapper
+			final BigDataViewer bdv = new BigDataViewer( new SpimDataWrapper( data ), "Set dataset transformation", null );
 
 			try
 			{
@@ -262,44 +253,82 @@ public class Apply_Transformation implements PlugIn
 			BigDataViewerTransformationWindow.disposeViewerWindow( bdv );
 
 			if ( bdvw.wasCancelled() )
-				return false;
+				return null;
 
-			final ArrayList< double[] > models = new ArrayList< double[] >();
-			final ArrayList< String > modelDescriptions = new ArrayList< String >();
+			final HashMap< ViewDescription, Pair< double[], String > > modelLinks = new HashMap< ViewDescription, Pair< double[], String > >();
 
 			final AffineTransform3D t = bdvw.getTransform();
-			models.add( t.getRowPackedCopy() );
-			modelDescriptions.add( "Rigid transform defined by BigDataViewer" );
+			final double[] m = t.getRowPackedCopy();
+			final String d = "Rigid transform defined by BigDataViewer";
 
-			final HashMap< Entry, List< TimePoint > > timepoints = getTimePoints( result.getTimePointsToProcess(), true );
-			final HashMap< Entry, List< Channel > > channels = getChannels( result.getChannelsToProcess(), true );
-			final HashMap< Entry, List< Illumination > > illums = getIlluminations( result.getIlluminationsToProcess(), true );
-			final HashMap< Entry, List< Angle > > angles = getAngles( result.getAnglesToProcess(), true );
+			defaultModels = new ArrayList< double[] >();
+			defaultModels.add( m );
 
-			return applyModels( result.getData(), models, modelDescriptions, applyTo, minResolution, timepoints, channels, illums, angles );
+			for ( final ViewId viewId : viewIds )
+			{
+				final ViewDescription vd = data.getSequenceDescription().getViewDescription( viewId );
+				modelLinks.put( vd, new ValuePair< double[], String >( m, d ) );
+			}
+
+			return modelLinks;
 		}
 		catch ( SpimDataException e )
 		{
 			IOFunctions.println( "Failed to run the BigDataViewer ... " );
 			e.printStackTrace();
-			return false;
+			return null;
 		}
 	}
 
-	protected boolean queryRotationAxis( final int model, final int applyTo, final double minResolution, final LoadParseQueryXML result, final boolean sameModelTimePoints, final boolean sameModelChannels, final boolean sameModelIlluminations, final boolean sameModelAngles )
+	public Map< ViewDescription, Pair< double[], String > > queryRotationAxis(
+			final SpimData2 data,
+			final List< ViewId > viewIds,
+			final ApplyParameters params )
 	{
-		if ( model != 2 )
+		if ( params.model != 2 )
 		{
 			IOFunctions.println( "No rigid model selected." );
-			return false;
+			return null;
 		}
 
-		final HashMap< Entry, List< TimePoint > > timepoints = getTimePoints( result.getTimePointsToProcess(), sameModelTimePoints );
-		final HashMap< Entry, List< Channel > > channels = getChannels( result.getChannelsToProcess(), sameModelChannels );
-		final HashMap< Entry, List< Illumination > > illums = getIlluminations( result.getIlluminationsToProcess(), sameModelIlluminations );
-		final HashMap< Entry, List< Angle > > angles = getAngles( result.getAnglesToProcess(), sameModelAngles );
-		
-		final int numEntries = getNumEntries( timepoints, channels, illums, angles );
+		// build a sparse four-dimensional table containing all entries that need to be queried
+		// assign indices 0...n-1 to individual TimePoints, Channels, Illums, Angles
+		// if same model for a type of entry (e.g. timepoint), than all Entries will link to the same index
+		final HashMap< TimePoint, Integer > mapT = new HashMap< TimePoint, Integer >();
+		final HashMap< Channel, Integer > mapC = new HashMap< Channel, Integer >();
+		final HashMap< Illumination, Integer > mapI = new HashMap< Illumination, Integer >();
+		final HashMap< Angle, Integer > mapA = new HashMap< Angle, Integer >();
+
+		// iterate first angles, then illums, then channels, then timepoints
+		final ListImg< ModelLink > img = createTable(
+				data, viewIds,
+				params.sameModelTimePoints,
+				params.sameModelChannels,
+				params.sameModelIlluminations,
+				params.sameModelAngles,
+				mapT, mapC, mapI, mapA );
+
+		final ListRandomAccess< ModelLink > ra = img.randomAccess();
+		final int[] l = new int[ img.numDimensions() ];
+
+		// populate the table
+		for ( final ViewId viewId : viewIds )
+		{
+			final ViewDescription vd = data.getSequenceDescription().getViewDescription( viewId );
+
+			locationForViewDescription( l, vd, mapT, mapC, mapI, mapA );
+
+			ra.setPosition( l );
+
+			if ( ra.get() == null )
+				ra.set( new ModelLink( vd ) );
+			else
+				ra.get().add( vd );
+		}
+
+		final int numEntries = numEntries( img );
+
+		IOFunctions.println( "Querying " + numEntries + " different rotation axis models." );
 
 		if ( defaultAxis == null || defaultDegrees == null || defaultAxis.length != numEntries || defaultDegrees.length != numEntries )
 		{
@@ -307,102 +336,156 @@ public class Apply_Transformation implements PlugIn
 			defaultDegrees = new double[ numEntries ];
 
 			int j = 0;
-			
-			for ( int t = 0; t < sortedList( timepoints.keySet() ).size(); ++t )
-				for ( int c = 0; c < sortedList( channels.keySet() ).size(); ++c )
-					for ( int i = 0; i < sortedList( illums.keySet() ).size(); ++i )
-						for ( final Entry a : sortedList( angles.keySet() ) )
+
+			for ( final ModelLink ml : img )
+				if ( ml != null )
+				{
+					defaultDegrees[ j ] = 0;
+					defaultAxis[ j ] = 0;
+
+					try
+					{
+						final Angle a = ml.viewDescriptions().get( 0 ).getViewSetup().getAngle();
+
+						final double[] axis = a.getRotationAxis();
+						if ( axis != null )
 						{
-							// it is for one individual angle, let's set the name as default rotation
-							if ( angles.get( a ).size() == 1 )
-							{
-								try
-								{
-									defaultDegrees[ j ] = Double.parseDouble( angles.get( a ).get( 0 ).getName() );
-								}
-								catch ( Exception e ) {};
-							}
-							
-							++j;
+							if ( axis[ 0 ] == 1 && axis[ 1 ] == 0 && axis[ 2 ] == 0 )
+								defaultAxis[ j ] = 0;
+							else if ( axis[ 0 ] == 0 && axis[ 1 ] == 1 && axis[ 2 ] == 0 )
+								defaultAxis[ j ] = 1;
+							else if ( axis[ 0 ] == 0 && axis[ 1 ] == 0 && axis[ 2 ] == 2 )
+								defaultAxis[ j ] = 2;
 						}
+
+						if ( !Double.isNaN( a.getRotationAngleDegrees() ) )
+							defaultDegrees[ j ] = a.getRotationAngleDegrees();
+						else
+							defaultDegrees[ j ] = Double.parseDouble( a.getName() );
+					}
+					catch ( Exception e ) {};
+
+					++j;
+				}
 		}
 		
 		final GenericDialog gd = new GenericDialog( "Parameters for rigid model 3d" );
 
 		int j = 0;
 		
-		for ( final Entry t : sortedList( timepoints.keySet() ) )
-			for ( final Entry c : sortedList( channels.keySet() ) )
-				for ( final Entry i : sortedList( illums.keySet() ) )
-					for ( final Entry a : sortedList( angles.keySet() ) )
-					{
-						gd.addChoice( "Axis_" + t.getTitle() + "_" + c.getTitle() + "_" + i.getTitle() + "_" + a.getTitle(), axesChoice, axesChoice[ defaultAxis[ j ] ] );
-						gd.addSlider( "Rotation_" + t.getTitle() + "_" + c.getTitle() + "_" + i.getTitle() + "_" + a.getTitle(), -360, 360, defaultDegrees[ j++ ] );
-					}
+		for ( final ModelLink ml : img )
+			if ( ml != null )
+			{
+				gd.addChoice( "Axis_" + ml.dialogName(), axesChoice, axesChoice[ defaultAxis[ j ] ] );
+				gd.addSlider( "Rotation_" + ml.dialogName(), -360, 360, defaultDegrees[ j ] );
+
+				++j;
+			}
 
 		if ( numEntries > 5 )
 			GUIHelper.addScrollBars( gd );
 
 		gd.showDialog();
-		
+
 		if ( gd.wasCanceled() )
-			return false;
-		
+			return null;
+
+		final HashMap< ViewDescription, Pair< double[], String > > modelLinks = new HashMap< ViewDescription, Pair< double[], String > >();
+		defaultModels = new ArrayList< double[] >();
 		final int[] axes = new int[ numEntries ];
 		final double[] degrees = new double[ numEntries ];
-		final ArrayList< double[] > models = new ArrayList< double[] >();
-		final ArrayList< String > modelDescriptions = new ArrayList< String >();
-		
+
 		final double[] tmp = new double[ 16 ];
-		
-		for ( j = 0; j < numEntries; ++j )
+
+		j = 0;
+
+		for ( final ModelLink ml : img )
 		{
-			axes[ j ] = gd.getNextChoiceIndex();
-			degrees[ j ] = gd.getNextNumber();
-			
-			final Transform3D t = new Transform3D();
-			if ( axes[ j ] == 0 )
+			if ( ml != null )
 			{
-				t.rotX( Math.toRadians( degrees[ j ] ) );
-				modelDescriptions.add( "Rotation around x-axis by " + degrees[ j ] + " degrees" );	
-			}
-			else if ( axes[ j ] == 1 )
-			{
-				t.rotY( Math.toRadians( degrees[ j ] ) );
-				modelDescriptions.add( "Rotation around y-axis by " + degrees[ j ] + " degrees" );	
-			}
-			else
-			{
-				t.rotZ( Math.toRadians( degrees[ j ] ) );
-				modelDescriptions.add( "Rotation around z-axis by " + degrees[ j ] + " degrees" );	
-			}
+				axes[ j ] = gd.getNextChoiceIndex();
+				degrees[ j ] = gd.getNextNumber();
 
-			t.get( tmp );
+				final String d;
+				final Transform3D t = new Transform3D();
+				if ( axes[ j ] == 0 )
+				{
+					t.rotX( Math.toRadians( degrees[ j ] ) );
+					d = "Rotation around x-axis by " + degrees[ j ] + " degrees";
+				}
+				else if ( axes[ j ] == 1 )
+				{
+					t.rotY( Math.toRadians( degrees[ j ] ) );
+					d = "Rotation around y-axis by " + degrees[ j ] + " degrees";
+				}
+				else
+				{
+					t.rotZ( Math.toRadians( degrees[ j ] ) );
+					d = "Rotation around z-axis by " + degrees[ j ] + " degrees";
+				}
 
-			models.add( new double[]{
-					tmp[ 0 ], tmp[ 1 ], tmp[ 2 ], tmp[ 3 ],
-					tmp[ 4 ], tmp[ 5 ], tmp[ 6 ], tmp[ 7 ],
-					tmp[ 8 ], tmp[ 9 ], tmp[ 10 ], tmp[ 11 ] } );			
+				t.get( tmp );
+
+				final double[] m = new double[]{
+						tmp[ 0 ], tmp[ 1 ], tmp[ 2 ], tmp[ 3 ],
+						tmp[ 4 ], tmp[ 5 ], tmp[ 6 ], tmp[ 7 ],
+						tmp[ 8 ], tmp[ 9 ], tmp[ 10 ], tmp[ 11 ] };
+
+				defaultModels.add( m );
+				ml.setModel( m, d );
+
+				for ( final ViewDescription vd : ml.viewDescriptions() )
+					modelLinks.put( vd, new ValuePair< double[], String >( ml.model(), ml.modelDescription() ) );
+			}
 		}
-		
+
 		// set defaults
 		defaultAxis = axes;
 		defaultDegrees = degrees;
-		
-		defaultModels = models;
-		
-		// apply the models as asked
-		return applyModels( result.getData(), models, modelDescriptions, applyTo, minResolution, timepoints, channels, illums, angles );
+
+		return modelLinks;
 	}
 
-	protected boolean queryString( final int model, final int applyTo, final double minResolution, final LoadParseQueryXML result, final boolean sameModelTimePoints, final boolean sameModelChannels, final boolean sameModelIlluminations, final boolean sameModelAngles )
+	public Map< ViewDescription, Pair< double[], String > > queryString(
+			final SpimData2 data,
+			final List< ViewId > viewIds,
+			final ApplyParameters params )
 	{
-		final HashMap< Entry, List< TimePoint > > timepoints = getTimePoints( result.getTimePointsToProcess(), sameModelTimePoints );
-		final HashMap< Entry, List< Channel > > channels = getChannels( result.getChannelsToProcess(), sameModelChannels );
-		final HashMap< Entry, List< Illumination > > illums = getIlluminations( result.getIlluminationsToProcess(), sameModelIlluminations );
-		final HashMap< Entry, List< Angle > > angles = getAngles( result.getAnglesToProcess(), sameModelAngles );
-		
-		final int numEntries = getNumEntries( timepoints, channels, illums, angles );
+		// build a sparse four-dimensional table containing all entries that need to be queried
+		// assign indices 0...n-1 to individual TimePoints, Channels, Illums, Angles
+		// if same model for a type of entry (e.g. timepoint), than all Entries will link to the same index
+		final HashMap< TimePoint, Integer > mapT = new HashMap< TimePoint, Integer >();
+		final HashMap< Channel, Integer > mapC = new HashMap< Channel, Integer >();
+		final HashMap< Illumination, Integer > mapI = new HashMap< Illumination, Integer >();
+		final HashMap< Angle, Integer > mapA = new HashMap< Angle, Integer >();
+
+		// iterate first angles, then illums, then channels, then timepoints
+		final ListImg< ModelLink > img = createTable(
+				data, viewIds,
+				params.sameModelTimePoints,
+				params.sameModelChannels,
+				params.sameModelIlluminations,
+				params.sameModelAngles,
+				mapT, mapC, mapI, mapA );
+		final ListRandomAccess< ModelLink > ra = img.randomAccess();
+		final int[] l = new int[ img.numDimensions() ];
+
+		// populate the table
+		for ( final ViewId viewId : viewIds )
+		{
+			final ViewDescription vd = data.getSequenceDescription().getViewDescription( viewId );
+
+			locationForViewDescription( l, vd, mapT, mapC, mapI, mapA );
+
+			ra.setPosition( l );
+
+			if ( ra.get() == null )
+				ra.set( new ModelLink( vd ) );
+			else
+				ra.get().add( vd );
+		}
+
+		final int numEntries = numEntries( img );
 
 		IOFunctions.println( "Querying " + numEntries + " different transformation models." );
 
@@ -416,51 +499,54 @@ public class Apply_Transformation implements PlugIn
 
 		final GenericDialog gd;
 		
-		if ( model == 0 ) // identity transform
+		if ( params.model == 0 ) // identity transform
 		{
 			gd = null;
 		}
-		else if ( model == 1 )
+		else if ( params.model == 1 ) // translation model
 		{
 			gd = new GenericDialog( "Model parameters for translation model 3d" );
 
 			gd.addMessage( "t(x) = m03, t(y) = m13, t(z) = m23" );
 			gd.addMessage( "" );
 			gd.addMessage( "Please provide 3d translation in this form (any brackets will be ignored): m03, m13, m23" );
-			
+
 			int j = 0;
-			
-			for ( final Entry t : sortedList( timepoints.keySet() ) )
-				for ( final Entry c : sortedList( channels.keySet() ) )
-					for ( final Entry i : sortedList( illums.keySet() ) )
-						for ( final Entry a : sortedList( angles.keySet() ) )
-							gd.addStringField( t.getTitle() + "_" + c.getTitle() + "_" + i.getTitle() + "_" + a.getTitle(), defaultModels.get( j )[ 3 ] + ", " + defaultModels.get( j )[ 7 ] + ", " + defaultModels.get( j++ )[ 11 ], 30 );
+
+			for ( final ModelLink ml : img )
+				if ( ml != null )
+					gd.addStringField(
+						ml.dialogName(),
+						defaultModels.get( j )[ 3 ] + ", " +
+						defaultModels.get( j )[ 7 ] + ", " +
+						defaultModels.get( j++ )[ 11 ], 30 );
 		}
-		else
+		else // rigid/affine model
 		{
 			gd = new GenericDialog( "Model parameters for rigid/affine model 3d" );
 
-			gd.addMessage( "| m00 m01 m02 m03 |\n" +
+			gd.addMessage(
+				"| m00 m01 m02 m03 |\n" +
 				"| m10 m11 m12 m13 |\n" +
 				"| m20 m21 m22 m23 |" );
+
 			gd.addMessage( "Please provide 3d rigid/affine in this form (any brackets will be ignored):\n" +
 				"m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23" );
 			
 			int j = 0;
 			
-			for ( final Entry t : sortedList( timepoints.keySet() ) )
-				for ( final Entry c : sortedList( channels.keySet() ) )
-					for ( final Entry i : sortedList( illums.keySet() ) )
-						for ( final Entry a : sortedList( angles.keySet() ) )
-						{
-							final double[] m = defaultModels.get( j++ );
-							gd.addStringField( t.getTitle() + "_" + c.getTitle() + "_" + i.getTitle() + "_" + a.getTitle(), 
-									m[ 0 ] + ", " + m[ 1 ] + ", " + m[ 2 ] + ", " + m[ 3 ] + ", " + 
-									m[ 4 ] + ", " + m[ 5 ] + ", " + m[ 6 ] + ", " + m[ 7 ] + ", " + 
-									m[ 8 ] + ", " + m[ 9 ] + ", " + m[ 10 ] + ", " + m[ 11 ], 80 );
-						}
+			for ( final ModelLink ml : img )
+				if ( ml != null )
+				{
+					final double[] m = defaultModels.get( j++ );
+					gd.addStringField(
+						ml.dialogName(),
+						m[ 0 ] + ", " + m[ 1 ] + ", " + m[ 2 ] + ", " + m[ 3 ] + ", " +
+						m[ 4 ] + ", " + m[ 5 ] + ", " + m[ 6 ] + ", " + m[ 7 ] + ", " +
+						m[ 8 ] + ", " + m[ 9 ] + ", " + m[ 10 ] + ", " + m[ 11 ], 80 );
+				}
 		}
-		
+
 		if ( gd != null )
 		{
 			if ( numEntries > 10 )
@@ -469,146 +555,165 @@ public class Apply_Transformation implements PlugIn
 			gd.showDialog();
 			
 			if ( gd.wasCanceled() )
-				return false;
+				return null;
 		}
-		
-		final ArrayList< double[] > models = new ArrayList< double[] >();
-		final ArrayList< String > modelDescriptions = new ArrayList< String >();
-		
-		if ( model == 0 )
-		{
-			for ( int j = 0; j < numEntries; ++j )
-				models.add( null );
-		}
-		else if ( model == 1 )
-		{
-			for ( int j = 0; j < numEntries; ++j )
-			{
-				final double[] v = parseString( gd.getNextString(), 3 );
-				
-				if ( v == null )
-					return false;
-				else
-				{
-					models.add( new double[]{ 1, 0, 0, v[ 0 ], 0, 1, 0, v[ 1 ], 0, 0, 1, v[ 2 ] } );
-					modelDescriptions.add( "Translation [" + v[ 0 ] + "," + v[ 1 ] + "," + v[ 2 ] + "]" );
-				}
-			}
-				
-		}
-		else
-		{
-			for ( int j = 0; j < numEntries; ++j )
-			{
-				final double[] v = parseString( gd.getNextString(), 12 );
 
-				if ( v == null )
-					return false;
-				else
+		final HashMap< ViewDescription, Pair< double[], String > > modelLinks = new HashMap< ViewDescription, Pair< double[], String > >();
+		defaultModels = new ArrayList< double[] >();
+
+		for ( final ModelLink ml : img )
+		{
+			if ( ml != null )
+			{
+				final double[] m;
+				final String d;
+				
+				if ( params.model == 0 )
 				{
-					models.add( v );
-					modelDescriptions.add( "Rigid/Affine by matrix" );
+					m = null;
+					d = "Identity";
 				}
-			}
-		}
-		
-		// set the defaults
-		if ( model == 0 )
-			defaultModels = null;
-		else
-			defaultModels = models;
-		
-		// apply the models as asked
-		return applyModels( result.getData(), models, modelDescriptions, applyTo, minResolution, timepoints, channels, illums, angles );
-	}
-	
-	protected boolean applyModels(
-			final SpimData2 spimData,
-			final ArrayList< double[] > models,
-			final ArrayList< String > modelDescriptions,
-			final int applyTo,
-			final double minResolution,
-			final HashMap< Entry, List< TimePoint > > timepoints, 
-			final HashMap< Entry, List< Channel > > channels, 
-			final HashMap< Entry, List< Illumination > > illums, 
-			final HashMap< Entry, List< Angle > > angles )
-	{
-		int j = 0;
-		
-		// needs to be sorted as well it relies on the index j for accessing the transforms
-		for ( final Entry ts : sortedList( timepoints.keySet() ) )
-			for ( final Entry cs : sortedList( channels.keySet() ) )
-				for ( final Entry is : sortedList( illums.keySet() ) )
-					for ( final Entry as : sortedList( angles.keySet() ) )
+				else if ( params.model == 1 )
+				{
+					final double[] v = parseString( gd.getNextString(), 3 );
+					
+					if ( v == null )
+						return null;
+					else
 					{
-						final List< TimePoint > tl = timepoints.get( ts );
-						final List< Channel > cl = channels.get( cs );
-						final List< Illumination > il = illums.get( is );
-						final List< Angle > al = angles.get( as );
-						
-						final double[] v = models.get( j );
-						final String modelDesc;
-						
-						if ( modelDescriptions == null || modelDescriptions.size() == 0 )
-							modelDesc = "";
-						else
-							modelDesc = modelDescriptions.get( j );
-
-						++j;
-						
-						for ( final TimePoint t : tl )
-							for ( final Channel c : cl )
-								for ( final Illumination i : il )
-									for ( final Angle a : al )
-									{
-										final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
-										
-										// this happens only if a viewsetup is not present in any timepoint
-										// (e.g. after appending fusion to a dataset)
-										if ( viewId == null )
-											continue;
-
-										final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
-												viewId.getTimePointId(), viewId.getViewSetupId() );
-
-										if ( !viewDescription.isPresent() )
-											continue;
-										
-										if ( applyTo == 0 )
-										{
-											IOFunctions.println( "Reseting model to identity transform for timepoint " + t.getName() + ", channel " + c.getName() + ", illum " + i.getName() + ", angle " + a.getName() );
-											setModelToIdentity( spimData, viewId );
-										}
-										
-										if ( applyTo == 1 )
-										{
-											IOFunctions.println( "Reseting model to calibration for timepoint " + t.getName() + ", channel " + c.getName() + ", illum " + i.getName() + ", angle " + a.getName() );
-											setModelToCalibration( spimData, viewId, minResolution );
-										}
-										
-										if ( v != null )
-										{
-											IOFunctions.println( "Applying model " + Util.printCoordinates( v ) + " (" + modelDesc + ") to timepoint " + t.getName() + ", channel " + c.getName() + ", illum " + i.getName() + ", angle " + a.getName() );
-											
-											final AffineTransform3D model = new AffineTransform3D();
-											model.set( v );
-											
-											preConcatenateTransform(spimData, viewId, model, "Manually defined transformation (" + modelDesc + ")" );
-										}
-									}
+						m = new double[]{ 1, 0, 0, v[ 0 ], 0, 1, 0, v[ 1 ], 0, 0, 1, v[ 2 ] };
+						d = "Translation [" + v[ 0 ] + "," + v[ 1 ] + "," + v[ 2 ] + "]";
 					}
-		return true;
+				}
+				else
+				{
+					m = parseString( gd.getNextString(), 12 );
+
+					if ( m == null )
+						return null;
+					else
+						d = "Rigid/Affine by matrix";
+				}
+
+				if ( m == null )
+					defaultModels.add( new double[]{ 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0 } );
+				else
+					defaultModels.add( m );
+
+				ml.setModel( m, d );
+
+				for ( final ViewDescription vd : ml.viewDescriptions() )
+					modelLinks.put( vd, new ValuePair< double[], String >( ml.model(), ml.modelDescription() ) );
+			}
+		}
+
+		return modelLinks;
 	}
-	
-	public static ArrayList< Entry > sortedList( final Set< Entry > set )
+
+	public void applyModels( final SpimData2 spimData, final double minResolution, final int applyTo, final Map< ViewDescription, Pair< double[], String > > modelLinks )
 	{
-		final ArrayList< Entry > list = new ArrayList< Entry >( set );
-		Collections.sort( list );
-		
-		return list;
+		for ( final ViewDescription vd : modelLinks.keySet() )
+		{
+			final double[] v = modelLinks.get( vd ).getA();
+			final String modelDesc = modelLinks.get( vd ).getB();
+
+			final TimePoint t = vd.getTimePoint();
+			final Channel c = vd.getViewSetup().getChannel();
+			final Illumination i = vd.getViewSetup().getIllumination();
+			final Angle a = vd.getViewSetup().getAngle();
+
+			if ( applyTo == 0 )
+			{
+				IOFunctions.println( "Reseting model to identity transform for timepoint " + t.getName() + ", channel " + c.getName() + ", illum " + i.getName() + ", angle " + a.getName() );
+				setModelToIdentity( spimData, vd );
+			}
+			else if ( applyTo == 1 )
+			{
+				IOFunctions.println( "Reseting model to calibration for timepoint " + t.getName() + ", channel " + c.getName() + ", illum " + i.getName() + ", angle " + a.getName() );
+				setModelToCalibration( spimData, vd, minResolution );
+			}
+			
+			if ( v != null )
+			{
+				IOFunctions.println( "Applying model " + Util.printCoordinates( v ) + " (" + modelDesc + ") to timepoint " + t.getName() + ", channel " + c.getName() + ", illum " + i.getName() + ", angle " + a.getName() );
+				
+				final AffineTransform3D model = new AffineTransform3D();
+				model.set( v );
+				
+				preConcatenateTransform( spimData, vd, model, "Manually defined transformation (" + modelDesc + ")" );
+			}
+		}
 	}
-		
-	protected double[] parseString( String entry, final int numValues )
+
+	private static final void locationForViewDescription(
+			final int[] l,
+			final ViewDescription vd,
+			final HashMap< TimePoint, Integer > mapT,
+			final HashMap< Channel, Integer > mapC,
+			final HashMap< Illumination, Integer > mapI,
+			final HashMap< Angle, Integer > mapA )
+	{
+		final TimePoint t = vd.getTimePoint();
+		final Channel c = vd.getViewSetup().getChannel();
+		final Illumination i = vd.getViewSetup().getIllumination();
+		final Angle a = vd.getViewSetup().getAngle();
+
+		l[ 0 ] = mapA.get( a );
+		l[ 1 ] = mapI.get( i );
+		l[ 2 ] = mapC.get( c );
+		l[ 3 ] = mapT.get( t );
+	}
+
+	private static final int numEntries( final ListImg< ModelLink > img )
+	{
+		int numEntries = 0;
+
+		for ( final ModelLink l : img )
+			if ( l != null )
+				++numEntries;
+
+		return numEntries;
+	}
+
+	private static final ListImg< ModelLink > createTable(
+			final SpimData2 data,
+			final List< ViewId > viewIds,
+			final boolean sameModelTimePoints,
+			final boolean sameModelChannels,
+			final boolean sameModelIlluminations,
+			final boolean sameModelAngles,
+			final HashMap< TimePoint, Integer > mapT,
+			final HashMap< Channel, Integer > mapC,
+			final HashMap< Illumination, Integer > mapI,
+			final HashMap< Angle, Integer > mapA )
+	{
+		final List< TimePoint > ts = SpimData2.getAllTimePointsSorted( data, viewIds );
+		final List< Channel > cs = SpimData2.getAllChannelsSorted( data, viewIds );
+		final List< Illumination > is = SpimData2.getAllIlluminationsSorted( data, viewIds );
+		final List< Angle > as = SpimData2.getAllAnglesSorted( data, viewIds );
+
+		final int nT = sameModelTimePoints ? 1 : ts.size();
+		for ( int i = 0; i < ts.size(); ++i )
+			mapT.put( ts.get( i ), sameModelTimePoints ? 0 : i );
+
+		final int nC = sameModelChannels ? 1 : cs.size();
+		for ( int i = 0; i < cs.size(); ++i )
+			mapC.put( cs.get( i ), sameModelChannels ? 0 : i );
+
+		final int nI = sameModelIlluminations ? 1 : is.size();
+		for ( int i = 0; i < is.size(); ++i )
+			mapI.put( is.get( i ), sameModelIlluminations ? 0 : i );
+
+		final int nA = sameModelAngles ? 1 : as.size();
+		for ( int i = 0; i < as.size(); ++i )
+			mapA.put( as.get( i ), sameModelAngles ? 0 : i );
+
+		// iterate first angles, then illums, then channels, then timepoints
+		return new ListImgFactory< ModelLink >().create( new long[]{ nA, nI, nC, nT }, new ModelLink( null ) );
+	}
+
+
+	protected static final double[] parseString( String entry, final int numValues )
 	{
 		while ( entry.contains( "(" ) )
 			entry.replace( "(", "" );
@@ -638,91 +743,6 @@ public class Apply_Transformation implements PlugIn
 			v[ j ] = Double.parseDouble( entries[ j ].trim() );
 		
 		return v;
-	}
-	
-	protected int getNumEntries( final HashMap< Entry, List< TimePoint > > t, final HashMap< Entry, List< Channel > > c, final HashMap< Entry, List< Illumination > > i, final HashMap< Entry, List< Angle > > a )
-	{
-		return t.keySet().size() * c.keySet().size() * i.keySet().size() * a.keySet().size();
-	}
-	
-	protected HashMap< Entry, List< TimePoint > > getTimePoints( final List< TimePoint > tps, final boolean sameModelTimePoints )
-	{
-		final HashMap< Entry, List< TimePoint > > h = new HashMap< Entry, List< TimePoint > >();
-		
-		if ( sameModelTimePoints && tps.size() > 1 )
-			h.put( new Entry( -1, "all_timepoints" ), tps );
-		else
-		{
-			for ( final TimePoint t : tps )
-			{
-				final ArrayList< TimePoint > tpl = new ArrayList< TimePoint >();
-				tpl.add( t );
-				
-				h.put( new Entry( t.getId(), "timepoint_" + t.getName() ), tpl );
-			}
-		}
-		
-		return h;
-	}
-
-	protected HashMap< Entry, List< Channel > > getChannels( final List< Channel > channels, final boolean sameModelChannels )
-	{
-		final HashMap< Entry, List< Channel > > h = new HashMap< Entry, List< Channel > >();
-		
-		if ( sameModelChannels && channels.size() > 1 )
-			h.put( new Entry( -1, "all_channels" ), channels );
-		else
-		{
-			for ( final Channel c : channels )
-			{
-				final ArrayList< Channel > chl = new ArrayList< Channel >();
-				chl.add( c );
-				
-				h.put( new Entry( c.getId(), "channel_" + c.getName() ), chl );
-			}
-		}
-		
-		return h;
-	}
-
-	protected HashMap< Entry, List< Illumination > > getIlluminations( final List< Illumination > illums, final boolean sameModelIlluminations )
-	{
-		final HashMap< Entry, List< Illumination > > h = new HashMap< Entry, List< Illumination > >();
-		
-		if ( sameModelIlluminations && illums.size() > 1 )
-			h.put( new Entry( -1, "all_illuminations" ), illums );
-		else
-		{
-			for ( final Illumination i : illums )
-			{
-				final ArrayList< Illumination > ill = new ArrayList< Illumination >();
-				ill.add( i );
-				
-				h.put( new Entry( i.getId(), "illumination_" + i.getName() ), ill );
-			}
-		}
-		
-		return h;
-	}
-
-	protected HashMap< Entry, List< Angle > > getAngles( final List< Angle > angles, final boolean sameModelAngles )
-	{
-		final HashMap< Entry, List< Angle > > h = new HashMap< Entry, List< Angle > >();
-		
-		if ( sameModelAngles && angles.size() > 1 )
-			h.put( new Entry( -1, "all_angles" ), angles );
-		else
-		{
-			for ( final Angle a : angles )
-			{
-				final ArrayList< Angle > al = new ArrayList< Angle >();
-				al.add( a );
-				
-				h.put( new Entry( a.getId(), "angle_" + a.getName() ), al );
-			}
-		}
-		
-		return h;
 	}
 
 	public static void preConcatenateTransform( final SpimData2 spimData, final ViewId viewId, final AffineTransform3D model, final String name )
@@ -772,72 +792,64 @@ public class Apply_Transformation implements PlugIn
 	 */
 	public static double assembleAllMetaData(
 			final SequenceDescription sequenceDescription,
-			final List< TimePoint > timepointsToProcess, 
-			final List< Channel > channelsToProcess,
-			final List< Illumination > illumsToProcess,
-			final List< Angle > anglesToProcess )
+			final Collection< ? extends ViewId > viewIdsToProcess )
 	{
 		double minResolution = Double.MAX_VALUE;
 		
-		for ( final TimePoint t : timepointsToProcess )
-			for ( final Channel c : channelsToProcess )
-				for ( final Illumination i : illumsToProcess )
-					for ( final Angle a : anglesToProcess )
-					{
-						// bureaucracy
-						final ViewId viewId = SpimData2.getViewId( sequenceDescription, t, c, a, i );
+		for ( final ViewId viewId : viewIdsToProcess )
+		{
+			final ViewDescription vd = sequenceDescription.getViewDescription( 
+					viewId.getTimePointId(), viewId.getViewSetupId() );
 
-						// this happens only if a viewsetup is not present in any timepoint
-						// (e.g. after appending fusion to a dataset)
-						if ( viewId == null )
-							continue;
+			if ( !vd.isPresent() )
+				continue;
+			
+			ViewSetup setup = vd.getViewSetup();
+			
+			// load metadata to update the registrations if required
+			// only use calibration as defined in the metadata
+			if ( !setup.hasVoxelSize() )
+			{
+				VoxelDimensions voxelSize = sequenceDescription.getImgLoader().getVoxelSize( viewId );
+				if ( voxelSize == null )
+				{
+					IOFunctions.println( "An error occured. Cannot load calibration for" +
+							" timepoint: " + vd.getTimePoint().getName() +
+							" angle: " + vd.getViewSetup().getAngle().getName() +
+							" channel: " + vd.getViewSetup().getChannel().getName() +
+							" illum: " + vd.getViewSetup().getIllumination().getName() );
+					
+					IOFunctions.println( "Quitting. Please set it manually when defining the dataset or by modifying the XML" );
+					
+					return Double.NaN;
+				}
+				setup.setVoxelSize( voxelSize );
+			}
 
-						final ViewDescription viewDescription = sequenceDescription.getViewDescription( 
-								viewId.getTimePointId(), viewId.getViewSetupId() );
-
-						if ( !viewDescription.isPresent() )
-							continue;
-						
-						ViewSetup setup = viewDescription.getViewSetup();
-						
-						// load metadata to update the registrations if required
-						// only use calibration as defined in the metadata
-						if ( !setup.hasVoxelSize() )
-						{
-							VoxelDimensions voxelSize = sequenceDescription.getImgLoader().getVoxelSize( viewId );
-							if ( voxelSize == null )
-							{
-								IOFunctions.println( "An error occured. Cannot load calibration for timepoint: " + t.getName() + " angle: " + 
-										a.getName() + " channel: " + c.getName() + " illum: " + i.getName() );
-								
-								IOFunctions.println( "Quitting. Please set it manually when defining the dataset or by modifying the XML" );
-								
-								return Double.NaN;
-							}
-							setup.setVoxelSize( voxelSize );
-						}
-
-						if ( !setup.hasVoxelSize() )
-						{
-							IOFunctions.println( "An error occured. No calibration available for timepoint: " + t.getName() + " angle: " + 
-									a.getName() + " channel: " + c.getName() + " illum: " + i.getName() );
-							
-							IOFunctions.println( "Quitting. Please set it manually when defining the dataset or by modifying the XML." );
-							IOFunctions.println( "Note: if you selected to load calibration independently for each image, it should." );
-							IOFunctions.println( "      have been loaded during interest point detection." );
-							
-							return Double.NaN;
-						}
-						
-						VoxelDimensions voxelSize = setup.getVoxelSize();
-						final double calX = voxelSize.dimension( 0 );
-						final double calY = voxelSize.dimension( 1 );
-						final double calZ = voxelSize.dimension( 2 );
-						
-						minResolution = Math.min( minResolution, calX );
-						minResolution = Math.min( minResolution, calY );
-						minResolution = Math.min( minResolution, calZ );
-					}
+			if ( !setup.hasVoxelSize() )
+			{
+				IOFunctions.println( "An error occured. No calibration available for" +
+						" timepoint: " + vd.getTimePoint().getName() +
+						" angle: " + vd.getViewSetup().getAngle().getName() +
+						" channel: " + vd.getViewSetup().getChannel().getName() +
+						" illum: " + vd.getViewSetup().getIllumination().getName() );
+				
+				IOFunctions.println( "Quitting. Please set it manually when defining the dataset or by modifying the XML." );
+				IOFunctions.println( "Note: if you selected to load calibration independently for each image, it should." );
+				IOFunctions.println( "      have been loaded during interest point detection." );
+				
+				return Double.NaN;
+			}
+			
+			VoxelDimensions voxelSize = setup.getVoxelSize();
+			final double calX = voxelSize.dimension( 0 );
+			final double calY = voxelSize.dimension( 1 );
+			final double calZ = voxelSize.dimension( 2 );
+			
+			minResolution = Math.min( minResolution, calX );
+			minResolution = Math.min( minResolution, calY );
+			minResolution = Math.min( minResolution, calZ );
+		}
 		
 		return minResolution;
 	}

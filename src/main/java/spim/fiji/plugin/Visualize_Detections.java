@@ -8,10 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
-import mpicbg.spim.data.sequence.Illumination;
-import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
@@ -40,6 +37,22 @@ public class Visualize_Detections implements PlugIn
 	public static int defaultDetections = 0;
 	public static double defaultDownsample = 1.0;
 	public static boolean defaultDisplayInput = false;
+
+	protected static class Params
+	{
+		final ArrayList< ChannelProcess > channelsToProcess;
+		final int detections;
+		final double downsample;
+		final boolean displayInput;
+
+		public Params( final ArrayList< ChannelProcess > channelsToProcess, final int detections, final double downsample, final boolean displayInput )
+		{
+			this.channelsToProcess = channelsToProcess;
+			this.detections = detections;
+			this.downsample = downsample;
+			this.displayInput = displayInput;
+		}
+	}
 	
 	@Override
 	public void run( final String arg0 )
@@ -50,8 +63,17 @@ public class Visualize_Detections implements PlugIn
 		if ( !result.queryXML( "visualize detections", true, false, true, true ) )
 			return;
 
+		final List< ViewId > viewIds = SpimData2.getAllViewIdsSorted( result.getData(), result.getViewSetupsToProcess(), result.getTimePointsToProcess() );
+		final Params params = queryDetails( result.getData(), viewIds );
+
+		if ( params != null )
+			visualize( result.getData(), viewIds, params.channelsToProcess, params.detections, params.downsample, params.displayInput );
+	}
+
+	public static Params queryDetails( final SpimData2 spimData, final List< ViewId > viewIds )
+	{
 		// ask which channels have the objects we are searching for
-		final List< Channel > channels = result.getData().getSequenceDescription().getAllChannelsOrdered();
+		final List< Channel > channels = spimData.getSequenceDescription().getAllChannelsOrdered();
 
 		// build up the dialog
 		final GenericDialog gd = new GenericDialog( "Choose segmentations to display" );
@@ -64,15 +86,10 @@ public class Visualize_Detections implements PlugIn
 		int j = 0;
 		for ( final Channel channel : channels )
 		{
-			final String[] labels = Interest_Point_Registration.getAllInterestPointLabelsForChannel(
-					result.getData(), result.getTimePointsToProcess(),
-					result.getAnglesToProcess(),
-					result.getIlluminationsToProcess(),
-					channel,
-					"visualize" );
+			final String[] labels = Interest_Point_Registration.getAllInterestPointLabelsForChannel( spimData, viewIds, channel, "visualize" );
 			
 			if ( labels == null )
-				return;
+				return null;
 			
 			if ( Interest_Point_Registration.defaultChannelLabels[ j ] >= labels.length )
 				Interest_Point_Registration.defaultChannelLabels[ j ] = 0;
@@ -89,7 +106,7 @@ public class Visualize_Detections implements PlugIn
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
-			return;
+			return null;
 		
 		// assemble which channels have been selected with with label
 		final ArrayList< ChannelProcess > channelsToProcess = new ArrayList< ChannelProcess >();
@@ -115,7 +132,7 @@ public class Visualize_Detections implements PlugIn
 		if ( channelsToProcess.size() == 0 )
 		{
 			IOFunctions.println( "No channels selected. Quitting." );
-			return;
+			return null;
 		}
 		
 		for ( final ChannelProcess c : channelsToProcess )
@@ -124,64 +141,64 @@ public class Visualize_Detections implements PlugIn
 		final int detections = defaultDetections = gd.getNextChoiceIndex();
 		final double downsample = defaultDownsample = gd.getNextNumber();
 		final boolean displayInput = defaultDisplayInput = gd.getNextBoolean();
-		
+
+		return new Params( channelsToProcess, detections, downsample, displayInput );
+	}
+
+	public static void visualize(
+			final SpimData2 spimData,
+			final List< ViewId > viewIds,
+			final ArrayList< ChannelProcess > channelsToProcess,
+			final int detections,
+			final double downsample,
+			final boolean displayInput )
+	{
 		//
 		// load the images and render the segmentations
 		//
-		
 		final DisplayImage di = new DisplayImage();
-		
-		for ( final TimePoint t : result.getTimePointsToProcess() )
+
+		for ( final ViewId viewId : viewIds )
 			for ( final ChannelProcess c : channelsToProcess )
-				for ( final Illumination i : result.getIlluminationsToProcess() )
-					for ( final Angle a : result.getAnglesToProcess() )
+			{
+				// get the viewdescription
+				final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( viewId.getTimePointId(), viewId.getViewSetupId() );
+
+				// check if the view is present
+				if ( !vd.isPresent() || vd.getViewSetup().getChannel().getId() != c.getChannel().getId() )
+					continue;
+
+				// load and display
+				final String name = "TP" + vd.getTimePointId() + "_Ch" + c.getChannel().getName() + "(label='" + c.getLabel() + "')_ill" + vd.getViewSetup().getIllumination().getName() + "_angle" + vd.getViewSetup().getAngle().getName();
+				final Interval interval;
+				
+				if ( displayInput )
+				{
+					@SuppressWarnings( "unchecked" )
+					final RandomAccessibleInterval< UnsignedShortType > img = ( RandomAccessibleInterval< UnsignedShortType > ) spimData.getSequenceDescription().getImgLoader().getImage( vd );
+					di.exportImage( img, name );
+					interval = img;
+				}
+				else
+				{
+					if ( !vd.getViewSetup().hasSize() )
 					{
-						final ViewId viewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c.getChannel(), a, i );
-						
-						// this happens only if a viewsetup is not present in any timepoint
-						// (e.g. after appending fusion to a dataset)
-						if ( viewId == null )
-							continue;
-
-						// get the viewdescription
-						final ViewDescription viewDescription = result.getData().getSequenceDescription().getViewDescription( 
-								viewId.getTimePointId(), viewId.getViewSetupId() );
-
-						// check if the view is present
-						if ( !viewDescription.isPresent() )
-							continue;
-
-						// load and display
-						final String name = "TP" + t.getName() + "_Ch" + c.getChannel().getName() + "(label='" + c.getLabel() + "')_ill" + i.getName() + "_angle" + a.getName();
-						final Interval interval;
-						
-						if ( displayInput )
-						{
-							@SuppressWarnings( "unchecked" )
-							final RandomAccessibleInterval< UnsignedShortType > img = ( RandomAccessibleInterval< UnsignedShortType > ) result.getData().getSequenceDescription().getImgLoader().getImage( viewDescription );							
-							di.exportImage( img, name );
-							interval = img;
-						}
-						else
-						{
-							if ( !viewDescription.getViewSetup().hasSize() )
-							{
-								IOFunctions.println( "Cannot load image dimensions from XML for " + name + ", using min/max of all detections instead." );
-								interval = null;
-							}
-							else
-							{
-								interval = ImgLib2Temp.getIntervalFromDimension( viewDescription.getViewSetup().getSize() );
-								// TODO: change back to imglib2 implementation once uploaded to Fiji
-								//interval = new FinalInterval( viewDescription.getViewSetup().getSize() );
-							}
-						}
-						
-						di.exportImage( renderSegmentations( result.getData(), viewId, c.getLabel(), detections, interval, downsample ), "seg of " + name );
+						IOFunctions.println( "Cannot load image dimensions from XML for " + name + ", using min/max of all detections instead." );
+						interval = null;
 					}
+					else
+					{
+						interval = ImgLib2Temp.getIntervalFromDimension( vd.getViewSetup().getSize() );
+						// TODO: change back to imglib2 implementation once uploaded to Fiji
+						//interval = new FinalInterval( viewDescription.getViewSetup().getSize() );
+					}
+				}
+				
+				di.exportImage( renderSegmentations( spimData, viewId, c.getLabel(), detections, interval, downsample ), "seg of " + name );
+			}
 	}
 	
-	protected Img< UnsignedShortType > renderSegmentations(
+	protected static Img< UnsignedShortType > renderSegmentations(
 			final SpimData2 data,
 			final ViewId viewId,
 			final String label,
@@ -191,7 +208,7 @@ public class Visualize_Detections implements PlugIn
 	{		
 		final InterestPointList ipl = data.getViewInterestPoints().getViewInterestPointLists( viewId ).getInterestPointList( label );
 		
-		if ( ipl.getInterestPoints() == null || ipl.getInterestPoints().size() == 0 )
+		if ( ipl.getInterestPoints() == null )
 			ipl.loadInterestPoints();
 			
 		if ( interval == null )
@@ -257,7 +274,7 @@ public class Visualize_Detections implements PlugIn
 			for ( final InterestPoint ip : ipl.getInterestPoints() )
 				map.put( ip.getId(), ip );
 			
-			if ( ipl.getCorrespondingInterestPoints() == null || ipl.getCorrespondingInterestPoints().size() == 0 )
+			if ( ipl.getCorrespondingInterestPoints() == null )
 			{
 				if ( !ipl.loadCorrespondingInterestPoints() )
 				{
