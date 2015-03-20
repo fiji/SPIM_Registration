@@ -34,6 +34,8 @@ import mpicbg.spim.io.IOFunctions;
 import spim.fiji.spimdata.explorer.popup.DetectInterestPointsPopup;
 import spim.fiji.spimdata.explorer.popup.DisplayViewPopup;
 import spim.fiji.spimdata.explorer.popup.RegisterInterestPointsPopup;
+import spim.fiji.spimdata.explorer.popup.Separator;
+import spim.fiji.spimdata.explorer.popup.SpecifyCalibrationPopup;
 import spim.fiji.spimdata.explorer.popup.ViewExplorerSetable;
 
 public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > > extends JPanel
@@ -44,8 +46,11 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 	{
 		IOFunctions.printIJLog = true;
 		staticPopups.add( new DisplayViewPopup() );
+		staticPopups.add( new Separator() );
 		staticPopups.add( new DetectInterestPointsPopup() );
 		staticPopups.add( new RegisterInterestPointsPopup() );
+		staticPopups.add( new Separator() );
+		staticPopups.add( new SpecifyCalibrationPopup() );
 	}
 
 	private static final long serialVersionUID = -3767947754096099774L;

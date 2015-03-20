@@ -1,10 +1,13 @@
 package spim.fiji.spimdata.explorer.popup;
 
-import javax.swing.JMenuItem;
+import javax.swing.JComponent;
 
+import mpicbg.spim.data.generic.AbstractSpimData;
+import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 
 public interface ViewExplorerSetable
 {
-	public JMenuItem setViewExplorer( final ViewSetupExplorerPanel< ?, ? > panel );
+	public JComponent setViewExplorer( final ViewSetupExplorerPanel< ? extends AbstractSpimData< ? extends AbstractSequenceDescription< ?, ?, ? > >, ? > panel );
 }
+// AbstractSpimData< ? extends AbstractSequenceDescription< ?, ?, ? > >
