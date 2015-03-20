@@ -77,8 +77,10 @@ public abstract class BoundingBox implements Interval
 
 	/**
 	 * Called before the XML is potentially saved
+	 *
+	 * @return - true if the spimdata was modified, otherwise false
 	 */
-	public abstract void cleanUp( final boolean saveXML, final String xml, final String clusterExtension );
+	public abstract boolean cleanUp();
 
 	public int getDownSampling() { return downsampling; }
 	

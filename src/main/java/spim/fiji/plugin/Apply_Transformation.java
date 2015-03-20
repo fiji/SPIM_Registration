@@ -100,7 +100,7 @@ public class Apply_Transformation implements PlugIn
 		applyModels( data, params.minResolution, params.applyTo, modelLinks );
 
 		// now save it
-		Interest_Point_Registration.saveXML( result.getData(), result.getXMLFileName(), result.getClusterExtension() );
+		SpimData2.saveXML( result.getData(), result.getXMLFileName(), result.getClusterExtension() );
 
 	}
 

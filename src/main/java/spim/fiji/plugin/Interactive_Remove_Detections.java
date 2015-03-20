@@ -126,7 +126,7 @@ public class Interactive_Remove_Detections implements PlugIn
 			return;
 
 		// now save it
-		Interest_Point_Registration.saveXML( result.getData(), result.getXMLFileName(), result.getClusterExtension() );
+		SpimData2.saveXML( result.getData(), result.getXMLFileName(), result.getClusterExtension() );
 	}
 
 	public static Pair< String, String > queryLabelAndNewLabel( final SpimData2 spimData, final ViewDescription vd )

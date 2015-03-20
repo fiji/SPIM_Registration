@@ -4,6 +4,7 @@ import ij.ImageJ;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -148,7 +149,7 @@ public class Duplicate_Transformation implements PlugIn
 		}
 
 		// now save it in case something was applied
-		Interest_Point_Registration.saveXML( result.getData(), result.getXMLFileName(), result.getClusterExtension() );
+		SpimData2.saveXML( result.getData(), new File( result.getXMLFileName() ).getName(), result.getClusterExtension() );
 	}
 
 	protected void askForRegistrations( final GenericDialog gd )

@@ -23,7 +23,6 @@ import spim.fiji.plugin.interestpointdetection.InterestPointDetection;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
@@ -221,22 +220,7 @@ public class Interest_Point_Detection implements PlugIn
 			
 			// save the xml
 			if ( saveXML )
-			{
-				final XmlIoSpimData2 io = new XmlIoSpimData2( clusterExtension );
-				
-				final String xml = new File( data.getBasePath(), new File( xmlFileName ).getName() ).getAbsolutePath();
-				try 
-				{
-					io.save( data, xml );
-					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + io.lastFileName() + "'." );
-				}
-				catch ( Exception e )
-				{
-					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + io.lastFileName() + "': " + e );
-					e.printStackTrace();
-					return false;
-				}
-			}
+				SpimData2.saveXML( data, xmlFileName, clusterExtension );
 		}
 
 		return true;

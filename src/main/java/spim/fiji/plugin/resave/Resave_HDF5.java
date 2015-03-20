@@ -2,7 +2,6 @@ package spim.fiji.plugin.resave;
 
 import ij.plugin.PlugIn;
 
-import java.io.File;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -29,7 +28,6 @@ import spim.fiji.plugin.Toggle_Cluster_Options;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.resave.Generic_Resave_HDF5.Parameters;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import bdv.export.ExportMipmapInfo;
@@ -62,19 +60,7 @@ public class Resave_HDF5 implements PlugIn
 		if ( loadDimensions( xml.getData(), xml.getViewSetupsToProcess() ) )
 		{
 			// save the XML again with the dimensions loaded
-			final XmlIoSpimData2 io = new XmlIoSpimData2( xml.getClusterExtension() );
-
-			final String xmlFile = new File( xml.getData().getBasePath(), new File( xml.getXMLFileName() ).getName() ).getAbsolutePath();
-			try
-			{
-				io.save( xml.getData(), xmlFile );
-				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + io.lastFileName() + "'." );
-			}
-			catch ( Exception e )
-			{
-				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + io.lastFileName() + "': " + e );
-				e.printStackTrace();
-			}
+			SpimData2.saveXML( xml.getData(), xml.getXMLFileName(), xml.getClusterExtension() );
 		}
 
 		final Map< Integer, ExportMipmapInfo > perSetupExportMipmapInfo = proposeMipmaps( xml.getViewSetupsToProcess() );

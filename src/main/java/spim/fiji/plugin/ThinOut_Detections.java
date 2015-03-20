@@ -21,7 +21,6 @@ import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.thinout.ChannelProcessThinOut;
 import spim.fiji.plugin.thinout.Histogram;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
@@ -68,19 +67,7 @@ public class ThinOut_Detections implements PlugIn
 			return;
 
 		// write new xml
-		final XmlIoSpimData2 io = new XmlIoSpimData2( xml.getClusterExtension() );
-		
-		final String xmlFile = new File( xml.getData().getBasePath(), new File( xml.getXMLFileName() ).getName() ).getAbsolutePath();
-		try 
-		{
-			io.save( xml.getData(), xmlFile );
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + io.lastFileName() + "'." );
-		}
-		catch ( Exception e )
-		{
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + io.lastFileName() + "': " + e );
-			e.printStackTrace();
-		}
+		SpimData2.saveXML( data, xml.getXMLFileName(), xml.getClusterExtension() );
 	}
 
 	public static boolean thinOut( final SpimData2 spimData, final List< ViewId > viewIds, final List< ChannelProcessThinOut > channels )

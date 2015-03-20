@@ -9,7 +9,6 @@ import ij.plugin.PlugIn;
 import java.awt.AWTEvent;
 import java.awt.Choice;
 import java.awt.event.ItemEvent;
-import java.io.File;
 import java.util.ArrayList;
 
 import mpicbg.spim.io.IOFunctions;
@@ -23,7 +22,6 @@ import spim.fiji.plugin.queryXML.GenericLoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.plugin.util.MyMultiLineLabel;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.XmlIoSpimData2;
 
 public class Define_Multi_View_Dataset implements PlugIn
 {
@@ -110,24 +108,15 @@ public class Define_Multi_View_Dataset implements PlugIn
 		}
 		else
 		{
-			final XmlIoSpimData2 io = new XmlIoSpimData2( "" );
-			
-			final String xml = new File( spimData.getBasePath(), xmlFileName ).getAbsolutePath();
-			try 
-			{
-				if ( save )
-				{
-					io.save( spimData, xml );
-					IOFunctions.println( "Saved xml '" + xml + "'." );
-					GenericLoadParseQueryXML.defaultXMLfilename = xml;
-				}
+			final String xml = SpimData2.saveXML( spimData, xmlFileName, "" );
 
+			if ( xml != null )
+			{
+				GenericLoadParseQueryXML.defaultXMLfilename = xml;
 				return new ValuePair< SpimData2, String >( spimData, xml );
 			}
-			catch ( Exception e )
+			else
 			{
-				IOFunctions.println( "Could not save xml '" + xml + "': " + e );
-				e.printStackTrace();
 				return null;
 			}
 		}

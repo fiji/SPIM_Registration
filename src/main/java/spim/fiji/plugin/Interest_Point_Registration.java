@@ -5,10 +5,8 @@ import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
 import java.awt.Font;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -27,7 +25,6 @@ import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.process.interestpointregistration.ChannelProcess;
@@ -366,27 +363,9 @@ public class Interest_Point_Registration implements PlugIn
 
 		// save the XML including transforms and correspondences
 		if ( saveXML )
-			saveXML( data, xmlFileName, clusterExtension );
+			SpimData2.saveXML( data, xmlFileName, clusterExtension );
 
 		return true;
-	}
-	
-	public static void saveXML( final SpimData2 data, final String xmlFileName, final String clusterExtension  )
-	{
-		// save the xml
-		final XmlIoSpimData2 io = new XmlIoSpimData2( clusterExtension );
-		
-		final String xml = new File( data.getBasePath(), new File( xmlFileName ).getName() ).getAbsolutePath();
-		try 
-		{
-			io.save( data, xml );
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + io.lastFileName() + "'." );
-		}
-		catch ( Exception e )
-		{
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + io.lastFileName() + "': " + e );
-			e.printStackTrace();
-		}
 	}
 
 	/**

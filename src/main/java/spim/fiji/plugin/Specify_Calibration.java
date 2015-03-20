@@ -5,10 +5,8 @@ import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
 import java.awt.TextField;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 import mpicbg.spim.data.SpimData;
@@ -28,7 +26,6 @@ import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
-import spim.fiji.spimdata.XmlIoSpimData2;
 
 public class Specify_Calibration implements PlugIn
 {
@@ -54,19 +51,7 @@ public class Specify_Calibration implements PlugIn
 		applyCal( maxCal, data, viewIds );
 
 		// save the xml
-		final XmlIoSpimData2 io = new XmlIoSpimData2( result.getClusterExtension() );
-		
-		final String xml = new File( result.getData().getBasePath(), new File( result.getXMLFileName() ).getName() ).getAbsolutePath();
-		try 
-		{
-			io.save( result.getData(), xml );
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + io.lastFileName() + "'." );
-		}
-		catch ( Exception e )
-		{
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + io.lastFileName() + "': " + e );
-			e.printStackTrace();
-		}
+		SpimData2.saveXML( data, result.getXMLFileName(), result.getClusterExtension() );
 	}
 
 	public static boolean queryNewCal( final ArrayList< Cal > calibrations, final Cal maxCal )
