@@ -8,6 +8,7 @@ import java.util.List;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
+import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.sequence.ViewId;
@@ -57,16 +58,25 @@ public class SpecifyCalibrationPopup extends JMenuItem implements ViewExplorerSe
 			if ( !Specify_Calibration.queryNewCal( calibrations, maxCal ) )
 				return;
 
-			Specify_Calibration.applyCal( maxCal, panel.getSpimData(), viewIds );
-
-			if ( showWarning )
+			if ( SpimData.class.isInstance( panel.getSpimData() ) )
+			{
+				Specify_Calibration.applyCal( maxCal, (SpimData)panel.getSpimData(), viewIds );
+	
+				if ( showWarning )
+				{
+					JOptionPane.showMessageDialog(
+							null,
+							"The calibration was set, but this is not reflected in the transformations yet (Click 'Info' Button). If you want to\n"
+							+ "do so, please call 'Apply Transformation' and use the image calibration as basis for transformations." );
+	
+					showWarning = false;
+				}
+			}
+			else
 			{
 				JOptionPane.showMessageDialog(
 						null,
-						"The calibration was set, but this is not reflected in the transformations yet (Click 'Info' Button).\n"
-						+ "If you want to do so, please call 'Apply Transformation' and use the image calibration as basis for transformations." );
-
-				showWarning = false;
+						"Applying the calibration is not supported for '" + panel.getSpimData().getClass().getSimpleName() + "', needs to extend SpimData." );
 			}
 		}
 	}

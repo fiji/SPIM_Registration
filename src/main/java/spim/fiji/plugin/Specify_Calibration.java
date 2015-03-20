@@ -11,12 +11,14 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
+import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.VoxelDimensions;
@@ -106,7 +108,8 @@ public class Specify_Calibration implements PlugIn
 		return true;
 	}
 
-	public static void applyCal( final Cal maxCal, final AbstractSpimData< ? extends AbstractSequenceDescription< ?, ?, ? > > spimData, final List< ViewId > viewIds )
+	// TODO: this should not be necessary, could be AbstractSpimData
+	public static void applyCal( final Cal maxCal, final SpimData spimData, final List< ViewId > viewIds )
 	{
 		// this is the same for all timepoints, we are just interested in the ViewSetup
 		final TimePoint t = spimData.getSequenceDescription().getTimePoints().getTimePointsOrdered().get( 0 );
@@ -116,11 +119,10 @@ public class Specify_Calibration implements PlugIn
 			if ( viewId.getTimePointId() != t.getId() )
 				continue;
 
-			final BasicViewDescription< ? > desc = spimData.getSequenceDescription().getViewDescriptions().get( viewId );
-			final BasicViewSetup viewSetup = desc.getViewSetup();
+			final ViewDescription desc = spimData.getSequenceDescription().getViewDescriptions().get( viewId );
+			final ViewSetup viewSetup = desc.getViewSetup();
 
-			// TODO: this should not be necessary
-			((ViewSetup)viewSetup).setVoxelSize( new FinalVoxelDimensions( maxCal.unit(),
+			viewSetup.setVoxelSize( new FinalVoxelDimensions( maxCal.unit(),
 					maxCal.getCal()[ 0 ],
 					maxCal.getCal()[ 1 ],
 					maxCal.getCal()[ 2 ] ) );
