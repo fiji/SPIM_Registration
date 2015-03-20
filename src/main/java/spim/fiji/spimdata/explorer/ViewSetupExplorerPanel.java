@@ -34,6 +34,7 @@ import mpicbg.spim.io.IOFunctions;
 import spim.fiji.spimdata.explorer.popup.ApplyTransformationPopup;
 import spim.fiji.spimdata.explorer.popup.DetectInterestPointsPopup;
 import spim.fiji.spimdata.explorer.popup.DisplayViewPopup;
+import spim.fiji.spimdata.explorer.popup.FusionPopup;
 import spim.fiji.spimdata.explorer.popup.RegisterInterestPointsPopup;
 import spim.fiji.spimdata.explorer.popup.Separator;
 import spim.fiji.spimdata.explorer.popup.SpecifyCalibrationPopup;
@@ -50,6 +51,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		staticPopups.add( new Separator() );
 		staticPopups.add( new DetectInterestPointsPopup() );
 		staticPopups.add( new RegisterInterestPointsPopup() );
+		staticPopups.add( new FusionPopup() );
 		staticPopups.add( new Separator() );
 		staticPopups.add( new SpecifyCalibrationPopup() );
 		staticPopups.add( new ApplyTransformationPopup() );
@@ -79,6 +81,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		initComponent();
 	}
 
+	public ViewSetupTableModel< AS > getTableModel() { return tableModel; }
 	public AS getSpimData() { return data; }
 
 	public List< BasicViewDescription< ? extends BasicViewSetup > > selectedRows()
