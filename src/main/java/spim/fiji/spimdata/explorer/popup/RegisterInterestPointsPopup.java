@@ -23,7 +23,7 @@ public class RegisterInterestPointsPopup extends JMenuItem implements ViewExplor
 	{
 		super( "Register using Interest Points ..." );
 
-		this.addActionListener( new RegisterInterestPointsActionListener() );
+		this.addActionListener( new MyActionListener() );
 	}
 
 	@Override
@@ -33,7 +33,7 @@ public class RegisterInterestPointsPopup extends JMenuItem implements ViewExplor
 		return this;
 	}
 
-	public class RegisterInterestPointsActionListener implements ActionListener
+	public class MyActionListener implements ActionListener
 	{
 		@Override
 		public void actionPerformed( final ActionEvent e )

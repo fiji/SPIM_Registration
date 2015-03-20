@@ -30,8 +30,8 @@ public class DisplayViewPopup extends JMenu implements ViewExplorerSetable
 		final JMenuItem as32bit = new JMenuItem( "As 32 Bit" );
 		final JMenuItem as16bit = new JMenuItem( "As 16 Bit" );
 
-		as16bit.addActionListener( new DisplayViewActionListener( true ) );
-		as32bit.addActionListener( new DisplayViewActionListener( false ) );
+		as16bit.addActionListener( new MyActionListener( true ) );
+		as32bit.addActionListener( new MyActionListener( false ) );
 
 		this.add( as16bit );
 		this.add( as32bit );
@@ -44,11 +44,11 @@ public class DisplayViewPopup extends JMenu implements ViewExplorerSetable
 		return this;
 	}
 
-	public class DisplayViewActionListener implements ActionListener
+	public class MyActionListener implements ActionListener
 	{
 		final boolean as16bit;
 
-		public DisplayViewActionListener( final boolean as16bit )
+		public MyActionListener( final boolean as16bit )
 		{
 			this.as16bit = as16bit;
 		}

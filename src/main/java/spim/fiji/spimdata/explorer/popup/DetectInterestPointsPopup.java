@@ -22,7 +22,7 @@ public class DetectInterestPointsPopup extends JMenuItem implements ViewExplorer
 	{
 		super( "Detect Interest Points ..." );
 
-		this.addActionListener( new DetectInterestPointsActionListener() );
+		this.addActionListener( new MyActionListener() );
 	}
 
 	@Override
@@ -32,7 +32,7 @@ public class DetectInterestPointsPopup extends JMenuItem implements ViewExplorer
 		return this;
 	}
 
-	public class DetectInterestPointsActionListener implements ActionListener
+	public class MyActionListener implements ActionListener
 	{
 		@Override
 		public void actionPerformed( final ActionEvent e )

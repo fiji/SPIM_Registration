@@ -28,7 +28,7 @@ public class SpecifyCalibrationPopup extends JMenuItem implements ViewExplorerSe
 	{
 		super( "Specify Calibration ..." );
 
-		this.addActionListener( new DetectInterestPointsActionListener() );
+		this.addActionListener( new MyActionListener() );
 	}
 
 	@Override
@@ -38,7 +38,7 @@ public class SpecifyCalibrationPopup extends JMenuItem implements ViewExplorerSe
 		return this;
 	}
 
-	public class DetectInterestPointsActionListener implements ActionListener
+	public class MyActionListener implements ActionListener
 	{
 		@Override
 		public void actionPerformed( final ActionEvent e )
