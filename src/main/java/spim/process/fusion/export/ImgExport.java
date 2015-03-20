@@ -16,12 +16,10 @@ public interface ImgExport
 {
 	/**
 	 * Called last when the fusion is finished (e.g. to write the XML)
-	 * @return - if the final step was successful
+	 *
+	 * @return - true if the spimdata was modified, otherwise false
 	 */
 	public boolean finish();
-
-	/** If an XML is written in the process **/
-	public void setClusterExt( final String clusterExt );
 
 	public void setXMLData( final List< TimePoint > timepointsToProcess, final List< ViewSetup > newViewSetups );
 

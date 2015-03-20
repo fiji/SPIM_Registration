@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 
@@ -18,6 +19,7 @@ import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
+import mpicbg.spim.io.IOFunctions;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
 /**
@@ -290,5 +292,25 @@ public class SpimData2 extends SpimData
 				});
 
 		return timepoints;
+	}
+
+	public static String saveXML( final SpimData2 data, final String xmlFileName, final String clusterExtension  )
+	{
+		// save the xml
+		final XmlIoSpimData2 io = new XmlIoSpimData2( clusterExtension );
+		
+		final String xml = new File( data.getBasePath(), new File( xmlFileName ).getName() ).getAbsolutePath();
+		try 
+		{
+			io.save( data, xml );
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + io.lastFileName() + "'." );
+			return xml;
+		}
+		catch ( Exception e )
+		{
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + io.lastFileName() + "': " + e );
+			e.printStackTrace();
+			return null;
+		}
 	}
 }

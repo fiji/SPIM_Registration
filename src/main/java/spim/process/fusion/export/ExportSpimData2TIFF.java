@@ -46,11 +46,6 @@ public class ExportSpimData2TIFF implements ImgExport
 	Save3dTIFF saver;
 	SpimData2 spimData;
 
-	String clusterExt = "";
-
-	@Override
-	public void setClusterExt( final String clusterExt ) { this.clusterExt = clusterExt; }
-
 	public static class FileNamePattern
 	{
 		public int layoutTP = 0, layoutChannels = 0, layoutIllum = 0, layoutAngles = 0;
@@ -89,14 +84,16 @@ public class ExportSpimData2TIFF implements ImgExport
 	@Override
 	public boolean finish()
 	{
-		XmlIoSpimData2 io = new XmlIoSpimData2( clusterExt );
+		XmlIoSpimData2 io = new XmlIoSpimData2( "" );
 
 		try
 		{
 			io.save( spimData, new File( params.getXMLFile() ).getAbsolutePath() );
 			
 			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + io.lastFileName() + "'." );
-			return true;
+
+			// this spimdata object was not modified, we just wrote a new one
+			return false;
 		}
 		catch ( SpimDataException e )
 		{

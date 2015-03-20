@@ -4,7 +4,6 @@ import ij.gui.GenericDialog;
 
 import java.awt.Font;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -31,7 +30,6 @@ import spim.fiji.plugin.Visualize_Detections;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
@@ -56,7 +54,8 @@ public class AutomaticReorientation extends ManualBoundingBox
 	public static double defaultPercent = 10;
 
 	int reorientate;
-
+	List< ViewId > viewIdsToApply;
+	
 	public AutomaticReorientation( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
 		super( spimData, viewIdsToProcess );
@@ -66,24 +65,39 @@ public class AutomaticReorientation extends ManualBoundingBox
 	 * Called before the XML is potentially saved
 	 */
 	@Override
-	public void cleanUp( final boolean saveXML, final String xml, final String clusterExtension )
+	public boolean cleanUp()
 	{
-		if ( saveXML && ( reorientate == 0 || reorientate == 1 ) )
+		if ( reorientate == 0 || reorientate == 1 )
 		{
-			// save the xml
-			final XmlIoSpimData2 io = new XmlIoSpimData2( clusterExtension );
-
-			try
+			// the spimdata registrations were changed
+			return true;
+		}
+		else if ( reorientate == 2 )
+		{
+			// remove the registrations we added
+			if ( viewIdsToApply == null )
 			{
-				io.save( spimData, xml );
-				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + io.lastFileName() + "' (applied the transformation to mimimize the bounding box)." );
+				IOFunctions.println( "Something went wrong, the viewIdsToApply list is null." );
 			}
-			catch ( Exception e )
+			else
 			{
-				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + io.lastFileName() + "': " + e );
-				e.printStackTrace();
+				for ( final ViewId viewId : viewIdsToApply )
+				{
+					final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( viewId );
+					
+					if ( !vd.isPresent() )
+						continue;
+
+					// get the registration
+					final ViewRegistration r = spimData.getViewRegistrations().getViewRegistration( viewId );
+					final List< ViewTransform > vtl = r.getTransformList();
+					vtl.remove( 0 );
+					r.updateModel();
+				}
 			}
 		}
+
+		return false;
 	}
 
 	@Override
@@ -219,8 +233,6 @@ public class AutomaticReorientation extends ManualBoundingBox
 			// set the registration for all or some of the views
 			//
 			IOFunctions.println( "Final transformation model: " + pair.getA() );
-
-			final List< ViewId > viewIdsToApply;
 
 			if ( reorientate == 0 ) // apply to all views
 			{

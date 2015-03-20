@@ -1,15 +1,11 @@
 package spim.process.fusion.export;
 
-import fiji.util.gui.GenericDialogPlus;
 import ij.gui.GenericDialog;
 
-import java.io.File;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.registration.ViewTransform;
@@ -27,10 +23,7 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import spim.fiji.plugin.fusion.BoundingBox;
-import spim.fiji.plugin.queryXML.LoadParseQueryXML;
-import spim.fiji.plugin.resave.PluginHelper;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.imgloaders.StackImgLoaderIJ;
 import spim.process.fusion.export.ExportSpimData2TIFF.FileNamePattern;
 
@@ -43,13 +36,6 @@ public class AppendSpimData2 implements ImgExport
 
 	Save3dTIFF saver;
 	SpimData2 spimData;
-
-	String xmlFile;
-
-	String clusterExt = "";
-
-	@Override
-	public void setClusterExt( final String clusterExt ) { this.clusterExt = clusterExt; }
 
 	@Override
 	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval<T> img, final BoundingBox bb, final TimePoint tp, final ViewSetup vs )
@@ -83,21 +69,8 @@ public class AppendSpimData2 implements ImgExport
 	@Override
 	public boolean finish()
 	{
-		XmlIoSpimData2 io = new XmlIoSpimData2( clusterExt );
-
-		try
-		{
-			io.save( spimData, new File( xmlFile ).getAbsolutePath() );
-			
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + io.lastFileName() + "'." );
-			return true;
-		}
-		catch ( SpimDataException e )
-		{
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + io.lastFileName() + "'." );
-			e.printStackTrace();
-			return false;
-		}
+		// this spimdata object was modified
+		return true;
 	}
 
 	@Override
@@ -127,7 +100,7 @@ public class AppendSpimData2 implements ImgExport
 			IOFunctions.println( "New timepoints and new viewsetup list not set yet ... cannot continue" );
 			return false;
 		}
-
+		/*
 		final GenericDialogPlus gd = new GenericDialogPlus( "Append dataset using TIFF" );
 
 		if ( defaultPath == null )
@@ -146,7 +119,7 @@ public class AppendSpimData2 implements ImgExport
 			xmlFile += ".xml";
 
 		defaultPath = LoadParseQueryXML.defaultXMLfilename = xmlFile;
-		
+		*/
 		this.spimData = appendSpimData2( oldSpimData, newTimepoints, newViewSetups );
 
 		final boolean compress = loader.getFileNamePattern().endsWith( ".zip" );

@@ -4,7 +4,6 @@ import ij.ImageJ;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -18,7 +17,6 @@ import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import spim.process.fusion.boundingbox.AutomaticBoundingBox;
 import spim.process.fusion.boundingbox.AutomaticReorientation;
@@ -79,6 +77,13 @@ public class Image_Fusion implements PlugIn
 
 	public boolean fuse(
 			final SpimData2 data,
+			final List< ViewId > viewIds )
+	{
+		return fuse( data, viewIds, "", null, false );
+	}
+
+	public boolean fuse(
+			final SpimData2 data,
 			final List< ViewId > viewIds,
 			final String clusterExtension,
 			final String xmlFileName,
@@ -130,9 +135,7 @@ public class Image_Fusion implements PlugIn
 		final int imgExportAlgorithm = defaultImgExportAlgorithm = gd.getNextChoiceIndex();
 
 		final Fusion fusion = staticFusionAlgorithms.get( fusionAlgorithm ).newInstance( data, viewIds );
-
 		final BoundingBox boundingBox = staticBoundingBoxAlgorithms.get( boundingBoxAlgorithm ).newInstance( data, viewIds );
-
 		final ImgExport imgExport = staticImgExportAlgorithms.get( imgExportAlgorithm ).newInstance();
 
 		if ( !boundingBox.queryParameters( fusion, imgExport ) )
@@ -148,46 +151,31 @@ public class Image_Fusion implements PlugIn
 		if ( !imgExport.queryParameters( data ) )
 			return false;
 
-		imgExport.setClusterExt( clusterExtension );
+		// did anyone modify this SpimData object?
+		boolean spimDataModified = false;
+
 		fusion.fuseData( boundingBox, imgExport );
 
-		boundingBox.cleanUp( saveXML, new File( data.getBasePath(), new File( xmlFileName ).getName() ).getAbsolutePath(), clusterExtension );
+		spimDataModified |= boundingBox.cleanUp();
 
 		// save the XML if metadata was updated
 		if ( data.getSequenceDescription().getImgLoader() instanceof AbstractImgLoader )
 		{
-			boolean updated = false;
-			
 			try
 			{
 				for ( final ViewSetup setup : data.getSequenceDescription().getViewSetupsOrdered() )
-					updated |= ( (AbstractImgLoader)data.getSequenceDescription().getImgLoader() ).updateXMLMetaData( setup, false );
+					spimDataModified |= ( (AbstractImgLoader)data.getSequenceDescription().getImgLoader() ).updateXMLMetaData( setup, false );
 			}
 			catch( Exception e )
 			{
 				IOFunctions.println( "Failed to update metadata, this should not happen: " + e );
 			}
-			
-			if ( updated && saveXML )
-			{
-				// save the xml
-				final XmlIoSpimData2 io = new XmlIoSpimData2( clusterExtension );
-				
-				final String xml = new File( data.getBasePath(), new File( xmlFileName ).getName() ).getAbsolutePath();
-				try 
-				{
-					io.save( data, xml );
-					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + io.lastFileName() + "' (image metadata was updated)." );
-				}
-				catch ( Exception e )
-				{
-					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + io.lastFileName() + "': " + e );
-					e.printStackTrace();
-				}
-			}
 		}
 
-		imgExport.finish();
+		spimDataModified |= imgExport.finish();
+
+		if ( spimDataModified && saveXML )
+			SpimData2.saveXML( data, xmlFileName, clusterExtension );
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Fusion finished." );
 
