@@ -20,8 +20,8 @@ import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 public class ViewSetupTableModel< AS extends AbstractSpimData< ? > > extends AbstractTableModel
 {
 	private static final long serialVersionUID = -6526338840427674269L;
-	
-	final ArrayList< BasicViewDescription< ? extends BasicViewSetup > > elements = new ArrayList< BasicViewDescription< ? extends BasicViewSetup > >();
+
+	final AS data;
 	final ArrayList< String > columnNames;
 
 	final int registrationColumn, interestPointsColumn;
@@ -33,6 +33,7 @@ public class ViewSetupTableModel< AS extends AbstractSpimData< ? > > extends Abs
 
 	public ViewSetupTableModel( final AS data )
 	{
+		this.data = data;
 		columnNames = new ArrayList< String >();
 		columnNames.add( "Timepoint" );
 		columnNames.add( "View Id" );
@@ -55,6 +56,11 @@ public class ViewSetupTableModel< AS extends AbstractSpimData< ? > > extends Abs
 			viewInterestPoints = null;
 			interestPointsColumn = -1;
 		}
+	}
+
+	protected ArrayList< BasicViewDescription< ? extends BasicViewSetup > > elements()
+	{
+		final ArrayList< BasicViewDescription< ? extends BasicViewSetup > > elements = new ArrayList< BasicViewDescription< ? extends BasicViewSetup > >();
 
 		for ( final TimePoint t : data.getSequenceDescription().getTimePoints().getTimePointsOrdered() )
 			for ( final BasicViewSetup v : data.getSequenceDescription().getViewSetupsOrdered() )
@@ -65,11 +71,13 @@ public class ViewSetupTableModel< AS extends AbstractSpimData< ? > > extends Abs
 				if ( viewDesc.isPresent() )
 					elements.add( viewDesc );
 			}
+
+		return elements;
 	}
 
 	public void sortByColumn( final int column )
 	{
-		Collections.sort( elements, new Comparator< BasicViewDescription< ? extends BasicViewSetup > >()
+		Collections.sort( elements(), new Comparator< BasicViewDescription< ? extends BasicViewSetup > >()
 		{
 			@Override
 			public int compare(
@@ -113,13 +121,13 @@ public class ViewSetupTableModel< AS extends AbstractSpimData< ? > > extends Abs
 		fireTableDataChanged();
 	}
 	
-	public ArrayList< BasicViewDescription< ? extends BasicViewSetup > > getElements() { return elements; }
-	
+	public ArrayList< BasicViewDescription< ? extends BasicViewSetup > > getElements() { return elements(); }
+
 	@Override
 	public int getColumnCount() { return columnNames.size(); }
 	
 	@Override
-	public int getRowCount() { return elements.size(); }
+	public int getRowCount() { return elements().size(); }
 
 	@Override
 	public boolean isCellEditable( final int row, final int column )
@@ -130,7 +138,7 @@ public class ViewSetupTableModel< AS extends AbstractSpimData< ? > > extends Abs
 	@Override
 	public Object getValueAt( final int row, final int column )
 	{
-		final BasicViewDescription< ? extends BasicViewSetup > vd = elements.get( row );
+		final BasicViewDescription< ? extends BasicViewSetup > vd = elements().get( row );
 
 		if ( column == 0 )
 			return vd.getTimePoint().getId();
