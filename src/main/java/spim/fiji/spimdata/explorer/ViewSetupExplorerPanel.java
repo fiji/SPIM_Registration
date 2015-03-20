@@ -31,6 +31,7 @@ import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+import spim.fiji.spimdata.explorer.popup.ApplyTransformationPopup;
 import spim.fiji.spimdata.explorer.popup.DetectInterestPointsPopup;
 import spim.fiji.spimdata.explorer.popup.DisplayViewPopup;
 import spim.fiji.spimdata.explorer.popup.RegisterInterestPointsPopup;
@@ -51,6 +52,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		staticPopups.add( new RegisterInterestPointsPopup() );
 		staticPopups.add( new Separator() );
 		staticPopups.add( new SpecifyCalibrationPopup() );
+		staticPopups.add( new ApplyTransformationPopup() );
 	}
 
 	private static final long serialVersionUID = -3767947754096099774L;
