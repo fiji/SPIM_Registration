@@ -63,14 +63,14 @@ public class ThinOut_Detections implements PlugIn
 			return;
 
 		// thin out detections and save the new interestpoint files
-		if ( !thinOut( data, viewIds, channels ) )
+		if ( !thinOut( data, viewIds, channels, true ) )
 			return;
 
 		// write new xml
 		SpimData2.saveXML( data, xml.getXMLFileName(), xml.getClusterExtension() );
 	}
 
-	public static boolean thinOut( final SpimData2 spimData, final List< ViewId > viewIds, final List< ChannelProcessThinOut > channels )
+	public static boolean thinOut( final SpimData2 spimData, final List< ViewId > viewIds, final List< ChannelProcessThinOut > channels, final boolean save )
 	{
 		final ViewInterestPoints vip = spimData.getViewInterestPoints();
 
@@ -127,6 +127,8 @@ public class ThinOut_Detections implements PlugIn
 								oldIpl.getFile().getParentFile(),
 								"tpId_" + viewId.getTimePointId() + "_viewSetupId_" + viewId.getViewSetupId() + "." + channel.getNewLabel() ) );
 
+				newIpl.setInterestPoints( new ArrayList< InterestPoint >() );
+
 				int id = 0;
 				for ( int j = 0; j < list2.size(); ++j )
 				{
@@ -152,7 +154,7 @@ public class ThinOut_Detections implements PlugIn
 				IOFunctions.println( new Date( System.currentTimeMillis() ) + ": TP=" + vd.getTimePointId() + " ViewSetup=" + vd.getViewSetupId() + 
 						", Detections: " + oldIpl.getInterestPoints().size() + " >>> " + newIpl.getInterestPoints().size() );
 
-				if ( !newIpl.saveInterestPoints() )
+				if ( save && !newIpl.saveInterestPoints() )
 				{
 					IOFunctions.println( "Error saving interest point list: " + new File( newIpl.getBaseDir(), newIpl.getFile().toString() + newIpl.getInterestPointsExt() ) );
 					return false;
