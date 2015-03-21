@@ -49,13 +49,20 @@ public class DetectInterestPointsPopup extends JMenuItem implements ViewExplorer
 				return;
 			}
 
-			if ( new Interest_Point_Detection().detectInterestPoints( (SpimData2)panel.getSpimData(), panel.selectedRowsViewId() ) )
+			new Thread( new Runnable()
 			{
-				// update interestpoint panel if available
-				for ( final SelectedViewDescriptionListener l : panel.getListeners() )
-					if ( InterestPointExplorer.class.isInstance( l ) )
-						( (InterestPointExplorer< ?, ? >)l ).panel().getTableModel().fireTableDataChanged();
-			}
+				@Override
+				public void run()
+				{
+					if ( new Interest_Point_Detection().detectInterestPoints( (SpimData2)panel.getSpimData(), panel.selectedRowsViewId() ) )
+					{
+						// update interestpoint panel if available
+						for ( final SelectedViewDescriptionListener l : panel.getListeners() )
+							if ( InterestPointExplorer.class.isInstance( l ) )
+								( (InterestPointExplorer< ?, ? >)l ).panel().getTableModel().fireTableDataChanged();
+					}
+				}
+			}).start();
 		}
 	}
 }

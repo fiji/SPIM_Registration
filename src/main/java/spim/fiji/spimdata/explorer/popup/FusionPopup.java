@@ -49,15 +49,22 @@ public class FusionPopup extends JMenuItem implements ViewExplorerSetable
 				return;
 			}
 
-			if ( new Image_Fusion().fuse( (SpimData2)panel.getSpimData(), panel.selectedRowsViewId() ) )
+			new Thread( new Runnable()
 			{
-				// update main table and registration panel if available
-				for ( final SelectedViewDescriptionListener l : panel.getListeners() )
-					if ( RegistrationExplorer.class.isInstance( l ) )
-						( (RegistrationExplorer< ?, ? >)l ).panel().getTableModel().fireTableDataChanged();
-
-				panel.getTableModel().fireTableDataChanged();
-			}
+				@Override
+				public void run()
+				{
+					if ( new Image_Fusion().fuse( (SpimData2)panel.getSpimData(), panel.selectedRowsViewId() ) )
+					{
+						// update main table and registration panel if available
+						for ( final SelectedViewDescriptionListener l : panel.getListeners() )
+							if ( RegistrationExplorer.class.isInstance( l ) )
+								( (RegistrationExplorer< ?, ? >)l ).panel().getTableModel().fireTableDataChanged();
+		
+						panel.getTableModel().fireTableDataChanged();
+					}
+				}
+			} ).start();
 		}
 	}
 }

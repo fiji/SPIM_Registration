@@ -50,18 +50,25 @@ public class RegisterInterestPointsPopup extends JMenuItem implements ViewExplor
 				return;
 			}
 
-			if ( new Interest_Point_Registration().register( (SpimData2)panel.getSpimData(), panel.selectedRowsViewId() ) )
+			new Thread( new Runnable()
 			{
-				// update interestpoint and registration panel if available
-				for ( final SelectedViewDescriptionListener l : panel.getListeners() )
+				@Override
+				public void run()
 				{
-					if ( InterestPointExplorer.class.isInstance( l ) )
-						( (InterestPointExplorer< ?, ? >)l ).panel().getTableModel().fireTableDataChanged();
-	
-					if ( RegistrationExplorer.class.isInstance( l ) )
-						( (RegistrationExplorer< ?, ? >)l ).panel().getTableModel().fireTableDataChanged();
+					if ( new Interest_Point_Registration().register( (SpimData2)panel.getSpimData(), panel.selectedRowsViewId() ) )
+					{
+						// update interestpoint and registration panel if available
+						for ( final SelectedViewDescriptionListener l : panel.getListeners() )
+						{
+							if ( InterestPointExplorer.class.isInstance( l ) )
+								( (InterestPointExplorer< ?, ? >)l ).panel().getTableModel().fireTableDataChanged();
+			
+							if ( RegistrationExplorer.class.isInstance( l ) )
+								( (RegistrationExplorer< ?, ? >)l ).panel().getTableModel().fireTableDataChanged();
+						}
+					}
 				}
-			}
+			} ).start();
 		}
 	}
 }

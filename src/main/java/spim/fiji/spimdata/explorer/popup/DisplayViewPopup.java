@@ -62,35 +62,42 @@ public class DisplayViewPopup extends JMenu implements ViewExplorerSetable
 				return;
 			}
 
-			final List< BasicViewDescription< ? extends BasicViewSetup > > vds = panel.selectedRows();
-
-			if (
-				vds.size() > askWhenMoreThan &&
-				JOptionPane.showConfirmDialog(
-					null,
-					"Are you sure to display " + vds.size() + " views?",
-					"Warning",
-					JOptionPane.YES_NO_OPTION ) == JOptionPane.NO_OPTION )
-				return;
-
-			IOFunctions.println( "Opening as " + ( as16bit ? " 16 bit:" : "32 bit:" ) );
-
-			for ( final BasicViewDescription< ? > vd : panel.selectedRows() )
+			new Thread( new Runnable()
 			{
-				IOFunctions.println( "Timepoint: " + vd.getTimePointId() + " ViewSetup: " + vd.getViewSetupId() );
+				@Override
+				public void run()
+				{
+					final List< BasicViewDescription< ? extends BasicViewSetup > > vds = panel.selectedRows();
 
-				final String name;
+					if (
+						vds.size() > askWhenMoreThan &&
+						JOptionPane.showConfirmDialog(
+							null,
+							"Are you sure to display " + vds.size() + " views?",
+							"Warning",
+							JOptionPane.YES_NO_OPTION ) == JOptionPane.NO_OPTION )
+						return;
 
-				if ( SpimData2.class.isInstance( panel.getSpimData() ) )
-					name = Display_View.name( (ViewDescription)vd );
-				else
-					name = "Timepoint: " + vd.getTimePointId() + " ViewSetup: " + vd.getViewSetupId();
-	
-				if ( as16bit )
-					Display_View.display( panel.getSpimData(), vd, 1, name );
-				else
-					Display_View.display( panel.getSpimData(), vd, 0, name );
-			}
+					IOFunctions.println( "Opening as " + ( as16bit ? " 16 bit:" : "32 bit:" ) );
+
+					for ( final BasicViewDescription< ? > vd : panel.selectedRows() )
+					{
+						IOFunctions.println( "Timepoint: " + vd.getTimePointId() + " ViewSetup: " + vd.getViewSetupId() );
+		
+						final String name;
+		
+						if ( SpimData2.class.isInstance( panel.getSpimData() ) )
+							name = Display_View.name( (ViewDescription)vd );
+						else
+							name = "Timepoint: " + vd.getTimePointId() + " ViewSetup: " + vd.getViewSetupId();
+			
+						if ( as16bit )
+							Display_View.display( panel.getSpimData(), vd, 1, name );
+						else
+							Display_View.display( panel.getSpimData(), vd, 0, name );
+					}
+				}
+			} ).start();
 		}
 	}
 }
