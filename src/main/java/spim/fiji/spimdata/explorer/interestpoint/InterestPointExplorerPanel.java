@@ -210,9 +210,6 @@ public class InterestPointExplorerPanel extends JPanel
 		{
 			ipList.loadInterestPoints();
 			list = ipList.getInterestPoints();
-
-			if ( ipList.getCorrespondingInterestPoints() == null )
-				ipList.loadCorrespondingInterestPoints();
 		}
 
 		return list;
@@ -227,9 +224,6 @@ public class InterestPointExplorerPanel extends JPanel
 		{
 			ipList.loadCorrespondingInterestPoints();
 			correspondencesList = ipList.getCorrespondingInterestPoints();
-
-			if ( ipList.getInterestPoints() == null )
-				ipList.loadInterestPoints();
 		}
 
 		return correspondencesList;
