@@ -40,6 +40,7 @@ import spim.fiji.spimdata.explorer.popup.RemoveDetectionsPopup;
 import spim.fiji.spimdata.explorer.popup.Separator;
 import spim.fiji.spimdata.explorer.popup.SpecifyCalibrationPopup;
 import spim.fiji.spimdata.explorer.popup.ViewExplorerSetable;
+import spim.fiji.spimdata.explorer.popup.VisualizeDetectionsPopup;
 
 public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > > extends JPanel
 {
@@ -56,6 +57,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		staticPopups.add( new Separator() );
 		staticPopups.add( new SpecifyCalibrationPopup() );
 		staticPopups.add( new ApplyTransformationPopup() );
+		staticPopups.add( new VisualizeDetectionsPopup() );
 		staticPopups.add( new RemoveDetectionsPopup() );
 	}
 
