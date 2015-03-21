@@ -1,5 +1,6 @@
 package spim.fiji.plugin;
 
+import ij.ImageJ;
 import ij.plugin.PlugIn;
 
 import java.awt.event.ActionEvent;
@@ -74,6 +75,7 @@ public class Data_Explorer implements PlugIn
 
 	public static void main( String[] args )
 	{
+		new ImageJ();
 		GenericLoadParseQueryXML.defaultXMLfilename = "/Users/preibischs/Documents/Microscopy/SPIM/HisYFP-SPIM//dataset.xml";
 		new Data_Explorer().run( null );
 	}
