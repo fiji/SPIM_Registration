@@ -8,9 +8,7 @@ import javax.swing.JMenuItem;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.Image_Fusion;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.explorer.SelectedViewDescriptionListener;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
-import spim.fiji.spimdata.explorer.registration.RegistrationExplorer;
 
 public class FusionPopup extends JMenuItem implements ViewExplorerSetable
 {
@@ -55,14 +53,7 @@ public class FusionPopup extends JMenuItem implements ViewExplorerSetable
 				public void run()
 				{
 					if ( new Image_Fusion().fuse( (SpimData2)panel.getSpimData(), panel.selectedRowsViewId() ) )
-					{
-						// update main table and registration panel if available
-						for ( final SelectedViewDescriptionListener l : panel.getListeners() )
-							if ( RegistrationExplorer.class.isInstance( l ) )
-								( (RegistrationExplorer< ?, ? >)l ).panel().getTableModel().fireTableDataChanged();
-		
-						panel.getTableModel().fireTableDataChanged();
-					}
+						panel.updateContent(); // update main table and registration panel if available
 				}
 			} ).start();
 		}

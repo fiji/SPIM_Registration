@@ -8,10 +8,7 @@ import javax.swing.JMenuItem;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.Interest_Point_Registration;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.explorer.SelectedViewDescriptionListener;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
-import spim.fiji.spimdata.explorer.interestpoint.InterestPointExplorer;
-import spim.fiji.spimdata.explorer.registration.RegistrationExplorer;
 
 public class RegisterInterestPointsPopup extends JMenuItem implements ViewExplorerSetable
 {
@@ -56,17 +53,7 @@ public class RegisterInterestPointsPopup extends JMenuItem implements ViewExplor
 				public void run()
 				{
 					if ( new Interest_Point_Registration().register( (SpimData2)panel.getSpimData(), panel.selectedRowsViewId() ) )
-					{
-						// update interestpoint and registration panel if available
-						for ( final SelectedViewDescriptionListener l : panel.getListeners() )
-						{
-							if ( InterestPointExplorer.class.isInstance( l ) )
-								( (InterestPointExplorer< ?, ? >)l ).panel().getTableModel().fireTableDataChanged();
-			
-							if ( RegistrationExplorer.class.isInstance( l ) )
-								( (RegistrationExplorer< ?, ? >)l ).panel().getTableModel().fireTableDataChanged();
-						}
-					}
+						panel.updateContent(); // update interestpoint and registration panel if available
 				}
 			} ).start();
 		}

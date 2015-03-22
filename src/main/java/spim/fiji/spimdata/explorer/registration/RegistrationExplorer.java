@@ -10,27 +10,22 @@ import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
-import spim.fiji.plugin.queryXML.LoadParseQueryXML;
-import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.explorer.SelectedViewDescriptionListener;
 import spim.fiji.spimdata.explorer.ViewSetupExplorer;
 
 public class RegistrationExplorer< AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > >
-	implements SelectedViewDescriptionListener
+	implements SelectedViewDescriptionListener< AS >
 {
-	final AS data;
 	final String xml;
 	final JFrame frame;
 	final RegistrationExplorerPanel panel;
 	
-	public RegistrationExplorer( final AS data, final String xml, final X io, final ViewSetupExplorer< AS, X > viewSetupExplorer )
+	public RegistrationExplorer( final String xml, final X io, final ViewSetupExplorer< AS, X > viewSetupExplorer )
 	{
-		this.data = data;
 		this.xml = xml;
 
 		frame = new JFrame( "Registration Explorer" );
-		panel = new RegistrationExplorerPanel( data.getViewRegistrations() );
+		panel = new RegistrationExplorerPanel( viewSetupExplorer.getPanel().getSpimData().getViewRegistrations() );
 		frame.add( panel, BorderLayout.CENTER );
 
 		frame.setSize( panel.getPreferredSize() );
@@ -46,11 +41,6 @@ public class RegistrationExplorer< AS extends AbstractSpimData< ? >, X extends X
 
 		// this call also triggers the first update of the registration table
 		viewSetupExplorer.addListener( this );
-	}
-
-	public RegistrationExplorer( final AS data, final String xml, final X io )
-	{
-		this( data, xml, io, new ViewSetupExplorer< AS, X >( data, xml, io ) );
 	}
 
 	@Override
@@ -71,13 +61,10 @@ public class RegistrationExplorer< AS extends AbstractSpimData< ? >, X extends X
 
 	public RegistrationExplorerPanel panel() { return panel; }
 
-	public static void main( String[] args )
+	@Override
+	public void updateContent( final AS data )
 	{
-		final LoadParseQueryXML result = new LoadParseQueryXML();
-
-		if ( !result.queryXML( "View Registration Explorer", "", false, false, false, false ) )
-			return;
-
-		new RegistrationExplorer< SpimData2, XmlIoSpimData2 >( result.getData(), result.getXMLFileName(), result.getIO() );
+		panel.getTableModel().update( data.getViewRegistrations() );
+		panel.getTableModel().fireTableDataChanged();
 	}
 }

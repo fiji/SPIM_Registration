@@ -20,9 +20,7 @@ import spim.fiji.plugin.ThinOut_Detections;
 import spim.fiji.plugin.removedetections.InteractiveProjections;
 import spim.fiji.plugin.thinout.ChannelProcessThinOut;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.explorer.SelectedViewDescriptionListener;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
-import spim.fiji.spimdata.explorer.interestpoint.InterestPointExplorer;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
@@ -105,10 +103,7 @@ public class RemoveDetectionsPopup extends JMenu implements ViewExplorerSetable
 				if ( !ThinOut_Detections.thinOut( data, viewIds, channels, false ) )
 					return;
 
-				// update interestpoint panel if available
-				for ( final SelectedViewDescriptionListener l : panel.getListeners() )
-					if ( InterestPointExplorer.class.isInstance( l ) )
-						( (InterestPointExplorer< ?, ? >)l ).panel().getTableModel().fireTableDataChanged();
+				panel.updateContent(); // update interestpoint panel if available
 
 				return;
 			}
@@ -164,10 +159,7 @@ public class RemoveDetectionsPopup extends JMenu implements ViewExplorerSetable
 
 						lists.addInterestPointList( newLabel, newIpl );
 
-						// update interestpoint panel if available
-						for ( final SelectedViewDescriptionListener l : panel.getListeners() )
-							if ( InterestPointExplorer.class.isInstance( l ) )
-								( (InterestPointExplorer< ?, ? >)l ).panel().getTableModel().fireTableDataChanged();
+						panel.updateContent(); // update interestpoint panel if available
 					}
 				}) );
 

@@ -24,6 +24,8 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
+import spim.fiji.ImgLib2Temp.Pair;
+import spim.fiji.ImgLib2Temp.ValuePair;
 import spim.fiji.plugin.Toggle_Cluster_Options;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.resave.Generic_Resave_HDF5.Parameters;
@@ -78,18 +80,24 @@ public class Resave_HDF5 implements PlugIn
 		final ProgressWriter progressWriter = new ProgressWriterIJ();
 		progressWriter.out().println( "starting export..." );
 
+		final SpimData2 data = xml.getData();
+		final List< ViewId > viewIds = SpimData2.getAllViewIdsSorted( data, xml.getViewSetupsToProcess(), xml.getTimePointsToProcess() );
+
 		// write hdf5
-		Generic_Resave_HDF5.writeHDF5( reduceSpimData2( xml.getData(), xml.getTimePointsToProcess(), xml.getViewSetupsToProcess() ), params, progressWriter );
+		Generic_Resave_HDF5.writeHDF5( reduceSpimData2( data, viewIds ), params, progressWriter );
 
 		// write xml sequence description
 		if ( !params.onlyRunSingleJob || params.jobId == 0 )
 		{
 			try
 			{
-				final List< String > filesToCopy = writeXML( xml, params, progressWriter );
+				final Pair< SpimData2, List< String > > result = createXMLObject( data, viewIds, params, progressWriter );
 
+				xml.getIO().save( result.getA(), params.seqFile.getAbsolutePath() );
+				progressWriter.setProgress( 0.95 );
+				
 				// copy the interest points if they exist
-				Resave_TIFF.copyInterestPoints( xml.getData().getBasePath(), params.getSeqFile().getParentFile(), filesToCopy );
+				Resave_TIFF.copyInterestPoints( xml.getData().getBasePath(), params.getSeqFile().getParentFile(), result.getB() );
 			}
 			catch ( SpimDataException e )
 			{
@@ -149,28 +157,29 @@ public class Resave_HDF5 implements PlugIn
 	 * @param viewSetupsToProcess
 	 * @return
 	 */
-	public static SpimData2 reduceSpimData2( final SpimData2 oldSpimData, final List< TimePoint > timepointsToProcess, final List< ViewSetup > viewSetupsToProcess )
+	public static SpimData2 reduceSpimData2( final SpimData2 oldSpimData, final List< ViewId > viewIds )
 	{
 		final TimePoints timepoints;
 
 		try
 		{
-			timepoints = new TimePointsPattern( Resave_TIFF.listAllTimePoints( timepointsToProcess ) );
+			timepoints = new TimePointsPattern( Resave_TIFF.listAllTimePoints( SpimData2.getAllTimePointsSorted( oldSpimData, viewIds ) ) );
 		}
 		catch (ParseException e)
 		{
 			IOFunctions.println( "Automatically created list of timepoints failed to parse. This should not happen, really :) -- " + e );
-			IOFunctions.println( "Here is the list: " + Resave_TIFF.listAllTimePoints( timepointsToProcess ) );
+			IOFunctions.println( "Here is the list: " + Resave_TIFF.listAllTimePoints( SpimData2.getAllTimePointsSorted( oldSpimData, viewIds ) ) );
 			e.printStackTrace();
 			return null;
 		}
 
+		final List< ViewSetup > viewSetupsToProcess = SpimData2.getAllViewSetupsSorted( oldSpimData, viewIds );
+
 		// a hashset for all viewsetups that remain
 		final Set< ViewId > views = new HashSet< ViewId >();
 
-		for ( final TimePoint t : timepointsToProcess )
-			for ( final ViewSetup v : viewSetupsToProcess )
-				views.add( new ViewId( t.getId(), v.getId() ) );
+		for ( final ViewId viewId : viewIds )
+			views.add( new ViewId( viewId.getTimePointId(), viewId.getViewSetupId() ) );
 
 		final MissingViews oldMissingViews = oldSpimData.getSequenceDescription().getMissingViews();
 		final ArrayList< ViewId > missingViews = new ArrayList< ViewId >();
@@ -212,32 +221,21 @@ public class Resave_HDF5 implements PlugIn
 		return newSpimData;
 	}
 
-	public static List< String > writeXML(
-			final LoadParseQueryXML lpq,
+	public static Pair< SpimData2, List< String > > createXMLObject(
+			final SpimData2 spimData,
+			final List< ViewId > viewIds,
 			final Parameters params,
 			final ProgressWriter progressWriter )
-		throws SpimDataException
 	{
 		// Re-assemble a new SpimData object containing the subset of viewsetups and timepoints selected
 		final List< String > filesToCopy = new ArrayList< String >();
-		final SpimData2 newSpimData = Resave_TIFF.assemblePartialSpimData2( lpq, params.seqFile.getParentFile(), filesToCopy );
+		final SpimData2 newSpimData = Resave_TIFF.assemblePartialSpimData2( spimData, viewIds, params.seqFile.getParentFile(), filesToCopy );
 		final ArrayList< Partition > partitions = Generic_Resave_HDF5.getPartitions( newSpimData, params );
 
 		final Hdf5ImageLoader hdf5Loader = new Hdf5ImageLoader( params.hdf5File, partitions, null, false );
 		newSpimData.getSequenceDescription().setImgLoader( hdf5Loader );
 		newSpimData.setBasePath( params.seqFile.getParentFile() );
 
-		try
-		{
-			lpq.getIO().save( newSpimData, params.seqFile.getAbsolutePath() );
-			progressWriter.setProgress( 0.95 );
-		}
-		catch ( final Exception e )
-		{
-			progressWriter.err().println( "Failed to write xml file " + params.seqFile );
-			e.printStackTrace( progressWriter.err() );
-		}
-
-		return filesToCopy;
+		return new ValuePair< SpimData2, List< String > >( newSpimData, filesToCopy );
 	}
 }

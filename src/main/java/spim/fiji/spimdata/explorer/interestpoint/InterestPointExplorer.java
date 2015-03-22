@@ -13,28 +13,24 @@ import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.ImgLib2Temp.Pair;
-import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.explorer.SelectedViewDescriptionListener;
 import spim.fiji.spimdata.explorer.ViewSetupExplorer;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 
 public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstractSpimData< ?, AS > >
-	implements SelectedViewDescriptionListener
+	implements SelectedViewDescriptionListener< AS >
 {
-	final AS data;
 	final String xml;
 	final JFrame frame;
 	final InterestPointExplorerPanel panel;
 
-	public InterestPointExplorer( final AS data, final String xml, final X io, final ViewSetupExplorer< AS, X > viewSetupExplorer )
+	public InterestPointExplorer( final String xml, final X io, final ViewSetupExplorer< AS, X > viewSetupExplorer )
 	{
-		this.data = data;
 		this.xml = xml;
 
 		frame = new JFrame( "Interest Point Explorer" );
-		panel = new InterestPointExplorerPanel( data.getViewInterestPoints() );
+		panel = new InterestPointExplorerPanel( viewSetupExplorer.getPanel().getSpimData().getViewInterestPoints() );
 		frame.add( panel, BorderLayout.CENTER );
 
 		frame.setSize( panel.getPreferredSize() );
@@ -50,11 +46,6 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 
 		// this call also triggers the first update of the registration table
 		viewSetupExplorer.addListener( this );
-	}
-
-	public InterestPointExplorer( final AS data, final String xml, final X io )
-	{
-		this( data, xml, io, new ViewSetupExplorer< AS, X >( data, xml, io ) );
 	}
 
 	@Override
@@ -109,13 +100,10 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 
 	public InterestPointExplorerPanel panel() { return panel; }
 
-	public static void main( String[] args )
+	@Override
+	public void updateContent( final AS data )
 	{
-		final LoadParseQueryXML result = new LoadParseQueryXML();
-
-		if ( !result.queryXML( "Interest Point Explorer", "", false, false, false, false ) )
-			return;
-
-		new InterestPointExplorer< SpimData2, XmlIoSpimData2 >( result.getData(), result.getXMLFileName(), result.getIO() );
+		panel.getTableModel().update( data.getViewInterestPoints() );
+		panel.getTableModel().fireTableDataChanged();
 	}
 }

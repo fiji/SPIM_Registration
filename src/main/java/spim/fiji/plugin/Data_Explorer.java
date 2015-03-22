@@ -62,8 +62,8 @@ public class Data_Explorer implements PlugIn
 
 		final ViewSetupExplorer< SpimData2, XmlIoSpimData2 > explorer = new ViewSetupExplorer<SpimData2, XmlIoSpimData2 >( data, xml, io );
 
-		new InterestPointExplorer< SpimData2, XmlIoSpimData2 >( data, xml, io, explorer );
-		new RegistrationExplorer< SpimData2, XmlIoSpimData2 >( data, xml, io, explorer );
+		new InterestPointExplorer< SpimData2, XmlIoSpimData2 >( xml, io, explorer );
+		new RegistrationExplorer< SpimData2, XmlIoSpimData2 >( xml, io, explorer );
 
 		explorer.getFrame().toFront();
 	}

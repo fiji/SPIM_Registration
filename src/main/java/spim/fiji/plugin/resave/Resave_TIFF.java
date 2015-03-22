@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
@@ -37,6 +38,8 @@ import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.real.FloatType;
+import spim.fiji.ImgLib2Temp.Pair;
+import spim.fiji.ImgLib2Temp.ValuePair;
 import spim.fiji.datasetmanager.StackList;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
@@ -60,9 +63,9 @@ public class Resave_TIFF implements PlugIn
 
 	public static class Parameters
 	{
-		ImgFactory< ? extends NativeType< ? > > imgFactory;
-		String xmlFile;
-		boolean compress;
+		public ImgFactory< ? extends NativeType< ? > > imgFactory;
+		public String xmlFile;
+		public boolean compress;
 		
 		public boolean compress() { return compress; }
 		public String getXMLFile() { return xmlFile; }
@@ -85,17 +88,23 @@ public class Resave_TIFF implements PlugIn
 		if ( params == null )
 			return;
 
+		final SpimData2 data = lpq.getData();
+		final List< ViewId > viewIds = SpimData2.getAllViewIdsSorted( data, lpq.getViewSetupsToProcess(), lpq.getTimePointsToProcess() );
+
 		// write the TIFF's
-		writeTIFF( lpq, new File( params.xmlFile ).getParent(), params.compress, progressWriter );
+		writeTIFF( data, viewIds, new File( params.xmlFile ).getParent(), params.compress, progressWriter );
 
 		// write the XML
 		try
 		{
-			final List< String > filesToCopy = writeXML( lpq, params );
+			final Pair< SpimData2, List< String > > result = createXMLObject( data, viewIds, params );
 			progressWriter.setProgress( 0.95 );
 
+			// write the XML
+			lpq.getIO().save( result.getA(), new File( params.xmlFile ).getAbsolutePath() );
+
 			// copy the interest points if they exist
-			copyInterestPoints( lpq.getData().getBasePath(), new File( params.xmlFile ).getParentFile(), filesToCopy );
+			copyInterestPoints( data.getBasePath(), new File( params.xmlFile ).getParentFile(), result.getB() );
 		}
 		catch ( SpimDataException e )
 		{
@@ -187,7 +196,7 @@ public class Resave_TIFF implements PlugIn
 		return params;
 	}
 
-	public static void writeTIFF( final LoadParseQueryXML lpq, final String path, final boolean compress, final ProgressWriter progressWriter )
+	public static void writeTIFF( final SpimData spimData, final List< ViewId > viewIds, final String path, final boolean compress, final ProgressWriter progressWriter )
 	{
 		if ( compress )
 			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Saving compressed TIFFS to directory '" + path + "'" );
@@ -196,162 +205,75 @@ public class Resave_TIFF implements PlugIn
 		
 		final Save3dTIFF save = new Save3dTIFF( path, compress );
 		
-		final int numAngles = lpq.getAnglesToProcess().size();
-		final int numChannels = lpq.getChannelsToProcess().size();
-		final int numIlluminations = lpq.getIlluminationsToProcess().size();
-		final int numTimepoints = lpq.getTimePointsToProcess().size();
-		
-		final int countImageStacks = lpq.getTimePointsToProcess().size() * lpq.getViewSetupsToProcess().size();
+		final int numAngles = SpimData2.getAllAnglesSorted( spimData, viewIds ).size();
+		final int numChannels = SpimData2.getAllChannelsSorted( spimData, viewIds ).size();
+		final int numIlluminations = SpimData2.getAllIlluminationsSorted( spimData, viewIds ).size();
+		final int numTimepoints =  SpimData2.getAllTimePointsSorted( spimData, viewIds ).size();
+
 		int i = 0;
-		
-		for ( final TimePoint t : lpq.getTimePointsToProcess() )
-			for ( final ViewSetup v : lpq.getViewSetupsToProcess() )
-			{
-				i++;
 
-				final ViewId viewId = new ViewId( t.getId(), v.getId() );
+		for ( final ViewId viewId : viewIds )
+		{
+			i++;
 
-				final ViewDescription viewDescription = lpq.getData().getSequenceDescription().getViewDescription( 
-						viewId.getTimePointId(), viewId.getViewSetupId() );
+			final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
+					viewId.getTimePointId(), viewId.getViewSetupId() );
 
-				if ( !viewDescription.isPresent() )
-					continue;
+			if ( !viewDescription.isPresent() )
+				continue;
 
-				final RandomAccessibleInterval img = lpq.getData().getSequenceDescription().getImgLoader().getImage( viewId );
+			final RandomAccessibleInterval img = spimData.getSequenceDescription().getImgLoader().getImage( viewId );
 
-				String filename = "img";
+			String filename = "img";
 
-				if ( numTimepoints > 1 )
-					filename += "_TL" + t.getId();
+			if ( numTimepoints > 1 )
+				filename += "_TL" + viewId.getTimePointId();
 
-				if ( numChannels > 1 )
-					filename += "_Ch" + v.getChannel().getName();
+			if ( numChannels > 1 )
+				filename += "_Ch" + viewDescription.getViewSetup().getChannel().getName();
 
-				if ( numIlluminations > 1 )
-					filename += "_Ill" + v.getIllumination().getName();
+			if ( numIlluminations > 1 )
+				filename += "_Ill" + viewDescription.getViewSetup().getIllumination().getName();
 
-				if ( numAngles > 1 )
-					filename += "_Angle" + v.getAngle().getName();
+			if ( numAngles > 1 )
+				filename += "_Angle" + viewDescription.getViewSetup().getAngle().getName();
 
-				save.exportImage( img, filename );
+			save.exportImage( img, filename );
 
-				progressWriter.setProgress( ((i-1) / (double)countImageStacks) * 95.00  );
-			}
+			progressWriter.setProgress( ((i-1) / (double)viewIds.size()) * 95.00  );
+		}
 	}
 
-	/**
-	 * Assembles a new SpimData2 based on the subset of timepoints and viewsetups as selected by the user.
-	 * The imgloader is still not set here.
-	 * 
-	 * It also fills up a list of filesToCopy from the interestpoints directory if it is not null.
-	 * 
-	 * @param lpq
-	 * @param params
-	 * @param filesToCopy
-	 * @return
-	 */
-	public static SpimData2 assemblePartialSpimData2( final LoadParseQueryXML lpq, final File basePath, final List< String > filesToCopy )
-	{
-		final TimePoints timepoints;
 
-		try
-		{
-			timepoints = new TimePointsPattern( listAllTimePoints( lpq.getTimePointsToProcess() ) );
-		}
-		catch (ParseException e)
-		{
-			IOFunctions.println( "Automatically created list of timepoints failed to parse. This should not happen, really :) -- " + e );
-			IOFunctions.println( "Here is the list: " + listAllTimePoints( lpq.getTimePointsToProcess() ) );
-			e.printStackTrace();
-			return null;
-		}
-		
-		final List< ViewSetup > setups = lpq.getViewSetupsToProcess();
-
-		// a hashset for all viewsetups that remain
-		final Set< ViewId > views = new HashSet< ViewId >();
-		
-		for ( final TimePoint t : lpq.getTimePointsToProcess() )
-			for ( final ViewSetup v : lpq.getViewSetupsToProcess() )
-				views.add( new ViewId( t.getId(), v.getId() ) );
-
-		final MissingViews oldMissingViews = lpq.getData().getSequenceDescription().getMissingViews();
-		final ArrayList< ViewId > missingViews = new ArrayList< ViewId >();
-
-		if ( oldMissingViews != null && oldMissingViews.getMissingViews() != null )
-			for ( final ViewId id : oldMissingViews.getMissingViews() )
-				if ( views.contains( id ) )
-					missingViews.add( id );
-
-		// instantiate the sequencedescription
-		final SequenceDescription sequenceDescription = new SequenceDescription( timepoints, setups, null, new MissingViews( missingViews ) );
-
-		// re-assemble the registrations
-		final Map< ViewId, ViewRegistration > oldRegMap = lpq.getData().getViewRegistrations().getViewRegistrations();
-		final Map< ViewId, ViewRegistration > newRegMap = new HashMap< ViewId, ViewRegistration >();
-		
-		for ( final ViewId viewId : oldRegMap.keySet() )
-			if ( views.contains( viewId ) )
-				newRegMap.put( viewId, oldRegMap.get( viewId ) );
-
-		final ViewRegistrations viewRegistrations = new ViewRegistrations( newRegMap );
-		
-		// re-assemble the interestpoints and a list of filenames to copy
-		final Map< ViewId, ViewInterestPointLists > oldInterestPoints = lpq.getData().getViewInterestPoints().getViewInterestPoints();
-		final Map< ViewId, ViewInterestPointLists > newInterestPoints = new HashMap< ViewId, ViewInterestPointLists >();
-
-		for ( final ViewId viewId : oldInterestPoints.keySet() )
-			if ( views.contains( viewId ) )
-			{
-				final ViewInterestPointLists ipLists = oldInterestPoints.get( viewId );
-				newInterestPoints.put( viewId, ipLists );
-
-				if ( filesToCopy != null )
-				{
-					// get also all the filenames that we need to copy
-					for ( final InterestPointList ipl : ipLists.getHashMap().values() )
-						filesToCopy.add( ipl.getFile().getName() );
-				}
-			}
-		
-		final ViewInterestPoints viewsInterestPoints = new ViewInterestPoints( newInterestPoints );
-
-		final SpimData2 newSpimData = new SpimData2(
-				basePath,
-				sequenceDescription,
-				viewRegistrations,
-				viewsInterestPoints );
-
-		return newSpimData;
-	}
-
-	public static List< String > writeXML(
-			final LoadParseQueryXML lpq,
-			final Parameters params )
-		throws SpimDataException
+	public static Pair< SpimData2, List< String > > createXMLObject( final SpimData2 spimData, final List< ViewId > viewIds, final Parameters params )
 	{
 		int layoutTP = 0, layoutChannels = 0, layoutIllum = 0, layoutAngles = 0;
 		String filename = "img";
 
-		if ( lpq.getTimePointsToProcess().size() > 1 )
+		final int numAngles = SpimData2.getAllAnglesSorted( spimData, viewIds ).size();
+		final int numChannels = SpimData2.getAllChannelsSorted( spimData, viewIds ).size();
+		final int numIlluminations = SpimData2.getAllIlluminationsSorted( spimData, viewIds ).size();
+		final int numTimepoints =  SpimData2.getAllTimePointsSorted( spimData, viewIds ).size();
+
+		if ( numTimepoints > 1 )
 		{
 			filename += "_TL{t}";
 			layoutTP = 1;
 		}
 		
-		if ( lpq.getChannelsToProcess().size() > 1 )
+		if ( numChannels > 1 )
 		{
 			filename += "_Ch{c}";
 			layoutChannels = 1;
 		}
 		
-		if ( lpq.getIlluminationsToProcess().size() > 1 )
+		if ( numIlluminations > 1 )
 		{
 			filename += "_Ill{i}";
 			layoutIllum = 1;
 		}
 		
-		if ( lpq.getAnglesToProcess().size() > 1 )
+		if ( numAngles > 1 )
 		{
 			filename += "_Angle{a}";
 			layoutAngles = 1;
@@ -364,7 +286,7 @@ public class Resave_TIFF implements PlugIn
 
 		// Re-assemble a new SpimData object containing the subset of viewsetups and timepoints selected
 		final List< String > filesToCopy = new ArrayList< String >();
-		final SpimData2 newSpimData = assemblePartialSpimData2( lpq, new File( params.xmlFile ).getParentFile(), filesToCopy );
+		final SpimData2 newSpimData = assemblePartialSpimData2( spimData, viewIds, new File( params.xmlFile ).getParentFile(), filesToCopy );
 
 		final StackImgLoaderIJ imgLoader = new StackImgLoaderIJ(
 				new File( params.xmlFile ).getParentFile(),
@@ -372,9 +294,7 @@ public class Resave_TIFF implements PlugIn
 				layoutTP, layoutChannels, layoutIllum, layoutAngles, null );
 		newSpimData.getSequenceDescription().setImgLoader( imgLoader );
 
-		lpq.getIO().save( newSpimData, new File( params.xmlFile ).getAbsolutePath() );
-
-		return filesToCopy;
+		return new ValuePair< SpimData2, List< String > >( newSpimData, filesToCopy );
 	}
 	
 	public static String listAllTimePoints( final List<TimePoint> timePointsToProcess )
@@ -421,5 +341,90 @@ public class Resave_TIFF implements PlugIn
 				out.close();
 			}
 		}
+	}
+
+	/**
+	 * Assembles a new SpimData2 based on the subset of timepoints and viewsetups as selected by the user.
+	 * The imgloader is still not set here.
+	 * 
+	 * It also fills up a list of filesToCopy from the interestpoints directory if it is not null.
+	 * 
+	 * @param lpq
+	 * @param params
+	 * @param filesToCopy
+	 * @return
+	 */
+	public static SpimData2 assemblePartialSpimData2( final SpimData2 spimData, final List< ViewId > viewIds, final File basePath, final List< String > filesToCopy )
+	{
+		final TimePoints timepoints;
+
+		try
+		{
+			timepoints = new TimePointsPattern( listAllTimePoints( SpimData2.getAllTimePointsSorted( spimData, viewIds ) ) );
+		}
+		catch (ParseException e)
+		{
+			IOFunctions.println( "Automatically created list of timepoints failed to parse. This should not happen, really :) -- " + e );
+			IOFunctions.println( "Here is the list: " + listAllTimePoints( SpimData2.getAllTimePointsSorted( spimData, viewIds ) ) );
+			e.printStackTrace();
+			return null;
+		}
+
+		final List< ViewSetup > setups = SpimData2.getAllViewSetupsSorted( spimData, viewIds );
+
+		// a hashset for all viewsetups that remain
+		final Set< ViewId > views = new HashSet< ViewId >();
+		
+		for ( final ViewId viewId : viewIds )
+			views.add( new ViewId( viewId.getTimePointId(), viewId.getViewSetupId() ) );
+
+		final MissingViews oldMissingViews = spimData.getSequenceDescription().getMissingViews();
+		final ArrayList< ViewId > missingViews = new ArrayList< ViewId >();
+
+		if ( oldMissingViews != null && oldMissingViews.getMissingViews() != null )
+			for ( final ViewId id : oldMissingViews.getMissingViews() )
+				if ( views.contains( id ) )
+					missingViews.add( id );
+
+		// instantiate the sequencedescription
+		final SequenceDescription sequenceDescription = new SequenceDescription( timepoints, setups, null, new MissingViews( missingViews ) );
+
+		// re-assemble the registrations
+		final Map< ViewId, ViewRegistration > oldRegMap = spimData.getViewRegistrations().getViewRegistrations();
+		final Map< ViewId, ViewRegistration > newRegMap = new HashMap< ViewId, ViewRegistration >();
+		
+		for ( final ViewId viewId : oldRegMap.keySet() )
+			if ( views.contains( viewId ) )
+				newRegMap.put( viewId, oldRegMap.get( viewId ) );
+
+		final ViewRegistrations viewRegistrations = new ViewRegistrations( newRegMap );
+		
+		// re-assemble the interestpoints and a list of filenames to copy
+		final Map< ViewId, ViewInterestPointLists > oldInterestPoints = spimData.getViewInterestPoints().getViewInterestPoints();
+		final Map< ViewId, ViewInterestPointLists > newInterestPoints = new HashMap< ViewId, ViewInterestPointLists >();
+
+		for ( final ViewId viewId : oldInterestPoints.keySet() )
+			if ( views.contains( viewId ) )
+			{
+				final ViewInterestPointLists ipLists = oldInterestPoints.get( viewId );
+				newInterestPoints.put( viewId, ipLists );
+
+				if ( filesToCopy != null )
+				{
+					// get also all the filenames that we need to copy
+					for ( final InterestPointList ipl : ipLists.getHashMap().values() )
+						filesToCopy.add( ipl.getFile().getName() );
+				}
+			}
+		
+		final ViewInterestPoints viewsInterestPoints = new ViewInterestPoints( newInterestPoints );
+
+		final SpimData2 newSpimData = new SpimData2(
+				basePath,
+				sequenceDescription,
+				viewRegistrations,
+				viewsInterestPoints );
+
+		return newSpimData;
 	}
 }

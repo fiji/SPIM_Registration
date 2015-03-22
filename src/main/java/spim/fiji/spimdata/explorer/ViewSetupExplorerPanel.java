@@ -65,7 +65,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 	
 	protected JTable table;
 	protected ViewSetupTableModel< AS > tableModel;
-	protected ArrayList< SelectedViewDescriptionListener > listeners;
+	protected ArrayList< SelectedViewDescriptionListener< AS > > listeners;
 	protected AS data;
 	final String xml;
 	final X io;
@@ -75,7 +75,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 
 	public ViewSetupExplorerPanel( final AS data, final String xml, final X io )
 	{
-		this.listeners = new ArrayList< SelectedViewDescriptionListener >();
+		this.listeners = new ArrayList< SelectedViewDescriptionListener< AS > >();
 		this.data = data;
 		this.xml = xml.replace( "\\", "/" ).replace( "//", "/" ).replace( "/./", "/" );
 		this.io = io;
@@ -87,6 +87,17 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 
 	public ViewSetupTableModel< AS > getTableModel() { return tableModel; }
 	public AS getSpimData() { return data; }
+	public String xml() { return xml; }
+
+	@SuppressWarnings("unchecked")
+	public void setSpimData( final Object data ) { this.data = (AS)data; }
+
+	public void updateContent()
+	{
+		this.getTableModel().fireTableDataChanged();
+		for ( final SelectedViewDescriptionListener< AS > l : listeners )
+			l.updateContent( this.data );
+	}
 
 	public List< BasicViewDescription< ? extends BasicViewSetup > > selectedRows()
 	{
@@ -104,7 +115,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		return list;
 	}
 
-	public void addListener( final SelectedViewDescriptionListener listener )
+	public void addListener( final SelectedViewDescriptionListener< AS > listener )
 	{
 		this.listeners.add( listener );
 		
@@ -112,16 +123,16 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		listener.seletedViewDescription( tableModel.getElements().get( table.getSelectedRow() ) );
 	}
 
-	public boolean removeListener( final SelectedViewDescriptionListener listener )
+	public boolean removeListener( final SelectedViewDescriptionListener< AS > listener )
 	{
 		return this.listeners.remove( listener );
 	}
 	
-	public ArrayList< SelectedViewDescriptionListener > getListeners() { return listeners; }
+	public ArrayList< SelectedViewDescriptionListener< AS > > getListeners() { return listeners; }
 	
 	public void initComponent()
 	{
-		tableModel = new ViewSetupTableModel< AS >( data );
+		tableModel = new ViewSetupTableModel< AS >( this );
 
 		table = new JTable();
 		table.setModel( tableModel );
@@ -260,7 +271,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		{
 			io.save( data, xml );
 
-			for ( final SelectedViewDescriptionListener l : listeners )
+			for ( final SelectedViewDescriptionListener< AS > l : listeners )
 				l.save();
 
 			IOFunctions.println( "Saved XML '" + xml + "'." );

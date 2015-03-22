@@ -13,8 +13,8 @@ import mpicbg.spim.data.registration.ViewTransform;
 public class RegistrationTableModel extends AbstractTableModel
 {
 	private static final long serialVersionUID = -1263388435427674269L;
-	
-	final ViewRegistrations viewRegistrations;
+
+	ViewRegistrations viewRegistrations;
 	final ArrayList< String > columnNames;
 	
 	BasicViewDescription< ? > currentVD;
@@ -32,7 +32,8 @@ public class RegistrationTableModel extends AbstractTableModel
 		this.viewRegistrations = viewRegistrations;
 		this.currentVD = null;
 	}
-	
+
+	protected void update( final ViewRegistrations viewRegistrations ) { this.viewRegistrations = viewRegistrations; }
 	protected ViewRegistrations getViewRegistrations() { return viewRegistrations; }
 	protected BasicViewDescription< ? > getCurrentViewDescription() { return currentVD; } 
 	

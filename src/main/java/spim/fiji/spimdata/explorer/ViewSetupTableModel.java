@@ -21,7 +21,7 @@ public class ViewSetupTableModel< AS extends AbstractSpimData< ? > > extends Abs
 {
 	private static final long serialVersionUID = -6526338840427674269L;
 
-	final AS data;
+	final ViewSetupExplorerPanel< AS, ? > panel;
 	final ArrayList< String > columnNames;
 
 	final int registrationColumn, interestPointsColumn;
@@ -31,21 +31,21 @@ public class ViewSetupTableModel< AS extends AbstractSpimData< ? > > extends Abs
 	public int registrationColumn() { return registrationColumn; }
 	public int interestPointsColumn() { return interestPointsColumn; }
 
-	public ViewSetupTableModel( final AS data )
+	public ViewSetupTableModel( final ViewSetupExplorerPanel< AS, ? > panel )
 	{
-		this.data = data;
+		this.panel = panel;
 		columnNames = new ArrayList< String >();
 		columnNames.add( "Timepoint" );
 		columnNames.add( "View Id" );
-		columnNames.addAll( data.getSequenceDescription().getViewSetupsOrdered().get( 0 ).getAttributes().keySet() );
+		columnNames.addAll( panel.getSpimData().getSequenceDescription().getViewSetupsOrdered().get( 0 ).getAttributes().keySet() );
 		columnNames.add( "#Registrations" );
 
 		registrationColumn = columnNames.size() - 1;
-		viewRegistrations = data.getViewRegistrations();
+		viewRegistrations = panel.getSpimData().getViewRegistrations();
 
-		if ( SpimData2.class.isInstance( data ) )
+		if ( SpimData2.class.isInstance( panel.getSpimData() ) )
 		{
-			final SpimData2 data2 = (SpimData2)data;
+			final SpimData2 data2 = (SpimData2)panel.getSpimData();
 			columnNames.add( "#InterestPoints" );
 
 			interestPointsColumn = columnNames.size() - 1;
@@ -62,11 +62,11 @@ public class ViewSetupTableModel< AS extends AbstractSpimData< ? > > extends Abs
 	{
 		final ArrayList< BasicViewDescription< ? extends BasicViewSetup > > elements = new ArrayList< BasicViewDescription< ? extends BasicViewSetup > >();
 
-		for ( final TimePoint t : data.getSequenceDescription().getTimePoints().getTimePointsOrdered() )
-			for ( final BasicViewSetup v : data.getSequenceDescription().getViewSetupsOrdered() )
+		for ( final TimePoint t : panel.getSpimData().getSequenceDescription().getTimePoints().getTimePointsOrdered() )
+			for ( final BasicViewSetup v : panel.getSpimData().getSequenceDescription().getViewSetupsOrdered() )
 			{
 				final ViewId viewId = new ViewId( t.getId(), v.getId() );
-				final BasicViewDescription< ? > viewDesc = data.getSequenceDescription().getViewDescriptions().get( viewId );
+				final BasicViewDescription< ? > viewDesc = panel.getSpimData().getSequenceDescription().getViewDescriptions().get( viewId );
 
 				if ( viewDesc.isPresent() )
 					elements.add( viewDesc );

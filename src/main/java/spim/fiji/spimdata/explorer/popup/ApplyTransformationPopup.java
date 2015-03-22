@@ -16,9 +16,7 @@ import mpicbg.spim.io.IOFunctions;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.plugin.apply.ApplyParameters;
-import spim.fiji.spimdata.explorer.SelectedViewDescriptionListener;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
-import spim.fiji.spimdata.explorer.registration.RegistrationExplorer;
 
 public class ApplyTransformationPopup extends JMenuItem implements ViewExplorerSetable
 {
@@ -84,9 +82,7 @@ public class ApplyTransformationPopup extends JMenuItem implements ViewExplorerS
 			t.applyModels( data, params.minResolution, params.applyTo, modelLinks );
 
 			// update registration panel if available
-			for ( final SelectedViewDescriptionListener l : panel.getListeners() )
-				if ( RegistrationExplorer.class.isInstance( l ) )
-					( (RegistrationExplorer< ?, ? >)l ).panel().getTableModel().fireTableDataChanged();
+			panel.updateContent();
 		}
 	}
 }

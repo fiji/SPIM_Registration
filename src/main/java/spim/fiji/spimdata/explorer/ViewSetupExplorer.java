@@ -52,7 +52,7 @@ public class ViewSetupExplorer< AS extends AbstractSpimData< ? >, X extends XmlI
 	
 	public void quit()
 	{
-		for ( final SelectedViewDescriptionListener l : panel.getListeners() )
+		for ( final SelectedViewDescriptionListener< AS > l : panel.getListeners() )
 			l.quit();
 
 		panel.getListeners().clear();
@@ -64,7 +64,7 @@ public class ViewSetupExplorer< AS extends AbstractSpimData< ? >, X extends XmlI
 	public AS getSpimData() { return panel.getSpimData(); }
 	public ViewSetupExplorerPanel< AS, X > getPanel() { return panel; }
 	public JFrame getFrame() { return frame; }
-	public void addListener( final SelectedViewDescriptionListener listener ) { panel.addListener( listener ); }
-	public boolean removeListener( final SelectedViewDescriptionListener listener ) { return panel.removeListener( listener ); }
-	public ArrayList< SelectedViewDescriptionListener > getListeners() { return panel.getListeners(); }
+	public void addListener( final SelectedViewDescriptionListener< AS > listener ) { panel.addListener( listener ); }
+	public boolean removeListener( final SelectedViewDescriptionListener< AS > listener ) { return panel.removeListener( listener ); }
+	public ArrayList< SelectedViewDescriptionListener< AS > > getListeners() { return panel.getListeners(); }
 }
