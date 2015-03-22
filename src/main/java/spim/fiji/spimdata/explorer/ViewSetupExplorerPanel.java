@@ -37,6 +37,7 @@ import spim.fiji.spimdata.explorer.popup.DisplayViewPopup;
 import spim.fiji.spimdata.explorer.popup.FusionPopup;
 import spim.fiji.spimdata.explorer.popup.RegisterInterestPointsPopup;
 import spim.fiji.spimdata.explorer.popup.RemoveDetectionsPopup;
+import spim.fiji.spimdata.explorer.popup.ResavePopup;
 import spim.fiji.spimdata.explorer.popup.Separator;
 import spim.fiji.spimdata.explorer.popup.SpecifyCalibrationPopup;
 import spim.fiji.spimdata.explorer.popup.ViewExplorerSetable;
@@ -57,8 +58,11 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		staticPopups.add( new Separator() );
 		staticPopups.add( new SpecifyCalibrationPopup() );
 		staticPopups.add( new ApplyTransformationPopup() );
+		staticPopups.add( new Separator() );
 		staticPopups.add( new VisualizeDetectionsPopup() );
 		staticPopups.add( new RemoveDetectionsPopup() );
+		staticPopups.add( new Separator() );
+		staticPopups.add( new ResavePopup() );
 	}
 
 	private static final long serialVersionUID = -3767947754096099774L;

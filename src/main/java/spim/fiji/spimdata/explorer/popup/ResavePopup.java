@@ -34,7 +34,7 @@ public class ResavePopup extends JMenu implements ViewExplorerSetable
 
 	ViewSetupExplorerPanel< ?, ? > panel;
 
-	protected static String[] types = new String[]{ "As TIFF ...", "As Compressed TIFF ...", "As HDF5 ..." };
+	protected static String[] types = new String[]{ "As TIFF ...", "As compressed TIFF ...", "As HDF5 ...", "As compressed HDF5 ..." };
 
 	public ResavePopup()
 	{
@@ -43,14 +43,17 @@ public class ResavePopup extends JMenu implements ViewExplorerSetable
 		final JMenuItem tiff = new JMenuItem( types[ 0 ] );
 		final JMenuItem zippedTiff = new JMenuItem( types[ 1 ] );
 		final JMenuItem hdf5 = new JMenuItem( types[ 2 ] );
+		final JMenuItem deflatehdf5 = new JMenuItem( types[ 3 ] );
 
 		tiff.addActionListener( new MyActionListener( 0 ) );
 		zippedTiff.addActionListener( new MyActionListener( 1 ) );
 		hdf5.addActionListener( new MyActionListener( 2 ) );
+		deflatehdf5.addActionListener( new MyActionListener( 3 ) );
 
 		this.add( tiff );
 		this.add( zippedTiff );
 		this.add( hdf5 );
+		this.add( deflatehdf5 );
 	}
 
 	@Override
@@ -96,7 +99,7 @@ public class ResavePopup extends JMenu implements ViewExplorerSetable
 
 					if ( viewIds.size() < panel.getTableModel().getElements().size() )
 						question =
-							"Are you sure you only want to export " + viewIds.size() + "of " +
+							"Are you sure you only want to export " + viewIds.size() + " of " +
 							panel.getTableModel().getElements().size() + " views?\n" +
 							"(the rest will not be visible in the new dataset)\n";
 					else
@@ -143,7 +146,7 @@ public class ResavePopup extends JMenu implements ViewExplorerSetable
 						panel.setSpimData( result.getA() );
 						panel.updateContent();
 					}
-					else if ( index == 2 ) // HDF5
+					else if ( index == 2 || index == 3 ) // HDF5, compressed HDF5
 					{
 						final List< ViewSetup > setups = SpimData2.getAllViewSetupsSorted( data, viewIds );
 						
@@ -156,7 +159,7 @@ public class ResavePopup extends JMenu implements ViewExplorerSetable
 						final int firstviewSetupId = data.getSequenceDescription().getViewSetupsOrdered().get( 0 ).getId();
 						final ExportMipmapInfo autoMipmapSettings = perSetupExportMipmapInfo.get( firstviewSetupId );
 
-						final boolean compress = true;
+						final boolean compress = ( index == 2 ) ? false : true;
 
 						final Generic_Resave_HDF5.Parameters params =
 								new Generic_Resave_HDF5.Parameters(
