@@ -161,13 +161,17 @@ public class ResavePopup extends JMenu implements ViewExplorerSetable
 
 						final boolean compress = ( index == 2 ) ? false : true;
 
+						final String hdf5Filename = panel.xml().substring( 0, panel.xml().length() - 4 ) + ".h5";
+						final File hdf5File = new File( hdf5Filename );
+						IOFunctions.println( "HDF5 file: " + hdf5File.getAbsolutePath() );
+
 						final Generic_Resave_HDF5.Parameters params =
 								new Generic_Resave_HDF5.Parameters(
 										false,
 										autoMipmapSettings.getExportResolutions(),
 										autoMipmapSettings.getSubdivisions(),
-										null,
-										null,
+										new File( panel.xml() ),
+										hdf5File,
 										compress,
 										false,
 										1,
