@@ -1,12 +1,5 @@
 package spim.fiji.spimdata.explorer;
 
-import java.awt.BorderLayout;
-
-import javax.swing.JFrame;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.UIManager;
-
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.base.Entity;
 import mpicbg.spim.data.generic.base.NamedEntity;
@@ -19,57 +12,44 @@ import net.imglib2.util.Util;
 
 public class ViewSetupExplorerInfoBox< AS extends AbstractSpimData< ? > >
 {
-	final JFrame frame;
-
 	public ViewSetupExplorerInfoBox( final AS data, final String xml )
 	{
-		try
-		{
-			UIManager.setLookAndFeel( UIManager.getCrossPlatformLookAndFeelClassName() );
-		}
-		catch ( Exception e )
-		{
-			System.out.println( "Could not set look-and-feel" );
-		}
+		String text = "";
 
-		frame = new JFrame( "Information" );
-
-		final JTextArea text = new JTextArea();
-
-		text.append( "ImgLoader:\n");
-		text.append( data.getSequenceDescription().getImgLoader().getClass().getName() + "\n" );
-		text.append( data.getSequenceDescription().getImgLoader().toString() + "\n" );
+		text += "ImgLoader:\n";
+		text += data.getSequenceDescription().getImgLoader().getClass().getName() + "\n";
+		text += data.getSequenceDescription().getImgLoader().toString() + "\n";
 		
 		for ( final BasicViewSetup vs : data.getSequenceDescription().getViewSetupsOrdered() )
 		{
-			text.append( "\n" );
-			text.append( "ViewSetup id=" + vs.getId() + ": \n" );
+			text += "\n";
+			text += "ViewSetup id=" + vs.getId() + ": \n";
 
 			final Dimensions dim = vs.getSize();
 			final VoxelDimensions vDim = vs.getVoxelSize();
 
 			if ( dim == null )
 			{
-				text.append( "Dimensions of image stack not loaded yet.\n");
+				text += "Dimensions of image stack not loaded yet.\n";
 			}
 			else
 			{
-				text.append( "Dimensions: ");
+				text += "Dimensions: ";
 				for ( int d = 0; d < dim.numDimensions() - 1; ++d )
-					text.append( Long.toString( dim.dimension( d ) ) + " x " );
-				text.append( Long.toString( dim.dimension( dim.numDimensions() - 1 ) ) + "px\n" );
+					text += Long.toString( dim.dimension( d ) ) + " x ";
+				text += Long.toString( dim.dimension( dim.numDimensions() - 1 ) ) + "px\n";
 			}
 
 			if ( vDim == null )
 			{
-				text.append( "Voxel Dimensions of image stack not loaded yet.\n");
+				text += "Voxel Dimensions of image stack not loaded yet.\n";
 			}
 			else
 			{
-				text.append( "Voxel Dimensions: ");
+				text += "Voxel Dimensions: ";
 				for ( int d = 0; d < vDim.numDimensions() - 1; ++d )
-					text.append( Double.toString( vDim.dimension( d ) ) + " x " );
-				text.append( Double.toString( vDim.dimension( vDim.numDimensions() - 1 ) ) + vDim.unit() + "\n" );
+					text += Double.toString( vDim.dimension( d ) ) + " x ";
+				text += Double.toString( vDim.dimension( vDim.numDimensions() - 1 ) ) + vDim.unit() + "\n";
 			}
 			
 			for ( final String attrib : vs.getAttributes().keySet() )
@@ -79,29 +59,27 @@ public class ViewSetupExplorerInfoBox< AS extends AbstractSpimData< ? > >
 				if ( Angle.class.isInstance( e ) )
 				{
 					final Angle a = (Angle)e;
-					text.append( attrib + " " + a.getName() + " (id=" + a.getId() + ")" );
+					text += attrib + " " + a.getName() + " (id=" + a.getId() + ")";
 
 					if ( a.hasRotation() )
-						text.append( ", Rotation Axis " + Util.printCoordinates( a.getRotationAxis() ) + ", Rotation Angle " + a.getRotationAngleDegrees() );
+						text += ", Rotation Axis " + Util.printCoordinates( a.getRotationAxis() ) + ", Rotation Angle " + a.getRotationAngleDegrees();
 
-					text.append( "\n" );
+					text += "\n";
 				}
 				else if ( NamedEntity.class.isInstance( e ) )
-					text.append( attrib + " " +((NamedEntity)e).getName() + " (id=" + e.getId() + ")\n" );
+					text += attrib + " " +((NamedEntity)e).getName() + " (id=" + e.getId() + ")\n";
 				else
-					text.append( attrib + " (id=" + e.getId() + ")\n" );
+					text += attrib + " (id=" + e.getId() + ")\n";
 			}
 		}
 
-		text.append( "\n\nTimePoints:\n");
+		text += "\n\nTimePoints:\n";
 		String tps = "";
 		for ( final TimePoint t : data.getSequenceDescription().getTimePoints().getTimePointsOrdered() )
 			tps += t.getId() + ", ";
 
-		text.append( tps.substring( 0, tps.length() - 2 ) + "\n" );
-		frame.add( new JScrollPane( text ), BorderLayout.CENTER );
+		text += tps.substring( 0, tps.length() - 2 ) + "\n";
 
-		frame.pack();
-		frame.setVisible( true );
+		new SimpleInfoBox( "Information", text );
 	}
 }
