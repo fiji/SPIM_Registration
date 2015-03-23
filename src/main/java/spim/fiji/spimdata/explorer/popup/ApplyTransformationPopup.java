@@ -56,33 +56,40 @@ public class ApplyTransformationPopup extends JMenuItem implements ViewExplorerS
 				return;
 			}
 
-			final List< ViewId > viewIds = panel.selectedRowsViewId();
-			final SpimData data = (SpimData)panel.getSpimData();
-
-			final Apply_Transformation t = new Apply_Transformation();
-
-			final ApplyParameters params = t.queryParams( data, viewIds );
-
-			if ( params == null )
-				return;
+			new Thread( new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					final List< ViewId > viewIds = panel.selectedRowsViewId();
+					final SpimData data = (SpimData)panel.getSpimData();
 		
-			final Map< ViewDescription, Pair< double[], String > > modelLinks;
+					final Apply_Transformation t = new Apply_Transformation();
 		
-			// query models and apply them
-			if ( params.defineAs == 0 ) // matrix
-				modelLinks = t.queryString( data, viewIds, params );
-			else if ( params.defineAs == 1 ) //Rotation around axis
-				modelLinks = t.queryRotationAxis( data, viewIds, params );
-			else // Interactively using the BigDataViewer
-				modelLinks = t.queryBigDataViewer( data, viewIds, params );
+					final ApplyParameters params = t.queryParams( data, viewIds );
 		
-			if ( modelLinks == null )
-				return;
+					if ( params == null )
+						return;
+				
+					final Map< ViewDescription, Pair< double[], String > > modelLinks;
+				
+					// query models and apply them
+					if ( params.defineAs == 0 ) // matrix
+						modelLinks = t.queryString( data, viewIds, params );
+					else if ( params.defineAs == 1 ) //Rotation around axis
+						modelLinks = t.queryRotationAxis( data, viewIds, params );
+					else // Interactively using the BigDataViewer
+						modelLinks = t.queryBigDataViewer( data, viewIds, params );
+				
+					if ( modelLinks == null )
+						return;
+				
+					t.applyModels( data, params.minResolution, params.applyTo, modelLinks );
 		
-			t.applyModels( data, params.minResolution, params.applyTo, modelLinks );
-
-			// update registration panel if available
-			panel.updateContent();
+					// update registration panel if available
+					panel.updateContent();
+				}
+			} ).start();
 		}
 	}
 }
