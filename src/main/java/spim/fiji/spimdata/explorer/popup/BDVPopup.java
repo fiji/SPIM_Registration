@@ -6,6 +6,8 @@ import java.awt.event.ActionListener;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
+import net.imglib2.realtransform.AffineTransform3D;
+import net.imglib2.ui.InteractiveDisplayCanvasComponent;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.apply.BigDataViewerTransformationWindow;
@@ -13,6 +15,7 @@ import spim.fiji.spimdata.SpimDataWrapper;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import bdv.BigDataViewer;
+import bdv.viewer.ViewerPanel;
 
 public class BDVPopup extends JMenuItem implements ViewExplorerSetable
 {
@@ -78,6 +81,9 @@ public class BDVPopup extends JMenuItem implements ViewExplorerSetable
 					}
 					else
 					{
+						ViewerPanel viewerPanel = bdv.getViewer();
+						InteractiveDisplayCanvasComponent< AffineTransform3D > display = viewerPanel.getDisplay();
+						
 						BigDataViewerTransformationWindow.disposeViewerWindow( bdv );
 						bdv = null;
 					}
