@@ -69,7 +69,7 @@ public class BDVPopup extends JMenuItem implements ViewExplorerSetable
 						{
 							bdv = new BigDataViewer( new SpimDataWrapper( panel.getSpimData() ), panel.xml(), null );
 						}
-						catch (SpimDataException e)
+						catch (Exception e)
 						{
 							IOFunctions.println( "Could not run BigDataViewer: " + e );
 							e.printStackTrace();
