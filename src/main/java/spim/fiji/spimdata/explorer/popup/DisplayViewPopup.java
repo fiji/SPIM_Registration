@@ -78,11 +78,13 @@ public class DisplayViewPopup extends JMenu implements ViewExplorerSetable
 							JOptionPane.YES_NO_OPTION ) == JOptionPane.NO_OPTION )
 						return;
 
-					IOFunctions.println( "Opening as " + ( as16bit ? " 16 bit:" : "32 bit:" ) );
+					IOFunctions.println(
+							"Opening as" + ( as16bit ? " 16 bit" : "32 bit" ) + " using " +
+							panel.getSpimData().getSequenceDescription().getImgLoader().getClass().getSimpleName() );
 
 					for ( final BasicViewDescription< ? > vd : panel.selectedRows() )
 					{
-						IOFunctions.println( "Timepoint: " + vd.getTimePointId() + " ViewSetup: " + vd.getViewSetupId() );
+						IOFunctions.println( "Loading timepoint: " + vd.getTimePointId() + " ViewSetup: " + vd.getViewSetupId() );
 		
 						final String name;
 		
