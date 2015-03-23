@@ -19,10 +19,12 @@ public class RegistrationExplorer< AS extends AbstractSpimData< ? >, X extends X
 	final String xml;
 	final JFrame frame;
 	final RegistrationExplorerPanel panel;
+	final ViewSetupExplorer< AS, X > viewSetupExplorer;
 	
 	public RegistrationExplorer( final String xml, final X io, final ViewSetupExplorer< AS, X > viewSetupExplorer )
 	{
 		this.xml = xml;
+		this.viewSetupExplorer = viewSetupExplorer;
 
 		frame = new JFrame( "Registration Explorer" );
 		panel = new RegistrationExplorerPanel( viewSetupExplorer.getPanel().getSpimData().getViewRegistrations() );
@@ -43,6 +45,8 @@ public class RegistrationExplorer< AS extends AbstractSpimData< ? >, X extends X
 		viewSetupExplorer.addListener( this );
 	}
 
+	public JFrame frame() { return frame; }
+
 	@Override
 	public void save() {}
 
@@ -55,6 +59,7 @@ public class RegistrationExplorer< AS extends AbstractSpimData< ? >, X extends X
 	@Override
 	public void quit()
 	{
+		viewSetupExplorer.removeListener( this );
 		frame.setVisible( false );
 		frame.dispose();
 	}

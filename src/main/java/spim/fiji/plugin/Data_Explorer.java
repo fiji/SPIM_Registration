@@ -12,8 +12,6 @@ import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.explorer.ViewSetupExplorer;
-import spim.fiji.spimdata.explorer.interestpoint.InterestPointExplorer;
-import spim.fiji.spimdata.explorer.registration.RegistrationExplorer;
 
 public class Data_Explorer implements PlugIn
 {
@@ -62,8 +60,8 @@ public class Data_Explorer implements PlugIn
 
 		final ViewSetupExplorer< SpimData2, XmlIoSpimData2 > explorer = new ViewSetupExplorer<SpimData2, XmlIoSpimData2 >( data, xml, io );
 
-		new InterestPointExplorer< SpimData2, XmlIoSpimData2 >( xml, io, explorer );
-		new RegistrationExplorer< SpimData2, XmlIoSpimData2 >( xml, io, explorer );
+		//new InterestPointExplorer< SpimData2, XmlIoSpimData2 >( xml, io, explorer );
+		//new RegistrationExplorer< SpimData2, XmlIoSpimData2 >( xml, io, explorer );
 
 		explorer.getFrame().toFront();
 	}

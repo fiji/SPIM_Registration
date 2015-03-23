@@ -36,8 +36,10 @@ import spim.fiji.spimdata.explorer.popup.BDVPopup;
 import spim.fiji.spimdata.explorer.popup.DetectInterestPointsPopup;
 import spim.fiji.spimdata.explorer.popup.DisplayViewPopup;
 import spim.fiji.spimdata.explorer.popup.FusionPopup;
+import spim.fiji.spimdata.explorer.popup.InterestPointsExplorerPopup;
 import spim.fiji.spimdata.explorer.popup.LabelPopUp;
 import spim.fiji.spimdata.explorer.popup.RegisterInterestPointsPopup;
+import spim.fiji.spimdata.explorer.popup.RegistrationExplorerPopup;
 import spim.fiji.spimdata.explorer.popup.RemoveDetectionsPopup;
 import spim.fiji.spimdata.explorer.popup.ResavePopup;
 import spim.fiji.spimdata.explorer.popup.Separator;
@@ -64,11 +66,13 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		staticPopups.add( new Separator() );
 
 		staticPopups.add( new LabelPopUp( " Calibration/Transformations" ) );
+		staticPopups.add( new RegistrationExplorerPopup() );
 		staticPopups.add( new SpecifyCalibrationPopup() );
 		staticPopups.add( new ApplyTransformationPopup() );
 		staticPopups.add( new Separator() );
 
 		staticPopups.add( new LabelPopUp( " Interest Points" ) );
+		staticPopups.add( new InterestPointsExplorerPopup() );
 		staticPopups.add( new VisualizeDetectionsPopup() );
 		staticPopups.add( new RemoveDetectionsPopup() );
 		staticPopups.add( new Separator() );
@@ -83,14 +87,16 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 	protected ViewSetupTableModel< AS > tableModel;
 	protected ArrayList< SelectedViewDescriptionListener< AS > > listeners;
 	protected AS data;
+	protected ViewSetupExplorer< AS, X > explorer;
 	final String xml;
 	final X io;
 	final boolean isMac;
 
 	final protected HashSet< BasicViewDescription< ? extends BasicViewSetup > > selectedRows;
 
-	public ViewSetupExplorerPanel( final AS data, final String xml, final X io )
+	public ViewSetupExplorerPanel( final ViewSetupExplorer< AS, X > explorer, final AS data, final String xml, final X io )
 	{
+		this.explorer = explorer;
 		this.listeners = new ArrayList< SelectedViewDescriptionListener< AS > >();
 		this.data = data;
 		this.xml = xml.replace( "\\", "/" ).replace( "//", "/" ).replace( "/./", "/" );
@@ -104,6 +110,8 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 	public ViewSetupTableModel< AS > getTableModel() { return tableModel; }
 	public AS getSpimData() { return data; }
 	public String xml() { return xml; }
+	public X io() { return io; }
+	public ViewSetupExplorer< AS, X > explorer() { return explorer; }
 
 	@SuppressWarnings("unchecked")
 	public void setSpimData( final Object data ) { this.data = (AS)data; }

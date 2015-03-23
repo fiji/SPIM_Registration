@@ -24,10 +24,12 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 	final String xml;
 	final JFrame frame;
 	final InterestPointExplorerPanel panel;
+	final ViewSetupExplorer< AS, X > viewSetupExplorer;
 
 	public InterestPointExplorer( final String xml, final X io, final ViewSetupExplorer< AS, X > viewSetupExplorer )
 	{
 		this.xml = xml;
+		this.viewSetupExplorer = viewSetupExplorer;
 
 		frame = new JFrame( "Interest Point Explorer" );
 		panel = new InterestPointExplorerPanel( viewSetupExplorer.getPanel().getSpimData().getViewInterestPoints() );
@@ -47,6 +49,8 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 		// this call also triggers the first update of the registration table
 		viewSetupExplorer.addListener( this );
 	}
+
+	public JFrame frame() { return frame; }
 
 	@Override
 	public void seletedViewDescription( final BasicViewDescription<? extends BasicViewSetup> viewDescription )
@@ -94,6 +98,7 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 	@Override
 	public void quit()
 	{
+		viewSetupExplorer.removeListener( this );
 		frame.setVisible( false );
 		frame.dispose();
 	}

@@ -9,7 +9,6 @@ import javax.swing.JOptionPane;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.apply.BigDataViewerTransformationWindow;
-import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.SpimDataWrapper;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
@@ -44,12 +43,6 @@ public class BDVPopup extends JMenuItem implements ViewExplorerSetable
 			if ( panel == null )
 			{
 				IOFunctions.println( "Panel not set for " + this.getClass().getSimpleName() );
-				return;
-			}
-
-			if ( !SpimData2.class.isInstance( panel.getSpimData() ) )
-			{
-				IOFunctions.println( "Only supported for SpimData2 objects: " + this.getClass().getSimpleName() );
 				return;
 			}
 
