@@ -273,7 +273,7 @@ public class Apply_Transformation implements PlugIn
 
 			return modelLinks;
 		}
-		catch ( SpimDataException e )
+		catch ( Exception e )
 		{
 			IOFunctions.println( "Failed to run the BigDataViewer ... " );
 			e.printStackTrace();
