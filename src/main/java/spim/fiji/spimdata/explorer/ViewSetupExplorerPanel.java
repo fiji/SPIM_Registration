@@ -36,6 +36,7 @@ import spim.fiji.spimdata.explorer.popup.BDVPopup;
 import spim.fiji.spimdata.explorer.popup.DetectInterestPointsPopup;
 import spim.fiji.spimdata.explorer.popup.DisplayViewPopup;
 import spim.fiji.spimdata.explorer.popup.FusionPopup;
+import spim.fiji.spimdata.explorer.popup.LabelPopUp;
 import spim.fiji.spimdata.explorer.popup.RegisterInterestPointsPopup;
 import spim.fiji.spimdata.explorer.popup.RemoveDetectionsPopup;
 import spim.fiji.spimdata.explorer.popup.ResavePopup;
@@ -51,19 +52,28 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 	static
 	{
 		IOFunctions.printIJLog = true;
+		staticPopups.add( new LabelPopUp( " Displaying" ) );
 		staticPopups.add( new BDVPopup() );
 		staticPopups.add( new DisplayViewPopup() );
 		staticPopups.add( new Separator() );
+
+		staticPopups.add( new LabelPopUp( " Processing" ) );
 		staticPopups.add( new DetectInterestPointsPopup() );
 		staticPopups.add( new RegisterInterestPointsPopup() );
 		staticPopups.add( new FusionPopup() );
 		staticPopups.add( new Separator() );
+
+		staticPopups.add( new LabelPopUp( " Calibration/Transformations" ) );
 		staticPopups.add( new SpecifyCalibrationPopup() );
 		staticPopups.add( new ApplyTransformationPopup() );
 		staticPopups.add( new Separator() );
+
+		staticPopups.add( new LabelPopUp( " Interest Points" ) );
 		staticPopups.add( new VisualizeDetectionsPopup() );
 		staticPopups.add( new RemoveDetectionsPopup() );
 		staticPopups.add( new Separator() );
+
+		staticPopups.add( new LabelPopUp( " Modifications" ) );
 		staticPopups.add( new ResavePopup() );
 	}
 

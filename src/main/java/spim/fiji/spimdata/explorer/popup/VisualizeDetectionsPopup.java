@@ -23,7 +23,7 @@ public class VisualizeDetectionsPopup extends JMenuItem implements ViewExplorerS
 
 	public VisualizeDetectionsPopup()
 	{
-		super( "Visualize Detections ..." );
+		super( "Visualize Interest Points ..." );
 
 		this.addActionListener( new MyActionListener() );
 	}

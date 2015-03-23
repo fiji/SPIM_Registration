@@ -34,7 +34,7 @@ public class RemoveDetectionsPopup extends JMenu implements ViewExplorerSetable
 
 	public RemoveDetectionsPopup()
 	{
-		super( "Remove Detections" );
+		super( "Remove Interest Points" );
 
 		final JMenuItem byDistance = new JMenuItem( "By Distance ..." );
 		final JMenuItem interactivelyXY = new JMenuItem( "Interactively (XY Projection) ..." );
