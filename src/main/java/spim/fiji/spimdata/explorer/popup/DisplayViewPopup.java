@@ -27,8 +27,8 @@ public class DisplayViewPopup extends JMenu implements ViewExplorerSetable
 	{
 		super( "Display View(s)" );
 
-		final JMenuItem as32bit = new JMenuItem( "As 32 Bit" );
-		final JMenuItem as16bit = new JMenuItem( "As 16 Bit" );
+		final JMenuItem as32bit = new JMenuItem( "As 32-Bit (ImageJ Stack)" );
+		final JMenuItem as16bit = new JMenuItem( "As 16-Bit (ImageJ Stack)" );
 
 		as16bit.addActionListener( new MyActionListener( true ) );
 		as32bit.addActionListener( new MyActionListener( false ) );
