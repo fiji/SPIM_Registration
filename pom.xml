@@ -57,7 +57,6 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>legacy-imglib1</artifactId>
-			<version>1.0.0-DEPRECATED</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
