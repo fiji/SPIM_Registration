@@ -5,6 +5,7 @@ import java.awt.event.ActionListener;
 
 import javax.swing.JMenuItem;
 
+import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.spimdata.SpimData2;
@@ -43,12 +44,6 @@ public class RegistrationExplorerPopup extends JMenuItem implements ViewExplorer
 				return;
 			}
 
-			if ( !SpimData2.class.isInstance( panel.getSpimData() ) )
-			{
-				IOFunctions.println( "Only supported for SpimData2 objects: " + this.getClass().getSimpleName() );
-				return;
-			}
-
 			new Thread( new Runnable()
 			{
 				@Override
@@ -68,7 +63,7 @@ public class RegistrationExplorerPopup extends JMenuItem implements ViewExplorer
 		}
 	}
 
-	private static final < AS extends SpimData2, X extends XmlIoAbstractSpimData< ?, AS > > RegistrationExplorer< AS, X > instanceFor( final ViewSetupExplorerPanel< AS, X > panel )
+	private static final < AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > > RegistrationExplorer< AS, X > instanceFor( final ViewSetupExplorerPanel< AS, X > panel )
 	{
 		return new RegistrationExplorer< AS, X >( panel.xml(), panel.io(), panel.explorer() );
 	}
