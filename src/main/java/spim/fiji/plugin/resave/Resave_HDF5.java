@@ -91,7 +91,7 @@ public class Resave_HDF5 implements PlugIn
 		{
 			try
 			{
-				final Pair< SpimData2, List< String > > result = createXMLObject( data, viewIds, params, progressWriter );
+				final Pair< SpimData2, List< String > > result = createXMLObject( data, viewIds, params, progressWriter, false );
 
 				xml.getIO().save( result.getA(), params.seqFile.getAbsolutePath() );
 				progressWriter.setProgress( 0.95 );
@@ -225,14 +225,21 @@ public class Resave_HDF5 implements PlugIn
 			final SpimData2 spimData,
 			final List< ViewId > viewIds,
 			final Parameters params,
-			final ProgressWriter progressWriter )
+			final ProgressWriter progressWriter,
+			final boolean useRightAway )
 	{
 		// Re-assemble a new SpimData object containing the subset of viewsetups and timepoints selected
 		final List< String > filesToCopy = new ArrayList< String >();
 		final SpimData2 newSpimData = Resave_TIFF.assemblePartialSpimData2( spimData, viewIds, params.seqFile.getParentFile(), filesToCopy );
 		final ArrayList< Partition > partitions = Generic_Resave_HDF5.getPartitions( newSpimData, params );
 
-		final Hdf5ImageLoader hdf5Loader = new Hdf5ImageLoader( params.hdf5File, partitions, null, false );
+		final Hdf5ImageLoader hdf5Loader;
+
+		if ( useRightAway )
+			hdf5Loader = new Hdf5ImageLoader( params.hdf5File, partitions, newSpimData.getSequenceDescription(), true );
+		else
+			hdf5Loader = new Hdf5ImageLoader( params.hdf5File, partitions, null, false );
+		
 		newSpimData.getSequenceDescription().setImgLoader( hdf5Loader );
 		newSpimData.setBasePath( params.seqFile.getParentFile() );
 

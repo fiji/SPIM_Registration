@@ -182,7 +182,7 @@ public class ResavePopup extends JMenu implements ViewExplorerSetable
 						// write hdf5
 						Generic_Resave_HDF5.writeHDF5( Resave_HDF5.reduceSpimData2( data, viewIds ), params, progressWriter );
 
-						final Pair< SpimData2, List< String > > result = Resave_HDF5.createXMLObject( data, viewIds, params, progressWriter );
+						final Pair< SpimData2, List< String > > result = Resave_HDF5.createXMLObject( data, viewIds, params, progressWriter, true );
 
 						// copy the interest points is not necessary as we overwrite the XML if they exist
 						// Resave_TIFF.copyInterestPoints( xml.getData().getBasePath(), params.getSeqFile().getParentFile(), result.getB() );
