@@ -53,7 +53,10 @@ public class RegisterInterestPointsPopup extends JMenuItem implements ViewExplor
 				public void run()
 				{
 					if ( new Interest_Point_Registration().register( (SpimData2)panel.getSpimData(), panel.selectedRowsViewId() ) )
+					{
 						panel.updateContent(); // update interestpoint and registration panel if available
+						panel.bdvPopup().updateBDV();
+					}
 				}
 			} ).start();
 		}

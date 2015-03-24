@@ -27,7 +27,7 @@ public class RegistrationExplorer< AS extends AbstractSpimData< ? >, X extends X
 		this.viewSetupExplorer = viewSetupExplorer;
 
 		frame = new JFrame( "Registration Explorer" );
-		panel = new RegistrationExplorerPanel( viewSetupExplorer.getPanel().getSpimData().getViewRegistrations() );
+		panel = new RegistrationExplorerPanel( viewSetupExplorer.getPanel().getSpimData().getViewRegistrations(), this );
 		frame.add( panel, BorderLayout.CENTER );
 
 		frame.setSize( panel.getPreferredSize() );

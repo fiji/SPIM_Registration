@@ -53,7 +53,10 @@ public class FusionPopup extends JMenuItem implements ViewExplorerSetable
 				public void run()
 				{
 					if ( new Image_Fusion().fuse( (SpimData2)panel.getSpimData(), panel.selectedRowsViewId() ) )
+					{
 						panel.updateContent(); // update main table and registration panel if available
+						panel.bdvPopup().updateBDV();
+					}
 				}
 			} ).start();
 		}

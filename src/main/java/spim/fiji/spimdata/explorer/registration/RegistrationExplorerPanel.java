@@ -29,15 +29,18 @@ public class RegistrationExplorerPanel extends JPanel
 {
 	private static final long serialVersionUID = -3767947754096099774L;
 	
+	final RegistrationExplorer< ?, ? > explorer;
+	
 	protected JTable table;
 	protected RegistrationTableModel tableModel;
 	protected JLabel label;
 	
 	protected ArrayList< ViewTransform > cache;
 	
-	public RegistrationExplorerPanel( final ViewRegistrations viewRegistrations )
+	public RegistrationExplorerPanel( final ViewRegistrations viewRegistrations, final RegistrationExplorer< ?, ? > explorer )
 	{
 		this.cache = new ArrayList< ViewTransform >();
+		this.explorer = explorer;
 
 		initComponent( viewRegistrations );
 	}
@@ -61,7 +64,7 @@ public class RegistrationExplorerPanel extends JPanel
 
 	public void initComponent( final ViewRegistrations viewRegistrations )
 	{
-		tableModel = new RegistrationTableModel( viewRegistrations );
+		tableModel = new RegistrationTableModel( viewRegistrations, this );
 
 		table = new JTable();
 		table.setModel( tableModel );

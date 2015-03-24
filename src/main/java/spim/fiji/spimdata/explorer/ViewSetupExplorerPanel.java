@@ -24,6 +24,9 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 
+import bdv.BigDataViewer;
+import bdv.img.hdf5.Hdf5ImageLoader;
+import bdv.tools.brightness.MinMaxGroup;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
@@ -31,6 +34,7 @@ import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+import spim.fiji.spimdata.SpimDataWrapper;
 import spim.fiji.spimdata.explorer.popup.ApplyTransformationPopup;
 import spim.fiji.spimdata.explorer.popup.BDVPopup;
 import spim.fiji.spimdata.explorer.popup.DetectInterestPointsPopup;
@@ -105,8 +109,26 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		this.selectedRows = new HashSet< BasicViewDescription< ? extends BasicViewSetup > >();
 
 		initComponent();
+
+		if ( Hdf5ImageLoader.class.isInstance( data.getSequenceDescription().getImgLoader() ) )
+			for ( final ViewExplorerSetable s : staticPopups )
+				if ( BDVPopup.class.isInstance( s ) )
+				{
+					((BDVPopup)s).bdv = new BigDataViewer( new SpimDataWrapper( getSpimData() ), xml(), null );
+					// TODO: get screenshot, get min/max from that
+					for ( final MinMaxGroup g : ((BDVPopup)s).bdv.getSetupAssignments().getMinMaxGroups() )
+						g.setRange( 0, 255 );
+				}
 	}
 
+	public BDVPopup bdvPopup()
+	{
+		for ( final ViewExplorerSetable s : staticPopups )
+			if ( BDVPopup.class.isInstance( s ) )
+				return ((BDVPopup)s);
+
+		return null;
+	}
 	public ViewSetupTableModel< AS > getTableModel() { return tableModel; }
 	public AS getSpimData() { return data; }
 	public String xml() { return xml; }

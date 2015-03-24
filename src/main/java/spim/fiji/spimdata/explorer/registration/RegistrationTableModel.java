@@ -16,13 +16,14 @@ public class RegistrationTableModel extends AbstractTableModel
 
 	ViewRegistrations viewRegistrations;
 	final ArrayList< String > columnNames;
+	final RegistrationExplorerPanel panel;
 	
 	BasicViewDescription< ? > currentVD;
 	
-	public RegistrationTableModel( final ViewRegistrations viewRegistrations )
+	public RegistrationTableModel( final ViewRegistrations viewRegistrations, final RegistrationExplorerPanel panel )
 	{
 		this.columnNames = new ArrayList< String >();
-		
+		this.panel = panel;
 		this.columnNames.add( "Transformation Name" );
 		
 		for ( int row = 0; row < 3; ++row )
@@ -91,6 +92,7 @@ public class RegistrationTableModel extends AbstractTableModel
 		viewRegistrations.getViewRegistration( currentVD ).updateModel();
 		
 		// do something ...
+		panel.explorer.viewSetupExplorer.getPanel().bdvPopup().updateBDV();
 		fireTableCellUpdated( row, column );
 	}
 	
