@@ -17,6 +17,8 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.SelectedViewDescriptionListener;
 import spim.fiji.spimdata.explorer.ViewSetupExplorer;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
+import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
+import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
 public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstractSpimData< ?, AS > >
 	implements SelectedViewDescriptionListener< AS >
@@ -61,16 +63,24 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 	@Override
 	public void save()
 	{
-		for ( final Pair< InterestPointList, ViewId > list : panel.save )
+		final ViewInterestPoints vip = viewSetupExplorer.getSpimData().getViewInterestPoints();
+		
+		for ( final ViewInterestPointLists vipl : vip.getViewInterestPoints().values() )
 		{
-			String output = "";
+			for ( final String label : vipl.getHashMap().keySet() )
+			{
+				final InterestPointList ipl = vipl.getInterestPointList( label );
 
-			if ( list.getA().saveCorrespondingInterestPoints() )
-				output = "Saved ";
-			else
-				output = "FAILED to save ";
+				if ( ipl.getInterestPoints() == null )
+					ipl.loadInterestPoints();
+				
+				ipl.saveInterestPoints();
 
-			IOFunctions.println( output + "correspondences in timepointid=" + list.getB().getTimePointId() + ", viewid=" + list.getB().getViewSetupId() );
+				if ( ipl.getCorrespondingInterestPoints() == null )
+					ipl.loadCorrespondingInterestPoints();
+
+				ipl.saveCorrespondingInterestPoints();
+			}
 		}
 
 		for ( final Pair< InterestPointList, ViewId > list : panel.delete )
@@ -91,7 +101,7 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 				IOFunctions.println( "FAILED to delete: " + corr.getAbsolutePath() );
 		}
 
-		panel.save.clear();
+		//panel.save.clear();
 		panel.delete.clear();
 	}
 

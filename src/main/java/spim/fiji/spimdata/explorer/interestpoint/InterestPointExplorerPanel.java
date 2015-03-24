@@ -39,12 +39,12 @@ public class InterestPointExplorerPanel extends JPanel
 	protected JLabel label;
 
 	// when save is called save those files and delete the other ones
-	protected ArrayList< Pair< InterestPointList, ViewId > > save;
+	//protected ArrayList< Pair< InterestPointList, ViewId > > save;
 	protected ArrayList< Pair< InterestPointList, ViewId > > delete;
 
 	public InterestPointExplorerPanel( final ViewInterestPoints viewInterestPoints )
 	{
-		this.save = new ArrayList< Pair< InterestPointList, ViewId > >();
+		//this.save = new ArrayList< Pair< InterestPointList, ViewId > >();
 		this.delete = new ArrayList< Pair< InterestPointList, ViewId > >();
 
 		initComponent( viewInterestPoints );
@@ -135,7 +135,7 @@ public class InterestPointExplorerPanel extends JPanel
 			Collections.sort( correspondencesList );
 
 			ViewId lastViewIdCorr = null;
-			String lastLabelCorr = null;
+			//String lastLabelCorr = null;
 			List< CorrespondingInterestPoints > cList = null;
 			int size = 0;
 
@@ -153,15 +153,15 @@ public class InterestPointExplorerPanel extends JPanel
 					if ( lastViewIdCorr != null )
 					{
 						IOFunctions.println( "Correspondences: " + size + " >>> " + cList.size() );
-						this.save.add( new ValuePair< InterestPointList, ViewId >(
-										vip.getViewInterestPointLists( lastViewIdCorr ).getInterestPointList( lastLabelCorr ),
-										lastViewIdCorr ) );
+						//this.save.add( new ValuePair< InterestPointList, ViewId >(
+						//				vip.getViewInterestPointLists( lastViewIdCorr ).getInterestPointList( lastLabelCorr ),
+						//				lastViewIdCorr ) );
 					}
 
 					// remove in the new one
 					IOFunctions.println( "Removing correspondences in timepointid=" + viewIdCorr.getTimePointId() + ", viewid=" + viewIdCorr.getViewSetupId() );
 					lastViewIdCorr = viewIdCorr;
-					lastLabelCorr = labelCorr;
+					//lastLabelCorr = labelCorr;
 					cList = getCorrespondingInterestPoints( vip, viewIdCorr, labelCorr );
 					size = cList.size();
 				}
@@ -184,9 +184,9 @@ public class InterestPointExplorerPanel extends JPanel
 			if ( lastViewIdCorr != null )
 			{
 				IOFunctions.println( "Correspondences: " + size + " >>> " + cList.size() );
-				this.save.add( new ValuePair< InterestPointList, ViewId >(
-								vip.getViewInterestPointLists( lastViewIdCorr ).getInterestPointList( lastLabelCorr ),
-								lastViewIdCorr ) );
+				//this.save.add( new ValuePair< InterestPointList, ViewId >(
+				//				vip.getViewInterestPointLists( lastViewIdCorr ).getInterestPointList( lastLabelCorr ),
+				//				lastViewIdCorr ) );
 			}
 
 			// remember to deleted the files
