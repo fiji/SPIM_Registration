@@ -24,9 +24,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 
-import bdv.BigDataViewer;
-import bdv.img.hdf5.Hdf5ImageLoader;
-import bdv.tools.brightness.MinMaxGroup;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
@@ -34,6 +31,7 @@ import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.SpimDataWrapper;
 import spim.fiji.spimdata.explorer.popup.ApplyTransformationPopup;
 import spim.fiji.spimdata.explorer.popup.BDVPopup;
@@ -50,6 +48,11 @@ import spim.fiji.spimdata.explorer.popup.Separator;
 import spim.fiji.spimdata.explorer.popup.SpecifyCalibrationPopup;
 import spim.fiji.spimdata.explorer.popup.ViewExplorerSetable;
 import spim.fiji.spimdata.explorer.popup.VisualizeDetectionsPopup;
+import spim.fiji.spimdata.interestpoints.InterestPointList;
+import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
+import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import bdv.BigDataViewer;
+import bdv.img.hdf5.Hdf5ImageLoader;
 
 public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > > extends JPanel
 {
@@ -314,6 +317,29 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 
 			for ( final SelectedViewDescriptionListener< AS > l : listeners )
 				l.save();
+
+			if ( SpimData2.class.isInstance( data ) )
+			{
+				final ViewInterestPoints vip = ( (SpimData2)data ).getViewInterestPoints();
+				
+				for ( final ViewInterestPointLists vipl : vip.getViewInterestPoints().values() )
+				{
+					for ( final String label : vipl.getHashMap().keySet() )
+					{
+						final InterestPointList ipl = vipl.getInterestPointList( label );
+	
+						if ( ipl.getInterestPoints() == null )
+							ipl.loadInterestPoints();
+						
+						ipl.saveInterestPoints();
+	
+						if ( ipl.getCorrespondingInterestPoints() == null )
+							ipl.loadCorrespondingInterestPoints();
+	
+						ipl.saveCorrespondingInterestPoints();
+					}
+				}
+			}
 
 			IOFunctions.println( "Saved XML '" + xml + "'." );
 		}

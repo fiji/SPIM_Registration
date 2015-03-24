@@ -63,26 +63,6 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 	@Override
 	public void save()
 	{
-		final ViewInterestPoints vip = viewSetupExplorer.getSpimData().getViewInterestPoints();
-		
-		for ( final ViewInterestPointLists vipl : vip.getViewInterestPoints().values() )
-		{
-			for ( final String label : vipl.getHashMap().keySet() )
-			{
-				final InterestPointList ipl = vipl.getInterestPointList( label );
-
-				if ( ipl.getInterestPoints() == null )
-					ipl.loadInterestPoints();
-				
-				ipl.saveInterestPoints();
-
-				if ( ipl.getCorrespondingInterestPoints() == null )
-					ipl.loadCorrespondingInterestPoints();
-
-				ipl.saveCorrespondingInterestPoints();
-			}
-		}
-
 		for ( final Pair< InterestPointList, ViewId > list : panel.delete )
 		{
 			IOFunctions.println( "Deleting correspondences and interestpoints in timepointid=" + list.getB().getTimePointId() + ", viewid=" + list.getB().getViewSetupId() );
