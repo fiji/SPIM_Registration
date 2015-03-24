@@ -113,12 +113,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		if ( Hdf5ImageLoader.class.isInstance( data.getSequenceDescription().getImgLoader() ) )
 			for ( final ViewExplorerSetable s : staticPopups )
 				if ( BDVPopup.class.isInstance( s ) )
-				{
 					((BDVPopup)s).bdv = new BigDataViewer( new SpimDataWrapper( getSpimData() ), xml(), null );
-					// TODO: get screenshot, get min/max from that
-					for ( final MinMaxGroup g : ((BDVPopup)s).bdv.getSetupAssignments().getMinMaxGroups() )
-						g.setRange( 0, 255 );
-				}
 	}
 
 	public BDVPopup bdvPopup()
