@@ -9,11 +9,12 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
-import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
@@ -28,25 +29,82 @@ import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.SpimDataWrapper;
+import spim.fiji.spimdata.explorer.popup.ApplyTransformationPopup;
+import spim.fiji.spimdata.explorer.popup.BDVPopup;
+import spim.fiji.spimdata.explorer.popup.DetectInterestPointsPopup;
+import spim.fiji.spimdata.explorer.popup.DisplayViewPopup;
+import spim.fiji.spimdata.explorer.popup.FusionPopup;
+import spim.fiji.spimdata.explorer.popup.InterestPointsExplorerPopup;
+import spim.fiji.spimdata.explorer.popup.LabelPopUp;
+import spim.fiji.spimdata.explorer.popup.RegisterInterestPointsPopup;
+import spim.fiji.spimdata.explorer.popup.RegistrationExplorerPopup;
+import spim.fiji.spimdata.explorer.popup.RemoveDetectionsPopup;
+import spim.fiji.spimdata.explorer.popup.ResavePopup;
+import spim.fiji.spimdata.explorer.popup.Separator;
+import spim.fiji.spimdata.explorer.popup.SpecifyCalibrationPopup;
+import spim.fiji.spimdata.explorer.popup.ViewExplorerSetable;
+import spim.fiji.spimdata.explorer.popup.VisualizeDetectionsPopup;
+import spim.fiji.spimdata.interestpoints.InterestPointList;
+import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
+import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import bdv.BigDataViewer;
+import bdv.img.hdf5.Hdf5ImageLoader;
 
 public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > > extends JPanel
 {
+	final static ArrayList< ViewExplorerSetable > staticPopups = new ArrayList< ViewExplorerSetable >();
+
+	static
+	{
+		IOFunctions.printIJLog = true;
+		staticPopups.add( new LabelPopUp( " Displaying" ) );
+		staticPopups.add( new BDVPopup() );
+		staticPopups.add( new DisplayViewPopup() );
+		staticPopups.add( new Separator() );
+
+		staticPopups.add( new LabelPopUp( " Processing" ) );
+		staticPopups.add( new DetectInterestPointsPopup() );
+		staticPopups.add( new RegisterInterestPointsPopup() );
+		staticPopups.add( new FusionPopup() );
+		staticPopups.add( new Separator() );
+
+		staticPopups.add( new LabelPopUp( " Calibration/Transformations" ) );
+		staticPopups.add( new RegistrationExplorerPopup() );
+		staticPopups.add( new SpecifyCalibrationPopup() );
+		staticPopups.add( new ApplyTransformationPopup() );
+		staticPopups.add( new Separator() );
+
+		staticPopups.add( new LabelPopUp( " Interest Points" ) );
+		staticPopups.add( new InterestPointsExplorerPopup() );
+		staticPopups.add( new VisualizeDetectionsPopup() );
+		staticPopups.add( new RemoveDetectionsPopup() );
+		staticPopups.add( new Separator() );
+
+		staticPopups.add( new LabelPopUp( " Modifications" ) );
+		staticPopups.add( new ResavePopup() );
+	}
+
 	private static final long serialVersionUID = -3767947754096099774L;
 	
 	protected JTable table;
 	protected ViewSetupTableModel< AS > tableModel;
-	protected ArrayList< SelectedViewDescriptionListener > listeners;
+	protected ArrayList< SelectedViewDescriptionListener< AS > > listeners;
 	protected AS data;
+	protected ViewSetupExplorer< AS, X > explorer;
 	final String xml;
 	final X io;
 	final boolean isMac;
 
 	final protected HashSet< BasicViewDescription< ? extends BasicViewSetup > > selectedRows;
 
-	public ViewSetupExplorerPanel( final AS data, final String xml, final X io )
+	public ViewSetupExplorerPanel( final ViewSetupExplorer< AS, X > explorer, final AS data, final String xml, final X io )
 	{
-		this.listeners = new ArrayList< SelectedViewDescriptionListener >();
+		this.explorer = explorer;
+		this.listeners = new ArrayList< SelectedViewDescriptionListener< AS > >();
 		this.data = data;
 		this.xml = xml.replace( "\\", "/" ).replace( "//", "/" ).replace( "/./", "/" );
 		this.io = io;
@@ -54,11 +112,54 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		this.selectedRows = new HashSet< BasicViewDescription< ? extends BasicViewSetup > >();
 
 		initComponent();
+
+		if ( Hdf5ImageLoader.class.isInstance( data.getSequenceDescription().getImgLoader() ) )
+			for ( final ViewExplorerSetable s : staticPopups )
+				if ( BDVPopup.class.isInstance( s ) )
+					((BDVPopup)s).bdv = new BigDataViewer( new SpimDataWrapper( getSpimData() ), xml(), null );
 	}
 
-	public AS getSpimData() { return data; }
+	public BDVPopup bdvPopup()
+	{
+		for ( final ViewExplorerSetable s : staticPopups )
+			if ( BDVPopup.class.isInstance( s ) )
+				return ((BDVPopup)s);
 
-	public void addListener( final SelectedViewDescriptionListener listener )
+		return null;
+	}
+	public ViewSetupTableModel< AS > getTableModel() { return tableModel; }
+	public AS getSpimData() { return data; }
+	public String xml() { return xml; }
+	public X io() { return io; }
+	public ViewSetupExplorer< AS, X > explorer() { return explorer; }
+
+	@SuppressWarnings("unchecked")
+	public void setSpimData( final Object data ) { this.data = (AS)data; }
+
+	public void updateContent()
+	{
+		this.getTableModel().fireTableDataChanged();
+		for ( final SelectedViewDescriptionListener< AS > l : listeners )
+			l.updateContent( this.data );
+	}
+
+	public List< BasicViewDescription< ? extends BasicViewSetup > > selectedRows()
+	{
+		final ArrayList< BasicViewDescription< ? extends BasicViewSetup > > list = new ArrayList< BasicViewDescription< ? extends BasicViewSetup > >();
+		list.addAll( selectedRows );
+		Collections.sort( list );
+		return list;
+	}
+
+	public List< ViewId > selectedRowsViewId()
+	{
+		final ArrayList< ViewId > list = new ArrayList< ViewId >();
+		list.addAll( selectedRows );
+		Collections.sort( list );
+		return list;
+	}
+
+	public void addListener( final SelectedViewDescriptionListener< AS > listener )
 	{
 		this.listeners.add( listener );
 		
@@ -66,16 +167,16 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		listener.seletedViewDescription( tableModel.getElements().get( table.getSelectedRow() ) );
 	}
 
-	public boolean removeListener( final SelectedViewDescriptionListener listener )
+	public boolean removeListener( final SelectedViewDescriptionListener< AS > listener )
 	{
 		return this.listeners.remove( listener );
 	}
 	
-	public ArrayList< SelectedViewDescriptionListener > getListeners() { return listeners; }
+	public ArrayList< SelectedViewDescriptionListener< AS > > getListeners() { return listeners; }
 	
 	public void initComponent()
 	{
-		tableModel = new ViewSetupTableModel< AS >( data );
+		tableModel = new ViewSetupTableModel< AS >( this );
 
 		table = new JTable();
 		table.setModel( tableModel );
@@ -214,8 +315,31 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		{
 			io.save( data, xml );
 
-			for ( final SelectedViewDescriptionListener l : listeners )
+			for ( final SelectedViewDescriptionListener< AS > l : listeners )
 				l.save();
+
+			if ( SpimData2.class.isInstance( data ) )
+			{
+				final ViewInterestPoints vip = ( (SpimData2)data ).getViewInterestPoints();
+				
+				for ( final ViewInterestPointLists vipl : vip.getViewInterestPoints().values() )
+				{
+					for ( final String label : vipl.getHashMap().keySet() )
+					{
+						final InterestPointList ipl = vipl.getInterestPointList( label );
+	
+						if ( ipl.getInterestPoints() == null )
+							ipl.loadInterestPoints();
+						
+						ipl.saveInterestPoints();
+	
+						if ( ipl.getCorrespondingInterestPoints() == null )
+							ipl.loadCorrespondingInterestPoints();
+	
+						ipl.saveCorrespondingInterestPoints();
+					}
+				}
+			}
 
 			IOFunctions.println( "Saved XML '" + xml + "'." );
 		}
@@ -229,18 +353,10 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 	protected void addPopupMenu( final JTable table )
 	{
 		final JPopupMenu popupMenu = new JPopupMenu();
-		final JMenuItem saveItem = new JMenuItem( "Save XML" );
 
-		saveItem.addActionListener( new ActionListener()
-		{
-			@Override
-			public void actionPerformed( final ActionEvent e )
-			{
-				saveXML();
-			}
-		});
+		for ( final ViewExplorerSetable item : staticPopups )
+			popupMenu.add( item.setViewExplorer( this ) );
 
-		popupMenu.add( saveItem );
 		table.setComponentPopupMenu( popupMenu );
 	}
 

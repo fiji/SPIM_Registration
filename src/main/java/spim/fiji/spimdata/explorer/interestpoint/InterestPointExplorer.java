@@ -13,28 +13,28 @@ import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.ImgLib2Temp.Pair;
-import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.explorer.SelectedViewDescriptionListener;
 import spim.fiji.spimdata.explorer.ViewSetupExplorer;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
+import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
+import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
 public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstractSpimData< ?, AS > >
-	implements SelectedViewDescriptionListener
+	implements SelectedViewDescriptionListener< AS >
 {
-	final AS data;
 	final String xml;
 	final JFrame frame;
 	final InterestPointExplorerPanel panel;
+	final ViewSetupExplorer< AS, X > viewSetupExplorer;
 
-	public InterestPointExplorer( final AS data, final String xml, final X io, final ViewSetupExplorer< AS, X > viewSetupExplorer )
+	public InterestPointExplorer( final String xml, final X io, final ViewSetupExplorer< AS, X > viewSetupExplorer )
 	{
-		this.data = data;
 		this.xml = xml;
+		this.viewSetupExplorer = viewSetupExplorer;
 
 		frame = new JFrame( "Interest Point Explorer" );
-		panel = new InterestPointExplorerPanel( data.getViewInterestPoints() );
+		panel = new InterestPointExplorerPanel( viewSetupExplorer.getPanel().getSpimData().getViewInterestPoints() );
 		frame.add( panel, BorderLayout.CENTER );
 
 		frame.setSize( panel.getPreferredSize() );
@@ -52,10 +52,7 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 		viewSetupExplorer.addListener( this );
 	}
 
-	public InterestPointExplorer( final AS data, final String xml, final X io )
-	{
-		this( data, xml, io, new ViewSetupExplorer< AS, X >( data, xml, io ) );
-	}
+	public JFrame frame() { return frame; }
 
 	@Override
 	public void seletedViewDescription( final BasicViewDescription<? extends BasicViewSetup> viewDescription )
@@ -66,18 +63,6 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 	@Override
 	public void save()
 	{
-		for ( final Pair< InterestPointList, ViewId > list : panel.save )
-		{
-			String output = "";
-
-			if ( list.getA().saveCorrespondingInterestPoints() )
-				output = "Saved ";
-			else
-				output = "FAILED to save ";
-
-			IOFunctions.println( output + "correspondences in timepointid=" + list.getB().getTimePointId() + ", viewid=" + list.getB().getViewSetupId() );
-		}
-
 		for ( final Pair< InterestPointList, ViewId > list : panel.delete )
 		{
 			IOFunctions.println( "Deleting correspondences and interestpoints in timepointid=" + list.getB().getTimePointId() + ", viewid=" + list.getB().getViewSetupId() );
@@ -96,24 +81,24 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 				IOFunctions.println( "FAILED to delete: " + corr.getAbsolutePath() );
 		}
 
-		panel.save.clear();
+		//panel.save.clear();
 		panel.delete.clear();
 	}
 
 	@Override
 	public void quit()
 	{
+		viewSetupExplorer.removeListener( this );
 		frame.setVisible( false );
 		frame.dispose();
 	}
 
-	public static void main( String[] args )
+	public InterestPointExplorerPanel panel() { return panel; }
+
+	@Override
+	public void updateContent( final AS data )
 	{
-		final LoadParseQueryXML result = new LoadParseQueryXML();
-
-		if ( !result.queryXML( "Interest Point Explorer", "", false, false, false, false ) )
-			return;
-
-		new InterestPointExplorer< SpimData2, XmlIoSpimData2 >( result.getData(), result.getXMLFileName(), result.getIO() );
+		panel.getTableModel().update( data.getViewInterestPoints() );
+		panel.getTableModel().fireTableDataChanged();
 	}
 }

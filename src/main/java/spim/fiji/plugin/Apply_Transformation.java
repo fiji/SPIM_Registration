@@ -11,6 +11,7 @@ import java.util.Map;
 
 import javax.media.j3d.Transform3D;
 
+import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
@@ -99,7 +100,7 @@ public class Apply_Transformation implements PlugIn
 		applyModels( data, params.minResolution, params.applyTo, modelLinks );
 
 		// now save it
-		Interest_Point_Registration.saveXML( result.getData(), result.getXMLFileName(), result.getClusterExtension() );
+		SpimData2.saveXML( result.getData(), result.getXMLFileName(), result.getClusterExtension() );
 
 	}
 
@@ -108,7 +109,7 @@ public class Apply_Transformation implements PlugIn
 	 * @param viewIds
 	 * @return - transformation model and explanation for each viewid, also sets global variables applyTo and minResolution
 	 */
-	public final ApplyParameters queryParams( final SpimData2 data, final List< ViewId > viewIds )
+	public final ApplyParameters queryParams( final SpimData data, final List< ViewId > viewIds )
 	{
 		final List< Angle > angles = SpimData2.getAllAnglesSorted( data, viewIds );
 		final List< Channel > channels = SpimData2.getAllChannelsSorted( data, viewIds );
@@ -208,7 +209,7 @@ public class Apply_Transformation implements PlugIn
 	}
 
 	public Map< ViewDescription, Pair< double[], String > > queryBigDataViewer(
-			final SpimData2 data,
+			final SpimData data,
 			final List< ViewId > viewIds,
 			final ApplyParameters params )
 	{
@@ -272,7 +273,7 @@ public class Apply_Transformation implements PlugIn
 
 			return modelLinks;
 		}
-		catch ( SpimDataException e )
+		catch ( Exception e )
 		{
 			IOFunctions.println( "Failed to run the BigDataViewer ... " );
 			e.printStackTrace();
@@ -281,7 +282,7 @@ public class Apply_Transformation implements PlugIn
 	}
 
 	public Map< ViewDescription, Pair< double[], String > > queryRotationAxis(
-			final SpimData2 data,
+			final SpimData data,
 			final List< ViewId > viewIds,
 			final ApplyParameters params )
 	{
@@ -447,7 +448,7 @@ public class Apply_Transformation implements PlugIn
 	}
 
 	public Map< ViewDescription, Pair< double[], String > > queryString(
-			final SpimData2 data,
+			final SpimData data,
 			final List< ViewId > viewIds,
 			final ApplyParameters params )
 	{
@@ -610,7 +611,7 @@ public class Apply_Transformation implements PlugIn
 		return modelLinks;
 	}
 
-	public void applyModels( final SpimData2 spimData, final double minResolution, final int applyTo, final Map< ViewDescription, Pair< double[], String > > modelLinks )
+	public void applyModels( final SpimData spimData, final double minResolution, final int applyTo, final Map< ViewDescription, Pair< double[], String > > modelLinks )
 	{
 		for ( final ViewDescription vd : modelLinks.keySet() )
 		{
@@ -676,7 +677,7 @@ public class Apply_Transformation implements PlugIn
 	}
 
 	private static final ListImg< ModelLink > createTable(
-			final SpimData2 data,
+			final SpimData data,
 			final List< ViewId > viewIds,
 			final boolean sameModelTimePoints,
 			final boolean sameModelChannels,
@@ -745,7 +746,7 @@ public class Apply_Transformation implements PlugIn
 		return v;
 	}
 
-	public static void preConcatenateTransform( final SpimData2 spimData, final ViewId viewId, final AffineTransform3D model, final String name )
+	public static void preConcatenateTransform( final SpimData spimData, final ViewId viewId, final AffineTransform3D model, final String name )
 	{
 		final ViewRegistrations viewRegistrations = spimData.getViewRegistrations();
 
@@ -755,7 +756,7 @@ public class Apply_Transformation implements PlugIn
 		vr.preconcatenateTransform( vt );
 	}
 	
-	public static void setModelToCalibration( final SpimData2 spimData, final ViewId viewId, final double minResolution )
+	public static void setModelToCalibration( final SpimData spimData, final ViewId viewId, final double minResolution )
 	{
 		setModelToIdentity( spimData, viewId );
 		
@@ -778,7 +779,7 @@ public class Apply_Transformation implements PlugIn
 		r.preconcatenateTransform( vt );
 	}
 
-	public static void setModelToIdentity( final SpimData2 spimData, final ViewId viewId )
+	public static void setModelToIdentity( final SpimData spimData, final ViewId viewId )
 	{
 		final ViewRegistrations viewRegistrations = spimData.getViewRegistrations();
 		final ViewRegistration r = viewRegistrations.getViewRegistration( viewId );

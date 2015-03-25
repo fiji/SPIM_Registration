@@ -38,12 +38,12 @@ public class Visualize_Detections implements PlugIn
 	public static double defaultDownsample = 1.0;
 	public static boolean defaultDisplayInput = false;
 
-	protected static class Params
+	public static class Params
 	{
-		final ArrayList< ChannelProcess > channelsToProcess;
-		final int detections;
-		final double downsample;
-		final boolean displayInput;
+		final public ArrayList< ChannelProcess > channelsToProcess;
+		final public int detections;
+		final public double downsample;
+		final public boolean displayInput;
 
 		public Params( final ArrayList< ChannelProcess > channelsToProcess, final int detections, final double downsample, final boolean displayInput )
 		{

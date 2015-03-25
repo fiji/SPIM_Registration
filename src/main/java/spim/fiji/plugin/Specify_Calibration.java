@@ -5,12 +5,15 @@ import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
 import java.awt.TextField;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
+import mpicbg.spim.data.SpimData;
+import mpicbg.spim.data.generic.AbstractSpimData;
+import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
+import mpicbg.spim.data.generic.sequence.BasicViewDescription;
+import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
@@ -23,7 +26,6 @@ import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
-import spim.fiji.spimdata.XmlIoSpimData2;
 
 public class Specify_Calibration implements PlugIn
 {
@@ -49,19 +51,7 @@ public class Specify_Calibration implements PlugIn
 		applyCal( maxCal, data, viewIds );
 
 		// save the xml
-		final XmlIoSpimData2 io = new XmlIoSpimData2( result.getClusterExtension() );
-		
-		final String xml = new File( result.getData().getBasePath(), new File( result.getXMLFileName() ).getName() ).getAbsolutePath();
-		try 
-		{
-			io.save( result.getData(), xml );
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + io.lastFileName() + "'." );
-		}
-		catch ( Exception e )
-		{
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + io.lastFileName() + "': " + e );
-			e.printStackTrace();
-		}
+		SpimData2.saveXML( data, result.getXMLFileName(), result.getClusterExtension() );
 	}
 
 	public static boolean queryNewCal( final ArrayList< Cal > calibrations, final Cal maxCal )
@@ -77,6 +67,7 @@ public class Specify_Calibration implements PlugIn
 		gd.addNumericField( "Calibration_z", maxCal.getCal()[ 2 ], 40, 20, "" );
 		// ImageJ cuts of part of the number otherwise
 		((TextField)gd.getNumericFields().lastElement()).setText( "" + maxCal.getCal()[ 2 ] );
+		gd.addStringField( "Unit", maxCal.unit() );
 
 		if ( calibrations.size() > 1 )
 			gd.addMessage( "WARNING: Calibrations are not the same for all\n" +
@@ -97,11 +88,13 @@ public class Specify_Calibration implements PlugIn
 		maxCal.getCal()[ 0 ] = gd.getNextNumber();
 		maxCal.getCal()[ 1 ] = gd.getNextNumber();
 		maxCal.getCal()[ 2 ] = gd.getNextNumber();
+		maxCal.setUnit( gd.getNextString() );
 
 		return true;
 	}
 
-	public static void applyCal( final Cal maxCal, final SpimData2 spimData, final List< ViewId > viewIds )
+	// TODO: this should not be necessary, could be AbstractSpimData
+	public static void applyCal( final Cal maxCal, final SpimData spimData, final List< ViewId > viewIds )
 	{
 		// this is the same for all timepoints, we are just interested in the ViewSetup
 		final TimePoint t = spimData.getSequenceDescription().getTimePoints().getTimePointsOrdered().get( 0 );
@@ -111,17 +104,17 @@ public class Specify_Calibration implements PlugIn
 			if ( viewId.getTimePointId() != t.getId() )
 				continue;
 
-			final ViewDescription desc = spimData.getSequenceDescription().getViewDescription( viewId );
+			final ViewDescription desc = spimData.getSequenceDescription().getViewDescriptions().get( viewId );
 			final ViewSetup viewSetup = desc.getViewSetup();
 
-			viewSetup.setVoxelSize( new FinalVoxelDimensions( "",
+			viewSetup.setVoxelSize( new FinalVoxelDimensions( maxCal.unit(),
 					maxCal.getCal()[ 0 ],
 					maxCal.getCal()[ 1 ],
 					maxCal.getCal()[ 2 ] ) );
 		}
 	}
 
-	public ArrayList< Cal > findCalibrations( final SpimData2 spimData, final List< ViewId > viewIds )
+	public static ArrayList< Cal > findCalibrations( final AbstractSpimData< ? extends AbstractSequenceDescription< ?, ?, ? > > spimData, final List< ViewId > viewIds )
 	{
 		// this is the same for all timepoints, we are just interested in the ViewSetup
 		final TimePoint t = spimData.getSequenceDescription().getTimePoints().getTimePointsOrdered().get( 0 );
@@ -133,14 +126,25 @@ public class Specify_Calibration implements PlugIn
 			if ( viewId.getTimePointId() != t.getId() )
 				continue;
 
-			final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( viewId );
-			final ViewSetup vs = vd.getViewSetup();
-			final String name =
-					"angle: " + vs.getAngle().getName() +
-					" channel: " + vs.getChannel().getName() +
-					" illum: " + vs.getIllumination().getName() +
+			final BasicViewDescription< ? > vd = spimData.getSequenceDescription().getViewDescriptions().get( viewId );
+			final BasicViewSetup vs = vd.getViewSetup();
+			final String name;
+
+			if ( ViewSetup.class.isInstance( vs ) )
+			{
+				name =
+					"angle: " + ((ViewSetup)vs).getAngle().getName() +
+					" channel: " + ((ViewSetup)vs).getChannel().getName() +
+					" illum: " + ((ViewSetup)vs).getIllumination().getName() +
 					", present at timepoint: " + t.getName() +
 					": " + vd.isPresent();
+			}
+			else
+			{
+				name =
+					"viewsetup: " + vs.getId() + ", present at timepoint: " +
+					t.getName() + ": " + vd.isPresent();
+			}
 
 			// only consider voxelsizes as defined in the XML
 			VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSize( vs );
@@ -151,10 +155,14 @@ public class Specify_Calibration implements PlugIn
 			final double x = voxelSize.dimension( 0 );
 			final double y = voxelSize.dimension( 1 );
 			final double z = voxelSize.dimension( 2 );
+			String unit = voxelSize.unit();
 
-			IOFunctions.println( "cal: [" + x + ", " + y + ", " + z + "] -- " + name );
+			if ( unit == null )
+				unit = "";
 
-			final Cal calTmp = new Cal( new double[]{ x, y, z } );
+			IOFunctions.println( "cal: [" + x + ", " + y + ", " + z + "] " + unit + "  -- " + name );
+
+			final Cal calTmp = new Cal( new double[]{ x, y, z }, unit );
 			boolean foundMatch = false;
 
 			for ( int j = 0; j < calibrations.size() && !foundMatch; ++j )
@@ -194,21 +202,25 @@ public class Specify_Calibration implements PlugIn
 		return maxCal;
 	}
 
-	protected class Cal
+	public static class Cal
 	{
 		final double[] cal;
 		int count;
-		
-		public Cal( final double[] cal )
+		String unit;
+
+		public Cal( final double[] cal, final String unit )
 		{
 			this.cal = cal;
 			this.count = 1;
+			this.unit = unit;
 		}
 		
 		public void increaseCount() { ++count; }
 		public int getCount() { return count; }
 		public double[] getCal() { return cal; }
-		
+		public String unit() { return unit; }
+		public void setUnit( final String unit ) { this.unit = unit; }
+
 		@Override
 		public boolean equals( final Object o )
 		{

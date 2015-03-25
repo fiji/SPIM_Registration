@@ -1,23 +1,20 @@
 package spim.process.fusion.export;
 
-import fiji.util.gui.GenericDialogPlus;
 import ij.gui.GenericDialog;
 
-import java.io.File;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import mpicbg.spim.data.SpimDataException;
+import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.registration.ViewRegistration;
-import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.registration.ViewTransform;
 import mpicbg.spim.data.registration.ViewTransformAffine;
 import mpicbg.spim.data.sequence.MissingViews;
 import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
-import mpicbg.spim.data.sequence.TimePoints;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
@@ -27,11 +24,9 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import spim.fiji.plugin.fusion.BoundingBox;
-import spim.fiji.plugin.queryXML.LoadParseQueryXML;
-import spim.fiji.plugin.resave.PluginHelper;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.imgloaders.StackImgLoaderIJ;
+import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.process.fusion.export.ExportSpimData2TIFF.FileNamePattern;
 
 public class AppendSpimData2 implements ImgExport
@@ -43,13 +38,6 @@ public class AppendSpimData2 implements ImgExport
 
 	Save3dTIFF saver;
 	SpimData2 spimData;
-
-	String xmlFile;
-
-	String clusterExt = "";
-
-	@Override
-	public void setClusterExt( final String clusterExt ) { this.clusterExt = clusterExt; }
 
 	@Override
 	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval<T> img, final BoundingBox bb, final TimePoint tp, final ViewSetup vs )
@@ -83,21 +71,8 @@ public class AppendSpimData2 implements ImgExport
 	@Override
 	public boolean finish()
 	{
-		XmlIoSpimData2 io = new XmlIoSpimData2( clusterExt );
-
-		try
-		{
-			io.save( spimData, new File( xmlFile ).getAbsolutePath() );
-			
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + io.lastFileName() + "'." );
-			return true;
-		}
-		catch ( SpimDataException e )
-		{
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + io.lastFileName() + "'." );
-			e.printStackTrace();
-			return false;
-		}
+		// this spimdata object was modified
+		return true;
 	}
 
 	@Override
@@ -108,13 +83,15 @@ public class AppendSpimData2 implements ImgExport
 	}
 
 	@Override
-	public boolean queryParameters( final SpimData2 oldSpimData )
+	public boolean queryParameters( final SpimData2 spimData )
 	{
+		this.spimData = spimData;
+
 		StackImgLoaderIJ loader;
 		
-		if ( oldSpimData.getSequenceDescription().getImgLoader() instanceof StackImgLoaderIJ )
+		if ( spimData.getSequenceDescription().getImgLoader() instanceof StackImgLoaderIJ )
 		{
-			loader = (StackImgLoaderIJ)oldSpimData.getSequenceDescription().getImgLoader();
+			loader = (StackImgLoaderIJ)spimData.getSequenceDescription().getImgLoader();
 		}
 		else
 		{
@@ -128,26 +105,7 @@ public class AppendSpimData2 implements ImgExport
 			return false;
 		}
 
-		final GenericDialogPlus gd = new GenericDialogPlus( "Append dataset using TIFF" );
-
-		if ( defaultPath == null )
-			defaultPath = LoadParseQueryXML.defaultXMLfilename;
-
-		PluginHelper.addSaveAsFileField( gd, "Select new XML", defaultPath, 80 );
-
-		gd.showDialog();
-
-		if ( gd.wasCanceled() )
-			return false;
-
-		xmlFile = gd.getNextString();
-		
-		if ( !xmlFile.endsWith( ".xml" ) )
-			xmlFile += ".xml";
-
-		defaultPath = LoadParseQueryXML.defaultXMLfilename = xmlFile;
-		
-		this.spimData = appendSpimData2( oldSpimData, newTimepoints, newViewSetups );
+		appendSpimData2( spimData, newTimepoints, newViewSetups );
 
 		final boolean compress = loader.getFileNamePattern().endsWith( ".zip" );
 		
@@ -203,44 +161,52 @@ public class AppendSpimData2 implements ImgExport
 	 * @param params
 	 * @return
 	 */
-	public static SpimData2 appendSpimData2(
+	public static void appendSpimData2(
 			final SpimData2 spimData,
 			final List< TimePoint > timepointsToProcess,
 			final List< ViewSetup > newViewSetups )
 	{
-		// same timepoints as before
-		final TimePoints timepoints = spimData.getSequenceDescription().getTimePoints();
+		final SequenceDescription sequenceDescription = spimData.getSequenceDescription();
 
-		// same views are still missing
-		final ArrayList< ViewId > missingViews = new ArrayList< ViewId >();
-		if ( spimData.getSequenceDescription().getMissingViews() != null )
-			missingViews.addAll( spimData.getSequenceDescription().getMissingViews().getMissingViews() );
+		// current viewsetups
+		final Map< Integer, ViewSetup > viewSetups = (Map< Integer, ViewSetup >)(Object)sequenceDescription.getViewSetups();
 
-		final List< ViewSetup > viewSetups = spimData.getSequenceDescription().getViewSetupsOrdered();
-
-		int maxId = -1;
-
-		for ( final ViewSetup vs : viewSetups )
-			maxId = Math.max( maxId, vs.getId() );
-
+		// add all the newly fused viewsetups
 		for ( final ViewSetup vs : newViewSetups )
-			maxId = Math.max( maxId, vs.getId() );
-		
+			viewSetups.put( vs.getId(), vs );
+
+		resetViewSetupsAndDescriptions( sequenceDescription );
+
 		// all the timepoints that are not processed are missing views
+		final ArrayList< ViewId > newMissingViews = new ArrayList< ViewId >();
+		final Map< ViewId, ViewInterestPointLists > ips = spimData.getViewInterestPoints().getViewInterestPoints();
 		for ( final TimePoint t : spimData.getSequenceDescription().getTimePoints().getTimePointsOrdered() )
 		{
 			if ( !timepointsToProcess.contains( t ) )
 			{
 				for ( final ViewSetup newSetup : newViewSetups )
-					missingViews.add( new ViewId( t.getId(), newSetup.getId() ) );
+					newMissingViews.add( new ViewId( t.getId(), newSetup.getId() ) );
+			}
+			else
+			{
+				for ( final ViewSetup newSetup : newViewSetups )
+					ips.put( new ViewId( t.getId(), newSetup.getId() ), new ViewInterestPointLists( t.getId(), newSetup.getId() ) );
 			}
 		}
 
-		// add all the newly fused viewsetups
-		viewSetups.addAll( newViewSetups );
+		// are there new ones? if so extend the maybe not existant list
+		if ( newMissingViews.size() > 0 )
+		{
+			MissingViews m = spimData.getSequenceDescription().getMissingViews();
 
-		// instantiate the sequencedescription
-		final SequenceDescription sequenceDescription = new SequenceDescription( timepoints, viewSetups, spimData.getSequenceDescription().getImgLoader(), new MissingViews( missingViews ) );
+			if ( m == null )
+				setMissingViews( spimData.getSequenceDescription(), m = new MissingViews( newMissingViews ) );
+			else
+				m.getMissingViews().addAll( newMissingViews );
+
+			// marking the missing views
+			BasicViewDescription.markMissingViews( spimData.getSequenceDescription().getViewDescriptions(), m );
+		}
 
 		// add the viewregistrations to the exisiting ones
 		final Map< ViewId, ViewRegistration > regMap = spimData.getViewRegistrations().getViewRegistrations();
@@ -251,16 +217,82 @@ public class AppendSpimData2 implements ImgExport
 				final ViewDescription vd = sequenceDescription.getViewDescription( tp.getId(), vs.getId() );
 				final ViewRegistration viewRegistration = new ViewRegistration( vd.getTimePointId(), vd.getViewSetupId() );
 				viewRegistration.identity();
-				regMap.put( viewRegistration, viewRegistration );
+				regMap.put( vd, viewRegistration );
 			}
-
-		final SpimData2 newSpimData = new SpimData2(
-				spimData.getBasePath(),
-				sequenceDescription,
-				new ViewRegistrations( regMap ),
-				spimData.getViewInterestPoints() );
-
-		return newSpimData;
 	}
 
+	private static final void resetViewSetupsAndDescriptions( final SequenceDescription s )
+	{
+		try
+		{
+			Class< ? > clazz = null;
+			Field viewSetupsOrderedDirty = null;
+			Field viewDescriptionsDirty = null;
+
+			do
+			{
+				if ( clazz == null )
+					clazz = s.getClass();
+				else
+					clazz = clazz.getSuperclass();
+
+				if ( clazz != null )
+					for ( final Field field : clazz.getDeclaredFields() )
+					{
+						if ( field.getName().equals( "viewSetupsOrderedDirty" ) )
+							viewSetupsOrderedDirty = field;
+
+						if ( field.getName().equals( "viewDescriptionsDirty" ) )
+							viewDescriptionsDirty = field;
+					}
+			}
+			while ( ( viewSetupsOrderedDirty == null || viewDescriptionsDirty == null ) && clazz != null );
+
+			if ( viewDescriptionsDirty == null || viewDescriptionsDirty == null )
+			{
+				System.out.println( "Failed to find SequenceDescription.viewSetupsOrderedDirty or SequenceDescription.viewDescriptionsDirty field. Quiting." );
+				return;
+			}
+
+			viewSetupsOrderedDirty.setAccessible( true );
+			viewSetupsOrderedDirty.set( s, true );
+			viewDescriptionsDirty.setAccessible( true );
+			viewDescriptionsDirty.set( s, true );
+		}
+		catch ( Exception e ) { e.printStackTrace(); }
+	}
+
+	private static final void setMissingViews( final SequenceDescription s, final MissingViews m )
+	{
+		try
+		{
+			Class< ? > clazz = null;
+			boolean found = false;
+
+			do
+			{
+				if ( clazz == null )
+					clazz = s.getClass();
+				else
+					clazz = clazz.getSuperclass();
+
+				if ( clazz != null )
+					for ( final Method method : clazz.getDeclaredMethods() )
+						if ( method.getName().equals( "setMissingViews" ) )
+							found = true;
+			}
+			while ( !found && clazz != null );
+
+			if ( !found )
+			{
+				System.out.println( "Failed to find SequenceDescription.setMissingViews method. Quiting." );
+				return;
+			}
+
+			final Method setMissingViews = clazz.getDeclaredMethod( "setMissingViews", MissingViews.class );
+			setMissingViews.setAccessible( true );
+			setMissingViews.invoke( s, m );
+		}
+		catch ( Exception e ) { e.printStackTrace(); }
+	}
 }

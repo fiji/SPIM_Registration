@@ -373,5 +373,5 @@ public class ManualBoundingBox extends BoundingBox
 	public String getDescription() { return "Define manually"; }
 
 	@Override
-	public void cleanUp( final boolean saveXML, final String xml, final String clusterExtension ) {}
+	public boolean cleanUp() { return false; } // the spimdata object was not changed
 }

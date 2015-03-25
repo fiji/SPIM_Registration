@@ -143,9 +143,10 @@ public class InterestPointList
 	{
 		try 
 		{
-			final BufferedReader in = TextFileAccess.openFileReadEx( new File( getBaseDir(), getFile().toString() + getCorrespondencesExt() ) );			
 			this.correspondingInterestPoints = new ArrayList< CorrespondingInterestPoints >();
-			
+
+			final BufferedReader in = TextFileAccess.openFileReadEx( new File( getBaseDir(), getFile().toString() + getCorrespondencesExt() ) );			
+
 			// the header
 			do {} while ( !in.readLine().startsWith( "id" ) );
 			
@@ -163,11 +164,11 @@ public class InterestPointList
 				
 				this.correspondingInterestPoints.add( cip );
 			}
-			
+
 			in.close();
-			
+
 			return true;
-		} 
+		}
 		catch ( final IOException e )
 		{
 			IOFunctions.println( "InterestPointList.loadCorrespondingInterestPoints(): " + e );
@@ -177,14 +178,15 @@ public class InterestPointList
 
 	public boolean loadInterestPoints()
 	{
-		try 
+		try
 		{
-			final BufferedReader in = TextFileAccess.openFileReadEx( new File( getBaseDir(), getFile().toString() + getInterestPointsExt() ) );
 			this.interestPoints = new ArrayList< InterestPoint >();
-			
+
+			final BufferedReader in = TextFileAccess.openFileReadEx( new File( getBaseDir(), getFile().toString() + getInterestPointsExt() ) );
+
 			// the header
 			do {} while ( !in.readLine().startsWith( "id" ) );
-			
+
 			while ( in.ready() )
 			{
 				final String p[] = in.readLine().split( "\t" );
@@ -198,7 +200,7 @@ public class InterestPointList
 				
 				this.interestPoints.add( point );
 			}
-			
+
 			in.close();
 			
 			return true;

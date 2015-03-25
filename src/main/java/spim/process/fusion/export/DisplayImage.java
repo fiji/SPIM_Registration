@@ -124,8 +124,9 @@ public class DisplayImage implements ImgExportTitle
 	public void setXMLData( final List< TimePoint > timepointsToProcess, final List< ViewSetup > newViewSetups ) {}
 
 	@Override
-	public boolean finish() { return true; }
-
-	@Override
-	public void setClusterExt( final String clusterExt ) {}
+	public boolean finish()
+	{
+		// this spimdata object was not modified
+		return false;
+	}
 }

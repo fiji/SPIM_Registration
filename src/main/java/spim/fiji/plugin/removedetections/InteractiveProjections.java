@@ -13,6 +13,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -35,14 +36,18 @@ public class InteractiveProjections
 {
 	public static double size = 2;
 
+	final Frame frame;
+
 	protected boolean isRunning, wasCanceled;
 	protected ImagePlus imp;
 	protected List< InterestPoint > ipList;
+	final protected List< Thread > runAfterFinished;
 
 	public InteractiveProjections( final SpimData2 spimData, final ViewDescription vd, final String label, final String newLabel, final int projectionDim )
 	{
 		this.isRunning = true;
 		this.wasCanceled = false;
+		this.runAfterFinished = new ArrayList< Thread >();
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + ": Loading image ..." );
 		RandomAccessibleInterval< FloatType > img = spimData.getSequenceDescription().getImgLoader().getFloatImage( vd, false );
@@ -57,7 +62,7 @@ public class InteractiveProjections
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + ": " + ipList.size() + " points displayed ... " );
 
-		final Frame frame = new Frame( "Remove detections" );
+		frame = new Frame( "Remove detections" );
 		frame.setSize( 300, 180 );
 
 		/* Instantiation */
@@ -97,6 +102,7 @@ public class InteractiveProjections
 		frame.setVisible( true );
 	}
 
+	public void runWhenDone( final Thread thread ) { this.runAfterFinished.add( thread ); }
 	public List< InterestPoint > getInterestPointList() { return ipList; }
 	public boolean isRunning() { return isRunning; }
 	public boolean wasCanceled() { return wasCanceled; }
@@ -159,7 +165,12 @@ public class InteractiveProjections
 		if ( list.getInterestPoints() == null )
 			list.loadInterestPoints();
 
-		return list.getInterestPoints();
+		final ArrayList< InterestPoint > newList = new ArrayList< InterestPoint >();
+
+		for ( final InterestPoint p : list.getInterestPoints() )
+			newList.add( new InterestPoint( p.getId(), p.getL().clone() ) );
+
+		return newList;
 	}
 
 	protected ImagePlus showProjection( final Img< FloatType > img )
@@ -176,6 +187,9 @@ public class InteractiveProjections
 
 		if ( imp != null )
 			imp.close();
+
+		for ( final Thread t : runAfterFinished )
+			t.start();
 
 		isRunning = false;
 	}

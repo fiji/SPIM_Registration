@@ -17,7 +17,7 @@ public class InterestPointTableModel extends AbstractTableModel
 {
 	private static final long serialVersionUID = -1263388435427674269L;
 	
-	final ViewInterestPoints viewInterestPoints;
+	ViewInterestPoints viewInterestPoints;
 	final ArrayList< String > columnNames;
 
 	BasicViewDescription< ? > currentVD;
@@ -37,7 +37,8 @@ public class InterestPointTableModel extends AbstractTableModel
 		this.currentVD = null;
 		this.panel = panel;
 	}
-	
+
+	protected void update( final ViewInterestPoints viewInterestPoints ) { this.viewInterestPoints = viewInterestPoints; }
 	protected ViewInterestPoints getViewInterestPoints() { return viewInterestPoints; }
 	protected BasicViewDescription< ? > getCurrentViewDescription() { return currentVD; } 
 	
