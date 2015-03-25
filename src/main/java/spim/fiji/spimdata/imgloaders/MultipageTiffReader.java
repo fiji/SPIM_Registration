@@ -75,7 +75,7 @@ public class MultipageTiffReader
 	private int byteDepth_ = 0;;
 	private boolean rgb_;
 
-	protected String unit;
+	protected String unit = "um";
 	protected double calX = Double.NaN;
 	protected double calY = Double.NaN;
 	protected double calZ = Double.NaN;
