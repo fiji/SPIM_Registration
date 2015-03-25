@@ -80,7 +80,8 @@ public class MultipageTiffReader
 	protected double calY = Double.NaN;
 	protected double calZ = Double.NaN;
 	protected double[] rotAxis = null;
-	
+	protected boolean applyAxis = true;
+
 	protected List< String > angleNames = null;
 	protected List< String > channelNames = null;
 	
@@ -475,6 +476,9 @@ public class MultipageTiffReader
 			raFile_ = null;
 		}
 	}
+
+	public void setApplyAxis( final boolean apply ) { this.applyAxis = apply; }
+	public boolean applyAxis() { return applyAxis; }
 	public void setCalX( final double cal ) { this.calX = cal; }
 	public void setCalY( final double cal ) { this.calY = cal; }
 	public void setCalZ( final double cal ) { this.calZ = cal; }
