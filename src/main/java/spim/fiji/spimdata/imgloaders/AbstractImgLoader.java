@@ -11,10 +11,11 @@ import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.Dimensions;
 import net.imglib2.FinalDimensions;
+import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
-
+import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
 
@@ -145,5 +146,25 @@ public abstract class AbstractImgLoader implements ImgLoader< UnsignedShortType 
 		}
 		
 		return updated;
+	}
+
+	protected static final void normalize( final Img< FloatType > img )
+	{
+		float min = Float.MAX_VALUE;
+		float max = -Float.MAX_VALUE;
+
+		for ( final FloatType t : img )
+		{
+			final float v = t.get();
+
+			if ( v < min )
+				min = v;
+
+			if ( v > max )
+				max = v;
+		}
+
+		for ( final FloatType t : img )
+			t.set( ( t.get() - min ) / ( max - min ) );
 	}
 }

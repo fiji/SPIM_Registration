@@ -70,24 +70,7 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 				throw new RuntimeException( "Could not load '" + cziFile + "' viewId=" + view.getViewSetupId() + ", tpId=" + view.getTimePointId() );
 
 			if ( normalize )
-			{
-				float min = Float.MAX_VALUE;
-				float max = -Float.MAX_VALUE;
-
-				for ( final FloatType t : img )
-				{
-					final float v = t.get();
-
-					if ( v < min )
-						min = v;
-
-					if ( v > max )
-						max = v;
-				}
-
-				for ( final FloatType t : img )
-					t.set( ( t.get() - min ) / ( max - min ) );
-			}
+				normalize( img );
 
 			// update the MetaDataCache of the AbstractImgLoader
 			// this does not update the XML ViewSetup but has to be called explicitly before saving
