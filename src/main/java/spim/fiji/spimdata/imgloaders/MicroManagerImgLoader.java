@@ -2,8 +2,6 @@ package spim.fiji.spimdata.imgloaders;
 
 import java.io.File;
 
-import spim.fiji.datasetmanager.LightSheetZ1;
-import spim.fiji.datasetmanager.MicroManager;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
@@ -22,6 +20,7 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import spim.fiji.datasetmanager.MicroManager;
 
 public class MicroManagerImgLoader extends AbstractImgLoader
 {
