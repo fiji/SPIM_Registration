@@ -44,7 +44,7 @@ public class MicroManager implements MultiViewDatasetDefinition
 	public static boolean defaultRotAxis = false;
 
 	@Override
-	public String getTitle() { return "Zeiss Lightsheet Z.1 Dataset (LOCI Bioformats)"; }
+	public String getTitle() { return "MicroManager diSPIM Dataset"; }
 
 	@Override
 	public String getExtendedDescription()
