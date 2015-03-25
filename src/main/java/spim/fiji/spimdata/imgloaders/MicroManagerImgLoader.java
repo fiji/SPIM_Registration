@@ -27,6 +27,8 @@ public class MicroManagerImgLoader extends AbstractImgLoader
 		setImgFactory( imgFactory );
 	}
 
+	public File getFile() { return mmFile; }
+
 	@Override
 	public RandomAccessibleInterval<FloatType> getFloatImage(ViewId view,
 			boolean normalize) {
