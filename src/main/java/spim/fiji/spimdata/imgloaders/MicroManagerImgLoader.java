@@ -83,7 +83,7 @@ public class MicroManagerImgLoader extends AbstractImgLoader
 
 			r.close();
 
-			return null;
+			return img;
 		}
 		catch ( Exception e )
 		{
@@ -109,7 +109,7 @@ public class MicroManagerImgLoader extends AbstractImgLoader
 
 			r.close();
 
-			return null;
+			return img;
 		}
 		catch ( Exception e )
 		{
