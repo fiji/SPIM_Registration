@@ -160,7 +160,7 @@ public class WeightedAverageFusion extends Fusion
 			for ( int i = 1; i < views.length; ++i )
 				views[ i ] = "" + i;
 			
-			if ( defaultNumParalellViewsIndex < 0 && defaultNumParalellViewsIndex >= views.length )
+			if ( defaultNumParalellViewsIndex < 0 || defaultNumParalellViewsIndex >= views.length )
 				defaultNumParalellViewsIndex = 0;
 			
 			gd.addChoice( "Process_views_in_paralell", views, views[ defaultNumParalellViewsIndex ] );
