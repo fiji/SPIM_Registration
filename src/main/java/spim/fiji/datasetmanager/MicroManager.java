@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import javax.media.j3d.Transform3D;
-import javax.vecmath.AxisAngle4d;
 
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.registration.ViewRegistration;
