@@ -227,7 +227,7 @@ public class MicroManager implements MultiViewDatasetDefinition
 				for ( final Angle a : angles )
 				{
 					final VoxelDimensions voxelSize = new FinalVoxelDimensions( meta.calUnit(), meta.calX(), meta.calY(), meta.calZ() );
-					final Dimensions dim = new FinalDimensions( meta.width(), meta.height(), meta.depth() );
+					final Dimensions dim = new FinalDimensions( new long[]{ meta.width(), meta.height(), meta.depth() } );
 					viewSetups.add( new ViewSetup( viewSetups.size(), null, dim, voxelSize, c, a, i ) );
 				}
 
