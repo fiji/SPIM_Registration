@@ -345,10 +345,11 @@ public class ThinOut_Detections implements PlugIn
 			if ( Interest_Point_Registration.defaultChannelLabels[ j ] >= labels.length )
 				Interest_Point_Registration.defaultChannelLabels[ j ] = 0;
 
-			gd.addCheckbox( "Channel_" + channel.getName() + ":_Display_distance_histogram", defaultShowHistogram[ j ] );
-			gd.addChoice( "Channel_" + channel.getName() + ":_Interest_points", labels, labels[ Interest_Point_Registration.defaultChannelLabels[ j ] ] );
-			gd.addStringField( "Channel_" + channel.getName() + ":_New_label", defaultNewLabels[ j ], 20 );
-			gd.addNumericField( "Channel_" + channel.getName() + ":_Subsample histogram", defaultSubSampling[ j ], 0, 5, "times" );
+			String ch = channel.getName().replace( ' ', '_' );
+			gd.addCheckbox( "Channel_" + ch + "_Display_distance_histogram", defaultShowHistogram[ j ] );
+			gd.addChoice( "Channel_" + ch + "_Interest_points", labels, labels[ Interest_Point_Registration.defaultChannelLabels[ j ] ] );
+			gd.addStringField( "Channel_" + ch + "_New_label", defaultNewLabels[ j ], 20 );
+			gd.addNumericField( "Channel_" + ch + "_Subsample histogram", defaultSubSampling[ j ], 0, 5, "times" );
 
 			channelLabels.add( labels );
 			++j;
