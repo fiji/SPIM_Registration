@@ -180,12 +180,19 @@ public class DifferenceOfGaussian extends DifferenceOf implements GenericDialogA
 		final int channelId = channel.getId();
 		
 		final GenericDialog gd = new GenericDialog( "Advanced values for channel " + channel.getName() );
-		
+
+		String ch;
+
+		if ( this.channelsToProcess.size() > 1 )
+			ch = "_" + channel.getName().replace( ' ', '_' );
+		else
+			ch = "";
+
 		gd.addMessage( "Advanced values for channel " + channel.getName() );
-		gd.addNumericField( "Sigma", defaultSigma[ channelId ], 5 );
-		gd.addNumericField( "Threshold", defaultThreshold[ channelId ], 4 );
-		gd.addCheckbox( "Find_minima", defaultFindMin[ channelId ] );
-		gd.addCheckbox( "Find_maxima", defaultFindMax[ channelId ] );
+		gd.addNumericField( "Sigma" + ch, defaultSigma[ channelId ], 5 );
+		gd.addNumericField( "Threshold" + ch, defaultThreshold[ channelId ], 4 );
+		gd.addCheckbox( "Find_minima" + ch, defaultFindMin[ channelId ] );
+		gd.addCheckbox( "Find_maxima" + ch, defaultFindMax[ channelId ] );
 
 		gd.showDialog();
 		

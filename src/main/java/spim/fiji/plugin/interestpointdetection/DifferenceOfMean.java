@@ -162,13 +162,20 @@ public class DifferenceOfMean extends DifferenceOf
 		final int channelId = channel.getId();
 		
 		final GenericDialog gd = new GenericDialog( "Advanced values for channel " + channel.getName() );
-		
+
+		String ch;
+
+		if ( this.channelsToProcess.size() > 1 )
+			ch = "_" + channel.getName().replace( ' ', '_' );
+		else
+			ch = "";
+
 		gd.addMessage( "Advanced values for channel " + channel.getName() );
-		gd.addNumericField( "Radius_1", defaultRadius1[ channelId ], 0 );
-		gd.addNumericField( "Radius_2", defaultRadius2[ channelId ], 0 );
-		gd.addNumericField( "Threshold", defaultThreshold[ channelId ], 4 );
-		gd.addCheckbox( "Find_minima", defaultFindMin[ channelId ] );
-		gd.addCheckbox( "Find_maxima", defaultFindMax[ channelId ] );
+		gd.addNumericField( "Radius_1" + ch, defaultRadius1[ channelId ], 0 );
+		gd.addNumericField( "Radius_2" + ch, defaultRadius2[ channelId ], 0 );
+		gd.addNumericField( "Threshold" + ch, defaultThreshold[ channelId ], 4 );
+		gd.addCheckbox( "Find_minima" + ch, defaultFindMin[ channelId ] );
+		gd.addCheckbox( "Find_maxima" + ch, defaultFindMax[ channelId ] );
 
 		gd.showDialog();
 		
