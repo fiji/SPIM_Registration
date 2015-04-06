@@ -27,7 +27,6 @@ public class MVDeconFFT
 	public static CUDAFourierConvolution cuda = null;
 	
 	private Img< FloatType > image, weight, kernel1, kernel2;
-	Img< FloatType > viewContribution = null;
 	FFTConvolution<FloatType> fftConvolution1, fftConvolution2;
 	protected int numViews = 0;
 
