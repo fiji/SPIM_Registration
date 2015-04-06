@@ -20,11 +20,9 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
-import mpicbg.spim.postprocessing.deconvolution2.BayesMVDeconvolution;
-import mpicbg.spim.postprocessing.deconvolution2.LRFFT;
-import mpicbg.spim.postprocessing.deconvolution2.LRFFT.PSFTYPE;
-import mpicbg.spim.postprocessing.deconvolution2.LRInput;
 import net.imglib2.img.Img;
+import net.imglib2.img.ImgFactory;
+import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
@@ -41,6 +39,7 @@ import spim.process.cuda.CUDATools;
 import spim.process.cuda.NativeLibraryTools;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.boundingbox.ManualBoundingBox.ManageListeners;
+import spim.process.fusion.deconvolution.MVDeconFFT.PSFTYPE;
 import spim.process.fusion.export.DisplayImage;
 import spim.process.fusion.export.FixedNameImgTitler;
 import spim.process.fusion.export.ImgExport;
@@ -100,6 +99,8 @@ public class EfficientBayesianBased extends Fusion
 	boolean debugMode;
 	boolean adjustBlending;
 
+	// TODO: set factory
+	ImgFactory< FloatType> factory;
 	boolean useBlocks;
 	int[] blockSize;
 	boolean useCUDA;
@@ -149,8 +150,8 @@ public class EfficientBayesianBased extends Fusion
 				new int[]{ blendingRangeX, blendingRangeY, blendingRangeZ } );
 		
 		// set debug mode
-		BayesMVDeconvolution.debug = debugMode;
-		BayesMVDeconvolution.debugInterval = debugInterval;
+		MVDeconvolution.debug = debugMode;
+		MVDeconvolution.debugInterval = debugInterval;
 
 		int stack = 0;
 
@@ -186,14 +187,14 @@ public class EfficientBayesianBased extends Fusion
 					else if ( osemspeedupIndex == 2 )
 						osemSpeedUp = pfd.getAvgOverlappingViews();
 				}
-				
+
 				// setup & run the deconvolution
 				displayParametersAndPSFs( bb, c, extractPSFLabels );
 
 				if ( justShowWeights )
 					return true;
-				
-				final LRInput deconvolutionData = new LRInput();
+
+				final MVDeconInput deconvolutionData = new MVDeconInput( factory );
 
 				for ( final ViewDescription vd : pfd.getViewDescriptions() )
 				{
@@ -202,18 +203,22 @@ public class EfficientBayesianBased extends Fusion
 					for ( int i = 0; i < devList.length; ++i )
 						devList[ i ] = deviceList.get( i ).getDeviceId();
 					
-					deconvolutionData.add( new LRFFT(
+					deconvolutionData.add( new MVDeconFFT(
 							pfd.getTransformedImgs().get( vd ),
 							pfd.getTransformedWeights().get( vd ),
-							pfd.getExtractPSF().getTransformedPSFs().get( vd ), devList, useBlocks, blockSize ) );
+							pfd.getExtractPSF().getTransformedPSFs().get( vd ),
+							new ArrayImgFactory< FloatType >(),
+							devList,
+							useBlocks,
+							blockSize ) );
 				}
 
 				final Img<FloatType> deconvolved;
 				
 				if ( useTikhonovRegularization )
-					deconvolved = LRFFT.wrap( new BayesMVDeconvolution( deconvolutionData, iterationType, numIterations, lambda, osemSpeedUp, osemspeedupIndex, "deconvolved" ).getPsi() );
+					deconvolved = new MVDeconvolution( deconvolutionData, iterationType, numIterations, lambda, osemSpeedUp, osemspeedupIndex, "deconvolved" ).getPsi();
 				else
-					deconvolved = LRFFT.wrap( new BayesMVDeconvolution( deconvolutionData, iterationType, numIterations, 0, osemSpeedUp, osemspeedupIndex, "deconvolved" ).getPsi() );
+					deconvolved = new MVDeconvolution( deconvolutionData, iterationType, numIterations, 0, osemSpeedUp, osemspeedupIndex, "deconvolved" ).getPsi();
 
 				// export the final image
 				titler.setTitle( "TP" + t.getName() + "_Ch" + c.getName() + FusionHelper.getIllumName( illumsToProcess ) + FusionHelper.getAngleName( anglesToProcess ) );
@@ -1010,15 +1015,15 @@ public class EfficientBayesianBased extends Fusion
 			potentialNames.add( "fftCUDA" );
 			potentialNames.add( "FourierConvolutionCUDA" );
 			
-			LRFFT.cuda = NativeLibraryTools.loadNativeLibrary( potentialNames, CUDAFourierConvolution.class );
+			MVDeconFFT.cuda = NativeLibraryTools.loadNativeLibrary( potentialNames, CUDAFourierConvolution.class );
 
-			if ( LRFFT.cuda == null )
+			if ( MVDeconFFT.cuda == null )
 			{
 				IOFunctions.println( "Cannot load CUDA JNA library." );
 				return false;
 			}
 			
-			final ArrayList< CUDADevice > selectedDevices = CUDATools.queryCUDADetails( LRFFT.cuda, useBlocks );
+			final ArrayList< CUDADevice > selectedDevices = CUDATools.queryCUDADetails( MVDeconFFT.cuda, useBlocks );
 			
 			if ( selectedDevices == null || selectedDevices.size() == 0 )
 				return false;
