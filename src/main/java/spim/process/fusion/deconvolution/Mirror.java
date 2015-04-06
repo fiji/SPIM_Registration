@@ -15,8 +15,6 @@ import spim.Threads;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
 
-import com.lowagie.text.Image;
-
 /**
  * Mirrors an n-dimensional image along an axis (one of the dimensions).
  * The calculation is performed in-place and multithreaded.
