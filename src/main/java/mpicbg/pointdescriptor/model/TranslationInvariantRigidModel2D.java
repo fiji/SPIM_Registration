@@ -34,8 +34,8 @@ public class TranslationInvariantRigidModel2D extends TranslationInvariantModel<
 {
 	static final protected int MIN_NUM_MATCHES = 2;
 	
-	protected float cos = 1.0f, sin = 0.0f, tx = 0.0f, ty = 0.0f;
-	protected float itx = 0.0f, ity = 0.0f;
+	protected double cos = 1.0, sin = 0.0, tx = 0.0, ty = 0.0;
+	protected double itx = 0.0, ity = 0.0;
 	
 	@Override
 	public boolean canDoNumDimension( final int numDimensions ) { return numDimensions == 2; }
@@ -44,21 +44,21 @@ public class TranslationInvariantRigidModel2D extends TranslationInvariantModel<
 	final public int getMinNumMatches(){ return MIN_NUM_MATCHES; }
 		
 	@Override
-	final public float[] apply( final float[] l )
+	final public double[] apply( final double[] l )
 	{
 		assert l.length == 2 : "2d rigid transformations can be applied to 2d points only.";
 		
-		final float[] transformed = l.clone();
+		final double[] transformed = l.clone();
 		applyInPlace( transformed );
 		return transformed;
 	}
 	
 	@Override
-	final public void applyInPlace( final float[] l )
+	final public void applyInPlace( final double[] l )
 	{
 		assert l.length == 2 : "2d rigid transformations can be applied to 2d points only.";
 		
-		final float l0 = l[ 0 ];
+		final double l0 = l[ 0 ];
 		l[ 0 ] = cos * l0 - sin * l[ 1 ] + tx;
 		l[ 1 ] = sin * l0 + cos * l[ 1 ] + ty;
 	}
@@ -103,18 +103,18 @@ public class TranslationInvariantRigidModel2D extends TranslationInvariantModel<
 		sin = 0;
 		for ( final P m : matches )
 		{
-			final float[] p = m.getP1().getL(); 
-			final float[] q = m.getP2().getW();
-			final float w = m.getWeight();
+			final double[] p = m.getP1().getL(); 
+			final double[] q = m.getP2().getW();
+			final double w = m.getWeight();
 
-			final float x1 = p[ 0 ];
-			final float y1 = p[ 1 ]; // x2
-			final float x2 = q[ 0 ]; // y1
-			final float y2 = q[ 1 ]; // y2
+			final double x1 = p[ 0 ];
+			final double y1 = p[ 1 ]; // x2
+			final double x2 = q[ 0 ]; // y1
+			final double y2 = q[ 1 ]; // y2
 			sin += w * ( x1 * y2 - y1 * x2 ); //   x1 * y2 - x2 * y1 // assuming p1 is x1,x2 and p2 is y1,y2
 			cos += w * ( x1 * x2 + y1 * y2 ); //   x1 * y1 + x2 * y2
 		}
-		final float norm = ( float )Math.sqrt( cos * cos + sin * sin );
+		final double norm = Math.sqrt( cos * cos + sin * sin );
 		cos /= norm;
 		sin /= norm;		
 	}

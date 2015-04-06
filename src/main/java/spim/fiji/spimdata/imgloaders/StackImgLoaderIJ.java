@@ -8,6 +8,7 @@ import ij.process.ImageProcessor;
 import java.io.File;
 import java.util.Date;
 
+import spim.fiji.datasetmanager.StackListImageJ;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
@@ -58,8 +59,12 @@ public class StackImgLoaderIJ extends StackImgLoader
 	public RandomAccessibleInterval< FloatType > getFloatImage( final ViewId view, final boolean normalize )
 	{
 		final File file = getFile( view );
+
+		if ( file == null )
+			throw new RuntimeException( "Could not find file '" + file + "'." );
+
 		final ImagePlus imp = open( file );
-		
+
 		if ( imp == null )
 			throw new RuntimeException( "Could not load '" + file + "'." );
 
@@ -190,6 +195,10 @@ public class StackImgLoaderIJ extends StackImgLoader
 	public RandomAccessibleInterval< UnsignedShortType > getImage( final ViewId view )
 	{
 		final File file = getFile( view );
+
+		if ( file == null )
+			throw new RuntimeException( "Could not find file '" + file + "'." );
+
 		final ImagePlus imp = open( file );
 		
 		if ( imp == null )
@@ -261,5 +270,11 @@ public class StackImgLoaderIJ extends StackImgLoader
 				imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight, imp.getCalibration().pixelDepth );
 
 		imp.close();
+	}
+
+	@Override
+	public String toString()
+	{
+		return new StackListImageJ().getTitle() + ", ImgFactory=" + imgFactory.getClass().getSimpleName();
 	}
 }

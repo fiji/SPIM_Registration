@@ -1,13 +1,9 @@
 package spim.process.fusion.weightedavg;
 
-import bdv.img.hdf5.Hdf5ImageLoader;
-
 import java.util.ArrayList;
 import java.util.List;
 
-import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
-import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
@@ -31,6 +27,7 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
 import spim.process.fusion.weights.Blending;
 import spim.process.fusion.weights.ContentBased;
+import bdv.img.hdf5.Hdf5ImageLoader;
 
 public abstract class ProcessFusion
 {
@@ -43,23 +40,20 @@ public abstract class ProcessFusion
 	public static boolean defaultAdjustContentBasedSigmaForAnisotropy = true;
 	
 	final protected SpimData2 spimData;
-	final protected List<Angle> anglesToProcess;
-	final protected List<Illumination> illumsToProcess;
+	final List< ViewId > viewIdsToProcess;
 	final BoundingBox bb;
 	final boolean useBlending;
 	final boolean useContentBased;
 	
 	public ProcessFusion(
 			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Illumination> illumsToProcess,
+			final List< ViewId > viewIdsToProcess,
 			final BoundingBox bb,
 			final boolean useBlending,
 			final boolean useContentBased  )
 	{
 		this.spimData = spimData;
-		this.anglesToProcess = anglesToProcess;
-		this.illumsToProcess = illumsToProcess;
+		this.viewIdsToProcess = viewIdsToProcess;
 		this.bb = bb;
 		this.useBlending = useBlending;
 		this.useContentBased = useContentBased;

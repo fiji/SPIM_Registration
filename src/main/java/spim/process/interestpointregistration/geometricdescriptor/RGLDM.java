@@ -4,9 +4,7 @@ import ij.gui.GenericDialog;
 
 import java.util.List;
 
-import mpicbg.spim.data.sequence.Angle;
-import mpicbg.spim.data.sequence.Illumination;
-import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.plugin.Interest_Point_Registration.RegistrationType;
 import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
 import spim.fiji.spimdata.SpimData2;
@@ -24,7 +22,7 @@ import spim.process.interestpointregistration.TransformationModel;
 public class RGLDM extends InterestPointRegistration
 {
 	public static int defaultModel = 2;
-	public static boolean defaultRegularize = false;
+	public static boolean defaultRegularize = true;
 	protected TransformationModel model = null;
 
 	protected RGLDMParameters parameters;
@@ -32,12 +30,10 @@ public class RGLDM extends InterestPointRegistration
 
 	public RGLDM(
 			final SpimData2 spimData,
-			final List< Angle > anglesToProcess,
-			final List< ChannelProcess > channelsToProcess,
-			final List< Illumination > illumsToProcess,
-			final List< TimePoint > timepointsToProcess )
+			final List< ViewId > viewIdsToProcess,
+			final List< ChannelProcess > channelsToProcess )
 	{
-		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+		super( spimData, viewIdsToProcess, channelsToProcess );
 	}
 
 	@Override
@@ -52,12 +48,10 @@ public class RGLDM extends InterestPointRegistration
 	@Override
 	public RGLDM newInstance(
 			final SpimData2 spimData,
-			final List< Angle > anglesToProcess,
-			final List< ChannelProcess > channelsToProcess,
-			final List< Illumination > illumsToProcess,
-			final List< TimePoint > timepointsToProcess )
+			final List< ViewId > viewIdsToProcess,
+			final List< ChannelProcess > channelsToProcess )
 	{
-		return new RGLDM( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+		return new RGLDM( spimData, viewIdsToProcess, channelsToProcess );
 	}
 
 

@@ -24,13 +24,33 @@ import net.imglib2.view.Views;
 import spim.Threads;
 import spim.fiji.spimdata.SpimData2;
 
-public class FusionHelper 
+public class FusionHelper
 {
 	/**
 	 * Do not instantiate
 	 */
 	private FusionHelper() {}
-	
+
+	public static String getIllumName( final List< Illumination > illumsToProcess )
+	{
+		String illumName = "_Ill" + illumsToProcess.get( 0 ).getName();
+
+		for ( int i = 1; i < illumsToProcess.size(); ++i )
+			illumName += "," + illumsToProcess.get( i ).getName();
+
+		return illumName;
+	}
+
+	public static String getAngleName( final List< Angle > anglesToProcess )
+	{
+		String angleName = "_Ang" + anglesToProcess.get( 0 ).getName();
+
+		for ( int i = 1; i < anglesToProcess.size(); ++i )
+			angleName += "," + anglesToProcess.get( i ).getName();
+
+		return angleName;
+	}
+
 	public static final boolean intersects( final float x, final float y, final float z, final int sx, final int sy, final int sz )
 	{
 		if ( x >= 0 && y >= 0 && z >= 0 && x < sx && y < sy && z < sz )
@@ -43,33 +63,23 @@ public class FusionHelper
 			final SpimData2 spimData,
 			final TimePoint timepoint,
 			final Channel channel,
-			final List< Angle > anglesToProcess,
-			final List< Illumination > illumsToProcess )
+			final List< ViewId > viewIdsToProcess )
 	{
 		final ArrayList< ViewDescription > inputData = new ArrayList< ViewDescription >();
-		
-		for ( final Illumination i : illumsToProcess )
-			for ( final Angle a : anglesToProcess )
-			{
-				// bureaucracy
-				final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), timepoint, channel, a, i );
 
-				// this happens only if a viewsetup is not present in any timepoint
-				// (e.g. after appending fusion to a dataset)
-				if ( viewId == null )
-					continue;
+		for ( final ViewId viewId : viewIdsToProcess )
+		{
+			final ViewDescription vd = spimData.getSequenceDescription().getViewDescription(
+					viewId.getTimePointId(), viewId.getViewSetupId() );
 
-				final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
-						viewId.getTimePointId(), viewId.getViewSetupId() );
+			if ( !vd.isPresent() || vd.getTimePointId() != timepoint.getId() || vd.getViewSetup().getChannel().getId() != channel.getId() )
+				continue;
 
-				if ( !viewDescription.isPresent() )
-					continue;
-				
-				// get the most recent model
-				spimData.getViewRegistrations().getViewRegistration( viewId ).updateModel();
-				
-				inputData.add( viewDescription );
-			}
+			// get the most recent model
+			spimData.getViewRegistrations().getViewRegistration( viewId ).updateModel();
+
+			inputData.add( vd );
+		}
 
 		return inputData;
 	}

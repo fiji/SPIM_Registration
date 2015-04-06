@@ -33,8 +33,6 @@ public class RGLDMPairwise implements Callable< PairwiseMatch >
 	@Override
 	public PairwiseMatch call() throws Exception
 	{
-		final RGLDMMatcher matcher = new RGLDMMatcher();
-		
 		final ArrayList< Detection > listA = new ArrayList< Detection >();
 		final ArrayList< Detection > listB = new ArrayList< Detection >();
 		
@@ -44,6 +42,7 @@ public class RGLDMPairwise implements Callable< PairwiseMatch >
 		for ( final InterestPoint i : pair.getListB() )
 			listB.add( new Detection( i.getId(), i.getL() ) );
 
+		final RGLDMMatcher matcher = new RGLDMMatcher();
 		final ArrayList< PointMatchGeneric< Detection > > candidates = matcher.extractCorrespondenceCandidates( 
 				listA, 
 				listB,

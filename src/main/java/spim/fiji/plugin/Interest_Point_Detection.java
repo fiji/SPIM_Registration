@@ -23,8 +23,8 @@ import spim.fiji.plugin.interestpointdetection.InterestPointDetection;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
+import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
@@ -46,14 +46,13 @@ public class Interest_Point_Detection implements PlugIn
 	public static boolean defaultDefineAnisotropy = false;
 	public static boolean defaultAdditionalSmoothing = false;
 	public static boolean defaultSetMinMax = false;
-	public static boolean[] defaultChannelChoice = null;
 	public static String defaultLabel = "beads";
 	
 	static
 	{
 		IOFunctions.printIJLog = true;
-		staticAlgorithms.add( new DifferenceOfMean( null, null, null, null, null ) );
-		staticAlgorithms.add( new DifferenceOfGaussian( null, null, null, null, null ) );
+		staticAlgorithms.add( new DifferenceOfMean( null, null ) );
+		staticAlgorithms.add( new DifferenceOfGaussian( null, null ) );
 	}
 	
 	@Override
@@ -62,12 +61,47 @@ public class Interest_Point_Detection implements PlugIn
 		// ask for everything but the channels
 		final LoadParseQueryXML result = new LoadParseQueryXML();
 		
-		if ( !result.queryXML( "perfoming interest point detection", true, false, true, true ) )
+		if ( !result.queryXML( "perfoming interest point detection", true, true, true, true ) )
 			return;
-		
-		// ask which channels have the objects we are searching for
-		final List< Channel > channels = result.getChannelsToProcess(); //result.getData().getSequenceDescription().getAllChannels();
-		
+
+		detectInterestPoints(
+				result.getData(),
+				SpimData2.getAllViewIdsSorted( result.getData(), result.getViewSetupsToProcess(), result.getTimePointsToProcess() ),
+				result.getClusterExtension(),
+				result.getXMLFileName(),
+				true );
+	}
+
+	/**
+	 * Does just the detection, no saving
+	 * 
+	 * @param data
+	 * @param viewIds
+	 * @return
+	 */
+	public boolean detectInterestPoints(
+			final SpimData2 data,
+			final List< ViewId > viewIds )
+	{
+		return detectInterestPoints( data, viewIds, "", null, false );
+	}
+
+	public boolean detectInterestPoints(
+			final SpimData2 data,
+			final List< ViewId > viewIds,
+			final String xmlFileName,
+			final boolean saveXML )
+	{
+		return detectInterestPoints( data, viewIds, "", xmlFileName, saveXML );
+	}
+
+	public boolean detectInterestPoints(
+			final SpimData2 data,
+			final List< ViewId > viewIds,
+			final String clusterExtension,
+			final String xmlFileName,
+			final boolean saveXML )
+	{
 		// the GenericDialog needs a list[] of String
 		final String[] descriptions = new String[ staticAlgorithms.size() ];
 		
@@ -81,25 +115,17 @@ public class Interest_Point_Detection implements PlugIn
 		
 		gd.addChoice( "Type_of_interest_point_detection", descriptions, descriptions[ defaultAlgorithm ] );
 		gd.addStringField( "Label_interest_points", defaultLabel );
-		
-		if ( channels.size() > 1 )
-		{
-			if ( defaultChannelChoice == null || defaultChannelChoice.length != channels.size() )
-			{
-				defaultChannelChoice = new boolean[ channels.size() ];
-				for ( int i = 0; i < channels.size(); ++i )
-					defaultChannelChoice[ i ] = true;
-			}
-			
-			gd.addMessage( "" );
-			gd.addMessage( "Choose channels to detect interest points in", GUIHelper.largefont );
-			
-			for ( int i = 0; i < channels.size(); ++i )
-				gd.addCheckbox( "Channel_" + channels.get( i ).getName(), defaultChannelChoice[ i ] );
 
-			gd.addMessage( "" );
-		}
-		
+		gd.addMessage( "" );
+		gd.addMessage( "Channels to detect interest points in", GUIHelper.largefont );
+
+		final ArrayList< Channel > channels = SpimData2.getAllChannelsSorted( data, viewIds );
+
+		for ( int i = 0; i < channels.size(); ++i )
+			gd.addMessage( "Channel " + channels.get( i ).getName(), GUIHelper.smallStatusFont );
+
+		gd.addMessage( "" );
+
 		gd.addCheckbox( "Downsample_images prior to segmentation", defaultDownSample );
 		gd.addCheckbox( "Define_anisotropy for segmentation", defaultDefineAnisotropy );
 		gd.addCheckbox( "Additional_smoothing", defaultAdditionalSmoothing );
@@ -111,30 +137,16 @@ public class Interest_Point_Detection implements PlugIn
 		gd.showDialog();
 
 		if ( gd.wasCanceled() )
-			return;
+			return false;
 
 		final int algorithm = defaultAlgorithm = gd.getNextChoiceIndex();
 
 		// how are the detections called (e.g. beads, nuclei, ...)
 		final String label = defaultLabel = gd.getNextString();
 		final ArrayList< Channel> channelsToProcess = new ArrayList< Channel >();
-		
-		if ( channels.size() > 1 )
-		{
-			for ( int i = 0; i < channels.size(); ++i )
-				if ( defaultChannelChoice[ i ] = gd.getNextBoolean() )
-					channelsToProcess.add( channels.get( i ) );
-			
-			if ( channelsToProcess.size() == 0 )
-			{
-				IOFunctions.println( "No channels selected. Quitting." );
-				return;
-			}
-		}
-		else
-		{
-			channelsToProcess.add( channels.get( 0 ) );
-		}
+
+		for ( int i = 0; i < channels.size(); ++i )
+			channelsToProcess.add( channels.get( i ) );
 
 		final boolean downsample = defaultDownSample = gd.getNextBoolean();
 		final boolean defineAnisotropy = defaultDefineAnisotropy = gd.getNextBoolean();
@@ -142,18 +154,15 @@ public class Interest_Point_Detection implements PlugIn
 		final boolean setMinMax = defaultSetMinMax = gd.getNextBoolean();
 		
 		final InterestPointDetection ipd = staticAlgorithms.get( algorithm ).newInstance(
-				result.getData(),
-				result.getAnglesToProcess(),
-				channelsToProcess,
-				result.getIlluminationsToProcess(),
-				result.getTimePointsToProcess() );
+				data,
+				viewIds );
 		
 		// the interest point detection should query its parameters
 		if ( !ipd.queryParameters( downsample, defineAnisotropy, additionalSmoothing, setMinMax ) )
-			return;
+			return false;
 		
 		// now extract all the detections
-		for ( final TimePoint tp : result.getTimePointsToProcess() )
+		for ( final TimePoint tp : SpimData2.getAllTimePointsSorted( data, viewIds ) )
 		{
 			final HashMap< ViewId, List< InterestPoint > > points = ipd.findInterestPoints( tp );
 			
@@ -164,7 +173,6 @@ public class Interest_Point_Detection implements PlugIn
 			}
 			
 			// save the file and the path in the XML
-			final SpimData2 data = result.getData();
 			final SequenceDescription seqDesc = data.getSequenceDescription();
 			
 			for ( final ViewId viewId : points.keySet() )
@@ -178,13 +186,20 @@ public class Interest_Point_Detection implements PlugIn
 				
 				list.setParameters( ipd.getParameters( channelId ) );
 				list.setInterestPoints( points.get( viewId ) );
-				
-				if ( !list.saveInterestPoints() )
+
+				if ( saveXML )
 				{
-					IOFunctions.println( "Error saving interest point list: " + new File( list.getBaseDir(), list.getFile().toString() + list.getInterestPointsExt() ) );
-					return;
+					if ( !list.saveInterestPoints() )
+					{
+						IOFunctions.println( "Error saving interest point list: " + new File( list.getBaseDir(), list.getFile().toString() + list.getInterestPointsExt() ) );
+						return false;
+					}
+	
+					list.setCorrespondingInterestPoints( new ArrayList< CorrespondingInterestPoints >() );
+					if ( !list.saveCorrespondingInterestPoints() )
+						IOFunctions.println( "Failed to clear corresponding interest point list: " + new File( list.getBaseDir(), list.getFile().toString() + list.getCorrespondencesExt() ) );
 				}
-				
+
 				final ViewInterestPointLists vipl = data.getViewInterestPoints().getViewInterestPointLists( viewId );
 				vipl.addInterestPointList( label, list );
 			}
@@ -204,22 +219,13 @@ public class Interest_Point_Detection implements PlugIn
 			}
 			
 			// save the xml
-			final XmlIoSpimData2 io = new XmlIoSpimData2();
-			
-			final String xml = new File( data.getBasePath(), new File( result.getXMLFileName() ).getName() ).getAbsolutePath();
-			try 
-			{
-				io.save( data, xml );
-				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + xml + "'." );
-			}
-			catch ( Exception e )
-			{
-				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + xml + "': " + e );
-				e.printStackTrace();
-			}
+			if ( saveXML )
+				SpimData2.saveXML( data, xmlFileName, clusterExtension );
 		}
+
+		return true;
 	}
-	
+
 	public static void main( final String[] args )
 	{
 		new ImageJ();

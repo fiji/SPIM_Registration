@@ -60,7 +60,7 @@ public class BeadSegmentation
 	
 	public void segment( final SPIMConfiguration conf, final ArrayList<ViewDataBeads> views )
 	{
-		final float threshold = conf.threshold;
+		final double threshold = conf.threshold;
 				
 		//
 		// Extract the beads
@@ -88,7 +88,7 @@ public class BeadSegmentation
 	    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 	    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Threshold Bead Extraction for " + view.getName() );				
 				
-				view.setBeadStructure( extractBeadsThresholdSegmentation( view, threshold, conf.minSize, conf.maxSize, conf.minBlackBorder) );
+				view.setBeadStructure( extractBeadsThresholdSegmentation( view, (float)threshold, conf.minSize, conf.maxSize, conf.minBlackBorder) );
 			}
 			else if ( conf.segmentation == SegmentationTypes.DOM )
 			{
@@ -200,12 +200,17 @@ public class BeadSegmentation
                 	
                 	final GaussianPeakFitterND<FloatType> fitter = new GaussianPeakFitterND<FloatType>( image );
                 	
+                	final float[] tmp = new float[ image.getNumDimensions() ];
+
             		// do as many pixels as wanted by this thread
                     for ( int j = start; j < end; ++j )
                     {
                     	final Bead bead = beadList.get( j );
                     	
-            			final double[] results = fitter.process( new LocalizablePoint( bead.getL() ), typicalSigma );
+                    	for ( int d = 0; d < tmp.length; ++d )
+                    		tmp[ d ] = (float)bead.getL()[ d ];
+                    	
+            			final double[] results = fitter.process( new LocalizablePoint( tmp ), typicalSigma );
             			
             			//double a = results[ 0 ];
             			//double x = results[ 1 ];
@@ -215,9 +220,9 @@ public class BeadSegmentation
             			double sy = 1/Math.sqrt( results[ 5 ] );
             			double sz = 1/Math.sqrt( results[ 6 ] );
             			
-            			bead.getL()[ 0 ] = bead.getW()[ 0 ] = (float)results[ 1 ];
-            			bead.getL()[ 1 ] = bead.getW()[ 1 ] = (float)results[ 2 ];
-            			bead.getL()[ 2 ] = bead.getW()[ 2 ] = (float)results[ 3 ];
+            			bead.getL()[ 0 ] = bead.getW()[ 0 ] = results[ 1 ];
+            			bead.getL()[ 1 ] = bead.getW()[ 1 ] = results[ 2 ];
+            			bead.getL()[ 2 ] = bead.getW()[ 2 ] = results[ 3 ];
             			
             			bead.relocalized = true;
             			
@@ -254,12 +259,15 @@ public class BeadSegmentation
 		Image<FloatType> img = factory.createImage( view.getImageSize() );
 		
 		LocalizableByDimCursor3D<FloatType> cursor = (LocalizableByDimCursor3D<FloatType>) img.createLocalizableByDimCursor();		
-		
+
+    	final float[] tmp = new float[ img.getNumDimensions() ];
+
 		for ( Bead bead : view.getBeadStructure().getBeadList())
 		{
-			final float[] pos = bead.getL();
-			
-			final LocalizablePoint p = new LocalizablePoint( pos );
+        	for ( int d = 0; d < tmp.length; ++d )
+        		tmp[ d ] = (float)bead.getL()[ d ];
+
+			final LocalizablePoint p = new LocalizablePoint( tmp );
 			
 			HyperSphereIterator<FloatType> it = new HyperSphereIterator<FloatType>( img, p, 1, new OutOfBoundsStrategyValueFactory<FloatType>() );
 			

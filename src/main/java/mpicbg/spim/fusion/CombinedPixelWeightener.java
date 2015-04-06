@@ -25,7 +25,7 @@ public abstract class CombinedPixelWeightener<I>
 	 */
 	public abstract void updateWeights( final int[][] locations, final boolean[] use );
 
-	public abstract void updateWeights( final float[][] locations, final boolean[] use );
+	public abstract void updateWeights( final double[][] locations, final boolean[] use );
 
 	/**
 	 * Returns the weightening factor for one view
@@ -33,7 +33,7 @@ public abstract class CombinedPixelWeightener<I>
 	 * @param view - which source image
 	 * @return a weightening factor between 0 and 1
 	 */
-	public abstract float getWeight( final int view );
+	public abstract double getWeight( final int view );
 	
 	/**
 	 * Closes the created images if applicable

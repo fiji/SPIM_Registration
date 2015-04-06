@@ -4,18 +4,19 @@ import ij.ImageJ;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
-import spim.fiji.spimdata.XmlIoSpimData2;
+import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import spim.process.fusion.boundingbox.AutomaticBoundingBox;
 import spim.process.fusion.boundingbox.AutomaticReorientation;
@@ -43,13 +44,13 @@ public class Image_Fusion implements PlugIn
 	static
 	{
 		IOFunctions.printIJLog = true;
-		staticFusionAlgorithms.add( new EfficientBayesianBased( null, null, null, null, null ) );
-		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, null, null, null, WeightedAvgFusionType.FUSEDATA ) );
-		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, null, null, null, WeightedAvgFusionType.INDEPENDENT ) );
+		staticFusionAlgorithms.add( new EfficientBayesianBased( null, null ) );
+		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, WeightedAvgFusionType.FUSEDATA ) );
+		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, WeightedAvgFusionType.INDEPENDENT ) );
 		
-		staticBoundingBoxAlgorithms.add( new ManualBoundingBox( null, null, null, null, null ) );
-		staticBoundingBoxAlgorithms.add( new AutomaticReorientation( null, null, null, null, null ) );
-		staticBoundingBoxAlgorithms.add( new AutomaticBoundingBox( null, null, null, null, null ) );
+		staticBoundingBoxAlgorithms.add( new ManualBoundingBox( null, null ) );
+		staticBoundingBoxAlgorithms.add( new AutomaticReorientation( null, null ) );
+		staticBoundingBoxAlgorithms.add( new AutomaticBoundingBox( null, null ) );
 		
 		staticImgExportAlgorithms.add( new DisplayImage() );
 		staticImgExportAlgorithms.add( new Save3dTIFF( null ) );
@@ -59,13 +60,35 @@ public class Image_Fusion implements PlugIn
 
 	@Override
 	public void run( final String arg )
-	{		
+	{
 		// ask for everything
 		final LoadParseQueryXML result = new LoadParseQueryXML();
 		
 		if ( !result.queryXML( "image fusion", true, true, true, true ) )
 			return;
-		
+
+		fuse(
+			result.getData(),
+			SpimData2.getAllViewIdsSorted( result.getData(), result.getViewSetupsToProcess(), result.getTimePointsToProcess() ),
+			result.getClusterExtension(),
+			result.getXMLFileName(),
+			true );
+	}
+
+	public boolean fuse(
+			final SpimData2 data,
+			final List< ViewId > viewIds )
+	{
+		return fuse( data, viewIds, "", null, false );
+	}
+
+	public boolean fuse(
+			final SpimData2 data,
+			final List< ViewId > viewIds,
+			final String clusterExtension,
+			final String xmlFileName,
+			final boolean saveXML )
+	{
 		// the GenericDialog needs a list[] of String
 		final String[] fusionDescriptions = new String[ staticFusionAlgorithms.size() ];
 		final String[] boundingBoxDescriptions = new String[ staticBoundingBoxAlgorithms.size() ];
@@ -92,7 +115,7 @@ public class Image_Fusion implements PlugIn
 		gd.addChoice( "Fused_image", imgExportDescriptions, imgExportDescriptions[ defaultImgExportAlgorithm ] );
 
 		// assemble the last registration names of all viewsetups involved
-		final HashMap< String, Integer > names = GUIHelper.assembleRegistrationNames( result.getData(), result.getViewSetupsToProcess(), result.getTimePointsToProcess() );
+		final HashMap< String, Integer > names = GUIHelper.assembleRegistrationNames( data, viewIds );
 		gd.addMessage( "" );
 		GUIHelper.displayRegistrationNames( gd, names );
 		gd.addMessage( "" );
@@ -105,82 +128,58 @@ public class Image_Fusion implements PlugIn
 		gd.showDialog();
 
 		if ( gd.wasCanceled() )
-			return;
+			return false;
 
 		final int fusionAlgorithm = defaultFusionAlgorithm = gd.getNextChoiceIndex();
 		final int boundingBoxAlgorithm = defaultBoundingBoxAlgorithm = gd.getNextChoiceIndex();
 		final int imgExportAlgorithm = defaultImgExportAlgorithm = gd.getNextChoiceIndex();
 
-		final Fusion fusion = staticFusionAlgorithms.get( fusionAlgorithm ).newInstance(
-				result.getData(), 
-				result.getAnglesToProcess(),
-				result.getChannelsToProcess(),
-				result.getIlluminationsToProcess(),
-				result.getTimePointsToProcess() );
-
-		final BoundingBox boundingBox = staticBoundingBoxAlgorithms.get( boundingBoxAlgorithm ).newInstance(
-				result.getData(), 
-				result.getAnglesToProcess(),
-				result.getChannelsToProcess(),
-				result.getIlluminationsToProcess(),
-				result.getTimePointsToProcess() );
-
+		final Fusion fusion = staticFusionAlgorithms.get( fusionAlgorithm ).newInstance( data, viewIds );
+		final BoundingBox boundingBox = staticBoundingBoxAlgorithms.get( boundingBoxAlgorithm ).newInstance( data, viewIds );
 		final ImgExport imgExport = staticImgExportAlgorithms.get( imgExportAlgorithm ).newInstance();
 
 		if ( !boundingBox.queryParameters( fusion, imgExport ) )
-			return;
+			return false;
 
 		if ( !fusion.queryParameters() )
-			return;
+			return false;
 
 		// set all the properties required for exporting as a new XML or as addition to an existing XML
 		fusion.defineNewViewSetups( boundingBox );
 		imgExport.setXMLData( fusion.getTimepointsToProcess(), fusion.getNewViewSetups() );
 		
-		if ( !imgExport.queryParameters( result.getData() ) )
-			return;
+		if ( !imgExport.queryParameters( data ) )
+			return false;
+
+		// did anyone modify this SpimData object?
+		boolean spimDataModified = false;
 
 		fusion.fuseData( boundingBox, imgExport );
 
-		boundingBox.cleanUp( result );
+		spimDataModified |= boundingBox.cleanUp();
 
 		// save the XML if metadata was updated
-		if ( result.getData().getSequenceDescription().getImgLoader() instanceof AbstractImgLoader )
+		if ( data.getSequenceDescription().getImgLoader() instanceof AbstractImgLoader )
 		{
-			boolean updated = false;
-			
 			try
 			{
-				for ( final ViewSetup setup : result.getData().getSequenceDescription().getViewSetupsOrdered() )
-					updated |= ( (AbstractImgLoader)result.getData().getSequenceDescription().getImgLoader() ).updateXMLMetaData( setup, false );
+				for ( final ViewSetup setup : data.getSequenceDescription().getViewSetupsOrdered() )
+					spimDataModified |= ( (AbstractImgLoader)data.getSequenceDescription().getImgLoader() ).updateXMLMetaData( setup, false );
 			}
 			catch( Exception e )
 			{
 				IOFunctions.println( "Failed to update metadata, this should not happen: " + e );
 			}
-			
-			if ( updated )
-			{
-				// save the xml
-				final XmlIoSpimData2 io = new XmlIoSpimData2();
-				
-				final String xml = new File( result.getData().getBasePath(), new File( result.getXMLFileName() ).getName() ).getAbsolutePath();
-				try 
-				{
-					io.save( result.getData(), xml );
-					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + xml + "' (image metadata was updated)." );
-				}
-				catch ( Exception e )
-				{
-					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + xml + "': " + e );
-					e.printStackTrace();
-				}
-			}
 		}
 
-		imgExport.finish();
+		spimDataModified |= imgExport.finish();
+
+		if ( spimDataModified && saveXML )
+			SpimData2.saveXML( data, xmlFileName, clusterExtension );
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Fusion finished." );
+
+		return true;
 	}
 
 	public static void main( final String[] args )

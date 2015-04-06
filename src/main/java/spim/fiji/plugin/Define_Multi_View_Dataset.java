@@ -9,11 +9,13 @@ import ij.plugin.PlugIn;
 import java.awt.AWTEvent;
 import java.awt.Choice;
 import java.awt.event.ItemEvent;
-import java.io.File;
 import java.util.ArrayList;
 
 import mpicbg.spim.io.IOFunctions;
+import spim.fiji.ImgLib2Temp.Pair;
+import spim.fiji.ImgLib2Temp.ValuePair;
 import spim.fiji.datasetmanager.LightSheetZ1;
+import spim.fiji.datasetmanager.MicroManager;
 import spim.fiji.datasetmanager.MultiViewDatasetDefinition;
 import spim.fiji.datasetmanager.StackListImageJ;
 import spim.fiji.datasetmanager.StackListLOCI;
@@ -21,7 +23,6 @@ import spim.fiji.plugin.queryXML.GenericLoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.plugin.util.MyMultiLineLabel;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.XmlIoSpimData2;
 
 public class Define_Multi_View_Dataset implements PlugIn
 {
@@ -37,11 +38,17 @@ public class Define_Multi_View_Dataset implements PlugIn
 		IOFunctions.printIJLog = true;
 		staticDatasetDefinitions.add( new StackListLOCI() );
 		staticDatasetDefinitions.add( new StackListImageJ() );
+		staticDatasetDefinitions.add( new MicroManager() );
 		staticDatasetDefinitions.add( new LightSheetZ1() );
 	}
 	
 	@Override
 	public void run( String arg0 ) 
+	{
+		defineDataset( true );
+	}
+
+	public Pair< SpimData2, String > defineDataset( final boolean save )
 	{
 		final ArrayList< MultiViewDatasetDefinition > datasetDefinitions = new ArrayList< MultiViewDatasetDefinition >();
 		
@@ -54,7 +61,7 @@ public class Define_Multi_View_Dataset implements PlugIn
 		if ( numDatasetDefinitions == 0 )
 		{
 			IJ.log( "No Multi-View Dataset Definitions available." );
-			return;
+			return null;
 		}
 		
 		// get their names
@@ -84,7 +91,7 @@ public class Define_Multi_View_Dataset implements PlugIn
 		
 		gd1.showDialog();
 		if ( gd1.wasCanceled() )
-			return;
+			return null;
 		
 		defaultDatasetDef = gd1.getNextChoiceIndex();
 		final String xmlFileName = defaultXMLName = gd1.getNextString();
@@ -99,30 +106,21 @@ public class Define_Multi_View_Dataset implements PlugIn
 		if ( spimData == null )
 		{
 			IOFunctions.println( "Defining multi-view dataset failed." );
-			return;
+			return null;
 		}
 		else
 		{
-			//final XmlIoSpimData< TimePoint, ViewSetupBeads > io = XmlIoSpimData.createDefault();
-			final XmlIoSpimData2 io = new XmlIoSpimData2();
-			
-			final String xml = new File( spimData.getBasePath(), xmlFileName ).getAbsolutePath();
-			try 
-			{
-				io.save( spimData, xml );
-				IOFunctions.println( "Saved xml '" + xml + "'." );
-				GenericLoadParseQueryXML.defaultXMLfilename = xml;
-			}
-			catch ( Exception e )
-			{
-				IOFunctions.println( "Could not save xml '" + xml + "': " + e );
-				e.printStackTrace();
-			}
+			final String xml = SpimData2.saveXML( spimData, xmlFileName, "" );
 
-			// show the first image
-			//new ImageJ();
-			//ImageJFunctions.show( spimData.getSequenceDescription().getImgLoader().getImage( spimData.getSequenceDescription().getViewDescription( 0, 0 ), true ) );
-			//ImageJFunctions.show( spimData.getSequenceDescription().getImgLoader().getUnsignedShortImage( spimData.getSequenceDescription().getViewDescription( 0, 0 ) ) );
+			if ( xml != null )
+			{
+				GenericLoadParseQueryXML.defaultXMLfilename = xml;
+				return new ValuePair< SpimData2, String >( spimData, xml );
+			}
+			else
+			{
+				return null;
+			}
 		}
 	}
 	

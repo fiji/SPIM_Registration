@@ -2,14 +2,14 @@ package spim.fiji.plugin.interestpointdetection;
 
 import ij.gui.GenericDialog;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
-import mpicbg.spim.data.sequence.Illumination;
-import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.gauss3.Gauss3;
@@ -25,23 +25,22 @@ import spim.process.interestpointdetection.Downsample;
 
 public abstract class DifferenceOf extends InterestPointDetection
 {
-	public static String[] downsampleChoice = { "1x", "2x", "4x", "8x" };
+	public static String[] downsampleChoiceXY = { "1x", "2x", "4x", "8x", "Match Z Resolution (less downsampling)", "Match Z Resolution (more downsampling)"  };
+	public static String[] downsampleChoiceZ = { "1x", "2x", "4x", "8x" };
 	public static String[] localizationChoice = { "None", "3-dimensional quadratic fit", "Gaussian mask localization fit" };	
 	public static String[] brightnessChoice = { "Very weak & small (beads)", "Weak & small (beads)", "Comparable to Sample & small (beads)", "Strong & small (beads)", "Advanced ...", "Interactive ..." };
 	
-	public static int defaultDownsampleXYIndex = 1;
+	public static int defaultDownsampleXYIndex = 4;
 	public static int defaultDownsampleZIndex = 0;
 
 	public static int defaultLocalization = 1;
 	public static int[] defaultBrightness = null;
-	
-	public static int defaultTimepointChoice = 0;
-	public static int defaultAngleChoice = 0;
-	public static int defaultIlluminationChoice = 0;
-	
+
 	public static double defaultImageSigmaX = 0.5;
 	public static double defaultImageSigmaY = 0.5;
 	public static double defaultImageSigmaZ = 0.5;
+
+	public static int defaultViewChoice = 0;
 
 	public static double defaultAdditionalSigmaX = 0.0;
 	public static double defaultAdditionalSigmaY = 0.0;
@@ -55,14 +54,16 @@ public abstract class DifferenceOf extends InterestPointDetection
 	protected double minIntensity, maxIntensity;
 	protected int localization, downsampleXY, downsampleZ;
 
-	public DifferenceOf(
-			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Channel> channelsToProcess,
-			final List<Illumination> illumsToProcess,
-			final List<TimePoint> timepointsToProcess)
+	final ArrayList< Channel > channelsToProcess;
+
+	public DifferenceOf( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
-		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+		super( spimData, viewIdsToProcess );
+
+		if ( viewIdsToProcess != null )
+			this.channelsToProcess = SpimData2.getAllChannelsSorted( spimData, viewIdsToProcess );
+		else
+			this.channelsToProcess = null;
 	}
 
 	protected abstract void addAddtionalParameters( final GenericDialog gd );
@@ -86,14 +87,19 @@ public abstract class DifferenceOf extends InterestPointDetection
 			for ( int i = 0; i < channels.size(); ++i )
 				defaultBrightness[ i ] = 1;
 		}
-		
+
 		for ( int c = 0; c < channelsToProcess.size(); ++c )
-			gd.addChoice( "Interest_point_specification_(channel_" + channelsToProcess.get( c ).getName() + ")", brightnessChoice, brightnessChoice[ defaultBrightness[ channelsToProcess.get( c ).getId() ] ] );
+		{
+			if ( channelsToProcess.size() == 1 )
+				gd.addChoice( "Interest_point_specification (channel_" + channelsToProcess.get( c ).getName() + ")", brightnessChoice, brightnessChoice[ defaultBrightness[ channelsToProcess.get( c ).getId() ] ] );
+			else
+				gd.addChoice( "Interest_point_specification_(channel_" + channelsToProcess.get( c ).getName().replace( " ", "_" ) + ")", brightnessChoice, brightnessChoice[ defaultBrightness[ channelsToProcess.get( c ).getId() ] ] );
+		}
 
 		if ( downsample )
 		{
-			gd.addChoice( "Downsample_XY", downsampleChoice, downsampleChoice[ defaultDownsampleXYIndex ] );
-			gd.addChoice( "Downsample_Z", downsampleChoice, downsampleChoice[ defaultDownsampleZIndex ] );
+			gd.addChoice( "Downsample_XY", downsampleChoiceXY, downsampleChoiceXY[ defaultDownsampleXYIndex ] );
+			gd.addChoice( "Downsample_Z", downsampleChoiceZ, downsampleChoiceZ[ defaultDownsampleZIndex ] );
 		}
 
 		if ( additionalSmoothing )
@@ -143,15 +149,6 @@ public abstract class DifferenceOf extends InterestPointDetection
 			int dsxy = defaultDownsampleXYIndex = gd.getNextChoiceIndex();
 			int dsz = defaultDownsampleZIndex = gd.getNextChoiceIndex();
 
-			if ( dsxy == 0 )
-				downsampleXY = 1;
-			else if ( dsxy == 1 )
-				downsampleXY = 2;
-			else if ( dsxy == 2 )
-				downsampleXY = 4;
-			else
-				downsampleXY = 8;
-
 			if ( dsz == 0 )
 				downsampleZ = 1;
 			else if ( dsz == 1 )
@@ -160,6 +157,19 @@ public abstract class DifferenceOf extends InterestPointDetection
 				downsampleZ = 4;
 			else
 				downsampleZ = 8;
+
+			if ( dsxy == 0 )
+				downsampleXY = 1;
+			else if ( dsxy == 1 )
+				downsampleXY = 2;
+			else if ( dsxy == 2 )
+				downsampleXY = 4;
+			else if ( dsxy == 3 )
+				downsampleXY = 8;
+			else if ( dsxy == 4 )
+				downsampleXY = 0;
+			else
+				downsampleXY = -1;
 		}
 		else
 		{
@@ -252,53 +262,30 @@ public abstract class DifferenceOf extends InterestPointDetection
 	 */
 	protected ViewId getViewSelection( final String dialogHeader, final String text, final Channel channel )
 	{
+		final ArrayList< ViewDescription > views = SpimData2.getAllViewIdsForChannelSorted( spimData, viewIdsToProcess, channel );
+		final String[] viewChoice = new String[ views.size() ];
+
+		for ( int i = 0; i < views.size(); ++i )
+		{
+			final ViewDescription vd = views.get( i );
+			viewChoice[ i ] = "Timepoint " + vd.getTimePointId() + ", Angle " + vd.getViewSetup().getAngle().getName() + ", Illum " + vd.getViewSetup().getIllumination().getName() + ", ViewSetupId " + vd.getViewSetupId();
+		}
+
+		if ( defaultViewChoice >= views.size() )
+			defaultViewChoice = 0;
+
 		final GenericDialog gd = new GenericDialog( dialogHeader );
-		
-		final String[] timepointNames = new String[ timepointsToProcess.size() ];
-		for ( int i = 0; i < timepointNames.length; ++i )
-			timepointNames[ i ] = timepointsToProcess.get( i ).getName();
-		
-		final List< Angle > angles = spimData.getSequenceDescription().getAllAnglesOrdered();
-		final String[] angleNames = new String[ angles.size() ];
-		for ( int i = 0; i < angles.size(); ++i )
-			angleNames[ i ] = angles.get( i ).getName();
-		
-		final List< Illumination > illuminations = spimData.getSequenceDescription().getAllIlluminationsOrdered();
-		final String[] illuminationNames = new String[ illuminations.size() ];
-		for ( int i = 0; i < illuminations.size(); ++i )
-			illuminationNames[ i ] = illuminations.get( i ).getName();
-
-		if ( defaultTimepointChoice >= timepointNames.length )
-			defaultTimepointChoice = 0;
-
-		if ( defaultAngleChoice >= angleNames.length )
-			defaultAngleChoice = 0;
-
-		if ( defaultIlluminationChoice >= illuminationNames.length )
-			defaultIlluminationChoice = 0;
 
 		gd.addMessage( text );
-		gd.addChoice( "Timepoint", timepointNames, timepointNames[ defaultTimepointChoice ] );
-		gd.addChoice( "Angle", angleNames, angleNames[ defaultAngleChoice ] );
-		gd.addChoice( "Illumination", illuminationNames, illuminationNames[ defaultIlluminationChoice ] );
-
-		gd.addMessage( "" );
-		gd.addMessage( "Note: Be sure that the view that you select is present at this timepoint!" );
+		gd.addChoice( "View", viewChoice, viewChoice[ defaultViewChoice ] );
 		
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
 			return null;
-		
-		final TimePoint tp = timepointsToProcess.get( defaultTimepointChoice = gd.getNextChoiceIndex() );
-		final Angle angle = angles.get( defaultAngleChoice = gd.getNextChoiceIndex() );
-		final Illumination illumination = illuminations.get( defaultIlluminationChoice = gd.getNextChoiceIndex() );
-		
-		final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), tp, channel, angle, illumination );
-		
-		if ( viewId == null )
-			IOFunctions.println( "This ViewSetup is not present." );
-		
+
+		final ViewId viewId = views.get( defaultViewChoice = gd.getNextChoiceIndex() );
+
 		return viewId;
 	}
 
@@ -314,12 +301,17 @@ public abstract class DifferenceOf extends InterestPointDetection
 	protected abstract boolean setAdvancedValues( final Channel channel );
 	protected abstract boolean setInteractiveValues( final Channel channel );
 
-	protected void correctForDownsampling( final List< InterestPoint > ips )
+	protected void correctForDownsampling( final List< InterestPoint > ips, final VoxelDimensions v )
 	{
 		if ( downsampleXY == 1 && downsampleZ == 1 )
 			return;
 
-		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Correcting coordinates for downsampling" );
+		int downsampleXY = this.downsampleXY;
+
+		if ( downsampleXY < 1 )
+			downsampleXY = downsampleFactor( downsampleXY, downsampleZ, v );
+
+		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Correcting coordinates for downsampling (xy=" + downsampleXY + "x, z=" + downsampleZ + "x)" );
 
 		for ( final InterestPoint ip : ips )
 		{
@@ -333,9 +325,32 @@ public abstract class DifferenceOf extends InterestPointDetection
 		}
 	}
 
-	protected RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > downsample( RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input )
+	public int downsampleFactor( final int downsampleXY, final int downsampleZ, final VoxelDimensions v )
+	{
+		final double calXY = Math.min( v.dimension( 0 ), v.dimension( 1 ) );
+		final double calZ = v.dimension( 2 ) * downsampleZ;
+		final double log2ratio = Math.log( calZ / calXY ) / Math.log( 2 );
+
+		final double exp2;
+
+		if ( downsampleXY == 0 )
+			exp2 = Math.pow( 2, Math.floor( log2ratio ) );
+		else
+			exp2 = Math.pow( 2, Math.ceil( log2ratio ) );
+
+		return (int)Math.round( exp2 );
+	}
+	
+	protected RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > downsample(
+			RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input,
+			final VoxelDimensions v )
 	{
 		final ImgFactory< net.imglib2.type.numeric.real.FloatType > f = ((Img<net.imglib2.type.numeric.real.FloatType>)input).factory();
+
+		int downsampleXY = this.downsampleXY;
+
+		if ( downsampleXY < 1 )
+			downsampleXY = downsampleFactor( downsampleXY, downsampleZ, v );
 
 		if ( downsampleXY > 1 )
 			IOFunctions.println( "(" + new Date( System.currentTimeMillis() )  + "): Downsampling in XY " + downsampleXY + "x ..." );

@@ -1,15 +1,14 @@
 package mpicbg.pointdescriptor;
 
-import fiji.util.node.Leaf;
-
 import java.util.ArrayList;
 
-import javax.vecmath.Matrix3f;
-import javax.vecmath.Vector3f;
+import javax.vecmath.Matrix3d;
+import javax.vecmath.Vector3d;
 
 import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
 import mpicbg.pointdescriptor.exception.NoSuitablePointsException;
+import fiji.util.node.Leaf;
 
 public class LocalCoordinateSystemPointDescriptor < P extends Point > extends AbstractPointDescriptor< P, LocalCoordinateSystemPointDescriptor<P> > 
 		implements Leaf< LocalCoordinateSystemPointDescriptor<P> >
@@ -37,7 +36,7 @@ public class LocalCoordinateSystemPointDescriptor < P extends Point > extends Ab
 	@Override
 	public double descriptorDistance( final LocalCoordinateSystemPointDescriptor< P > pointDescriptor ) 
 	{ 
-		float difference = 0;
+		double difference = 0;
 		
 		if ( !normalize )
 			difference += ( ax - pointDescriptor.ax ) * ( ax - pointDescriptor.ax );  	
@@ -60,11 +59,11 @@ public class LocalCoordinateSystemPointDescriptor < P extends Point > extends Ab
 	public void buildLocalCoordinateSystem( final ArrayList< LinkedPoint< P > > neighbors, final boolean normalize )
 	{
 		// most distant point		
-		final Vector3f b = new Vector3f( neighbors.get( 0 ).getL() );
-		final Vector3f c = new Vector3f( neighbors.get( 1 ).getL() );
-		final Vector3f d = new Vector3f( neighbors.get( 2 ).getL() );
+		final Vector3d b = new Vector3d( neighbors.get( 0 ).getL() );
+		final Vector3d c = new Vector3d( neighbors.get( 1 ).getL() );
+		final Vector3d d = new Vector3d( neighbors.get( 2 ).getL() );
 		
-		final Vector3f x = new Vector3f( d );
+		final Vector3d x = new Vector3d( d );
 		x.normalize();			
 
 //		IOFunctions.println( "Input" );
@@ -74,7 +73,7 @@ public class LocalCoordinateSystemPointDescriptor < P extends Point > extends Ab
 
 		if ( normalize )
 		{			
-			final float lengthD = 1.0f / d.length();
+			final double lengthD = 1.0 / d.length();
 
 			b.scale(lengthD);
 			c.scale(lengthD);
@@ -87,11 +86,11 @@ public class LocalCoordinateSystemPointDescriptor < P extends Point > extends Ab
 		}
 		else
 		{
-			ax = d.length();
+			ax = (float)d.length();
 		}
 		
 		// get normal vector of ab and ad ( which will be the z-axis)
-		final Vector3f n = new Vector3f();
+		final Vector3d n = new Vector3d();
 		n.cross(b, x);		
 		n.normalize();
 		
@@ -108,7 +107,7 @@ public class LocalCoordinateSystemPointDescriptor < P extends Point > extends Ab
 		
 		// get the inverse of the matrix that maps the vectors into the local coordinate system
 		// where the x-axis is vector(ad), the z-axis is n and the y-axis is cross-product(x,z)
-		final Vector3f y = new Vector3f();
+		final Vector3d y = new Vector3d();
 		y.cross( n, x );
 		y.normalize();
 		
@@ -118,7 +117,7 @@ public class LocalCoordinateSystemPointDescriptor < P extends Point > extends Ab
 //		IOFunctions.println( "Y - axis" );
 //		IOFunctions.println( y );
 		
-		final Matrix3f m = new Matrix3f();
+		final Matrix3d m = new Matrix3d();
 		m.m00 = x.x; m.m01 = y.x; m.m02 = n.x;  
 		m.m10 = x.y; m.m11 = y.y; m.m12 = n.y; 
 		m.m20 = x.z; m.m21 = y.z; m.m22 = n.z;
@@ -135,8 +134,8 @@ public class LocalCoordinateSystemPointDescriptor < P extends Point > extends Ab
 		
 		
 		// get the positions in the local coordinate system
-		final Vector3f bl = new Vector3f( b );
-		final Vector3f cl = new Vector3f( c );
+		final Vector3d bl = new Vector3d( b );
+		final Vector3d cl = new Vector3d( c );
 
 		m.transform( bl );
 		m.transform( cl );
@@ -145,11 +144,11 @@ public class LocalCoordinateSystemPointDescriptor < P extends Point > extends Ab
 //		IOFunctions.println( bl );
 //		IOFunctions.println( cl );
 		
-		bx = bl.x;
-		by = bl.y;
-		cx = cl.x;
-		cy = cl.y;
-		cz = cl.z;
+		bx = (float)bl.x;
+		by = (float)bl.y;
+		cx = (float)cl.x;
+		cy = (float)cl.y;
+		cz = (float)cl.z;
 		
 //		System.out.println( "NEW" );
 //		System.out.println( ax );

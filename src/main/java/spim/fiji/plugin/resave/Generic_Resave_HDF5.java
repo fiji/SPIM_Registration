@@ -1,13 +1,5 @@
 package spim.fiji.plugin.resave;
 
-import bdv.export.ExportMipmapInfo;
-import bdv.export.ProgressWriter;
-import bdv.export.ProposeMipmaps;
-import bdv.export.SubTaskProgressWriter;
-import bdv.export.WriteSequenceToHdf5;
-import bdv.img.hdf5.Hdf5ImageLoader;
-import bdv.spimdata.SpimDataMinimal;
-import bdv.spimdata.XmlIoSpimDataMinimal;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.gui.DialogListener;
@@ -19,6 +11,9 @@ import java.awt.Checkbox;
 import java.awt.TextField;
 import java.awt.event.ItemEvent;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.swing.JFileChooser;
@@ -28,7 +23,20 @@ import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
+import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.ImgLoader;
+import mpicbg.spim.data.sequence.TimePoint;
+import spim.fiji.plugin.Toggle_Cluster_Options;
+import bdv.export.ExportMipmapInfo;
+import bdv.export.ProgressWriter;
+import bdv.export.ProposeMipmaps;
+import bdv.export.SubTaskProgressWriter;
+import bdv.export.WriteSequenceToHdf5;
+import bdv.export.WriteSequenceToHdf5.DefaultLoopbackHeuristic;
+import bdv.img.hdf5.Hdf5ImageLoader;
+import bdv.img.hdf5.Partition;
+import bdv.spimdata.SpimDataMinimal;
+import bdv.spimdata.XmlIoSpimDataMinimal;
 
 public class Generic_Resave_HDF5 implements PlugIn
 {
@@ -45,8 +53,18 @@ public class Generic_Resave_HDF5 implements PlugIn
 		File seqFile;
 		File hdf5File;
 		boolean deflate;
+		boolean split;
+		int timepointsPerPartition;
+		int setupsPerPartition;
+		boolean onlyRunSingleJob;
+		int jobId;
 
-		public Parameters( final boolean setMipmapManual, final int[][] resolutions, final int[][] subdivisions, final File seqFile, final File hdf5File, final boolean deflate )
+		public Parameters(
+				final boolean setMipmapManual, final int[][] resolutions, final int[][] subdivisions,
+				final File seqFile, final File hdf5File,
+				final boolean deflate,
+				final boolean split, final int timepointsPerPartition, final int setupsPerPartition,
+				final boolean onlyRunSingleJob, final int jobId )
 		{
 			this.setMipmapManual = setMipmapManual;
 			this.resolutions = resolutions;
@@ -54,14 +72,19 @@ public class Generic_Resave_HDF5 implements PlugIn
 			this.seqFile = seqFile;
 			this.hdf5File = hdf5File;
 			this.deflate = deflate;
+			this.split = split;
+			this.timepointsPerPartition = timepointsPerPartition;
+			this.setupsPerPartition = setupsPerPartition;
+			this.onlyRunSingleJob = onlyRunSingleJob;
+			this.jobId = jobId;
 		}
-		
+
 		public void setSeqFile( final File seqFile ) { this.seqFile = seqFile; }
 		public void setHDF5File( final File hdf5File ) { this.hdf5File = hdf5File; }
 		public void setResolutions( final int[][] resolutions ) { this.resolutions = resolutions; }
 		public void setSubdivisions( final int[][] subdivisions ) { this.subdivisions = subdivisions; }
 		public void setMipmapManual( final boolean setMipmapManual ) { this.setMipmapManual = setMipmapManual; }
-		
+
 		public File getSeqFile() { return seqFile; }
 		public File getHDF5File() { return hdf5File; }
 		public int[][] getResolutions() { return resolutions; }
@@ -75,7 +98,7 @@ public class Generic_Resave_HDF5 implements PlugIn
 		final File file = getInputXML();
 		if ( file == null )
 			return;
-		
+
 		final XmlIoSpimDataMinimal io = new XmlIoSpimDataMinimal();
 		SpimDataMinimal spimData;
 		try
@@ -98,47 +121,96 @@ public class Generic_Resave_HDF5 implements PlugIn
 		progressWriter.out().println( "starting export..." );
 
 		// write hdf5
-		writeHDF5( spimData.getSequenceDescription(), params, perSetupExportMipmapInfo, progressWriter );
-		
+		writeHDF5( spimData, params, progressWriter );
+
 		// write xml sequence description
-		try 
+		try
 		{
-			writeXML( spimData, io, params.seqFile, params.hdf5File, progressWriter );
+			writeXML( spimData, io, params, progressWriter );
 		}
 		catch ( SpimDataException e )
 		{
 			throw new RuntimeException( e );
 		}
 	}
-	
-	public static void writeHDF5( final AbstractSequenceDescription< ?, ?, ? > seq, final Parameters params, final Map< Integer, ExportMipmapInfo > perSetupExportMipmapInfo, final ProgressWriter progressWriter )
-	{
-		final boolean setMipmapManual = params.setMipmapManual;
-		final int[][] manualResolutions = params.resolutions;
-		final int[][] manualSubdivisions = params.subdivisions;
 
-		if ( setMipmapManual )
-			WriteSequenceToHdf5.writeHdf5File( seq, manualResolutions, manualSubdivisions, params.deflate, params.hdf5File, new SubTaskProgressWriter( progressWriter, 0, 0.95 ) );
+	public static Map< Integer, ExportMipmapInfo > getPerSetupExportMipmapInfo( final AbstractSpimData< ? > spimData, final Parameters params )
+	{
+		if ( params.setMipmapManual )
+		{
+			final Map< Integer, ExportMipmapInfo > perSetupExportMipmapInfo = new HashMap< Integer, ExportMipmapInfo >();
+			final ExportMipmapInfo mipmapInfo = new ExportMipmapInfo( params.resolutions, params.subdivisions );
+			for ( final BasicViewSetup setup : spimData.getSequenceDescription().getViewSetupsOrdered() )
+				perSetupExportMipmapInfo.put( setup.getId(), mipmapInfo );
+			return perSetupExportMipmapInfo;
+		}
 		else
-			WriteSequenceToHdf5.writeHdf5File( seq, perSetupExportMipmapInfo, params.deflate, params.hdf5File, new SubTaskProgressWriter( progressWriter, 0, 0.95 ) );
+			return ProposeMipmaps.proposeMipmaps( spimData.getSequenceDescription() );
 	}
-	
+
+	public static ArrayList< Partition > getPartitions( final AbstractSpimData< ? > spimData, final Parameters params )
+	{
+		final AbstractSequenceDescription< ?, ?, ? > seq = spimData.getSequenceDescription();
+		if ( params.split )
+		{
+			final String xmlFilename = params.seqFile.getAbsolutePath();
+			final String basename = xmlFilename.endsWith( ".xml" ) ? xmlFilename.substring( 0, xmlFilename.length() - 4 ) : xmlFilename;
+			List< TimePoint > timepoints = seq.getTimePoints().getTimePointsOrdered();
+			List< ? extends BasicViewSetup > setups = seq.getViewSetupsOrdered();
+			return Partition.split( timepoints, setups, params.timepointsPerPartition, params.setupsPerPartition, basename );
+		}
+		else
+			return null;
+	}
+
+	public static void writeHDF5( final AbstractSpimData< ? > spimData, final Parameters params, final ProgressWriter progressWriter )
+	{
+		Map< Integer, ExportMipmapInfo > perSetupExportMipmapInfo = getPerSetupExportMipmapInfo( spimData, params );
+		final ArrayList< Partition > partitions = getPartitions( spimData, params );
+		AbstractSequenceDescription< ?, ?, ? > seq = spimData.getSequenceDescription();
+		if ( partitions != null )
+		{
+			for ( int i = 0; i < partitions.size(); ++i )
+			{
+				final Partition partition = partitions.get( i );
+				final ProgressWriter p = new SubTaskProgressWriter( progressWriter, 0, 0.95 * i / partitions.size() );
+				progressWriter.out().printf( "proccessing partition %d / %d\n", ( i + 1 ), partitions.size() );
+				if ( !params.onlyRunSingleJob || params.jobId == i + 1 )
+					WriteSequenceToHdf5.writeHdf5PartitionFile( seq, perSetupExportMipmapInfo, params.deflate, partition, new DefaultLoopbackHeuristic(), null, p );
+			}
+			if ( !params.onlyRunSingleJob || params.jobId == 0 )
+				WriteSequenceToHdf5.writeHdf5PartitionLinkFile( seq, perSetupExportMipmapInfo, partitions, params.hdf5File );
+		}
+		else
+		{
+			final ProgressWriter p = new SubTaskProgressWriter( progressWriter, 0, 0.95 );
+			WriteSequenceToHdf5.writeHdf5File( seq, perSetupExportMipmapInfo, params.deflate, params.hdf5File, new DefaultLoopbackHeuristic(), null, p );
+		}
+	}
+
 	public static < T extends AbstractSpimData< A >, A extends AbstractSequenceDescription< ?, ?, ? super ImgLoader< ? > > > void writeXML(
 			final T spimData,
 			final XmlIoAbstractSpimData< A, T > io,
-			final File seqFile,
-			final File hdf5File,
+			final Parameters params,
 			final ProgressWriter progressWriter )
 		throws SpimDataException
 	{
 		final A seq = spimData.getSequenceDescription();
-		final Hdf5ImageLoader hdf5Loader = new Hdf5ImageLoader( hdf5File, null, null, false );
+		final ArrayList< Partition > partitions = getPartitions( spimData, params );
+		final Hdf5ImageLoader hdf5Loader = new Hdf5ImageLoader( params.hdf5File, partitions, null, false );
 		seq.setImgLoader( hdf5Loader );
-		spimData.setBasePath( seqFile.getParentFile() );
-
-		io.save( spimData, seqFile.getAbsolutePath() );
-		
-		progressWriter.setProgress( 1.0 );
+		spimData.setBasePath( params.seqFile.getParentFile() );
+		try
+		{
+			if ( !params.onlyRunSingleJob || params.jobId == 0 )
+				io.save( spimData, params.seqFile.getAbsolutePath() );
+			progressWriter.setProgress( 1.0 );
+		}
+		catch ( final Exception e )
+		{
+			progressWriter.err().println( "Failed to write xml file " + params.seqFile );
+			e.printStackTrace( progressWriter.err() );
+		}
 		progressWriter.out().println( "done" );
 	}
 
@@ -148,7 +220,15 @@ public class Generic_Resave_HDF5 implements PlugIn
 
 	static String lastChunkSizes = "{16,16,16}, {16,16,16}, {16,16,16}";
 
+	static boolean lastSplit = false;
+
+	static int lastTimepointsPerPartition = 1;
+
+	static int lastSetupsPerPartition = 0;
+
 	static boolean lastDeflate = true;
+
+	static int lastJobIndex = 0;
 
 	public static String lastExportPath = "/Users/pietzsch/Desktop/spimrec2.xml";
 
@@ -186,27 +266,48 @@ public class Generic_Resave_HDF5 implements PlugIn
 		else
 			return null;
 	}
-	
+
 	public static Parameters getParameters( final ExportMipmapInfo autoMipmapSettings, final boolean askForXMLPath )
 	{
+		final boolean displayClusterProcessing = Toggle_Cluster_Options.displayClusterProcessing;
+		if ( displayClusterProcessing )
+		{
+			lastSplit = true;
+			lastTimepointsPerPartition = 1;
+			lastSetupsPerPartition = 0;
+		}
+
 		while ( true )
 		{
 			final GenericDialogPlus gd = new GenericDialogPlus( "Export for BigDataViewer" );
 
-			gd.addCheckbox( "manual mipmap setup", lastSetMipmapManual );
+			gd.addCheckbox( "manual_mipmap_setup", lastSetMipmapManual );
 			final Checkbox cManualMipmap = ( Checkbox ) gd.getCheckboxes().lastElement();
-			gd.addStringField( "Subsampling factors", lastSubsampling, 25 );
+			gd.addStringField( "Subsampling_factors", lastSubsampling, 25 );
 			final TextField tfSubsampling = ( TextField ) gd.getStringFields().lastElement();
-			gd.addStringField( "Hdf5 chunk sizes", lastChunkSizes, 25 );
+			gd.addStringField( "Hdf5_chunk_sizes", lastChunkSizes, 25 );
 			final TextField tfChunkSizes = ( TextField ) gd.getStringFields().lastElement();
 
 			gd.addMessage( "" );
-			gd.addCheckbox( "use deflate compression", lastDeflate );
+			gd.addCheckbox( "split_hdf5", lastSplit );
+			final Checkbox cSplit = ( Checkbox ) gd.getCheckboxes().lastElement();
+			gd.addNumericField( "timepoints_per_partition", lastTimepointsPerPartition, 0, 25, "" );
+			final TextField tfSplitTimepoints = ( TextField ) gd.getNumericFields().lastElement();
+			gd.addNumericField( "setups_per_partition", lastSetupsPerPartition, 0, 25, "" );
+			final TextField tfSplitSetups = ( TextField ) gd.getNumericFields().lastElement();
+			if ( displayClusterProcessing )
+			{
+				gd.addNumericField( "run_only_job_number", lastJobIndex, 0, 25, "" );
+			}
+
+			gd.addMessage( "" );
+			gd.addCheckbox( "use_deflate_compression", lastDeflate );
+
 
 			if ( askForXMLPath )
 			{
 				gd.addMessage( "" );
-				PluginHelper.addSaveAsFileField( gd, "Export path", lastExportPath, 25 );
+				PluginHelper.addSaveAsFileField( gd, "Export_path", lastExportPath, 25 );
 			}
 
 			final String autoSubsampling = ProposeMipmaps.getArrayString( autoMipmapSettings.getExportResolutions() );
@@ -216,6 +317,16 @@ public class Generic_Resave_HDF5 implements PlugIn
 				@Override
 				public boolean dialogItemChanged( final GenericDialog dialog, final AWTEvent e )
 				{
+					gd.getNextBoolean();
+					gd.getNextString();
+					gd.getNextString();
+					gd.getNextBoolean();
+					gd.getNextNumber();
+					gd.getNextNumber();
+					if ( displayClusterProcessing )
+						gd.getNextNumber();
+					gd.getNextBoolean();
+					gd.getNextString();
 					if ( e instanceof ItemEvent && e.getID() == ItemEvent.ITEM_STATE_CHANGED && e.getSource() == cManualMipmap )
 					{
 						final boolean useManual = cManualMipmap.getState();
@@ -226,6 +337,12 @@ public class Generic_Resave_HDF5 implements PlugIn
 							tfSubsampling.setText( autoSubsampling );
 							tfChunkSizes.setText( autoChunkSizes );
 						}
+					}
+					else if ( e instanceof ItemEvent && e.getID() == ItemEvent.ITEM_STATE_CHANGED && e.getSource() == cSplit )
+					{
+						final boolean split = cSplit.getState();
+						tfSplitTimepoints.setEnabled( split );
+						tfSplitSetups.setEnabled( split );
 					}
 					return true;
 				}
@@ -239,6 +356,16 @@ public class Generic_Resave_HDF5 implements PlugIn
 				tfChunkSizes.setText( autoChunkSizes );
 			}
 
+			tfSplitTimepoints.setEnabled( lastSplit );
+			tfSplitSetups.setEnabled( lastSplit );
+
+			if ( displayClusterProcessing )
+			{
+				cSplit.setEnabled( false );
+				tfSplitTimepoints.setEnabled( false );
+				tfSplitSetups.setEnabled( false );
+			}
+
 			gd.showDialog();
 			if ( gd.wasCanceled() )
 				return null;
@@ -246,6 +373,13 @@ public class Generic_Resave_HDF5 implements PlugIn
 			lastSetMipmapManual = gd.getNextBoolean();
 			lastSubsampling = gd.getNextString();
 			lastChunkSizes = gd.getNextString();
+			lastSplit = gd.getNextBoolean();
+			lastTimepointsPerPartition = ( int ) gd.getNextNumber();
+			lastSetupsPerPartition = ( int ) gd.getNextNumber();
+			if ( displayClusterProcessing )
+			{
+				lastJobIndex = ( int ) gd.getNextNumber();
+			}
 			lastDeflate = gd.getNextBoolean();
 			lastExportPath = gd.getNextString();
 
@@ -290,7 +424,7 @@ public class Generic_Resave_HDF5 implements PlugIn
 				seqFile = hdf5File = null;
 			}
 
-			return new Parameters( lastSetMipmapManual, resolutions, subdivisions, seqFile, hdf5File, lastDeflate );
+			return new Parameters( lastSetMipmapManual, resolutions, subdivisions, seqFile, hdf5File, lastDeflate, lastSplit, lastTimepointsPerPartition, lastSetupsPerPartition, displayClusterProcessing, lastJobIndex );
 		}
 	}
 }

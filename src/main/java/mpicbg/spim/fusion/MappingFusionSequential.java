@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.vecmath.Point3f;
+import javax.vecmath.Point3d;
 
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
@@ -252,7 +252,7 @@ public class MappingFusionSequential extends SPIMImageFusion
 		                	final int myNumber = ai.getAndIncrement();
 
 		                	// temporary float array
-		                	final float[] tmp = new float[ 3 ];
+		                	final double[] tmp = new double[ 3 ];
 
 			        		// init combined pixel weighteners
 			        		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN && combinedWeightenerFactories.size() > 0 && myNumber == 0 )
@@ -280,13 +280,13 @@ public class MappingFusionSequential extends SPIMImageFusion
 							for (int view = viewIndexStart; view < viewIndexEnd; view++)
 			    				interpolators[ view ] = views.get( view ).getImage( false ).createInterpolator( conf.interpolatorFactorOutput );
 
-							final Point3f[] tmpCoordinates = new Point3f[ numViews ];
+							final Point3d[] tmpCoordinates = new Point3d[ numViews ];
 							final int[][] loc = new int[ numViews ][ 3 ];
-			    			final float[][] locf = new float[ numViews ][ 3 ];
+			    			final double[][] locf = new double[ numViews ][ 3 ];
 							final boolean[] use = new boolean[ numViews ];
 
 							for (int i = 0; i < tmpCoordinates.length; i++)
-								tmpCoordinates[i] = new Point3f();
+								tmpCoordinates[i] = new Point3d();
 
 							if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN && myNumber == 0 )
 								for ( final ViewDataBeads view : processViews )
@@ -318,9 +318,9 @@ public class MappingFusionSequential extends SPIMImageFusion
 
 		        							mpicbg.spim.mpicbg.Java3d.applyInverseInPlace( models[i], tmpCoordinates[i], tmp );
 
-		        							loc[i][0] = Util.round( tmpCoordinates[i].x );
-		        							loc[i][1] = Util.round( tmpCoordinates[i].y );
-		        							loc[i][2] = Util.round( tmpCoordinates[i].z );
+		        							loc[i][0] = (int)Util.round( tmpCoordinates[i].x );
+		        							loc[i][1] = (int)Util.round( tmpCoordinates[i].y );
+		        							loc[i][2] = (int)Util.round( tmpCoordinates[i].z );
 
 			    							locf[i][0] = tmpCoordinates[i].x;
 			    							locf[i][1] = tmpCoordinates[i].y;

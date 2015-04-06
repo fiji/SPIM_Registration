@@ -13,6 +13,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -24,7 +25,6 @@ import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
-import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
@@ -34,31 +34,35 @@ import spim.process.fusion.deconvolution.ExtractPSF;
 
 public class InteractiveProjections
 {
-	public static float size = 2;
+	public static double size = 2;
+
+	final Frame frame;
 
 	protected boolean isRunning, wasCanceled;
 	protected ImagePlus imp;
 	protected List< InterestPoint > ipList;
+	final protected List< Thread > runAfterFinished;
 
-	public InteractiveProjections( final LoadParseQueryXML result, final ViewDescription vd, final String label, final String newLabel, final int projectionDim )
+	public InteractiveProjections( final SpimData2 spimData, final ViewDescription vd, final String label, final String newLabel, final int projectionDim )
 	{
 		this.isRunning = true;
 		this.wasCanceled = false;
+		this.runAfterFinished = new ArrayList< Thread >();
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + ": Loading image ..." );
-		RandomAccessibleInterval< FloatType > img = result.getData().getSequenceDescription().getImgLoader().getFloatImage( vd, false );
+		RandomAccessibleInterval< FloatType > img = spimData.getSequenceDescription().getImgLoader().getFloatImage( vd, false );
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + ": Computing max projection along dimension " + projectionDim + " ..." );
 		final Img< FloatType > maxProj = ExtractPSF.computeMaxProjection( img, new ArrayImgFactory< FloatType >(), projectionDim );
 		this.imp = showProjection( maxProj );
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + ": Loading & drawing interest points ..." );
-		this.ipList = loadInterestPoints( result.getData(), vd, label );
+		this.ipList = loadInterestPoints( spimData, vd, label );
 		drawProjectedInterestPoints( imp, ipList, projectionDim );
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + ": " + ipList.size() + " points displayed ... " );
 
-		final Frame frame = new Frame( "Remove detections" );
+		frame = new Frame( "Remove detections" );
 		frame.setSize( 300, 180 );
 
 		/* Instantiation */
@@ -98,6 +102,7 @@ public class InteractiveProjections
 		frame.setVisible( true );
 	}
 
+	public void runWhenDone( final Thread thread ) { this.runAfterFinished.add( thread ); }
 	public List< InterestPoint > getInterestPointList() { return ipList; }
 	public boolean isRunning() { return isRunning; }
 	public boolean wasCanceled() { return wasCanceled; }
@@ -120,8 +125,8 @@ public class InteractiveProjections
 
 		for ( final InterestPoint ip : ipList )
 		{
-			final float x = ip.getL()[ xDim ];
-			final float y = ip.getL()[ yDim ];
+			final double x = ip.getL()[ xDim ];
+			final double y = ip.getL()[ yDim ];
 			
 				final OvalRoi or = new OvalRoi( Math.round( x - size ), Math.round( y - size ), Math.round( size * 2 ), Math.round( size * 2 ) );
 				or.setStrokeColor( Color.green );
@@ -157,10 +162,15 @@ public class InteractiveProjections
 		final ViewInterestPointLists lists = interestPoints.getViewInterestPointLists( id );
 		final InterestPointList list = lists.getInterestPointList( label );
 
-		if ( list.getInterestPoints() == null || list.getInterestPoints().size() == 0 )
+		if ( list.getInterestPoints() == null )
 			list.loadInterestPoints();
 
-		return list.getInterestPoints();
+		final ArrayList< InterestPoint > newList = new ArrayList< InterestPoint >();
+
+		for ( final InterestPoint p : list.getInterestPoints() )
+			newList.add( new InterestPoint( p.getId(), p.getL().clone() ) );
+
+		return newList;
 	}
 
 	protected ImagePlus showProjection( final Img< FloatType > img )
@@ -177,6 +187,9 @@ public class InteractiveProjections
 
 		if ( imp != null )
 			imp.close();
+
+		for ( final Thread t : runAfterFinished )
+			t.start();
 
 		isRunning = false;
 	}
@@ -213,9 +226,9 @@ public class InteractiveProjections
 
 				for ( int i = ipList.size() - 1; i >= 0; --i )
 				{
-					final float[] l = ipList.get( i ).getL();
+					final double[] l = ipList.get( i ).getL();
 
-					final boolean contains = roi.contains( Math.round( l[ xDim ] ), Math.round( l[ yDim ] ) );
+					final boolean contains = roi.contains( (int)Math.round( l[ xDim ] ), (int)Math.round( l[ yDim ] ) );
 					
 					if ( inside && contains || !inside && !contains )
 						ipList.remove( i );

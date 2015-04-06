@@ -361,7 +361,7 @@ public class ExtractPSF
 		
 		// the center of the psf has to be the center of the transformed psf as well
 		// this is important!
-		final float[] center = new float[ numDimensions ]; 
+		final double[] center = new double[ numDimensions ]; 
 		
 		for ( int d = 0; d < numDimensions; ++d )
 			center[ d ] = psf.getDimension( d ) / 2;
@@ -379,7 +379,7 @@ public class ExtractPSF
 			// the offset is defined like this:
 			// the transformed coordinates of the center of the psf
 			// are the center of the transformed psf
-			offset[ d ] = center[ d ] - newSize[ d ]/2;
+			offset[ d ] = (float)center[ d ] - newSize[ d ]/2;
 			
 			//System.out.println( MathLib.printCoordinates( minMaxDim[ d ] ) + " size " + size[ d ] + " newSize " + newSize[ d ] );
 		}
@@ -430,9 +430,9 @@ public class ExtractPSF
 		
 		for ( final Bead bead : view.getBeadStructure().getBeadList() )
 		{			
-			final float[] position = bead.getL().clone();
+			final double[] position = bead.getL().clone();
 			final int[] tmpI = new int[ position.length ];
-			final float[] tmpF = new float[ position.length ];
+			final double[] tmpF = new double[ position.length ];
 			
 			// check if it is a true correspondence
 			if ( bead.getRANSACCorrespondence().size() > 0 ) 
@@ -477,7 +477,7 @@ public class ExtractPSF
 	{
 		final int numDimensions = dimensions.length;
 		
-		final float[] tmp = new float[ numDimensions ];
+		final double[] tmp = new double[ numDimensions ];
 		final float[][] minMaxDim = new float[ numDimensions ][ 2 ];
 		
 		for ( int d = 0; d < numDimensions; ++d )
@@ -507,10 +507,10 @@ public class ExtractPSF
 			for ( int d = 0; d < numDimensions; ++d )
 			{				
 				if ( tmp[ d ] < minMaxDim[ d ][ 0 ]) 
-					minMaxDim[ d ][ 0 ] = tmp[ d ];
+					minMaxDim[ d ][ 0 ] = (float)tmp[ d ];
 
 				if ( tmp[ d ] > minMaxDim[ d ][ 1 ]) 
-					minMaxDim[ d ][ 1 ] = tmp[ d ];
+					minMaxDim[ d ][ 1 ] = (float)tmp[ d ];
 			}				
 		}
 		

@@ -11,6 +11,7 @@ import mpicbg.models.AbstractModel;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.Angle;
+import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
@@ -37,17 +38,13 @@ import spim.process.interestpointregistration.PairwiseMatch;
  */
 public abstract class GlobalOptimizationType
 {
-	public static boolean remove = true, add = true;
-	protected boolean save;
 	final protected boolean considerTimePointsAsUnit;
 
 	final SpimData2 spimData;
-	final List< Angle > anglesToProcess;
+	final List< ViewId > viewIdsToProcess;
 	final List< ChannelProcess > channelsToProcess;
-	final List< Illumination > illumsToProcess;
-	final List< TimePoint > timepointsToProcess;
 
-	final List< GlobalOptimizationSubset > subsets;
+	List< GlobalOptimizationSubset > subsets;
 
 	Set< ViewId > fixedTiles;
 	Map< GlobalOptimizationSubset, ViewId > referenceTiles;
@@ -55,27 +52,23 @@ public abstract class GlobalOptimizationType
 	
 	public GlobalOptimizationType(
 			final SpimData2 spimData,
-			final List< Angle > anglesToProcess,
+			final List< ViewId > viewIdsToProcess,
 			final List< ChannelProcess > channelsToProcess,
-			final List< Illumination > illumsToProcess,
-			final List< TimePoint > timepointsToProcess,
-			final boolean save,
 			final boolean considerTimePointsAsUnit )
 	{
 		this.spimData = spimData;
-		this.anglesToProcess = anglesToProcess;
+		this.viewIdsToProcess = viewIdsToProcess;
 		this.channelsToProcess = channelsToProcess;
-		this.illumsToProcess = illumsToProcess;
-		this.timepointsToProcess = timepointsToProcess;
 
-		this.save = save;
 		this.considerTimePointsAsUnit = considerTimePointsAsUnit;
 
 		this.fixedTiles = new HashSet< ViewId >();
 		this.referenceTiles = new HashMap< GlobalOptimizationSubset, ViewId >();
 		this.mapBackModel = null;
 
-		this.subsets = assembleAllViewPairs();
+		// we cannot call assemble from the constructor as some subclasses might not
+		// have set parameters passed by the constructor yet
+		this.subsets = null;
 	}
 
 	/**
@@ -86,7 +79,13 @@ public abstract class GlobalOptimizationType
 	/**
 	 * @return - the list of all subsets for the global optimization
 	 */
-	public List< GlobalOptimizationSubset > getAllViewPairs(){ return subsets; }
+	public List< GlobalOptimizationSubset > getAllViewPairs()
+	{
+		if ( subsets == null )
+			this.subsets = assembleAllViewPairs();
+
+		return subsets;
+	}
 
 	/**
 	 * @param viewId
@@ -144,21 +143,6 @@ public abstract class GlobalOptimizationType
 	public void setMapBackModel( final AbstractModel<?> model ) { this.mapBackModel = model; }
 
 	/** 
-	 * @return - true if previous correspondences should be removed
-	 */
-	public boolean remove() { return remove; }
-
-	/** 
-	 * @return - true if new correspondences should be added
-	 */
-	public boolean add() { return add; }
-
-	/** 
-	 * @return - true if any of the data should be saved
-	 */
-	public boolean save() { return save; }
-	
-	/** 
 	 * @return - true if timepoints should be considered as one unit
 	 */
 	public boolean considerTimePointsAsUnit() { return considerTimePointsAsUnit; }
@@ -178,69 +162,68 @@ public abstract class GlobalOptimizationType
 		final ViewRegistrations registrations = spimData.getViewRegistrations();
 		final ViewInterestPoints interestpoints = spimData.getViewInterestPoints();
 		
-		for ( final Angle a : anglesToProcess )
-			for ( final Illumination i : illumsToProcess )
-				for ( final ChannelProcess c : channelsToProcess )
+		for ( final ViewDescription vd : SpimData2.getAllViewIdsForTimePointSorted( spimData, viewIdsToProcess, timepoint) )
+		{
+			if ( !vd.isPresent() )
+				continue;
+
+			final ChannelProcess c = getChannelProcessForChannel( channelsToProcess, vd.getViewSetup().getChannel() );
+			final Angle a = vd.getViewSetup().getAngle();
+			final Illumination i = vd.getViewSetup().getIllumination();
+
+			// assemble a new list
+			final ArrayList< InterestPoint > list = new ArrayList< InterestPoint >();
+
+			// check the existing lists of points
+			final ViewInterestPointLists lists = interestpoints.getViewInterestPointLists( vd );
+
+			if ( !lists.contains( c.getLabel() ) )
 			{
-				// bureaucracy
-				final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), timepoint, c.getChannel(), a, i );
-
-				// this happens only if a viewsetup is not present in any timepoint
-				// (e.g. after appending fusion to a dataset)
-				if ( viewId == null )
-					continue;
-
-				final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
-						viewId.getTimePointId(), viewId.getViewSetupId() );
-
-				if ( !viewDescription.isPresent() )
-					continue;
-
-				// assemble a new list
-				final ArrayList< InterestPoint > list = new ArrayList< InterestPoint >();
-
-				// check the existing lists of points
-				final ViewInterestPointLists lists = interestpoints.getViewInterestPointLists( viewId );
-
-				if ( !lists.contains( c.getLabel() ) )
+				IOFunctions.println( "Interest points for label '" + c.getLabel() + "' not found for timepoint: " + timepoint.getId() + " angle: " + 
+						a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
+				
+				continue;
+			}
+			
+			if ( lists.getInterestPointList( c.getLabel() ).getInterestPoints() == null )
+			{
+				if ( !lists.getInterestPointList( c.getLabel() ).loadInterestPoints() )
 				{
-					IOFunctions.println( "Interest points for label '" + c.getLabel() + "' not found for timepoint: " + timepoint.getId() + " angle: " + 
+					IOFunctions.println( "Interest points for label '" + c.getLabel() + "' could not be loaded for timepoint: " + timepoint.getId() + " angle: " + 
 							a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
 					
 					continue;
 				}
-				
-				if ( lists.getInterestPointList( c.getLabel() ).getInterestPoints().size() == 0 )
-				{
-					if ( !lists.getInterestPointList( c.getLabel() ).loadInterestPoints() )
-					{
-						IOFunctions.println( "Interest points for label '" + c.getLabel() + "' could not be loaded for timepoint: " + timepoint.getId() + " angle: " + 
-								a.getId() + " channel: " + c.getChannel().getId() + " illum: " + i.getId() );
-						
-						continue;
-					}
-				}
-				
-				final List< InterestPoint > ptList = lists.getInterestPointList( c.getLabel() ).getInterestPoints();
-				
-				final ViewRegistration r = registrations.getViewRegistration( viewId );
-				r.updateModel();
-				final AffineTransform3D m = r.getModel();
-				
-				for ( final InterestPoint p : ptList )
-				{
-					final float[] l = new float[ 3 ];
-					m.apply( p.getL(), l );
-					
-					list.add( new InterestPoint( p.getId(), l ) );
-				}
-				
-				interestPoints.put( viewId, new MatchPointList( list, c ) );
 			}
-		
+			
+			final List< InterestPoint > ptList = lists.getInterestPointList( c.getLabel() ).getInterestPoints();
+			
+			final ViewRegistration r = registrations.getViewRegistration( vd );
+			r.updateModel();
+			final AffineTransform3D m = r.getModel();
+			
+			for ( final InterestPoint p : ptList )
+			{
+				final double[] l = new double[ 3 ];
+				m.apply( p.getL(), l );
+				
+				list.add( new InterestPoint( p.getId(), l ) );
+			}
+			
+			interestPoints.put( vd, new MatchPointList( list, c ) );
+		}
+
 		return interestPoints;
 	}
 
+	protected static ChannelProcess getChannelProcessForChannel( final List< ChannelProcess > cpList, final Channel c )
+	{
+		for ( final ChannelProcess cp : cpList )
+			if ( cp.getChannel().getId() == c.getId() )
+				return cp;
+
+		return null;
+	}
 	/**
 	 * Add all correspondences the list for those that are compared here
 	 * 
@@ -263,8 +246,14 @@ public abstract class GlobalOptimizationType
 			final InterestPointList listA = spimData.getViewInterestPoints().getViewInterestPointLists( viewA ).getInterestPointList( labelA );				
 			final InterestPointList listB = spimData.getViewInterestPoints().getViewInterestPointLists( viewB ).getInterestPointList( labelB );
 
-			final List< CorrespondingInterestPoints > corrListA = listA.getCorrespondingInterestPoints();
-			final List< CorrespondingInterestPoints > corrListB = listB.getCorrespondingInterestPoints();
+			List< CorrespondingInterestPoints > corrListA = listA.getCorrespondingInterestPoints();
+			List< CorrespondingInterestPoints > corrListB = listB.getCorrespondingInterestPoints();
+
+			if ( corrListA == null )
+				corrListA = new ArrayList< CorrespondingInterestPoints >();
+
+			if ( corrListB == null )
+				corrListB = new ArrayList< CorrespondingInterestPoints >();
 
 			for ( final PointMatchGeneric< Detection > d : correspondences )
 			{
@@ -277,6 +266,9 @@ public abstract class GlobalOptimizationType
 				corrListA.add( correspondingToA );
 				corrListB.add( correspondingToB );
 			}
+
+			listA.setCorrespondingInterestPoints( corrListA );
+			listB.setCorrespondingInterestPoints( corrListB );
 		}
 	}
 
@@ -292,7 +284,7 @@ public abstract class GlobalOptimizationType
 		for ( final ViewId id : set.getViews() )
 			for ( final ChannelProcess c : channelsToProcess )
 				if ( spimData.getSequenceDescription().getViewDescription( id ).getViewSetup().getChannel().getId() == c.getChannel().getId() )
-					spimData.getViewInterestPoints().getViewInterestPointLists( id ).getInterestPointList( c.getLabel() ).saveCorrespondingInterestPoints();		
+					spimData.getViewInterestPoints().getViewInterestPointLists( id ).getInterestPointList( c.getLabel() ).saveCorrespondingInterestPoints();
 	}
 
 	/**
@@ -307,6 +299,6 @@ public abstract class GlobalOptimizationType
 		for ( final ViewId id : set.getViews() )
 			for ( final ChannelProcess c : channelsToProcess )
 				if ( spimData.getSequenceDescription().getViewDescription( id ).getViewSetup().getChannel().getId() == c.getChannel().getId() )
-					spimData.getViewInterestPoints().getViewInterestPointLists( id ).getInterestPointList( c.getLabel() ).getCorrespondingInterestPoints().clear();
+					spimData.getViewInterestPoints().getViewInterestPointLists( id ).getInterestPointList( c.getLabel() ).setCorrespondingInterestPoints( new ArrayList< CorrespondingInterestPoints>() );
 	}
 }

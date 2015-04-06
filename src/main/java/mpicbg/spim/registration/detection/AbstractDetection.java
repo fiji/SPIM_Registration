@@ -1,7 +1,7 @@
 package mpicbg.spim.registration.detection;
 
+import net.imglib2.util.Util;
 import fiji.util.node.Leaf;
-import mpicbg.imglib.util.Util;
 import mpicbg.models.Point;
 
 public abstract class AbstractDetection< T extends AbstractDetection< T > > extends Point implements Leaf< T >
@@ -13,18 +13,18 @@ public abstract class AbstractDetection< T extends AbstractDetection< T > > exte
 	protected boolean useW = false;
 
 	// used for display
-	protected float distance = -1;
+	protected double distance = -1;
 
 	// used for recursive parsing
 	protected boolean isUsed = false;		
 	
-	public AbstractDetection( final int id, final float[] location )
+	public AbstractDetection( final int id, final double[] location )
 	{
 		super( location );
 		this.id = id;
 	}
 
-	public AbstractDetection( final int id, final float[] location, final double weight )
+	public AbstractDetection( final int id, final double[] location, final double weight )
 	{
 		super( location );
 		this.id = id;
@@ -34,8 +34,8 @@ public abstract class AbstractDetection< T extends AbstractDetection< T > > exte
 	public void setWeight( final double weight ){ this.weight = weight; }
 	public double getWeight(){ return weight; }
 	public long getID() { return id; }
-	public void setDistance( float distance )  { this.distance = distance; }
-	public float getDistance() { return distance; }
+	public void setDistance( double distance )  { this.distance = distance; }
+	public double getDistance() { return distance; }
 	public boolean isUsed() { return isUsed; }
 	public void setUsed( final boolean isUsed ) { this.isUsed = isUsed; }
 
@@ -57,7 +57,7 @@ public abstract class AbstractDetection< T extends AbstractDetection< T > > exte
 		return true;
 	}
 	
-	public void setW( final float[] wn )
+	public void setW( final double[] wn )
 	{
 		for ( int i = 0; i < w.length; ++i )
 			w[ i ] = wn[ i ];
@@ -72,8 +72,8 @@ public abstract class AbstractDetection< T extends AbstractDetection< T > > exte
 	public double getDistance( final Point point2 )
 	{
 		double distance = 0;
-		final float[] a = getL();
-		final float[] b = point2.getW();
+		final double[] a = getL();
+		final double[] b = point2.getW();
 		
 		for ( int i = 0; i < getL().length; ++i )
 		{
@@ -90,9 +90,9 @@ public abstract class AbstractDetection< T extends AbstractDetection< T > > exte
 	@Override
 	public float distanceTo( final T o ) 
 	{
-		final float x = o.get( 0 ) - get( 0 );
-		final float y = o.get( 1 ) - get( 1 );
-		final float z = o.get( 2 ) - get( 2 );
+		final double x = o.get( 0 ) - get( 0 );
+		final double y = o.get( 1 ) - get( 1 );
+		final double z = o.get( 2 ) - get( 2 );
 		
 		return (float)Math.sqrt(x*x + y*y + z*z);
 	}
@@ -104,9 +104,9 @@ public abstract class AbstractDetection< T extends AbstractDetection< T > > exte
 	public float get( final int k ) 
 	{
 		if ( useW )
-			return w[ k ];
+			return (float)w[ k ];
 		else
-			return l[ k ];
+			return (float)l[ k ];
 	}
 	
 	@Override

@@ -35,6 +35,7 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import ome.xml.model.primitives.PositiveFloat;
+import spim.fiji.datasetmanager.StackListLOCI;
 
 public class StackImgLoaderLOCI extends StackImgLoader
 {
@@ -59,7 +60,10 @@ public class StackImgLoaderLOCI extends StackImgLoader
 	public RandomAccessibleInterval< FloatType > getFloatImage( final ViewId view, final boolean normalize )
 	{
 		final File file = getFile( view );
-		
+
+		if ( file == null )
+			throw new RuntimeException( "Could not find file '" + file + "'." );
+
 		try
 		{
 			final CalibratedImg< FloatType > img = openLOCI( file, new FloatType(), view );
@@ -112,7 +116,10 @@ public class StackImgLoaderLOCI extends StackImgLoader
 	public RandomAccessibleInterval< UnsignedShortType > getImage( final ViewId view )
 	{
 		final File file = getFile( view );
-		
+
+		if ( file == null )
+			throw new RuntimeException( "Could not find file '" + file + "'." );
+
 		try
 		{
 			final CalibratedImg< UnsignedShortType > img = openLOCI( file, new UnsignedShortType(), view );
@@ -512,4 +519,11 @@ public class StackImgLoaderLOCI extends StackImgLoader
 			return null;
 		}
 	}
+
+	@Override
+	public String toString()
+	{
+		return new StackListLOCI().getTitle() + ", ImgFactory=" + imgFactory.getClass().getSimpleName();
+	}
+
 }

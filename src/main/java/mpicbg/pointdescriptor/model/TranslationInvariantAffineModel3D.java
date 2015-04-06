@@ -37,10 +37,10 @@ public class TranslationInvariantAffineModel3D extends TranslationInvariantModel
 {
 	static final protected int MIN_NUM_MATCHES = 4;
 	
-	protected float
-		m00 = 1.0f, m01 = 0.0f, m02 = 0.0f, 
-		m10 = 0.0f, m11 = 1.0f, m12 = 0.0f, 
-		m20 = 0.0f, m21 = 0.0f, m22 = 1.0f;
+	protected double
+		m00 = 1.0, m01 = 0.0, m02 = 0.0,
+		m10 = 0.0, m11 = 1.0, m12 = 0.0,
+		m20 = 0.0, m21 = 0.0, m22 = 1.0;
 
 	@Override
 	public boolean canDoNumDimension( final int numDimensions ) { return numDimensions == 3; }
@@ -52,17 +52,17 @@ public class TranslationInvariantAffineModel3D extends TranslationInvariantModel
 		if ( matches.size() < MIN_NUM_MATCHES )
 			throw new NotEnoughDataPointsException( matches.size() + " data points are not enough to estimate a 3d affine model, at least " + MIN_NUM_MATCHES + " data points required." );
 		
-		float pcx = 0, pcy = 0, pcz = 0;
-		float qcx = 0, qcy = 0, qcz = 0;
+		double pcx = 0, pcy = 0, pcz = 0;
+		double qcx = 0, qcy = 0, qcz = 0;
 		
 		double ws = 0.0;
 		
 		for ( final PointMatch m : matches )
 		{
-			final float[] p = m.getP1().getL(); 
-			final float[] q = m.getP2().getW(); 
+			final double[] p = m.getP1().getL(); 
+			final double[] q = m.getP2().getW(); 
 			
-			final float w = m.getWeight();
+			final double w = m.getWeight();
 			ws += w;
 			
 			pcx += w * p[ 0 ];
@@ -79,11 +79,11 @@ public class TranslationInvariantAffineModel3D extends TranslationInvariantModel
 		qcy /= ws;
 		qcz /= ws;
 		
-		float
+		double
 			a00, a01, a02,
 			     a11, a12,
 			          a22;
-		float
+		double
 			b00, b01, b02,
 			b10, b11, b12,
 			b20, b21, b22;
@@ -91,12 +91,12 @@ public class TranslationInvariantAffineModel3D extends TranslationInvariantModel
 		a00 = a01 = a02 = a11 = a12 = a22 = b00 = b01 = b02 = b10 = b11 = b12 = b20 = b21 = b22 = 0;
 		for ( final PointMatch m : matches )
 		{
-			final float[] p = m.getP1().getL();
-			final float[] q = m.getP2().getW();
-			final float w = m.getWeight();
+			final double[] p = m.getP1().getL();
+			final double[] q = m.getP2().getW();
+			final double w = m.getWeight();
 			
-			final float px = p[ 0 ] - pcx, py = p[ 1 ] - pcy, pz = p[ 2 ] - pcz;
-			final float qx = q[ 0 ] - qcx, qy = q[ 1 ] - qcy, qz = q[ 2 ] - qcz;
+			final double px = p[ 0 ] - pcx, py = p[ 1 ] - pcy, pz = p[ 2 ] - pcz;
+			final double qx = q[ 0 ] - qcx, qy = q[ 1 ] - qcy, qz = q[ 2 ] - qcz;
 			a00 += w * px * px;
 			a01 += w * px * py;
 			a02 += w * px * pz;
@@ -115,7 +115,7 @@ public class TranslationInvariantAffineModel3D extends TranslationInvariantModel
 			b22 += w * pz * qz;
 		}
 		
-		final float det =
+		final double det =
 			a00 * a11 * a22 +
 			a01 * a12 * a02 +
 			a02 * a01 * a12 -
@@ -126,14 +126,14 @@ public class TranslationInvariantAffineModel3D extends TranslationInvariantModel
 		if ( det == 0 )
 			throw new IllDefinedDataPointsException();
 		
-		final float idet = 1f / det;
+		final double idet = 1f / det;
 		
-		final float ai00 = ( a11 * a22 - a12 * a12 ) * idet;
-		final float ai01 = ( a02 * a12 - a01 * a22 ) * idet;
-		final float ai02 = ( a01 * a12 - a02 * a11 ) * idet;
-		final float ai11 = ( a00 * a22 - a02 * a02 ) * idet;
-		final float ai12 = ( a02 * a01 - a00 * a12 ) * idet;
-		final float ai22 = ( a00 * a11 - a01 * a01 ) * idet;
+		final double ai00 = ( a11 * a22 - a12 * a12 ) * idet;
+		final double ai01 = ( a02 * a12 - a01 * a22 ) * idet;
+		final double ai02 = ( a01 * a12 - a02 * a11 ) * idet;
+		final double ai11 = ( a00 * a22 - a02 * a02 ) * idet;
+		final double ai12 = ( a02 * a01 - a00 * a12 ) * idet;
+		final double ai22 = ( a00 * a11 - a01 * a01 ) * idet;
 		
 		m00 = ai00 * b00 + ai01 * b10 + ai02 * b20;
 		m01 = ai01 * b00 + ai11 * b10 + ai12 * b20;
@@ -187,20 +187,20 @@ public class TranslationInvariantAffineModel3D extends TranslationInvariantModel
 	final public int getMinNumMatches(){ return MIN_NUM_MATCHES; }
 	
 	@Override
-	final public float[] apply( final float[] l )
+	final public double[] apply( final double[] l )
 	{
-		final float[] transformed = l.clone();
+		final double[] transformed = l.clone();
 		applyInPlace( transformed );
 		return transformed;
 	}
 	
 	@Override
-	final public void applyInPlace( final float[] l )
+	final public void applyInPlace( final double[] l )
 	{
 		assert l.length == 3 : "3d affine transformations can be applied to 3d points only.";
 		
-		final float l0 = l[ 0 ];
-		final float l1 = l[ 1 ];
+		final double l0 = l[ 0 ];
+		final double l1 = l[ 1 ];
 		l[ 0 ] = l0 * m00 + l1 * m01 + l[ 2 ] * m02;
 		l[ 1 ] = l0 * m10 + l1 * m11 + l[ 2 ] * m12;
 		l[ 2 ] = l0 * m20 + l1 * m21 + l[ 2 ] * m22;

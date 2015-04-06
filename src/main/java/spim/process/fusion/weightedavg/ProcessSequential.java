@@ -8,11 +8,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
-import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessible;
@@ -35,14 +34,13 @@ public class ProcessSequential extends ProcessFusion
 	
 	public ProcessSequential(
 			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Illumination> illumsToProcess,
+			final List< ViewId > viewIdsToProcess,
 			final BoundingBox bb,
 			final boolean useBlending,
 			final boolean useContentBased,
 			final int numSequentialViews )
 	{
-		super( spimData, anglesToProcess, illumsToProcess, bb, useBlending, useContentBased );
+		super( spimData, viewIdsToProcess, bb, useBlending, useContentBased );
 		
 		this.numSequentialViews = numSequentialViews;
 	}
@@ -65,6 +63,15 @@ public class ProcessSequential extends ProcessFusion
 	{
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Reserving memory for fused image.");
 
+		// get all views that are fused
+		final ArrayList< ViewDescription > allInputData =
+				FusionHelper.assembleInputData( spimData, timepoint, channel, viewIdsToProcess );
+
+		// it can be that for a certain comination of timepoint/channel there is nothing to do
+		// (e.g. fuse timepoint 1 channel 1 and timepoint 2 channel 2)
+		if ( allInputData.size() == 0 )
+			return null;
+
 		// try creating the output (type needs to be there to define T)
 		final Img< T > fusedImg = bb.getImgFactory( type ).create( bb.getDimensions(), type );
 
@@ -82,11 +89,7 @@ public class ProcessSequential extends ProcessFusion
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): WeightedAverageFusion: Cannot create weight image."  );
 			return null;
 		}
-		
-		// get all views that are fused
-		final ArrayList< ViewDescription > allInputData =
-				FusionHelper.assembleInputData( spimData, timepoint, channel, anglesToProcess, illumsToProcess );
-		
+
 		// we will need to run some batches until all is fused
 		for ( int batch = 0; batch < numBatches( allInputData.size(), numSequentialViews ); ++batch )
 		{

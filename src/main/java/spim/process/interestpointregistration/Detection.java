@@ -1,7 +1,7 @@
 package spim.process.interestpointregistration;
 
+import net.imglib2.util.Util;
 import fiji.util.node.Leaf;
-import mpicbg.imglib.util.Util;
 import mpicbg.models.Point;
 
 /**
@@ -18,18 +18,18 @@ public class Detection extends Point implements Leaf< Detection >
 	protected boolean useW = false;
 
 	// used for display
-	protected float distance = -1;
+	protected double distance = -1;
 
 	// used for recursive parsing
-	protected boolean isUsed = false;		
+	protected boolean isUsed = false;
 	
-	public Detection( final int id, final float[] location )
+	public Detection( final int id, final double[] location )
 	{
 		super( location );
 		this.id = id;
 	}
 
-	public Detection( final int id, final float[] location, final double weight )
+	public Detection( final int id, final double[] location, final double weight )
 	{
 		super( location );
 		this.id = id;
@@ -39,8 +39,8 @@ public class Detection extends Point implements Leaf< Detection >
 	public void setWeight( final double weight ){ this.weight = weight; }
 	public double getWeight(){ return weight; }
 	public int getId() { return id; }
-	public void setDistance( float distance )  { this.distance = distance; }
-	public float getDistance() { return distance; }
+	public void setDistance( double distance )  { this.distance = distance; }
+	public double getDistance() { return distance; }
 	public boolean isUsed() { return isUsed; }
 	public void setUsed( final boolean isUsed ) { this.isUsed = isUsed; }
 
@@ -62,7 +62,7 @@ public class Detection extends Point implements Leaf< Detection >
 		return true;
 	}
 	
-	public void setW( final float[] wn )
+	public void setW( final double[] wn )
 	{
 		for ( int i = 0; i < w.length; ++i )
 			w[ i ] = wn[ i ];
@@ -77,8 +77,8 @@ public class Detection extends Point implements Leaf< Detection >
 	public double getDistance( final Point point2 )
 	{
 		double distance = 0;
-		final float[] a = getL();
-		final float[] b = point2.getW();
+		final double[] a = getL();
+		final double[] b = point2.getW();
 		
 		for ( int i = 0; i < getL().length; ++i )
 		{
@@ -95,9 +95,9 @@ public class Detection extends Point implements Leaf< Detection >
 	@Override
 	public float distanceTo( final Detection o ) 
 	{
-		final float x = o.get( 0 ) - get( 0 );
-		final float y = o.get( 1 ) - get( 1 );
-		final float z = o.get( 2 ) - get( 2 );
+		final double x = o.get( 0 ) - get( 0 );
+		final double y = o.get( 1 ) - get( 1 );
+		final double z = o.get( 2 ) - get( 2 );
 		
 		return (float)Math.sqrt(x*x + y*y + z*z);
 	}
@@ -109,9 +109,9 @@ public class Detection extends Point implements Leaf< Detection >
 	public float get( final int k ) 
 	{
 		if ( useW )
-			return w[ k ];
+			return (float)w[ k ];
 		else
-			return l[ k ];
+			return (float)l[ k ];
 	}
 	
 	@Override

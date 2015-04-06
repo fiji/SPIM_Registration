@@ -8,8 +8,8 @@ public class Blending extends CombinedPixelWeightener<Blending>
 {
 	final boolean useView[];
 	final int numViews;
-	final float[] weights;
-	final float[] minDistance;
+	final double[] weights;
+	final double[] minDistance;
 	
 	final int[][] imageSizes;
 	
@@ -19,8 +19,8 @@ public class Blending extends CombinedPixelWeightener<Blending>
 		
 		numViews = views.size();
 		useView = new boolean[numViews];
-		weights = new float[numViews];
-		minDistance = new float[numViews];
+		weights = new double[numViews];
+		minDistance = new double[numViews];
 		
 		// cache image sizes
 		imageSizes = new int[numViews][];		
@@ -29,7 +29,7 @@ public class Blending extends CombinedPixelWeightener<Blending>
 	}
 
 	@Override
-	public void updateWeights(final float[][] loc, final boolean[] useView)
+	public void updateWeights(final double[][] loc, final boolean[] useView)
 	{
 		// check which location are inside its respective view
 		int num = 0;
@@ -55,7 +55,7 @@ public class Blending extends CombinedPixelWeightener<Blending>
 	}
 	
 	@Override
-	public float getWeight(final int view) { return weights[view]; }
+	public double getWeight(final int view) { return weights[view]; }
 	
 	final private void computeLinearWeights( final int num, final int[][] loc, final boolean[] useView )
 	{
@@ -70,7 +70,7 @@ public class Blending extends CombinedPixelWeightener<Blending>
 		}
 		
 		// compute the minimal distance to the border for each image
-		float sumInverseWeights = 0;
+		double sumInverseWeights = 0;
 		for (int i = 0; i < useView.length; i++)
 		{
 			if (useView[i])
@@ -79,10 +79,10 @@ public class Blending extends CombinedPixelWeightener<Blending>
 				for (int dim = 0; dim < 3; dim++)
 				{
 					final int localImgPos = loc[i][dim];
-					float value = Math.min(localImgPos, imageSizes[ i ][ dim ] - localImgPos - 1) + 1;
+					double value = Math.min(localImgPos, imageSizes[ i ][ dim ] - localImgPos - 1) + 1;
 					
-					final float imgHalf = imageSizes[ i ][ dim ]/2.0f;
-					final float imgHalf10 = Math.round( 0.35f * imgHalf );
+					final double imgHalf = imageSizes[ i ][ dim ]/2.0;
+					final double imgHalf10 = Math.round( 0.35 * imgHalf );
 					
 					if ( value < imgHalf10 )
 						value = (value / imgHalf10);
@@ -100,7 +100,7 @@ public class Blending extends CombinedPixelWeightener<Blending>
 				else if ( minDistance[i] > 1)
 					minDistance[i] = 1;
 				
-				weights[i] = (float)Math.pow(minDistance[i], conf.alpha);				
+				weights[i] = Math.pow(minDistance[i], conf.alpha);				
 
 				sumInverseWeights += weights[i];				
 			}
@@ -122,7 +122,7 @@ public class Blending extends CombinedPixelWeightener<Blending>
 		}
 	}
 
-	final private void computeLinearWeights( final int num, final float[][] loc, final boolean[] useView )
+	final private void computeLinearWeights( final int num, final double[][] loc, final boolean[] useView )
 	{
 		if (num <= 1)
 		{
@@ -135,7 +135,7 @@ public class Blending extends CombinedPixelWeightener<Blending>
 		}
 		
 		// compute the minimal distance to the border for each image
-		float sumInverseWeights = 0;
+		double sumInverseWeights = 0;
 		for (int i = 0; i < useView.length; i++)
 		{
 			if (useView[i])
@@ -143,11 +143,11 @@ public class Blending extends CombinedPixelWeightener<Blending>
 				minDistance[i] = 1;
 				for (int dim = 0; dim < 3; dim++)
 				{
-					final float localImgPos = loc[i][dim];
-					float value = Math.min(localImgPos, imageSizes[ i ][ dim ] - localImgPos - 1) + 1;
+					final double localImgPos = loc[i][dim];
+					double value = Math.min(localImgPos, imageSizes[ i ][ dim ] - localImgPos - 1) + 1;
 					
-					final float imgHalf = imageSizes[ i ][ dim ]/2.0f;
-					final float imgHalf10 = Math.round( 0.35f * imgHalf );
+					final double imgHalf = imageSizes[ i ][ dim ]/2.0;
+					final double imgHalf10 = Math.round( 0.35 * imgHalf );
 					
 					if ( value < imgHalf10 )
 						value = (value / imgHalf10);
@@ -165,7 +165,7 @@ public class Blending extends CombinedPixelWeightener<Blending>
 				else if ( minDistance[i] > 1)
 					minDistance[i] = 1;
 				
-				weights[i] = (float)Math.pow(minDistance[i], conf.alpha);				
+				weights[i] = Math.pow(minDistance[i], conf.alpha);				
 
 				sumInverseWeights += weights[i];				
 			}

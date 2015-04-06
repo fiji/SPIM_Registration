@@ -33,6 +33,7 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
+import spim.fiji.datasetmanager.LightSheetZ1;
 import spim.fiji.datasetmanager.LightSheetZ1MetaData;
 
 public class LightSheetZ1ImgLoader extends AbstractImgLoader
@@ -42,7 +43,8 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 
 	// once the metadata is loaded for one view, it is available for all other ones
 	LightSheetZ1MetaData meta;
-	
+	boolean isClosed = true;
+
 	public LightSheetZ1ImgLoader(
 			final File cziFile,
 			final ImgFactory< ? extends NativeType< ? > > imgFactory,
@@ -68,24 +70,7 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 				throw new RuntimeException( "Could not load '" + cziFile + "' viewId=" + view.getViewSetupId() + ", tpId=" + view.getTimePointId() );
 
 			if ( normalize )
-			{
-				float min = Float.MAX_VALUE;
-				float max = -Float.MAX_VALUE;
-
-				for ( final FloatType t : img )
-				{
-					final float v = t.get();
-
-					if ( v < min )
-						min = v;
-
-					if ( v > max )
-						max = v;
-				}
-
-				for ( final FloatType t : img )
-					t.set( ( t.get() - min ) / ( max - min ) );
-			}
+				normalize( img );
 
 			// update the MetaDataCache of the AbstractImgLoader
 			// this does not update the XML ViewSetup but has to be called explicitly before saving
@@ -151,6 +136,21 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 				meta.calX(), meta.calY(), meta.calZ() );
 	}
 
+	public void finalize()
+	{
+		IOFunctions.println( "Closing czi: " + cziFile );
+
+		try
+		{
+			if ( meta != null && meta.getReader() != null )
+			{
+				meta.getReader().close();
+				isClosed = true;
+			}
+		}
+		catch (IOException e) {}
+	}
+
 	protected < T extends RealType< T > & NativeType< T > > Img< T > openCZI( final T type, final ViewId view ) throws Exception
 	{
 		IOFunctions.println( "Investigating file '" + cziFile.getAbsolutePath() + "'." );
@@ -163,7 +163,12 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 			{
 				IOFunctions.println( "Failed to analyze file: '" + cziFile.getAbsolutePath() + "'." );
 				meta = null;
+				isClosed = true;
 				return null;
+			}
+			else
+			{
+				isClosed = false;
 			}
 		}
 
@@ -218,11 +223,19 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 		try
 		{
 			// open the file if not already done
-			if ( meta.getReader() == null )
+			try
+			{
+				if ( meta.getReader() == null )
+					r.setId( cziFile.getAbsolutePath() );
+				
+				// set the right angle
+				r.setSeries( a.getId() );
+			}
+			catch ( IllegalStateException e )
+			{
 				r.setId( cziFile.getAbsolutePath() );
-
-			// set the right angle
-			r.setSeries( a.getId() );
+				r.setSeries( a.getId() );
+			}
 
 			// compute the right channel from channelId & illuminationId
 			int ch = c.getId() * meta.numIlluminations() + i.getId();
@@ -272,8 +285,6 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 						readFloats( b, cursor, width, isLittleEndian );
 				}
 			}
-
-			r.close();
 
 			IJ.showProgress( 1 );
 		}
@@ -430,5 +441,11 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 			throw new RuntimeException( "This XML does not have the 'Illumination' attribute for their ViewSetup. Cannot continue." );
 
 		return illumination;
+	}
+
+	@Override
+	public String toString()
+	{
+		return new LightSheetZ1().getTitle() + ", ImgFactory=" + imgFactory.getClass().getSimpleName();
 	}
 }

@@ -1,6 +1,5 @@
 package spim.process.fusion.deconvolution;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -17,6 +16,7 @@ import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.Interval;
@@ -26,6 +26,7 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.Threads;
 import spim.fiji.ImgLib2Temp;
+import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
@@ -52,8 +53,7 @@ public class ProcessForDeconvolution
 	public static int[] defaultBlendingBorder = null;
 
 	final protected SpimData2 spimData;
-	final protected List<Angle> anglesToProcess;
-	final protected List<Illumination> illumsToProcess;
+	final protected List< ViewId > viewIdsToProcess;
 	final BoundingBox bb;
 	final int[] blendingBorder;
 	final int[] blendingRange;
@@ -61,28 +61,26 @@ public class ProcessForDeconvolution
 	int minOverlappingViews;
 	double avgOverlappingViews;
 	ArrayList< ViewDescription > viewDescriptions;
-	ArrayList< Img< FloatType > > imgs, weights;
+	HashMap< ViewId, Img< FloatType > > imgs, weights;
 	ExtractPSF< FloatType > ePSF;
 	
 	public ProcessForDeconvolution(
 			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Illumination> illumsToProcess,
+			final List< ViewId > viewIdsToProcess,
 			final BoundingBox bb,
 			final int[] blendingBorder,
 			final int[] blendingRange )
 	{
 		this.spimData = spimData;
-		this.anglesToProcess = anglesToProcess;
-		this.illumsToProcess = illumsToProcess;
+		this.viewIdsToProcess = viewIdsToProcess;
 		this.bb = bb;
 		this.blendingBorder = blendingBorder;
 		this.blendingRange = blendingRange;
 	}
 	
 	public ExtractPSF< FloatType > getExtractPSF() { return ePSF; }
-	public ArrayList< Img< FloatType > > getTransformedImgs() { return imgs; }
-	public ArrayList< Img< FloatType > > getTransformedWeights() { return weights; }
+	public HashMap< ViewId, Img< FloatType > > getTransformedImgs() { return imgs; }
+	public HashMap< ViewId, Img< FloatType > > getTransformedWeights() { return weights; }
 	public ArrayList< ViewDescription > getViewDescriptions() { return viewDescriptions; }
 	public int getMinOverlappingViews() { return minOverlappingViews; }
 	public double getAvgOverlappingViews() { return avgOverlappingViews; }
@@ -104,14 +102,17 @@ public class ProcessForDeconvolution
 			final boolean weightsOnly,
 			final HashMap< Channel, ChannelPSF > extractPSFLabels,
 			final long[] psfSize,
-			final HashMap< Channel, ArrayList< String > > psfFiles,
+			final HashMap< Channel, ArrayList< Pair< Pair< Angle, Illumination >, String > > > psfFiles,
 			final boolean transformLoadedPSFs )
-	{				
+	{
 		// get all views that are fused
-		this.viewDescriptions = FusionHelper.assembleInputData( spimData, timepoint, channel, anglesToProcess, illumsToProcess );
-		
-		this.imgs = new ArrayList< Img< FloatType > >(); 
-		this.weights = new ArrayList< Img< FloatType > >();
+		this.viewDescriptions = FusionHelper.assembleInputData( spimData, timepoint, channel, viewIdsToProcess );
+
+		if ( this.viewDescriptions.size() == 0 )
+			return false;
+
+		this.imgs = new HashMap< ViewId, Img< FloatType > >();
+		this.weights = new HashMap< ViewId, Img< FloatType > >();
 		
 		final Img< FloatType > overlapImg;
 		
@@ -219,7 +220,7 @@ public class ProcessForDeconvolution
 			// extract PSFs if wanted
 			if ( extractPSFs )
 			{
-				final ArrayList< float[] > llist = getLocationsOfCorrespondingBeads( timepoint, inputData, extractPSFLabels.get( channel ).getLabel() );
+				final ArrayList< double[] > llist = getLocationsOfCorrespondingBeads( timepoint, inputData, extractPSFLabels.get( channel ).getLabel() );
 				
 				IOFunctions.println( "Extracting PSF for viewsetup " + inputData.getViewSetupId() + " using label '" + extractPSFLabels.get( channel ).getLabel() + "'" +
 						" (" +llist.size() + " corresponding detections available)" );
@@ -233,12 +234,17 @@ public class ProcessForDeconvolution
 			}
 			
 			if ( !weightsOnly )
-				imgs.add( fusedImg );
-			weights.add( weightImg );
+				imgs.put( inputData, fusedImg );
+			weights.put( inputData, weightImg );
 		}
 		
 		// normalize the weights
-		if ( !normalizeWeightsAndComputeMinAvgViews( weights ) )
+		final ArrayList< Img< FloatType > > weightsSorted = new ArrayList< Img< FloatType> >();
+
+		for ( final ViewDescription vd : viewDescriptions )
+			weightsSorted.add( weights.get( vd ) );
+
+		if ( !normalizeWeightsAndComputeMinAvgViews( weightsSorted ) )
 			return false;
 				
 		IOFunctions.println( "Minimal number of overlapping views: " + getMinOverlappingViews() + ", using " + (this.minOverlappingViews = Math.max( 1, this.minOverlappingViews ) ) );
@@ -251,7 +257,7 @@ public class ProcessForDeconvolution
 			else if ( osemIndex == 2 )
 				osemspeedup = getAvgOverlappingViews();
 				
-			displayWeights( osemspeedup, weights, overlapImg );
+			displayWeights( osemspeedup, weightsSorted, overlapImg );
 		}
 				
 		return true;
@@ -260,29 +266,24 @@ public class ProcessForDeconvolution
 	private ExtractPSF<FloatType> loadPSFs(
 			final Channel ch,
 			final ArrayList< ViewDescription > allInputData,
-			final HashMap< Channel, ArrayList< String > > psfFiles,
+			final HashMap< Channel, ArrayList< Pair< Pair< Angle, Illumination >, String > > > psfFiles,
 			final boolean transformLoadedPSFs )
 	{
-		final ArrayList< AffineTransform3D > models;
+		final HashMap< ViewId, AffineTransform3D > models;
 		
 		if ( transformLoadedPSFs )
 		{
-			models = new ArrayList< AffineTransform3D >();
+			models = new HashMap< ViewId, AffineTransform3D >();
 		
-			for ( final ViewDescription viewDesc  : allInputData )
-				models.add( spimData.getViewRegistrations().getViewRegistration( viewDesc ).getModel() );
+			for ( final ViewDescription viewDesc : allInputData )
+				models.put( viewDesc, spimData.getViewRegistrations().getViewRegistration( viewDesc ).getModel() );
 		}
 		else
 		{
 			models = null;
 		}
-		
-		final ArrayList< File > files = new ArrayList< File >();
-		
-		for ( final String fname : psfFiles.get( ch ) )
-			files.add( new File( fname ) );
-		
-		return ExtractPSF.loadAndTransformPSFs( files, allInputData, bb.getImgFactory( new FloatType() ), new FloatType(), models );
+
+		return ExtractPSF.loadAndTransformPSFs( psfFiles.get( ch ), allInputData, bb.getImgFactory( new FloatType() ), new FloatType(), models );
 	}
 
 	protected ExtractPSF< FloatType > assignOtherChannel( final Channel channel, final HashMap< Channel, ChannelPSF > extractPSFLabels )
@@ -293,7 +294,7 @@ public class ProcessForDeconvolution
 		return otherChannelPSF.getExtractPSFInstance();
 	}
 
-	protected ArrayList< float[] > getLocationsOfCorrespondingBeads( final TimePoint tp, final ViewDescription inputData, final String label )
+	protected ArrayList< double[] > getLocationsOfCorrespondingBeads( final TimePoint tp, final ViewDescription inputData, final String label )
 	{
 		final InterestPointList iplist = spimData.getViewInterestPoints().getViewInterestPointLists( inputData ).getInterestPointList( label );
 		
@@ -303,7 +304,7 @@ public class ProcessForDeconvolution
 		for ( final CorrespondingInterestPoints cip : iplist.getCorrespondingInterestPoints() )
 			ipWithCorrespondences.add( cip.getDetectionId() );
 		
-		final ArrayList< float[] > llist = new ArrayList< float[] >();
+		final ArrayList< double[] > llist = new ArrayList< double[] >();
 		
 		// now go over all detections and see if they had correspondences
 		for ( final InterestPoint ip : iplist.getInterestPoints() )
@@ -390,7 +391,7 @@ public class ProcessForDeconvolution
 		d.exportImage( wosem, bb, "OSEM=" + osemspeedup + ", sum of weights per pixel" );
 	}
 	
-	protected boolean normalizeWeightsAndComputeMinAvgViews( final ArrayList< Img< FloatType > > weights )
+	protected boolean normalizeWeightsAndComputeMinAvgViews( final List< Img< FloatType > > weights )
 	{
 		// split up into many parts for multithreading
 		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( weights.get( 0 ).size(), Threads.numThreads() * 2 );

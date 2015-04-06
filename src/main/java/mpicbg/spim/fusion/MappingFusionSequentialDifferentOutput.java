@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.vecmath.Point3f;
+import javax.vecmath.Point3d;
 
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
@@ -150,7 +150,7 @@ public class MappingFusionSequentialDifferentOutput extends SPIMImageFusion
 								final Image<FloatType> img = view.getImage( conf.inputImageFactory, false );
 								final Interpolator<FloatType> interpolator = img.createInterpolator( conf.interpolatorFactorOutput );
 	
-								final Point3f tmpCoordinates = new Point3f();
+								final Point3d tmpCoordinates = new Point3d();
 	
 								final int[] imageSize = view.getImageSize();
 								final int w = imageSize[ 0 ];
@@ -160,14 +160,14 @@ public class MappingFusionSequentialDifferentOutput extends SPIMImageFusion
 								final AbstractAffineModel3D<?> model = (AbstractAffineModel3D<?>)view.getTile().getModel();
 	
 								// temporary float array
-					        	final float[] tmp = new float[ 3 ];
+					        	final double[] tmp = new double[ 3 ];
 	
 	
 					    		final CombinedPixelWeightener<?>[] combW = new CombinedPixelWeightener<?>[combinedWeightenerFactories.size()];
 					    		for (int i = 0; i < combW.length; i++)
 					    			combW[i] = combinedWeightenerFactories.get(i).createInstance( views );
 	
-								final float[][] loc = new float[ numViews ][ 3 ];
+								final double[][] loc = new double[ numViews ][ 3 ];
 								final boolean[] use = new boolean[ numViews ];
 	
 								for ( int v = 0; v < numViews; ++v )
@@ -199,9 +199,9 @@ public class MappingFusionSequentialDifferentOutput extends SPIMImageFusion
 	
 										mpicbg.spim.mpicbg.Java3d.applyInverseInPlace( model, tmpCoordinates, tmp );
 	
-										final int locX = Util.round( tmpCoordinates.x );
-										final int locY = Util.round( tmpCoordinates.y );
-										final int locZ = Util.round( tmpCoordinates.z );
+										final int locX = (int)Util.round( tmpCoordinates.x );
+										final int locY = (int)Util.round( tmpCoordinates.y );
+										final int locZ = (int)Util.round( tmpCoordinates.z );
 	
 										// do we hit the source image?
 										if (locX >= 0 && locY >= 0 && locZ >= 0 &&

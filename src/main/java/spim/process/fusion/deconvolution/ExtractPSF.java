@@ -8,9 +8,14 @@ import ij.process.ImageProcessor;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
+import spim.fiji.ImgLib2Temp.Pair;
+import mpicbg.spim.data.sequence.Angle;
+import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
@@ -31,14 +36,14 @@ public class ExtractPSF< T extends RealType< T > >
 {
 	final ImgFactory< T > psfFactory;
 	
-	final ArrayList< Img< T > > pointSpreadFunctions, originalPSFs;
-	final ArrayList< ViewDescription > viewDescriptions;
+	final protected HashMap< ViewId, Img< T > > pointSpreadFunctions, originalPSFs;
+	final protected ArrayList< ViewId > viewIds;
 	
 	public ExtractPSF( final ImgFactory< T > psfFactory )
 	{		
-		this.pointSpreadFunctions = new ArrayList< Img< T > >();
-		this.originalPSFs = new ArrayList< Img< T > >();
-		this.viewDescriptions = new ArrayList< ViewDescription >();
+		this.pointSpreadFunctions = new HashMap< ViewId, Img< T > >();
+		this.originalPSFs = new HashMap< ViewId, Img< T > >();
+		this.viewIds = new ArrayList< ViewId >();
 		
 		this.psfFactory = psfFactory;
 	}
@@ -46,17 +51,17 @@ public class ExtractPSF< T extends RealType< T > >
 	/**
 	 * @return - the extracted PSFs after applying the transformations of each view
 	 */
-	public ArrayList< Img< T > > getTransformedPSFs() { return pointSpreadFunctions; }
+	public HashMap< ViewId, Img< T > > getTransformedPSFs() { return pointSpreadFunctions; }
 
 	/**
 	 * @return - the extracted PSFs in original calibration for each view
 	 */
-	public ArrayList< Img< T > > getInputCalibrationPSFs() { return originalPSFs; }
+	public HashMap< ViewId, Img< T > > getInputCalibrationPSFs() { return originalPSFs; }
 	
 	/**
 	 * @return - the viewdescriptions corresponding to the PSFs
 	 */
-	public ArrayList< ViewDescription > getViewDescriptionsForPSFs() { return viewDescriptions; }
+	public ArrayList< ViewId > getViewIdsForPSFs() { return viewIds; }
 	
 	/**
 	 * Get projection along the smallest dimension (which is usually the rotation axis)
@@ -120,13 +125,13 @@ public class ExtractPSF< T extends RealType< T > >
 
 			tmp[ minDim ] = -1;
 			
-			float maxValue = -Float.MAX_VALUE;
+			double maxValue = -Double.MAX_VALUE;
 			
 			psfIterator.setPosition( tmp );
 			for ( int i = 0; i < sizeProjection; ++i )
 			{
 				psfIterator.fwd( minDim );
-				final float value = psfIterator.get().getRealFloat();
+				final double value = psfIterator.get().getRealDouble();
 				
 				if ( value > maxValue )
 					maxValue = value;
@@ -151,12 +156,14 @@ public class ExtractPSF< T extends RealType< T > >
 		
 		Img< T > avgPSF = pointSpreadFunctions.get( 0 ).factory().create( maxSize, pointSpreadFunctions.get( 0 ).firstElement() );
 		
-		final long[] avgCenter = new long[ numDimensions ];		
+		final long[] avgCenter = new long[ numDimensions ];
 		for ( int d = 0; d < numDimensions; ++d )
 			avgCenter[ d ] = avgPSF.dimension( d ) / 2;
-			
-		for ( final Img< T > psf : pointSpreadFunctions )
+
+		for ( final ViewId viewId : getViewIdsForPSFs() )
 		{
+			final Img< T > psf = pointSpreadFunctions.get( viewId );
+
 			final RandomAccess< T > avgCursor = avgPSF.randomAccess();
 			final Cursor< T > psfCursor = psf.localizingCursor();
 			
@@ -191,11 +198,13 @@ public class ExtractPSF< T extends RealType< T > >
 		final Img< T > avgOriginalPSF = originalPSFs.get( 0 ).factory().create( originalPSFs.get( 0 ), originalPSFs.get( 0 ).firstElement() );
 
 		try
-		{		
-			for ( final Img< T > psf : originalPSFs )
+		{
+			for ( final ViewId viewId : getViewIdsForPSFs() )
 			{
+				final Img< T > psf = originalPSFs.get( viewId );
+
 				final Cursor< T > cursor = psf.cursor();
-				
+
 				for ( final T t : avgOriginalPSF )
 					t.add( cursor.next() );
 			}
@@ -219,9 +228,9 @@ public class ExtractPSF< T extends RealType< T > >
 	 */
 	public void extractNextImg(
 			final RandomAccessibleInterval< T > img,
-			final ViewDescription viewDescription,
+			final ViewId viewId,
 			final AffineTransform3D model,
-			final ArrayList< float[] > locations,
+			final ArrayList< double[] > locations,
 			final long[] psfSize )
 	{
 		IOFunctions.println( "PSF size: " + Util.printCoordinates( psfSize ) );
@@ -233,15 +242,15 @@ public class ExtractPSF< T extends RealType< T > >
 
 		final Img< T > psf = transformPSF( originalPSF, model );
 
-		pointSpreadFunctions.add( psf );
-		originalPSFs.add( originalPSF );
-		viewDescriptions.add( viewDescription );
+		viewIds.add( viewId );
+		pointSpreadFunctions.put( viewId, psf );
+		originalPSFs.put( viewId, originalPSF );
 	}
 
 	private static < T extends RealType< T > >void normalize( final IterableInterval< T > img )
 	{
-		double min = Float.MAX_VALUE;
-		double max = -Float.MAX_VALUE;
+		double min = Double.MAX_VALUE;
+		double max = -Double.MAX_VALUE;
 
 		for ( final T t : img )
 		{
@@ -265,7 +274,7 @@ public class ExtractPSF< T extends RealType< T > >
 	 * @param model - the transformation model
 	 * @return the transformed psf which has odd sizes and where the center of the psf is also the center of the transformed psf
 	 */
-	protected Img< T > transformPSF( final Img< T > psf, final AffineTransform3D model )
+	protected static < T extends RealType< T > > Img< T > transformPSF( final Img< T > psf, final AffineTransform3D model )
 	{
 		// here we compute a slightly different transformation than the ImageTransform does
 		// two things are necessary:
@@ -276,14 +285,14 @@ public class ExtractPSF< T extends RealType< T > >
 		
 		final RealInterval minMaxDim = model.estimateBounds( psf );
 		
-		final float[] size = new float[ numDimensions ];		
+		final double[] size = new double[ numDimensions ];		
 		final long[] newSize = new long[ numDimensions ];		
-		final float[] offset = new float[ numDimensions ];
+		final double[] offset = new double[ numDimensions ];
 		
 		// the center of the psf has to be the center of the transformed psf as well
 		// this is important!
-		final float[] center = new float[ numDimensions ];
-		final float[] tmp = new float[ numDimensions ];
+		final double[] center = new double[ numDimensions ];
+		final double[] tmp = new double[ numDimensions ];
 
 		for ( int d = 0; d < numDimensions; ++d )
 			center[ d ] = psf.dimension( d ) / 2;
@@ -291,8 +300,8 @@ public class ExtractPSF< T extends RealType< T > >
 		model.apply( center, tmp );
 
 		for ( int d = 0; d < numDimensions; ++d )
-		{						
-			size[ d ] = (float)minMaxDim.realMax( d ) - (float) minMaxDim.realMin( d );
+		{
+			size[ d ] = minMaxDim.realMax( d ) - minMaxDim.realMin( d );
 			
 			newSize[ d ] = (int)size[ d ] + 1;
 			if ( newSize[ d ] % 2 == 0 )
@@ -313,10 +322,10 @@ public class ExtractPSF< T extends RealType< T > >
 	 * @param size - the size in which the psf is extracted (in pixel units, z-scaling is ignored)
 	 * @return - the psf, NOT z-scaling corrected
 	 */
-	protected Img< T > extractPSFLocal(
+	protected static < T extends RealType< T > > Img< T > extractPSFLocal(
 			final RandomAccessibleInterval< T > img,
 			final ImgFactory< T > psfFactory,
-			final ArrayList< float[] > locations,
+			final ArrayList< double[] > locations,
 			final long[] size )
 	{
 		final int numDimensions = size.length;
@@ -324,20 +333,20 @@ public class ExtractPSF< T extends RealType< T > >
 		final Img< T > psf = psfFactory.create( size, Views.iterable( img ).firstElement() );
 		
 		// Mirror produces some artifacts ... so we use periodic
-		final RealRandomAccess< T > interpolator = 
+		final RealRandomAccess< T > interpolator =
 				Views.interpolate( Views.extendPeriodic( img ), new NLinearInterpolatorFactory< T >() ).realRandomAccess();
 		
 		final Cursor< T > psfCursor = psf.localizingCursor();
 		
-		final long[] sizeHalf = size.clone();		
+		final long[] sizeHalf = size.clone();
 		for ( int d = 0; d < numDimensions; ++d )
 			sizeHalf[ d ] /= 2;
 		
 		final int[] tmpI = new int[ size.length ];
-		final float[] tmpF = new float[ size.length ];
+		final double[] tmpD = new double[ size.length ];
 
-		for ( final float[] position : locations )
-		{						
+		for ( final double[] position : locations )
+		{
 			psfCursor.reset();
 			
 			while ( psfCursor.hasNext() )
@@ -346,9 +355,9 @@ public class ExtractPSF< T extends RealType< T > >
 				psfCursor.localize( tmpI );
 
 				for ( int d = 0; d < numDimensions; ++d )
-					tmpF[ d ] = tmpI[ d ] - sizeHalf[ d ] + position[ d ];
+					tmpD[ d ] = tmpI[ d ] - sizeHalf[ d ] + position[ d ];
 				
-				interpolator.setPosition( tmpF );
+				interpolator.setPosition( tmpD );
 				
 				psfCursor.get().add( interpolator.get() );
 			}
@@ -357,7 +366,7 @@ public class ExtractPSF< T extends RealType< T > >
 		return psf;
 	}
 	
-	public static < T extends RealType< T > > Img< T > transform( final Img< T > image, final AffineTransform3D transformIn, final long[] newDim, final float[] offset )
+	public static < T extends RealType< T > > Img< T > transform( final Img< T > image, final AffineTransform3D transformIn, final long[] newDim, final double[] offset )
 	{
 		final int numDimensions = image.numDimensions();
 		final AffineTransform3D transform = transformIn.inverse(); 
@@ -368,8 +377,8 @@ public class ExtractPSF< T extends RealType< T > >
 		final Cursor<T> transformedIterator = transformed.localizingCursor();		
 		final RealRandomAccess<T> interpolator = Views.interpolate( Views.extendZero( image ), new NLinearInterpolatorFactory<T>() ).realRandomAccess();
 		
-		final float[] tmp1 = new float[ numDimensions ];
-		final float[] tmp2 = new float[ numDimensions ];
+		final double[] tmp1 = new double[ numDimensions ];
+		final double[] tmp2 = new double[ numDimensions ];
 
 		while (transformedIterator.hasNext())
 		{
@@ -406,10 +415,10 @@ public class ExtractPSF< T extends RealType< T > >
 	{
 		final long[] size = sizeIn.clone();
 
-		float min = Float.MAX_VALUE;
+		double min = Double.MAX_VALUE;
 
 		for ( final T f : img )
-			min = Math.min( min, f.getRealFloat() );
+			min = Math.min( min, f.getRealDouble() );
 
 		final Img< T > square = img.factory().create( size, img.firstElement() );
 
@@ -465,7 +474,7 @@ public class ExtractPSF< T extends RealType< T > >
 		
 		final long[] maxSize = new long[ numDimensions ];
 
-		for ( final Img< T > transformedPSF : pointSpreadFunctions )
+		for ( final Img< T > transformedPSF : pointSpreadFunctions.values() )
 			for ( int d = 0; d < numDimensions; ++d )
 				maxSize[ d ] = Math.max( maxSize[ d ], transformedPSF.dimension( d ) );
 
@@ -479,25 +488,17 @@ public class ExtractPSF< T extends RealType< T > >
 	 * @return
 	 */
 	public static < T extends RealType< T > > ExtractPSF< T > loadAndTransformPSFs(
-			final ArrayList< File > filenames,
-			final ArrayList< ViewDescription > viewDescriptions,
+			final ArrayList< Pair< Pair< Angle, Illumination >, String > > filenames,
+			final ArrayList< ViewDescription > viewDesc,
 			final ImgFactory< T > factory,
 			final T type,
-			final ArrayList< AffineTransform3D > models )
+			final HashMap< ViewId, AffineTransform3D > models )
 	{
 		final ExtractPSF< T > extractPSF = new ExtractPSF< T >( factory );
 
-		if ( viewDescriptions.size() != filenames.size() )
+		for ( final ViewDescription vd : viewDesc )
 		{
-			IOFunctions.println( "There must be as many filenames as there are viewdescriptions." );
-			return null;
-		}
-		
-		extractPSF.viewDescriptions.addAll( viewDescriptions );
-		
-		for ( int i = 0; i < filenames.size(); ++i )
-		{
-			final File file = filenames.get( i );
+			final File file = getFileNameForViewId( vd, filenames );
 
 			// extract the PSF for this one
 			IOFunctions.println( "Loading PSF file '" + file.getAbsolutePath() );
@@ -529,19 +530,29 @@ public class ExtractPSF< T extends RealType< T > >
 
 			if ( models != null )
 			{
-				IOFunctions.println( "Transforming PSF for viewid " + viewDescriptions.get( i ).getViewSetupId() + ", file=" + file.getName() );
-				psf = extractPSF.transformPSF( psfImage, models.get( i ) );
+				IOFunctions.println( "Transforming PSF for viewid " + vd.getViewSetupId() + ", file=" + file.getName() );
+				psf = ExtractPSF.transformPSF( psfImage, models.get( vd ) );
 			}
 			else
 			{
-				IOFunctions.println( "PSF for viewid " + viewDescriptions.get( i ).getViewSetupId() + ", file=" + file.getName() + " will not be transformed." );
+				IOFunctions.println( "PSF for viewid " + vd.getViewSetupId() + ", file=" + file.getName() + " will not be transformed." );
 				psf = psfImage.copy();
 			}
 
-			extractPSF.pointSpreadFunctions.add( psf );
-			extractPSF.originalPSFs.add( psfImage );
+			extractPSF.viewIds.add( vd );
+			extractPSF.pointSpreadFunctions.put( vd, psf );
+			extractPSF.originalPSFs.put( vd, psfImage );
 		}
 		
 		return extractPSF;
+	}
+
+	protected static File getFileNameForViewId( final ViewDescription vd, final ArrayList< Pair< Pair< Angle, Illumination >, String > > filenames )
+	{
+		for ( final Pair< Pair< Angle, Illumination >, String > pair : filenames )
+			if ( pair.getA().getA().getId() == vd.getViewSetup().getAngle().getId() && pair.getA().getB().getId() == vd.getViewSetup().getIllumination().getId() )
+				return new File( pair.getB() );
+
+		return null;
 	}
 }

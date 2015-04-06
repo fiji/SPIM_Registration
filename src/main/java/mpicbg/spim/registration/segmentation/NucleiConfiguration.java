@@ -69,7 +69,7 @@ public class NucleiConfiguration
 		if ( ransacModel instanceof RigidModel3D )
 		{
 			final RigidModel3D model = (RigidModel3D)ransacModel;			
-			final float[] m = model.getMatrix( null );
+			final double[] m = model.getMatrix( null );
 
 			fixedModel = new TranslationInvariantFixedModel( m[ 0 ], m[ 1 ], m[ 2 ],
 			                                                 m[ 4 ], m[ 5 ], m[ 6 ],
@@ -78,7 +78,7 @@ public class NucleiConfiguration
 		else
 		{
 			final AffineModel3D model = (AffineModel3D)ransacModel;
-			final float[] m = model.getMatrix( null );
+			final double[] m = model.getMatrix( null );
 
 			fixedModel = new TranslationInvariantFixedModel( m[ 0 ], m[ 1 ], m[ 2 ],
 			                                                 m[ 4 ], m[ 5 ], m[ 6 ],
@@ -100,7 +100,7 @@ public class NucleiConfiguration
 		if ( ransacModel instanceof RigidModel3D )
 		{
 			final RigidModel3D model = (RigidModel3D)ransacModel;			
-			final float[] m = model.getMatrix( null );
+			final double[] m = model.getMatrix( null );
 
 			fixedModel = new FixedModel( m[ 0 ], m[ 1 ], m[ 2 ], m[ 3 ],
 			                             m[ 4 ], m[ 5 ], m[ 6 ], m[ 7 ],
@@ -109,7 +109,7 @@ public class NucleiConfiguration
 		else
 		{
 			final AffineModel3D model = (AffineModel3D)ransacModel;
-			final float[] m = model.getMatrix( null );
+			final double[] m = model.getMatrix( null );
 
 			fixedModel = new FixedModel( m[ 0 ], m[ 1 ], m[ 2 ], m[ 3 ],
 			                             m[ 4 ], m[ 5 ], m[ 6 ], m[ 7 ],

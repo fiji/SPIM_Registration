@@ -156,5 +156,9 @@ public class Save3dTIFF implements ImgExportTitle
 	public void setXMLData( final List< TimePoint > timepointsToProcess, final List< ViewSetup > newViewSetups ) {}
 
 	@Override
-	public boolean finish() { return true; }
+	public boolean finish()
+	{
+		// this spimdata object was not modified
+		return false;
+	}
 }

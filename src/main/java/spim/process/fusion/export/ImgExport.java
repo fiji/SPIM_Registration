@@ -16,7 +16,8 @@ public interface ImgExport
 {
 	/**
 	 * Called last when the fusion is finished (e.g. to write the XML)
-	 * @return - if the final step was successful
+	 *
+	 * @return - true if the spimdata was modified, otherwise false
 	 */
 	public boolean finish();
 

@@ -5,10 +5,8 @@ import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
 import java.awt.Font;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -16,9 +14,7 @@ import java.util.Set;
 
 import mpicbg.models.RigidModel3D;
 import mpicbg.models.TranslationModel3D;
-import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
-import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.TimePoints;
 import mpicbg.spim.data.sequence.ViewDescription;
@@ -29,7 +25,6 @@ import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.process.interestpointregistration.ChannelProcess;
@@ -80,7 +75,6 @@ public class Interest_Point_Registration implements PlugIn
 	public static boolean defaultConsiderTimepointAsUnit = false;
 	public static int defaultFixTiles = 0;
 	public static int defaultMapBack = 0;
-	public static boolean defaultDisplayTransformOnly = false;
 	public static boolean defaultSameFixedViews = true;
 	public static boolean defaultSameReferenceView = true;
 
@@ -92,9 +86,9 @@ public class Interest_Point_Registration implements PlugIn
 	static
 	{
 		IOFunctions.printIJLog = true;
-		staticAlgorithms.add( new GeometricHashing( null, null, null, null, null ) );
-		staticAlgorithms.add( new RGLDM( null, null, null, null, null ) );
-		staticAlgorithms.add( new IterativeClosestPoint( null, null, null, null, null ) );
+		staticAlgorithms.add( new GeometricHashing( null, null, null ) );
+		staticAlgorithms.add( new RGLDM( null, null, null ) );
+		staticAlgorithms.add( new IterativeClosestPoint( null, null, null ) );
 	}
 
 	@Override
@@ -105,7 +99,38 @@ public class Interest_Point_Registration implements PlugIn
 
 		if ( !result.queryXML( "for performing interest point registration", true, false, true, true ) )
 			return;
-		
+
+		register(
+			result.getData(),
+			SpimData2.getAllViewIdsSorted( result.getData(), result.getViewSetupsToProcess(), result.getTimePointsToProcess() ),
+			result.getClusterExtension(),
+			result.getXMLFileName(),
+			true );
+	}
+
+	public boolean register(
+			final SpimData2 data,
+			final List< ViewId > viewIds )
+	{
+		return register( data, viewIds, "", null, false );
+	}
+
+	public boolean register(
+			final SpimData2 data,
+			final List< ViewId > viewIds,
+			final String xmlFileName,
+			final boolean saveXML )
+	{
+		return register( data, viewIds, "", xmlFileName, saveXML );
+	}
+
+	public boolean register(
+			final SpimData2 data,
+			final List< ViewId > viewIds,
+			final String clusterExtension,
+			final String xmlFileName,
+			final boolean saveXML )
+	{
 		// the GenericDialog needs a list[] of String for the algorithms that can register
 		final String[] descriptions = new String[ staticAlgorithms.size() ];
 		
@@ -115,8 +140,11 @@ public class Interest_Point_Registration implements PlugIn
 		if ( defaultAlgorithm >= descriptions.length )
 			defaultAlgorithm = 0;
 
+		// which timepoints are part of the 
+		final List< TimePoint > timepointToProcess = SpimData2.getAllTimePointsSorted( data, viewIds );
+
 		// ask which channels have the objects we are searching for
-		final List< Channel > channels = result.getData().getSequenceDescription().getAllChannelsOrdered();
+		final List< Channel > channels = SpimData2.getAllChannelsSorted( data, viewIds );
 
 		// build up the dialog
 		final GenericDialog gd = new GenericDialog( "Basic Registration Parameters" );
@@ -124,12 +152,11 @@ public class Interest_Point_Registration implements PlugIn
 		gd.addChoice( "Registration_algorithm", descriptions, descriptions[ defaultAlgorithm ] );
 
 		final String[] choicesGlobal;
-		if ( result.getTimePointsToProcess().size() > 1 )
+		if ( timepointToProcess.size() > 1 )
 			choicesGlobal = registrationTypes.clone();
 		else
 		{
-			final int globalAmountTimepoints =
-					result.getData().getSequenceDescription().getTimePoints().size();
+			final int globalAmountTimepoints = data.getSequenceDescription().getTimePoints().size();
 
 			// suggest a registration to a reference timepoint (that we do not process here)
 			// if there the entire dataset description has more than one timepoint
@@ -138,30 +165,25 @@ public class Interest_Point_Registration implements PlugIn
 			else
 				choicesGlobal = new String[]{ registrationTypes[ 0 ] };
 		}
-		
+
 		if ( defaultRegistrationType >= choicesGlobal.length )
 			defaultRegistrationType = 0;
-		
+
 		gd.addChoice( "Type_of_registration", choicesGlobal, choicesGlobal[ defaultRegistrationType ] );
 		
 		if ( defaultChannelLabels == null || defaultChannelLabels.length != channels.size() )
 			defaultChannelLabels = new int[ channels.size() ];
-		
+
 		// check which channels and labels are available and build the choices
 		final ArrayList< String[] > channelLabels = new ArrayList< String[] >();
 		int i = 0;
 		for ( final Channel channel : channels )
 		{
-			final String[] labels = getAllInterestPointLabelsForChannel(
-					result.getData(), result.getTimePointsToProcess(),
-					result.getAnglesToProcess(),
-					result.getIlluminationsToProcess(),
-					channel,
-					"register" );
-			
+			final String[] labels = getAllInterestPointLabelsForChannel( data, viewIds, channel, "register" );
+
 			if ( channelLabels == null )
-				return;
-			
+				return false;
+
 			if ( defaultChannelLabels[ channel.getId() ] >= labels.length )
 				defaultChannelLabels[ channel.getId() ] = 0;
 			
@@ -170,7 +192,7 @@ public class Interest_Point_Registration implements PlugIn
 		}
 
 		// assemble the last registration names of all viewsetups involved
-		final HashMap< String, Integer > names = GUIHelper.assembleRegistrationNames( result.getData(), result.getViewSetupsToProcess(), result.getTimePointsToProcess() );
+		final HashMap< String, Integer > names = GUIHelper.assembleRegistrationNames( data, viewIds );
 		gd.addMessage( "" );
 		GUIHelper.displayRegistrationNames( gd, names );
 		gd.addMessage( "" );
@@ -183,7 +205,7 @@ public class Interest_Point_Registration implements PlugIn
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
-			return;
+			return false;
 		
 		final int algorithm = defaultAlgorithm = gd.getNextChoiceIndex();
 		
@@ -204,7 +226,7 @@ public class Interest_Point_Registration implements PlugIn
 				registrationType = RegistrationType.ALL_TO_ALL_WITH_RANGE;
 				break;
 			default:
-				return;
+				return false;
 		}
 
 		// assemble which channels have been selected with with label
@@ -230,196 +252,120 @@ public class Interest_Point_Registration implements PlugIn
 		if ( channelsToProcess.size() == 0 )
 		{
 			IOFunctions.println( "No channels selected. Quitting." );
-			return;
+			return false;
 		}
-		
-		if (
-				result.getAnglesToProcess().size() * result.getIlluminationsToProcess().size() * channelsToProcess.size() <= 1 && 
-				registrationType == RegistrationType.TIMEPOINTS_INDIVIDUALLY )
-		{
-			IOFunctions.println( "You selected/have just one view setup per timepoint and to register timepoints individually. Nothing to do here. Quitting." );
-			return;
-		}
-		
+
 		for ( final ChannelProcess c : channelsToProcess )
 			IOFunctions.println( "registering channel: " + c.getChannel().getId()  + " label: '" + c.getLabel() + "'" );
 		
-		final InterestPointRegistration ipr = staticAlgorithms.get( algorithm ).newInstance(
-				result.getData(),
-				result.getAnglesToProcess(),
-				channelsToProcess,
-				result.getIlluminationsToProcess(),
-				result.getTimePointsToProcess());
+		final InterestPointRegistration ipr = staticAlgorithms.get( algorithm ).newInstance( data, viewIds, channelsToProcess );
 
 		IOFunctions.println( "Registration algorithm: " + ipr.getDescription() );
 		IOFunctions.println( "Registration type: " + registrationType.name() );
 		IOFunctions.println( "Channels to process: " + channelsToProcess.size() );
 
-		// call the next dialog that asks for specific details
-		queryDetailedParameters( result, ipr, registrationType );
-	}
-	
-	protected void queryDetailedParameters( final LoadParseQueryXML result, final InterestPointRegistration ipr, final RegistrationType registrationType )
-	{
-		final GenericDialog gd = new GenericDialog( "Register: " + registrationTypes[ registrationType.ordinal() ] );
+		final GenericDialog gd2 = new GenericDialog( "Register: " + registrationTypes[ registrationType.ordinal() ] );
 		
 		if ( registrationType == RegistrationType.TO_REFERENCE_TIMEPOINT )
 		{
-			final String[] tpList = assembleTimepoints( result.getData().getSequenceDescription().getTimePoints() );
+			// assemble all timepoints, each one could be a reference
+			final String[] tpList = assembleTimepoints( data.getSequenceDescription().getTimePoints() );
 			
 			// by default, the reference timepoint is the first one
 			if ( defaultReferenceTimepointIndex < 0 || defaultReferenceTimepointIndex >= tpList.length )
 				defaultReferenceTimepointIndex = 0;
 
-			gd.addChoice( "Reference timepoint", tpList, tpList[ defaultReferenceTimepointIndex ] );
-			gd.addMessage( "" );
+			gd2.addChoice( "Reference timepoint", tpList, tpList[ defaultReferenceTimepointIndex ] );
+			gd2.addMessage( "" );
 		}
 		else if ( registrationType == RegistrationType.ALL_TO_ALL_WITH_RANGE )
 		{
-			gd.addSlider( "Range for all-to-all timepoint matching", 2, 10, defaultRange );
+			gd2.addSlider( "Range for all-to-all timepoint matching", 2, 10, defaultRange );
 		}
 
 		// for all registrations that include multiple timepointss
 		if ( registrationType != RegistrationType.TIMEPOINTS_INDIVIDUALLY )
 		{
-			gd.addCheckbox( "Consider_each_timepoint_as_rigid_unit", defaultConsiderTimepointAsUnit );
-			gd.addMessage( "Note: This option applies the same transformation model to all views of one timepoint. This makes for example\n" +
+			gd2.addCheckbox( "Consider_each_timepoint_as_rigid_unit", defaultConsiderTimepointAsUnit );
+			gd2.addMessage( "Note: This option applies the same transformation model to all views of one timepoint. This makes for example\n" +
 					"sense if all timepoints are individually pre-registered using an affine transformation model, and for the timeseries\n" +
 					"stabilization a translation model should be used.\n ", GUIHelper.smallStatusFont );
 		}
 
-		gd.addCheckbox( "Display final transformation only (do not edit XML)", defaultDisplayTransformOnly );
-
 		if ( registrationType != RegistrationType.TO_REFERENCE_TIMEPOINT )
 		{
-			gd.addChoice( "Fix_tiles", fixTilesChoice, fixTilesChoice[ defaultFixTiles ] );
-			gd.addChoice( "Map_back_tiles", mapBackChoice, mapBackChoice[ defaultMapBack ] );
+			gd2.addChoice( "Fix_tiles", fixTilesChoice, fixTilesChoice[ defaultFixTiles ] );
+			gd2.addChoice( "Map_back_tiles", mapBackChoice, mapBackChoice[ defaultMapBack ] );
 		}
 
-		gd.addMessage( "" );
-		gd.addMessage( "Algorithm parameters [" + ipr.getDescription() + "]", new Font( Font.SANS_SERIF, Font.BOLD, 12 ) );
-		gd.addMessage( "" );
+		gd2.addMessage( "" );
+		gd2.addMessage( "Algorithm parameters [" + ipr.getDescription() + "]", new Font( Font.SANS_SERIF, Font.BOLD, 12 ) );
+		gd2.addMessage( "" );
 		
-		ipr.addQuery( gd, registrationType );
+		ipr.addQuery( gd2, registrationType );
 		
 		// display the dialog
-		gd.showDialog();
-		
-		if ( gd.wasCanceled() )
-			return;
+		gd2.showDialog();
 
-		int referenceTimePoint = 0;result.getData().getSequenceDescription().getTimePoints().getTimePointsOrdered().get( 0 ).getId();
+		if ( gd2.wasCanceled() )
+			return false;
+
+		int referenceTimePoint = data.getSequenceDescription().getTimePoints().getTimePointsOrdered().get( 0 ).getId();
 		int range = defaultRange;
 		
 		if ( registrationType == RegistrationType.TO_REFERENCE_TIMEPOINT )
-			referenceTimePoint = result.getData().getSequenceDescription().getTimePoints().getTimePointsOrdered().get( defaultReferenceTimepointIndex = gd.getNextChoiceIndex() ).getId();
+			referenceTimePoint = data.getSequenceDescription().getTimePoints().getTimePointsOrdered().get( defaultReferenceTimepointIndex = gd2.getNextChoiceIndex() ).getId();
 
 		if ( registrationType == RegistrationType.ALL_TO_ALL_WITH_RANGE )
-			range = defaultRange = (int)Math.round( gd.getNextNumber() );
+			range = defaultRange = (int)Math.round( gd2.getNextNumber() );
 
 		final boolean considerTimepointsAsUnit;
 		if ( registrationType != RegistrationType.TIMEPOINTS_INDIVIDUALLY )
-			considerTimepointsAsUnit = defaultConsiderTimepointAsUnit = gd.getNextBoolean();
+			considerTimepointsAsUnit = defaultConsiderTimepointAsUnit = gd2.getNextBoolean();
 		else
 			considerTimepointsAsUnit = false;
-		final boolean displayOnly = defaultDisplayTransformOnly = gd.getNextBoolean();
-		
+
 		final int fixTiles, mapBack;
-		
+
 		if ( registrationType != RegistrationType.TO_REFERENCE_TIMEPOINT )
 		{
-			fixTiles = defaultFixTiles = gd.getNextChoiceIndex();
-			mapBack = defaultMapBack = gd.getNextChoiceIndex();
+			fixTiles = defaultFixTiles = gd2.getNextChoiceIndex();
+			mapBack = defaultMapBack = gd2.getNextChoiceIndex();
 		}
 		else
 		{
 			fixTiles = mapBack = -1;
 		}
 
-		if ( !ipr.parseDialog( gd, registrationType ) )
-			return;
+		if ( !ipr.parseDialog( gd2, registrationType ) )
+			return false;
 
 		// perform the actual registration(s)
 		final GlobalOptimizationType type;
 		
 		if ( registrationType == RegistrationType.TIMEPOINTS_INDIVIDUALLY )
-		{
-			type = new IndividualTimepointRegistration(
-					result.getData(),
-					ipr.getAnglesToProcess(),
-					ipr.getChannelsToProcess(),
-					ipr.getIllumsToProcess(),
-					ipr.getTimepointsToProcess(),
-					!displayOnly );
-		}
+			type = new IndividualTimepointRegistration( data, viewIds, channelsToProcess );
 		else if ( registrationType == RegistrationType.TO_REFERENCE_TIMEPOINT )
-		{
-			type = new ReferenceTimepointRegistration(
-					result.getData(),
-					ipr.getAnglesToProcess(),
-					ipr.getChannelsToProcess(),
-					ipr.getIllumsToProcess(),
-					ipr.getTimepointsToProcess(),
-					result.getData().getSequenceDescription().getTimePoints().getTimePoints().get( referenceTimePoint ),
-					!displayOnly,
-					considerTimepointsAsUnit );
-		}
+			type = new ReferenceTimepointRegistration( data, viewIds, channelsToProcess, data.getSequenceDescription().getTimePoints().getTimePoints().get( referenceTimePoint ), considerTimepointsAsUnit );
 		else if ( registrationType == RegistrationType.ALL_TO_ALL )
-		{
-			type = new AllToAllRegistration(
-					result.getData(),
-					ipr.getAnglesToProcess(),
-					ipr.getChannelsToProcess(),
-					ipr.getIllumsToProcess(),
-					ipr.getTimepointsToProcess(),
-					!displayOnly,
-					considerTimepointsAsUnit );
-		}
+			type = new AllToAllRegistration( data, viewIds, channelsToProcess, considerTimepointsAsUnit );
 		else if ( registrationType == RegistrationType.ALL_TO_ALL_WITH_RANGE )
-		{
-			type = new AllToAllRegistrationWithRange(
-					result.getData(),
-					ipr.getAnglesToProcess(),
-					ipr.getChannelsToProcess(),
-					ipr.getIllumsToProcess(),
-					ipr.getTimepointsToProcess(),
-					range,
-					!displayOnly,
-					considerTimepointsAsUnit );
-		}
+			type = new AllToAllRegistrationWithRange( data, viewIds, channelsToProcess, range, considerTimepointsAsUnit );
 		else
-		{
 			type = null;
-		}
 
 		// set the fixed tiles and the potential mapping back to some tile
 		if ( !setFixedTilesAndReference( fixTiles, mapBack, type ) )
-			return;
+			return false;
 
-		if ( !ipr.register( type ) )
-			return;
+		if ( !ipr.register( type, saveXML ) )
+			return false;
 
 		// save the XML including transforms and correspondences
-		if ( !displayOnly )
-			saveXML( result.getData(), result.getXMLFileName() );
-	}
-	
-	public static void saveXML( final SpimData2 data, final String xmlFileName  )
-	{
-		// save the xml
-		final XmlIoSpimData2 io = new XmlIoSpimData2();
-		
-		final String xml = new File( data.getBasePath(), new File( xmlFileName ).getName() ).getAbsolutePath();
-		try 
-		{
-			io.save( data, xml );
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + xml + "'." );
-		}
-		catch ( Exception e )
-		{
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + xml + "': " + e );
-			e.printStackTrace();
-		}
+		if ( saveXML )
+			SpimData2.saveXML( data, xmlFileName, clusterExtension );
+
+		return true;
 	}
 
 	/**
@@ -440,7 +386,12 @@ public class Interest_Point_Registration implements PlugIn
 		if ( fixTilesIndex == 0 ) // all first tiles
 		{
 			for ( final GlobalOptimizationSubset subset : subsets )
-				fixedTiles.add( subset.getViews().get( 0 ) );
+			{
+				if ( subset.getViews().size() == 0 )
+					IOFunctions.println( "Nothing to do for: " + subset.getDescription() + ". No tiles fixed." );
+				else
+					fixedTiles.add( subset.getViews().get( 0 ) );
+			}
 		}
 		else if ( fixTilesIndex == 1 )
 		{
@@ -503,13 +454,14 @@ public class Interest_Point_Registration implements PlugIn
 		}
 		else
 		{
-			// no fixed tiles
+			// no fixed tiles or reference timepoint
 		}
 
-		type.setFixedTiles( fixedTiles );
+		if ( fixTilesIndex >= 0 )
+			type.setFixedTiles( fixedTiles );
 
 		IOFunctions.println( "Following tiles are fixed:" );
-		for ( final ViewId id : fixedTiles )
+		for ( final ViewId id : type.getFixedTiles() )
 		{
 			final ViewDescription vd = type.getSpimData().getSequenceDescription().getViewDescription( id );
 			final ViewSetup vs = vd.getViewSetup();
@@ -606,7 +558,7 @@ public class Interest_Point_Registration implements PlugIn
 			// no reference tile
 		}
 
-		IOFunctions.println( "Following tiles are reference tiles:" );
+		IOFunctions.println( "Following tiles are reference tiles (for mapping back if there are no fixed tiles):" );
 		for ( final GlobalOptimizationSubset subset : subsets )
 		{
 			final ViewId id = type.getMapBackReferenceTile( subset );
@@ -707,12 +659,10 @@ public class Interest_Point_Registration implements PlugIn
 	 */
 	public static String[] getAllInterestPointLabelsForChannel(
 			final SpimData2 spimData,
-			final List< TimePoint > timepointsToProcess,
-			final List< Angle > anglesToProcess,
-			final List< Illumination > illuminationsToProcess,
+			final List< ViewId > viewIdsToProcess,
 			final Channel channel )
 	{
-		return getAllInterestPointLabelsForChannel( spimData, timepointsToProcess, anglesToProcess, illuminationsToProcess, channel, null );
+		return getAllInterestPointLabelsForChannel( spimData, viewIdsToProcess, channel, null );
 	}
 
 	/**
@@ -726,9 +676,7 @@ public class Interest_Point_Registration implements PlugIn
 	 */
 	public static String[] getAllInterestPointLabelsForChannel(
 			final SpimData2 spimData,
-			final List< TimePoint > timepointsToProcess,
-			final List< Angle > anglesToProcess,
-			final List< Illumination > illuminationsToProcess,
+			final List< ViewId > viewIdsToProcess,
 			final Channel channel,
 			final String doWhat )
 	{
@@ -737,41 +685,32 @@ public class Interest_Point_Registration implements PlugIn
 		
 		int countViewDescriptions = 0;
 
-		for ( final TimePoint t : timepointsToProcess )
-			for ( final Angle a : anglesToProcess )
-				for ( final Illumination i : illuminationsToProcess )
-				{
-					final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, channel, a, i );
-					
-					// this happens only if a viewsetup is not present in any timepoint
-					// (e.g. after appending fusion to a dataset)
-					if ( viewId == null )
-						continue;
-					
-					// get the viewdescription
-					final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
-							viewId.getTimePointId(), viewId.getViewSetupId() );
+		for ( final ViewId viewId : viewIdsToProcess )
+		{
+			// get the viewdescription
+			final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
+					viewId.getTimePointId(), viewId.getViewSetupId() );
 
-					// check if the view is present
-					if ( !viewDescription.isPresent() )
-						continue;
-					
-					// which lists of interest points are available
-					final ViewInterestPointLists lists = interestPoints.getViewInterestPointLists( viewId );
-					
-					for ( final String label : lists.getHashMap().keySet() )
-					{
-						int count = 1;
+			// check if the view is present
+			if ( !viewDescription.isPresent() )
+				continue;
+			
+			// which lists of interest points are available
+			final ViewInterestPointLists lists = interestPoints.getViewInterestPointLists( viewId );
+			
+			for ( final String label : lists.getHashMap().keySet() )
+			{
+				int count = 1;
 
-						if ( labels.containsKey( label ) )
-							count += labels.get( label );
+				if ( labels.containsKey( label ) )
+					count += labels.get( label );
 
-						labels.put( label, count );
-					}
+				labels.put( label, count );
+			}
 
-					// are they available in all viewdescriptions?
-					++countViewDescriptions;
-				}
+			// are they available in all viewdescriptions?
+			++countViewDescriptions;
+		}
 		
 		final String[] allLabels;
 

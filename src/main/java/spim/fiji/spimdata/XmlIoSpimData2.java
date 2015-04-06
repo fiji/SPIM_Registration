@@ -22,18 +22,38 @@ import spim.fiji.spimdata.interestpoints.XmlIoViewInterestPoints;
 public class XmlIoSpimData2 extends XmlIoAbstractSpimData< SequenceDescription, SpimData2 >
 {
 	final XmlIoViewInterestPoints xmlViewsInterestPoints;
+	String clusterExt, lastFileName;
 	public static int numBackups = 5;
 	
-	public XmlIoSpimData2()
+	public XmlIoSpimData2( final String clusterExt )
 	{
 		super( SpimData2.class, new XmlIoSequenceDescription(), new XmlIoViewRegistrations() );
 		xmlViewsInterestPoints = new XmlIoViewInterestPoints();
 		handledTags.add( xmlViewsInterestPoints.getTag() );
+		this.clusterExt = clusterExt;
 	}
 
+	public void setClusterExt( final String clusterExt ) { this.clusterExt = clusterExt; }
+
 	@Override
-	public void save( final SpimData2 spimData, final String xmlFilename ) throws SpimDataException
+	public void save( final SpimData2 spimData, String xmlFilename ) throws SpimDataException
 	{
+		if ( clusterExt != null && clusterExt.length() > 0 )
+		{
+			if ( xmlFilename.toLowerCase().endsWith( ".xml" ) )
+			{
+				xmlFilename =
+						xmlFilename.substring( 0, xmlFilename.length() - 4 ) + "." + this.clusterExt +
+						xmlFilename.substring( xmlFilename.length() - 4, xmlFilename.length() );
+			}
+			else
+			{
+				xmlFilename += this.clusterExt + ".xml";
+			}
+		}
+
+		this.lastFileName = xmlFilename;
+
 		// fist make a copy of the XML and save it to not loose it
 		if ( new File( xmlFilename ).exists() )
 		{
@@ -61,8 +81,9 @@ public class XmlIoSpimData2 extends XmlIoAbstractSpimData< SequenceDescription, 
 
 		super.save( spimData, xmlFilename );
 	}
-	
-	 
+
+	public String lastFileName() { return lastFileName; }
+
 	protected static void copyFile( final File inputFile, final File outputFile ) throws IOException
 	{
 		InputStream input = null;

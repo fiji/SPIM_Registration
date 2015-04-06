@@ -18,13 +18,13 @@ public class PointNode extends Point implements Leaf<PointNode>
 		this.numDimensions = l.length;
 	}
 	
-	public PointNode( final float[] l )
+	public PointNode( final double[] l )
 	{
 		super( l );
 		this.numDimensions = l.length;
 	}
 
-	public PointNode( final float[] l, final float[] w )
+	public PointNode( final double[] l, final double[] w )
 	{
 		super( l, w );
 		this.numDimensions = l.length;
@@ -34,10 +34,10 @@ public class PointNode extends Point implements Leaf<PointNode>
 	public PointNode[] createArray( final int n ) { return new PointNode[ n ]; }
 
 	@Override
-	public float distanceTo( final PointNode other ) { return Point.distance( this, other ); }
+	public float distanceTo( final PointNode other ) { return (float)Point.distance( this, other ); }
 
 	@Override
-	public float get( final int k ) { return w[ k ]; }
+	public float get( final int k ) { return (float)w[ k ]; }
 
 	@Override
 	public int getNumDimensions() { return numDimensions; }

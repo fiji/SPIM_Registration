@@ -11,10 +11,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
-import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
@@ -36,9 +35,8 @@ import spim.process.fusion.weightedavg.ProcessParalell;
 import spim.process.fusion.weightedavg.ProcessSequential;
 
 public class MinFilterThreshold
-{	
-	final List< Angle > anglesToProcess;
-	final List< Illumination > illumsToProcess;
+{
+	final List< ViewId > viewIdsToProcess;
 	final Channel channel;
 	final TimePoint timepoint;
 	final SpimData2 spimData;
@@ -47,13 +45,12 @@ public class MinFilterThreshold
 	final int radiusMin;
 	final boolean loadSequentially;
 	final boolean displaySegmentationImage;
-	
+
 	int[] min, max;
 
 	public MinFilterThreshold(
 			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Illumination> illumsToProcess,
+			final List< ViewId > viewIdsToProcess,
 			final Channel channel,
 			final TimePoint timepoint,
 			final BoundingBox bb,
@@ -63,8 +60,7 @@ public class MinFilterThreshold
 			final boolean displaySegmentationImage )
 	{
 		this.spimData = spimData;
-		this.anglesToProcess = anglesToProcess;
-		this.illumsToProcess = illumsToProcess;
+		this.viewIdsToProcess = viewIdsToProcess;
 		this.channel = channel;
 		this.timepoint = timepoint;
 		this.bb = bb;
@@ -81,32 +77,32 @@ public class MinFilterThreshold
 	{
 		// fuse the dataset
 		final ProcessFusion process;
-		
+
 		if ( loadSequentially )
-			process = new ProcessSequential( spimData, anglesToProcess, illumsToProcess, bb, false, false, 1 );
-		else			
-			process = new ProcessParalell( spimData, anglesToProcess, illumsToProcess, bb, false, false );
-		
+			process = new ProcessSequential( spimData, viewIdsToProcess, bb, false, false, 1 );
+		else
+			process = new ProcessParalell( spimData, viewIdsToProcess, bb, false, false );
+
 		Img< FloatType > img = process.fuseStack( new FloatType(), new NearestNeighborInterpolatorFactory<FloatType>(), timepoint, channel );
-		
+
 		final float[] minmax = FusionHelper.minMax( img );
 		final int effR = Math.max( radiusMin / bb.getDownSampling(), 1 );
 		final double threshold = (minmax[ 1 ] - minmax[ 0 ]) * ( background / 100.0 ) + minmax[ 0 ];
-				
+
 		IOFunctions.println( "Fused image minimum: " + minmax[ 0 ] );
 		IOFunctions.println( "Fused image maximum: " + minmax[ 1 ] );
 		IOFunctions.println( "Threshold: " + threshold );
-		
+
 		IOFunctions.println( "Computing minimum filter with effective radius of " + effR + " (downsampling=" + bb.getDownSampling() + ")" );
-		
+
 		img = computeLazyMinFilter( img, effR );
-		
+
 		if ( displaySegmentationImage )
 			ImageJFunctions.show( img );
-		
+
 		this.min = new int[ img.numDimensions() ];
 		this.max = new int[ img.numDimensions() ];
-		
+
 		if ( !computeBoundingBox( img, threshold, min, max ) )
 			return false;
 
@@ -283,7 +279,7 @@ public class MinFilterThreshold
 										r.fwd( d );
 									}
 									
-									t.setReal( min );									
+									t.setReal( min );
 								}
 								return "";
 							}

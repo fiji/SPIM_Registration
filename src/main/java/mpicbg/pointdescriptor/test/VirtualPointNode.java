@@ -22,10 +22,10 @@ public class VirtualPointNode<P extends Point> implements Leaf<VirtualPointNode<
 	public P getPoint() { return p; }
 
 	@Override
-	public float distanceTo( final VirtualPointNode<P> other ) { return Point.distance( p, other.getPoint() ); }
+	public float distanceTo( final VirtualPointNode<P> other ) { return (float)Point.distance( p, other.getPoint() ); }
 
 	@Override
-	public float get( final int k ) { return p.getW()[ k ]; }
+	public float get( final int k ) { return (float)p.getW()[ k ]; }
 
 	@Override
 	public int getNumDimensions() { return numDimensions; }

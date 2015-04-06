@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Transform3D;
-import javax.vecmath.Matrix4f;
+import javax.vecmath.Matrix4d;
 
 import mpicbg.imglib.algorithm.gauss.DownSample;
 import mpicbg.imglib.algorithm.mirror.MirrorImage;
@@ -210,8 +210,8 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	 */
 	public Transform3D getTransform3D()
 	{
-		final Matrix4f matrix = new Matrix4f();
-		final float[] m = ((AbstractAffineModel3D<?>)getTile().getModel()).getMatrix( null );
+		final Matrix4d matrix = new Matrix4d();
+		final double[] m = ((AbstractAffineModel3D<?>)getTile().getModel()).getMatrix( null );
 
 		matrix.m00 = m[ 0 ];
 		matrix.m01 = m[ 1 ];

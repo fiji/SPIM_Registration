@@ -9,12 +9,9 @@ import java.util.HashMap;
 import java.util.List;
 
 import mpicbg.imglib.image.Image;
-import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.wrapper.ImgLib2;
-import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
-import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
@@ -61,28 +58,18 @@ public class DifferenceOfGaussian extends DifferenceOf implements GenericDialogA
 	CUDASeparableConvolution cuda = null;
 	boolean accurateCUDA = false;
 
-	public DifferenceOfGaussian(
-			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Channel> channelsToProcess,
-			final List<Illumination> illumsToProcess,
-			final List<TimePoint> timepointsToProcess )
+	public DifferenceOfGaussian( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
-		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+		super( spimData, viewIdsToProcess );
 	}
 
 	@Override
 	public String getDescription() { return "Difference-of-Gaussian"; }
 
 	@Override
-	public DifferenceOfGaussian newInstance(
-			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Channel> channelsToProcess,
-			final List<Illumination> illumsToProcess,
-			final List<TimePoint> timepointsToProcess ) 
-	{ 
-		return new DifferenceOfGaussian( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+	public DifferenceOfGaussian newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
+	{
+		return new DifferenceOfGaussian( spimData, viewIdsToProcess );
 	}
 
 
@@ -91,80 +78,75 @@ public class DifferenceOfGaussian extends DifferenceOf implements GenericDialogA
 	{
 		final HashMap< ViewId, List< InterestPoint > > interestPoints = new HashMap< ViewId, List< InterestPoint > >();
 		
-		for ( final Angle a : anglesToProcess )
-			for ( final Illumination i : illumsToProcess )
-				for ( final Channel c : channelsToProcess )
-				{
-					// make sure not everything crashes if one file is missing
-					try
-					{
-						//
-						// open the corresponding image (if present at this timepoint)
-						//
-						long time1 = System.currentTimeMillis();
-						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
+		for ( final ViewDescription vd : SpimData2.getAllViewIdsForTimePointSorted( spimData, viewIdsToProcess, t ) )
+		{
+			// make sure not everything crashes if one file is missing
+			try
+			{
+				//
+				// open the corresponding image (if present at this timepoint)
+				//
+				long time1 = System.currentTimeMillis();
 
-						// this happens only if a viewsetup is not present in any timepoint
-						// (e.g. after appending fusion to a dataset)
-						if ( viewId == null )
-							continue;
-						
-						final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription(
-								viewId.getTimePointId(), viewId.getViewSetupId() );
+				if ( !vd.isPresent() )
+					continue;
 
-						if ( !viewDescription.isPresent() )
-							continue;
+				final Channel c = vd.getViewSetup().getChannel();
 
-						IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Requesting Img from ImgLoader (tp=" + viewId.getTimePointId() + ", setup=" + viewId.getViewSetupId() + ")" );
-						final RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input =
-								downsample(
-										spimData.getSequenceDescription().getImgLoader().getFloatImage( viewId, false ) );
+				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Requesting Img from ImgLoader (tp=" + vd.getTimePointId() + ", setup=" + vd.getViewSetupId() + ")" );
+				final RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input =
+						downsample(
+								spimData.getSequenceDescription().getImgLoader().getFloatImage( vd, false ),
+								vd.getViewSetup().getVoxelSize() );
 
-						long time2 = System.currentTimeMillis();
+				long time2 = System.currentTimeMillis();
 
-						benchmark.openFiles += time2 - time1;
+				benchmark.openFiles += time2 - time1;
 
-						preSmooth( input );
+				preSmooth( input );
 
-						final Image< FloatType > img = ImgLib2.wrapFloatToImgLib1( (Img<net.imglib2.type.numeric.real.FloatType>)input );
+				final Image< FloatType > img = ImgLib2.wrapFloatToImgLib1( (Img<net.imglib2.type.numeric.real.FloatType>)input );
 
-						//
-						// compute Difference-of-Mean
-						//
-						final ArrayList< InterestPoint > ips = 
-							ProcessDOG.compute(
-								cuda,
-								deviceList,
-								accurateCUDA,
-								percentGPUMem,
-								img,
-								(Img<net.imglib2.type.numeric.real.FloatType>)input,
-								(float)sigma[ c.getId() ],
-								(float)threshold[ c.getId() ],
-								localization,
-								Math.min( imageSigmaX, (float)sigma[ c.getId() ] ),
-								Math.min( imageSigmaY, (float)sigma[ c.getId() ] ),
-								Math.min( imageSigmaZ, (float)sigma[ c.getId() ] ),
-								findMin[ c.getId() ],
-								findMax[ c.getId() ],
-								minIntensity,
-								maxIntensity );
+				//
+				// compute Difference-of-Mean
+				//
+				final ArrayList< InterestPoint > ips = 
+					ProcessDOG.compute(
+						cuda,
+						deviceList,
+						accurateCUDA,
+						percentGPUMem,
+						img,
+						(Img<net.imglib2.type.numeric.real.FloatType>)input,
+						(float)sigma[ c.getId() ],
+						(float)threshold[ c.getId() ],
+						localization,
+						Math.min( imageSigmaX, (float)sigma[ c.getId() ] ),
+						Math.min( imageSigmaY, (float)sigma[ c.getId() ] ),
+						Math.min( imageSigmaZ, (float)sigma[ c.getId() ] ),
+						findMin[ c.getId() ],
+						findMax[ c.getId() ],
+						minIntensity,
+						maxIntensity );
 
-						img.close();
+				img.close();
 
-						correctForDownsampling( ips );
+				correctForDownsampling( ips, vd.getViewSetup().getVoxelSize() );
 
-						interestPoints.put( viewId, ips );
+				interestPoints.put( vd, ips );
 
-						benchmark.computation += System.currentTimeMillis() - time2;
-					}
-					catch ( Exception  e )
-					{
-						IOFunctions.println( "An error occured. Failed to segment angle: " + 
-								a.getId() + " channel: " + c.getId() + " illum: " + i.getId() + ". Continuing with next one." );
-						e.printStackTrace();
-					}
-				}
+				benchmark.computation += System.currentTimeMillis() - time2;
+			}
+			catch ( Exception  e )
+			{
+				IOFunctions.println( "An error occured (DOG): " + e ); 
+				IOFunctions.println( "Failed to segment angleId: " + 
+						vd.getViewSetup().getAngle().getId() + " channelId: " +
+						vd.getViewSetup().getChannel().getId() + " illumId: " +
+						vd.getViewSetup().getIllumination().getId() + ". Continuing with next one." );
+				e.printStackTrace();
+			}
+		}
 
 		return interestPoints;
 	}
@@ -198,12 +180,19 @@ public class DifferenceOfGaussian extends DifferenceOf implements GenericDialogA
 		final int channelId = channel.getId();
 		
 		final GenericDialog gd = new GenericDialog( "Advanced values for channel " + channel.getName() );
-		
+
+		String ch;
+
+		if ( this.channelsToProcess.size() > 1 )
+			ch = "_" + channel.getName().replace( ' ', '_' );
+		else
+			ch = "";
+
 		gd.addMessage( "Advanced values for channel " + channel.getName() );
-		gd.addNumericField( "Sigma", defaultSigma[ channelId ], 5 );
-		gd.addNumericField( "Threshold", defaultThreshold[ channelId ], 4 );
-		gd.addCheckbox( "Find_minima", defaultFindMin[ channelId ] );
-		gd.addCheckbox( "Find_maxima", defaultFindMax[ channelId ] );
+		gd.addNumericField( "Sigma" + ch, defaultSigma[ channelId ], 5 );
+		gd.addNumericField( "Threshold" + ch, defaultThreshold[ channelId ], 4 );
+		gd.addCheckbox( "Find_minima" + ch, defaultFindMin[ channelId ] );
+		gd.addCheckbox( "Find_maxima" + ch, defaultFindMax[ channelId ] );
 
 		gd.showDialog();
 		
@@ -240,8 +229,10 @@ public class DifferenceOfGaussian extends DifferenceOf implements GenericDialogA
 
 		RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > img =
 				downsample(
-						spimData.getSequenceDescription().getImgLoader().getFloatImage( view, false ) );
-				
+						spimData.getSequenceDescription().getImgLoader().getFloatImage( view, false ),
+						viewDescription.getViewSetup().getVoxelSize() );
+
+		
 		if ( img == null )
 		{
 			IOFunctions.println( "View not found: " + viewDescription );
@@ -258,7 +249,7 @@ public class DifferenceOfGaussian extends DifferenceOf implements GenericDialogA
 		imp.setSlice( imp.getStackSize() / 2 );
 		imp.setRoi( 0, 0, imp.getWidth()/3, imp.getHeight()/3 );		
 
-		final InteractiveDoG idog = new InteractiveDoG();
+		final InteractiveDoG idog = new InteractiveDoG( imp );
 		final int channelId = channel.getId();
 
 		idog.setSigma2isAdjustable( false );
@@ -266,12 +257,20 @@ public class DifferenceOfGaussian extends DifferenceOf implements GenericDialogA
 		idog.setThreshold( (float)defaultThreshold[ channelId ] );
 		idog.setLookForMinima( defaultFindMin[ channelId ] );
 		idog.setLookForMaxima( defaultFindMax[ channelId ] );
+		idog.setMinIntensityImage( minIntensity ); // if is Double.NaN will be ignored
+		idog.setMinIntensityImage( maxIntensity ); // if is Double.NaN will be ignored
 
 		idog.run( null );
 		
 		while ( !idog.isFinished() )
-			SimpleMultiThreading.threadWait( 100 );
-		
+		{
+			try
+			{
+				Thread.sleep( 100 );
+			}
+			catch (InterruptedException e) {}
+		}
+
 		imp.close();
 
 		if ( idog.wasCanceled() )

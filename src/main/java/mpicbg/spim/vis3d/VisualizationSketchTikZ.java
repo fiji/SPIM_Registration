@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import javax.media.j3d.Transform3D;
+import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 
 import mpicbg.spim.registration.ViewDataBeads;
@@ -13,12 +14,12 @@ import mpicbg.spim.registration.segmentation.Nucleus;
 
 public class VisualizationSketchTikZ
 {
-	public static String drawBeads( final Collection<Bead> beads, final Transform3D globalTransform, final String beadType, final float factor )
+	public static String drawBeads( final Collection<Bead> beads, final Transform3D globalTransform, final String beadType, final double factor )
 	{
 		return drawBeads( beads, globalTransform, beadType, factor, 1 );
 	}
 	
-	public static String drawBeads( final Collection<Bead> beads, final Transform3D globalTransform, final String beadType, final float factor, final int skipBeads )
+	public static String drawBeads( final Collection<Bead> beads, final Transform3D globalTransform, final String beadType, final double factor, final int skipBeads )
 	{				
 		// we will insert lines like this
 		// put { translate([0,0,1]) } {Bead}
@@ -29,7 +30,7 @@ public class VisualizationSketchTikZ
 		String insert = "";
 
 		// the transformed bead position
-		final Point3f translation = new Point3f();
+		final Point3d translation = new Point3d();
 		
 		int beadCount = 0;
 		
@@ -55,7 +56,7 @@ public class VisualizationSketchTikZ
 		return insert;
 	}
 
-	public static String drawNuclei( final Collection<Nucleus> nuclei, final Transform3D globalTransform, final float factor )
+	public static String drawNuclei( final Collection<Nucleus> nuclei, final Transform3D globalTransform, final double factor )
 	{				
 		// we will insert lines like this
 		// put { translate([0,0,1]) } {Nucleus}
@@ -66,7 +67,7 @@ public class VisualizationSketchTikZ
 		String insert = "";
 
 		// the transformed bead position
-		final Point3f translation = new Point3f();
+		final Point3d translation = new Point3d();
 		
 		int j = 0;
 		
@@ -99,7 +100,7 @@ public class VisualizationSketchTikZ
 		return insert;
 	}
 
-	public static String drawBead( final Bead bead, final Transform3D globalTransform, final String beadType, final float factor )
+	public static String drawBead( final Bead bead, final Transform3D globalTransform, final String beadType, final double factor )
 	{				
 		// we will insert lines like this
 		// put { translate([0,0,1]) } {Bead}
@@ -110,7 +111,7 @@ public class VisualizationSketchTikZ
 		String insert = "";
 
 		// the transformed bead position
-		final Point3f translation = new Point3f();
+		final Point3d translation = new Point3d();
 		
 		// add beads	
 		
@@ -125,7 +126,7 @@ public class VisualizationSketchTikZ
 		return insert;
 	}
 
-	public static String drawNucleus( final Nucleus nucleus, final Transform3D globalTransform, final String beadType, final float factor )
+	public static String drawNucleus( final Nucleus nucleus, final Transform3D globalTransform, final String beadType, final double factor )
 	{			
 		// we will insert lines like this
 		// put { translate([0,0,1]) } {Bead}
@@ -136,7 +137,7 @@ public class VisualizationSketchTikZ
 		String insert = "";
 
 		// the transformed bead position
-		final Point3f translation = new Point3f();
+		final Point3d translation = new Point3d();
 		
 		// add beads	
 		
@@ -163,7 +164,7 @@ public class VisualizationSketchTikZ
 		return s.toString();
 	}
 	
-	public static String drawView( final ViewDataBeads view, final float factor )
+	public static String drawView( final ViewDataBeads view, final double factor )
 	{
 		final ArrayList<Point3f> box = VisualizationFunctions.getTransformedBoundingBox( view );
 		

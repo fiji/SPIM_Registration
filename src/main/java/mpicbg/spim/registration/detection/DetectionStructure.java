@@ -14,7 +14,7 @@ public class DetectionStructure< T extends DetectionView< ?, T > >
 	{
 		for ( final T detection : getDetectionList() )
 		{
-			float[] location = detection.getL();
+			double[] location = detection.getL();
 			
 			if ( x == location[ 0 ] && y == location[ 1 ] && z == location[ 2 ] )
 				return detection;

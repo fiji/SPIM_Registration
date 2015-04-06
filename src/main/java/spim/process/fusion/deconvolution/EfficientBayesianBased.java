@@ -26,6 +26,8 @@ import mpicbg.spim.postprocessing.deconvolution2.LRFFT.PSFTYPE;
 import mpicbg.spim.postprocessing.deconvolution2.LRInput;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.real.FloatType;
+import spim.fiji.ImgLib2Temp.Pair;
+import spim.fiji.ImgLib2Temp.ValuePair;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.plugin.util.GUIHelper;
@@ -37,6 +39,7 @@ import spim.process.cuda.CUDADevice;
 import spim.process.cuda.CUDAFourierConvolution;
 import spim.process.cuda.CUDATools;
 import spim.process.cuda.NativeLibraryTools;
+import spim.process.fusion.FusionHelper;
 import spim.process.fusion.boundingbox.ManualBoundingBox.ManageListeners;
 import spim.process.fusion.export.DisplayImage;
 import spim.process.fusion.export.FixedNameImgTitler;
@@ -104,7 +107,7 @@ public class EfficientBayesianBased extends Fusion
 	double osemSpeedUp;
 	boolean extractPSF;
 	boolean transformPSFs;
-	HashMap< Channel, ArrayList< String > > psfFiles;
+	HashMap< Channel, ArrayList< Pair< Pair< Angle, Illumination >, String > > > psfFiles;
 	HashMap< Channel, ChannelPSF > extractPSFLabels; // should be either a String or another Channel object
 	int blendingBorderX, blendingBorderY, blendingBorderZ;
 	int blendingRangeX, blendingRangeY, blendingRangeZ;
@@ -119,14 +122,9 @@ public class EfficientBayesianBased extends Fusion
 
 	Choice gpu, block, it;
 
-	public EfficientBayesianBased(
-			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Channel> channelsToProcess,
-			final List<Illumination> illumsToProcess,
-			final List<TimePoint> timepointsToProcess )
+	public EfficientBayesianBased( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
-		super( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+		super( spimData, viewIdsToProcess );
 		
 		// we want the arrayimg by default
 		BoundingBox.defaultImgType = 0;
@@ -145,9 +143,8 @@ public class EfficientBayesianBased extends Fusion
 
 		final ProcessForDeconvolution pfd = new ProcessForDeconvolution(
 				spimData,
-				anglesToProcess,
-				illumsToProcess, 
-				bb, 
+				viewIdsToProcess,
+				bb,
 				new int[]{ blendingBorderX, blendingBorderY, blendingBorderZ },
 				new int[]{ blendingRangeX, blendingRangeY, blendingRangeZ } );
 		
@@ -155,21 +152,14 @@ public class EfficientBayesianBased extends Fusion
 		BayesMVDeconvolution.debug = debugMode;
 		BayesMVDeconvolution.debugInterval = debugInterval;
 
-		String illumName = "_Ill" + illumsToProcess.get( 0 ).getName();
-
-		for ( int i = 1; i < illumsToProcess.size(); ++i )
-			illumName += "," + illumsToProcess.get( i ).getName();
-
-		String angleName = "_Ang" + anglesToProcess.get( 0 ).getName();
-
-		for ( int i = 1; i < anglesToProcess.size(); ++i )
-			angleName += "," + anglesToProcess.get( i ).getName();
-
 		int stack = 0;
 
 		for ( final TimePoint t : timepointsToProcess )
 			for ( final Channel c : channelsToProcess )
 			{
+				final List< Angle > anglesToProcess = SpimData2.getAllAnglesForChannelTimepointSorted( spimData, viewIdsToProcess, c, t );
+				final List< Illumination > illumsToProcess = SpimData2.getAllIlluminationsForChannelTimepointSorted( spimData, viewIdsToProcess, c, t );
+
 				// fuse the images, create weights, extract PSFs we need for the deconvolution
 				if ( !pfd.fuseStacksAndGetPSFs(
 						t, c,
@@ -205,17 +195,17 @@ public class EfficientBayesianBased extends Fusion
 				
 				final LRInput deconvolutionData = new LRInput();
 
-				for ( int view = 0; view < anglesToProcess.size() * illumsToProcess.size(); ++view )
+				for ( final ViewDescription vd : pfd.getViewDescriptions() )
 				{
 					// device list for CPU or CUDA processing
 					final int[] devList = new int[ deviceList.size() ];
 					for ( int i = 0; i < devList.length; ++i )
 						devList[ i ] = deviceList.get( i ).getDeviceId();
 					
-					deconvolutionData.add( new LRFFT( 
-							pfd.getTransformedImgs().get( view ),
-							pfd.getTransformedWeights().get( view ),
-							pfd.getExtractPSF().getTransformedPSFs().get( view ), devList, useBlocks, blockSize ) );
+					deconvolutionData.add( new LRFFT(
+							pfd.getTransformedImgs().get( vd ),
+							pfd.getTransformedWeights().get( vd ),
+							pfd.getExtractPSF().getTransformedPSFs().get( vd ), devList, useBlocks, blockSize ) );
 				}
 
 				final Img<FloatType> deconvolved;
@@ -226,7 +216,7 @@ public class EfficientBayesianBased extends Fusion
 					deconvolved = LRFFT.wrap( new BayesMVDeconvolution( deconvolutionData, iterationType, numIterations, 0, osemSpeedUp, osemspeedupIndex, "deconvolved" ).getPsi() );
 
 				// export the final image
-				titler.setTitle( "TP" + t.getName() + "_Ch" + c.getName() + illumName + angleName );
+				titler.setTitle( "TP" + t.getName() + "_Ch" + c.getName() + FusionHelper.getIllumName( illumsToProcess ) + FusionHelper.getAngleName( anglesToProcess ) );
 				exporter.exportImage(
 						deconvolved,
 						bb,
@@ -336,14 +326,9 @@ public class EfficientBayesianBased extends Fusion
 	}
 
 	@Override
-	public Fusion newInstance(
-			final SpimData2 spimData,
-			final List<Angle> anglesToProcess,
-			final List<Channel> channelsToProcess,
-			final List<Illumination> illumsToProcess,
-			final List<TimePoint> timepointsToProcess)
+	public Fusion newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
-		return new EfficientBayesianBased( spimData, anglesToProcess, channelsToProcess, illumsToProcess, timepointsToProcess );
+		return new EfficientBayesianBased( spimData, viewIdsToProcess );
 	}
 
 	@Override
@@ -468,7 +453,7 @@ public class EfficientBayesianBased extends Fusion
 			else if ( displayPSF == 3 )
 			{
 				for ( int i = 0; i < ePSF.getTransformedPSFs().size(); ++i )
-					di.exportImage( ePSF.getTransformedPSFs().get( i ), "transfomed PSF of viewsetup " + ePSF.getViewDescriptionsForPSFs().get( i ).getViewSetupId() );
+					di.exportImage( ePSF.getTransformedPSFs().get( i ), "transfomed PSF of viewsetup " + ePSF.getViewIdsForPSFs().get( i ).getViewSetupId() );
 			}
 			else if ( displayPSF == 4 )
 			{
@@ -477,7 +462,7 @@ public class EfficientBayesianBased extends Fusion
 			else if ( displayPSF == 5 )
 			{
 				for ( int i = 0; i < ePSF.getInputCalibrationPSFs().size(); ++i )
-					di.exportImage( ePSF.getInputCalibrationPSFs().get( i ), "original PSF of viewsetup " + ePSF.getViewDescriptionsForPSFs().get( i ).getViewSetupId() );				
+					di.exportImage( ePSF.getInputCalibrationPSFs().get( i ), "original PSF of viewsetup " + ePSF.getViewIdsForPSFs().get( i ).getViewSetupId() );
 			}
 		}
 	}
@@ -594,13 +579,13 @@ public class EfficientBayesianBased extends Fusion
 			{
 				blendingRangeX = ProcessForDeconvolution.defaultBlendingRangeNumber;
 				blendingRangeY = ProcessForDeconvolution.defaultBlendingRangeNumber;
-				blendingRangeZ = ProcessForDeconvolution.defaultBlendingRangeNumber;				
+				blendingRangeZ = ProcessForDeconvolution.defaultBlendingRangeNumber;
 			}
 		}
 		
 		return true;
 	}
-	
+
 	protected boolean getPSF()
 	{
 		if ( extractPSFIndex == 0 )
@@ -612,7 +597,17 @@ public class EfficientBayesianBased extends Fusion
 
 			// get all interest point labels that have correspondences for all views that are processed
 			assembleAvailableCorrespondences( correspondences, new HashMap< Channel, Integer >(), true );
-			
+
+			int sumChannels = 0;
+			for ( final Channel c : correspondences.keySet() )
+				sumChannels += correspondences.get( c ).size();
+
+			if ( sumChannels == 0 )
+			{
+				IOFunctions.println( "No detections that have been registered are available to extract a PSF. Quitting." );
+				return false;
+			}
+
 			// make a list of those labels for the imagej dialog
 			// and set the default selections
 			final String[][] choices = new String[ channelsToProcess.size() ][];
@@ -741,12 +736,15 @@ public class EfficientBayesianBased extends Fusion
 					"if you choose to transform them according to the registration of the views!", GUIHelper.mediumstatusfont );
 
 			int numPSFs;
-			
+
+			final List< Angle > anglesToProcess = SpimData2.getAllAnglesSorted( spimData, viewIdsToProcess );
+			final List< Illumination > illumsToProcess = SpimData2.getAllIlluminationsSorted( spimData, viewIdsToProcess );
+
 			if ( defaultSamePSFForAllViews )
 				numPSFs = 1;
-			else
+			else // TODO: ignores potentially missing or not existing views 
 				numPSFs = anglesToProcess.size() * illumsToProcess.size();
-			
+
 			if ( !defaultSamePSFForAllChannels )
 				numPSFs *= channelsToProcess.size();
 
@@ -807,16 +805,22 @@ public class EfficientBayesianBased extends Fusion
 			for ( int i = 0; i < numPSFs; ++i )
 				defaultPSFFileField.add( gd2.getNextString() );
 				
-			psfFiles = new HashMap< Channel, ArrayList< String > >();
+			psfFiles = new HashMap< Channel, ArrayList< Pair< Pair< Angle,Illumination >, String > > >();
 			
 			if ( defaultSamePSFForAllViews )
 			{
 				if ( defaultSamePSFForAllChannels )
 				{
 					// as many times the same filename as there are illuminations and angles
-					final ArrayList< String > files = new ArrayList< String >();
-					for ( int i = 0; i < anglesToProcess.size() * illumsToProcess.size(); ++i )
-						files.add( defaultPSFFileField.get( 0 ) );
+					final String fileName = defaultPSFFileField.get( 0 );
+
+					final ArrayList< Pair< Pair< Angle,Illumination >, String > > files = new ArrayList< Pair< Pair< Angle,Illumination >, String > >();
+					for( final Illumination i : illumsToProcess )
+						for ( final Angle a : anglesToProcess )
+						{
+							final Pair< Angle, Illumination > aiPair = new ValuePair< Angle, Illumination >( a, i );
+							files.add( new ValuePair< Pair< Angle,Illumination >, String >( aiPair, fileName ) );
+						}
 
 					for ( final Channel c : channelsToProcess )
 						psfFiles.put( c, files );
@@ -827,11 +831,17 @@ public class EfficientBayesianBased extends Fusion
 					
 					for ( final Channel c : channelsToProcess )
 					{
-						final ArrayList< String > files = new ArrayList< String >();
+						final ArrayList< Pair< Pair< Angle,Illumination >, String > > files = new ArrayList< Pair< Pair< Angle,Illumination >, String > >();
 
 						// as many times the same filename as there are illuminations and angles
-						for ( int i = 0; i < anglesToProcess.size() * illumsToProcess.size(); ++i )
-							files.add( defaultPSFFileField.get( j ) );
+						final String fileName = defaultPSFFileField.get( j );
+
+						for( final Illumination i : illumsToProcess )
+							for ( final Angle a : anglesToProcess )
+							{
+								final Pair< Angle, Illumination > aiPair = new ValuePair< Angle, Illumination >( a, i );
+								files.add( new ValuePair< Pair< Angle,Illumination >, String >( aiPair, fileName ) );
+							}
 
 						psfFiles.put( c, files );
 						++j;
@@ -842,24 +852,38 @@ public class EfficientBayesianBased extends Fusion
 			{
 				if ( defaultSamePSFForAllChannels )
 				{
-					final ArrayList< String > files = new ArrayList< String >();
-					files.addAll( defaultPSFFileField );
-					
+					final ArrayList< Pair< Pair< Angle,Illumination >, String > > files = new ArrayList< Pair< Pair< Angle,Illumination >, String > >();
+
+					// one filename per angle/illum pair
+					int j = 0;
+
+					for( final Illumination i : illumsToProcess )
+						for ( final Angle a : anglesToProcess )
+						{
+							final Pair< Angle, Illumination > aiPair = new ValuePair< Angle, Illumination >( a, i );
+							files.add( new ValuePair< Pair< Angle,Illumination >, String >( aiPair, defaultPSFFileField.get( j++ ) ) );
+						}
+
 					for ( final Channel c : channelsToProcess )
 						psfFiles.put( c, files );
 				}
 				else
 				{
+					// one filename per angle/illum pair and channel
 					int j = 0;
 					
 					for ( final Channel c : channelsToProcess )
 					{
-						final ArrayList< String > files = new ArrayList< String >();
-						
-						for ( int i = 0; i < anglesToProcess.size() * illumsToProcess.size(); ++i )
-							files.add( defaultPSFFileField.get( j++ ) );
-						
-						psfFiles.put( c, files );		
+						final ArrayList< Pair< Pair< Angle,Illumination >, String > > files = new ArrayList< Pair< Pair< Angle,Illumination >, String > >();
+
+						for( final Illumination i : illumsToProcess )
+							for ( final Angle a : anglesToProcess )
+							{
+								final Pair< Angle, Illumination > aiPair = new ValuePair< Angle, Illumination >( a, i );
+								files.add( new ValuePair< Pair< Angle,Illumination >, String >( aiPair, defaultPSFFileField.get( j++ ) ) );
+							}
+
+						psfFiles.put( c, files );
 					}
 				}
 			}	
@@ -1014,67 +1038,60 @@ public class EfficientBayesianBased extends Fusion
 			final ArrayList< Correspondence > corrList = new ArrayList< Correspondence >();
 			
 			for ( final TimePoint t : timepointsToProcess )
-				for ( final Illumination i : illumsToProcess )
-					for ( final Angle a : anglesToProcess )
+				for ( final ViewId viewId : SpimData2.getAllViewIdsForTimePointSorted( spimData, viewIdsToProcess, t ) )
+				{
+					final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( viewId ); 
+					
+					if ( vd.isPresent() )
 					{
-						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, c, a, i );
+						// how many views with correspondences should be there
+						++countViews;
 
-						// this happens only if a viewsetup is not present in any timepoint
-						// (e.g. after appending fusion to a dataset)
-						if ( viewId == null )
-							continue;
-
-						final ViewDescription desc = spimData.getSequenceDescription().getViewDescription( viewId ); 
+						// the object with links to all available detections
+						final ViewInterestPointLists vpl = vp.getViewInterestPointLists( viewId );
 						
-						if ( desc.isPresent() )
+						// the list of all available detections
+						for ( final String label : vpl.getHashMap().keySet() )
 						{
-							// how many views with correspondences should be there
-							++countViews;
+							final InterestPointList ipl = vpl.getInterestPointList( label );
 
-							// the object with links to all available detections
-							final ViewInterestPointLists vpl = vp.getViewInterestPointLists( viewId );
+							final String name =
+									label + " --- channel: " + c.getName() + " angle: " + vd.getViewSetup().getAngle().getName() +
+									" illum: " + vd.getViewSetup().getIllumination().getName() + " timepoint: " + t.getName() + ": ";
+
+							if ( ipl.getInterestPoints() == null )
+								ipl.loadInterestPoints();
 							
-							// the list of all available detections
-							for ( final String label : vpl.getHashMap().keySet() )
+							if ( ipl.getCorrespondingInterestPoints() == null )
+								ipl.loadCorrespondingInterestPoints();
+							
+							if ( ipl.getCorrespondingInterestPoints().size() > 0 )
 							{
-								final InterestPointList ipl = vpl.getInterestPointList( label );
-
-								final String name = label + " --- channel: " + c.getName() + " angle: " + a.getName() + " illum: " + i.getName() + 
-										" timepoint: " + t.getName() + ": ";
-
-								if ( ipl.getInterestPoints().size() == 0 )
-									ipl.loadInterestPoints();
+								Correspondence corrTmp = new Correspondence( label );
+								boolean foundEntry = false;
 								
-								if ( ipl.getCorrespondingInterestPoints().size() == 0 )
-									ipl.loadCorrespondingInterestPoints();
-								
-								if ( ipl.getCorrespondingInterestPoints().size() > 0 )
+								for ( final Correspondence corr : corrList )
 								{
-									Correspondence corrTmp = new Correspondence( label );
-									boolean foundEntry = false;
-									
-									for ( final Correspondence corr : corrList )
+									if ( corr.equals( corrTmp ) )
 									{
-										if ( corr.equals( corrTmp ) )
-										{
-											corr.increaseCount();
-											foundEntry = true;
-											break;
-										}
+										corr.increaseCount();
+										foundEntry = true;
+										break;
 									}
-									
-									if ( !foundEntry )
-										corrList.add( corrTmp );
-									
-									IOFunctions.println( name + ipl.getCorrespondingInterestPoints().size() + " correspondences." );
 								}
-								else
-								{
-									IOFunctions.println( name + " NO correspondences." );
-								}
+								
+								if ( !foundEntry )
+									corrList.add( corrTmp );
+								
+								IOFunctions.println( name + ipl.getCorrespondingInterestPoints().size() + " correspondences." );
+							}
+							else
+							{
+								IOFunctions.println( name + " NO correspondences." );
 							}
 						}
 					}
+				}
 			
 			correspondences.put( c, corrList );
 			viewsPresent.put( c, countViews );
@@ -1130,12 +1147,6 @@ public class EfficientBayesianBased extends Fusion
 	@Override
 	protected Map< ViewSetup, ViewSetup > createNewViewSetups( final BoundingBox bb )
 	{
-		return WeightedAverageFusion.assembleNewViewSetupsFusion(
-				spimData,
-				channelsToProcess,
-				illumsToProcess,
-				anglesToProcess,
-				bb,
-				"Decon",
-				"Decon" );	}
+		return WeightedAverageFusion.assembleNewViewSetupsFusion( spimData, viewIdsToProcess, bb, "Decon", "Decon" );
+	}
 }

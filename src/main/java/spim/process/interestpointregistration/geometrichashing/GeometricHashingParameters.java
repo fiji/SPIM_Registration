@@ -2,8 +2,8 @@ package spim.process.interestpointregistration.geometrichashing;
 
 public class GeometricHashingParameters
 {
-	public static float differenceThreshold = 50; 
-	public static float ratioOfDistance = 10; 
+	public static float differenceThreshold = 50;
+	public static float ratioOfDistance = 10;
 	public static boolean useAssociatedBeads = false;
 
 	protected final float dt, rod;

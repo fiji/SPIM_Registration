@@ -9,22 +9,18 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
-import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
-import mpicbg.spim.data.sequence.Illumination;
-import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
-import net.imglib2.RealPoint;
 import net.imglib2.KDTree;
+import net.imglib2.RealPoint;
 import net.imglib2.neighborsearch.KNearestNeighborSearchOnKDTree;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.thinout.ChannelProcessThinOut;
 import spim.fiji.plugin.thinout.Histogram;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
@@ -53,57 +49,28 @@ public class ThinOut_Detections implements PlugIn
 		if ( !xml.queryXML( "", true, false, true, true ) )
 			return;
 
+		final SpimData2 data = xml.getData();
+		final List< ViewId > viewIds = SpimData2.getAllViewIdsSorted( data, xml.getViewSetupsToProcess(), xml.getTimePointsToProcess() );
+
 		// ask which channels have the objects we are searching for
-		final List< ChannelProcessThinOut > channels = getChannelsAndLabels(
-				xml.getData(),
-				xml.getTimePointsToProcess(),
-				xml.getData().getSequenceDescription().getAllChannelsOrdered(),
-				xml.getIlluminationsToProcess(),
-				xml.getAnglesToProcess() );
+		final List< ChannelProcessThinOut > channels = getChannelsAndLabels( data, viewIds );
 
 		if ( channels == null )
 			return;
 
 		// get the actual min/max thresholds for cutting out
-		if ( !getThinOutThresholds(
-				xml.getData(),
-				xml.getTimePointsToProcess(),
-				channels,
-				xml.getIlluminationsToProcess(),
-				xml.getAnglesToProcess() ) )
+		if ( !getThinOutThresholds( data, viewIds, channels ) )
 			return;
 
 		// thin out detections and save the new interestpoint files
-		if ( !thinOut(
-				xml.getData(),
-				xml.getTimePointsToProcess(),
-				channels,
-				xml.getIlluminationsToProcess(),
-				xml.getAnglesToProcess() ) )
+		if ( !thinOut( data, viewIds, channels, true ) )
 			return;
 
 		// write new xml
-		final XmlIoSpimData2 io = new XmlIoSpimData2();
-		
-		final String xmlFile = new File( xml.getData().getBasePath(), new File( xml.getXMLFileName() ).getName() ).getAbsolutePath();
-		try 
-		{
-			io.save( xml.getData(), xmlFile );
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + xmlFile + "'." );
-		}
-		catch ( Exception e )
-		{
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + xmlFile + "': " + e );
-			e.printStackTrace();
-		}
+		SpimData2.saveXML( data, xml.getXMLFileName(), xml.getClusterExtension() );
 	}
 
-	protected boolean thinOut(
-			final SpimData2 spimData,
-			final List< TimePoint > timePointsToProcess,
-			final List< ChannelProcessThinOut > channels,
-			final List< Illumination > illumsToProcess,
-			final List< Angle > anglesToProcess )
+	public static boolean thinOut( final SpimData2 spimData, final List< ViewId > viewIds, final List< ChannelProcessThinOut > channels, final boolean save )
 	{
 		final ViewInterestPoints vip = spimData.getViewInterestPoints();
 
@@ -113,95 +80,84 @@ public class ThinOut_Detections implements PlugIn
 			final double maxDistance = channel.getMax();
 			final boolean keepRange = channel.keepRange();
 
-			for ( final TimePoint t : timePointsToProcess )
+			for ( final ViewId viewId : viewIds )
 			{
-				for ( final Illumination i : illumsToProcess )
+				final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( viewId );
+				
+				if ( !vd.isPresent() || vd.getViewSetup().getChannel().getId() != channel.getChannel().getId() )
+					continue;
+
+				final ViewInterestPointLists vipl = vip.getViewInterestPointLists( viewId );
+				final InterestPointList oldIpl = vipl.getInterestPointList( channel.getLabel() );
+
+				if ( oldIpl.getInterestPoints() == null )
+					oldIpl.loadInterestPoints();
+
+				final VoxelDimensions voxelSize = vd.getViewSetup().getVoxelSize();
+
+				// assemble the list of points (we need two lists as the KDTree sorts the list)
+				// we assume that the order of list2 and points is preserved!
+				final List< RealPoint > list1 = new ArrayList< RealPoint >();
+				final List< RealPoint > list2 = new ArrayList< RealPoint >();
+				final List< double[] > points = new ArrayList< double[] >();
+
+				for ( final InterestPoint ip : oldIpl.getInterestPoints() )
 				{
-					for ( final Angle a : anglesToProcess )
+					list1.add ( new RealPoint(
+							ip.getL()[ 0 ] * voxelSize.dimension( 0 ),
+							ip.getL()[ 1 ] * voxelSize.dimension( 1 ),
+							ip.getL()[ 2 ] * voxelSize.dimension( 2 ) ) );
+
+					list2.add ( new RealPoint(
+							ip.getL()[ 0 ] * voxelSize.dimension( 0 ),
+							ip.getL()[ 1 ] * voxelSize.dimension( 1 ),
+							ip.getL()[ 2 ] * voxelSize.dimension( 2 ) ) );
+
+					points.add( ip.getL() );
+				}
+
+				// make the KDTree
+				final KDTree< RealPoint > tree = new KDTree< RealPoint >( list1, list1 );
+
+				// Nearest neighbor for each point, populate the new list
+				final KNearestNeighborSearchOnKDTree< RealPoint > nn = new KNearestNeighborSearchOnKDTree< RealPoint >( tree, 2 );
+				final InterestPointList newIpl = new InterestPointList(
+						oldIpl.getBaseDir(),
+						new File(
+								oldIpl.getFile().getParentFile(),
+								"tpId_" + viewId.getTimePointId() + "_viewSetupId_" + viewId.getViewSetupId() + "." + channel.getNewLabel() ) );
+
+				newIpl.setInterestPoints( new ArrayList< InterestPoint >() );
+
+				int id = 0;
+				for ( int j = 0; j < list2.size(); ++j )
+				{
+					final RealPoint p = list2.get( j );
+					nn.search( p );
+					
+					// first nearest neighbor is the point itself, we need the second nearest
+					final double d = nn.getDistance( 1 );
+					
+					if ( ( keepRange && d >= minDistance && d <= maxDistance ) || ( !keepRange && ( d < minDistance || d > maxDistance ) ) )
 					{
-						final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, channel.getChannel(), a, i );
-
-						// this happens only if a viewsetup is not present in any timepoint
-						// (e.g. after appending fusion to a dataset)
-						if ( viewId == null )
-							continue;
-
-						final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( viewId );
-						
-						if ( !vd.isPresent() )
-							continue;
-
-						final ViewInterestPointLists vipl = vip.getViewInterestPointLists( viewId );
-						final InterestPointList oldIpl = vipl.getInterestPointList( channel.getLabel() );
-
-						if ( oldIpl.getInterestPoints() == null || oldIpl.getInterestPoints().size() == 0 )
-							oldIpl.loadInterestPoints();
-
-						final VoxelDimensions voxelSize = vd.getViewSetup().getVoxelSize();
-
-						// assemble the list of points (we need two lists as the KDTree sorts the list)
-						// we assume that the order of list2 and points is preserved!
-						final List< RealPoint > list1 = new ArrayList< RealPoint >();
-						final List< RealPoint > list2 = new ArrayList< RealPoint >();
-						final List< float[] > points = new ArrayList< float[] >();
-
-						for ( final InterestPoint ip : oldIpl.getInterestPoints() )
-						{
-							list1.add ( new RealPoint(
-									ip.getL()[ 0 ] * voxelSize.dimension( 0 ),
-									ip.getL()[ 1 ] * voxelSize.dimension( 1 ),
-									ip.getL()[ 2 ] * voxelSize.dimension( 2 ) ) );
-
-							list2.add ( new RealPoint(
-									ip.getL()[ 0 ] * voxelSize.dimension( 0 ),
-									ip.getL()[ 1 ] * voxelSize.dimension( 1 ),
-									ip.getL()[ 2 ] * voxelSize.dimension( 2 ) ) );
-
-							points.add( ip.getL() );
-						}
-
-						// make the KDTree
-						final KDTree< RealPoint > tree = new KDTree< RealPoint >( list1, list1 );
-
-						// Nearest neighbor for each point, populate the new list
-						final KNearestNeighborSearchOnKDTree< RealPoint > nn = new KNearestNeighborSearchOnKDTree< RealPoint >( tree, 2 );
-						final InterestPointList newIpl = new InterestPointList(
-								oldIpl.getBaseDir(),
-								new File(
-										oldIpl.getFile().getParentFile(),
-										"tpId_" + viewId.getTimePointId() + "_viewSetupId_" + viewId.getViewSetupId() + "." + channel.getNewLabel() ) );
-
-						int id = 0;
-						for ( int j = 0; j < list2.size(); ++j )
-						{
-							final RealPoint p = list2.get( j );
-							nn.search( p );
-							
-							// first nearest neighbor is the point itself, we need the second nearest
-							final double d = nn.getDistance( 1 );
-							
-							if ( ( keepRange && d >= minDistance && d <= maxDistance ) || ( !keepRange && ( d < minDistance || d > maxDistance ) ) )
-							{
-								newIpl.getInterestPoints().add( new InterestPoint( id++, points.get( j ).clone() ) );
-							}
-						}
-
-						if ( keepRange )
-							newIpl.setParameters( "thinned-out '" + channel.getLabel() + "', kept range from " + minDistance + " to " + maxDistance );
-						else
-							newIpl.setParameters( "thinned-out '" + channel.getLabel() + "', removed range from " + minDistance + " to " + maxDistance );
-
-						vipl.addInterestPointList( channel.getNewLabel(), newIpl );
-
-						IOFunctions.println( new Date( System.currentTimeMillis() ) + ": TP=" + t.getId() + " ViewSetup=" + vd.getViewSetupId() + 
-								", Detections: " + oldIpl.getInterestPoints().size() + " >>> " + newIpl.getInterestPoints().size() );
-
-						if ( !newIpl.saveInterestPoints() )
-						{
-							IOFunctions.println( "Error saving interest point list: " + new File( newIpl.getBaseDir(), newIpl.getFile().toString() + newIpl.getInterestPointsExt() ) );
-							return false;
-						}
+						newIpl.getInterestPoints().add( new InterestPoint( id++, points.get( j ).clone() ) );
 					}
+				}
+
+				if ( keepRange )
+					newIpl.setParameters( "thinned-out '" + channel.getLabel() + "', kept range from " + minDistance + " to " + maxDistance );
+				else
+					newIpl.setParameters( "thinned-out '" + channel.getLabel() + "', removed range from " + minDistance + " to " + maxDistance );
+
+				vipl.addInterestPointList( channel.getNewLabel(), newIpl );
+
+				IOFunctions.println( new Date( System.currentTimeMillis() ) + ": TP=" + vd.getTimePointId() + " ViewSetup=" + vd.getViewSetupId() + 
+						", Detections: " + oldIpl.getInterestPoints().size() + " >>> " + newIpl.getInterestPoints().size() );
+
+				if ( save && !newIpl.saveInterestPoints() )
+				{
+					IOFunctions.println( "Error saving interest point list: " + new File( newIpl.getBaseDir(), newIpl.getFile().toString() + newIpl.getInterestPointsExt() ) );
+					return false;
 				}
 			}
 		}
@@ -209,16 +165,11 @@ public class ThinOut_Detections implements PlugIn
 		return true;
 	}
 
-	protected boolean getThinOutThresholds(
-			final SpimData2 spimData,
-			final List< TimePoint > timePointsToProcess,
-			final List< ChannelProcessThinOut > channels,
-			final List< Illumination > illumsToProcess,
-			final List< Angle > anglesToProcess )
+	public static boolean getThinOutThresholds( final SpimData2 spimData, final List< ViewId > viewIds, final List< ChannelProcessThinOut > channels )
 	{
 		for ( final ChannelProcessThinOut channel : channels )
 			if ( channel.showHistogram() )
-				plotHistogram( spimData, timePointsToProcess, channel, illumsToProcess, anglesToProcess );
+				plotHistogram( spimData, viewIds, channel );
 
 		if ( defaultCutoffThresholdMin == null || defaultCutoffThresholdMin.length != channels.size() || 
 				defaultCutoffThresholdMax == null || defaultCutoffThresholdMax.length != channels.size() )
@@ -284,12 +235,7 @@ public class ThinOut_Detections implements PlugIn
 		return true;
 	}
 
-	protected Histogram plotHistogram(
-			final SpimData2 spimData,
-			final List< TimePoint > timePointsToProcess,
-			final ChannelProcessThinOut channel,
-			final List< Illumination > illumsToProcess,
-			final List< Angle > anglesToProcess )
+	public static Histogram plotHistogram( final SpimData2 spimData, final List< ViewId > viewIds, final ChannelProcessThinOut channel )
 	{
 		final ViewInterestPoints vip = spimData.getViewInterestPoints();
 
@@ -298,62 +244,53 @@ public class ThinOut_Detections implements PlugIn
 		final Random rnd = new Random( System.currentTimeMillis() );
 		String unit = null;
 
-		for ( final TimePoint t : timePointsToProcess )
-			for ( final Illumination i : illumsToProcess )
-				for ( final Angle a : anglesToProcess )
+		for ( final ViewId viewId : viewIds )
+		{
+			final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( viewId );
+			
+			if ( !vd.isPresent() || vd.getViewSetup().getChannel().getId() != channel.getChannel().getId() )
+				continue;
+
+			final ViewInterestPointLists vipl = vip.getViewInterestPointLists( viewId );
+			final InterestPointList ipl = vipl.getInterestPointList( channel.getLabel() );
+
+			final VoxelDimensions voxelSize = vd.getViewSetup().getVoxelSize();
+
+			if ( ipl.getInterestPoints() == null )
+				ipl.loadInterestPoints();
+
+			if ( unit == null )
+				unit = vd.getViewSetup().getVoxelSize().unit();
+
+			// assemble the list of points
+			final List< RealPoint > list = new ArrayList< RealPoint >();
+
+			for ( final InterestPoint ip : ipl.getInterestPoints() )
+			{
+				list.add ( new RealPoint(
+						ip.getL()[ 0 ] * voxelSize.dimension( 0 ),
+						ip.getL()[ 1 ] * voxelSize.dimension( 1 ),
+						ip.getL()[ 2 ] * voxelSize.dimension( 2 ) ) );
+			}
+
+			// make the KDTree
+			final KDTree< RealPoint > tree = new KDTree< RealPoint >( list, list );
+
+			// Nearest neighbor for each point
+			final KNearestNeighborSearchOnKDTree< RealPoint > nn = new KNearestNeighborSearchOnKDTree< RealPoint >( tree, 2 );
+
+			for ( final RealPoint p : list )
+			{
+				// every n'th point only
+				if ( rnd.nextDouble() < 1.0 / (double)channel.getSubsampling() )
 				{
-					final ViewId viewId = SpimData2.getViewId( spimData.getSequenceDescription(), t, channel.getChannel(), a, i );
-
-					// this happens only if a viewsetup is not present in any timepoint
-					// (e.g. after appending fusion to a dataset)
-					if ( viewId == null )
-						continue;
+					nn.search( p );
 					
-					final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( viewId );
-					
-					if ( !vd.isPresent() )
-						continue;
-
-					final ViewInterestPointLists vipl = vip.getViewInterestPointLists( viewId );
-					final InterestPointList ipl = vipl.getInterestPointList( channel.getLabel() );
-
-					final VoxelDimensions voxelSize = vd.getViewSetup().getVoxelSize();
-
-					if ( ipl.getInterestPoints() == null || ipl.getInterestPoints().size() == 0 )
-						ipl.loadInterestPoints();
-
-					if ( unit == null )
-						unit = vd.getViewSetup().getVoxelSize().unit();
-
-					// assemble the list of points
-					final List< RealPoint > list = new ArrayList< RealPoint >();
-
-					for ( final InterestPoint ip : ipl.getInterestPoints() )
-					{
-						list.add ( new RealPoint(
-								ip.getL()[ 0 ] * voxelSize.dimension( 0 ),
-								ip.getL()[ 1 ] * voxelSize.dimension( 1 ),
-								ip.getL()[ 2 ] * voxelSize.dimension( 2 ) ) );
-					}
-
-					// make the KDTree
-					final KDTree< RealPoint > tree = new KDTree< RealPoint >( list, list );
-
-					// Nearest neighbor for each point
-					final KNearestNeighborSearchOnKDTree< RealPoint > nn = new KNearestNeighborSearchOnKDTree< RealPoint >( tree, 2 );
-
-					for ( final RealPoint p : list )
-					{
-						// every n'th point only
-						if ( rnd.nextDouble() < 1.0 / (double)channel.getSubsampling() )
-						{
-							nn.search( p );
-							
-							// first nearest neighbor is the point itself, we need the second nearest
-							distances.add( nn.getDistance( 1 ) );
-						}
-					}
+					// first nearest neighbor is the point itself, we need the second nearest
+					distances.add( nn.getDistance( 1 ) );
 				}
+			}
+		}
 
 		final Histogram h = new Histogram( distances, 100, "Distance Histogram [Channel=" + channel.getChannel().getName() + "]", unit  );
 		h.showHistogram();
@@ -361,15 +298,14 @@ public class ThinOut_Detections implements PlugIn
 		return h;
 	}
 
-	protected ArrayList< ChannelProcessThinOut > getChannelsAndLabels(
+	public static ArrayList< ChannelProcessThinOut > getChannelsAndLabels(
 			final SpimData2 spimData,
-			final List< TimePoint > timePointsToProcess,
-			final List< Channel > channels,
-			final List< Illumination > illumsToProcess,
-			final List< Angle > anglesToProcess )
+			final List< ViewId > viewIds )
 	{
 		// build up the dialog
 		final GenericDialog gd = new GenericDialog( "Choose segmentations to thin out" );
+
+		final List< Channel > channels = SpimData2.getAllChannelsSorted( spimData, viewIds );
 
 		if ( Interest_Point_Registration.defaultChannelLabels == null || Interest_Point_Registration.defaultChannelLabels.length != channels.size() )
 			Interest_Point_Registration.defaultChannelLabels = new int[ channels.size() ];
@@ -402,19 +338,18 @@ public class ThinOut_Detections implements PlugIn
 		{
 			final String[] labels = Interest_Point_Registration.getAllInterestPointLabelsForChannel(
 					spimData,
-					timePointsToProcess,
-					anglesToProcess,
-					illumsToProcess,
+					viewIds,
 					channel,
 					"thin out" );
 
 			if ( Interest_Point_Registration.defaultChannelLabels[ j ] >= labels.length )
 				Interest_Point_Registration.defaultChannelLabels[ j ] = 0;
 
-			gd.addCheckbox( "Channel_" + channel.getName() + ":_Display_distance_histogram", defaultShowHistogram[ j ] );
-			gd.addChoice( "Channel_" + channel.getName() + ":_Interest_points", labels, labels[ Interest_Point_Registration.defaultChannelLabels[ j ] ] );
-			gd.addStringField( "Channel_" + channel.getName() + ":_New_label", defaultNewLabels[ j ], 20 );
-			gd.addNumericField( "Channel_" + channel.getName() + ":_Subsample histogram", defaultSubSampling[ j ], 0, 5, "times" );
+			String ch = channel.getName().replace( ' ', '_' );
+			gd.addCheckbox( "Channel_" + ch + "_Display_distance_histogram", defaultShowHistogram[ j ] );
+			gd.addChoice( "Channel_" + ch + "_Interest_points", labels, labels[ Interest_Point_Registration.defaultChannelLabels[ j ] ] );
+			gd.addStringField( "Channel_" + ch + "_New_label", defaultNewLabels[ j ], 20 );
+			gd.addNumericField( "Channel_" + ch + "_Subsample histogram", defaultSubSampling[ j ], 0, 5, "times" );
 
 			channelLabels.add( labels );
 			++j;
