@@ -20,6 +20,7 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
@@ -99,8 +100,14 @@ public class EfficientBayesianBased extends Fusion
 	boolean debugMode;
 	boolean adjustBlending;
 
-	// TODO: set factory
-	ImgFactory< FloatType> factory;
+	// set in fuseData method
+	ImgFactory< FloatType > factory;
+
+	/**
+	 * The ImgFactory used for Blocks and for computing the actual FFT ... should be ArrayImg if there is no good reason
+	 */
+	ImgFactory< FloatType > computeFactory = new ArrayImgFactory< FloatType >();
+
 	boolean useBlocks;
 	int[] blockSize;
 	boolean useCUDA;
@@ -142,6 +149,9 @@ public class EfficientBayesianBased extends Fusion
 		if ( exporter instanceof ImgExportTitle )
 			( (ImgExportTitle)exporter).setImgTitler( titler );
 
+		// set up ImgFactory
+		this.factory = bb.getImgFactory( new FloatType() );
+
 		final ProcessForDeconvolution pfd = new ProcessForDeconvolution(
 				spimData,
 				viewIdsToProcess,
@@ -164,6 +174,7 @@ public class EfficientBayesianBased extends Fusion
 				// fuse the images, create weights, extract PSFs we need for the deconvolution
 				if ( !pfd.fuseStacksAndGetPSFs(
 						t, c,
+						factory,
 						osemspeedupIndex,
 						osemSpeedUp,
 						justShowWeights,
@@ -207,18 +218,27 @@ public class EfficientBayesianBased extends Fusion
 							pfd.getTransformedImgs().get( vd ),
 							pfd.getTransformedWeights().get( vd ),
 							pfd.getExtractPSF().getTransformedPSFs().get( vd ),
-							new ArrayImgFactory< FloatType >(),
+							computeFactory,
 							devList,
 							useBlocks,
 							blockSize ) );
 				}
 
-				final Img<FloatType> deconvolved;
-				
-				if ( useTikhonovRegularization )
+				if ( !useTikhonovRegularization )
+					lambda = 0;
+
+				final Img< FloatType > deconvolved;
+
+				try
+				{
 					deconvolved = new MVDeconvolution( deconvolutionData, iterationType, numIterations, lambda, osemSpeedUp, osemspeedupIndex, "deconvolved" ).getPsi();
-				else
-					deconvolved = new MVDeconvolution( deconvolutionData, iterationType, numIterations, 0, osemSpeedUp, osemspeedupIndex, "deconvolved" ).getPsi();
+				} 
+				catch (IncompatibleTypeException e)
+				{
+					IOFunctions.println( "Failed to initialize deconvolution: " + e );
+					e.printStackTrace();
+					return false;
+				}
 
 				// export the final image
 				titler.setTitle( "TP" + t.getName() + "_Ch" + c.getName() + FusionHelper.getIllumName( illumsToProcess ) + FusionHelper.getAngleName( anglesToProcess ) );

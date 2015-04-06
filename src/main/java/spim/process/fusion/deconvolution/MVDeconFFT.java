@@ -7,9 +7,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.postprocessing.deconvolution2.LRInput;
 import net.imglib2.Cursor;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.fft2.FFTConvolution;
+import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
+import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.numeric.complex.ComplexFloatType;
 import net.imglib2.type.numeric.real.FloatType;
@@ -26,8 +29,9 @@ public class MVDeconFFT
 	
 	public static CUDAFourierConvolution cuda = null;
 	
-	private Img< FloatType > image, weight, kernel1, kernel2;
-	FFTConvolution<FloatType> fftConvolution1, fftConvolution2;
+	private RandomAccessibleInterval< FloatType > image, weight;
+	private ArrayImg< FloatType, ? > kernel1, kernel2;
+	FFTConvolution< FloatType > fftConvolution1, fftConvolution2;
 	protected int numViews = 0;
 
 	final protected ExecutorService service;
@@ -41,8 +45,8 @@ public class MVDeconFFT
 	final int device0, numDevices;
 	final Block[] blocks;
 
-	// the imgfactory used to instantiate the blocks, must be ArrayImg for CUDA
-	ImgFactory< FloatType > blockFactory;
+	// the imgfactory used to instantiate the blocks and compute the FFTs, must be ArrayImg for CUDA
+	ImgFactory< FloatType > blockFFTFactory;
 
 	/**
 	 * Used to determine if the Convolutions already have been computed for the current iteration
@@ -50,10 +54,10 @@ public class MVDeconFFT
 	int i = -1;
 
 	public MVDeconFFT(
-			final Img< FloatType > image,
-			final Img< FloatType > weight,
-			final Img< FloatType > kernel,
-			final ImgFactory< FloatType > blockFactory,
+			final RandomAccessibleInterval< FloatType > image,
+			final RandomAccessibleInterval< FloatType > weight,
+			final ArrayImg< FloatType, ? > kernel,
+			final ImgFactory< FloatType > blockFFTFactory,
 			final int[] deviceList, final boolean useBlocks, final int[] blockSize )
 	{
 		this.image = image;
@@ -61,6 +65,7 @@ public class MVDeconFFT
 		this.weight = weight;
 		this.n = image.numDimensions();
 		this.service = FFTConvolution.createExecutorService( Threads.numThreads() );
+		this.blockFFTFactory = blockFFTFactory;
 
 		this.deviceList = deviceList;
 		this.device0 = deviceList[ 0 ];
@@ -101,8 +106,6 @@ public class MVDeconFFT
 			this.blocks = blockGenerator.divideIntoBlocks( imgSize, kernelSize );
 
 			IOFunctions.println( "Number of blocks: " + this.blocks.length );
-
-			this.blockFactory = new ArrayImgFactory< FloatType >();
 		}
 		else if ( this.useCUDA ) // and no blocks, i.e. one big block
 		{
@@ -125,13 +128,11 @@ public class MVDeconFFT
 
 			IOFunctions.println( "Number of blocks: " + this.blocks.length + " (1 single block for CUDA processing)." );
 
-			this.blockFactory = new ArrayImgFactory< FloatType >();
 		}
 		else
 		{
 			this.blocks = null;
 			this.blockSize = null;
-			this.blockFactory = null;
 			this.useBlocks = false;
 		}
 	}
@@ -143,8 +144,9 @@ public class MVDeconFFT
 	
 	/**
 	 * This method is called once all views are added to the {@link LRInput}
+	 * @throws IncompatibleTypeException 
 	 */
-	protected void init( final PSFTYPE iterationType, final ArrayList< MVDeconFFT > views )
+	protected void init( final PSFTYPE iterationType, final ArrayList< MVDeconFFT > views ) throws IncompatibleTypeException
 	{		
 		// normalize kernel so that sum of all pixels == 1
 		AdjustInput.normImage( kernel1 );
@@ -171,7 +173,7 @@ public class MVDeconFFT
 			// P_v^compound = P_v^{*} prod{w \in W_v} P_v^{*} \ast P_w \ast P_w^{*}
 			
 			// we first get P_v^{*} -> {*} refers to the inverted coordinates
-			final Img< FloatType > tmp = computeInvertedKernel( this.kernel1.copy() );
+			final ArrayImg< FloatType, ? > tmp = computeInvertedKernel( this.kernel1.copy() );
 
 			// now for each view: w \in W_v
 			for ( final MVDeconFFT view : views )
@@ -235,7 +237,7 @@ public class MVDeconFFT
 			// P_v^compound = P_v^{*} prod{w \in W_v} P_v^{*} \ast P_w
 
 			// we first get P_v^{*} -> {*} refers to the inverted coordinates
-			final Img< FloatType > tmp = ( this.kernel1.copy() );
+			final ArrayImg< FloatType, ? > tmp = ( this.kernel1.copy() );
 
 			// now for each view: w \in W_v
 			for ( final MVDeconFFT view : views )
@@ -277,7 +279,7 @@ public class MVDeconFFT
 		else //if ( iterationType == PSFTYPE.OPTIMIZATION_II )
 		{
 			// compute the squared kernel and its inverse
-			final Img< FloatType > exponentialKernel = computeExponentialKernel( this.kernel1, numViews );
+			final ArrayImg< FloatType, ? > exponentialKernel = computeExponentialKernel( this.kernel1, numViews );
 
 			// norm the squared kernel
 			AdjustInput.normImage( exponentialKernel );
@@ -290,7 +292,7 @@ public class MVDeconFFT
 		{
 			if ( useBlocks )
 			{
-				final Img< FloatType > block = blockFactory.create( blockSize, new FloatType() );
+				final Img< FloatType > block = blockFFTFactory.create( blockSize, new FloatType() );
 
 				this.fftConvolution1 = new FFTConvolution< FloatType >( block, this.kernel1 );
 				this.fftConvolution1.setExecutorService( service );
@@ -302,11 +304,11 @@ public class MVDeconFFT
 			}
 			else
 			{
-				this.fftConvolution1 = new FFTConvolution< FloatType >( this.image, this.kernel1 );
+				this.fftConvolution1 = new FFTConvolution< FloatType >( this.image, this.kernel1, blockFFTFactory.imgFactory( new ComplexFloatType() ) );
 				this.fftConvolution1.setExecutorService( service );
 				this.fftConvolution1.setKeepImgFFT( false );
-				
-				this.fftConvolution2 = new FFTConvolution< FloatType >( this.image, this.kernel2 );
+
+				this.fftConvolution2 = new FFTConvolution< FloatType >( this.image, this.kernel2, blockFFTFactory.imgFactory( new ComplexFloatType() )  );
 				this.fftConvolution2.setExecutorService( service );
 				this.fftConvolution2.setKeepImgFFT( false );
 			}
@@ -318,9 +320,9 @@ public class MVDeconFFT
 		}
 	}
 	
-	public static Img<FloatType> computeExponentialKernel( final Img<FloatType> kernel, final int numViews )
+	public static ArrayImg< FloatType, ? > computeExponentialKernel( final ArrayImg< FloatType, ? > kernel, final int numViews )
 	{
-		final Img<FloatType> exponentialKernel = kernel.copy();
+		final ArrayImg< FloatType, ? > exponentialKernel = kernel.copy();
 
 		for ( final FloatType f : exponentialKernel )
 			f.set( pow( f.get(), numViews ) );
@@ -328,9 +330,9 @@ public class MVDeconFFT
 		return exponentialKernel;
 	}
 
-	public static Img< FloatType > computeInvertedKernel( final Img< FloatType > kernel )
+	public static ArrayImg< FloatType, ? > computeInvertedKernel( final ArrayImg< FloatType, ? > kernel )
 	{
-		final Img< FloatType > invKernel = kernel.copy();
+		final ArrayImg< FloatType, ? > invKernel = kernel.copy();
 
 		for ( int d = 0; d < invKernel.numDimensions(); ++d )
 			Mirror.mirror( invKernel, d, Threads.numThreads() );
@@ -356,17 +358,17 @@ public class MVDeconFFT
 
 	public void setWeight( final Img< FloatType > weight ) { this.weight = weight; }
 
-	public void setKernel( final Img< FloatType > kernel ) 
+	public void setKernel( final ArrayImg< FloatType, ? > kernel ) throws IncompatibleTypeException 
 	{
 		this.kernel1 = kernel;
 		init( iterationType, views );
 		setCurrentIteration( -1 );
 	}
 
-	public Img<FloatType> getImage() { return image; }
-	public Img<FloatType> getWeight() { return weight; }
-	public Img<FloatType> getKernel1() { return kernel1; }
-	public Img<FloatType> getKernel2() { return kernel2; }
+	public RandomAccessibleInterval< FloatType > getImage() { return image; }
+	public RandomAccessibleInterval< FloatType > getWeight() { return weight; }
+	public ArrayImg< FloatType, ? > getKernel1() { return kernel1; }
+	public ArrayImg< FloatType, ? > getKernel2() { return kernel2; }
 	
 	public void setCurrentIteration( final int i ) { this.i = i; }
 	public int getCurrentIteration() { return i; }
@@ -383,7 +385,7 @@ public class MVDeconFFT
 		{
 			if ( useBlocks )
 			{
-				final Img< FloatType > block = blockFactory.create( blockSize, new FloatType() );
+				final Img< FloatType > block = blockFFTFactory.create( blockSize, new FloatType() );
 
 				for ( int i = 0; i < blocks.length; ++i )
 					MVDeconFFTThreads.convolve1BlockCPU( blocks[ i ], image, result, block, fftConvolution1, i );
@@ -405,7 +407,7 @@ public class MVDeconFFT
 		}
 		else if ( useCUDA && numDevices == 1 )
 		{
-			final Img< FloatType > block = blockFactory.create( blockSize, new FloatType() );
+			final Img< FloatType > block = blockFFTFactory.create( blockSize, new FloatType() );
 
 			for ( int i = 0; i < blocks.length; ++i )
 				MVDeconFFTThreads.convolve1BlockCUDA( blocks[ i ], device0, image, result, block, kernel1, i );
@@ -418,7 +420,7 @@ public class MVDeconFFT
 			final Thread[] threads = new Thread[ deviceList.length ];
 
 			for ( int i = 0; i < deviceList.length; ++i )
-				threads[ i ] = MVDeconFFTThreads.getCUDAThread1( ai, blockFactory, blocks, blockSize, image, result, deviceList[ i ], kernel1 );
+				threads[ i ] = MVDeconFFTThreads.getCUDAThread1( ai, blockFFTFactory, blocks, blockSize, image, result, deviceList[ i ], kernel1 );
 
 			for ( int ithread = 0; ithread < threads.length; ++ithread )
 				threads[ ithread ].start();
@@ -449,7 +451,7 @@ public class MVDeconFFT
 		{
 			if ( useBlocks )
 			{
-				final Img< FloatType > block = blockFactory.create( blockSize, new FloatType() );
+				final Img< FloatType > block = blockFFTFactory.create( blockSize, new FloatType() );
 
 				for ( int i = 0; i < blocks.length; ++i )
 					MVDeconFFTThreads.convolve2BlockCPU( blocks[ i ], image, result, block, fftConvolution2 );
@@ -468,7 +470,7 @@ public class MVDeconFFT
 		}
 		else if ( useCUDA && numDevices == 1 )
 		{
-			final Img< FloatType > block = blockFactory.create( blockSize, new FloatType() );
+			final Img< FloatType > block = blockFFTFactory.create( blockSize, new FloatType() );
 
 			for ( int i = 0; i < blocks.length; ++i )
 				MVDeconFFTThreads.convolve2BlockCUDA( blocks[ i ], device0, image, result, block, kernel2 );
@@ -481,7 +483,7 @@ public class MVDeconFFT
 			final Thread[] threads = new Thread[ deviceList.length ];
 
 			for ( int i = 0; i < deviceList.length; ++i )
-				threads[ i ] = MVDeconFFTThreads.getCUDAThread2( ai, blockFactory, blocks, blockSize, image, result, deviceList[ i ], kernel2 );
+				threads[ i ] = MVDeconFFTThreads.getCUDAThread2( ai, blockFFTFactory, blocks, blockSize, image, result, deviceList[ i ], kernel2 );
 
 			for ( int ithread = 0; ithread < threads.length; ++ithread )
 				threads[ ithread ].start();

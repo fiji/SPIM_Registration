@@ -22,8 +22,10 @@ import net.imglib2.Cursor;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
+import net.imglib2.img.ImgFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
 import spim.Threads;
 import spim.fiji.ImgLib2Temp;
 import spim.fiji.ImgLib2Temp.Pair;
@@ -61,7 +63,7 @@ public class ProcessForDeconvolution
 	int minOverlappingViews;
 	double avgOverlappingViews;
 	ArrayList< ViewDescription > viewDescriptions;
-	HashMap< ViewId, Img< FloatType > > imgs, weights;
+	HashMap< ViewId, RandomAccessibleInterval< FloatType > > imgs, weights;
 	ExtractPSF< FloatType > ePSF;
 	
 	public ProcessForDeconvolution(
@@ -79,8 +81,8 @@ public class ProcessForDeconvolution
 	}
 	
 	public ExtractPSF< FloatType > getExtractPSF() { return ePSF; }
-	public HashMap< ViewId, Img< FloatType > > getTransformedImgs() { return imgs; }
-	public HashMap< ViewId, Img< FloatType > > getTransformedWeights() { return weights; }
+	public HashMap< ViewId, RandomAccessibleInterval< FloatType > > getTransformedImgs() { return imgs; }
+	public HashMap< ViewId, RandomAccessibleInterval< FloatType > > getTransformedWeights() { return weights; }
 	public ArrayList< ViewDescription > getViewDescriptions() { return viewDescriptions; }
 	public int getMinOverlappingViews() { return minOverlappingViews; }
 	public double getAvgOverlappingViews() { return avgOverlappingViews; }
@@ -97,6 +99,7 @@ public class ProcessForDeconvolution
 	public boolean fuseStacksAndGetPSFs(
 			final TimePoint timepoint, 
 			final Channel channel,
+			final ImgFactory< FloatType > imgFactory,
 			final int osemIndex,
 			double osemspeedup,
 			final boolean weightsOnly,
@@ -111,13 +114,13 @@ public class ProcessForDeconvolution
 		if ( this.viewDescriptions.size() == 0 )
 			return false;
 
-		this.imgs = new HashMap< ViewId, Img< FloatType > >();
-		this.weights = new HashMap< ViewId, Img< FloatType > >();
+		this.imgs = new HashMap< ViewId, RandomAccessibleInterval< FloatType > >();
+		this.weights = new HashMap< ViewId, RandomAccessibleInterval< FloatType > >();
 		
 		final Img< FloatType > overlapImg;
 		
 		if ( weightsOnly )
-			overlapImg = bb.getImgFactory( new FloatType() ).create( bb.getDimensions(), new FloatType() );
+			overlapImg = imgFactory.create( bb.getDimensions(), new FloatType() );
 		else
 			overlapImg = null;
 				
@@ -125,7 +128,7 @@ public class ProcessForDeconvolution
 		final boolean loadPSFs = (psfFiles != null);
 				
 		if ( extractPSFs )
-			ePSF = new ExtractPSF<FloatType>( bb.getImgFactory( new FloatType() ) );
+			ePSF = new ExtractPSF<FloatType>();
 		else if ( loadPSFs )
 			ePSF = loadPSFs( channel, viewDescriptions, psfFiles, transformLoadedPSFs );
 		else
@@ -149,9 +152,9 @@ public class ProcessForDeconvolution
 			if ( weightsOnly )
 				fusedImg = overlapImg;
 			else
-				fusedImg = bb.getImgFactory( new FloatType() ).create( bb.getDimensions(), new FloatType() );
+				fusedImg = imgFactory.create( bb.getDimensions(), new FloatType() );
 			
-			final Img< FloatType > weightImg = fusedImg.factory().create( bb.getDimensions(), new FloatType() );
+			final Img< FloatType > weightImg = imgFactory.create( bb.getDimensions(), new FloatType() );
 
 			if ( fusedImg == null || weightImg == null )
 			{
@@ -190,7 +193,7 @@ public class ProcessForDeconvolution
 							spimData.getViewRegistrations().getViewRegistration( inputData ).getModel(),
 							overlapImg,
 							weightImg,
-							bb ) );					
+							bb ) );
 				}
 				else
 				{
@@ -239,14 +242,14 @@ public class ProcessForDeconvolution
 		}
 		
 		// normalize the weights
-		final ArrayList< Img< FloatType > > weightsSorted = new ArrayList< Img< FloatType> >();
+		final ArrayList< RandomAccessibleInterval< FloatType > > weightsSorted = new ArrayList< RandomAccessibleInterval< FloatType> >();
 
 		for ( final ViewDescription vd : viewDescriptions )
 			weightsSorted.add( weights.get( vd ) );
 
 		if ( !normalizeWeightsAndComputeMinAvgViews( weightsSorted ) )
 			return false;
-				
+
 		IOFunctions.println( "Minimal number of overlapping views: " + getMinOverlappingViews() + ", using " + (this.minOverlappingViews = Math.max( 1, this.minOverlappingViews ) ) );
 		IOFunctions.println( "Average number of overlapping views: " + getAvgOverlappingViews() + ", using " + (this.avgOverlappingViews = Math.max( 1, this.avgOverlappingViews ) ) );
 
@@ -257,7 +260,7 @@ public class ProcessForDeconvolution
 			else if ( osemIndex == 2 )
 				osemspeedup = getAvgOverlappingViews();
 				
-			displayWeights( osemspeedup, weightsSorted, overlapImg );
+			displayWeights( osemspeedup, weightsSorted, overlapImg, imgFactory );
 		}
 				
 		return true;
@@ -283,7 +286,7 @@ public class ProcessForDeconvolution
 			models = null;
 		}
 
-		return ExtractPSF.loadAndTransformPSFs( psfFiles.get( ch ), allInputData, bb.getImgFactory( new FloatType() ), new FloatType(), models );
+		return ExtractPSF.loadAndTransformPSFs( psfFiles.get( ch ), allInputData, new FloatType(), models );
 	}
 
 	protected ExtractPSF< FloatType > assignOtherChannel( final Channel channel, final HashMap< Channel, ChannelPSF > extractPSFLabels )
@@ -314,17 +317,21 @@ public class ProcessForDeconvolution
 		return llist;
 	}
 	
-	protected void displayWeights( final double osemspeedup, final ArrayList< Img< FloatType > > weights, final Img< FloatType > overlapImg )
+	protected void displayWeights(
+			final double osemspeedup,
+			final ArrayList< RandomAccessibleInterval< FloatType > > weights,
+			final RandomAccessibleInterval< FloatType > overlapImg,
+			final ImgFactory< FloatType > imgFactory )
 	{
 		final DisplayImage d = new DisplayImage();
 		
 		d.exportImage( overlapImg, bb, "Number of views per pixel" );
 		
-		final Img< FloatType > w = overlapImg.factory().create( overlapImg, new FloatType() );
-		final Img< FloatType > wosem = overlapImg.factory().create( overlapImg, new FloatType() );
+		final Img< FloatType > w = imgFactory.create( overlapImg, new FloatType() );
+		final Img< FloatType > wosem = imgFactory.create( overlapImg, new FloatType() );
 		
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( weights.get( 0 ).size(), Threads.numThreads() * 2 );
+		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( Views.iterable( weights.get( 0 ) ).size(), Threads.numThreads() * 2 );
 
 		// set up executor service
 		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
@@ -341,9 +348,9 @@ public class ProcessForDeconvolution
 							final Cursor< FloatType > sum = w.cursor();
 							final Cursor< FloatType > sumOsem = wosem.cursor();
 							
-							for ( final Img< FloatType > imgW : weights )
+							for ( final RandomAccessibleInterval< FloatType > imgW : weights )
 							{
-								final Cursor< FloatType > c = imgW.cursor();
+								final Cursor< FloatType > c = Views.iterable( imgW ).cursor();
 								c.jumpFwd( portion.getStartPosition() );
 								cursors.add( c );
 							}
@@ -391,10 +398,10 @@ public class ProcessForDeconvolution
 		d.exportImage( wosem, bb, "OSEM=" + osemspeedup + ", sum of weights per pixel" );
 	}
 	
-	protected boolean normalizeWeightsAndComputeMinAvgViews( final List< Img< FloatType > > weights )
+	protected boolean normalizeWeightsAndComputeMinAvgViews( final List< RandomAccessibleInterval< FloatType > > weights )
 	{
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( weights.get( 0 ).size(), Threads.numThreads() * 2 );
+		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( Views.iterable( weights.get( 0 ) ).size(), Threads.numThreads() * 2 );
 
 		// set up executor service
 		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
@@ -409,9 +416,9 @@ public class ProcessForDeconvolution
 						{
 							final ArrayList< Cursor< FloatType > > cursors = new ArrayList< Cursor< FloatType > >(); 
 							
-							for ( final Img< FloatType > imgW : weights )
+							for ( final RandomAccessibleInterval< FloatType > imgW : weights )
 							{
-								final Cursor< FloatType > c = imgW.cursor();
+								final Cursor< FloatType > c = Views.iterable( imgW ).cursor();
 								c.jumpFwd( portion.getStartPosition() );
 								cursors.add( c );
 							}

@@ -2,6 +2,7 @@ package spim.process.fusion.deconvolution;
 
 import java.util.ArrayList;
 
+import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.process.fusion.deconvolution.MVDeconFFT.PSFTYPE;
@@ -37,8 +38,9 @@ public class MVDeconInput
 	 * @param exponentialKernel - use exponential kernel?
 	 * 
 	 * @return the same instance again for convinience
+	 * @throws IncompatibleTypeException 
 	 */
-	public MVDeconInput init( final PSFTYPE iterationType )
+	public MVDeconInput init( final PSFTYPE iterationType ) throws IncompatibleTypeException
 	{
 		for ( final MVDeconFFT view : views )
 			view.init( iterationType, views );

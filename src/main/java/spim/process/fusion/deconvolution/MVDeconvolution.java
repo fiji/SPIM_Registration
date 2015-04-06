@@ -15,10 +15,15 @@ import java.util.concurrent.Executors;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.Dimensions;
+import net.imglib2.IterableInterval;
+import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
+import net.imglib2.view.Views;
 import spim.Threads;
 import spim.fiji.spimdata.imgloaders.StackImgLoaderIJ;
 import spim.process.fusion.FusionHelper;
@@ -68,7 +73,7 @@ public class MVDeconvolution
 			final double lambda,
 			double osemspeedup,
 			final int osemspeedupindex,
-			final String name )
+			final String name ) throws IncompatibleTypeException
 	{
 		this.name = name;
 		this.data = views.getViews();
@@ -174,7 +179,7 @@ public class MVDeconvolution
 
 		for ( final MVDeconFFT view : views.getViews() )
 		{
-			for ( final FloatType f : view.getWeight() )
+			for ( final FloatType f : Views.iterable( view.getWeight() ) )
 				f.set( Math.min( 1, f.get() * (float)osemspeedup ) ); // individual contribution never higher than 1
 		}
 	}
@@ -470,24 +475,48 @@ public class MVDeconvolution
 	private static final void computeQuotient(
 			final long start,
 			final long loopSize,
-			final Img< FloatType > psiBlurred,
-			final Img< FloatType > observedImg )
+			final RandomAccessibleInterval< FloatType > psiBlurred,
+			final RandomAccessibleInterval< FloatType > observedImg )
 	{
-		final Cursor< FloatType > cursorImg = observedImg.cursor();
-		final Cursor< FloatType > cursorPsiBlurred = psiBlurred.cursor();
+		final IterableInterval< FloatType > psiBlurredIterable = Views.iterable( psiBlurred );
+		final IterableInterval< FloatType > observedImgIterable = Views.iterable( observedImg );
 
-		cursorImg.jumpFwd( start );
-		cursorPsiBlurred.jumpFwd( start );
-
-		for ( long l = 0; l < loopSize; ++l )
+		if ( psiBlurredIterable.iterationOrder().equals( observedImgIterable.iterationOrder() ) )
 		{
-			cursorImg.fwd();
-			cursorPsiBlurred.fwd();
+			final Cursor< FloatType > cursorPsiBlurred = psiBlurredIterable.cursor();
+			final Cursor< FloatType > cursorImg = observedImgIterable.cursor();
+	
+			cursorPsiBlurred.jumpFwd( start );
+			cursorImg.jumpFwd( start );
+	
+			for ( long l = 0; l < loopSize; ++l )
+			{
+				cursorPsiBlurred.fwd();
+				cursorImg.fwd();
+	
+				final float psiBlurredValue = cursorPsiBlurred.get().get();
+				final float imgValue = cursorImg.get().get();
+	
+				cursorPsiBlurred.get().set( imgValue / psiBlurredValue );
+			}
+		}
+		else
+		{
+			final RandomAccess< FloatType > raPsiBlurred = psiBlurred.randomAccess();
+			final Cursor< FloatType > cursorImg = observedImgIterable.localizingCursor();
 
-			final float imgValue = cursorImg.get().get();
-			final float psiBlurredValue = cursorPsiBlurred.get().get();
+			cursorImg.jumpFwd( start );
 
-			cursorPsiBlurred.get().set( imgValue / psiBlurredValue );
+			for ( long l = 0; l < loopSize; ++l )
+			{
+				cursorImg.fwd();
+				raPsiBlurred.setPosition( cursorImg );
+	
+				final float psiBlurredValue = raPsiBlurred.get().get();
+				final float imgValue = cursorImg.get().get();
+	
+				raPsiBlurred.get().set( imgValue / psiBlurredValue );
+			}
 		}
 	}
 
@@ -504,62 +533,120 @@ public class MVDeconvolution
 	private static final void computeFinalValues(
 			final long start,
 			final long loopSize,
-			final Img< FloatType > psi,
-			final Img< FloatType > integral,
-			final Img< FloatType > weight,
+			final RandomAccessibleInterval< FloatType > psi,
+			final RandomAccessibleInterval< FloatType > integral,
+			final RandomAccessibleInterval< FloatType > weight,
 			final double lambda )
 	{
-		// TOOD: check that strategies are compatible! (weights could be different)
-		final Cursor< FloatType > cursorPsi = psi.cursor();
-		final Cursor< FloatType > cursorIntegral = integral.cursor();
-		final Cursor< FloatType > cursorWeight = weight.cursor();
-		
-		cursorPsi.jumpFwd( start );
-		cursorIntegral.jumpFwd( start );
-		cursorWeight.jumpFwd( start );
-		
-		for ( long l = 0; l < loopSize; ++l )
+		final IterableInterval< FloatType > psiIterable = Views.iterable( psi );
+		final IterableInterval< FloatType > integralIterable = Views.iterable( integral );
+		final IterableInterval< FloatType > weightIterable = Views.iterable( weight );
+
+		if (
+			psiIterable.iterationOrder().equals( integralIterable.iterationOrder() ) && 
+			psiIterable.iterationOrder().equals( weightIterable.iterationOrder() ) )
 		{
-			cursorPsi.fwd();
-			cursorIntegral.fwd();
-			cursorWeight.fwd();
+			final Cursor< FloatType > cursorPsi = psiIterable.cursor();
+			final Cursor< FloatType > cursorIntegral = integralIterable.cursor();
+			final Cursor< FloatType > cursorWeight = weightIterable.cursor();
+			
+			cursorPsi.jumpFwd( start );
+			cursorIntegral.jumpFwd( start );
+			cursorWeight.jumpFwd( start );
 
-			final float lastPsiValue = cursorPsi.get().get();
-
-			float value = lastPsiValue * cursorIntegral.get().get();
-
-			if ( value > 0 )
+			for ( long l = 0; l < loopSize; ++l )
 			{
+				cursorPsi.fwd();
+				cursorIntegral.fwd();
+				cursorWeight.fwd();
+	
+				final float lastPsiValue = cursorPsi.get().get();
+	
+				float value = lastPsiValue * cursorIntegral.get().get();
+	
+				if ( value > 0 )
+				{
+					//
+					// perform Tikhonov regularization if desired
+					//
+					if ( lambda > 0 )
+						value = ( (float)( (Math.sqrt( 1.0 + 2.0*lambda*value ) - 1.0) / lambda ) );
+				}
+				else
+				{
+					value = minValue;
+				}
+	
 				//
-				// perform Tikhonov regularization if desired
+				// get the final value and some statistics
 				//
-				if ( lambda > 0 )
-					value = ( (float)( (Math.sqrt( 1.0 + 2.0*lambda*value ) - 1.0) / lambda ) );
+				float nextPsiValue;
+	
+				if ( Double.isNaN( value ) )
+					nextPsiValue = (float)minValue;
+				else
+					nextPsiValue = (float)Math.max( minValue, value );
+	
+				// compute the difference between old and new
+				float change = nextPsiValue - lastPsiValue;
+	
+				// apply the appropriate amount
+				change *= cursorWeight.get().get();
+				nextPsiValue = lastPsiValue + change;
+	
+				// store the new value
+				cursorPsi.get().set( (float)nextPsiValue );
 			}
-			else
+		}
+		else
+		{
+			final Cursor< FloatType > cursorPsi = psiIterable.localizingCursor();
+			final RandomAccess< FloatType > raIntegral = integral.randomAccess();
+			final RandomAccess< FloatType > raWeight = weight.randomAccess();
+
+			for ( long l = 0; l < loopSize; ++l )
 			{
-				value = minValue;
+				cursorPsi.fwd();
+				raIntegral.setPosition( cursorPsi );
+				raWeight.setPosition( cursorPsi );
+	
+				final float lastPsiValue = cursorPsi.get().get();
+	
+				float value = lastPsiValue * raIntegral.get().get();
+	
+				if ( value > 0 )
+				{
+					//
+					// perform Tikhonov regularization if desired
+					//
+					if ( lambda > 0 )
+						value = ( (float)( (Math.sqrt( 1.0 + 2.0*lambda*value ) - 1.0) / lambda ) );
+				}
+				else
+				{
+					value = minValue;
+				}
+	
+				//
+				// get the final value and some statistics
+				//
+				float nextPsiValue;
+	
+				if ( Double.isNaN( value ) )
+					nextPsiValue = (float)minValue;
+				else
+					nextPsiValue = (float)Math.max( minValue, value );
+	
+				// compute the difference between old and new
+				float change = nextPsiValue - lastPsiValue;
+	
+				// apply the appropriate amount
+				change *= raWeight.get().get();
+				nextPsiValue = lastPsiValue + change;
+	
+				// store the new value
+				cursorPsi.get().set( (float)nextPsiValue );
 			}
-
-			//
-			// get the final value and some statistics
-			//
-			float nextPsiValue;
-
-			if ( Double.isNaN( value ) )
-				nextPsiValue = (float)minValue;
-			else
-				nextPsiValue = (float)Math.max( minValue, value );
-
-			// compute the difference between old and new
-			float change = nextPsiValue - lastPsiValue;
-
-			// apply the appropriate amount
-			change *= cursorWeight.get().get();
-			nextPsiValue = lastPsiValue + change;
-
-			// store the new value
-			cursorPsi.get().set( (float)nextPsiValue );
 		}
 	}
 }
