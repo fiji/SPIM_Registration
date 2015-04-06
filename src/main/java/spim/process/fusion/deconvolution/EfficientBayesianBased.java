@@ -76,7 +76,7 @@ public class EfficientBayesianBased extends Fusion
 	public static boolean defaultAdjustBlending = false;
 	public static int defaultDebugInterval = 1;
 	public static double defaultOSEMspeedup = 1;
-	public static boolean defaultSamePSFForAllViews = true;
+	public static boolean defaultSamePSFForAllAnglesIllums = true;
 	public static boolean defaultSamePSFForAllChannels = true;
 	public static boolean defaultTransformPSFs = true;
 	public static ArrayList< String > defaultPSFFileField = null;
@@ -715,21 +715,34 @@ public class EfficientBayesianBased extends Fusion
 			for ( final Channel c : channelsToProcess )
 				this.extractPSFLabels.put( c, new ChannelPSF( c ) );
 
-			final GenericDialogPlus gd = new GenericDialogPlus( "Load PSF File ..." );
+			final List< Angle > anglesToProcess = SpimData2.getAllAnglesSorted( spimData, viewIdsToProcess );
+			final List< Illumination > illumsToProcess = SpimData2.getAllIlluminationsSorted( spimData, viewIdsToProcess );
 
-			gd.addCheckbox( "Use_same_PSF_for_all_views", defaultSamePSFForAllViews );
-			gd.addCheckbox( "Use_same_PSF_for_all_channels", defaultSamePSFForAllChannels );
-			
-			gd.showDialog();
-
-			if ( gd.wasCanceled() )
-				return false;
+			if ( anglesToProcess.size() * illumsToProcess.size() * channelsToProcess.size() > 1 )
+			{
+				final GenericDialogPlus gd = new GenericDialogPlus( "Load PSF File ..." );
+	
+				if ( anglesToProcess.size() * illumsToProcess.size() > 1 )
+					gd.addCheckbox( "Use_same_PSF_for_all_angles/illuminations", defaultSamePSFForAllAnglesIllums );
+	
+				if ( channelsToProcess.size() > 1 )
+					gd.addCheckbox( "Use_same_PSF_for_all_channels", defaultSamePSFForAllChannels );
+				
+				gd.showDialog();
+	
+				if ( gd.wasCanceled() )
+					return false;
+	
+				defaultSamePSFForAllAnglesIllums = gd.getNextBoolean();
+				defaultSamePSFForAllChannels = gd.getNextBoolean();
+			}
+			else
+			{
+				defaultSamePSFForAllAnglesIllums = defaultSamePSFForAllChannels = true;
+			}
 
 			final GenericDialogPlus gd2 = new GenericDialogPlus( "Select PSF File ..." );
-			
-			defaultSamePSFForAllViews = gd.getNextBoolean();
-			defaultSamePSFForAllChannels = gd.getNextBoolean();
-					
+
 			gd2.addCheckbox( "Transform_PSFs", defaultTransformPSFs );
 			gd2.addMessage( "" );
 			gd2.addMessage( "Note: the calibration of the PSF(s) has to match the calibration of the input views\n" +
@@ -737,10 +750,7 @@ public class EfficientBayesianBased extends Fusion
 
 			int numPSFs;
 
-			final List< Angle > anglesToProcess = SpimData2.getAllAnglesSorted( spimData, viewIdsToProcess );
-			final List< Illumination > illumsToProcess = SpimData2.getAllIlluminationsSorted( spimData, viewIdsToProcess );
-
-			if ( defaultSamePSFForAllViews )
+			if ( defaultSamePSFForAllAnglesIllums )
 				numPSFs = 1;
 			else // TODO: ignores potentially missing or not existing views 
 				numPSFs = anglesToProcess.size() * illumsToProcess.size();
@@ -758,7 +768,7 @@ public class EfficientBayesianBased extends Fusion
 				for ( int i = numPSFs; i < defaultPSFFileField.size(); ++i )
 					defaultPSFFileField.remove( numPSFs );
 
-			if ( defaultSamePSFForAllViews )
+			if ( defaultSamePSFForAllAnglesIllums )
 			{
 				if ( defaultSamePSFForAllChannels )
 				{
@@ -807,7 +817,7 @@ public class EfficientBayesianBased extends Fusion
 				
 			psfFiles = new HashMap< Channel, ArrayList< Pair< Pair< Angle,Illumination >, String > > >();
 			
-			if ( defaultSamePSFForAllViews )
+			if ( defaultSamePSFForAllAnglesIllums )
 			{
 				if ( defaultSamePSFForAllChannels )
 				{
