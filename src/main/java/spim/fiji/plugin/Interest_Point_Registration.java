@@ -145,6 +145,7 @@ public class Interest_Point_Registration implements PlugIn
 
 		// ask which channels have the objects we are searching for
 		final List< Channel > channels = SpimData2.getAllChannelsSorted( data, viewIds );
+		final int nAllChannels = data.getSequenceDescription().getAllChannelsOrdered().size();
 
 		// build up the dialog
 		final GenericDialog gd = new GenericDialog( "Basic Registration Parameters" );
@@ -171,8 +172,8 @@ public class Interest_Point_Registration implements PlugIn
 
 		gd.addChoice( "Type_of_registration", choicesGlobal, choicesGlobal[ defaultRegistrationType ] );
 		
-		if ( defaultChannelLabels == null || defaultChannelLabels.length != channels.size() )
-			defaultChannelLabels = new int[ channels.size() ];
+		if ( defaultChannelLabels == null || defaultChannelLabels.length != nAllChannels )
+			defaultChannelLabels = new int[ nAllChannels ];
 
 		// check which channels and labels are available and build the choices
 		final ArrayList< String[] > channelLabels = new ArrayList< String[] >();
@@ -181,12 +182,9 @@ public class Interest_Point_Registration implements PlugIn
 		{
 			final String[] labels = getAllInterestPointLabelsForChannel( data, viewIds, channel, "register" );
 
-			if ( channelLabels == null )
-				return false;
-
 			if ( defaultChannelLabels[ channel.getId() ] >= labels.length )
 				defaultChannelLabels[ channel.getId() ] = 0;
-			
+
 			gd.addChoice( "Interest_points_channel_" + channel.getName(), labels, labels[ defaultChannelLabels[ i++ ] ] );
 			channelLabels.add( labels );
 		}
