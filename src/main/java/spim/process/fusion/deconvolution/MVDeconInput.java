@@ -37,7 +37,7 @@ public class MVDeconInput
 	 * 
 	 * @param exponentialKernel - use exponential kernel?
 	 * 
-	 * @return the same instance again for convinience
+	 * @return the same instance again for convenience
 	 * @throws IncompatibleTypeException 
 	 */
 	public MVDeconInput init( final PSFTYPE iterationType ) throws IncompatibleTypeException

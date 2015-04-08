@@ -51,7 +51,7 @@ public class FusionHelper
 		return angleName;
 	}
 
-	public static final boolean intersects( final float x, final float y, final float z, final int sx, final int sy, final int sz )
+	public static final boolean intersects( final double x, final double y, final double z, final long sx, final long sy, final long sz )
 	{
 		if ( x >= 0 && y >= 0 && z >= 0 && x < sx && y < sy && z < sz )
 			return true;
