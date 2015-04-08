@@ -306,9 +306,10 @@ public class ThinOut_Detections implements PlugIn
 		final GenericDialog gd = new GenericDialog( "Choose segmentations to thin out" );
 
 		final List< Channel > channels = SpimData2.getAllChannelsSorted( spimData, viewIds );
+		final int nAllChannels = spimData.getSequenceDescription().getAllChannelsOrdered().size();
 
-		if ( Interest_Point_Registration.defaultChannelLabels == null || Interest_Point_Registration.defaultChannelLabels.length != channels.size() )
-			Interest_Point_Registration.defaultChannelLabels = new int[ channels.size() ];
+		if ( Interest_Point_Registration.defaultChannelLabels == null || Interest_Point_Registration.defaultChannelLabels.length != nAllChannels )
+			Interest_Point_Registration.defaultChannelLabels = new int[ nAllChannels ];
 
 		if ( defaultShowHistogram == null || defaultShowHistogram.length != channels.size() )
 		{

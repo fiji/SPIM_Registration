@@ -74,12 +74,13 @@ public class Visualize_Detections implements PlugIn
 	{
 		// ask which channels have the objects we are searching for
 		final List< Channel > channels = spimData.getSequenceDescription().getAllChannelsOrdered();
+		final int nAllChannels = spimData.getSequenceDescription().getAllChannelsOrdered().size();
 
 		// build up the dialog
 		final GenericDialog gd = new GenericDialog( "Choose segmentations to display" );
 
-		if ( Interest_Point_Registration.defaultChannelLabels == null || Interest_Point_Registration.defaultChannelLabels.length != channels.size() )
-			Interest_Point_Registration.defaultChannelLabels = new int[ channels.size() ];
+		if ( Interest_Point_Registration.defaultChannelLabels == null || Interest_Point_Registration.defaultChannelLabels.length != nAllChannels )
+			Interest_Point_Registration.defaultChannelLabels = new int[ nAllChannels ];
 
 		// check which channels and labels are available and build the choices
 		final ArrayList< String[] > channelLabels = new ArrayList< String[] >();
