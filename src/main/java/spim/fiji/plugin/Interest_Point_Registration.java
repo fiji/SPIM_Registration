@@ -692,7 +692,7 @@ public class Interest_Point_Registration implements PlugIn
 					viewId.getTimePointId(), viewId.getViewSetupId() );
 
 			// check if the view is present
-			if ( !viewDescription.isPresent() )
+			if ( !viewDescription.isPresent() || viewDescription.getViewSetup().getChannel().getId() != channel.getId() )
 				continue;
 			
 			// which lists of interest points are available
@@ -749,6 +749,7 @@ public class Interest_Point_Registration implements PlugIn
 
 	public static void main( String[] args )
 	{
+		LoadParseQueryXML.defaultXMLfilename = "/Users/preibischs/Downloads/worm7bugtester/worm7.xml";
 		new ImageJ();
 		new Interest_Point_Registration().run( null );
 	}
