@@ -453,7 +453,10 @@ public class EfficientBayesianBased extends Fusion
 			else if ( displayPSF == 3 )
 			{
 				for ( int i = 0; i < ePSF.getTransformedPSFs().size(); ++i )
-					di.exportImage( ePSF.getTransformedPSFs().get( i ), "transfomed PSF of viewsetup " + ePSF.getViewIdsForPSFs().get( i ).getViewSetupId() );
+				{
+					final ViewId viewId = ePSF.getViewIdsForPSFs().get( i );
+					di.exportImage( ePSF.getTransformedPSFs().get( viewId ), "transfomed PSF of viewsetup " + viewId.getViewSetupId() );
+				}
 			}
 			else if ( displayPSF == 4 )
 			{
@@ -462,7 +465,10 @@ public class EfficientBayesianBased extends Fusion
 			else if ( displayPSF == 5 )
 			{
 				for ( int i = 0; i < ePSF.getInputCalibrationPSFs().size(); ++i )
-					di.exportImage( ePSF.getInputCalibrationPSFs().get( i ), "original PSF of viewsetup " + ePSF.getViewIdsForPSFs().get( i ).getViewSetupId() );
+				{
+					final ViewId viewId = ePSF.getViewIdsForPSFs().get( i );
+					di.exportImage( ePSF.getInputCalibrationPSFs().get( viewId ), "original PSF of viewsetup " + viewId.getViewSetupId() );
+				}
 			}
 		}
 	}
