@@ -43,6 +43,7 @@ import spim.fiji.spimdata.explorer.popup.LabelPopUp;
 import spim.fiji.spimdata.explorer.popup.RegisterInterestPointsPopup;
 import spim.fiji.spimdata.explorer.popup.RegistrationExplorerPopup;
 import spim.fiji.spimdata.explorer.popup.RemoveDetectionsPopup;
+import spim.fiji.spimdata.explorer.popup.RemoveTransformationPopup;
 import spim.fiji.spimdata.explorer.popup.ResavePopup;
 import spim.fiji.spimdata.explorer.popup.Separator;
 import spim.fiji.spimdata.explorer.popup.SpecifyCalibrationPopup;
@@ -76,6 +77,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		staticPopups.add( new RegistrationExplorerPopup() );
 		staticPopups.add( new SpecifyCalibrationPopup() );
 		staticPopups.add( new ApplyTransformationPopup() );
+		staticPopups.add( new RemoveTransformationPopup() );
 		staticPopups.add( new Separator() );
 
 		staticPopups.add( new LabelPopUp( " Interest Points" ) );
