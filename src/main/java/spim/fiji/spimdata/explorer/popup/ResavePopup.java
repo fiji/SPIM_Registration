@@ -106,7 +106,7 @@ public class ResavePopup extends JMenu implements ViewExplorerSetable
 						question = "Resaving all views of the current dataset.\n";
 
 					if ( JOptionPane.showConfirmDialog( null,
-							question + "Note: this will first save the currently open dataset. Proceed?",
+							question + "Note: this will first save the current state of the open XML. Proceed?",
 							"Warning",
 							JOptionPane.YES_NO_OPTION ) == JOptionPane.NO_OPTION )
 						return;
