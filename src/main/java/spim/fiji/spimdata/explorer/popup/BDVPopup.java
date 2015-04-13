@@ -10,10 +10,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
 import mpicbg.spim.data.registration.ViewRegistration;
-import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.apply.BigDataViewerTransformationWindow;
-import spim.fiji.spimdata.SpimDataWrapper;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import bdv.AbstractSpimSource;
@@ -74,10 +72,9 @@ public class BDVPopup extends JMenuItem implements ViewExplorerSetable
 								return;
 						}
 
-						// TODO: Remove the wrapper
 						try
 						{
-							bdv = new BigDataViewer( new SpimDataWrapper( panel.getSpimData() ), panel.xml(), null );
+							bdv = new BigDataViewer( panel.getSpimData(), panel.xml(), null );
 						}
 						catch (Exception e)
 						{

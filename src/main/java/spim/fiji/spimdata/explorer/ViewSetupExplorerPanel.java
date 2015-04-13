@@ -32,7 +32,6 @@ import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.SpimDataWrapper;
 import spim.fiji.spimdata.explorer.popup.ApplyTransformationPopup;
 import spim.fiji.spimdata.explorer.popup.BDVPopup;
 import spim.fiji.spimdata.explorer.popup.DetectInterestPointsPopup;
@@ -116,7 +115,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		if ( Hdf5ImageLoader.class.isInstance( data.getSequenceDescription().getImgLoader() ) )
 			for ( final ViewExplorerSetable s : staticPopups )
 				if ( BDVPopup.class.isInstance( s ) )
-					((BDVPopup)s).bdv = new BigDataViewer( new SpimDataWrapper( getSpimData() ), xml(), null );
+					((BDVPopup)s).bdv = new BigDataViewer( getSpimData(), xml(), null );
 	}
 
 	public BDVPopup bdvPopup()
