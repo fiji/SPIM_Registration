@@ -16,6 +16,7 @@ import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import bdv.AbstractSpimSource;
 import bdv.BigDataViewer;
+import bdv.tools.InitializeViewerState;
 import bdv.tools.transformation.TransformedSource;
 import bdv.viewer.Source;
 import bdv.viewer.ViewerPanel;
@@ -75,6 +76,8 @@ public class BDVPopup extends JMenuItem implements ViewExplorerSetable
 						try
 						{
 							bdv = new BigDataViewer( panel.getSpimData(), panel.xml(), null );
+//							if ( !bdv.tryLoadSettings( panel.xml() ) ) TODO: this should work, but currently tryLoadSettings is protected. fix that.
+								InitializeViewerState.initBrightness( 0.001, 0.999, bdv.getViewer(), bdv.getSetupAssignments() );
 						}
 						catch (Exception e)
 						{

@@ -41,6 +41,7 @@ import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
 import bdv.BigDataViewer;
+import bdv.tools.InitializeViewerState;
 
 public class Apply_Transformation implements PlugIn
 {
@@ -224,6 +225,7 @@ public class Apply_Transformation implements PlugIn
 		{
 			// TODO: Remove the wrapper
 			final BigDataViewer bdv = new BigDataViewer( data, "Set dataset transformation", null );
+			InitializeViewerState.initBrightness( 0.001, 0.999, bdv.getViewer(), bdv.getSetupAssignments() );
 
 			try
 			{
