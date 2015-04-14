@@ -71,8 +71,6 @@ public class GeometricHashingPairwise implements Callable< PairwiseMatch >
     	
 		pair.setCandidates( candidates );
 
-		System.out.println( candidates + " Processing: " + pair.getViewIdA().getViewSetupId() + " " + pair.getViewIdB().getViewSetupId() );
-
     	// compute ransac and remove inconsistent candidates
     	final ArrayList< PointMatchGeneric< Detection > > inliers = new ArrayList< PointMatchGeneric< Detection > >();
 
