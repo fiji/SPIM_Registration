@@ -48,7 +48,7 @@ public class NativeLibraryTools
 		else
 			dir = new File( directory );
 		
-		gd.addDirectoryField( "Directory", dir.getAbsolutePath(), 80 );
+		gd.addDirectoryField( "CUDA_Directory", dir.getAbsolutePath(), 80 );
 		
 		gd.showDialog();
 		
