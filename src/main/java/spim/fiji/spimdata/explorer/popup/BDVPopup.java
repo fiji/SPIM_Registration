@@ -105,7 +105,7 @@ public class BDVPopup extends JMenuItem implements ViewExplorerSetable
 //		if ( !bdv.tryLoadSettings( panel.xml() ) ) TODO: this should work, but currently tryLoadSettings is protected. fix that.
 			InitializeViewerState.initBrightness( 0.001, 0.999, bdv.getViewer(), bdv.getSetupAssignments() );
 		
-		ViewSetupExplorerPanel.updateBDV( bdv, panel.getSpimData(), panel.firstSelectedVD(), panel.selectedRows() );
+		ViewSetupExplorerPanel.updateBDV( bdv, panel.colorMode(), panel.getSpimData(), panel.firstSelectedVD(), panel.selectedRows() );
 
 		return bdv;
 	}

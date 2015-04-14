@@ -34,7 +34,6 @@ import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.type.numeric.ARGBType;
-import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.popup.ApplyTransformationPopup;
 import spim.fiji.spimdata.explorer.popup.BDVPopup;
@@ -151,6 +150,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		return null;
 	}
 
+	public boolean colorMode() { return colorMode; }
 	public BasicViewDescription< ? extends BasicViewSetup > firstSelectedVD() { return firstSelectedVD; }
 	public ViewSetupTableModel< AS > getTableModel() { return tableModel; }
 	public AS getSpimData() { return data; }
@@ -238,7 +238,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		if ( isMac )
 			addAppleA();
 
-		addSelectSubset();
+		addColorMode();
 
 		table.setPreferredScrollableViewportSize( new Dimension( 750, 300 ) );
 		table.getColumnModel().getColumn( 0 ).setPreferredWidth( 20 );
@@ -338,13 +338,14 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 				}
 
 				if ( b != null && b.bdv != null )
-					updateBDV( b.bdv, data, firstSelectedVD, selectedRows );
+					updateBDV( b.bdv, colorMode, data, firstSelectedVD, selectedRows );
 			}
 		};
 	}
 
 	public static void updateBDV(
 			final BigDataViewer bdv,
+			final boolean colorMode,
 			final AbstractSpimData< ? > data,
 			BasicViewDescription< ? extends BasicViewSetup > firstVD,
 			final Collection< ? extends BasicViewDescription< ? extends BasicViewSetup > > selectedRows )
@@ -368,8 +369,10 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 			if ( vd.getTimePointId() == firstTP.getId() )
 				active[ getBDVSourceIndex( vd.getViewSetup(), data ) ] = true;
 
-		if ( selectedRows.size() > 1 )
+		if ( selectedRows.size() > 1 && colorMode )
 			colorSources( bdv.getSetupAssignments().getConverterSetups(), 0 );
+		else
+			whiteSources( bdv.getSetupAssignments().getConverterSetups() );
 
 		setVisibleSources( bdv.getViewer().getVisibilityAndGrouping(), active );
 	}
@@ -392,6 +395,12 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 	{
 		for ( int i = 0; i < cs.size(); ++i )
 			cs.get( i ).setColor( new ARGBType( ColorStream.get( i + j ) ) );
+	}
+
+	public static void whiteSources( final List< ConverterSetup > cs )
+	{
+		for ( int i = 0; i < cs.size(); ++i )
+			cs.get( i ).setColor( new ARGBType( ARGBType.rgba( 255, 255, 255, 0 ) ) );
 	}
 
 	public static void setVisibleSources( final VisibilityAndGrouping vag, final boolean[] active )
@@ -480,18 +489,22 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		table.setComponentPopupMenu( popupMenu );
 	}
 
-	protected void addSelectSubset()
+	protected void addColorMode()
 	{
 		table.addKeyListener( new KeyListener()
 		{
-
 			@Override
 			public void keyPressed( final KeyEvent arg0 )
 			{
-				if ( arg0.getKeyChar() == '+' )
+				if ( arg0.getKeyChar() == 'c' || arg0.getKeyChar() == 'C' )
 				{
-					LoadParseQueryXML xml = new LoadParseQueryXML();
-					xml.queryXML();
+					colorMode = !colorMode;
+					
+					System.out.println( "colormode" );
+
+					final BDVPopup p = bdvPopup();
+					if ( p != null && p.bdv != null && p.bdv.getViewerFrame().isVisible() )
+						updateBDV( p.bdv, colorMode, data, null, selectedRows );
 				}
 			}
 

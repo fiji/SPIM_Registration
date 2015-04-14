@@ -68,7 +68,7 @@ public class BigDataViewerBoundingBox extends ManualBoundingBox
 			for ( final ViewId viewId : viewIdsToProcess )
 				vds.add( spimData.getSequenceDescription().getViewDescription( viewId ) );
 
-			ViewSetupExplorerPanel.updateBDV( bdv, spimData, null, vds );
+			ViewSetupExplorerPanel.updateBDV( bdv, true, spimData, null, vds );
 		}
 		else if ( popup.bdv == null )
 		{
