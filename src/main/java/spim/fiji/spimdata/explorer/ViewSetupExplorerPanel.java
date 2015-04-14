@@ -11,6 +11,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -24,6 +25,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 
+import net.imglib2.type.numeric.ARGBType;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
@@ -50,12 +52,14 @@ import spim.fiji.spimdata.explorer.popup.Separator;
 import spim.fiji.spimdata.explorer.popup.SpecifyCalibrationPopup;
 import spim.fiji.spimdata.explorer.popup.ViewExplorerSetable;
 import spim.fiji.spimdata.explorer.popup.VisualizeDetectionsPopup;
+import spim.fiji.spimdata.explorer.util.ColorStream;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import bdv.BigDataViewer;
 import bdv.img.hdf5.Hdf5ImageLoader;
 import bdv.tools.InitializeViewerState;
+import bdv.tools.brightness.ConverterSetup;
 import bdv.viewer.DisplayMode;
 import bdv.viewer.VisibilityAndGrouping;
 
@@ -313,22 +317,27 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 						selectedRows.add( tableModel.getElements().get( row ) );
 					}
 
-					// always use the first timepoint
-					final TimePoint firstTP = firstVD.getTimePoint();
-					b.bdv.getViewer().setTimepoint( getBDVTimePointIndex( firstTP, data ) );
-
-					final List< ? extends BasicViewSetup > list = data.getSequenceDescription().getViewSetupsOrdered();
-					final boolean[] active = new boolean[ list.size() ];
-
-					for ( final BasicViewDescription< ? > vd : selectedRows )
-						if ( vd.getTimePointId() == firstTP.getId() )
-							active[ getBDVSourceIndex( vd.getViewSetup(), data ) ] = true;
-
-					if ( doInitialColoring )
+					if ( b != null && b.bdv != null )
 					{
-						doInitialColoring = false;
+						// always use the first timepoint
+						final TimePoint firstTP = firstVD.getTimePoint();
+						b.bdv.getViewer().setTimepoint( getBDVTimePointIndex( firstTP, data ) );
+	
+						final List< ? extends BasicViewSetup > list = data.getSequenceDescription().getViewSetupsOrdered();
+						final boolean[] active = new boolean[ list.size() ];
+	
+						for ( final BasicViewDescription< ? > vd : selectedRows )
+							if ( vd.getTimePointId() == firstTP.getId() )
+								active[ getBDVSourceIndex( vd.getViewSetup(), data ) ] = true;
+	
+						if ( doInitialColoring )
+						{
+							doInitialColoring = false;
+							colorSources( b.bdv.getSetupAssignments().getConverterSetups(), 0 );
+						}
+	
+						setVisibleSources( b.bdv.getViewer().getVisibilityAndGrouping(), active );
 					}
-					setVisibleSources( b.bdv.getViewer().getVisibilityAndGrouping(), active );
 				}
 				else
 				{
@@ -363,6 +372,12 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 				}
 			}
 		};
+	}
+
+	public static void colorSources( final List< ConverterSetup > cs, final long j )
+	{
+		for ( int i = 0; i < cs.size(); ++i )
+			cs.get( i ).setColor( new ARGBType( ColorStream.get( i + j ) ) );
 	}
 
 	public static void setVisibleSources( final VisibilityAndGrouping vag, final boolean[] active )
