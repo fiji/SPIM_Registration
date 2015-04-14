@@ -31,7 +31,6 @@ import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
@@ -57,11 +56,14 @@ import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import bdv.BigDataViewer;
 import bdv.img.hdf5.Hdf5ImageLoader;
 import bdv.tools.InitializeViewerState;
+import bdv.viewer.DisplayMode;
 import bdv.viewer.VisibilityAndGrouping;
 
 public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > > extends JPanel
 {
 	final static ArrayList< ViewExplorerSetable > staticPopups = new ArrayList< ViewExplorerSetable >();
+
+	public static boolean doInitialColoring = true;
 
 	static
 	{
@@ -288,6 +290,11 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 			{
 				BDVPopup b = bdvPopup();
 
+				// we always set the fused mode
+				if ( b != null && b.bdv != null )
+					if ( b.bdv.getViewer().getVisibilityAndGrouping().getDisplayMode() != DisplayMode.FUSED )
+						b.bdv.getViewer().getVisibilityAndGrouping().setDisplayMode( DisplayMode.FUSED );
+
 				if ( table.getSelectedRowCount() != 1 )
 				{
 					lastRow = -1;
@@ -297,8 +304,31 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 
 					selectedRows.clear();
 
+					BasicViewDescription< ? > firstVD = null;
 					for ( final int row : table.getSelectedRows() )
+					{
+						if ( firstVD == null )
+							firstVD = tableModel.getElements().get( row );
+
 						selectedRows.add( tableModel.getElements().get( row ) );
+					}
+
+					// always use the first timepoint
+					final TimePoint firstTP = firstVD.getTimePoint();
+					b.bdv.getViewer().setTimepoint( getBDVTimePointIndex( firstTP, data ) );
+
+					final List< ? extends BasicViewSetup > list = data.getSequenceDescription().getViewSetupsOrdered();
+					final boolean[] active = new boolean[ list.size() ];
+
+					for ( final BasicViewDescription< ? > vd : selectedRows )
+						if ( vd.getTimePointId() == firstTP.getId() )
+							active[ getBDVSourceIndex( vd.getViewSetup(), data ) ] = true;
+
+					if ( doInitialColoring )
+					{
+						doInitialColoring = false;
+					}
+					setVisibleSources( b.bdv.getViewer().getVisibilityAndGrouping(), active );
 				}
 				else
 				{
@@ -318,15 +348,27 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 
 						if ( b != null && b.bdv != null )
 						{
-							// fused mode?
-							final VisibilityAndGrouping vag = b.bdv.getViewer().getVisibilityAndGrouping();
-							vag.setCurrentSource( getBDVSourceIndex( vd.getViewSetup(), data) );
 							b.bdv.getViewer().setTimepoint( getBDVTimePointIndex( vd.getTimePoint(), data ) );
+
+							final int sourceIndex = getBDVSourceIndex( vd.getViewSetup(), data );
+
+							final List< ? extends BasicViewSetup > list = data.getSequenceDescription().getViewSetupsOrdered();
+							final boolean[] active = new boolean[ list.size() ];
+
+							active[ sourceIndex ] = true;
+
+							setVisibleSources( b.bdv.getViewer().getVisibilityAndGrouping(), active );
 						}
 					}
 				}
 			}
 		};
+	}
+
+	public static void setVisibleSources( final VisibilityAndGrouping vag, final boolean[] active )
+	{
+		for ( int i = 0; i < active.length; ++i )
+			vag.setSourceActive( i, active[ i ] );
 	}
 
 	public static int getBDVTimePointIndex( final TimePoint t, final AbstractSpimData< ? > data )
