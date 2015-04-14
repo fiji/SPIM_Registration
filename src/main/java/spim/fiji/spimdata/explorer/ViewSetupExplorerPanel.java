@@ -29,7 +29,9 @@ import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
+import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
@@ -54,6 +56,8 @@ import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import bdv.BigDataViewer;
 import bdv.img.hdf5.Hdf5ImageLoader;
+import bdv.tools.InitializeViewerState;
+import bdv.viewer.VisibilityAndGrouping;
 
 public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > > extends JPanel
 {
@@ -116,9 +120,17 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		initComponent();
 
 		if ( Hdf5ImageLoader.class.isInstance( data.getSequenceDescription().getImgLoader() ) )
-			for ( final ViewExplorerSetable s : staticPopups )
-				if ( BDVPopup.class.isInstance( s ) )
-					((BDVPopup)s).bdv = new BigDataViewer( getSpimData(), xml(), null );
+		{
+			final BDVPopup bdvpopup = bdvPopup();
+			
+			if ( bdvpopup != null )
+			{
+				bdvpopup.bdv = new BigDataViewer( getSpimData(), xml(), null );
+
+//				if ( !bdv.tryLoadSettings( panel.xml() ) ) TODO: this should work, but currently tryLoadSettings is protected. fix that.
+					InitializeViewerState.initBrightness( 0.001, 0.999, bdvpopup.bdv.getViewer(), bdvpopup.bdv.getSetupAssignments() );
+			}
+		}
 	}
 
 	public BDVPopup bdvPopup()
@@ -129,6 +141,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 
 		return null;
 	}
+
 	public ViewSetupTableModel< AS > getTableModel() { return tableModel; }
 	public AS getSpimData() { return data; }
 	public String xml() { return xml; }
@@ -273,6 +286,8 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 			@Override
 			public void valueChanged( final ListSelectionEvent arg0 )
 			{
+				BDVPopup b = bdvPopup();
+
 				if ( table.getSelectedRowCount() != 1 )
 				{
 					lastRow = -1;
@@ -299,11 +314,41 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 							listeners.get( i ).seletedViewDescription( vd );
 
 						selectedRows.clear();
-						selectedRows.add(vd );
+						selectedRows.add( vd );
+
+						if ( b != null && b.bdv != null )
+						{
+							// fused mode?
+							final VisibilityAndGrouping vag = b.bdv.getViewer().getVisibilityAndGrouping();
+							vag.setCurrentSource( getBDVSourceIndex( vd.getViewSetup(), data) );
+							b.bdv.getViewer().setTimepoint( getBDVTimePointIndex( vd.getTimePoint(), data ) );
+						}
 					}
 				}
 			}
 		};
+	}
+
+	public static int getBDVTimePointIndex( final TimePoint t, final AbstractSpimData< ? > data )
+	{
+		final List< TimePoint > list = data.getSequenceDescription().getTimePoints().getTimePointsOrdered();
+
+		for ( int i = 0; i < list.size(); ++i )
+			if ( list.get( i ).getId() == t.getId() )
+				return i;
+
+		return 0;
+	}
+
+	public static int getBDVSourceIndex( final BasicViewSetup vs, final AbstractSpimData< ? > data )
+	{
+		final List< ? extends BasicViewSetup > list = data.getSequenceDescription().getViewSetupsOrdered();
+		
+		for ( int i = 0; i < list.size(); ++i )
+			if ( list.get( i ).getId() == vs.getId() )
+				return i;
+
+		return 0;
 	}
 
 	public HashSet< BasicViewDescription< ? extends BasicViewSetup > > getSelectedRows() { return selectedRows; }
