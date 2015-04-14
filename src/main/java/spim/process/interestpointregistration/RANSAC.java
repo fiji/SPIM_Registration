@@ -81,7 +81,7 @@ public class RANSAC
 		}
 			
 		final NumberFormat nf = NumberFormat.getPercentInstance();
-		final double ratio = (inliers.size() / candidates.size());
+		final double ratio = ( (double)inliers.size() / (double)candidates.size() );
 		
 		if ( modelFound && inliers.size() >= minNumCorrespondences )
 		{			
