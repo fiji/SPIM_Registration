@@ -172,6 +172,13 @@ public class BigDataViewerBoundingBox extends ManualBoundingBox
 						}
 
 						lock.set( true );
+
+						try
+						{
+							synchronized ( lock ) { lock.notifyAll(); }
+						}
+						catch (Exception e1) {}
+
 					}
 				} );
 
@@ -187,7 +194,11 @@ public class BigDataViewerBoundingBox extends ManualBoundingBox
 
 		do
 		{
-			try { Thread.sleep( 10 ); } catch (Exception e) {}
+			try
+			{
+				synchronized ( lock ) { lock.wait(); }
+			}
+			catch (Exception e) {}
 		}
 		while ( lock.get() == false );
 
