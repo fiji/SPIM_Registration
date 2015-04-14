@@ -47,7 +47,7 @@ public class ColorStream
 		return ( ( ( r << 8 ) | g ) << 8 ) | b | 0xff000000;
 	}
 
-	final static int get( final long index )
+	final public static int get( final long index )
 	{
 		double x = goldenRatio * index;
 		x -= ( long )x;
