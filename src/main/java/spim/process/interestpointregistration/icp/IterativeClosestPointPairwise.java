@@ -48,6 +48,14 @@ public class IterativeClosestPointPairwise implements Callable< PairwiseMatch >
 		for ( final InterestPoint i : pair.getListB() )
 			listB.add( new Detection( i.getId(), i.getL() ) );
 
+		if ( listA.size() < 1 || listB.size() < 1 )
+		{
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): " + comparison + ": Not enough detections to match" );
+			pair.setCandidates( new ArrayList<PointMatchGeneric<Detection>>() );
+			pair.setInliers( new ArrayList<PointMatchGeneric<Detection>>() );
+			return pair;
+		}
+
 		// use the world and not the local coordinates
 		for ( final Detection d : listA )
 			d.setUseW( true );

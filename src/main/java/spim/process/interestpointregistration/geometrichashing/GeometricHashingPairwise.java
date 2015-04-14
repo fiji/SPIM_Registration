@@ -54,6 +54,14 @@ public class GeometricHashingPairwise implements Callable< PairwiseMatch >
 		for ( final InterestPoint i : pair.getListB() )
 			listB.add( new Detection( i.getId(), i.getL() ) );
 
+		if ( listA.size() < 4 || listB.size() < 4 )
+		{
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): " + comparison + ": Not enough detections to match" );
+			pair.setCandidates( new ArrayList<PointMatchGeneric<Detection>>() );
+			pair.setInliers( new ArrayList<PointMatchGeneric<Detection>>() );
+			return pair;
+		}
+
 		final ArrayList< PointMatchGeneric< Detection > > candidates = hasher.extractCorrespondenceCandidates( 
 				listA, 
 				listB, 
@@ -62,7 +70,9 @@ public class GeometricHashingPairwise implements Callable< PairwiseMatch >
 				gp.getUseAssociatedBeads() );
     	
 		pair.setCandidates( candidates );
-		
+
+		System.out.println( candidates + " Processing: " + pair.getViewIdA().getViewSetupId() + " " + pair.getViewIdB().getViewSetupId() );
+
     	// compute ransac and remove inconsistent candidates
     	final ArrayList< PointMatchGeneric< Detection > > inliers = new ArrayList< PointMatchGeneric< Detection > >();
 
@@ -71,7 +81,7 @@ public class GeometricHashingPairwise implements Callable< PairwiseMatch >
 		pair.setInliers( inliers );
 
     	IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): " + comparison + ": " + result );
-		
+
 		return pair;
 	}
 }
