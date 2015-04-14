@@ -297,7 +297,12 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 				// we always set the fused mode
 				if ( b != null && b.bdv != null )
 					if ( b.bdv.getViewer().getVisibilityAndGrouping().getDisplayMode() != DisplayMode.FUSED )
+					{
+						final boolean[] active = new boolean[ data.getSequenceDescription().getViewSetupsOrdered().size() ];
+						active[ 0 ] = true;
+						setVisibleSources( b.bdv.getViewer().getVisibilityAndGrouping(), active );
 						b.bdv.getViewer().getVisibilityAndGrouping().setDisplayMode( DisplayMode.FUSED );
+					}
 
 				if ( table.getSelectedRowCount() != 1 )
 				{
@@ -323,8 +328,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 						final TimePoint firstTP = firstVD.getTimePoint();
 						b.bdv.getViewer().setTimepoint( getBDVTimePointIndex( firstTP, data ) );
 	
-						final List< ? extends BasicViewSetup > list = data.getSequenceDescription().getViewSetupsOrdered();
-						final boolean[] active = new boolean[ list.size() ];
+						final boolean[] active = new boolean[ data.getSequenceDescription().getViewSetupsOrdered().size() ];
 	
 						for ( final BasicViewDescription< ? > vd : selectedRows )
 							if ( vd.getTimePointId() == firstTP.getId() )
