@@ -31,6 +31,7 @@ import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.SpimDataWrapper;
 import spim.fiji.spimdata.explorer.popup.ApplyTransformationPopup;
@@ -215,6 +216,8 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		if ( isMac )
 			addAppleA();
 
+		addSelectSubset();
+
 		table.setPreferredScrollableViewportSize( new Dimension( 750, 300 ) );
 		table.getColumnModel().getColumn( 0 ).setPreferredWidth( 20 );
 		table.getColumnModel().getColumn( 1 ).setPreferredWidth( 15 );
@@ -362,6 +365,28 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		table.setComponentPopupMenu( popupMenu );
 	}
 
+	protected void addSelectSubset()
+	{
+		table.addKeyListener( new KeyListener()
+		{
+
+			@Override
+			public void keyPressed( final KeyEvent arg0 )
+			{
+				if ( arg0.getKeyChar() == '+' )
+				{
+					LoadParseQueryXML xml = new LoadParseQueryXML();
+					xml.queryXML();
+				}
+			}
+
+			@Override
+			public void keyReleased( final KeyEvent arg0 ) {}
+
+			@Override
+			public void keyTyped( final KeyEvent arg0 ) {}
+		} );
+	}
 	protected void addAppleA()
 	{
 		table.addKeyListener( new KeyListener()
