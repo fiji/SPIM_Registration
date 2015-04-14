@@ -60,6 +60,10 @@ public class BDVPopup extends JMenuItem implements ViewExplorerSetable
 				@Override
 				public void run()
 				{
+					// if BDV was closed by the user
+					if ( !bdv.getViewerFrame().isVisible() )
+						bdv = null;
+
 					if ( bdv == null )
 					{
 						if ( AbstractImgLoader.class.isInstance( panel.getSpimData().getSequenceDescription().getImgLoader() ) )
@@ -78,6 +82,8 @@ public class BDVPopup extends JMenuItem implements ViewExplorerSetable
 							bdv = new BigDataViewer( panel.getSpimData(), panel.xml(), null );
 //							if ( !bdv.tryLoadSettings( panel.xml() ) ) TODO: this should work, but currently tryLoadSettings is protected. fix that.
 								InitializeViewerState.initBrightness( 0.001, 0.999, bdv.getViewer(), bdv.getSetupAssignments() );
+							
+							ViewSetupExplorerPanel.updateBDV( bdv, panel.getSpimData(), panel.firstSelectedVD(), panel.selectedRows() );
 						}
 						catch (Exception e)
 						{
