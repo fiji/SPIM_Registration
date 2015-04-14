@@ -149,6 +149,10 @@ public class BigDataViewerTransformationWindow
 				if ( bdv != null )
 					bdv.getViewer().getState().getViewerTransform( t );
 
+				t.set( 0, 0, 3 );
+				t.set( 0, 1, 3 );
+				t.set( 0, 2, 3 );
+
 				if ( ignoreScaling )
 				{
 					final double[] m = new double[ 16 ];

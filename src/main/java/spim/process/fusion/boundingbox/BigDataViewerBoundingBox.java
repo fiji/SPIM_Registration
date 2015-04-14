@@ -3,6 +3,7 @@ package spim.process.fusion.boundingbox;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -10,12 +11,15 @@ import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 
-import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.generic.AbstractSpimData;
+import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Interval;
 import net.imglib2.util.Intervals;
 import net.imglib2.util.Util;
+import spim.fiji.ImgLib2Temp.Pair;
+import spim.fiji.ImgLib2Temp.ValuePair;
 import spim.fiji.plugin.apply.BigDataViewerTransformationWindow;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
@@ -36,8 +40,7 @@ public class BigDataViewerBoundingBox extends ManualBoundingBox
 		super( spimData, viewIdsToProcess );
 	}
 
-	@Override
-	public boolean queryParameters( final Fusion fusion, final ImgExport imgExport )
+	public static Pair< BigDataViewer, Boolean > getBDV( final AbstractSpimData< ? > spimData, final Collection< ViewId > viewIdsToProcess )
 	{
 		final BDVPopup popup = ViewSetupExplorerPanel.bdvPopup();
 		BigDataViewer bdv;
@@ -54,7 +57,7 @@ public class BigDataViewerBoundingBox extends ManualBoundingBox
 						"Proceed anyways?",
 						"Warning",
 						JOptionPane.YES_NO_OPTION ) == JOptionPane.NO_OPTION )
-					return false;
+					return null;
 			}
 
 			bdv = new BigDataViewer( spimData, "BigDataViewer", null );
@@ -63,10 +66,10 @@ public class BigDataViewerBoundingBox extends ManualBoundingBox
 //			if ( !bdv.tryLoadSettings( panel.xml() ) ) TODO: this should work, but currently tryLoadSettings is protected. fix that.
 				InitializeViewerState.initBrightness( 0.001, 0.999, bdv.getViewer(), bdv.getSetupAssignments() );
 
-			final List< ViewDescription > vds = new ArrayList< ViewDescription >();
+			final List< BasicViewDescription< ? > > vds = new ArrayList< BasicViewDescription< ? > >();
 
 			for ( final ViewId viewId : viewIdsToProcess )
-				vds.add( spimData.getSequenceDescription().getViewDescription( viewId ) );
+				vds.add( spimData.getSequenceDescription().getViewDescriptions().get( viewId ) );
 
 			ViewSetupExplorerPanel.updateBDV( bdv, true, spimData, null, vds );
 		}
@@ -92,8 +95,18 @@ public class BigDataViewerBoundingBox extends ManualBoundingBox
 			bdv = popup.bdv;
 		}
 
-		if ( bdv == null )
+		return new ValuePair< BigDataViewer, Boolean >( bdv, bdvIsLocal );
+	}
+
+	@Override
+	public boolean queryParameters( final Fusion fusion, final ImgExport imgExport )
+	{
+		final Pair< BigDataViewer, Boolean > bdvPair = getBDV( spimData, viewIdsToProcess );
+		
+		if ( bdvPair == null || bdvPair.getA() == null )
 			return false;
+
+		final BigDataViewer bdv = bdvPair.getA();
 
 		// =============== the bounding box dialog ==================
 		final AtomicBoolean lock = new AtomicBoolean( false );
@@ -184,7 +197,8 @@ public class BigDataViewerBoundingBox extends ManualBoundingBox
 		BoundingBox.defaultMin = min;
 		BoundingBox.defaultMax = max;
 
-		if ( bdvIsLocal )
+		// was locally opened?
+		if ( bdvPair.getB() )
 			BigDataViewerTransformationWindow.disposeViewerWindow( bdv );
 
 		return super.queryParameters( fusion, imgExport );
