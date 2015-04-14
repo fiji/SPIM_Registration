@@ -145,6 +145,7 @@ public class ResavePopup extends JMenu implements ViewExplorerSetable
 						// replace the spimdata object
 						panel.setSpimData( result.getA() );
 						panel.updateContent();
+						panel.saveXML();
 					}
 					else if ( index == 2 || index == 3 ) // HDF5, compressed HDF5
 					{
@@ -192,6 +193,7 @@ public class ResavePopup extends JMenu implements ViewExplorerSetable
 						panel.updateContent();
 
 						progressWriter.setProgress( 1.0 );
+						panel.saveXML();
 						progressWriter.out().println( "done" );
 					}
 				}
