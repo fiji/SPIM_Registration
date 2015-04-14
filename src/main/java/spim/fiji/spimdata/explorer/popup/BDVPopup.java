@@ -27,7 +27,7 @@ public class BDVPopup extends JMenuItem implements ViewExplorerSetable
 {
 	private static final long serialVersionUID = 5234649267634013390L;
 
-	ViewSetupExplorerPanel< ?, ? > panel;
+	public ViewSetupExplorerPanel< ?, ? > panel;
 	public BigDataViewer bdv = null;
 
 	public BDVPopup()
@@ -61,29 +61,15 @@ public class BDVPopup extends JMenuItem implements ViewExplorerSetable
 				public void run()
 				{
 					// if BDV was closed by the user
-					if ( !bdv.getViewerFrame().isVisible() )
+					if ( bdv != null && !bdv.getViewerFrame().isVisible() )
 						bdv = null;
 
 					if ( bdv == null )
 					{
-						if ( AbstractImgLoader.class.isInstance( panel.getSpimData().getSequenceDescription().getImgLoader() ) )
-						{
-							if ( JOptionPane.showConfirmDialog( null,
-									"Opening <SpimData> dataset that is not suited for interactive browsing.\n" +
-									"Consider resaving as HDF5 for better performance.\n" +
-									"Proceed anyways?",
-									"Warning",
-									JOptionPane.YES_NO_OPTION ) == JOptionPane.NO_OPTION )
-								return;
-						}
 
 						try
 						{
-							bdv = new BigDataViewer( panel.getSpimData(), panel.xml(), null );
-//							if ( !bdv.tryLoadSettings( panel.xml() ) ) TODO: this should work, but currently tryLoadSettings is protected. fix that.
-								InitializeViewerState.initBrightness( 0.001, 0.999, bdv.getViewer(), bdv.getSetupAssignments() );
-							
-							ViewSetupExplorerPanel.updateBDV( bdv, panel.getSpimData(), panel.firstSelectedVD(), panel.selectedRows() );
+							bdv = createBDV( panel );
 						}
 						catch (Exception e)
 						{
@@ -100,6 +86,28 @@ public class BDVPopup extends JMenuItem implements ViewExplorerSetable
 				}
 			}).start();
 		}
+	}
+
+	public static BigDataViewer createBDV( final ViewSetupExplorerPanel< ?, ? > panel )
+	{
+		if ( AbstractImgLoader.class.isInstance( panel.getSpimData().getSequenceDescription().getImgLoader() ) )
+		{
+			if ( JOptionPane.showConfirmDialog( null,
+					"Opening <SpimData> dataset that is not suited for interactive browsing.\n" +
+					"Consider resaving as HDF5 for better performance.\n" +
+					"Proceed anyways?",
+					"Warning",
+					JOptionPane.YES_NO_OPTION ) == JOptionPane.NO_OPTION )
+				return null;
+		}
+
+		BigDataViewer bdv = new BigDataViewer( panel.getSpimData(), panel.xml(), null );
+//		if ( !bdv.tryLoadSettings( panel.xml() ) ) TODO: this should work, but currently tryLoadSettings is protected. fix that.
+			InitializeViewerState.initBrightness( 0.001, 0.999, bdv.getViewer(), bdv.getSetupAssignments() );
+		
+		ViewSetupExplorerPanel.updateBDV( bdv, panel.getSpimData(), panel.firstSelectedVD(), panel.selectedRows() );
+
+		return bdv;
 	}
 
 	public void updateBDV()

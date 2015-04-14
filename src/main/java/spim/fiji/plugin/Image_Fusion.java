@@ -20,6 +20,7 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import spim.process.fusion.boundingbox.AutomaticBoundingBox;
 import spim.process.fusion.boundingbox.AutomaticReorientation;
+import spim.process.fusion.boundingbox.BigDataViewerBoundingBox;
 import spim.process.fusion.boundingbox.ManualBoundingBox;
 import spim.process.fusion.deconvolution.EfficientBayesianBased;
 import spim.process.fusion.export.AppendSpimData2;
@@ -36,7 +37,7 @@ public class Image_Fusion implements PlugIn
 	public static int defaultFusionAlgorithm = 1;
 
 	public static ArrayList< BoundingBox > staticBoundingBoxAlgorithms = new ArrayList< BoundingBox >();
-	public static int defaultBoundingBoxAlgorithm = 0;
+	public static int defaultBoundingBoxAlgorithm = 1;
 
 	public static ArrayList< ImgExport > staticImgExportAlgorithms = new ArrayList< ImgExport >();
 	public static int defaultImgExportAlgorithm = 0;
@@ -49,6 +50,7 @@ public class Image_Fusion implements PlugIn
 		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, WeightedAvgFusionType.INDEPENDENT ) );
 		
 		staticBoundingBoxAlgorithms.add( new ManualBoundingBox( null, null ) );
+		staticBoundingBoxAlgorithms.add( new BigDataViewerBoundingBox( null, null ) );
 		staticBoundingBoxAlgorithms.add( new AutomaticReorientation( null, null ) );
 		staticBoundingBoxAlgorithms.add( new AutomaticBoundingBox( null, null ) );
 		

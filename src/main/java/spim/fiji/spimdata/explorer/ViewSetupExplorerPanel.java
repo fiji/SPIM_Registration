@@ -142,7 +142,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		}
 	}
 
-	public BDVPopup bdvPopup()
+	public static BDVPopup bdvPopup()
 	{
 		for ( final ViewExplorerSetable s : staticPopups )
 			if ( BDVPopup.class.isInstance( s ) )
@@ -346,11 +346,17 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 	public static void updateBDV(
 			final BigDataViewer bdv,
 			final AbstractSpimData< ? > data,
-			final BasicViewDescription< ? extends BasicViewSetup > firstVD,
-			final Collection< BasicViewDescription< ? extends BasicViewSetup > > selectedRows )
+			BasicViewDescription< ? extends BasicViewSetup > firstVD,
+			final Collection< ? extends BasicViewDescription< ? extends BasicViewSetup > > selectedRows )
 	{
 		// we always set the fused mode
 		setFusedModeSimple( bdv, data );
+
+		if ( selectedRows == null || selectedRows.size() == 0 )
+			return;
+
+		if ( firstVD == null )
+			firstVD = selectedRows.iterator().next();
 
 		// always use the first timepoint
 		final TimePoint firstTP = firstVD.getTimePoint();
