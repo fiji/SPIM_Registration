@@ -504,9 +504,18 @@ public class MultipageTiffReader
 	public double calZ()
 	{
 		if ( Double.isNaN( calZ ) )
-			return Double.parseDouble( summaryMetadata_.get( "z-step_um" ).toString() );
+		{
+			final Object o = summaryMetadata_.get( "z-step_um" );
+
+			if ( o == null )
+				return 1.0;
+			else
+				return Double.parseDouble( o.toString() );
+		}
 		else
+		{
 			return calZ;
+		}
 	}
 	public String calUnit() { return unit; }
 	public int numTimepoints() { return Integer.parseInt( summaryMetadata_.get( "Frames" ).toString() ); }
