@@ -12,7 +12,6 @@ import java.util.Map;
 import javax.media.j3d.Transform3D;
 
 import mpicbg.spim.data.SpimData;
-import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.registration.ViewTransform;
@@ -40,9 +39,9 @@ import spim.fiji.plugin.apply.ModelLink;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.SpimDataWrapper;
 import spim.fiji.spimdata.ViewSetupUtils;
 import bdv.BigDataViewer;
+import bdv.tools.InitializeViewerState;
 
 public class Apply_Transformation implements PlugIn
 {
@@ -225,7 +224,8 @@ public class Apply_Transformation implements PlugIn
 		try
 		{
 			// TODO: Remove the wrapper
-			final BigDataViewer bdv = new BigDataViewer( new SpimDataWrapper( data ), "Set dataset transformation", null );
+			final BigDataViewer bdv = new BigDataViewer( data, "Set dataset transformation", null );
+			InitializeViewerState.initBrightness( 0.001, 0.999, bdv.getViewer(), bdv.getSetupAssignments() );
 
 			try
 			{
