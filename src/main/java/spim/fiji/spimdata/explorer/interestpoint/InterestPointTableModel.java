@@ -7,8 +7,10 @@ import java.util.HashSet;
 
 import javax.swing.table.AbstractTableModel;
 
+import net.imglib2.RealLocalizable;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
+import spim.fiji.spimdata.explorer.popup.BDVPopup;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
@@ -23,6 +25,9 @@ public class InterestPointTableModel extends AbstractTableModel
 	BasicViewDescription< ? > currentVD;
 	final InterestPointExplorerPanel panel;
 
+	private int selectedRow = -1;
+	private int selectedCol = -1;
+
 	public InterestPointTableModel( final ViewInterestPoints viewInterestPoints, final InterestPointExplorerPanel panel )
 	{
 		this.columnNames = new ArrayList< String >();
@@ -36,6 +41,9 @@ public class InterestPointTableModel extends AbstractTableModel
 		this.viewInterestPoints = viewInterestPoints;
 		this.currentVD = null;
 		this.panel = panel;
+
+		// by default show the detections of the first entry if available
+		setSelected( 0, 1 );
 	}
 
 	protected void update( final ViewInterestPoints viewInterestPoints ) { this.viewInterestPoints = viewInterestPoints; }
@@ -85,7 +93,7 @@ public class InterestPointTableModel extends AbstractTableModel
 		}
 	}
 
-	public static String label( final ViewInterestPoints viewInterestPoints, final BasicViewDescription< ? >vd, final int row )
+	public static String label( final ViewInterestPoints viewInterestPoints, final BasicViewDescription< ? > vd, final int row )
 	{
 		final ArrayList< String > labels = new ArrayList< String >();
 		labels.addAll( viewInterestPoints.getViewInterestPointLists( vd ).getHashMap().keySet() );
@@ -148,5 +156,57 @@ public class InterestPointTableModel extends AbstractTableModel
 	public String getColumnName( final int column )
 	{
 		return columnNames.get( column );
+	}
+
+	public boolean getState( final int row, final int column )
+	{
+		if ( row == selectedRow && column == selectedCol )
+			return true;
+		else
+			return false;
+	}
+
+	public void setSelected( final int row, final int col )
+	{
+		if ( BDVPopup.bdvRunning() && row >= 0 && row < getRowCount() && col >= 1 && col <= 2  )
+		{
+			this.selectedRow = row;
+			this.selectedCol = col;
+
+			final String label = label( viewInterestPoints, currentVD, row );
+			final ArrayList< RealLocalizable > points;
+
+			if ( col == 1 )
+			{
+				points = null;
+			}
+			else //if ( col == 2 )
+			{
+				panel.getCorrespondingInterestPoints( viewInterestPoints, currentVD, label );
+				points = null;
+			}
+			
+			displayInBDV( points );
+		}
+		else
+		{
+			this.selectedRow = this.selectedCol = -1;
+			displayInBDV( null );
+		}
+	}
+
+	public int getSelectedRow() { return selectedRow; }
+	public int getSelectedCol() { return selectedCol; }
+
+	public void displayInBDV( final ArrayList< RealLocalizable > points )
+	{
+		if ( points == null || points.size() == 0 )
+		{
+			
+		}
+		else
+		{
+			
+		}
 	}
 }

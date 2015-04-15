@@ -128,6 +128,13 @@ public class AutomaticReorientation extends ManualBoundingBox
 		// ask which channels have the objects we are searching for
 		final List< Channel > channels = spimData.getSequenceDescription().getAllChannelsOrdered();
 
+		final List< ViewId > viewIdsToConsider = new ArrayList< ViewId >();
+		for ( final ViewId viewId : viewIdsToProcess )
+		{
+			//TODO:
+			spimData.getSequenceDescription().getViewDescriptions().values();
+		}
+
 		boolean labelsWereReset = false;
 
 		if ( Interest_Point_Registration.defaultChannelLabels == null || Interest_Point_Registration.defaultChannelLabels.length != channels.size() )

@@ -1,10 +1,14 @@
 package spim.fiji.spimdata.explorer.interestpoint;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -76,12 +80,12 @@ public class InterestPointExplorerPanel extends JPanel
 		table.setSurrendersFocusOnKeystroke( true );
 		table.setSelectionMode( ListSelectionModel.SINGLE_INTERVAL_SELECTION );
 		
-		final DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-		centerRenderer.setHorizontalAlignment( JLabel.CENTER );
+		final MyRenderer myRenderer = new MyRenderer();
+		myRenderer.setHorizontalAlignment( JLabel.CENTER );
 		
 		// center all columns
 		for ( int column = 0; column < tableModel.getColumnCount(); ++column )
-			table.getColumnModel().getColumn( column ).setCellRenderer( centerRenderer );
+			table.getColumnModel().getColumn( column ).setCellRenderer( myRenderer );
 
 		table.setPreferredScrollableViewportSize( new Dimension( 1020, 300 ) );
 		final Font f = table.getFont();
@@ -99,7 +103,60 @@ public class InterestPointExplorerPanel extends JPanel
 		table.getColumnModel().getColumn( 3 ).setPreferredWidth( 25 );
 		table.getColumnModel().getColumn( 4 ).setPreferredWidth( 400 );
 
+		table.addMouseListener( new MouseListener()
+		{
+			@Override
+			public void mouseReleased(MouseEvent e) {}
+			
+			@Override
+			public void mousePressed(MouseEvent e) {}
+			
+			@Override
+			public void mouseExited(MouseEvent e) {}
+			
+			@Override
+			public void mouseEntered(MouseEvent e) {}
+			
+			@Override
+			public void mouseClicked(MouseEvent e)
+			{
+				int row = table.rowAtPoint( e.getPoint() );
+				int col = table.columnAtPoint( e.getPoint() );
+
+				if ( tableModel.getSelectedRow() == row && tableModel.getSelectedCol() == col )
+					tableModel.setSelected( -1, -1 );
+				else
+					tableModel.setSelected( row, col );
+
+				// update everything
+				final int sr = table.getSelectedRow();
+				tableModel.fireTableDataChanged();
+				table.setRowSelectionInterval( sr, sr );
+			}
+		});
+
 		addPopupMenu( table );
+	}
+
+	private static class MyRenderer extends DefaultTableCellRenderer
+	{
+		private static final long serialVersionUID = 1L;
+
+		Color backgroundColor = getBackground();
+		
+		@Override
+		public Component getTableCellRendererComponent( JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column )
+		{
+			final Component c = super.getTableCellRendererComponent( table, value, isSelected, hasFocus, row, column );
+			final InterestPointTableModel model = (InterestPointTableModel) table.getModel();
+
+			if ( model.getState( row, column ) )
+				c.setBackground( Color.red );
+			else if ( !isSelected )
+				c.setBackground( backgroundColor );
+
+			return c;
+		}
 	}
 
 	protected void delete()
@@ -198,6 +255,9 @@ public class InterestPointExplorerPanel extends JPanel
 
 			vip.getViewInterestPointLists( vd ).getHashMap().remove( label );
 		}
+
+		// reset selection
+		tableModel.setSelected( -1, -1 );
 
 		// update everything
 		tableModel.fireTableDataChanged();

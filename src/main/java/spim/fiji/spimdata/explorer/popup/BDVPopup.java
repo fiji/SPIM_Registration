@@ -88,6 +88,11 @@ public class BDVPopup extends JMenuItem implements ViewExplorerSetable
 		}
 	}
 
+	public static boolean bdvRunning()
+	{
+		final BDVPopup p = ViewSetupExplorerPanel.bdvPopup();
+		return ( p != null && p.bdv != null && p.bdv.getViewerFrame().isVisible() );
+	}
 	public static BigDataViewer createBDV( final ViewSetupExplorerPanel< ?, ? > panel )
 	{
 		if ( AbstractImgLoader.class.isInstance( panel.getSpimData().getSequenceDescription().getImgLoader() ) )
