@@ -194,13 +194,8 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		listener.seletedViewDescription( tableModel.getElements().get( table.getSelectedRow() ) );
 	}
 
-	public boolean removeListener( final SelectedViewDescriptionListener< AS > listener )
-	{
-		return this.listeners.remove( listener );
-	}
-	
 	public ArrayList< SelectedViewDescriptionListener< AS > > getListeners() { return listeners; }
-	
+
 	public void initComponent()
 	{
 		tableModel = new ViewSetupTableModel< AS >( this );

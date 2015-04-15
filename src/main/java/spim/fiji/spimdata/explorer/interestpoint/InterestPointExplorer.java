@@ -88,7 +88,6 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 	@Override
 	public void quit()
 	{
-		viewSetupExplorer.removeListener( this );
 		frame.setVisible( false );
 		frame.dispose();
 	}

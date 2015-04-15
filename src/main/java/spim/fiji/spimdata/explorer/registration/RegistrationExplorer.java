@@ -59,7 +59,6 @@ public class RegistrationExplorer< AS extends AbstractSpimData< ? >, X extends X
 	@Override
 	public void quit()
 	{
-		viewSetupExplorer.removeListener( this );
 		frame.setVisible( false );
 		frame.dispose();
 	}
