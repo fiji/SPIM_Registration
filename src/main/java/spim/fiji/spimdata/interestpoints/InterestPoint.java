@@ -1,5 +1,6 @@
 package spim.fiji.spimdata.interestpoints;
 
+import net.imglib2.RealLocalizable;
 import mpicbg.models.Point;
 
 /**
@@ -8,7 +9,7 @@ import mpicbg.models.Point;
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
-public class InterestPoint extends Point
+public class InterestPoint extends Point implements RealLocalizable
 {
 	private static final long serialVersionUID = 5615112297702152070L;
 
@@ -21,4 +22,27 @@ public class InterestPoint extends Point
 	}
 	
 	public int getId() { return id; }
+
+	@Override
+	public int numDimensions() { return l.length; }
+
+	@Override
+	public void localize( final float[] position )
+	{
+		for ( int d = 0; d < l.length; ++d )
+			position[ d ] = (float)l[ d ];
+	}
+
+	@Override
+	public void localize( final double[] position )
+	{
+		for ( int d = 0; d < l.length; ++d )
+			position[ d ] = l[ d ];
+	}
+
+	@Override
+	public float getFloatPosition( final int d ) { return (float)l[ d ]; }
+
+	@Override
+	public double getDoublePosition( final int d ) { return l[ d ]; }
 }

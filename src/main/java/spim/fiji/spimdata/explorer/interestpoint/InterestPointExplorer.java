@@ -7,6 +7,7 @@ import java.io.File;
 
 import javax.swing.JFrame;
 
+import bdv.BigDataViewer;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
@@ -16,6 +17,8 @@ import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.SelectedViewDescriptionListener;
 import spim.fiji.spimdata.explorer.ViewSetupExplorer;
+import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
+import spim.fiji.spimdata.explorer.popup.BDVPopup;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 
 public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstractSpimData< ?, AS > >
@@ -32,7 +35,7 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 		this.viewSetupExplorer = viewSetupExplorer;
 
 		frame = new JFrame( "Interest Point Explorer" );
-		panel = new InterestPointExplorerPanel( viewSetupExplorer.getPanel().getSpimData().getViewInterestPoints() );
+		panel = new InterestPointExplorerPanel( viewSetupExplorer.getPanel().getSpimData().getViewInterestPoints(), viewSetupExplorer );
 		frame.add( panel, BorderLayout.CENTER );
 
 		frame.setSize( panel.getPreferredSize() );
@@ -55,7 +58,7 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 	@Override
 	public void seletedViewDescription( final BasicViewDescription<? extends BasicViewSetup> viewDescription )
 	{
-		panel.updateViewDescription( viewDescription );
+		panel.updateViewDescription( viewDescription, false );
 	}
 
 	@Override
@@ -88,6 +91,13 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 	{
 		frame.setVisible( false );
 		frame.dispose();
+
+		if ( BDVPopup.bdvRunning() && panel.tableModel.interestPointOverlay != null )
+		{
+			final BigDataViewer bdv = ViewSetupExplorerPanel.bdvPopup().bdv;
+			bdv.getViewer().removeTransformListener( panel.tableModel.interestPointOverlay );
+			bdv.getViewer().getDisplay().removeOverlayRenderer( panel.tableModel.interestPointOverlay );
+		}
 	}
 
 	public InterestPointExplorerPanel panel() { return panel; }

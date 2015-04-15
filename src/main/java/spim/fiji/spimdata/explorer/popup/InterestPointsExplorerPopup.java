@@ -57,6 +57,9 @@ public class InterestPointsExplorerPopup extends JMenuItem implements ViewExplor
 					if ( ipe == null || !ipe.frame().isVisible() )
 					{
 						ipe = instanceFor( (ViewSetupExplorerPanel)panel );
+
+						if ( panel.selectedRows().size() == 1 )
+							ipe.panel().updateViewDescription( panel.selectedRows().iterator().next(), true );
 					}
 					else
 					{

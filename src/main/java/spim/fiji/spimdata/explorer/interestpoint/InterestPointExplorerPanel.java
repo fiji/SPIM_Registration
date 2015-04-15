@@ -29,6 +29,7 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
+import spim.fiji.spimdata.explorer.ViewSetupExplorer;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
@@ -37,7 +38,9 @@ import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 public class InterestPointExplorerPanel extends JPanel
 {
 	private static final long serialVersionUID = -3767947754096099774L;
-	
+
+	final ViewSetupExplorer< ?, ? > viewSetupExplorer;
+
 	protected JTable table;
 	protected InterestPointTableModel tableModel;
 	protected JLabel label;
@@ -46,18 +49,19 @@ public class InterestPointExplorerPanel extends JPanel
 	//protected ArrayList< Pair< InterestPointList, ViewId > > save;
 	protected ArrayList< Pair< InterestPointList, ViewId > > delete;
 
-	public InterestPointExplorerPanel( final ViewInterestPoints viewInterestPoints )
+	public InterestPointExplorerPanel( final ViewInterestPoints viewInterestPoints, final ViewSetupExplorer< ?, ? > viewSetupExplorer )
 	{
 		//this.save = new ArrayList< Pair< InterestPointList, ViewId > >();
 		this.delete = new ArrayList< Pair< InterestPointList, ViewId > >();
 
+		this.viewSetupExplorer = viewSetupExplorer;
 		initComponent( viewInterestPoints );
 	}
 
 	public InterestPointTableModel getTableModel() { return tableModel; }
 	public JTable getTable() { return table; }
 	
-	public void updateViewDescription( final BasicViewDescription< ? > vd )
+	public void updateViewDescription( final BasicViewDescription< ? > vd, final boolean isFirst )
 	{
 		if ( vd != null && label != null )
 			this.label.setText("View Description --- Timepoint: " + vd.getTimePointId() + ", View Setup Id: " + vd.getViewSetupId() );
@@ -65,7 +69,7 @@ public class InterestPointExplorerPanel extends JPanel
 		if ( vd == null )
 			this.label.setText( "No or multiple View Descriptions selected");
 
-		tableModel.updateViewDescription( vd );
+		tableModel.updateViewDescription( vd, isFirst );
 
 		if ( table.getSelectedRowCount() == 0 )
 			table.getSelectionModel().setSelectionInterval( 0, 0 );
