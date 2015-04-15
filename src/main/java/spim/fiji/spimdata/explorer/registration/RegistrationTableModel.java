@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
 
+import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
@@ -92,7 +93,7 @@ public class RegistrationTableModel extends AbstractTableModel
 		viewRegistrations.getViewRegistration( currentVD ).updateModel();
 		
 		// do something ...
-		panel.explorer.viewSetupExplorer.getPanel().bdvPopup().updateBDV();
+		ViewSetupExplorerPanel.bdvPopup().updateBDV();
 		fireTableCellUpdated( row, column );
 	}
 	

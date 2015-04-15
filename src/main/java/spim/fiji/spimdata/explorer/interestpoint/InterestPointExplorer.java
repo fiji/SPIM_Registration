@@ -17,8 +17,6 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.SelectedViewDescriptionListener;
 import spim.fiji.spimdata.explorer.ViewSetupExplorer;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
-import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
-import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
 public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstractSpimData< ?, AS > >
 	implements SelectedViewDescriptionListener< AS >
