@@ -26,9 +26,22 @@ public class InterestPointOverlay implements OverlayRenderer, TransformListener<
 
 	private final ViewerPanel viewer;
 
+	private Color col = Color.green.darker();
+
+	public void setColor( final Color col ) { this.col = col; }
+
+	/** screen pixels [x,y,z] **/
 	private Color getColor( final double[] gPos )
 	{
-		return Color.green;
+		if ( Math.abs( gPos[ 2 ] ) < 3 )
+			return Color.red;
+
+		int alpha = 255 - (int)Math.round( Math.abs( gPos[ 2 ] ) );
+
+		if ( alpha < 64 )
+			alpha = 64;
+
+		return new Color( col.getRed(), col.getGreen(), col.getBlue(), alpha );
 	}
 
 	private double getPointSize( final double[] gPos )
