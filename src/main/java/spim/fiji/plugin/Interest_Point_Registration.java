@@ -312,7 +312,24 @@ public class Interest_Point_Registration implements PlugIn
 		int range = defaultRange;
 		
 		if ( registrationType == RegistrationType.TO_REFERENCE_TIMEPOINT )
+		{
 			referenceTimePoint = data.getSequenceDescription().getTimePoints().getTimePointsOrdered().get( defaultReferenceTimepointIndex = gd2.getNextChoiceIndex() ).getId();
+
+			// check that at least one of the views of the reference timepoint is part of the viewdescriptions
+			boolean contains = false;
+
+			for ( final ViewId viewId : viewIds )
+				if ( viewId.getTimePointId() == referenceTimePoint )
+					contains = true;
+
+			if ( !contains )
+			{
+				IOFunctions.println( "No views of the reference timepoint are part of the registration." );
+				IOFunctions.println( "Please re-run and select the corresponding views that should be used as reference." );
+
+				return false;
+			}
+		}
 
 		if ( registrationType == RegistrationType.ALL_TO_ALL_WITH_RANGE )
 			range = defaultRange = (int)Math.round( gd2.getNextNumber() );
