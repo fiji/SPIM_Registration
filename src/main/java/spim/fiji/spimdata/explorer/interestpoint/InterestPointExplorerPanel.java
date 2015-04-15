@@ -123,8 +123,10 @@ public class InterestPointExplorerPanel extends JPanel
 
 		final ViewInterestPoints vip = tableModel.getViewInterestPoints();
 
-		for ( final int row : selectedRows )
+		for ( int rowIndex = selectedRows.length - 1; rowIndex >= 0; rowIndex--)
 		{
+			final int row = selectedRows[ rowIndex ];
+
 			final String label = InterestPointTableModel.label( vip, vd, row );
 
 			IOFunctions.println( "Removing label '' for timepoint_id " + vd.getTimePointId() + " viewsetup_id " + vd.getViewSetupId() + " -- Parsing through all correspondences to remove any links to this interest point list." );
