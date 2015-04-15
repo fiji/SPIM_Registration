@@ -112,6 +112,35 @@ public class BDVPopup extends JMenuItem implements ViewExplorerSetable
 		
 		ViewSetupExplorerPanel.updateBDV( bdv, panel.colorMode(), panel.getSpimData(), panel.firstSelectedVD(), panel.selectedRows() );
 
+//		final ArrayList< InterestPointSource > interestPointSources = new ArrayList< InterestPointSource >();
+//		interestPointSources.add( new InterestPointSource()
+//		{
+//			private final ArrayList< RealPoint > points;
+//			{
+//				points = new ArrayList< RealPoint >();
+//				final Random rand = new Random();
+//				for ( int i = 0; i < 1000; ++i )
+//					points.add( new RealPoint( rand.nextDouble() * 1400, rand.nextDouble() * 800, rand.nextDouble() * 300 ) );
+//			}
+//
+//			@Override
+//			public final Collection< ? extends RealLocalizable > getLocalCoordinates( final int timepointIndex )
+//			{
+//				return points;
+//			}
+//
+//			@Override
+//			public void getLocalToGlobalTransform( final int timepointIndex, final AffineTransform3D transform )
+//			{
+//				transform.identity();
+//			}
+//		} );
+//		final InterestPointOverlay interestPointOverlay = new InterestPointOverlay( bdv.getViewer(), interestPointSources );
+//		bdv.getViewer().addRenderTransformListener( interestPointOverlay );
+//		bdv.getViewer().getDisplay().addOverlayRenderer( interestPointOverlay );
+//		bdv.getViewer().removeTransformListener( interestPointOverlay );
+//		bdv.getViewer().getDisplay().removeOverlayRenderer( interestPointOverlay );
+
 		return bdv;
 	}
 
