@@ -4,16 +4,13 @@ import ij.ImagePlus;
 import ij.gui.GenericDialog;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-import bdv.img.hdf5.Hdf5ImageLoader;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.wrapper.ImgLib2;
 import mpicbg.spim.data.sequence.Channel;
-import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
@@ -79,14 +76,7 @@ public class DifferenceOfMean extends DifferenceOf
 
 				final Channel c = vd.getViewSetup().getChannel();
 
-				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Requesting Img from ImgLoader (tp=" + vd.getTimePointId() + ", setup=" + vd.getViewSetupId() + ")" );
-
-				ImgLoader< ? > imgLoader = spimData.getSequenceDescription().getImgLoader();
-				if ( imgLoader instanceof Hdf5ImageLoader )
-					imgLoader = ( ( Hdf5ImageLoader ) imgLoader ).getMonolithicImageLoader();
-
-				final RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input =
-						downsample( imgLoader.getFloatImage( vd, false ), vd.getViewSetup().getVoxelSize() );
+				final RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input = openAndDownsample( spimData, vd );
 
 				long time2 = System.currentTimeMillis();
 
@@ -217,10 +207,8 @@ public class DifferenceOfMean extends DifferenceOf
 		}
 		
 		RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > img =
-				downsample(
-						spimData.getSequenceDescription().getImgLoader().getFloatImage( view, false ),
-						viewDescription.getViewSetup().getVoxelSize() );
-		
+				openAndDownsample( spimData, viewDescription );
+
 		if ( img == null )
 		{
 			IOFunctions.println( "View not found: " + viewDescription );
