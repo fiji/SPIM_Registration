@@ -181,7 +181,7 @@ public class ExportSpimData2HDF5 implements ImgExport
 		final Partition partition = viewIdToPartition.get( new ViewId( tp.getId(), vs.getId() ) );
 		final ExportMipmapInfo mipmapInfo = perSetupExportMipmapInfo.get( vs.getId() );
 		final boolean writeMipmapInfo = true; // TODO
-		final boolean deflate = true; // TODO
+		final boolean deflate = params.getDeflate();
 		final ProgressWriter progressWriter = new SubTaskProgressWriter( this.progressWriter, 0.0, 1.0 ); // TODO
 		WriteSequenceToHdf5.writeViewToHdf5PartitionFile( ushortimg, partition, tp.getId(), vs.getId(), mipmapInfo, writeMipmapInfo, deflate, null, null, progressWriter );
 
