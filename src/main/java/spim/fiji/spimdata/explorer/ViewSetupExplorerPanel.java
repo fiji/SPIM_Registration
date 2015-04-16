@@ -191,7 +191,8 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		this.listeners.add( listener );
 		
 		// update it with the currently selected row
-		listener.seletedViewDescription( tableModel.getElements().get( table.getSelectedRow() ) );
+		if ( table.getSelectedRow() != -1 )
+			listener.seletedViewDescription( tableModel.getElements().get( table.getSelectedRow() ) );
 	}
 
 	public ArrayList< SelectedViewDescriptionListener< AS > > getListeners() { return listeners; }
