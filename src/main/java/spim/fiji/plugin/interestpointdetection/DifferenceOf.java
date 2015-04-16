@@ -19,6 +19,7 @@ import net.imglib2.algorithm.gauss3.Gauss3;
 import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
+import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
 import spim.fiji.plugin.util.GUIHelper;
@@ -309,27 +310,25 @@ public abstract class DifferenceOf extends InterestPointDetection
 	protected abstract boolean setAdvancedValues( final Channel channel );
 	protected abstract boolean setInteractiveValues( final Channel channel );
 
-	protected void correctForDownsampling( final List< InterestPoint > ips, final VoxelDimensions v )
+	protected void correctForDownsampling( final List< InterestPoint > ips, final AffineTransform3D t )
 	{
-		if ( downsampleXY == 1 && downsampleZ == 1 )
-			return;
+		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Correcting coordinates for downsampling (xy=" + downsampleXY + "x, z=" + downsampleZ + "x) using AffineTransform: " + t );
 
-		int downsampleXY = this.downsampleXY;
-
-		if ( downsampleXY < 1 )
-			downsampleXY = downsampleFactor( downsampleXY, downsampleZ, v );
-
-		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Correcting coordinates for downsampling (xy=" + downsampleXY + "x, z=" + downsampleZ + "x)" );
+		final double[] tmp = new double[ ips.get( 0 ).getL().length ];
 
 		for ( final InterestPoint ip : ips )
 		{
-			ip.getL()[ 0 ] *= downsampleXY;
-			ip.getL()[ 1 ] *= downsampleXY;
-			ip.getL()[ 2 ] *= downsampleZ;
+			t.apply( ip.getL(), tmp );
 
-			ip.getW()[ 0 ] *= downsampleXY;
-			ip.getW()[ 1 ] *= downsampleXY;
-			ip.getW()[ 2 ] *= downsampleZ;
+			ip.getL()[ 0 ] = tmp[ 0 ];
+			ip.getL()[ 1 ] = tmp[ 1 ];
+			ip.getL()[ 2 ] = tmp[ 2 ];
+
+			t.apply( ip.getW(), tmp );
+
+			ip.getW()[ 0 ] = tmp[ 0 ];
+			ip.getW()[ 1 ] = tmp[ 1 ];
+			ip.getW()[ 2 ] = tmp[ 2 ];
 		}
 	}
 
@@ -351,7 +350,8 @@ public abstract class DifferenceOf extends InterestPointDetection
 	
 	protected RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > openAndDownsample(
 			final SpimData2 spimData,
-			final ViewDescription vd )
+			final ViewDescription vd,
+			final AffineTransform3D t )
 	{
 		IOFunctions.println(
 				"(" + new Date(System.currentTimeMillis()) + "): "
@@ -380,12 +380,11 @@ public abstract class DifferenceOf extends InterestPointDetection
 		if ( Hdf5ImageLoader.class.isInstance( imgLoader ) )
 			imgLoader = ( ( Hdf5ImageLoader ) imgLoader ).getMonolithicImageLoader();
 		
-		if ( MultiResolutionImgLoader.class.isInstance( imgLoader ) )
+		if ( ( dsx > 1 || dsy > 1 || dsz > 1 ) && MultiResolutionImgLoader.class.isInstance( imgLoader ) )
 		{
 			MultiResolutionImgLoader< ? > mrImgLoader = ( MultiResolutionImgLoader< ? > ) imgLoader;
 
-			Hdf5ImageLoader hdf5ImgLoader = ( ( Hdf5ImageLoader ) imgLoader );
-			double[][] mipmapResolutions = hdf5ImgLoader.getMipmapResolutions( vd.getViewSetupId() );
+			double[][] mipmapResolutions = mrImgLoader.getMipmapResolutions( vd.getViewSetupId() );
 			
 			int bestLevel = 0;
 			for ( int level = 0; level < mipmapResolutions.length; ++level )
@@ -400,11 +399,12 @@ public abstract class DifferenceOf extends InterestPointDetection
 				if ( fx <= dsx && fy <= dsy && fz <= dsz && contains( fx, ds ) && contains( fy, ds ) && contains( fz, ds ) )
 					bestLevel = level;
 			}
-			// TODO: adjust coordinates from HDF5
 
 			final int fx = (int)Math.round( mipmapResolutions[ bestLevel ][ 0 ] );
 			final int fy = (int)Math.round( mipmapResolutions[ bestLevel ][ 1 ] );
 			final int fz = (int)Math.round( mipmapResolutions[ bestLevel ][ 2 ] );
+
+			t.set( mrImgLoader.getMipmapTransforms(vd.getViewSetupId())[ bestLevel ] );
 
 			dsx /= fx;
 			dsy /= fy;
@@ -420,9 +420,14 @@ public abstract class DifferenceOf extends InterestPointDetection
 		else
 		{
 			input = imgLoader.getFloatImage( vd, false );
+			t.identity();
 		}
 
 		final ImgFactory< net.imglib2.type.numeric.real.FloatType > f = ((Img<net.imglib2.type.numeric.real.FloatType>)input).factory();
+
+		t.set( downsampleXY, 0, 0 );
+		t.set( downsampleXY, 1, 1 );
+		t.set( downsampleZ, 2, 2 );
 
 		for ( ;dsx > 1; dsx /= 2 )
 			input = Downsample.simple2x( input, f, new boolean[]{ true, false, false } );
