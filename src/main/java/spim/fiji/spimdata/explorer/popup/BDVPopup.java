@@ -158,25 +158,24 @@ public class BDVPopup extends JMenuItem implements ViewExplorerSetable
 		
 		for ( final SourceState< ? > state : sources )
 		{
+			Source< ? > source = state.getSpimSource();
+
+			while ( TransformedSource.class.isInstance( source ) )
 			{
-				Source< ? > source = state.getSpimSource();
-
-				while ( TransformedSource.class.isInstance( source ) )
-				{
-					source = ( ( TransformedSource< ? > ) source ).getWrappedSource();
-				}
-
-				if ( AbstractSpimSource.class.isInstance( source ) )
-				{
-					final AbstractSpimSource< ? > s = ( AbstractSpimSource< ? > ) source;
-
-					final int tpi = getCurrentTimePointIndex( s );
-					callLoadTimePoint( s, tpi );
-				}
+				source = ( ( TransformedSource< ? > ) source ).getWrappedSource();
 			}
-			{
-				Source< ? > source = state.asVolatile().getSpimSource();
 
+			if ( AbstractSpimSource.class.isInstance( source ) )
+			{
+				final AbstractSpimSource< ? > s = ( AbstractSpimSource< ? > ) source;
+
+				final int tpi = getCurrentTimePointIndex( s );
+				callLoadTimePoint( s, tpi );
+			}
+
+			if ( state.asVolatile() != null )
+			{
+				source = state.asVolatile().getSpimSource();
 				while ( TransformedSource.class.isInstance( source ) )
 				{
 					source = ( ( TransformedSource< ? > ) source ).getWrappedSource();
