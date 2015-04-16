@@ -3,6 +3,8 @@ package spim.fiji.spimdata.explorer.interestpoint;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Toolkit;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 
 import javax.swing.JFrame;
@@ -51,6 +53,16 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 
 		// this call also triggers the first update of the registration table
 		viewSetupExplorer.addListener( this );
+
+		frame.addWindowListener( new WindowAdapter()
+		{
+			@Override
+			public void windowClosing(WindowEvent e)
+			{
+				quit();
+				e.getWindow().dispose();
+			}
+		});
 	}
 
 	public JFrame frame() { return frame; }
@@ -89,15 +101,16 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 	@Override
 	public void quit()
 	{
-		frame.setVisible( false );
-		frame.dispose();
-
 		if ( BDVPopup.bdvRunning() && panel.tableModel.interestPointOverlay != null )
 		{
 			final BigDataViewer bdv = ViewSetupExplorerPanel.bdvPopup().bdv;
 			bdv.getViewer().removeTransformListener( panel.tableModel.interestPointOverlay );
 			bdv.getViewer().getDisplay().removeOverlayRenderer( panel.tableModel.interestPointOverlay );
+			ViewSetupExplorerPanel.bdvPopup().updateBDV();
 		}
+
+		frame.setVisible( false );
+		frame.dispose();
 	}
 
 	public InterestPointExplorerPanel panel() { return panel; }

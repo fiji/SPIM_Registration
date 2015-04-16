@@ -36,7 +36,7 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 	private int selectedCol = -1;
 
 	final ArrayList< InterestPointSource > interestPointSources;
-	InterestPointOverlay interestPointOverlay = null;
+	volatile InterestPointOverlay interestPointOverlay = null;
 	Collection< ? extends RealLocalizable > points = new ArrayList< RealLocalizable >();
 
 	public InterestPointTableModel( final ViewInterestPoints viewInterestPoints, final InterestPointExplorerPanel panel )
@@ -222,6 +222,7 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 				interestPointOverlay = new InterestPointOverlay( bdv.getViewer(), interestPointSources );
 				bdv.getViewer().addRenderTransformListener( interestPointOverlay );
 				bdv.getViewer().getDisplay().addOverlayRenderer( interestPointOverlay );
+				ViewSetupExplorerPanel.bdvPopup().updateBDV();
 			}
 		}
 		else
