@@ -1,0 +1,232 @@
+package spim.process.fusion.export;
+
+import ij.gui.GenericDialog;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import mpicbg.spim.data.SpimDataException;
+import mpicbg.spim.data.registration.ViewRegistration;
+import mpicbg.spim.data.registration.ViewRegistrations;
+import mpicbg.spim.data.registration.ViewTransform;
+import mpicbg.spim.data.registration.ViewTransformAffine;
+import mpicbg.spim.data.sequence.SequenceDescription;
+import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.TimePoints;
+import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.ViewSetup;
+import mpicbg.spim.io.IOFunctions;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.realtransform.AffineTransform3D;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.util.Util;
+import spim.fiji.plugin.fusion.BoundingBox;
+import spim.fiji.plugin.queryXML.LoadParseQueryXML;
+import spim.fiji.plugin.resave.Generic_Resave_HDF5;
+import spim.fiji.plugin.resave.Generic_Resave_HDF5.Parameters;
+import spim.fiji.plugin.resave.ProgressWriterIJ;
+import spim.fiji.plugin.resave.Resave_HDF5;
+import spim.fiji.plugin.resave.Resave_TIFF;
+import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.XmlIoSpimData2;
+import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
+import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import bdv.export.ExportMipmapInfo;
+import bdv.export.ProgressWriter;
+import bdv.export.SubTaskProgressWriter;
+import bdv.export.WriteSequenceToHdf5;
+import bdv.img.hdf5.Hdf5ImageLoader;
+import bdv.img.hdf5.Partition;
+
+public class ExportSpimData2HDF5 implements ImgExport
+{
+
+	private List< TimePoint > newTimepoints;
+
+	private List< ViewSetup > newViewSetups;
+
+	private Parameters params;
+
+	private SpimData2 spimData;
+
+	private Map< Integer, ExportMipmapInfo > perSetupExportMipmapInfo;
+
+	private HashMap< ViewId, Partition > viewIdToPartition;
+
+	private final ProgressWriter progressWriter = new ProgressWriterIJ();
+
+	@Override
+	public boolean finish()
+	{
+		System.out.println( "finish()" );
+		String path = params.getSeqFile().getAbsolutePath();
+		try
+		{
+			new XmlIoSpimData2( "" ).save( spimData, path );
+
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + path + "'." );
+			return true;
+		}
+		catch ( SpimDataException e )
+		{
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + path + "'." );
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	@Override
+	public void setXMLData( final List< TimePoint > newTimepoints, final List< ViewSetup > newViewSetups )
+	{
+		System.out.println( "setXMLData()" );
+		this.newTimepoints = newTimepoints;
+		this.newViewSetups = newViewSetups;
+	}
+
+	@Override
+	public boolean queryParameters( SpimData2 spimData )
+	{
+		System.out.println( "queryParameters()" );
+
+		if ( newTimepoints == null || newViewSetups == null )
+		{
+			IOFunctions.println( "new timepoints and new viewsetup list not set yet ... cannot continue" );
+			return false;
+		}
+
+		if ( Resave_TIFF.defaultPath == null )
+			Resave_TIFF.defaultPath = "";
+
+		perSetupExportMipmapInfo = Resave_HDF5.proposeMipmaps( newViewSetups );
+
+		Generic_Resave_HDF5.lastExportPath = LoadParseQueryXML.defaultXMLfilename;
+
+		final int firstviewSetupId = newViewSetups.get( 0 ).getId();
+		params = Generic_Resave_HDF5.getParameters( perSetupExportMipmapInfo.get( firstviewSetupId ), true );
+
+		if ( params == null )
+		{
+			System.out.println( "abort " );
+			return false;
+		}
+
+//		this.saver = new Save3dTIFF( new File( this.params.getXMLFile() ).getParent(), this.params.compress() );
+//		this.saver.setImgTitler( new XMLTIFFImgTitler( newTimepoints, newViewSetups ) );
+//
+		initSpimData();
+
+		return true;
+	}
+
+	private void initSpimData()
+	{
+		// SequenceDescription containing the subset of viewsetups and timepoints. Does not have an ImgLoader yet.
+		final SequenceDescription seq = new SequenceDescription( new TimePoints( newTimepoints ), newViewSetups, null, null );
+
+		// Create identity ViewRegistration for all views.
+		final Map< ViewId, ViewRegistration > regMap = new HashMap< ViewId, ViewRegistration >();
+		for ( final ViewDescription vDesc : seq.getViewDescriptions().values() )
+			regMap.put( vDesc, new ViewRegistration( vDesc.getTimePointId(), vDesc.getViewSetupId() ) );
+		final ViewRegistrations viewRegistrations = new ViewRegistrations( regMap );
+
+		// Create empty ViewInterestPoints.
+		final ViewInterestPoints viewsInterestPoints = new ViewInterestPoints( new HashMap< ViewId, ViewInterestPointLists >() );
+
+		// base path is directory containing the XML file.
+		File basePath = params.getSeqFile().getParentFile();
+
+		// just use a single partition for now... TODO
+		viewIdToPartition = new HashMap< ViewId, Partition >();
+		final HashMap< Integer, Integer > timepointIdSequenceToPartition = new HashMap< Integer, Integer >();
+		for ( final TimePoint timepoint : newTimepoints )
+			timepointIdSequenceToPartition.put( timepoint.getId(), timepoint.getId() );
+		final HashMap< Integer, Integer > setupIdSequenceToPartition = new HashMap< Integer, Integer >();
+		for ( final ViewSetup setup : newViewSetups )
+			setupIdSequenceToPartition.put( setup.getId(), setup.getId() );
+		final Partition partition = new Partition( params.getHDF5File().getAbsolutePath(), timepointIdSequenceToPartition, setupIdSequenceToPartition );
+		for ( final ViewDescription vDesc : seq.getViewDescriptions().values() )
+			viewIdToPartition.put( vDesc, partition );
+
+		final ArrayList< Partition > hdf5Partitions = null; // TODO: implement this when we want to use partitions
+		seq.setImgLoader( new Hdf5ImageLoader( params.getHDF5File(), hdf5Partitions, seq, false ) );
+
+		spimData = new SpimData2( basePath, seq, viewRegistrations, viewsInterestPoints );
+	}
+
+	@Override
+	public < T extends RealType< T > & NativeType< T >> boolean exportImage( RandomAccessibleInterval< T > img, BoundingBox bb, TimePoint tp, ViewSetup vs )
+	{
+		System.out.println( "exportImage1()" );
+		return exportImage( img, bb, tp, vs, Double.NaN, Double.NaN );
+	}
+
+	@Override
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage( RandomAccessibleInterval< T > img, BoundingBox bb, TimePoint tp, ViewSetup vs, double min, double max )
+	{
+		System.out.println( "exportImage2()" );
+
+		if ( ! ( Util.getTypeFromInterval( img ) instanceof UnsignedShortType ) )
+			throw new UnsupportedOperationException( "only UnsignedShortType supported." );
+
+		// write the image
+		@SuppressWarnings( "unchecked" )
+		final RandomAccessibleInterval< UnsignedShortType > ushortimg = ( RandomAccessibleInterval< UnsignedShortType > ) img;
+		final Partition partition = viewIdToPartition.get( new ViewId( tp.getId(), vs.getId() ) );
+		final ExportMipmapInfo mipmapInfo = perSetupExportMipmapInfo.get( vs.getId() );
+		final boolean writeMipmapInfo = true; // TODO
+		final boolean deflate = true; // TODO
+		final ProgressWriter progressWriter = new SubTaskProgressWriter( this.progressWriter, 0.0, 1.0 ); // TODO
+		WriteSequenceToHdf5.writeViewToHdf5PartitionFile( ushortimg, partition, tp.getId(), vs.getId(), mipmapInfo, writeMipmapInfo, deflate, null, null, progressWriter );
+
+		// update the registrations
+		final ViewRegistration vr = spimData.getViewRegistrations().getViewRegistration( new ViewId( tp.getId(), vs.getId() ) );
+
+		final double scale = bb.getDownSampling();
+		final AffineTransform3D m = new AffineTransform3D();
+		m.set( scale, 0.0f, 0.0f, bb.min( 0 ),
+			   0.0f, scale, 0.0f, bb.min( 1 ),
+			   0.0f, 0.0f, scale, bb.min( 2 ) );
+		final ViewTransform vt = new ViewTransformAffine( "fusion bounding box", m );
+
+		vr.getTransformList().clear();
+		vr.getTransformList().add( vt );
+
+		return true;
+	}
+
+	@Override
+	public void queryAdditionalParameters( GenericDialog gd, SpimData2 spimData )
+	{
+		System.out.println( "queryAdditionalParameters()" );
+
+	}
+
+	@Override
+	public boolean parseAdditionalParameters( GenericDialog gd, SpimData2 spimData )
+	{
+		System.out.println( "parseAdditionalParameters()" );
+		return true;
+	}
+
+	@Override
+	public ImgExport newInstance()
+	{
+		System.out.println( "newInstance()" );
+		return new ExportSpimData2HDF5();
+	}
+
+	@Override
+	public String getDescription()
+	{
+		System.out.println( "getDescription()" );
+		return "Save as new XML Project (HDF5)";
+	}
+
+}
