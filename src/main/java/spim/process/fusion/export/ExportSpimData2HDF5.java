@@ -241,6 +241,7 @@ public class ExportSpimData2HDF5 implements ImgExport
 	public ImgExport newInstance()
 	{
 		System.out.println( "newInstance()" );
+		BoundingBox.defaultPixelType = 1; // set to 16 bit by default
 		return new ExportSpimData2HDF5();
 	}
 
