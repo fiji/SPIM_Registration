@@ -110,7 +110,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	
 	protected HashMap< ViewSetupPrecursor, Calibration > calibrations = new HashMap< ViewSetupPrecursor, Calibration >();
 	
-	public static String defaultDirectory = "/home/preibisch/Documents/Microscopy/SPIM/HisYFP-SPIM";
+	public static String defaultDirectory = "";
 	public static String defaultFileNamePattern = null;
 
 	protected String directory, fileNamePattern;	
