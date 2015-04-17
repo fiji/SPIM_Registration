@@ -106,10 +106,18 @@ public class ExportSpimData2HDF5 implements ImgExport
 
 		perSetupExportMipmapInfo = Resave_HDF5.proposeMipmaps( newViewSetups );
 
-		Generic_Resave_HDF5.lastExportPath = LoadParseQueryXML.defaultXMLfilename;
+		String fn = LoadParseQueryXML.defaultXMLfilename;
+		if ( fn.endsWith( ".xml" ) )
+			fn = fn.substring( 0, fn.length() - ".xml".length() );
+		for ( int i = 0;; ++i )
+		{
+			Generic_Resave_HDF5.lastExportPath = String.format( "%s-f%d.xml", fn, i );
+			if ( !new File( Generic_Resave_HDF5.lastExportPath ).exists() )
+				break;
+		}
 
 		final int firstviewSetupId = newViewSetups.get( 0 ).getId();
-		params = Generic_Resave_HDF5.getParameters( perSetupExportMipmapInfo.get( firstviewSetupId ), true );
+		params = Generic_Resave_HDF5.getParameters( perSetupExportMipmapInfo.get( firstviewSetupId ), true, getDescription() );
 
 		if ( params == null )
 		{
@@ -117,9 +125,6 @@ public class ExportSpimData2HDF5 implements ImgExport
 			return false;
 		}
 
-//		this.saver = new Save3dTIFF( new File( this.params.getXMLFile() ).getParent(), this.params.compress() );
-//		this.saver.setImgTitler( new XMLTIFFImgTitler( newTimepoints, newViewSetups ) );
-//
 		initSpimData();
 
 		return true;
@@ -142,21 +147,38 @@ public class ExportSpimData2HDF5 implements ImgExport
 		// base path is directory containing the XML file.
 		File basePath = params.getSeqFile().getParentFile();
 
-		// just use a single partition for now... TODO
+		ArrayList< Partition > hdf5Partitions = null;
 		viewIdToPartition = new HashMap< ViewId, Partition >();
-		final HashMap< Integer, Integer > timepointIdSequenceToPartition = new HashMap< Integer, Integer >();
-		for ( final TimePoint timepoint : newTimepoints )
-			timepointIdSequenceToPartition.put( timepoint.getId(), timepoint.getId() );
-		final HashMap< Integer, Integer > setupIdSequenceToPartition = new HashMap< Integer, Integer >();
-		for ( final ViewSetup setup : newViewSetups )
-			setupIdSequenceToPartition.put( setup.getId(), setup.getId() );
-		final Partition partition = new Partition( params.getHDF5File().getAbsolutePath(), timepointIdSequenceToPartition, setupIdSequenceToPartition );
-		for ( final ViewDescription vDesc : seq.getViewDescriptions().values() )
-			viewIdToPartition.put( vDesc, partition );
 
-		final ArrayList< Partition > hdf5Partitions = null; // TODO: implement this when we want to use partitions
+		if ( params.getSplit() )
+		{
+			String basename = params.getHDF5File().getAbsolutePath();
+			if ( basename.endsWith( ".h5" ) )
+				basename = basename.substring( 0, basename.length() - ".h5".length() );
+		    hdf5Partitions = Partition.split( newTimepoints, newViewSetups, params.getTimepointsPerPartition(), params.getSetupsPerPartition(), basename );
+			for ( final ViewDescription vDesc : seq.getViewDescriptions().values() )
+				for ( Partition p : hdf5Partitions )
+					if ( p.contains( vDesc ) )
+					{
+						viewIdToPartition.put( vDesc, p );
+						break;
+					}
+			WriteSequenceToHdf5.writeHdf5PartitionLinkFile( seq, perSetupExportMipmapInfo, hdf5Partitions, params.getHDF5File() );
+		}
+		else
+		{
+			final HashMap< Integer, Integer > timepointIdSequenceToPartition = new HashMap< Integer, Integer >();
+			for ( final TimePoint timepoint : newTimepoints )
+				timepointIdSequenceToPartition.put( timepoint.getId(), timepoint.getId() );
+			final HashMap< Integer, Integer > setupIdSequenceToPartition = new HashMap< Integer, Integer >();
+			for ( final ViewSetup setup : newViewSetups )
+				setupIdSequenceToPartition.put( setup.getId(), setup.getId() );
+			final Partition partition = new Partition( params.getHDF5File().getAbsolutePath(), timepointIdSequenceToPartition, setupIdSequenceToPartition );
+			for ( final ViewDescription vDesc : seq.getViewDescriptions().values() )
+				viewIdToPartition.put( vDesc, partition );
+		}
+
 		seq.setImgLoader( new Hdf5ImageLoader( params.getHDF5File(), hdf5Partitions, seq, false ) );
-
 		spimData = new SpimData2( basePath, seq, viewRegistrations, viewsInterestPoints );
 	}
 
@@ -180,7 +202,7 @@ public class ExportSpimData2HDF5 implements ImgExport
 		final RandomAccessibleInterval< UnsignedShortType > ushortimg = ( RandomAccessibleInterval< UnsignedShortType > ) img;
 		final Partition partition = viewIdToPartition.get( new ViewId( tp.getId(), vs.getId() ) );
 		final ExportMipmapInfo mipmapInfo = perSetupExportMipmapInfo.get( vs.getId() );
-		final boolean writeMipmapInfo = true; // TODO
+		final boolean writeMipmapInfo = true; // TODO: remember whether we already wrote it and write only once
 		final boolean deflate = params.getDeflate();
 		final ProgressWriter progressWriter = new SubTaskProgressWriter( this.progressWriter, 0.0, 1.0 ); // TODO
 		WriteSequenceToHdf5.writeViewToHdf5PartitionFile( ushortimg, partition, tp.getId(), vs.getId(), mipmapInfo, writeMipmapInfo, deflate, null, null, progressWriter );
