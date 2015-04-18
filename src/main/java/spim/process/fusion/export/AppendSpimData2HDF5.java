@@ -152,12 +152,12 @@ public class AppendSpimData2HDF5 implements ImgExport
 	{
 		System.out.println( "exportImage2()" );
 
-		if ( ! ( Util.getTypeFromInterval( img ) instanceof UnsignedShortType ) )
+		if ( ! UnsignedShortType.class.isInstance( Util.getTypeFromInterval( img ) ) )
 			throw new UnsupportedOperationException( "only UnsignedShortType supported." );
 
 		// write the image
-		@SuppressWarnings( "unchecked" )
-		final RandomAccessibleInterval< UnsignedShortType > ushortimg = ( RandomAccessibleInterval< UnsignedShortType > ) img;
+		@SuppressWarnings( { "unchecked", "rawtypes" } )
+		final RandomAccessibleInterval< UnsignedShortType > ushortimg = ( RandomAccessibleInterval ) img;
 		final Partition partition = viewIdToPartition.get( new ViewId( tp.getId(), vs.getId() ) );
 		final ExportMipmapInfo mipmapInfo = perSetupExportMipmapInfo.get( vs.getId() );
 		final boolean writeMipmapInfo = true; // TODO: remember whether we already wrote it and write only once
