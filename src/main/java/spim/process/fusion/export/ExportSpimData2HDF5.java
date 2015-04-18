@@ -26,14 +26,15 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.util.Pair;
 import net.imglib2.util.Util;
+import net.imglib2.util.ValuePair;
 import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.resave.Generic_Resave_HDF5;
 import spim.fiji.plugin.resave.Generic_Resave_HDF5.Parameters;
 import spim.fiji.plugin.resave.ProgressWriterIJ;
 import spim.fiji.plugin.resave.Resave_HDF5;
-import spim.fiji.plugin.resave.Resave_TIFF;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
@@ -72,7 +73,9 @@ public class ExportSpimData2HDF5 implements ImgExport
 			new XmlIoSpimData2( "" ).save( spimData, path );
 
 			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + path + "'." );
-			return true;
+
+			// this spimdata object was not modified, we just wrote a new one
+			return false;
 		}
 		catch ( SpimDataException e )
 		{
@@ -101,9 +104,6 @@ public class ExportSpimData2HDF5 implements ImgExport
 			return false;
 		}
 
-		if ( Resave_TIFF.defaultPath == null )
-			Resave_TIFF.defaultPath = "";
-
 		perSetupExportMipmapInfo = Resave_HDF5.proposeMipmaps( newViewSetups );
 
 		String fn = LoadParseQueryXML.defaultXMLfilename;
@@ -125,12 +125,18 @@ public class ExportSpimData2HDF5 implements ImgExport
 			return false;
 		}
 
-		initSpimData();
+		Pair< SpimData2, HashMap< ViewId, Partition > > init = initSpimData( newTimepoints, newViewSetups, params, perSetupExportMipmapInfo );
+		this.spimData = init.getA();
+		viewIdToPartition = init.getB();
 
 		return true;
 	}
 
-	private void initSpimData()
+	protected static Pair< SpimData2, HashMap< ViewId, Partition > > initSpimData(
+			final List< TimePoint > newTimepoints,
+			final List< ViewSetup > newViewSetups,
+			final Parameters params,
+			final Map< Integer, ExportMipmapInfo > perSetupExportMipmapInfo )
 	{
 		// SequenceDescription containing the subset of viewsetups and timepoints. Does not have an ImgLoader yet.
 		final SequenceDescription seq = new SequenceDescription( new TimePoints( newTimepoints ), newViewSetups, null, null );
@@ -148,7 +154,7 @@ public class ExportSpimData2HDF5 implements ImgExport
 		File basePath = params.getSeqFile().getParentFile();
 
 		ArrayList< Partition > hdf5Partitions = null;
-		viewIdToPartition = new HashMap< ViewId, Partition >();
+		HashMap< ViewId, Partition > viewIdToPartition = new HashMap< ViewId, Partition >();
 
 		if ( params.getSplit() )
 		{
@@ -179,7 +185,9 @@ public class ExportSpimData2HDF5 implements ImgExport
 		}
 
 		seq.setImgLoader( new Hdf5ImageLoader( params.getHDF5File(), hdf5Partitions, seq, false ) );
-		spimData = new SpimData2( basePath, seq, viewRegistrations, viewsInterestPoints );
+		SpimData2 spimData = new SpimData2( basePath, seq, viewRegistrations, viewsInterestPoints );
+
+		return new ValuePair< SpimData2, HashMap<ViewId,Partition> >( spimData, viewIdToPartition );
 	}
 
 	@Override

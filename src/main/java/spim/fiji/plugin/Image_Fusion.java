@@ -31,6 +31,7 @@ import spim.process.fusion.export.ImgExport;
 import spim.process.fusion.export.Save3dTIFF;
 import spim.process.fusion.weightedavg.WeightedAverageFusion;
 import spim.process.fusion.weightedavg.WeightedAverageFusion.WeightedAvgFusionType;
+import bdv.img.hdf5.Hdf5ImageLoader;
 
 public class Image_Fusion implements PlugIn
 {
@@ -141,6 +142,9 @@ public class Image_Fusion implements PlugIn
 		final Fusion fusion = staticFusionAlgorithms.get( fusionAlgorithm ).newInstance( data, viewIds );
 		final BoundingBox boundingBox = staticBoundingBoxAlgorithms.get( boundingBoxAlgorithm ).newInstance( data, viewIds );
 		final ImgExport imgExport = staticImgExportAlgorithms.get( imgExportAlgorithm ).newInstance();
+
+		if ( data.getSequenceDescription().getImgLoader() instanceof Hdf5ImageLoader )
+			BoundingBox.defaultPixelType = 1; // set to 16 bit by default for hdf5
 
 		if ( !boundingBox.queryParameters( fusion, imgExport ) )
 			return false;

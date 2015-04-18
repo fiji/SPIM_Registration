@@ -339,7 +339,8 @@ public class Generic_Resave_HDF5 implements PlugIn
 					if ( displayClusterProcessing )
 						gd.getNextNumber();
 					gd.getNextBoolean();
-					gd.getNextString();
+					if ( askForXMLPath )
+						gd.getNextString();
 					if ( e instanceof ItemEvent && e.getID() == ItemEvent.ITEM_STATE_CHANGED && e.getSource() == cManualMipmap )
 					{
 						final boolean useManual = cManualMipmap.getState();
@@ -394,7 +395,8 @@ public class Generic_Resave_HDF5 implements PlugIn
 				lastJobIndex = ( int ) gd.getNextNumber();
 			}
 			lastDeflate = gd.getNextBoolean();
-			lastExportPath = gd.getNextString();
+			if ( askForXMLPath )
+				lastExportPath = gd.getNextString();
 
 			// parse mipmap resolutions and cell sizes
 			final int[][] resolutions = PluginHelper.parseResolutionsString( lastSubsampling );
