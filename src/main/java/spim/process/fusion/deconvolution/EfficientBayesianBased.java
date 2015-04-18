@@ -738,9 +738,11 @@ public class EfficientBayesianBased extends Fusion
 	
 				if ( gd.wasCanceled() )
 					return false;
-	
-				defaultSamePSFForAllAnglesIllums = gd.getNextBoolean();
-				defaultSamePSFForAllChannels = gd.getNextBoolean();
+				
+				if ( anglesToProcess.size() * illumsToProcess.size() > 1 )
+					defaultSamePSFForAllAnglesIllums = gd.getNextBoolean();
+				if ( channelsToProcess.size() > 1 )
+					defaultSamePSFForAllChannels = gd.getNextBoolean();
 			}
 			else
 			{
