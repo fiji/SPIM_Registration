@@ -84,12 +84,20 @@ public class Generic_Resave_HDF5 implements PlugIn
 		public void setResolutions( final int[][] resolutions ) { this.resolutions = resolutions; }
 		public void setSubdivisions( final int[][] subdivisions ) { this.subdivisions = subdivisions; }
 		public void setMipmapManual( final boolean setMipmapManual ) { this.setMipmapManual = setMipmapManual; }
+		public void setDeflate( final boolean deflate ) { this.deflate = deflate; }
+		public void setSplit( final boolean split ) { this.split = split; }
+		public void setTimepointsPerPartition( final int timepointsPerPartition ) { this.timepointsPerPartition = timepointsPerPartition; }
+		public void setSetupsPerPartition( final int setupsPerPartition ) { this.setupsPerPartition = setupsPerPartition; }
 
 		public File getSeqFile() { return seqFile; }
 		public File getHDF5File() { return hdf5File; }
 		public int[][] getResolutions() { return resolutions; }
 		public int[][] getSubdivisions() { return subdivisions; }
 		public boolean getMipmapManual() { return setMipmapManual; }
+		public boolean getDeflate() { return deflate; }
+		public boolean getSplit() { return split; }
+		public int getTimepointsPerPartition() { return timepointsPerPartition; }
+		public int getSetupsPerPartition() { return setupsPerPartition; }
 	}
 
 	@Override
@@ -269,6 +277,11 @@ public class Generic_Resave_HDF5 implements PlugIn
 
 	public static Parameters getParameters( final ExportMipmapInfo autoMipmapSettings, final boolean askForXMLPath )
 	{
+		return getParameters( autoMipmapSettings, askForXMLPath, "Export for BigDataViewer" );
+	}
+
+	public static Parameters getParameters( final ExportMipmapInfo autoMipmapSettings, final boolean askForXMLPath, final String dialogTitle )
+	{
 		final boolean displayClusterProcessing = Toggle_Cluster_Options.displayClusterProcessing;
 		if ( displayClusterProcessing )
 		{
@@ -279,7 +292,7 @@ public class Generic_Resave_HDF5 implements PlugIn
 
 		while ( true )
 		{
-			final GenericDialogPlus gd = new GenericDialogPlus( "Export for BigDataViewer" );
+			final GenericDialogPlus gd = new GenericDialogPlus( dialogTitle );
 
 			gd.addCheckbox( "manual_mipmap_setup", lastSetMipmapManual );
 			final Checkbox cManualMipmap = ( Checkbox ) gd.getCheckboxes().lastElement();
@@ -326,7 +339,8 @@ public class Generic_Resave_HDF5 implements PlugIn
 					if ( displayClusterProcessing )
 						gd.getNextNumber();
 					gd.getNextBoolean();
-					gd.getNextString();
+					if ( askForXMLPath )
+						gd.getNextString();
 					if ( e instanceof ItemEvent && e.getID() == ItemEvent.ITEM_STATE_CHANGED && e.getSource() == cManualMipmap )
 					{
 						final boolean useManual = cManualMipmap.getState();
@@ -381,7 +395,8 @@ public class Generic_Resave_HDF5 implements PlugIn
 				lastJobIndex = ( int ) gd.getNextNumber();
 			}
 			lastDeflate = gd.getNextBoolean();
-			lastExportPath = gd.getNextString();
+			if ( askForXMLPath )
+				lastExportPath = gd.getNextString();
 
 			// parse mipmap resolutions and cell sizes
 			final int[][] resolutions = PluginHelper.parseResolutionsString( lastSubsampling );
