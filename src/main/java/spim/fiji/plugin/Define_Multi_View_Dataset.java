@@ -181,7 +181,7 @@ public class Define_Multi_View_Dataset implements PlugIn
 	
 	public static void main( String args[] )
 	{
-		StackList.defaultDirectory = "/home/preibisch/Documents/Microscopy/SPIM/HisYFP-SPIM";
+		StackList.defaultDirectory = "/Users/preibischs/Documents/Microscopy/SPIM/HisYFP-SPIM";
 
 		//new ImageJ();
 		new Define_Multi_View_Dataset().run( null );
