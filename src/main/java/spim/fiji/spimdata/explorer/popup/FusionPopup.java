@@ -2,8 +2,11 @@ package spim.fiji.spimdata.explorer.popup;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.JComponent;
 
 import javax.swing.JMenuItem;
+import mpicbg.spim.data.generic.AbstractSpimData;
+import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.Image_Fusion;
@@ -24,8 +27,7 @@ public class FusionPopup extends JMenuItem implements ViewExplorerSetable
 	}
 
 	@Override
-	public JMenuItem setViewExplorer( final ViewSetupExplorerPanel< ?, ? > panel )
-	{
+	public JComponent setViewExplorer(ViewSetupExplorerPanel<? extends AbstractSpimData<? extends AbstractSequenceDescription<?, ?, ?>>, ?> panel) {
 		this.panel = panel;
 		return this;
 	}
