@@ -1,6 +1,8 @@
 package spim.fiji.spimdata.explorer;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -206,7 +208,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		table.setSurrendersFocusOnKeystroke( true );
 		table.setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
 		
-		final DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+		final DefaultTableCellRenderer centerRenderer = new CellBorderRenderer();
 		centerRenderer.setHorizontalAlignment( JLabel.CENTER );
 		
 		// center all columns
@@ -283,6 +285,34 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		table.getSelectionModel().setSelectionInterval( 0, 0 );
 
 		addPopupMenu( table );
+	}
+
+	public static class CellBorderRenderer extends DefaultTableCellRenderer
+	{
+		private static final long serialVersionUID = 1L;
+		final Color bkgnd, foregnd;
+
+		public CellBorderRenderer() { this( Color.white, Color.black ); }
+		public CellBorderRenderer( final Color bkgnd, final Color foregnd )
+		{
+			super();
+
+			this.bkgnd = bkgnd;
+			this.foregnd = foregnd;
+		}
+
+		@Override
+		public Component getTableCellRendererComponent(
+				final JTable table, final Object value, final boolean isSelected,
+				final boolean hasFocus, final int row, final int column )
+		{
+			Component cell = super.getTableCellRendererComponent( table, value, isSelected, hasFocus, row, column );
+
+			cell.setBackground( bkgnd );
+			cell.setForeground( foregnd );
+
+			return cell;
+		}
 	}
 
 	protected ListSelectionListener getSelectionListener()

@@ -142,7 +142,7 @@ public class InterestPointExplorerPanel extends JPanel
 		addPopupMenu( table );
 	}
 
-	private static class MyRenderer extends DefaultTableCellRenderer
+	protected static class MyRenderer extends DefaultTableCellRenderer
 	{
 		private static final long serialVersionUID = 1L;
 
