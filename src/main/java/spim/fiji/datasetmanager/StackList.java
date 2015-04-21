@@ -320,8 +320,8 @@ public abstract class StackList implements MultiViewDatasetDefinition
 							for ( int[] exceptions : tmp )
 								if ( exceptions[ 1 ] == c && exceptions[ 2 ] == i && exceptions[ 3 ] == a )
 								{
-									missingViews.add( new ViewId( t, setupId ) );
-									System.out.println( "creating missing views t:" + t + " c:" + c + " i:" + i + " a:" + a + " setupid: " + setupId );
+									missingViews.add( new ViewId( Integer.parseInt( timepointNameList.get( t ) ), setupId ) );
+									System.out.println( "creating missing views t:" + Integer.parseInt( timepointNameList.get( t ) ) + " c:" + c + " i:" + i + " a:" + a + " setupid: " + setupId );
 								}
 							
 							++setupId;
