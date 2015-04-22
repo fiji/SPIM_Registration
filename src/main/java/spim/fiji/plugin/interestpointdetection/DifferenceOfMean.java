@@ -233,7 +233,9 @@ public class DifferenceOfMean extends DifferenceOf
 		ii.setThreshold( (float)defaultThreshold[ channelId ] );
 		ii.setLookForMinima( defaultFindMin[ channelId ] );
 		ii.setLookForMaxima( defaultFindMax[ channelId ] );
-		
+		ii.setMinIntensityImage( minIntensity ); // if is Double.NaN will be ignored
+		ii.setMaxIntensityImage( maxIntensity ); // if is Double.NaN will be ignored
+
 		ii.run( null );
 		
 		while ( !ii.isFinished() )

@@ -40,40 +40,32 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import net.imglib2.RandomAccess;
-import net.imglib2.exception.ImgLibException;
-import net.imglib2.img.ImagePlusAdapter;
-import net.imglib2.img.imageplus.FloatImagePlus;
-import net.imglib2.img.imageplus.ImagePlusImgs;
-import net.imglib2.view.Views;
-import spim.Threads;
-import spim.process.fusion.FusionHelper;
 import mpicbg.imglib.algorithm.gauss.GaussianConvolutionReal;
 import mpicbg.imglib.algorithm.math.LocalizablePoint;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianReal1;
 import mpicbg.imglib.algorithm.scalespace.SubpixelLocalization;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
-import mpicbg.imglib.cursor.array.ArrayCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
-import mpicbg.imglib.multithreading.Chunk;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
 import mpicbg.spim.io.IOFunctions;
-import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
 import mpicbg.spim.registration.detection.DetectionSegmentation;
+import net.imglib2.RandomAccess;
+import net.imglib2.exception.ImgLibException;
+import net.imglib2.img.ImagePlusAdapter;
+import net.imglib2.img.imageplus.FloatImagePlus;
+import net.imglib2.view.Views;
+import spim.process.fusion.FusionHelper;
 
 /**
  * An interactive tool for determining the required sigma and peak threshold
@@ -198,7 +190,7 @@ public class InteractiveDoG implements PlugIn
 		}
 		
 		// copy the ImagePlus into an ArrayImage<FloatType> for faster access
-		source = convertToFloat( imp, channel, 0 );
+		source = convertToFloat( imp, channel, 0, minIntensityImage, maxIntensityImage );
 		
 		// show the interactive kit
 		displaySliders();
@@ -461,7 +453,7 @@ public class InteractiveDoG implements PlugIn
 
 		final FloatImagePlus< net.imglib2.type.numeric.real.FloatType > i = createImgLib2( img, w, h );
 
-		if ( Double.isNaN( min ) || Double.isNaN( max ) || Double.isInfinite( min ) || Double.isInfinite( max ) )
+		if ( Double.isNaN( min ) || Double.isNaN( max ) || Double.isInfinite( min ) || Double.isInfinite( max ) || min == max )
 			FusionHelper.normalizeImage( i );
 		else
 			FusionHelper.normalizeImage( i, (float)min, (float)max );

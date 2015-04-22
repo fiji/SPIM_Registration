@@ -252,7 +252,7 @@ public class DifferenceOfGaussian extends DifferenceOf implements GenericDialogA
 		idog.setLookForMinima( defaultFindMin[ channelId ] );
 		idog.setLookForMaxima( defaultFindMax[ channelId ] );
 		idog.setMinIntensityImage( minIntensity ); // if is Double.NaN will be ignored
-		idog.setMinIntensityImage( maxIntensity ); // if is Double.NaN will be ignored
+		idog.setMaxIntensityImage( maxIntensity ); // if is Double.NaN will be ignored
 
 		idog.run( null );
 		

@@ -52,7 +52,7 @@ public class ProcessDOM
 
 		final float min, max;
 
-		if ( Double.isNaN( minIntensity ) || Double.isNaN( maxIntensity ) || minIntensity == maxIntensity )
+		if ( Double.isNaN( minIntensity ) || Double.isNaN( maxIntensity ) || Double.isInfinite( minIntensity ) || Double.isInfinite( maxIntensity ) || minIntensity == maxIntensity )
 		{
 			final float[] minmax = FusionHelper.minMax( imglib2img );
 			min = minmax[ 0 ];
