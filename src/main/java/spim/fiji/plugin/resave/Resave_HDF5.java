@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import net.imglib2.Dimensions;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.registration.ViewRegistration;
@@ -138,9 +139,19 @@ public class Resave_HDF5 implements PlugIn
 
 					if ( vd.isPresent() )
 					{
-						vs.setSize( spimData.getSequenceDescription().getImgLoader().getImageSize( vd ) );
+						Dimensions dim = spimData.getSequenceDescription().getImgLoader().getImageSize( vd );
+						
+						IOFunctions.println(
+								"Dimensions: " + dim.dimension( 0 ) + "x" + dim.dimension( 1 ) + "x" + dim.dimension( 2 ) +
+								", loaded from tp:" + t.getId() + " vs: " + vs.getId() );
+
+						vs.setSize( dim );
 						loadedDimensions = true;
 						break;
+					}
+					else
+					{
+						IOFunctions.println( "ViewSetup: " + vs.getId() + " not present in timepoint: " + t.getId() );
 					}
 				}
 			}
