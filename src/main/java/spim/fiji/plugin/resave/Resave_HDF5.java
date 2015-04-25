@@ -193,12 +193,22 @@ public class Resave_HDF5 implements PlugIn
 			views.add( new ViewId( viewId.getTimePointId(), viewId.getViewSetupId() ) );
 
 		final MissingViews oldMissingViews = oldSpimData.getSequenceDescription().getMissingViews();
-		final ArrayList< ViewId > missingViews = new ArrayList< ViewId >();
+		final HashSet< ViewId > missingViews = new HashSet< ViewId >();
 
 		if( oldMissingViews != null && oldMissingViews.getMissingViews() != null )
 			for ( final ViewId id : oldMissingViews.getMissingViews() )
 				if ( views.contains( id ) )
 					missingViews.add( id );
+
+		// add the new missing views!!!
+		for ( final TimePoint t : timepoints.getTimePointsOrdered() )
+			for ( final ViewSetup v : viewSetupsToProcess )
+			{
+				final ViewId viewId = new ViewId( t.getId(), v.getId() );
+
+				if ( !views.contains( viewId ) )
+					missingViews.add( viewId );
+			}
 
 		// instantiate the sequencedescription
 		final SequenceDescription sequenceDescription = new SequenceDescription( timepoints, viewSetupsToProcess, oldSpimData.getSequenceDescription().getImgLoader(), new MissingViews( missingViews ) );

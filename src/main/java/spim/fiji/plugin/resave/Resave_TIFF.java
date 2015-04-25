@@ -386,6 +386,16 @@ public class Resave_TIFF implements PlugIn
 				if ( views.contains( id ) )
 					missingViews.add( id );
 
+		// add the new missing views!!!
+		for ( final TimePoint t : timepoints.getTimePointsOrdered() )
+			for ( final ViewSetup v : setups )
+			{
+				final ViewId viewId = new ViewId( t.getId(), v.getId() );
+
+				if ( !views.contains( viewId ) )
+					missingViews.add( viewId );
+			}
+
 		// instantiate the sequencedescription
 		final SequenceDescription sequenceDescription = new SequenceDescription( timepoints, setups, null, new MissingViews( missingViews ) );
 
