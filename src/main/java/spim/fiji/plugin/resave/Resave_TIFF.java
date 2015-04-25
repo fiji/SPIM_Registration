@@ -379,7 +379,7 @@ public class Resave_TIFF implements PlugIn
 			views.add( new ViewId( viewId.getTimePointId(), viewId.getViewSetupId() ) );
 
 		final MissingViews oldMissingViews = spimData.getSequenceDescription().getMissingViews();
-		final ArrayList< ViewId > missingViews = new ArrayList< ViewId >();
+		final HashSet< ViewId > missingViews = new HashSet< ViewId >();
 
 		if ( oldMissingViews != null && oldMissingViews.getMissingViews() != null )
 			for ( final ViewId id : oldMissingViews.getMissingViews() )
