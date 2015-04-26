@@ -98,13 +98,13 @@ public class AppendSpimData2 implements ImgExport
 	}
 
 	@Override
-	public boolean queryParameters( final SpimData2 spimData )
+	public boolean queryParameters( final SpimData2 spimData, final boolean is16bit )
 	{
 		if ( spimData.getSequenceDescription().getImgLoader() instanceof Hdf5ImageLoader )
 		{
 			appendToHdf5 = new AppendSpimData2HDF5();
 			appendToHdf5.setXMLData( newTimepoints, newViewSetups );
-			return appendToHdf5.queryParameters( spimData );
+			return appendToHdf5.queryParameters( spimData, is16bit );
 		}
 
 		this.spimData = spimData;

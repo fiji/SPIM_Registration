@@ -113,7 +113,7 @@ public class Save3dTIFF implements ImgExportTitle
 	}
 
 	@Override
-	public boolean queryParameters( final SpimData2 spimData ) { return true; }
+	public boolean queryParameters( final SpimData2 spimData, final boolean is16bit ) { return true; }
 
 	@Override
 	public void queryAdditionalParameters( final GenericDialog gd, final SpimData2 spimData )

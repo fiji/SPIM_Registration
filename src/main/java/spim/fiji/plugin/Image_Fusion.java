@@ -156,7 +156,7 @@ public class Image_Fusion implements PlugIn
 		fusion.defineNewViewSetups( boundingBox );
 		imgExport.setXMLData( fusion.getTimepointsToProcess(), fusion.getNewViewSetups() );
 		
-		if ( !imgExport.queryParameters( data ) )
+		if ( !imgExport.queryParameters( data, boundingBox.getPixelType() == 1 ) )
 			return false;
 
 		// did anyone modify this SpimData object?

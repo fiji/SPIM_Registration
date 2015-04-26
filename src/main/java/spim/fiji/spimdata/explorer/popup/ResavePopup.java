@@ -178,7 +178,8 @@ public class ResavePopup extends JMenu implements ViewExplorerSetable
 										1,
 										0,
 										false,
-										0 );
+										0,
+										0, Double.NaN, Double.NaN );
 
 						// write hdf5
 						Generic_Resave_HDF5.writeHDF5( Resave_HDF5.reduceSpimData2( data, viewIds ), params, progressWriter );

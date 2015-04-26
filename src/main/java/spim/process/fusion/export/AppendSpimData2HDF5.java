@@ -72,7 +72,7 @@ public class AppendSpimData2HDF5 implements ImgExport
 	}
 
 	@Override
-	public boolean queryParameters( final SpimData2 spimData )
+	public boolean queryParameters( final SpimData2 spimData, final boolean is16bit )
 	{
 		System.out.println( "queryParameters()" );
 
@@ -100,7 +100,7 @@ public class AppendSpimData2HDF5 implements ImgExport
 		}
 
 		final int firstviewSetupId = newViewSetups.get( 0 ).getId();
-		params = Generic_Resave_HDF5.getParameters( perSetupExportMipmapInfo.get( firstviewSetupId ), false, getDescription() );
+		params = Generic_Resave_HDF5.getParameters( perSetupExportMipmapInfo.get( firstviewSetupId ), false, getDescription(), is16bit );
 		if ( params == null )
 		{
 			System.out.println( "abort " );
@@ -147,17 +147,19 @@ public class AppendSpimData2HDF5 implements ImgExport
 		return exportImage( img, bb, tp, vs, Double.NaN, Double.NaN );
 	}
 
+	@SuppressWarnings( { "unchecked", "rawtypes" } )
 	@Override
 	public < T extends RealType< T > & NativeType< T > > boolean exportImage( RandomAccessibleInterval< T > img, BoundingBox bb, TimePoint tp, ViewSetup vs, double min, double max )
 	{
 		System.out.println( "exportImage2()" );
 
-		if ( ! UnsignedShortType.class.isInstance( Util.getTypeFromInterval( img ) ) )
-			throw new UnsupportedOperationException( "only UnsignedShortType supported." );
-
 		// write the image
-		@SuppressWarnings( { "unchecked", "rawtypes" } )
-		final RandomAccessibleInterval< UnsignedShortType > ushortimg = ( RandomAccessibleInterval ) img;
+		final RandomAccessibleInterval< UnsignedShortType > ushortimg;
+		if ( ! UnsignedShortType.class.isInstance( Util.getTypeFromInterval( img ) ) )
+			ushortimg = ExportSpimData2HDF5.convert( img, params );
+		else
+			ushortimg = ( RandomAccessibleInterval ) img;
+
 		final Partition partition = viewIdToPartition.get( new ViewId( tp.getId(), vs.getId() ) );
 		final ExportMipmapInfo mipmapInfo = perSetupExportMipmapInfo.get( vs.getId() );
 		final boolean writeMipmapInfo = true; // TODO: remember whether we already wrote it and write only once

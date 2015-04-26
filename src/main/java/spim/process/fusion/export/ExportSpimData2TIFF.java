@@ -111,7 +111,7 @@ public class ExportSpimData2TIFF implements ImgExport
 	}
 
 	@Override
-	public boolean queryParameters( final SpimData2 spimData )
+	public boolean queryParameters( final SpimData2 spimData, final boolean is16bit )
 	{
 		if ( newTimepoints == null || newViewSetups == null )
 		{

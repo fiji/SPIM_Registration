@@ -50,7 +50,7 @@ public interface ImgExport
 	 * 
 	 * @return
 	 */
-	public abstract boolean queryParameters( final SpimData2 spimData );
+	public abstract boolean queryParameters( final SpimData2 spimData, final boolean is16bit );
 	
 	/**
 	 * Query additional parameters within the bounding box dialog

@@ -27,6 +27,7 @@ import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.TimePoint;
 import spim.fiji.plugin.Toggle_Cluster_Options;
+import spim.fiji.plugin.util.GUIHelper;
 import bdv.export.ExportMipmapInfo;
 import bdv.export.ProgressWriter;
 import bdv.export.ProposeMipmaps;
@@ -40,6 +41,14 @@ import bdv.spimdata.XmlIoSpimDataMinimal;
 
 public class Generic_Resave_HDF5 implements PlugIn
 {
+	public static final String[] convertChoices = {
+		"Use min/max of each image (might flicker over time)",
+		"Use min/max of first image (might saturate intenities over time)",
+		"Manually define min/max" };
+
+	public static int defaultConvertChoice = 1;
+	public static double defaultMin = 0, defaultMax = 5;
+
 	public static void main( final String[] args )
 	{
 		new Generic_Resave_HDF5().run( null );
@@ -59,12 +68,17 @@ public class Generic_Resave_HDF5 implements PlugIn
 		boolean onlyRunSingleJob;
 		int jobId;
 
+		int convertChoice = 1;
+		double min = Double.NaN;
+		double max = Double.NaN;
+
 		public Parameters(
 				final boolean setMipmapManual, final int[][] resolutions, final int[][] subdivisions,
 				final File seqFile, final File hdf5File,
 				final boolean deflate,
 				final boolean split, final int timepointsPerPartition, final int setupsPerPartition,
-				final boolean onlyRunSingleJob, final int jobId )
+				final boolean onlyRunSingleJob, final int jobId,
+				final int convertChoice, final double min, final double max )
 		{
 			this.setMipmapManual = setMipmapManual;
 			this.resolutions = resolutions;
@@ -77,6 +91,10 @@ public class Generic_Resave_HDF5 implements PlugIn
 			this.setupsPerPartition = setupsPerPartition;
 			this.onlyRunSingleJob = onlyRunSingleJob;
 			this.jobId = jobId;
+
+			this.convertChoice = convertChoice;
+			this.min = min;
+			this.max = max;
 		}
 
 		public void setSeqFile( final File seqFile ) { this.seqFile = seqFile; }
@@ -88,6 +106,8 @@ public class Generic_Resave_HDF5 implements PlugIn
 		public void setSplit( final boolean split ) { this.split = split; }
 		public void setTimepointsPerPartition( final int timepointsPerPartition ) { this.timepointsPerPartition = timepointsPerPartition; }
 		public void setSetupsPerPartition( final int setupsPerPartition ) { this.setupsPerPartition = setupsPerPartition; }
+		public void setMin( final double min ) { this.min = min; }
+		public void setMax( final double max ) { this.max = max; }
 
 		public File getSeqFile() { return seqFile; }
 		public File getHDF5File() { return hdf5File; }
@@ -98,6 +118,10 @@ public class Generic_Resave_HDF5 implements PlugIn
 		public boolean getSplit() { return split; }
 		public int getTimepointsPerPartition() { return timepointsPerPartition; }
 		public int getSetupsPerPartition() { return setupsPerPartition; }
+
+		public int getConvertChoice() { return convertChoice; }
+		public double getMin() { return min; }
+		public double getMax() { return max; }
 	}
 
 	@Override
@@ -121,7 +145,7 @@ public class Generic_Resave_HDF5 implements PlugIn
 		final Map< Integer, ExportMipmapInfo > perSetupExportMipmapInfo = ProposeMipmaps.proposeMipmaps( spimData.getSequenceDescription() );
 
 		final int firstviewSetupId = spimData.getSequenceDescription().getViewSetupsOrdered().get( 0 ).getId();
-		final Parameters params = getParameters( perSetupExportMipmapInfo.get( firstviewSetupId ), true );
+		final Parameters params = getParameters( perSetupExportMipmapInfo.get( firstviewSetupId ), true, true );
 		if ( params == null )
 			return;
 
@@ -275,12 +299,12 @@ public class Generic_Resave_HDF5 implements PlugIn
 			return null;
 	}
 
-	public static Parameters getParameters( final ExportMipmapInfo autoMipmapSettings, final boolean askForXMLPath )
+	public static Parameters getParameters( final ExportMipmapInfo autoMipmapSettings, final boolean askForXMLPath, final boolean is16bit )
 	{
-		return getParameters( autoMipmapSettings, askForXMLPath, "Export for BigDataViewer" );
+		return getParameters( autoMipmapSettings, askForXMLPath, "Export for BigDataViewer", is16bit );
 	}
 
-	public static Parameters getParameters( final ExportMipmapInfo autoMipmapSettings, final boolean askForXMLPath, final String dialogTitle )
+	public static Parameters getParameters( final ExportMipmapInfo autoMipmapSettings, final boolean askForXMLPath, final String dialogTitle, final boolean is16bit )
 	{
 		final boolean displayClusterProcessing = Toggle_Cluster_Options.displayClusterProcessing;
 		if ( displayClusterProcessing )
@@ -323,6 +347,13 @@ public class Generic_Resave_HDF5 implements PlugIn
 				PluginHelper.addSaveAsFileField( gd, "Export_path", lastExportPath, 25 );
 			}
 
+			if ( !is16bit )
+			{
+				gd.addMessage( "" );
+				gd.addMessage( "Currently, only 16-bit data is supported for HDF5. Please define how to convert to 16bit.", GUIHelper.mediumstatusfont );
+				gd.addChoice( "Convert_32bit", convertChoices, convertChoices[ defaultConvertChoice ] );
+			}
+
 			final String autoSubsampling = ProposeMipmaps.getArrayString( autoMipmapSettings.getExportResolutions() );
 			final String autoChunkSizes = ProposeMipmaps.getArrayString( autoMipmapSettings.getSubdivisions() );
 			gd.addDialogListener( new DialogListener()
@@ -341,6 +372,8 @@ public class Generic_Resave_HDF5 implements PlugIn
 					gd.getNextBoolean();
 					if ( askForXMLPath )
 						gd.getNextString();
+					if ( !is16bit )
+						gd.getNextChoiceIndex();
 					if ( e instanceof ItemEvent && e.getID() == ItemEvent.ITEM_STATE_CHANGED && e.getSource() == cManualMipmap )
 					{
 						final boolean useManual = cManualMipmap.getState();
@@ -397,6 +430,8 @@ public class Generic_Resave_HDF5 implements PlugIn
 			lastDeflate = gd.getNextBoolean();
 			if ( askForXMLPath )
 				lastExportPath = gd.getNextString();
+			if ( !is16bit )
+				defaultConvertChoice = gd.getNextChoiceIndex();
 
 			// parse mipmap resolutions and cell sizes
 			final int[][] resolutions = PluginHelper.parseResolutionsString( lastSubsampling );
@@ -439,7 +474,37 @@ public class Generic_Resave_HDF5 implements PlugIn
 				seqFile = hdf5File = null;
 			}
 
-			return new Parameters( lastSetMipmapManual, resolutions, subdivisions, seqFile, hdf5File, lastDeflate, lastSplit, lastTimepointsPerPartition, lastSetupsPerPartition, displayClusterProcessing, lastJobIndex );
+			if ( defaultConvertChoice == 2 )
+			{
+				if ( Double.isNaN( defaultMin ) )
+					defaultMin = 0;
+
+				if ( Double.isNaN( defaultMax ) )
+					defaultMax = 5;
+
+				final GenericDialog gdMinMax = new GenericDialog( "Define min/max" );
+
+				gdMinMax.addNumericField( "Min_Intensity_for_16bit_conversion", defaultMin, 1 );
+				gdMinMax.addNumericField( "Max_Intensity_for_16bit_conversion", defaultMax, 1 );
+				gdMinMax.addMessage( "Note: the typical range for multiview deconvolution is [0 ... 10] & for fusion the same as the input intensities., ",GUIHelper.mediumstatusfont );
+
+				gdMinMax.showDialog();
+
+				if ( gdMinMax.wasCanceled() )
+					return null;
+	
+				defaultMin = gdMinMax.getNextNumber();
+				defaultMax = gdMinMax.getNextNumber();
+			}
+			else
+			{
+				defaultMin = defaultMax = Double.NaN;
+			}
+
+			return new Parameters(
+					lastSetMipmapManual, resolutions, subdivisions, seqFile, hdf5File, lastDeflate, lastSplit,
+					lastTimepointsPerPartition, lastSetupsPerPartition, displayClusterProcessing, lastJobIndex,
+					defaultConvertChoice, defaultMin, defaultMax );
 		}
 	}
 }

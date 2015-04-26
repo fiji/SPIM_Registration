@@ -22,6 +22,8 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.converter.RealUnsignedShortConverter;
+import net.imglib2.converter.read.ConvertedRandomAccessibleInterval;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -39,6 +41,7 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.process.fusion.FusionHelper;
 import bdv.export.ExportMipmapInfo;
 import bdv.export.ProgressWriter;
 import bdv.export.SubTaskProgressWriter;
@@ -94,7 +97,7 @@ public class ExportSpimData2HDF5 implements ImgExport
 	}
 
 	@Override
-	public boolean queryParameters( SpimData2 spimData )
+	public boolean queryParameters( SpimData2 spimData, final boolean is16bit )
 	{
 		System.out.println( "queryParameters()" );
 
@@ -117,7 +120,7 @@ public class ExportSpimData2HDF5 implements ImgExport
 		}
 
 		final int firstviewSetupId = newViewSetups.get( 0 ).getId();
-		params = Generic_Resave_HDF5.getParameters( perSetupExportMipmapInfo.get( firstviewSetupId ), true, getDescription() );
+		params = Generic_Resave_HDF5.getParameters( perSetupExportMipmapInfo.get( firstviewSetupId ), true, getDescription(), is16bit );
 
 		if ( params == null )
 		{
@@ -197,17 +200,48 @@ public class ExportSpimData2HDF5 implements ImgExport
 		return exportImage( img, bb, tp, vs, Double.NaN, Double.NaN );
 	}
 
+	public static < T extends RealType< T > > RandomAccessibleInterval< UnsignedShortType > convert( final RandomAccessibleInterval< T > img, final Parameters params )
+	{
+		double min, max;
+
+		if ( params.getConvertChoice() == 0 || Double.isNaN( params.getMin() ) || Double.isNaN( params.getMin() ) )
+		{
+			final float[] minmax = FusionHelper.minMax( img );
+			min = minmax[ 0 ];
+			max = minmax[ 1 ];
+
+			min = Math.max( 0, min - ((min+max)/2.0) * 0.1 );
+			max = max + ((min+max)/2.0) * 0.1;
+
+			params.setMin( min );
+			params.setMax( max );
+		}
+		else
+		{
+			min = params.getMin();
+			max = params.getMax();
+		}
+
+		IOFunctions.println( "Min intensity for 16bit conversion: " + min );
+		IOFunctions.println( "Max intensity for 16bit conversion: " + max );
+
+		final RealUnsignedShortConverter< T > converter = new RealUnsignedShortConverter< T >( min, max );
+
+		return new ConvertedRandomAccessibleInterval<T, UnsignedShortType>( img, converter, new UnsignedShortType() );
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public < T extends RealType< T > & NativeType< T > > boolean exportImage( RandomAccessibleInterval< T > img, BoundingBox bb, TimePoint tp, ViewSetup vs, double min, double max )
 	{
 		System.out.println( "exportImage2()" );
 
-		if ( ! UnsignedShortType.class.isInstance( Util.getTypeFromInterval( img ) ) )
-			throw new UnsupportedOperationException( "only UnsignedShortType supported." );
-
 		// write the image
-		@SuppressWarnings( { "unchecked", "rawtypes" } )
-		final RandomAccessibleInterval< UnsignedShortType > ushortimg = ( RandomAccessibleInterval ) img;
+		final RandomAccessibleInterval< UnsignedShortType > ushortimg;
+		if ( ! UnsignedShortType.class.isInstance( Util.getTypeFromInterval( img ) ) )
+			ushortimg = convert( img, params );
+		else
+			ushortimg = ( RandomAccessibleInterval ) img;
 		final Partition partition = viewIdToPartition.get( new ViewId( tp.getId(), vs.getId() ) );
 		final ExportMipmapInfo mipmapInfo = perSetupExportMipmapInfo.get( vs.getId() );
 		final boolean writeMipmapInfo = true; // TODO: remember whether we already wrote it and write only once
