@@ -362,7 +362,7 @@ public abstract class DifferenceOf extends InterestPointDetection
 		// downsampleXY == 0 : a bit less then z-resolution
 		// downsampleXY == -1 : a bit more then z-resolution
 		if ( downsampleXY < 1 )
-			downsampleXY = downsampleFactor( downsampleXY, downsampleZ, vd.getViewSetup().getVoxelSize() );
+			this.downsampleXY = downsampleXY = downsampleFactor( downsampleXY, downsampleZ, vd.getViewSetup().getVoxelSize() );
 
 		if ( downsampleXY > 1 )
 			IOFunctions.println( "(" + new Date( System.currentTimeMillis() )  + "): Downsampling in XY " + downsampleXY + "x ..." );
