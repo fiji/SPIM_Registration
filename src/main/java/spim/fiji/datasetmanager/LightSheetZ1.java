@@ -352,6 +352,42 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 	@Override
 	public LightSheetZ1 newInstance() { return new LightSheetZ1(); }
 
+	public void defaultProcess(File cziFile, String xmlFile)
+	{
+		LightSheetZ1MetaData meta = new LightSheetZ1MetaData();
+		if ( !meta.loadMetaData( cziFile ) )
+		{
+			System.out.println( "Failed to analyze file." );
+			return;
+		}
+
+		String directory = cziFile.getParent();
+		ImgFactory< ? extends NativeType< ? > > imgFactory = selectImgFactory( meta );
+		// assemble timepints, viewsetups, missingviews and the imgloader
+		TimePoints timepoints = this.createTimePoints( meta );
+		ArrayList< ViewSetup > setups = this.createViewSetups( meta );
+		MissingViews missingViews = null;
+		// instantiate the sequencedescription
+		SequenceDescription sequenceDescription = new SequenceDescription( timepoints, setups, null, missingViews );
+		ImgLoader< UnsignedShortType > imgLoader = new LightSheetZ1ImgLoader( cziFile, imgFactory, sequenceDescription );
+		sequenceDescription.setImgLoader( imgLoader );
+		// get the minimal resolution of all calibrations
+		double minResolution = Math.min( Math.min( meta.calX(), meta.calY() ), meta.calZ() );
+		System.out.println( "Minimal resolution in all dimensions is: " + minResolution );
+		System.out.println( "(The smallest resolution in any dimension; the distance between two pixels in the output image will be that wide)" );
+		// create the initial view registrations (they are all the identity transform)
+		ViewRegistrations viewRegistrations = StackList.createViewRegistrations( sequenceDescription.getViewDescriptions(), minResolution );
+		// create the initial view interest point object
+		ViewInterestPoints viewInterestPoints = new ViewInterestPoints();
+		viewInterestPoints.createViewInterestPoints( sequenceDescription.getViewDescriptions() );
+		// finally create the SpimData itself based on the sequence description and the view registration
+		SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints );
+
+		SpimData2.saveXML( spimData, xmlFile, "" );
+
+		((LightSheetZ1ImgLoader)imgLoader).finalize();
+	}
+
 	public static void main( String[] args )
 	{
 		//defaultFirstFile = "/Volumes/My Passport/worm7/Track1(3).czi";
