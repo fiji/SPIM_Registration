@@ -3,6 +3,7 @@ package spim.process.fusion.boundingbox;
 import ij.gui.GenericDialog;
 
 import java.awt.Choice;
+import java.awt.GraphicsEnvironment;
 import java.awt.Label;
 import java.awt.TextField;
 import java.awt.event.ItemEvent;
@@ -105,9 +106,11 @@ public class ManualBoundingBox extends BoundingBox
 		gd.addMessage( "???x???x??? pixels", GUIHelper.smallStatusFont, GUIHelper.good );
 		Label l2 = (Label)gd.getMessage();
 
-		final ManageListeners m = new ManageListeners( gd, gd.getNumericFields(), gd.getChoices(), l1, l2, fusion, fusion.supportsDownsampling(), fusion.supports16BitUnsigned() );
-		fusion.registerAdditionalListeners( m );
-		m.update();
+		if (GraphicsEnvironment.isHeadless()) {
+			final ManageListeners m = new ManageListeners( gd, gd.getNumericFields(), gd.getChoices(), l1, l2, fusion, fusion.supportsDownsampling(), fusion.supports16BitUnsigned() );
+			fusion.registerAdditionalListeners( m );
+			m.update();
+		}
 		
 		gd.showDialog();
 		
