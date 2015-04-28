@@ -26,6 +26,8 @@ import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import bdv.export.ExportMipmapInfo;
 import bdv.export.ProgressWriter;
+import mpicbg.spim.data.generic.AbstractSpimData;
+import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 
 public class ResavePopup extends JMenu implements ViewExplorerSetable
 {
@@ -57,7 +59,7 @@ public class ResavePopup extends JMenu implements ViewExplorerSetable
 	}
 
 	@Override
-	public JMenuItem setViewExplorer( final ViewSetupExplorerPanel< ?, ? > panel )
+	public JMenuItem setViewExplorer(ViewSetupExplorerPanel<? extends AbstractSpimData<? extends AbstractSequenceDescription<?, ?, ?>>, ?> panel )
 	{
 		this.panel = panel;
 		return this;
@@ -120,10 +122,7 @@ public class ResavePopup extends JMenu implements ViewExplorerSetable
 
 						final Parameters params = new Parameters();
 
-						if ( index == 0 )
-							params.compress = false;
-						else
-							params.compress = true;
+						params.compress = index != 0;
 
 						if ( AbstractImgLoader.class.isInstance( data.getSequenceDescription().getImgLoader() ) )
 							params.imgFactory = ( (AbstractImgLoader)data.getSequenceDescription().getImgLoader() ).getImgFactory();
@@ -160,7 +159,7 @@ public class ResavePopup extends JMenu implements ViewExplorerSetable
 						final int firstviewSetupId = data.getSequenceDescription().getViewSetupsOrdered().get( 0 ).getId();
 						final ExportMipmapInfo autoMipmapSettings = perSetupExportMipmapInfo.get( firstviewSetupId );
 
-						final boolean compress = ( index == 2 ) ? false : true;
+						final boolean compress = (index != 2);
 
 						final String hdf5Filename = panel.xml().substring( 0, panel.xml().length() - 4 ) + ".h5";
 						final File hdf5File = new File( hdf5Filename );
