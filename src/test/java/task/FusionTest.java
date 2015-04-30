@@ -17,4 +17,10 @@ public class FusionTest extends XmlDatasetTest
 		int[] max = new int[] {910, 1926, 714};
 		new Image_Fusion().defaultProcess( xmlFileName, min, max );
 	}
+
+	public static void main(String[] argv)
+	{
+		FusionTest test = new FusionTest();
+		test.DeconvolveDataset();
+	}
 }
