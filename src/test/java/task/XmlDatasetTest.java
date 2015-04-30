@@ -5,8 +5,5 @@ package task;
  */
 public class XmlDatasetTest
 {
-	//String xmlFileName = "/Users/moon/temp/moon/test.xml";
-
-	// Cluster file
-	String xmlFileName = "/projects/pilot_spim/moon/test.xml";
+	String xmlFileName = "/Users/moon/temp/moon/test.xml";
 }
