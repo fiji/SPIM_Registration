@@ -407,7 +407,7 @@ public class WeightedAverageFusion extends Fusion
 	}
 
 	@Override
-	public void initDefault()
+	public void initDefault(int defineBlockSize, int defineComputeType, int defineIterationType)
 	{
 		if ( this.getFusionType() == WeightedAvgFusionType.FUSEDATA )
 		{
