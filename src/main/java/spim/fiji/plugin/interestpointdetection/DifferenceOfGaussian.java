@@ -393,4 +393,46 @@ public class DifferenceOfGaussian extends DifferenceOf implements GenericDialogA
 		this.percentGPUMem = defaultUseGPUMem = gd.getNextNumber();
 		return true;
 	}
+
+	public void defaultProcess(ArrayList< Channel > channels, String xmlFileName, String clusterExtension, boolean useCuda)
+	{
+		if(useCuda)
+		{
+			accurateCUDA = false;
+
+			final ArrayList< String > potentialNames = new ArrayList< String >();
+			potentialNames.add( "separable" );
+
+			cuda = NativeLibraryTools.loadNativeLibrary( potentialNames, CUDASeparableConvolution.class );
+
+			if ( cuda == null )
+			{
+				IOFunctions.println( "Cannot load CUDA JNA library." );
+				deviceList = null;
+				return;
+			}
+			else
+			{
+				deviceList = new ArrayList< CUDADevice >();
+			}
+
+			// multiple CUDA devices sometimes crashes, no idea why yet ...
+			final ArrayList< CUDADevice > selectedDevices = CUDATools.queryCUDADetails( cuda, false, this );
+
+			if ( selectedDevices == null || selectedDevices.size() == 0 )
+				return;
+			else
+				deviceList.addAll( selectedDevices );
+
+			// TODO: remove this, only for debug on non-CUDA machines >>>>
+			if ( deviceList.get( 0 ).getDeviceName().startsWith( "CPU emulation" ) )
+			{
+				for ( int i = 0; i < deviceList.size(); ++i )
+				{
+					deviceList.set( i, new CUDADevice( -1-i, deviceList.get( i ).getDeviceName(), deviceList.get( i ).getTotalDeviceMemory(), deviceList.get( i ).getFreeDeviceMemory(), deviceList.get( i ).getMajorComputeVersion(), deviceList.get( i ).getMinorComputeVersion() ) );
+					IOFunctions.println( "Running on cpu emulation, added " + ( -1-i ) + " as device" );
+				}
+			}
+		}
+	}
 }

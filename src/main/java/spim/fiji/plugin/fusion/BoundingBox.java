@@ -180,4 +180,6 @@ public abstract class BoundingBox implements Interval
 
 	@Override
 	public long dimension( final int d ) { return this.max[ d ] - this.min[ d ] + 1; }
+
+	public abstract void initDefault(final Fusion fusion, int[] min, int[] max);
 }

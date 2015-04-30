@@ -35,7 +35,7 @@ public class DifferenceOfMean extends DifferenceOf
 {
 	public static int defaultR1 = 2;
 	public static int defaultR2 = 3;
-	public static double defaultT = 0.02;
+	public static double defaultT = 0.005;
 	
 	public static int defaultRadius1[];
 	public static int defaultRadius2[];
@@ -155,6 +155,8 @@ public class DifferenceOfMean extends DifferenceOf
 			this.threshold[ channelId ] = 0.25f;
 		else
 			return false;
+
+		this.threshold[ channelId ] = defaultT;
 		
 		return true;
 	}
@@ -317,108 +319,5 @@ public class DifferenceOfMean extends DifferenceOf
 	@Override
 	protected boolean queryAdditionalParameters( final GenericDialog gd ) { return true; }
 
-	public void defaultProcess(ArrayList< Channel > channels, String xmlFileName, String clusterExtension)
-	{
-		final String label = "beads";
 
-		init( channels.size() );
-
-		if ( defaultBrightness == null || defaultBrightness.length != channels.size() )
-		{
-			defaultBrightness = new int[ channels.size() ];
-			for ( int i = 0; i < channels.size(); ++i )
-				defaultBrightness[ i ] = 1;
-		}
-
-		this.localization = defaultLocalization;
-
-		final int[] brightness = new int[ channelsToProcess.size() ];
-
-		for ( int c = 0; c < channelsToProcess.size(); ++c )
-		{
-			final Channel channel = channelsToProcess.get( c );
-			brightness[ c ] = defaultBrightness[ channel.getId() ];
-		}
-
-		downsampleXY = downsampleZ = 1;
-		additionalSigmaX = additionalSigmaY = additionalSigmaZ = 0.0;
-		minIntensity = maxIntensity = Double.NaN;
-
-		for ( int c = 0; c < channelsToProcess.size(); ++c )
-		{
-			final Channel channel = channelsToProcess.get( c );
-
-			if ( brightness[ c ] <= 3 )
-			{
-				if ( !setDefaultValues( channel, brightness[ c ] ) )
-					return;
-			}
-			else if ( brightness[ c ] == 4 )
-			{
-				if ( !setAdvancedValues( channel ) )
-					return;
-			}
-			else
-			{
-				if ( !setInteractiveValues( channel ) )
-					return;
-			}
-		}
-
-		imageSigmaX = imageSigmaY = imageSigmaZ = 0.5;
-
-		SpimData2 data = spimData;
-		List< ViewId > viewIds = viewIdsToProcess;
-		DifferenceOf ipd = this;
-
-		// now extract all the detections
-		for ( final TimePoint tp : SpimData2.getAllTimePointsSorted( data, viewIds ) )
-		{
-			final HashMap< ViewId, List< InterestPoint > > points = findInterestPoints( tp );
-			if ( ipd instanceof DifferenceOf )
-			{
-				IOFunctions.println( "Opening of files took: " + ((DifferenceOf)ipd).getBenchmark().openFiles/1000 + " sec." );
-				IOFunctions.println( "Detecting interest points took: " + ((DifferenceOf)ipd).getBenchmark().computation/1000 + " sec." );
-			}
-			// save the file and the path in the XML
-			final SequenceDescription seqDesc = data.getSequenceDescription();
-			for ( final ViewId viewId : points.keySet() )
-			{
-				final ViewDescription viewDesc = seqDesc.getViewDescription( viewId.getTimePointId(), viewId.getViewSetupId() );
-				final int channelId = viewDesc.getViewSetup().getChannel().getId();
-				final InterestPointList list = new InterestPointList(
-						data.getBasePath(),
-						new File( "interestpoints", "tpId_" + viewId.getTimePointId() + "_viewSetupId_" + viewId.getViewSetupId() + "." + label ) );
-				list.setParameters( ipd.getParameters( channelId ) );
-				list.setInterestPoints( points.get( viewId ) );
-
-				if ( !list.saveInterestPoints() )
-				{
-					IOFunctions.println( "Error saving interest point list: " + new File( list.getBaseDir(), list.getFile().toString() + list.getInterestPointsExt() ) );
-					return;
-				}
-				list.setCorrespondingInterestPoints( new ArrayList< CorrespondingInterestPoints >() );
-				if ( !list.saveCorrespondingInterestPoints() )
-					IOFunctions.println( "Failed to clear corresponding interest point list: " + new File( list.getBaseDir(), list.getFile().toString() + list.getCorrespondencesExt() ) );
-
-				final ViewInterestPointLists vipl = data.getViewInterestPoints().getViewInterestPointLists( viewId );
-				vipl.addInterestPointList( label, list );
-			}
-			// update metadata if necessary
-			if ( data.getSequenceDescription().getImgLoader() instanceof AbstractImgLoader )
-			{
-				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Updating metadata ... " );
-				try
-				{
-					( (AbstractImgLoader)data.getSequenceDescription().getImgLoader() ).updateXMLMetaData( data, false );
-				}
-				catch( Exception e )
-				{
-					IOFunctions.println( "Failed to update metadata, this should not happen: " + e );
-				}
-			}
-
-			SpimData2.saveXML( data, xmlFileName, clusterExtension );
-		}
-	}
 }

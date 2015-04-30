@@ -374,4 +374,65 @@ public class ManualBoundingBox extends BoundingBox
 
 	@Override
 	public boolean cleanUp() { return false; } // the spimdata object was not changed
+
+	@Override
+	public void initDefault( final Fusion fusion, int[] min, int[] max )
+	{
+		final double[] minBB = new double[ 3 ];
+		final double[] maxBB = new double[ 3 ];
+
+		computeMaximalBoundingBox( spimData, viewIdsToProcess, minBB, maxBB );
+
+		for ( int d = 0; d < minBB.length; ++d )
+		{
+			BoundingBox.defaultRangeMin[ d ] = (int)Math.floor( minBB[ d ] );
+			BoundingBox.defaultRangeMax[ d ] = (int)Math.floor( maxBB[ d ] );
+
+			// not preselected
+			if ( BoundingBox.defaultMin[ d ] == 0 && BoundingBox.defaultMax[ d ] == 0 )
+			{
+				BoundingBox.defaultMin[ d ] = BoundingBox.defaultRangeMin[ d ];
+				BoundingBox.defaultMax[ d ] = BoundingBox.defaultRangeMax[ d ];
+			}
+			else if ( BoundingBox.defaultMin[ d ] < BoundingBox.defaultRangeMin[ d ] )
+			{
+				BoundingBox.defaultMin[ d ] = BoundingBox.defaultRangeMin[ d ];
+			}
+			else if ( BoundingBox.defaultMax[ d ] > BoundingBox.defaultRangeMax[ d ] )
+			{
+				BoundingBox.defaultMax[ d ] = BoundingBox.defaultRangeMax[ d ];
+			}
+
+			if ( BoundingBox.defaultMin[ d ] > BoundingBox.defaultMax[ d ] )
+			{
+				BoundingBox.defaultMin[ d ] = BoundingBox.defaultRangeMin[ d ];
+				BoundingBox.defaultMax[ d ] = BoundingBox.defaultRangeMax[ d ];
+			}
+		}
+
+		if ( fusion.supportsDownsampling() )
+			this.downsampling = BoundingBox.staticDownsampling;
+		else
+			this.downsampling = 1;
+
+		if ( fusion.supports16BitUnsigned() )
+			this.pixelType = BoundingBox.defaultPixelType = 1;
+		else
+			this.pixelType = BoundingBox.defaultPixelType = 0; //32-bit
+
+		this.imgtype = BoundingBox.defaultImgType;
+
+		if ( min[ 0 ] > max[ 0 ] || min[ 1 ] > max[ 1 ] || min[ 2 ] > max[ 2 ] )
+		{
+			IOFunctions.println( "Invalid coordinates, min cannot be larger than max" );
+			return;
+		}
+
+		this.min[0] = BoundingBox.defaultMin[ 0 ] = min[ 0 ];
+		this.min[1] = BoundingBox.defaultMin[ 1 ] = min[ 1 ];
+		this.min[2] = BoundingBox.defaultMin[ 2 ] = min[ 2 ];
+		this.max[0] = BoundingBox.defaultMax[ 0 ] = max[ 0 ];
+		this.max[1] = BoundingBox.defaultMax[ 1 ] = max[ 1 ];
+		this.max[2] = BoundingBox.defaultMax[ 2 ] = max[ 2 ];
+	}
 }

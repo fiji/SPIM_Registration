@@ -117,36 +117,36 @@ public class CUDATools
 				deviceChoice.add( false );
 			}
 			
-			final GenericDialog gdCUDA = new GenericDialog( "Choose CUDA/CPUs devices to use" );
-			
-			for ( int i = 0; i < deviceList.length; ++i )
-				gdCUDA.addCheckbox( "GPU_" + (i+1) + " of " + deviceList.length  + ": " + deviceList[ i ], deviceChoice.get( i ) );
+//			final GenericDialog gdCUDA = new GenericDialog( "Choose CUDA/CPUs devices to use" );
+//
+//			for ( int i = 0; i < deviceList.length; ++i )
+//				gdCUDA.addCheckbox( "GPU_" + (i+1) + " of " + deviceList.length  + ": " + deviceList[ i ], deviceChoice.get( i ) );
 
-			if ( additionalQueries != null )
-				additionalQueries.addQuery( gdCUDA );
+//			if ( additionalQueries != null )
+//				additionalQueries.addQuery( gdCUDA );
 
-			gdCUDA.showDialog();
-
-			if ( gdCUDA.wasCanceled() )
-				return null;
+//			gdCUDA.showDialog();
+//
+//			if ( gdCUDA.wasCanceled() )
+//				return null;
 
 			// check all CUDA devices
 			for ( int i = 0; i < deviceList.length; ++i )
 			{
-				if( gdCUDA.getNextBoolean() )
-				{
+//				if( gdCUDA.getNextBoolean() )
+//				{
 					selectedDevices.add( deviceList[ i ] );
 					deviceChoice.set( i , true );
-				}
-				else
-				{
-					deviceChoice.set( i , false );
-				}
+//				}
+//				else
+//				{
+//					deviceChoice.set( i , false );
+//				}
 			}
 			
-			if ( additionalQueries != null )
-				if ( !additionalQueries.parseDialog( gdCUDA ) )
-					return null;
+//			if ( additionalQueries != null )
+//				if ( !additionalQueries.parseDialog( gdCUDA ) )
+//					return null;
 
 			if ( selectedDevices.size() == 0 )
 			{
@@ -157,30 +157,32 @@ public class CUDATools
 		else
 		{
 			// only choose one device to run everything at once				
-			final GenericDialog gdCUDA = new GenericDialog( "Choose CUDA device" );
+//			final GenericDialog gdCUDA = new GenericDialog( "Choose CUDA device" );
 
 			if ( standardDevice < 0 || standardDevice >= deviceList.length )
 				standardDevice = highestComputeCapabilityDevice;
 
-			final String desc[] = new String[ deviceList.length ];
-			for ( int i = 0; i < deviceList.length; ++i )
-				desc[ i ] = "GPU " + (i+1) + " of " + deviceList.length  + ": " + deviceList[ i ];
+//			final String desc[] = new String[ deviceList.length ];
+//			for ( int i = 0; i < deviceList.length; ++i )
+//				desc[ i ] = "GPU " + (i+1) + " of " + deviceList.length  + ": " + deviceList[ i ];
+//
+//			gdCUDA.addChoice( "Device", desc, desc[ standardDevice ] );
+//
+//			if ( additionalQueries != null )
+//				additionalQueries.addQuery( gdCUDA );
+//
+//			gdCUDA.showDialog();
+//
+//			if ( gdCUDA.wasCanceled() )
+//				return null;
 
-			gdCUDA.addChoice( "Device", desc, desc[ standardDevice ] );
+//			selectedDevices.add( deviceList[ standardDevice = gdCUDA.getNextChoiceIndex() ] );
 
-			if ( additionalQueries != null )
-				additionalQueries.addQuery( gdCUDA );
+			selectedDevices.add( deviceList[ standardDevice ] );
 
-			gdCUDA.showDialog();
-
-			if ( gdCUDA.wasCanceled() )
-				return null;
-
-			selectedDevices.add( deviceList[ standardDevice = gdCUDA.getNextChoiceIndex() ] );
-
-			if ( additionalQueries != null )
-				if ( !additionalQueries.parseDialog( gdCUDA ) )
-					return null;
+//			if ( additionalQueries != null )
+//				if ( !additionalQueries.parseDialog( gdCUDA ) )
+//					return null;
 		}
 
 		Collections.sort( selectedDevices );

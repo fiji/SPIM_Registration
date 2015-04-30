@@ -82,4 +82,11 @@ public class IterativeClosestPoint extends InterestPointRegistration
 
 	@Override
 	public String getDescription() { return "Iterative closest-point (ICP, no invariance)";}
+
+	@Override
+	public void initDefault()
+	{
+		model = new TransformationModel( defaultModel );
+		this.parameters = new IterativeClosestPointParameters( IterativeClosestPointParameters.maxDistance, IterativeClosestPointParameters.maxIterations );
+	}
 }

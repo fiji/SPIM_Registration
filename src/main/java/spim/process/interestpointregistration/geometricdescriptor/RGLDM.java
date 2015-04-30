@@ -12,6 +12,7 @@ import spim.process.interestpointregistration.ChannelProcess;
 import spim.process.interestpointregistration.PairwiseMatch;
 import spim.process.interestpointregistration.RANSACParameters;
 import spim.process.interestpointregistration.TransformationModel;
+import spim.process.interestpointregistration.icp.IterativeClosestPointParameters;
 
 /**
  * Redundant Geometric Local Descriptor Matching (RGLDM)
@@ -89,5 +90,14 @@ public class RGLDM extends InterestPointRegistration
 		this.ransacParams = new RANSACParameters( maxEpsilon, RANSACParameters.min_inlier_ratio, RANSACParameters.min_inlier_factor, RANSACParameters.num_iterations );
 		
 		return true;
+	}
+
+	@Override
+	public void initDefault()
+	{
+		model = new TransformationModel( defaultModel );
+		this.parameters = new RGLDMParameters( RGLDMParameters.differenceThreshold, RGLDMParameters.ratioOfDistance,
+				RGLDMParameters.numNeighbors, RGLDMParameters.redundancy );
+		this.ransacParams = new RANSACParameters( RANSACParameters.max_epsilon, RANSACParameters.min_inlier_ratio, RANSACParameters.min_inlier_factor, RANSACParameters.num_iterations );
 	}
 }

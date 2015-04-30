@@ -12,6 +12,7 @@ import spim.process.interestpointregistration.ChannelProcess;
 import spim.process.interestpointregistration.PairwiseMatch;
 import spim.process.interestpointregistration.RANSACParameters;
 import spim.process.interestpointregistration.TransformationModel;
+import spim.process.interestpointregistration.icp.IterativeClosestPointParameters;
 
 public class GeometricHashing extends InterestPointRegistration
 {
@@ -78,5 +79,13 @@ public class GeometricHashing extends InterestPointRegistration
 		this.ghParams = new GeometricHashingParameters( GeometricHashingParameters.differenceThreshold, ratioOfDistance, GeometricHashingParameters.useAssociatedBeads );
 
 		return true;
+	}
+
+	@Override
+	public void initDefault()
+	{
+		model = new TransformationModel( defaultModel );
+		this.ransacParams = new RANSACParameters( RANSACParameters.max_epsilon, RANSACParameters.min_inlier_ratio, RANSACParameters.min_inlier_factor, RANSACParameters.num_iterations );
+		this.ghParams = new GeometricHashingParameters( GeometricHashingParameters.differenceThreshold, GeometricHashingParameters.ratioOfDistance, GeometricHashingParameters.useAssociatedBeads );
 	}
 }

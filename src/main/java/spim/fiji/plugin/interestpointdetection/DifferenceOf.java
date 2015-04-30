@@ -2,17 +2,15 @@ package spim.fiji.plugin.interestpointdetection;
 
 import ij.gui.GenericDialog;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import bdv.img.hdf5.Hdf5ImageLoader;
 import bdv.img.hdf5.MultiResolutionImgLoader;
-import mpicbg.spim.data.sequence.Channel;
-import mpicbg.spim.data.sequence.ImgLoader;
-import mpicbg.spim.data.sequence.ViewDescription;
-import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.data.sequence.VoxelDimensions;
+import mpicbg.spim.data.sequence.*;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.gauss3.Gauss3;
@@ -22,9 +20,14 @@ import net.imglib2.img.ImgFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
+import spim.fiji.plugin.Toggle_Cluster_Options;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
+import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.fiji.spimdata.interestpoints.InterestPointList;
+import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.process.interestpointdetection.Downsample;
 
 public abstract class DifferenceOf extends InterestPointDetection
@@ -448,5 +451,115 @@ public abstract class DifferenceOf extends InterestPointDetection
 				return true;
 
 		return false;
+	}
+
+	public void defaultProcess(String xmlFileName, String clusterExtension)
+	{
+		final String label = "beads";
+
+		ArrayList< Channel > channels = SpimData2.getAllChannelsSorted( spimData, viewIdsToProcess );
+
+		init( channels.size() );
+
+		if ( defaultBrightness == null || defaultBrightness.length != channels.size() )
+		{
+			defaultBrightness = new int[ channels.size() ];
+			for ( int i = 0; i < channels.size(); ++i )
+				defaultBrightness[ i ] = 1;
+		}
+
+		this.localization = defaultLocalization;
+
+		final int[] brightness = new int[ channelsToProcess.size() ];
+
+		for ( int c = 0; c < channelsToProcess.size(); ++c )
+		{
+			final Channel channel = channelsToProcess.get( c );
+			brightness[ c ] = defaultBrightness[ channel.getId() ];
+		}
+
+		downsampleXY = downsampleZ = 1;
+		additionalSigmaX = additionalSigmaY = additionalSigmaZ = 0.0;
+		minIntensity = maxIntensity = Double.NaN;
+
+		for ( int c = 0; c < channelsToProcess.size(); ++c )
+		{
+			final Channel channel = channelsToProcess.get( c );
+
+			if ( brightness[ c ] <= 3 )
+			{
+				if ( !setDefaultValues( channel, brightness[ c ] ) )
+					return;
+			}
+			else if ( brightness[ c ] == 4 )
+			{
+				if ( !setAdvancedValues( channel ) )
+					return;
+			}
+			else
+			{
+				if ( !setInteractiveValues( channel ) )
+					return;
+			}
+		}
+
+		imageSigmaX = imageSigmaY = imageSigmaZ = 0.5;
+
+		SpimData2 data = spimData;
+		List< ViewId > viewIds = viewIdsToProcess;
+		DifferenceOf ipd = this;
+
+		// now extract all the detections
+		for ( final TimePoint tp : SpimData2.getAllTimePointsSorted( data, viewIds ) )
+		{
+			final HashMap< ViewId, List< InterestPoint > > points = findInterestPoints( tp );
+			if ( ipd instanceof DifferenceOf )
+			{
+				IOFunctions.println( "Opening of files took: " + ((DifferenceOf)ipd).getBenchmark().openFiles/1000 + " sec." );
+				IOFunctions.println( "Detecting interest points took: " + ((DifferenceOf)ipd).getBenchmark().computation/1000 + " sec." );
+			}
+			// save the file and the path in the XML
+			final SequenceDescription seqDesc = data.getSequenceDescription();
+			for ( final ViewId viewId : points.keySet() )
+			{
+				final ViewDescription viewDesc = seqDesc.getViewDescription( viewId.getTimePointId(), viewId.getViewSetupId() );
+				final int channelId = viewDesc.getViewSetup().getChannel().getId();
+				final InterestPointList list = new InterestPointList(
+						data.getBasePath(),
+						new File( "interestpoints", "tpId_" + viewId.getTimePointId() + "_viewSetupId_" + viewId.getViewSetupId() + "." + label ) );
+				list.setParameters( ipd.getParameters( channelId ) );
+				list.setInterestPoints( points.get( viewId ) );
+
+				if ( !list.saveInterestPoints() )
+				{
+					IOFunctions.println( "Error saving interest point list: " + new File( list.getBaseDir(), list.getFile().toString() + list.getInterestPointsExt() ) );
+					return;
+				}
+				list.setCorrespondingInterestPoints( new ArrayList< CorrespondingInterestPoints >() );
+				if ( !list.saveCorrespondingInterestPoints() )
+					IOFunctions.println( "Failed to clear corresponding interest point list: " + new File( list.getBaseDir(), list.getFile().toString() + list.getCorrespondencesExt() ) );
+
+				final ViewInterestPointLists vipl = data.getViewInterestPoints().getViewInterestPointLists( viewId );
+				vipl.addInterestPointList( label, list );
+			}
+			// update metadata if necessary
+			if ( data.getSequenceDescription().getImgLoader() instanceof AbstractImgLoader )
+			{
+				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Updating metadata ... " );
+				try
+				{
+					( (AbstractImgLoader)data.getSequenceDescription().getImgLoader() ).updateXMLMetaData( data, false );
+				}
+				catch( Exception e )
+				{
+					IOFunctions.println( "Failed to update metadata, this should not happen: " + e );
+				}
+			}
+
+			if( Toggle_Cluster_Options.displayClusterProcessing )
+				SpimData2.saveXML( data, xmlFileName, clusterExtension );
+			else
+				SpimData2.saveXML( data, xmlFileName, "" );
+		}
 	}
 }

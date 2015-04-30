@@ -41,6 +41,7 @@ public class WeightedAverageFusion extends Fusion
 	protected int numParalellViews = 1;
 	
 	protected Choice sequentialViews = null;
+	protected int sequentialViewsIndex = 0;
 
 	public WeightedAverageFusion(
 			final SpimData2 spimData,
@@ -403,5 +404,31 @@ public class WeightedAverageFusion extends Fusion
 		}
 
 		return map;
+	}
+
+	@Override
+	public void initDefault()
+	{
+		if ( this.getFusionType() == WeightedAvgFusionType.FUSEDATA )
+		{
+			int maxViews = 0;
+
+			for ( final TimePoint t : timepointsToProcess )
+				for ( final Channel c : channelsToProcess )
+					maxViews = Math.max( maxViews, FusionHelper.assembleInputData( spimData, t, c, viewIdsToProcess ).size() );
+
+			// any choice but all views
+			final String[] views = new String[ maxViews ];
+
+			views[ 0 ] = "All";
+
+			for ( int i = 1; i < views.length; ++i )
+				views[ i ] = "" + i;
+
+			if ( defaultNumParalellViewsIndex < 0 || defaultNumParalellViewsIndex >= views.length )
+				defaultNumParalellViewsIndex = 0;
+
+			this.sequentialViewsIndex = 0;
+		}
 	}
 }

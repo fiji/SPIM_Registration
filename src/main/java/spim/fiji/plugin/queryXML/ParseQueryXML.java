@@ -27,7 +27,7 @@ public class ParseQueryXML extends GenericLoadParseQueryXML< SpimData2, Sequence
 		if ( !queryDetails() )
 			return false;
 
-		this.clusterExt = "job_" + createUniqueName();
+		//this.clusterExt = "job_" + createUniqueName();
 
 		return true;
 	}

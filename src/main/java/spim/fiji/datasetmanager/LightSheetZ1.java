@@ -352,6 +352,11 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 	@Override
 	public LightSheetZ1 newInstance() { return new LightSheetZ1(); }
 
+	/***
+	 * defaultProcess provides headless process (with default optional parameters) with cziFile and xmlFile to be saved.
+	 * @param cziFile
+	 * @param xmlFile
+	 */
 	public void defaultProcess(File cziFile, String xmlFile)
 	{
 		LightSheetZ1MetaData meta = new LightSheetZ1MetaData();
