@@ -204,7 +204,11 @@ public class Image_Fusion implements PlugIn
 		String clusterExtension = result.getClusterExtension();
 
 		final Fusion fusion = new EfficientBayesianBased( data, viewIds );
-		fusion.initDefault();
+		// The below data should be given by users
+		// 1: {64, 64, 64}
+		// 0: CPU
+		// 1: PSFTYPE.OPTIMIZATION_I
+		fusion.initDefault(1, 0, 1);
 
 		final BoundingBox boundingBox = new ManualBoundingBox( data, viewIds );
 

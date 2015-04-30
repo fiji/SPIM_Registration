@@ -228,5 +228,5 @@ public abstract class Fusion
 		return maxViews;
 	}
 
-	public abstract void initDefault();
+	public abstract void initDefault(int defineBlockSize, int defineComputeType, int defineIterationType);
 }

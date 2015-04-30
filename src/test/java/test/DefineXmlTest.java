@@ -1,4 +1,4 @@
-package task;
+package test;
 
 import mpicbg.spim.io.IOFunctions;
 import org.junit.Test;

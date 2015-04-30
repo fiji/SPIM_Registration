@@ -1179,15 +1179,15 @@ public class EfficientBayesianBased extends Fusion
 	}
 
 	@Override
-	public void initDefault()
+	public void initDefault(int defineBlockSize, int defineComputeType, int defineIterationType)
 	{
-		blockSizeIndex = 4;
+		blockSizeIndex = defineBlockSize;
 		// check blocks
 		if ( !getBlocks() )
 			return;
 
 		// check CUDA
-		computationTypeIndex = 0;
+		computationTypeIndex = defineComputeType;
 		if ( !getCUDA() )
 			return;
 
@@ -1316,7 +1316,7 @@ public class EfficientBayesianBased extends Fusion
 			return;
 
 
-		defaultIterationType = 1;
+		defaultIterationType = defineIterationType;
 
 		justShowWeights = false;
 

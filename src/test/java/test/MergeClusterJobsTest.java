@@ -1,4 +1,4 @@
-package task;
+package test;
 
 /**
  * Created by moon on 4/28/15.

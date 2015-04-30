@@ -2,15 +2,11 @@
  * Created by moon on 4/28/15.
  */
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import static org.junit.Assert.assertEquals;
-import task.DefineXmlTest;
-import task.Hdf5ResaveTest;
-import task.InterestPointDetectionTest;
+import test.DefineXmlTest;
+import test.InterestPointDetectionTest;
 
 import java.io.File;
 

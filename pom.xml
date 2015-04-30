@@ -141,19 +141,25 @@
 		<dependency>
 			<groupId>java3d</groupId>
 			<artifactId>j3d-core</artifactId>
-			<!--<scope>provided</scope>-->
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>java3d</groupId>
 			<artifactId>j3d-core-utils</artifactId>
-			<!--<scope>provided</scope>-->
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>java3d</groupId>
 			<artifactId>vecmath</artifactId>
-			<!--<scope>provided</scope>-->
+			<scope>compile</scope>
 		</dependency>
 
+        <!-- test-->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
 	</dependencies>
 
 	<developers>

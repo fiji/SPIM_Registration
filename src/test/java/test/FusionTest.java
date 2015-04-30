@@ -1,8 +1,7 @@
-package task;
+package test;
 
 import org.junit.Test;
 import spim.fiji.plugin.Image_Fusion;
-import spim.fiji.plugin.resave.Resave_HDF5;
 
 /**
  * Created by moon on 4/28/15.
