@@ -32,6 +32,7 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.imgloaders.LightSheetZ1ImgLoader;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
@@ -106,7 +107,7 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		viewInterestPoints.createViewInterestPoints( sequenceDescription.getViewDescriptions() );
 
 		// finally create the SpimData itself based on the sequence description and the view registration
-		final SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints );
+		final SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints, new BoundingBoxes() );
 
 		return spimData;
 	}

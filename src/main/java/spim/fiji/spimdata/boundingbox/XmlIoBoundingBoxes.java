@@ -11,9 +11,9 @@ import mpicbg.spim.data.generic.base.XmlIoSingleton;
 
 import org.jdom2.Element;
 
-public class XmlIoBoundingBox extends XmlIoSingleton< BoundingBoxes >
+public class XmlIoBoundingBoxes extends XmlIoSingleton< BoundingBoxes >
 {
-	public XmlIoBoundingBox()
+	public XmlIoBoundingBoxes()
 	{
 		super( BOUNDINGBOXES_TAG, BoundingBoxes.class );
 		handledTags.add( BOUNDINGBOX_TAG );

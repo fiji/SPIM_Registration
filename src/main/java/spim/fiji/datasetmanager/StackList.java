@@ -45,6 +45,7 @@ import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.NamePattern;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.imgloaders.StackImgLoader;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
@@ -247,7 +248,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		viewInterestPoints.createViewInterestPoints( sequenceDescription.getViewDescriptions() );
 
 		// finally create the SpimData itself based on the sequence description and the view registration
-		final SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints );
+		final SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints, new BoundingBoxes() );
 
 		return spimData;
 	}

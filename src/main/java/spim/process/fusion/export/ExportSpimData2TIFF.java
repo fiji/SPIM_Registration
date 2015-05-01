@@ -33,6 +33,7 @@ import spim.fiji.plugin.resave.Resave_TIFF;
 import spim.fiji.plugin.resave.Resave_TIFF.Parameters;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
+import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.imgloaders.StackImgLoaderIJ;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
@@ -260,7 +261,8 @@ public class ExportSpimData2TIFF implements ImgExport
 				basePath,
 				sequenceDescription,
 				viewRegistrations,
-				viewsInterestPoints );
+				viewsInterestPoints,
+				new BoundingBoxes() );
 
 		return newSpimData;
 	}

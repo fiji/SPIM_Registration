@@ -39,6 +39,7 @@ import spim.fiji.plugin.resave.ProgressWriterIJ;
 import spim.fiji.plugin.resave.Resave_HDF5;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
+import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.process.fusion.FusionHelper;
@@ -188,7 +189,7 @@ public class ExportSpimData2HDF5 implements ImgExport
 		}
 
 		seq.setImgLoader( new Hdf5ImageLoader( params.getHDF5File(), hdf5Partitions, seq, false ) );
-		SpimData2 spimData = new SpimData2( basePath, seq, viewRegistrations, viewsInterestPoints );
+		SpimData2 spimData = new SpimData2( basePath, seq, viewRegistrations, viewsInterestPoints, new BoundingBoxes() );
 
 		return new ValuePair< SpimData2, HashMap<ViewId,Partition> >( spimData, viewIdToPartition );
 	}

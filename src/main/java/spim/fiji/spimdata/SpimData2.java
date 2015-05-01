@@ -20,6 +20,7 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
+import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
 /**
@@ -30,23 +31,35 @@ import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 public class SpimData2 extends SpimData
 {
 	private ViewInterestPoints viewsInterestPoints;
+	private BoundingBoxes boundingBoxes;
 	
-	public SpimData2( final File basePath, final SequenceDescription sequenceDescription, 
-			final ViewRegistrations viewRegistrations, final ViewInterestPoints viewsInterestPoints )
+	public SpimData2(
+			final File basePath,
+			final SequenceDescription sequenceDescription,
+			final ViewRegistrations viewRegistrations,
+			final ViewInterestPoints viewsInterestPoints,
+			final BoundingBoxes boundingBoxes )
 	{
 		super( basePath, sequenceDescription, viewRegistrations );
 
 		this.viewsInterestPoints = viewsInterestPoints;
+		this.boundingBoxes = boundingBoxes;
 	}
-	
+
 	protected SpimData2()
 	{}
 
 	public ViewInterestPoints getViewInterestPoints() { return viewsInterestPoints; }
+	public BoundingBoxes getBoundingBoxes() { return boundingBoxes; }
 
 	protected void setViewsInterestPoints( final ViewInterestPoints viewsInterestPoints )
 	{
 		this.viewsInterestPoints = viewsInterestPoints;
+	}
+
+	protected void setBoundingBoxes( final BoundingBoxes boundingBoxes )
+	{
+		this.boundingBoxes = boundingBoxes;
 	}
 
 	/**
