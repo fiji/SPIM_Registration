@@ -19,14 +19,14 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Dimensions;
 import net.imglib2.FinalRealInterval;
-import spim.fiji.plugin.fusion.BoundingBox;
+import spim.fiji.plugin.fusion.AbstractBoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
 import spim.process.fusion.export.ImgExport;
 
-public class ManualBoundingBox extends BoundingBox
+public class ManualBoundingBox extends AbstractBoundingBox
 {	
 	public ManualBoundingBox( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
@@ -43,28 +43,28 @@ public class ManualBoundingBox extends BoundingBox
 
 		for ( int d = 0; d < minBB.length; ++d )
 		{
-			BoundingBox.defaultRangeMin[ d ] = (int)Math.floor( minBB[ d ] );
-			BoundingBox.defaultRangeMax[ d ] = (int)Math.floor( maxBB[ d ] );
+			AbstractBoundingBox.defaultRangeMin[ d ] = (int)Math.floor( minBB[ d ] );
+			AbstractBoundingBox.defaultRangeMax[ d ] = (int)Math.floor( maxBB[ d ] );
 			
 			// not preselected
-			if ( BoundingBox.defaultMin[ d ] == 0 && BoundingBox.defaultMax[ d ] == 0 )
+			if ( AbstractBoundingBox.defaultMin[ d ] == 0 && AbstractBoundingBox.defaultMax[ d ] == 0 )
 			{
-				BoundingBox.defaultMin[ d ] = BoundingBox.defaultRangeMin[ d ];
-				BoundingBox.defaultMax[ d ] = BoundingBox.defaultRangeMax[ d ];
+				AbstractBoundingBox.defaultMin[ d ] = AbstractBoundingBox.defaultRangeMin[ d ];
+				AbstractBoundingBox.defaultMax[ d ] = AbstractBoundingBox.defaultRangeMax[ d ];
 			}
-			else if ( BoundingBox.defaultMin[ d ] < BoundingBox.defaultRangeMin[ d ] )
+			else if ( AbstractBoundingBox.defaultMin[ d ] < AbstractBoundingBox.defaultRangeMin[ d ] )
 			{
-				BoundingBox.defaultMin[ d ] = BoundingBox.defaultRangeMin[ d ];				
+				AbstractBoundingBox.defaultMin[ d ] = AbstractBoundingBox.defaultRangeMin[ d ];				
 			}
-			else if ( BoundingBox.defaultMax[ d ] > BoundingBox.defaultRangeMax[ d ] )
+			else if ( AbstractBoundingBox.defaultMax[ d ] > AbstractBoundingBox.defaultRangeMax[ d ] )
 			{
-				BoundingBox.defaultMax[ d ] = BoundingBox.defaultRangeMax[ d ];								
+				AbstractBoundingBox.defaultMax[ d ] = AbstractBoundingBox.defaultRangeMax[ d ];								
 			}
 			
-			if ( BoundingBox.defaultMin[ d ] > BoundingBox.defaultMax[ d ] )
+			if ( AbstractBoundingBox.defaultMin[ d ] > AbstractBoundingBox.defaultMax[ d ] )
 			{
-				BoundingBox.defaultMin[ d ] = BoundingBox.defaultRangeMin[ d ];
-				BoundingBox.defaultMax[ d ] = BoundingBox.defaultRangeMax[ d ];				
+				AbstractBoundingBox.defaultMin[ d ] = AbstractBoundingBox.defaultRangeMin[ d ];
+				AbstractBoundingBox.defaultMax[ d ] = AbstractBoundingBox.defaultRangeMax[ d ];				
 			}
 		}
 
@@ -76,22 +76,22 @@ public class ManualBoundingBox extends BoundingBox
 		if ( !fusion.compressBoundingBoxDialog() )
 			gd.addMessage( "", GUIHelper.smallStatusFont );
 		
-		gd.addSlider( "Minimal_X", BoundingBox.defaultRangeMin[ 0 ], BoundingBox.defaultRangeMax[ 0 ], BoundingBox.defaultMin[ 0 ] );
-		gd.addSlider( "Minimal_Y", BoundingBox.defaultRangeMin[ 1 ], BoundingBox.defaultRangeMax[ 1 ], BoundingBox.defaultMin[ 1 ] );
-		gd.addSlider( "Minimal_Z", BoundingBox.defaultRangeMin[ 2 ], BoundingBox.defaultRangeMax[ 2 ], BoundingBox.defaultMin[ 2 ] );
+		gd.addSlider( "Minimal_X", AbstractBoundingBox.defaultRangeMin[ 0 ], AbstractBoundingBox.defaultRangeMax[ 0 ], AbstractBoundingBox.defaultMin[ 0 ] );
+		gd.addSlider( "Minimal_Y", AbstractBoundingBox.defaultRangeMin[ 1 ], AbstractBoundingBox.defaultRangeMax[ 1 ], AbstractBoundingBox.defaultMin[ 1 ] );
+		gd.addSlider( "Minimal_Z", AbstractBoundingBox.defaultRangeMin[ 2 ], AbstractBoundingBox.defaultRangeMax[ 2 ], AbstractBoundingBox.defaultMin[ 2 ] );
 
 		if ( !fusion.compressBoundingBoxDialog() )
 			gd.addMessage( "" );
 		
-		gd.addSlider( "Maximal_X", BoundingBox.defaultRangeMin[ 0 ], BoundingBox.defaultRangeMax[ 0 ], BoundingBox.defaultMax[ 0 ] );
-		gd.addSlider( "Maximal_Y", BoundingBox.defaultRangeMin[ 1 ], BoundingBox.defaultRangeMax[ 1 ], BoundingBox.defaultMax[ 1 ] );
-		gd.addSlider( "Maximal_Z", BoundingBox.defaultRangeMin[ 2 ], BoundingBox.defaultRangeMax[ 2 ], BoundingBox.defaultMax[ 2 ] );
+		gd.addSlider( "Maximal_X", AbstractBoundingBox.defaultRangeMin[ 0 ], AbstractBoundingBox.defaultRangeMax[ 0 ], AbstractBoundingBox.defaultMax[ 0 ] );
+		gd.addSlider( "Maximal_Y", AbstractBoundingBox.defaultRangeMin[ 1 ], AbstractBoundingBox.defaultRangeMax[ 1 ], AbstractBoundingBox.defaultMax[ 1 ] );
+		gd.addSlider( "Maximal_Z", AbstractBoundingBox.defaultRangeMin[ 2 ], AbstractBoundingBox.defaultRangeMax[ 2 ], AbstractBoundingBox.defaultMax[ 2 ] );
 
 		if ( !fusion.compressBoundingBoxDialog() )
 			gd.addMessage( "" );
 
 		if ( fusion.supportsDownsampling() )
-			gd.addSlider( "Downsample fused dataset", 1.0, 10.0, BoundingBox.staticDownsampling );
+			gd.addSlider( "Downsample fused dataset", 1.0, 10.0, AbstractBoundingBox.staticDownsampling );
 		
 		if ( fusion.supports16BitUnsigned() )
 			gd.addChoice( "Pixel_type", pixelTypes, pixelTypes[ defaultPixelType ] );
@@ -123,16 +123,16 @@ public class ManualBoundingBox extends BoundingBox
 		this.max[ 2 ] = (int)Math.round( gd.getNextNumber() );
 		
 		if ( fusion.supportsDownsampling() )
-			this.downsampling = BoundingBox.staticDownsampling = (int)Math.round( gd.getNextNumber() );
+			this.downsampling = AbstractBoundingBox.staticDownsampling = (int)Math.round( gd.getNextNumber() );
 		else
 			this.downsampling = 1;
 		
 		if ( fusion.supports16BitUnsigned() )
-			this.pixelType = BoundingBox.defaultPixelType = gd.getNextChoiceIndex();
+			this.pixelType = AbstractBoundingBox.defaultPixelType = gd.getNextChoiceIndex();
 		else
-			this.pixelType = BoundingBox.defaultPixelType = 0; //32-bit
+			this.pixelType = AbstractBoundingBox.defaultPixelType = 0; //32-bit
 		
-		this.imgtype = BoundingBox.defaultImgType = gd.getNextChoiceIndex();
+		this.imgtype = AbstractBoundingBox.defaultImgType = gd.getNextChoiceIndex();
 		
 		if ( min[ 0 ] > max[ 0 ] || min[ 1 ] > max[ 1 ] || min[ 2 ] > max[ 2 ] )
 		{
@@ -146,12 +146,12 @@ public class ManualBoundingBox extends BoundingBox
 		if ( !imgExport.parseAdditionalParameters( gd, spimData ) )
 			return false;
 
-		BoundingBox.defaultMin[ 0 ] = min[ 0 ];
-		BoundingBox.defaultMin[ 1 ] = min[ 1 ];
-		BoundingBox.defaultMin[ 2 ] = min[ 2 ];
-		BoundingBox.defaultMax[ 0 ] = max[ 0 ];
-		BoundingBox.defaultMax[ 1 ] = max[ 1 ];
-		BoundingBox.defaultMax[ 2 ] = max[ 2 ];
+		AbstractBoundingBox.defaultMin[ 0 ] = min[ 0 ];
+		AbstractBoundingBox.defaultMin[ 1 ] = min[ 1 ];
+		AbstractBoundingBox.defaultMin[ 2 ] = min[ 2 ];
+		AbstractBoundingBox.defaultMax[ 0 ] = max[ 0 ];
+		AbstractBoundingBox.defaultMax[ 1 ] = max[ 1 ];
+		AbstractBoundingBox.defaultMax[ 2 ] = max[ 2 ];
 
 		return true;
 	}
@@ -322,7 +322,7 @@ public class ManualBoundingBox extends BoundingBox
 			label2.setText( "Dimensions: " + 
 					(max[ 0 ] - min[ 0 ] + 1)/downsampling + " x " + 
 					(max[ 1 ] - min[ 1 ] + 1)/downsampling + " x " + 
-					(max[ 2 ] - min[ 2 ] + 1)/downsampling + " pixels @ " + BoundingBox.pixelTypes[ pixelType ] );			
+					(max[ 2 ] - min[ 2 ] + 1)/downsampling + " pixels @ " + AbstractBoundingBox.pixelTypes[ pixelType ] );			
 		}
 	}
 

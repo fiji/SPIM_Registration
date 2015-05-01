@@ -15,7 +15,7 @@ import net.imglib2.type.numeric.ComplexType;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.export.ImgExport;
 
-public abstract class BoundingBox implements Interval
+public abstract class AbstractBoundingBox implements Interval
 {
 	public static int staticDownsampling = 1;
 	
@@ -46,7 +46,7 @@ public abstract class BoundingBox implements Interval
 	 * @param spimData
 	 * @param viewIdsToProcess - which view ids to fuse
 	 */
-	public BoundingBox( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
+	public AbstractBoundingBox( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
 		this.spimData = spimData;
 		this.viewIdsToProcess = viewIdsToProcess;
@@ -68,7 +68,7 @@ public abstract class BoundingBox implements Interval
 	 * @param viewIdsToProcess - which view ids to fuse
 	 * @return - a new instance without any special properties
 	 */
-	public abstract BoundingBox newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess );
+	public abstract AbstractBoundingBox newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess );
 
 	/**
 	 * @return - to be displayed in the generic dialog

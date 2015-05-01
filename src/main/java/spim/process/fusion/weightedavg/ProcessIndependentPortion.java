@@ -11,7 +11,7 @@ import net.imglib2.interpolation.InterpolatorFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
-import spim.fiji.plugin.fusion.BoundingBox;
+import spim.fiji.plugin.fusion.AbstractBoundingBox;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
 
@@ -29,7 +29,7 @@ public class ProcessIndependentPortion< T extends RealType< T > > implements Cal
 	final InterpolatorFactory<T, RandomAccessible< T > > interpolatorFactory;
 	final AffineTransform3D transform;
 	final Img< T > fusedImg;
-	final BoundingBox bb;
+	final AbstractBoundingBox bb;
 	
 	final boolean doDownSampling;
 	final int downSampling;
@@ -40,7 +40,7 @@ public class ProcessIndependentPortion< T extends RealType< T > > implements Cal
 			final InterpolatorFactory<T, RandomAccessible< T > > interpolatorFactory,
 			final AffineTransform3D transform,
 			final Img< T > fusedImg,
-			final BoundingBox bb )
+			final AbstractBoundingBox bb )
 	{
 		this.portion = portion;
 		this.img = img;

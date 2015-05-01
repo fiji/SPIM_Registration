@@ -22,7 +22,7 @@ import net.imglib2.type.numeric.complex.ComplexFloatType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.ImgLib2Temp;
-import spim.fiji.plugin.fusion.BoundingBox;
+import spim.fiji.plugin.fusion.AbstractBoundingBox;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
 import spim.process.fusion.weights.Blending;
@@ -41,14 +41,14 @@ public abstract class ProcessFusion
 	
 	final protected SpimData2 spimData;
 	final List< ViewId > viewIdsToProcess;
-	final BoundingBox bb;
+	final AbstractBoundingBox bb;
 	final boolean useBlending;
 	final boolean useContentBased;
 	
 	public ProcessFusion(
 			final SpimData2 spimData,
 			final List< ViewId > viewIdsToProcess,
-			final BoundingBox bb,
+			final AbstractBoundingBox bb,
 			final boolean useBlending,
 			final boolean useContentBased  )
 	{

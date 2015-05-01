@@ -27,7 +27,7 @@ import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
 import spim.fiji.plugin.Interest_Point_Registration;
 import spim.fiji.plugin.Visualize_Detections;
-import spim.fiji.plugin.fusion.BoundingBox;
+import spim.fiji.plugin.fusion.AbstractBoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
@@ -296,8 +296,8 @@ public class AutomaticReorientation extends ManualBoundingBox
 		IOFunctions.println( "Min (with addition): " + Util.printCoordinates( min ) );
 		IOFunctions.println( "Max (with addition): " + Util.printCoordinates( max ) );
 
-		BoundingBox.defaultMin = min;
-		BoundingBox.defaultMax = max;
+		AbstractBoundingBox.defaultMin = min;
+		AbstractBoundingBox.defaultMax = max;
 
 		return super.queryParameters( fusion, imgExport );
 	}

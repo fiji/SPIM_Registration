@@ -27,7 +27,7 @@ import net.imglib2.type.numeric.real.FloatType;
 import spim.Threads;
 import spim.fiji.ImgLib2Temp;
 import spim.fiji.ImgLib2Temp.Pair;
-import spim.fiji.plugin.fusion.BoundingBox;
+import spim.fiji.plugin.fusion.AbstractBoundingBox;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
@@ -54,7 +54,7 @@ public class ProcessForDeconvolution
 
 	final protected SpimData2 spimData;
 	final protected List< ViewId > viewIdsToProcess;
-	final BoundingBox bb;
+	final AbstractBoundingBox bb;
 	final int[] blendingBorder;
 	final int[] blendingRange;
 	
@@ -67,7 +67,7 @@ public class ProcessForDeconvolution
 	public ProcessForDeconvolution(
 			final SpimData2 spimData,
 			final List< ViewId > viewIdsToProcess,
-			final BoundingBox bb,
+			final AbstractBoundingBox bb,
 			final int[] blendingBorder,
 			final int[] blendingRange )
 	{

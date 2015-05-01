@@ -23,7 +23,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.Threads;
-import spim.fiji.plugin.fusion.BoundingBox;
+import spim.fiji.plugin.fusion.AbstractBoundingBox;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
@@ -35,7 +35,7 @@ public class ProcessSequential extends ProcessFusion
 	public ProcessSequential(
 			final SpimData2 spimData,
 			final List< ViewId > viewIdsToProcess,
-			final BoundingBox bb,
+			final AbstractBoundingBox bb,
 			final boolean useBlending,
 			final boolean useContentBased,
 			final int numSequentialViews )

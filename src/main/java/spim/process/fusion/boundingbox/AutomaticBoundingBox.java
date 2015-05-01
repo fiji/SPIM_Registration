@@ -13,7 +13,7 @@ import java.util.Vector;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
-import spim.fiji.plugin.fusion.BoundingBox;
+import spim.fiji.plugin.fusion.AbstractBoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
@@ -116,8 +116,8 @@ public class AutomaticBoundingBox extends ManualBoundingBox
 		}
 		else
 		{
-			BoundingBox.defaultMin = automatic.getMin();
-			BoundingBox.defaultMax = automatic.getMax();
+			AbstractBoundingBox.defaultMin = automatic.getMin();
+			AbstractBoundingBox.defaultMax = automatic.getMax();
 		}
 				
 		return super.queryParameters( fusion, imgExport );

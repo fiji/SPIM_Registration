@@ -96,7 +96,7 @@ public abstract class Fusion
 	 * @param bb
 	 * @return
 	 */
-	public abstract boolean fuseData( final BoundingBox bb, final ImgExport exporter );
+	public abstract boolean fuseData( final AbstractBoundingBox bb, final ImgExport exporter );
 
 	/**
 	 * @return - which timepoints will be processed, this is maybe inquired by the exporter
@@ -129,9 +129,9 @@ public abstract class Fusion
 	 * @param bb - the bounding box used for fusing the data
 	 * @return the list of new viewsetups (in the order as the viewsetups are processed)
 	 */
-	protected abstract Map< ViewSetup, ViewSetup > createNewViewSetups( final BoundingBox bb );
+	protected abstract Map< ViewSetup, ViewSetup > createNewViewSetups( final AbstractBoundingBox bb );
 	
-	public void defineNewViewSetups( final BoundingBox bb ) { this.newViewsetups = createNewViewSetups( bb ); }
+	public void defineNewViewSetups( final AbstractBoundingBox bb ) { this.newViewsetups = createNewViewSetups( bb ); }
 
 	public abstract boolean supports16BitUnsigned();
 	public abstract boolean supportsDownsampling();

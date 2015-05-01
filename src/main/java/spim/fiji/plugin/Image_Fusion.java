@@ -12,7 +12,7 @@ import java.util.List;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
-import spim.fiji.plugin.fusion.BoundingBox;
+import spim.fiji.plugin.fusion.AbstractBoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
@@ -38,7 +38,7 @@ public class Image_Fusion implements PlugIn
 	public static ArrayList< Fusion > staticFusionAlgorithms = new ArrayList< Fusion >();
 	public static int defaultFusionAlgorithm = 1;
 
-	public static ArrayList< BoundingBox > staticBoundingBoxAlgorithms = new ArrayList< BoundingBox >();
+	public static ArrayList< AbstractBoundingBox > staticBoundingBoxAlgorithms = new ArrayList< AbstractBoundingBox >();
 	public static int defaultBoundingBoxAlgorithm = 1;
 
 	public static ArrayList< ImgExport > staticImgExportAlgorithms = new ArrayList< ImgExport >();
@@ -140,11 +140,11 @@ public class Image_Fusion implements PlugIn
 		final int imgExportAlgorithm = defaultImgExportAlgorithm = gd.getNextChoiceIndex();
 
 		final Fusion fusion = staticFusionAlgorithms.get( fusionAlgorithm ).newInstance( data, viewIds );
-		final BoundingBox boundingBox = staticBoundingBoxAlgorithms.get( boundingBoxAlgorithm ).newInstance( data, viewIds );
+		final AbstractBoundingBox boundingBox = staticBoundingBoxAlgorithms.get( boundingBoxAlgorithm ).newInstance( data, viewIds );
 		final ImgExport imgExport = staticImgExportAlgorithms.get( imgExportAlgorithm ).newInstance();
 
 		if ( data.getSequenceDescription().getImgLoader() instanceof Hdf5ImageLoader )
-			BoundingBox.defaultPixelType = 1; // set to 16 bit by default for hdf5
+			AbstractBoundingBox.defaultPixelType = 1; // set to 16 bit by default for hdf5
 
 		if ( !boundingBox.queryParameters( fusion, imgExport ) )
 			return false;

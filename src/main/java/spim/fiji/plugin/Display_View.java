@@ -20,7 +20,7 @@ import net.imglib2.img.imageplus.ImagePlusImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
-import spim.fiji.plugin.fusion.BoundingBox;
+import spim.fiji.plugin.fusion.AbstractBoundingBox;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
@@ -71,7 +71,7 @@ public class Display_View implements PlugIn
 		gd.addChoice( "Illumination", illuminationNames, illuminationNames[ defaultIlluminationChoice ] );
 		gd.addChoice( "Timepoint", timepointNames, timepointNames[ defaultTimepointChoice ] );
 		gd.addMessage( "" );
-		gd.addChoice( "Pixel_type", BoundingBox.pixelTypes, BoundingBox.pixelTypes[ defaultPixelType ] );
+		gd.addChoice( "Pixel_type", AbstractBoundingBox.pixelTypes, AbstractBoundingBox.pixelTypes[ defaultPixelType ] );
 
 		gd.showDialog();
 

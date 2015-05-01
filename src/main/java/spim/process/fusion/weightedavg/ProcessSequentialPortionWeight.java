@@ -13,7 +13,7 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
-import spim.fiji.plugin.fusion.BoundingBox;
+import spim.fiji.plugin.fusion.AbstractBoundingBox;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
 
@@ -37,7 +37,7 @@ public class ProcessSequentialPortionWeight< T extends RealType< T > > extends P
 			final AffineTransform3D[] transforms,
 			final Img< T > fusedImg,
 			final Img< FloatType > weightImg,
-			final BoundingBox bb )
+			final AbstractBoundingBox bb )
 	{
 		super( portion, imgs, interpolatorFactory, transforms, fusedImg, weightImg, bb );
 		

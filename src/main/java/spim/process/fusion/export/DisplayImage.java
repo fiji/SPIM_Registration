@@ -13,7 +13,7 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.img.imageplus.ImagePlusImg;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import spim.fiji.plugin.fusion.BoundingBox;
+import spim.fiji.plugin.fusion.AbstractBoundingBox;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.FusionHelper;
 
@@ -35,7 +35,7 @@ public class DisplayImage implements ImgExportTitle
 		this.setImgTitler( current );
 	}
 
-	public < T extends RealType< T > & NativeType< T > > void exportImage( final RandomAccessibleInterval< T > img, final BoundingBox bb, final String title )
+	public < T extends RealType< T > & NativeType< T > > void exportImage( final RandomAccessibleInterval< T > img, final AbstractBoundingBox bb, final String title )
 	{
 		final ImgTitler current = this.getImgTitler();
 		this.setImgTitler( new FixedNameImgTitler( title ) );
@@ -46,13 +46,13 @@ public class DisplayImage implements ImgExportTitle
 	}
 
 	@Override
-	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval< T > img, final BoundingBox bb, final TimePoint tp, final ViewSetup vs )
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval< T > img, final AbstractBoundingBox bb, final TimePoint tp, final ViewSetup vs )
 	{
 		return exportImage( img, bb, tp, vs, Double.NaN, Double.NaN );
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T extends RealType<T> & NativeType<T>> boolean exportImage( final RandomAccessibleInterval<T> img, final BoundingBox bb, final TimePoint tp, final ViewSetup vs, final double min, final double max )
+	public <T extends RealType<T> & NativeType<T>> boolean exportImage( final RandomAccessibleInterval<T> img, final AbstractBoundingBox bb, final TimePoint tp, final ViewSetup vs, final double min, final double max )
 	{
 		// do nothing in case the image is null
 		if ( img == null )

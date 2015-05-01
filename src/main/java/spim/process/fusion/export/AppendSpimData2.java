@@ -23,7 +23,7 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import spim.fiji.plugin.fusion.BoundingBox;
+import spim.fiji.plugin.fusion.AbstractBoundingBox;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.imgloaders.StackImgLoaderIJ;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
@@ -43,7 +43,7 @@ public class AppendSpimData2 implements ImgExport
 	AppendSpimData2HDF5 appendToHdf5 = null;
 
 	@Override
-	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval<T> img, final BoundingBox bb, final TimePoint tp, final ViewSetup vs )
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval<T> img, final AbstractBoundingBox bb, final TimePoint tp, final ViewSetup vs )
 	{
 		if ( appendToHdf5 != null )
 			return appendToHdf5.exportImage( img, bb, tp, vs );
@@ -52,7 +52,7 @@ public class AppendSpimData2 implements ImgExport
 	}
 
 	@Override
-	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval<T> img, final BoundingBox bb, final TimePoint tp, final ViewSetup vs, final double min, final double max )
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval<T> img, final AbstractBoundingBox bb, final TimePoint tp, final ViewSetup vs, final double min, final double max )
 	{
 		if ( appendToHdf5 != null )
 			return appendToHdf5.exportImage( img, bb, tp, vs, min, max );
