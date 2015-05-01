@@ -3,9 +3,6 @@ package spim.fiji.plugin.fusion;
 import java.util.List;
 
 import mpicbg.spim.data.sequence.ViewId;
-import net.imglib2.Interval;
-import net.imglib2.Positionable;
-import net.imglib2.RealPositionable;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.cell.CellImgFactory;
@@ -13,9 +10,10 @@ import net.imglib2.img.imageplus.ImagePlusImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.ComplexType;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.process.fusion.export.ImgExport;
 
-public abstract class AbstractBoundingBox implements Interval
+public abstract class AbstractBoundingBox extends BoundingBox
 {
 	public static int staticDownsampling = 1;
 	
@@ -39,7 +37,6 @@ public abstract class AbstractBoundingBox implements Interval
 
 	protected final SpimData2 spimData;
 	
-	protected int[] min, max;
 	protected int downsampling;
 
 	/**
@@ -48,11 +45,11 @@ public abstract class AbstractBoundingBox implements Interval
 	 */
 	public AbstractBoundingBox( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
+		super( defaultMin.clone(), defaultMax.clone() );
+
 		this.spimData = spimData;
 		this.viewIdsToProcess = viewIdsToProcess;
-		
-		this.min = defaultMin.clone();
-		this.max = defaultMax.clone();
+
 		this.downsampling = staticDownsampling;
 	}
 	
@@ -115,69 +112,4 @@ public abstract class AbstractBoundingBox implements Interval
 		
 		return dim;
 	}
-	
-	@Override
-	public long min( final int d ) { return min[ d ]; }
-
-	@Override
-	public void min( final long[] min )
-	{
-		for ( int d = 0; d < min.length; ++d )
-			min[ d ] = this.min[ d ];
-	}
-
-	@Override
-	public void min( final Positionable min ) { min.setPosition( this.min ); }
-
-	@Override
-	public long max( final int d ) { return max[ d ]; }
-
-	@Override
-	public void max( final long[] max )
-	{
-		for ( int d = 0; d < max.length; ++d )
-			max[ d ] = this.max[ d ];
-	}
-
-	@Override
-	public void max( final Positionable max ) { max.setPosition( this.max ); }
-
-	@Override
-	public double realMin( final int d ) { return min[ d ]; }
-
-	@Override
-	public void realMin( final double[] min )
-	{
-		for ( int d = 0; d < min.length; ++d )
-			min[ d ] = this.min[ d ];
-	}
-
-	@Override
-	public void realMin( final RealPositionable min ) { min.setPosition( this.min ); }
-
-	@Override
-	public double realMax( final int d ) { return this.max[ d ]; }
-
-	@Override
-	public void realMax( final double[] max )
-	{
-		for ( int d = 0; d < max.length; ++d )
-			max[ d ] = this.max[ d ];
-	}
-
-	@Override
-	public void realMax( final RealPositionable max ) { max.setPosition( this.max ); }
-
-	@Override
-	public int numDimensions() { return min.length; }
-
-	@Override
-	public void dimensions( final long[] dimensions )
-	{
-		for ( int d = 0; d < max.length; ++d )
-			dimensions[ d ] = dimension( d );
-	}
-
-	@Override
-	public long dimension( final int d ) { return this.max[ d ] - this.min[ d ] + 1; }
 }
