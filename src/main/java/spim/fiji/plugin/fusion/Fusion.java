@@ -16,7 +16,8 @@ import mpicbg.spim.data.sequence.ViewSetup;
 import net.imglib2.util.Intervals;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
-import spim.process.fusion.boundingbox.ManualBoundingBox.ManageListeners;
+import spim.process.fusion.boundingbox.BoundingBoxGUI;
+import spim.process.fusion.boundingbox.BoundingBoxGUI.ManageListeners;
 import spim.process.fusion.export.ImgExport;
 
 public abstract class Fusion
@@ -96,7 +97,7 @@ public abstract class Fusion
 	 * @param bb
 	 * @return
 	 */
-	public abstract boolean fuseData( final AbstractBoundingBox bb, final ImgExport exporter );
+	public abstract boolean fuseData( final BoundingBoxGUI bb, final ImgExport exporter );
 
 	/**
 	 * @return - which timepoints will be processed, this is maybe inquired by the exporter
@@ -129,9 +130,9 @@ public abstract class Fusion
 	 * @param bb - the bounding box used for fusing the data
 	 * @return the list of new viewsetups (in the order as the viewsetups are processed)
 	 */
-	protected abstract Map< ViewSetup, ViewSetup > createNewViewSetups( final AbstractBoundingBox bb );
+	protected abstract Map< ViewSetup, ViewSetup > createNewViewSetups( final BoundingBoxGUI bb );
 	
-	public void defineNewViewSetups( final AbstractBoundingBox bb ) { this.newViewsetups = createNewViewSetups( bb ); }
+	public void defineNewViewSetups( final BoundingBoxGUI bb ) { this.newViewsetups = createNewViewSetups( bb ); }
 
 	public abstract boolean supports16BitUnsigned();
 	public abstract boolean supportsDownsampling();

@@ -31,7 +31,6 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.util.Pair;
 import net.imglib2.util.Util;
 import net.imglib2.util.ValuePair;
-import spim.fiji.plugin.fusion.AbstractBoundingBox;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.resave.Generic_Resave_HDF5;
 import spim.fiji.plugin.resave.Generic_Resave_HDF5.Parameters;
@@ -43,6 +42,7 @@ import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.process.fusion.FusionHelper;
+import spim.process.fusion.boundingbox.BoundingBoxGUI;
 import bdv.export.ExportMipmapInfo;
 import bdv.export.ProgressWriter;
 import bdv.export.SubTaskProgressWriter;
@@ -195,7 +195,7 @@ public class ExportSpimData2HDF5 implements ImgExport
 	}
 
 	@Override
-	public < T extends RealType< T > & NativeType< T >> boolean exportImage( RandomAccessibleInterval< T > img, AbstractBoundingBox bb, TimePoint tp, ViewSetup vs )
+	public < T extends RealType< T > & NativeType< T >> boolean exportImage( RandomAccessibleInterval< T > img, BoundingBoxGUI bb, TimePoint tp, ViewSetup vs )
 	{
 		System.out.println( "exportImage1()" );
 		return exportImage( img, bb, tp, vs, Double.NaN, Double.NaN );
@@ -233,7 +233,7 @@ public class ExportSpimData2HDF5 implements ImgExport
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
-	public < T extends RealType< T > & NativeType< T > > boolean exportImage( RandomAccessibleInterval< T > img, AbstractBoundingBox bb, TimePoint tp, ViewSetup vs, double min, double max )
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage( RandomAccessibleInterval< T > img, BoundingBoxGUI bb, TimePoint tp, ViewSetup vs, double min, double max )
 	{
 		System.out.println( "exportImage2()" );
 
@@ -284,7 +284,7 @@ public class ExportSpimData2HDF5 implements ImgExport
 	public ImgExport newInstance()
 	{
 		System.out.println( "newInstance()" );
-		AbstractBoundingBox.defaultPixelType = 1; // set to 16 bit by default
+		BoundingBoxGUI.defaultPixelType = 1; // set to 16 bit by default
 		return new ExportSpimData2HDF5();
 	}
 

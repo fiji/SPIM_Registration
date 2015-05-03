@@ -10,9 +10,9 @@ import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
-import spim.fiji.plugin.fusion.AbstractBoundingBox;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
+import spim.process.fusion.boundingbox.BoundingBoxGUI;
 import spim.process.fusion.weights.Blending;
 
 /**
@@ -28,7 +28,7 @@ public class ProcessForDeconvolutionPortion implements Callable< String >
 	final RandomAccessibleInterval< FloatType > img;
 	final AffineTransform3D transform;
 	final Img< FloatType > weightImg, fusedImg;
-	final AbstractBoundingBox bb;
+	final BoundingBoxGUI bb;
 	final Blending blending;
 	
 	public ProcessForDeconvolutionPortion(
@@ -38,7 +38,7 @@ public class ProcessForDeconvolutionPortion implements Callable< String >
 			final AffineTransform3D transform,
 			final Img< FloatType > fusedImg,
 			final Img< FloatType > weightImg,
-			final AbstractBoundingBox bb )
+			final BoundingBoxGUI bb )
 	{
 		this.portion = portion;
 		this.img = img;

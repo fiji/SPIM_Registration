@@ -12,7 +12,6 @@ import java.util.List;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
-import spim.fiji.plugin.fusion.AbstractBoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
@@ -21,7 +20,7 @@ import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import spim.process.fusion.boundingbox.AutomaticBoundingBox;
 import spim.process.fusion.boundingbox.AutomaticReorientation;
 import spim.process.fusion.boundingbox.BigDataViewerBoundingBox;
-import spim.process.fusion.boundingbox.ManualBoundingBox;
+import spim.process.fusion.boundingbox.BoundingBoxGUI;
 import spim.process.fusion.deconvolution.EfficientBayesianBased;
 import spim.process.fusion.export.AppendSpimData2;
 import spim.process.fusion.export.DisplayImage;
@@ -38,7 +37,7 @@ public class Image_Fusion implements PlugIn
 	public static ArrayList< Fusion > staticFusionAlgorithms = new ArrayList< Fusion >();
 	public static int defaultFusionAlgorithm = 1;
 
-	public static ArrayList< AbstractBoundingBox > staticBoundingBoxAlgorithms = new ArrayList< AbstractBoundingBox >();
+	public static ArrayList< BoundingBoxGUI > staticBoundingBoxAlgorithms = new ArrayList< BoundingBoxGUI >();
 	public static int defaultBoundingBoxAlgorithm = 1;
 
 	public static ArrayList< ImgExport > staticImgExportAlgorithms = new ArrayList< ImgExport >();
@@ -51,7 +50,7 @@ public class Image_Fusion implements PlugIn
 		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, WeightedAvgFusionType.FUSEDATA ) );
 		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, WeightedAvgFusionType.INDEPENDENT ) );
 		
-		staticBoundingBoxAlgorithms.add( new ManualBoundingBox( null, null ) );
+		staticBoundingBoxAlgorithms.add( new BoundingBoxGUI( null, null ) );
 		staticBoundingBoxAlgorithms.add( new BigDataViewerBoundingBox( null, null ) );
 		staticBoundingBoxAlgorithms.add( new AutomaticReorientation( null, null ) );
 		staticBoundingBoxAlgorithms.add( new AutomaticBoundingBox( null, null ) );
@@ -140,11 +139,11 @@ public class Image_Fusion implements PlugIn
 		final int imgExportAlgorithm = defaultImgExportAlgorithm = gd.getNextChoiceIndex();
 
 		final Fusion fusion = staticFusionAlgorithms.get( fusionAlgorithm ).newInstance( data, viewIds );
-		final AbstractBoundingBox boundingBox = staticBoundingBoxAlgorithms.get( boundingBoxAlgorithm ).newInstance( data, viewIds );
+		final BoundingBoxGUI boundingBox = staticBoundingBoxAlgorithms.get( boundingBoxAlgorithm ).newInstance( data, viewIds );
 		final ImgExport imgExport = staticImgExportAlgorithms.get( imgExportAlgorithm ).newInstance();
 
 		if ( data.getSequenceDescription().getImgLoader() instanceof Hdf5ImageLoader )
-			AbstractBoundingBox.defaultPixelType = 1; // set to 16 bit by default for hdf5
+			BoundingBoxGUI.defaultPixelType = 1; // set to 16 bit by default for hdf5
 
 		if ( !boundingBox.queryParameters( fusion, imgExport ) )
 			return false;

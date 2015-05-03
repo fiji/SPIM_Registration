@@ -21,7 +21,6 @@ import net.imglib2.util.Util;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
 import spim.fiji.plugin.apply.BigDataViewerTransformationWindow;
-import spim.fiji.plugin.fusion.AbstractBoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
@@ -32,7 +31,7 @@ import bdv.BigDataViewer;
 import bdv.tools.InitializeViewerState;
 import bdv.tools.boundingbox.BoundingBoxDialog;
 
-public class BigDataViewerBoundingBox extends ManualBoundingBox
+public class BigDataViewerBoundingBox extends BoundingBoxGUI
 {
 
 	public BigDataViewerBoundingBox( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
@@ -111,41 +110,16 @@ public class BigDataViewerBoundingBox extends ManualBoundingBox
 		// =============== the bounding box dialog ==================
 		final AtomicBoolean lock = new AtomicBoolean( false );
 
-		final double[] minBB = new double[ 3 ];
-		final double[] maxBB = new double[ 3 ];
+		final int[] rangeMin = new int[ 3 ];
+		final int[] rangeMax = new int[ 3 ];
 
-		computeMaximalBoundingBox( spimData, viewIdsToProcess, minBB, maxBB );
-
-		final int[] min = new int[ 3 ];
-		final int[] max = new int[ 3 ];
-
-		for ( int d = 0; d < minBB.length; ++d )
-		{
-			AbstractBoundingBox.defaultRangeMin[ d ] = (int)Math.floor( minBB[ d ] );
-			AbstractBoundingBox.defaultRangeMax[ d ] = (int)Math.floor( maxBB[ d ] );
-
-			// not preselected
-			if ( AbstractBoundingBox.defaultMin[ d ] == 0 && AbstractBoundingBox.defaultMax[ d ] == 0 )
-			{
-				min[ d ] = (int)Math.round( minBB[ d ] );
-				max[ d ] = (int)Math.round( maxBB[ d ] );
-			}
-			else
-			{
-				min[ d ] = AbstractBoundingBox.defaultMin[ d ];
-				max[ d ] = AbstractBoundingBox.defaultMax[ d ];
-			}
-		}
+		setUpDefaultValues( rangeMin, rangeMax );
 
 		final int boxSetupId = 9999; // some non-existing setup id
 		final Interval initialInterval = Intervals.createMinMax( min[ 0 ], min[ 1 ], min[ 2 ], max[ 0 ], max[ 1 ], max[ 2 ] ); // the initially selected bounding box
 		final Interval rangeInterval = Intervals.createMinMax(
-				AbstractBoundingBox.defaultRangeMin[ 0 ],
-				AbstractBoundingBox.defaultRangeMin[ 1 ],
-				AbstractBoundingBox.defaultRangeMin[ 2 ],
-				AbstractBoundingBox.defaultRangeMax[ 0 ],
-				AbstractBoundingBox.defaultRangeMax[ 1 ],
-				AbstractBoundingBox.defaultRangeMax[ 2 ] ); // the range (bounding box of possible bounding boxes)
+				rangeMin[ 0 ], rangeMin[ 1 ], rangeMin[ 2 ],
+				rangeMax[ 0 ], rangeMax[ 1 ], rangeMax[ 2 ] ); // the range (bounding box of possible bounding boxes)
 
 		final BoundingBoxDialog boundingBoxDialog =
 				new BoundingBoxDialog( bdv.getViewerFrame(), "bounding box", bdv.getViewer(), bdv.getSetupAssignments(), boxSetupId, initialInterval, rangeInterval )
@@ -205,8 +179,8 @@ public class BigDataViewerBoundingBox extends ManualBoundingBox
 		IOFunctions.println( "Min: " + Util.printCoordinates( min ) );
 		IOFunctions.println( "Max: " + Util.printCoordinates( max ) );
 
-		AbstractBoundingBox.defaultMin = min;
-		AbstractBoundingBox.defaultMax = max;
+		BoundingBoxGUI.defaultMin = min.clone();
+		BoundingBoxGUI.defaultMax = max.clone();
 
 		// was locally opened?
 		if ( bdvPair.getB() )
@@ -223,11 +197,4 @@ public class BigDataViewerBoundingBox extends ManualBoundingBox
 
 	@Override
 	public String getDescription() { return "Define with BigDataViewer"; }
-
-	@Override
-	public boolean cleanUp() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
 }

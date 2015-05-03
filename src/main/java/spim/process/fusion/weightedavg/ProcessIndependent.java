@@ -21,10 +21,10 @@ import net.imglib2.interpolation.InterpolatorFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import spim.Threads;
-import spim.fiji.plugin.fusion.AbstractBoundingBox;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
+import spim.process.fusion.boundingbox.BoundingBoxGUI;
 import spim.process.fusion.export.FixedNameImgTitler;
 import spim.process.fusion.export.ImgExport;
 import spim.process.fusion.export.ImgExportTitle;
@@ -44,7 +44,7 @@ public class ProcessIndependent extends ProcessFusion
 	public ProcessIndependent(
 			final SpimData2 spimData,
 			final List< ViewId > viewIdsToProcess,
-			final AbstractBoundingBox bb,
+			final BoundingBoxGUI bb,
 			final ImgExport export,
 			final Map< ViewSetup, ViewSetup > newViewsetups )
 	{

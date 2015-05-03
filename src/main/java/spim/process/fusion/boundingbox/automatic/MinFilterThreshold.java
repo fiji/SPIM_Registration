@@ -26,10 +26,10 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import spim.Threads;
-import spim.fiji.plugin.fusion.AbstractBoundingBox;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
+import spim.process.fusion.boundingbox.BoundingBoxGUI;
 import spim.process.fusion.weightedavg.ProcessFusion;
 import spim.process.fusion.weightedavg.ProcessParalell;
 import spim.process.fusion.weightedavg.ProcessSequential;
@@ -40,7 +40,7 @@ public class MinFilterThreshold
 	final Channel channel;
 	final TimePoint timepoint;
 	final SpimData2 spimData;
-	final AbstractBoundingBox bb;
+	final BoundingBoxGUI bb;
 	final double background;
 	final int radiusMin;
 	final boolean loadSequentially;
@@ -53,7 +53,7 @@ public class MinFilterThreshold
 			final List< ViewId > viewIdsToProcess,
 			final Channel channel,
 			final TimePoint timepoint,
-			final AbstractBoundingBox bb,
+			final BoundingBoxGUI bb,
 			final double background,
 			final int discardedObjectSize,
 			final boolean loadSequentially,

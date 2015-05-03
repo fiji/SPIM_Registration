@@ -13,9 +13,9 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
-import spim.fiji.plugin.fusion.AbstractBoundingBox;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
+import spim.process.fusion.boundingbox.BoundingBoxGUI;
 
 /**
  * Fuse one portion of a paralell fusion, supports many weight functions
@@ -35,7 +35,7 @@ public class ProcessParalellPortionWeights< T extends RealType< T > > extends Pr
 			final InterpolatorFactory< T, RandomAccessible< T > > interpolatorFactory,
 			final AffineTransform3D[] transforms,
 			final Img< T > fusedImg,
-			final AbstractBoundingBox bb )
+			final BoundingBoxGUI bb )
 	{
 		super( portion, imgs, interpolatorFactory, transforms, fusedImg, bb );
 		
