@@ -34,16 +34,7 @@ public class PreDefinedBoundingBox extends BoundingBoxGUI
 		final String[] boundingBoxes = new String[ spimData.getBoundingBoxes().getBoundingBoxes().size() ];
 
 		for ( int i = 0; i < boundingBoxes.length; ++i )
-		{
-			final BoundingBox bb = spimData.getBoundingBoxes().getBoundingBoxes().get( i );
-
-			boundingBoxes[ i ] = bb.getTitle() + " (";
-
-			for ( int d = 0; d < bb.numDimensions(); ++d )
-				boundingBoxes[ i ] += bb.dimension( d ) + "x";
-
-			boundingBoxes[ i ] = boundingBoxes[ i ].substring( 0, boundingBoxes[ i ].length() - 1 ) + "px)";
-		}
+			boundingBoxes[ i ] = getBoundingBoxDescription( spimData.getBoundingBoxes().getBoundingBoxes().get( i ) );
 
 		if ( defaultBoundingBox >= boundingBoxes.length )
 			defaultBoundingBox = 0;
@@ -61,6 +52,23 @@ public class PreDefinedBoundingBox extends BoundingBoxGUI
 		this.max = bb.getMax().clone();
 
 		return super.queryParameters( fusion, imgExport );
+	}
+
+	public static String getBoundingBoxDescription( final BoundingBox bb )
+	{
+		String title = bb.getTitle() + " (dim=";
+
+		for ( int d = 0; d < bb.numDimensions(); ++d )
+			title += bb.dimension( d ) + "x";
+
+		title = title.substring( 0, title.length() - 1 ) + "px, offset=";
+
+		for ( int d = 0; d < bb.numDimensions(); ++d )
+			title += bb.min( d ) + "x";
+
+		title = title.substring( 0, title.length() - 1 ) + "px)";
+
+		return title;
 	}
 
 	@Override

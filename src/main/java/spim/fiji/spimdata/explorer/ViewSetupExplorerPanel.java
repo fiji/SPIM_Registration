@@ -37,6 +37,7 @@ import net.imglib2.type.numeric.ARGBType;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.popup.ApplyTransformationPopup;
 import spim.fiji.spimdata.explorer.popup.BDVPopup;
+import spim.fiji.spimdata.explorer.popup.BoundingBoxPopup;
 import spim.fiji.spimdata.explorer.popup.DetectInterestPointsPopup;
 import spim.fiji.spimdata.explorer.popup.DisplayViewPopup;
 import spim.fiji.spimdata.explorer.popup.FusionPopup;
@@ -78,6 +79,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		staticPopups.add( new LabelPopUp( " Processing" ) );
 		staticPopups.add( new DetectInterestPointsPopup() );
 		staticPopups.add( new RegisterInterestPointsPopup() );
+		staticPopups.add( new BoundingBoxPopup() );
 		staticPopups.add( new FusionPopup() );
 		staticPopups.add( new Separator() );
 
