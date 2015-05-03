@@ -104,7 +104,8 @@ public class BoundingBoxGUI extends BoundingBox
 		if ( supports16BitUnsigned )
 			gd.addChoice( "Pixel_type", pixelTypes, pixelTypes[ defaultPixelType ] );
 
-		gd.addChoice( "ImgLib2_container", imgTypes, imgTypes[ defaultImgType ] );
+		if ( fusion != null && imgExport != null )
+			gd.addChoice( "ImgLib2_container", imgTypes, imgTypes[ defaultImgType ] );
 
 		if ( fusion != null )
 			fusion.queryAdditionalParameters( gd );
@@ -117,7 +118,7 @@ public class BoundingBoxGUI extends BoundingBox
 		gd.addMessage( "???x???x??? pixels", GUIHelper.smallStatusFont, GUIHelper.good );
 		Label l2 = (Label)gd.getMessage();
 
-		final ManageListeners m = new ManageListeners( gd, gd.getNumericFields(), gd.getChoices(), l1, l2, fusion, supportsDownsampling, supports16BitUnsigned );
+		final ManageListeners m = new ManageListeners( gd, gd.getNumericFields(), gd.getChoices(), l1, l2, fusion, imgExport, supportsDownsampling, supports16BitUnsigned );
 
 		if ( fusion != null )
 			fusion.registerAdditionalListeners( m );
@@ -141,14 +142,15 @@ public class BoundingBoxGUI extends BoundingBox
 			this.downsampling = BoundingBoxGUI.staticDownsampling = (int)Math.round( gd.getNextNumber() );
 		else
 			this.downsampling = 1;
-		
+
 		if ( supports16BitUnsigned )
 			this.pixelType = BoundingBoxGUI.defaultPixelType = gd.getNextChoiceIndex();
 		else
 			this.pixelType = BoundingBoxGUI.defaultPixelType = 0; //32-bit
-		
-		this.imgtype = BoundingBoxGUI.defaultImgType = gd.getNextChoiceIndex();
-		
+
+		if ( fusion != null && imgExport != null )
+			this.imgtype = BoundingBoxGUI.defaultImgType = gd.getNextChoiceIndex();
+
 		if ( min[ 0 ] > max[ 0 ] || min[ 1 ] > max[ 1 ] || min[ 2 ] > max[ 2 ] )
 		{
 			IOFunctions.println( "Invalid coordinates, min cannot be larger than max" );
@@ -397,6 +399,7 @@ public class BoundingBoxGUI extends BoundingBox
 				final Label label1,
 				final Label label2,
 				final Fusion fusion,
+				final ImgExport imgExport,
 				final boolean supportsDownsampling,
 				final boolean supports16bit )
 		{
@@ -413,12 +416,19 @@ public class BoundingBoxGUI extends BoundingBox
 			if ( supports16bit )
 			{
 				pixelTypeChoice = (Choice)choices.get( 0 );
-				imgTypeChoice = (Choice)choices.get( 1 );
+
+				if ( fusion != null && imgExport != null )
+					imgTypeChoice = (Choice)choices.get( 1 );
+				else
+					imgTypeChoice = null;
 			}
 			else
 			{
 				pixelTypeChoice = null;
-				imgTypeChoice = (Choice)choices.get( 0 );
+				if ( fusion != null && imgExport != null )
+					imgTypeChoice = (Choice)choices.get( 0 );
+				else
+					imgTypeChoice = null;
 			}
 			
 			if ( supportsDownsampling )
@@ -432,34 +442,35 @@ public class BoundingBoxGUI extends BoundingBox
 			this.supports16bit = supports16bit;
 			this.fusion = fusion;
 			
-			this.addListeners();
+			this.addListeners( imgExport );
 		}
 		
-		protected void addListeners()
+		protected void addListeners( final ImgExport imgExport )
 		{
 			this.minX.addTextListener( new TextListener() { @Override
-			public void textValueChanged(TextEvent e) { update(); } });
+				public void textValueChanged(TextEvent e) { update(); } });
 			this.minY.addTextListener( new TextListener() { @Override
-			public void textValueChanged(TextEvent e) { update(); } });
+				public void textValueChanged(TextEvent e) { update(); } });
 			this.minZ.addTextListener( new TextListener() { @Override
-			public void textValueChanged(TextEvent e) { update(); } });
+				public void textValueChanged(TextEvent e) { update(); } });
 			this.maxX.addTextListener( new TextListener() { @Override
-			public void textValueChanged(TextEvent e) { update(); } });
+				public void textValueChanged(TextEvent e) { update(); } });
 			this.maxY.addTextListener( new TextListener() { @Override
-			public void textValueChanged(TextEvent e) { update(); } });
+				public void textValueChanged(TextEvent e) { update(); } });
 			this.maxZ.addTextListener( new TextListener() { @Override
-			public void textValueChanged(TextEvent e) { update(); } });
-			
-			this.imgTypeChoice.addItemListener( new ItemListener() { @Override
-			public void itemStateChanged(ItemEvent e) { update(); } });
-			
+				public void textValueChanged(TextEvent e) { update(); } });
+
+			if ( fusion != null && imgExport != null )
+				this.imgTypeChoice.addItemListener( new ItemListener() { @Override
+					public void itemStateChanged(ItemEvent e) { update(); } });
+
 			if ( supportsDownsampling )
 				this.downsample.addTextListener( new TextListener() { @Override
-				public void textValueChanged(TextEvent e) { update(); } });
-			
+					public void textValueChanged(TextEvent e) { update(); } });
+
 			if ( supports16bit )
 				this.pixelTypeChoice.addItemListener( new ItemListener() { @Override
-				public void itemStateChanged(ItemEvent e) { update(); } });
+					public void itemStateChanged(ItemEvent e) { update(); } });
 		}
 		
 		public void update()
@@ -481,10 +492,12 @@ public class BoundingBoxGUI extends BoundingBox
 				pixelType = pixelTypeChoice.getSelectedIndex();
 			else
 				pixelType = 0;
-			
-			imgtype = imgTypeChoice.getSelectedIndex();
-			
-			
+
+			if ( imgTypeChoice != null )
+				imgtype = imgTypeChoice.getSelectedIndex();
+			else
+				imgtype = 1;
+
 			final long numPixels = numPixels( min, max, downsampling );
 			final int bytePerPixel;
 			if ( pixelType == 1 )
