@@ -152,7 +152,10 @@ public class AutomaticReorientation extends BoundingBoxGUI
 				Interest_Point_Registration.defaultChannelLabels[ j ] = 0;
 
 			if ( labelsWereReset && labels[ Interest_Point_Registration.defaultChannelLabels[ j ] ].contains( "bead" ) )
-				Interest_Point_Registration.defaultChannelLabels[ j ] = labels.length - 1;
+				Interest_Point_Registration.defaultChannelLabels[ j ] = labels.length - 2;
+
+			if ( Interest_Point_Registration.defaultChannelLabels[ j ] < labels.length )
+				Interest_Point_Registration.defaultChannelLabels[ j ] = 0;
 
 			String ch = channel.getName().replace( ' ', '_' );
 			gd.addChoice( "Interest_points_channel_" + ch, labels, labels[ Interest_Point_Registration.defaultChannelLabels[ j++ ] ] );
