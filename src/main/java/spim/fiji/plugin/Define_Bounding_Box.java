@@ -100,6 +100,16 @@ public class Define_Bounding_Box implements PlugIn
 		final int boundingBoxAlgorithm = defaultBoundingBoxAlgorithm = gd.getNextChoiceIndex();
 		final String boundingBoxName = gd.getNextString();
 
+		for ( final BoundingBox bb : data.getBoundingBoxes().getBoundingBoxes() )
+		{
+			if ( bb.getTitle().equals( boundingBoxName ) )
+			{
+				IOFunctions.println( "A bounding box with the name '" + boundingBoxName + "' already exists." );
+				defaultName = boundingBoxName + "1";
+				return null;
+			}
+		}
+
 		final BoundingBoxGUI boundingBox = staticBoundingBoxAlgorithms.get( boundingBoxAlgorithm ).newInstance( data, viewIds );
 
 		if ( !boundingBox.queryParameters( null, null ) )
