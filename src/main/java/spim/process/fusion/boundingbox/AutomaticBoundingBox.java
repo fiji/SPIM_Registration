@@ -46,6 +46,13 @@ public class AutomaticBoundingBox extends BoundingBoxGUI
 		// compute dimensions and update size for this instance
 		final long[] dim = new long[ maxBB.length ];
 
+		// first time called on this object
+		if ( this.min == null || this.max == null )
+		{
+			this.min = new int[ minBB.length ];
+			this.max = new int[ minBB.length ];
+		}
+
 		for ( int d = 0; d < dim.length; ++d )
 		{
 			this.min[ d ] = (int)Math.round( minBB[ d ] );
