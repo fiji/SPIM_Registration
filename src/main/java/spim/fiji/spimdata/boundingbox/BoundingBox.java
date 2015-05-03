@@ -23,6 +23,7 @@ public class BoundingBox implements Interval, Comparable< BoundingBox >
 		this.title = "DefaultBoundingBox";
 	}
 
+	public void setTitle( final String title ) { this.title = title; }
 	public String getTitle() { return title; }
 
 	public int[] getMin() { return min; }
