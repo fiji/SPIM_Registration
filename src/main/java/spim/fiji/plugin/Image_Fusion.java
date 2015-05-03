@@ -21,6 +21,7 @@ import spim.process.fusion.boundingbox.AutomaticBoundingBox;
 import spim.process.fusion.boundingbox.AutomaticReorientation;
 import spim.process.fusion.boundingbox.BigDataViewerBoundingBox;
 import spim.process.fusion.boundingbox.BoundingBoxGUI;
+import spim.process.fusion.boundingbox.PreDefinedBoundingBox;
 import spim.process.fusion.deconvolution.EfficientBayesianBased;
 import spim.process.fusion.export.AppendSpimData2;
 import spim.process.fusion.export.DisplayImage;
@@ -38,7 +39,7 @@ public class Image_Fusion implements PlugIn
 	public static int defaultFusionAlgorithm = 1;
 
 	public static ArrayList< BoundingBoxGUI > staticBoundingBoxAlgorithms = new ArrayList< BoundingBoxGUI >();
-	public static int defaultBoundingBoxAlgorithm = 1;
+	public static int defaultBoundingBoxAlgorithm = -1;
 
 	public static ArrayList< ImgExport > staticImgExportAlgorithms = new ArrayList< ImgExport >();
 	public static int defaultImgExportAlgorithm = 0;
@@ -49,12 +50,13 @@ public class Image_Fusion implements PlugIn
 		staticFusionAlgorithms.add( new EfficientBayesianBased( null, null ) );
 		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, WeightedAvgFusionType.FUSEDATA ) );
 		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, WeightedAvgFusionType.INDEPENDENT ) );
-		
+
 		staticBoundingBoxAlgorithms.add( new BoundingBoxGUI( null, null ) );
 		staticBoundingBoxAlgorithms.add( new BigDataViewerBoundingBox( null, null ) );
 		staticBoundingBoxAlgorithms.add( new AutomaticReorientation( null, null ) );
 		staticBoundingBoxAlgorithms.add( new AutomaticBoundingBox( null, null ) );
-		
+		staticBoundingBoxAlgorithms.add( new PreDefinedBoundingBox( null, null ) );
+
 		staticImgExportAlgorithms.add( new DisplayImage() );
 		staticImgExportAlgorithms.add( new Save3dTIFF( null ) );
 		staticImgExportAlgorithms.add( new ExportSpimData2TIFF() );
@@ -107,6 +109,10 @@ public class Image_Fusion implements PlugIn
 		
 		if ( defaultFusionAlgorithm >= fusionDescriptions.length )
 			defaultFusionAlgorithm = 0;
+		if ( defaultBoundingBoxAlgorithm < 0 && data.getBoundingBoxes().getBoundingBoxes().size() > 0 )
+			defaultBoundingBoxAlgorithm = 4;
+		else
+			defaultBoundingBoxAlgorithm = 1;
 		if ( defaultBoundingBoxAlgorithm >= boundingBoxDescriptions.length )
 			defaultBoundingBoxAlgorithm = 0;
 		if ( defaultImgExportAlgorithm >= imgExportDescriptions.length )
@@ -191,6 +197,7 @@ public class Image_Fusion implements PlugIn
 
 	public static void main( final String[] args )
 	{
+		LoadParseQueryXML.defaultXMLfilename = "/Users/preibischs/Documents/Microscopy/SPIM/HisYFP-SPIM//dataset.xml";
 		new ImageJ();
 		new Image_Fusion().run( null );
 	}

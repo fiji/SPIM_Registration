@@ -171,7 +171,7 @@ public class AutomaticBoundingBox extends BoundingBoxGUI
 					downsampling = Integer.parseInt( downsample.getText() );
 					
 					final long numPixels = numPixels( dim, downsampling );
-					final long megabytes = (numPixels * 4) / (1024*1024);				
+					final long megabytes = (numPixels * 4) / (1024*1024);
 					
 					label.setText( "Image size for segmentation: " + 
 							(dim[ 0 ])/downsampling + " x " + 
