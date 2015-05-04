@@ -32,6 +32,8 @@ public abstract class InterestPointRegistration
 	final List< ViewId > viewIdsToProcess;
 	final List< ChannelProcess > channelsToProcess;
 
+	List< List< PairwiseMatch > > statistics;
+
 	/**
 	 * Instantiate the interest point registration. It is performed for a spimdata object on a
 	 * subset of angles, channels, illuminations and timepoints. Each channel is linked to a
@@ -110,6 +112,7 @@ public abstract class InterestPointRegistration
 	protected SpimData2 getSpimData() { return spimData1; }
 	public List< ViewId > getViewIdsToProcess() { return viewIdsToProcess; }
 	public List< ChannelProcess > getChannelsToProcess() { return channelsToProcess; }
+	public List< List< PairwiseMatch > > getStatistics() { return statistics; }
 
 	/**
 	 * Registers all timepoints. No matter which matching is done it is always the same principle.
@@ -121,37 +124,40 @@ public abstract class InterestPointRegistration
 	 * @param save - if you want to save the correspondence files
 	 * @return
 	 */
-	public boolean register( final GlobalOptimizationType registrationType, final boolean save )
+	public boolean register( final GlobalOptimizationType registrationType, final boolean save, final boolean collectStatistics )
 	{
 		final SpimData2 spimData = getSpimData();
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Starting registration" );
 
+		if ( collectStatistics )
+			this.statistics = new ArrayList< List< PairwiseMatch > >();
+
 		// get a list of all pairs for this specific GlobalOptimizationType
 		final List< GlobalOptimizationSubset > list = registrationType.getAllViewPairs();
-		
+
 		int successfulRuns = 0;
-		
+
 		for ( final GlobalOptimizationSubset subset : list )
 		{
 			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Finding correspondences for subset: " + subset.getDescription() );
-					
+
 			final List< PairwiseMatch > pairs = subset.getViewPairs();
-			
+
 			final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
 			final ArrayList< Callable< PairwiseMatch > > tasks = new ArrayList< Callable< PairwiseMatch > >(); // your tasks
-			
+
 			for ( final PairwiseMatch pair : pairs )
 			{
 				// just for logging the names and results of pairwise comparison
 				final ViewDescription viewA = spimData.getSequenceDescription().getViewDescription( pair.getViewIdA() );
-		    	final ViewDescription viewB = spimData.getSequenceDescription().getViewDescription( pair.getViewIdB() );
-		    	
+				final ViewDescription viewB = spimData.getSequenceDescription().getViewDescription( pair.getViewIdB() );
+
 				final String description = "[TP=" + viewA.getTimePoint().getName() + 
-		    			" angle=" + viewA.getViewSetup().getAngle().getName() + ", ch=" + viewA.getViewSetup().getChannel().getName() +
-		    			", illum=" + viewA.getViewSetup().getIllumination().getName() + " >>> TP=" + viewB.getTimePoint().getName() +
-		    			" angle=" + viewB.getViewSetup().getAngle().getName() + ", ch=" + viewB.getViewSetup().getChannel().getName() +
-		    			", illum=" + viewB.getViewSetup().getIllumination().getName() + "]";
+						" angle=" + viewA.getViewSetup().getAngle().getName() + ", ch=" + viewA.getViewSetup().getChannel().getName() +
+						", illum=" + viewA.getViewSetup().getIllumination().getName() + " >>> TP=" + viewB.getTimePoint().getName() +
+						" angle=" + viewB.getViewSetup().getAngle().getName() + ", ch=" + viewB.getViewSetup().getChannel().getName() +
+						", illum=" + viewB.getViewSetup().getIllumination().getName() + "]";
 				
 				tasks.add( pairwiseMatchingInstance( pair, description ) );
 			}
@@ -178,7 +184,10 @@ public abstract class InterestPointRegistration
 			
 			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Number of Candidates: " + sumCandidates );
 			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Number of Inliers: " + sumInliers );
-			
+
+			if ( collectStatistics )
+				statistics.add( pairs );
+
 			//
 			// set and store correspondences
 			//

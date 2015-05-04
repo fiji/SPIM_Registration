@@ -80,6 +80,7 @@ public class Interest_Point_Registration implements PlugIn
 
 	public static boolean[] defaultFixedTiles = null;
 	public static int defaultReferenceTile = 0;
+	public static boolean defaultShowStatistics = true;
 
 	public final static String warningLabel = " (WARNING: Only available for "; 
 	
@@ -299,9 +300,12 @@ public class Interest_Point_Registration implements PlugIn
 		gd2.addMessage( "" );
 		gd2.addMessage( "Algorithm parameters [" + ipr.getDescription() + "]", new Font( Font.SANS_SERIF, Font.BOLD, 12 ) );
 		gd2.addMessage( "" );
-		
+
 		ipr.addQuery( gd2, registrationType );
-		
+
+		if ( timepointToProcess.size() > 1 )
+			gd2.addCheckbox( "Show_timeseries_statistics", defaultShowStatistics );
+
 		// display the dialog
 		gd2.showDialog();
 
@@ -355,6 +359,12 @@ public class Interest_Point_Registration implements PlugIn
 		if ( !ipr.parseDialog( gd2, registrationType ) )
 			return false;
 
+		final boolean showStatistics;
+		if ( timepointToProcess.size() > 1 )
+			defaultShowStatistics = showStatistics = gd2.getNextBoolean();
+		else
+			showStatistics = false;
+
 		// perform the actual registration(s)
 		final GlobalOptimizationType type;
 		
@@ -373,12 +383,17 @@ public class Interest_Point_Registration implements PlugIn
 		if ( !setFixedTilesAndReference( fixTiles, mapBack, type ) )
 			return false;
 
-		if ( !ipr.register( type, saveXML ) )
+		if ( !ipr.register( type, saveXML, showStatistics ) )
 			return false;
 
 		// save the XML including transforms and correspondences
 		if ( saveXML )
 			SpimData2.saveXML( data, xmlFileName, clusterExtension );
+
+		if ( showStatistics )
+		{
+			// TODO: show statistics
+		}
 
 		return true;
 	}
