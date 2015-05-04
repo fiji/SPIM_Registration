@@ -28,14 +28,15 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.resave.Resave_TIFF;
 import spim.fiji.plugin.resave.Resave_TIFF.Parameters;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
+import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.imgloaders.StackImgLoaderIJ;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.process.fusion.boundingbox.BoundingBoxGUI;
 
 public class ExportSpimData2TIFF implements ImgExport
 {
@@ -53,13 +54,13 @@ public class ExportSpimData2TIFF implements ImgExport
 	}
 
 	@Override
-	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval<T> img, final BoundingBox bb, final TimePoint tp, final ViewSetup vs )
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval<T> img, final BoundingBoxGUI bb, final TimePoint tp, final ViewSetup vs )
 	{
 		return exportImage( img, bb, tp, vs, Double.NaN, Double.NaN );
 	}
 
 	@Override
-	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval<T> img, final BoundingBox bb, final TimePoint tp, final ViewSetup vs, final double min, final double max )
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval<T> img, final BoundingBoxGUI bb, final TimePoint tp, final ViewSetup vs, final double min, final double max )
 	{
 		// write the image
 		if ( !this.saver.exportImage( img, bb, tp, vs, min, max ) )
@@ -260,7 +261,8 @@ public class ExportSpimData2TIFF implements ImgExport
 				basePath,
 				sequenceDescription,
 				viewRegistrations,
-				viewsInterestPoints );
+				viewsInterestPoints,
+				new BoundingBoxes() );
 
 		return newSpimData;
 	}

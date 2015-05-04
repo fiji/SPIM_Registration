@@ -240,7 +240,8 @@ public class Resave_HDF5 implements PlugIn
 				oldSpimData.getBasePath(),
 				sequenceDescription,
 				viewRegistrations,
-				viewsInterestPoints );
+				viewsInterestPoints,
+				oldSpimData.getBoundingBoxes() );
 
 		return newSpimData;
 	}

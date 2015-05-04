@@ -171,7 +171,8 @@ public class InterestPointList
 		}
 		catch ( final IOException e )
 		{
-			IOFunctions.println( "InterestPointList.loadCorrespondingInterestPoints(): " + e );
+			// it is normal that this file does not exist until a registration was computed
+			System.out.println( "InterestPointList.loadCorrespondingInterestPoints(): " + e );
 			return false;
 		}
 	}

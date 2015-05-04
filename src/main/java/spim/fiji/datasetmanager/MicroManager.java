@@ -38,6 +38,7 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.imgloaders.MicroManagerImgLoader;
 import spim.fiji.spimdata.imgloaders.MultipageTiffReader;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
@@ -110,7 +111,7 @@ public class MicroManager implements MultiViewDatasetDefinition
 		viewInterestPoints.createViewInterestPoints( sequenceDescription.getViewDescriptions() );
 
 		// finally create the SpimData itself based on the sequence description and the view registration
-		final SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints );
+		final SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints, new BoundingBoxes() );
 
 		if ( reader.applyAxis() )
 			applyAxis( spimData );

@@ -9,8 +9,8 @@ import mpicbg.spim.data.sequence.ViewSetup;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.spimdata.SpimData2;
+import spim.process.fusion.boundingbox.BoundingBoxGUI;
 
 public interface ImgExport
 {
@@ -31,7 +31,7 @@ public interface ImgExport
 	 * @param tp - the current (new) timepoint
 	 * @param vs - the current (new) viewsetup
 	 */
-	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval< T > img, final BoundingBox bb, final TimePoint tp, final ViewSetup vs );
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval< T > img, final BoundingBoxGUI bb, final TimePoint tp, final ViewSetup vs );
 	
 	/**
 	 * Exports the image using a predefined min/max
@@ -43,7 +43,7 @@ public interface ImgExport
 	 * @param min - define min intensity of this image
 	 * @param max - define max intensity of this image
 	 */
-	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval< T > img, final BoundingBox bb, final TimePoint tp, final ViewSetup vs, final double min, final double max );
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval< T > img, final BoundingBoxGUI bb, final TimePoint tp, final ViewSetup vs, final double min, final double max );
 	
 	/**
 	 * Query the necessary parameters for the fusion (new dialog has to be made)

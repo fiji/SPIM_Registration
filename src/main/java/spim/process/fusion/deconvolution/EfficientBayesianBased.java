@@ -29,7 +29,6 @@ import net.imglib2.img.Img;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
-import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
@@ -41,7 +40,8 @@ import spim.process.cuda.CUDAFourierConvolution;
 import spim.process.cuda.CUDATools;
 import spim.process.cuda.NativeLibraryTools;
 import spim.process.fusion.FusionHelper;
-import spim.process.fusion.boundingbox.ManualBoundingBox.ManageListeners;
+import spim.process.fusion.boundingbox.BoundingBoxGUI;
+import spim.process.fusion.boundingbox.BoundingBoxGUI.ManageListeners;
 import spim.process.fusion.export.DisplayImage;
 import spim.process.fusion.export.FixedNameImgTitler;
 import spim.process.fusion.export.ImgExport;
@@ -128,14 +128,14 @@ public class EfficientBayesianBased extends Fusion
 		super( spimData, viewIdsToProcess );
 		
 		// we want the arrayimg by default
-		BoundingBox.defaultImgType = 0;
+		BoundingBoxGUI.defaultImgType = 0;
 		
 		// linear interpolation
 		Fusion.defaultInterpolation = this.interpolation = 1;
 	}
 
 	@Override
-	public boolean fuseData(final BoundingBox bb, final ImgExport exporter) {
+	public boolean fuseData(final BoundingBoxGUI bb, final ImgExport exporter) {
 		try {
 			// set up naming scheme
 			final FixedNameImgTitler titler = new FixedNameImgTitler("");
@@ -394,7 +394,7 @@ public class EfficientBayesianBased extends Fusion
 		return totalRam;
 	}
 
-	protected void displayParametersAndPSFs( final BoundingBox bb, final Channel channel, final HashMap< Channel, ChannelPSF > extractPSFLabels  )
+	protected void displayParametersAndPSFs( final BoundingBoxGUI bb, final Channel channel, final HashMap< Channel, ChannelPSF > extractPSFLabels  )
 	{
 		IOFunctions.println( "Type of iteration: " + iterationType );
 		IOFunctions.println( "Number iterations: " + numIterations );
@@ -1173,7 +1173,7 @@ public class EfficientBayesianBased extends Fusion
 	}
 
 	@Override
-	protected Map< ViewSetup, ViewSetup > createNewViewSetups( final BoundingBox bb )
+	protected Map< ViewSetup, ViewSetup > createNewViewSetups( final BoundingBoxGUI bb )
 	{
 		return WeightedAverageFusion.assembleNewViewSetupsFusion( spimData, viewIdsToProcess, bb, "Decon", "Decon" );
 	}

@@ -94,8 +94,9 @@ public class Visualize_Detections implements PlugIn
 			
 			if ( Interest_Point_Registration.defaultChannelLabels[ j ] >= labels.length )
 				Interest_Point_Registration.defaultChannelLabels[ j ] = 0;
-			
-			gd.addChoice( "Interest_points_channel_" + channel.getName(), labels, labels[ Interest_Point_Registration.defaultChannelLabels[ j++ ] ] );
+
+			String ch = channel.getName().replace( ' ', '_' );
+			gd.addChoice( "Interest_points_channel_" + ch, labels, labels[ Interest_Point_Registration.defaultChannelLabels[ j++ ] ] );
 			channelLabels.add( labels );
 		}
 		
@@ -115,7 +116,7 @@ public class Visualize_Detections implements PlugIn
 		
 		for ( final Channel channel : channels )
 		{
-			final int channelChoice = Interest_Point_Registration.defaultChannelLabels[ channel.getId() ] = gd.getNextChoiceIndex();
+			final int channelChoice = Interest_Point_Registration.defaultChannelLabels[ j ] = gd.getNextChoiceIndex();
 			
 			if ( channelChoice < channelLabels.get( j ).length - 1 )
 			{

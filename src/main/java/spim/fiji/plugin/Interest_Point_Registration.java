@@ -749,7 +749,7 @@ public class Interest_Point_Registration implements PlugIn
 		}
 
 		if ( doWhat != null )
-			allLabels[ i ] = "[DO NOT " + doWhat + " this channel]";
+			allLabels[ i ] = "(DO NOT " + doWhat + " this channel)";
 
 		return allLabels;
 	}

@@ -12,7 +12,6 @@ import java.util.List;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
-import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.queryXML.ParseQueryXML;
@@ -22,7 +21,8 @@ import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import spim.process.fusion.boundingbox.AutomaticBoundingBox;
 import spim.process.fusion.boundingbox.AutomaticReorientation;
 import spim.process.fusion.boundingbox.BigDataViewerBoundingBox;
-import spim.process.fusion.boundingbox.ManualBoundingBox;
+import spim.process.fusion.boundingbox.BoundingBoxGUI;
+import spim.process.fusion.boundingbox.PreDefinedBoundingBox;
 import spim.process.fusion.deconvolution.EfficientBayesianBased;
 import spim.process.fusion.export.AppendSpimData2;
 import spim.process.fusion.export.DisplayImage;
@@ -39,8 +39,8 @@ public class Image_Fusion implements PlugIn
 	public static ArrayList< Fusion > staticFusionAlgorithms = new ArrayList< Fusion >();
 	public static int defaultFusionAlgorithm = 1;
 
-	public static ArrayList< BoundingBox > staticBoundingBoxAlgorithms = new ArrayList< BoundingBox >();
-	public static int defaultBoundingBoxAlgorithm = 1;
+	public static ArrayList< BoundingBoxGUI > staticBoundingBoxAlgorithms = new ArrayList< BoundingBoxGUI >();
+	public static int defaultBoundingBoxAlgorithm = -1;
 
 	public static ArrayList< ImgExport > staticImgExportAlgorithms = new ArrayList< ImgExport >();
 	public static int defaultImgExportAlgorithm = 0;
@@ -51,12 +51,13 @@ public class Image_Fusion implements PlugIn
 		staticFusionAlgorithms.add( new EfficientBayesianBased( null, null ) );
 		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, WeightedAvgFusionType.FUSEDATA ) );
 		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, WeightedAvgFusionType.INDEPENDENT ) );
-		
-		staticBoundingBoxAlgorithms.add( new ManualBoundingBox( null, null ) );
+
+		staticBoundingBoxAlgorithms.add( new BoundingBoxGUI( null, null ) );
 		staticBoundingBoxAlgorithms.add( new BigDataViewerBoundingBox( null, null ) );
 		staticBoundingBoxAlgorithms.add( new AutomaticReorientation( null, null ) );
 		staticBoundingBoxAlgorithms.add( new AutomaticBoundingBox( null, null ) );
-		
+		staticBoundingBoxAlgorithms.add( new PreDefinedBoundingBox( null, null ) );
+
 		staticImgExportAlgorithms.add( new DisplayImage() );
 		staticImgExportAlgorithms.add( new Save3dTIFF( null ) );
 		staticImgExportAlgorithms.add( new ExportSpimData2TIFF() );
@@ -109,6 +110,10 @@ public class Image_Fusion implements PlugIn
 		
 		if ( defaultFusionAlgorithm >= fusionDescriptions.length )
 			defaultFusionAlgorithm = 0;
+		if ( defaultBoundingBoxAlgorithm < 0 && data.getBoundingBoxes().getBoundingBoxes().size() > 0 )
+			defaultBoundingBoxAlgorithm = 4;
+		else
+			defaultBoundingBoxAlgorithm = 1;
 		if ( defaultBoundingBoxAlgorithm >= boundingBoxDescriptions.length )
 			defaultBoundingBoxAlgorithm = 0;
 		if ( defaultImgExportAlgorithm >= imgExportDescriptions.length )
@@ -141,11 +146,11 @@ public class Image_Fusion implements PlugIn
 		final int imgExportAlgorithm = defaultImgExportAlgorithm = gd.getNextChoiceIndex();
 
 		final Fusion fusion = staticFusionAlgorithms.get( fusionAlgorithm ).newInstance( data, viewIds );
-		final BoundingBox boundingBox = staticBoundingBoxAlgorithms.get( boundingBoxAlgorithm ).newInstance( data, viewIds );
+		final BoundingBoxGUI boundingBox = staticBoundingBoxAlgorithms.get( boundingBoxAlgorithm ).newInstance( data, viewIds );
 		final ImgExport imgExport = staticImgExportAlgorithms.get( imgExportAlgorithm ).newInstance();
 
 		if ( data.getSequenceDescription().getImgLoader() instanceof Hdf5ImageLoader )
-			BoundingBox.defaultPixelType = 1; // set to 16 bit by default for hdf5
+			BoundingBoxGUI.defaultPixelType = 1; // set to 16 bit by default for hdf5
 
 		if ( !boundingBox.queryParameters( fusion, imgExport ) )
 			return false;
@@ -262,6 +267,7 @@ public class Image_Fusion implements PlugIn
 
 	public static void main( final String[] args )
 	{
+		LoadParseQueryXML.defaultXMLfilename = "/Users/preibischs/Documents/Microscopy/SPIM/HisYFP-SPIM//dataset.xml";
 		new ImageJ();
 		new Image_Fusion().run( null );
 	}
