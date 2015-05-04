@@ -37,6 +37,8 @@ import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizati
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationType;
 import spim.process.interestpointregistration.optimizationtypes.IndividualTimepointRegistration;
 import spim.process.interestpointregistration.optimizationtypes.ReferenceTimepointRegistration;
+import spim.process.interestpointregistration.registrationstatistics.RegistrationStatistics;
+import spim.process.interestpointregistration.registrationstatistics.TimeLapseDisplay;
 
 /**
  *
@@ -392,7 +394,10 @@ public class Interest_Point_Registration implements PlugIn
 
 		if ( showStatistics )
 		{
-			// TODO: show statistics
+			final ArrayList< RegistrationStatistics > rsData = new ArrayList< RegistrationStatistics >();
+			for ( final TimePoint t : timepointToProcess )
+				rsData.add( new RegistrationStatistics( t.getId(), ipr.getStatistics() ) );
+			TimeLapseDisplay.plotData( data.getSequenceDescription().getTimePoints(), rsData, TimeLapseDisplay.getOptimalTimePoint( rsData ), true );
 		}
 
 		return true;
@@ -767,7 +772,7 @@ public class Interest_Point_Registration implements PlugIn
 		return allLabels;
 	}
 
-	protected String[] assembleTimepoints( final TimePoints timepoints )
+	protected static String[] assembleTimepoints( final TimePoints timepoints )
 	{
 		final String[] tps = new String[ timepoints.size() ];
 
