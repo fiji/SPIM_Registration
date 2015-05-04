@@ -215,14 +215,14 @@ public class Image_Fusion implements PlugIn
 		// 1: PSFTYPE.OPTIMIZATION_I
 		fusion.initDefault(1, 0, 1);
 
-		final BoundingBox boundingBox = new ManualBoundingBox( data, viewIds );
+		final PreDefinedBoundingBox boundingBox = new PreDefinedBoundingBox( data, viewIds );
 
 		boundingBox.initDefault( fusion, min, max );
 
 		final ImgExport imgExport = new Save3dTIFF(null);
 
 		if ( data.getSequenceDescription().getImgLoader() instanceof Hdf5ImageLoader )
-			BoundingBox.defaultPixelType = 1; // set to 16 bit by default for hdf5
+			PreDefinedBoundingBox.defaultPixelType = 1; // set to 16 bit by default for hdf5
 
 		// set all the properties required for exporting as a new XML or as addition to an existing XML
 		fusion.defineNewViewSetups( boundingBox );

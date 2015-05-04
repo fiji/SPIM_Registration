@@ -387,7 +387,7 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		ViewInterestPoints viewInterestPoints = new ViewInterestPoints();
 		viewInterestPoints.createViewInterestPoints( sequenceDescription.getViewDescriptions() );
 		// finally create the SpimData itself based on the sequence description and the view registration
-		SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints );
+		SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints, new BoundingBoxes() );
 
 		SpimData2.saveXML( spimData, xmlFile, "" );
 
