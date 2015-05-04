@@ -45,6 +45,7 @@ import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.NamePattern;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.imgloaders.StackImgLoader;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
@@ -80,10 +81,10 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	
 	public static boolean showDebugFileNames = true;
 	
-	public static String defaultTimepoints = "18";
+	public static String defaultTimepoints = "18,19,30";
 	public static String defaultChannels = "1,2";
 	public static String defaultIlluminations = "0,1";
-	public static String defaultAngles = "0-270:45";
+	public static String defaultAngles = "0-315:45";
 
 	protected String timepoints, channels, illuminations, angles;
 	protected ArrayList< String > timepointNameList, channelNameList, illuminationsNameList, angleNameList;
@@ -110,10 +111,10 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	
 	protected HashMap< ViewSetupPrecursor, Calibration > calibrations = new HashMap< ViewSetupPrecursor, Calibration >();
 	
-	public static String defaultDirectory = "/home/preibisch/Documents/Microscopy/SPIM/HisYFP-SPIM";
+	public static String defaultDirectory = "";
 	public static String defaultFileNamePattern = null;
 
-	protected String directory, fileNamePattern;	
+	protected String directory, fileNamePattern;
 	
 	protected abstract boolean supportsMultipleTimepointsPerFile();
 	protected abstract boolean supportsMultipleChannelsPerFile();
@@ -247,7 +248,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		viewInterestPoints.createViewInterestPoints( sequenceDescription.getViewDescriptions() );
 
 		// finally create the SpimData itself based on the sequence description and the view registration
-		final SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints );
+		final SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints, new BoundingBoxes() );
 
 		return spimData;
 	}
@@ -317,9 +318,12 @@ public abstract class StackList implements MultiViewDatasetDefinition
 					for ( int i = 0; i < illuminationsNameList.size(); ++i )
 						for ( int a = 0; a < angleNameList.size(); ++a )
 						{
-							for ( int[] exceptions : exceptionIds )
+							for ( int[] exceptions : tmp )
 								if ( exceptions[ 1 ] == c && exceptions[ 2 ] == i && exceptions[ 3 ] == a )
-									missingViews.add( new ViewId( t, setupId ) );
+								{
+									missingViews.add( new ViewId( Integer.parseInt( timepointNameList.get( t ) ), setupId ) );
+									System.out.println( "creating missing views t:" + Integer.parseInt( timepointNameList.get( t ) ) + " c:" + c + " i:" + i + " a:" + a + " setupid: " + setupId );
+								}
 							
 							++setupId;
 						}
@@ -513,6 +517,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 
 		gd.addMessage( "" );
 		gd.addMessage( "Path: " + directory + "   " );
+		gd.addMessage( "Note: Not selected files will be treated as missing views (e.g. missing files).", GUIHelper.smallStatusFont );
 
 		for ( int t = 0; t < timepointNameList.size(); ++t )
 			for ( int c = 0; c < channelNameList.size(); ++c )
@@ -548,13 +553,21 @@ public abstract class StackList implements MultiViewDatasetDefinition
 
 						if ( ext.length() > 1 )
 							fileName += "   >> [" + ext + "]";
-						
+
+						final boolean select;
+
 						if ( fileExisits )
+						{
 							fileName += " (file found)";
+							select = true;
+						}
 						else
+						{
+							select = false;
 							fileName += " (file NOT found)";
+						}
 						
-						gd.addCheckbox( fileName, true );
+						gd.addCheckbox( fileName, select );
 						
 						// otherwise underscores are gone ...
 						((Checkbox)gd.getCheckboxes().lastElement()).setLabel( fileName );
@@ -563,9 +576,9 @@ public abstract class StackList implements MultiViewDatasetDefinition
 					}
 				
 		GUIHelper.addScrollBars( gd );
-		
+
 		gd.showDialog();
-		
+
 		if ( gd.wasCanceled() )
 			return false;
 
@@ -577,8 +590,11 @@ public abstract class StackList implements MultiViewDatasetDefinition
 				for ( int i = 0; i < illuminationsNameList.size(); ++i )
 					for ( int a = 0; a < angleNameList.size(); ++a )
 						if ( gd.getNextBoolean() == false )
-							exceptionIds.add( new int[]{ t, c, i, a } );					
-				
+						{
+							exceptionIds.add( new int[]{ t, c, i, a } );
+							System.out.println( "adding missing views t:" + t + " c:" + c + " i:" + i + " a:" + a );
+						}
+
 		return true;
 	}
 	

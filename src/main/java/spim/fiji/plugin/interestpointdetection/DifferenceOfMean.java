@@ -4,7 +4,6 @@ import ij.ImagePlus;
 import ij.gui.GenericDialog;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -20,6 +19,7 @@ import mpicbg.spim.segmentation.InteractiveIntegral;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.realtransform.AffineTransform3D;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.interestpointdetection.ProcessDOM;
@@ -77,11 +77,8 @@ public class DifferenceOfMean extends DifferenceOf
 
 				final Channel c = vd.getViewSetup().getChannel();
 
-				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Requesting Img from ImgLoader (tp=" + vd.getTimePointId() + ", setup=" + vd.getViewSetupId() + ")" );
-				final RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input =
-						downsample(
-								spimData.getSequenceDescription().getImgLoader().getFloatImage( vd, false ),
-								vd.getViewSetup().getVoxelSize() );
+				final AffineTransform3D correctCoordinates = new AffineTransform3D();
+				final RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input = openAndDownsample( spimData, vd, correctCoordinates );
 
 				long time2 = System.currentTimeMillis();
 
@@ -112,7 +109,7 @@ public class DifferenceOfMean extends DifferenceOf
 
 				img.close();
 
-				correctForDownsampling( ips, vd.getViewSetup().getVoxelSize() );
+				correctForDownsampling( ips, correctCoordinates );
 
 				interestPoints.put( vd, ips );
 
@@ -212,10 +209,8 @@ public class DifferenceOfMean extends DifferenceOf
 		}
 		
 		RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > img =
-				downsample(
-						spimData.getSequenceDescription().getImgLoader().getFloatImage( view, false ),
-						viewDescription.getViewSetup().getVoxelSize() );
-		
+				openAndDownsample( spimData, viewDescription, new AffineTransform3D() );
+
 		if ( img == null )
 		{
 			IOFunctions.println( "View not found: " + viewDescription );
@@ -238,7 +233,9 @@ public class DifferenceOfMean extends DifferenceOf
 		ii.setThreshold( (float)defaultThreshold[ channelId ] );
 		ii.setLookForMinima( defaultFindMin[ channelId ] );
 		ii.setLookForMaxima( defaultFindMax[ channelId ] );
-		
+		ii.setMinIntensityImage( minIntensity ); // if is Double.NaN will be ignored
+		ii.setMaxIntensityImage( maxIntensity ); // if is Double.NaN will be ignored
+
 		ii.run( null );
 		
 		while ( !ii.isFinished() )

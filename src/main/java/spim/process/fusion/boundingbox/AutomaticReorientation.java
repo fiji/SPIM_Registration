@@ -27,7 +27,6 @@ import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
 import spim.fiji.plugin.Interest_Point_Registration;
 import spim.fiji.plugin.Visualize_Detections;
-import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
@@ -37,7 +36,7 @@ import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.process.fusion.export.ImgExport;
 import spim.process.interestpointregistration.ChannelProcess;
 
-public class AutomaticReorientation extends ManualBoundingBox
+public class AutomaticReorientation extends BoundingBoxGUI
 {
 	public static enum Reorientation { NONE, PARTLY, ALL };
 
@@ -97,7 +96,7 @@ public class AutomaticReorientation extends ManualBoundingBox
 			}
 		}
 
-		return false;
+		return this.changedSpimDataObject;
 	}
 
 	@Override
@@ -126,7 +125,7 @@ public class AutomaticReorientation extends ManualBoundingBox
 
 		// check which channels and labels are available and build the choices
 		// ask which channels have the objects we are searching for
-		final List< Channel > channels = spimData.getSequenceDescription().getAllChannelsOrdered();
+		final List< Channel > channels = SpimData2.getAllChannelsSorted( spimData, viewIdsToProcess ); //spimData.getSequenceDescription().getAllChannelsOrdered();
 
 		boolean labelsWereReset = false;
 
@@ -153,9 +152,13 @@ public class AutomaticReorientation extends ManualBoundingBox
 				Interest_Point_Registration.defaultChannelLabels[ j ] = 0;
 
 			if ( labelsWereReset && labels[ Interest_Point_Registration.defaultChannelLabels[ j ] ].contains( "bead" ) )
-				Interest_Point_Registration.defaultChannelLabels[ j ] = labels.length - 1;
+				Interest_Point_Registration.defaultChannelLabels[ j ] = labels.length - 2;
 
-			gd.addChoice( "Interest_points_channel_" + channel.getName(), labels, labels[ Interest_Point_Registration.defaultChannelLabels[ j++ ] ] );
+			if ( Interest_Point_Registration.defaultChannelLabels[ j ] < labels.length )
+				Interest_Point_Registration.defaultChannelLabels[ j ] = 0;
+
+			String ch = channel.getName().replace( ' ', '_' );
+			gd.addChoice( "Interest_points_channel_" + ch, labels, labels[ Interest_Point_Registration.defaultChannelLabels[ j++ ] ] );
 			channelLabels.add( labels );
 		}
 
@@ -269,8 +272,8 @@ public class AutomaticReorientation extends ManualBoundingBox
 		IOFunctions.println( "Min (without addition): " + Util.printCoordinates( minF ) );
 		IOFunctions.println( "Max (without addition): " + Util.printCoordinates( maxF ) );
 
-		final int[] min = new int[ 3 ];
-		final int[] max = new int[ 3 ];
+		this.min = new int[ 3 ];
+		this.max = new int[ 3 ];
 
 		double addX = (maxF[ 0 ] - minF[ 0 ]) * ( percent/100.0 ) / 2;
 		double addY = (maxF[ 1 ] - minF[ 1 ]) * ( percent/100.0 ) / 2;
@@ -278,19 +281,19 @@ public class AutomaticReorientation extends ManualBoundingBox
 
 		final double add = Math.max( addX, Math.max( addY, addZ ) );
 
-		min[ 0 ] = (int)Math.round( minF[ 0 ] - add );
-		min[ 1 ] = (int)Math.round( minF[ 1 ] - add );
-		min[ 2 ] = (int)Math.round( minF[ 2 ] - add );
+		this.min[ 0 ] = (int)Math.round( minF[ 0 ] - add );
+		this.min[ 1 ] = (int)Math.round( minF[ 1 ] - add );
+		this.min[ 2 ] = (int)Math.round( minF[ 2 ] - add );
 
-		max[ 0 ] = (int)Math.round( maxF[ 0 ] + add );
-		max[ 1 ] = (int)Math.round( maxF[ 1 ] + add );
-		max[ 2 ] = (int)Math.round( maxF[ 2 ] + add );
+		this.max[ 0 ] = (int)Math.round( maxF[ 0 ] + add );
+		this.max[ 1 ] = (int)Math.round( maxF[ 1 ] + add );
+		this.max[ 2 ] = (int)Math.round( maxF[ 2 ] + add );
 
-		IOFunctions.println( "Min (with addition): " + Util.printCoordinates( min ) );
-		IOFunctions.println( "Max (with addition): " + Util.printCoordinates( max ) );
+		IOFunctions.println( "Min (with addition): " + Util.printCoordinates( this.min ) );
+		IOFunctions.println( "Max (with addition): " + Util.printCoordinates( this.max ) );
 
-		BoundingBox.defaultMin = min;
-		BoundingBox.defaultMax = max;
+		BoundingBoxGUI.defaultMin = this.min.clone();
+		BoundingBoxGUI.defaultMax = this.max.clone();
 
 		return super.queryParameters( fusion, imgExport );
 	}

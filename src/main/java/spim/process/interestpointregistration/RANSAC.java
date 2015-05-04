@@ -3,6 +3,8 @@ package spim.process.interestpointregistration;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 
+import spim.fiji.ImgLib2Temp.Pair;
+import spim.fiji.ImgLib2Temp.ValuePair;
 import mpicbg.models.Model;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.PointMatch;
@@ -16,7 +18,7 @@ import mpicbg.spim.mpicbg.PointMatchGeneric;
  */
 public class RANSAC
 {
-	public static String computeRANSAC( 
+	public static Pair< String, Double > computeRANSAC( 
 			final ArrayList< PointMatchGeneric < Detection > > correspondenceCandidates, 
 			final ArrayList< PointMatchGeneric < Detection > > inlierList, 
 			final Model<?> model, 
@@ -36,7 +38,7 @@ public class RANSAC
 
 		// if there are not enough correspondences for the used model
 		if ( numCorrespondences < minNumCorrespondences )
-			return "Not enough correspondences found " + numCorrespondences + ", should be at least " + minNumCorrespondences;
+			return new ValuePair< String, Double >( "Not enough correspondences found " + numCorrespondences + ", should be at least " + minNumCorrespondences, Double.NaN );
 
 		/**
 		 * The ArrayList that stores the inliers after RANSAC, contains PointMatches of LinkedPoints
@@ -77,11 +79,11 @@ public class RANSAC
 		}
 		catch ( NotEnoughDataPointsException e )
 		{
-			return e.toString();
+			return new ValuePair< String, Double >( e.toString(), Double.NaN );
 		}
 			
 		final NumberFormat nf = NumberFormat.getPercentInstance();
-		final double ratio = (inliers.size() / candidates.size());
+		final double ratio = ( (double)inliers.size() / (double)candidates.size() );
 		
 		if ( modelFound && inliers.size() >= minNumCorrespondences )
 		{			
@@ -96,14 +98,14 @@ public class RANSAC
 				inlierList.add( new PointMatchGeneric< Detection >( detectionA, detectionB ) );
 			}
 
-			return "Remaining inliers after RANSAC: " + inliers.size() + " of " + candidates.size() + " (" + nf.format(ratio) + ") with average error " + model.getCost();
+			return new ValuePair< String, Double >( "Remaining inliers after RANSAC: " + inliers.size() + " of " + candidates.size() + " (" + nf.format(ratio) + ") with average error " + model.getCost(), model.getCost() );
 		}
 		else
 		{
-			if ( modelFound )					
-				return "Model found but not enough remaining inliers (" + inliers.size() + "/" + minNumCorrespondences + ") after RANSAC of " + candidates.size();
+			if ( modelFound )
+				return new ValuePair< String, Double >( "Model found but not enough remaining inliers (" + inliers.size() + "/" + minNumCorrespondences + ") after RANSAC of " + candidates.size(), Double.NaN );
 			else
-				return "NO Model found after RANSAC of " + candidates.size();
+				return new ValuePair< String, Double >( "NO Model found after RANSAC of " + candidates.size(), Double.NaN );
 		}
 	}
 }

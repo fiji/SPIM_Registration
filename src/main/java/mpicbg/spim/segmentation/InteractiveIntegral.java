@@ -68,7 +68,7 @@ public class InteractiveIntegral implements PlugIn
 	int radius1 = 1;
 	int radius2 = 3;
 	float threshold = 0.0001f;
-	float min, max;
+	double min, max;
 
 	int radiusMin = 1;
 	int radiusMax = 29;
@@ -144,7 +144,10 @@ public class InteractiveIntegral implements PlugIn
 	}
 	public InteractiveIntegral( final ImagePlus imp ) { this.imp = imp; }
 	public InteractiveIntegral() {}
-	
+
+	public void setMinIntensityImage( final double min ) { this.min = min; }
+	public void setMaxIntensityImage( final double max ) { this.max = max; }
+
 	@Override
 	public void run( String arg )
 	{
@@ -162,14 +165,17 @@ public class InteractiveIntegral implements PlugIn
 		sliceImage = source.getImageFactory().createImage( new int[]{ source.getDimension( 0 ), source.getDimension( 1 ) } );
 		
 		// compute min/max
-		FloatType min = new FloatType();
-		FloatType max = new FloatType();
-		
-		DOM.computeMinMax( source, min, max );
-		
-		this.min = min.get();
-		this.max = max.get();
-		
+		if ( Double.isNaN( min ) || Double.isNaN( max ) || Double.isInfinite( min ) || Double.isInfinite( max ) || min == max )
+		{
+			FloatType min = new FloatType();
+			FloatType max = new FloatType();
+	
+			DOM.computeMinMax( source, min, max );
+	
+			this.min = min.get();
+			this.max = max.get();
+		}
+
 		// compute the integral image
 		integralImage = computeIntegralImage( source );
 		
@@ -287,7 +293,7 @@ public class InteractiveIntegral implements PlugIn
 			final int s1 = radius1*2 + 1;
 			final int s2 = radius2*2 + 1;
 			
-			computeDifferencOfMeanSlice( integralImage, sliceImage, slice, s1, s1, s1, s2, s2, s2, min, max );
+			computeDifferencOfMeanSlice( integralImage, sliceImage, slice, s1, s1, s1, s2, s2, s2, (float)min, (float)max );
 
 	        //ImageJFunctions.show( sliceImage );
 	        

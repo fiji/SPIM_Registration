@@ -8,7 +8,6 @@ import javax.swing.JMenuItem;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
 import mpicbg.spim.io.IOFunctions;
-import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 import spim.fiji.spimdata.explorer.registration.RegistrationExplorer;
 

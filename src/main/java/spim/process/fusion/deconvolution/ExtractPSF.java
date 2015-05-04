@@ -153,8 +153,9 @@ public class ExtractPSF< T extends RealType< T > & NativeType< T > >
 		final int numDimensions = maxSize.length;
 		
 		IJ.log( "maxSize: " + Util.printCoordinates( maxSize ) );
-		
-		Img< T > avgPSF = pointSpreadFunctions.get( 0 ).factory().create( maxSize, pointSpreadFunctions.get( 0 ).firstElement() );
+
+		Img< T > someImg = pointSpreadFunctions.values().iterator().next();
+		Img< T > avgPSF = someImg.factory().create( maxSize, someImg.firstElement() );
 		
 		final long[] avgCenter = new long[ numDimensions ];
 		for ( int d = 0; d < numDimensions; ++d )
@@ -194,8 +195,9 @@ public class ExtractPSF< T extends RealType< T > & NativeType< T > >
 	 * @return
 	 */
 	public Img< T > computeAveragePSF()
-	{ 
-		final Img< T > avgOriginalPSF = originalPSFs.get( 0 ).factory().create( originalPSFs.get( 0 ), originalPSFs.get( 0 ).firstElement() );
+	{
+		Img< T > someImg = originalPSFs.values().iterator().next();
+		final Img< T > avgOriginalPSF = someImg.factory().create( someImg, someImg.firstElement() );
 
 		try
 		{

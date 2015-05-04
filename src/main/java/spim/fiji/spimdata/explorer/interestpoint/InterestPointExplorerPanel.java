@@ -1,10 +1,14 @@
 package spim.fiji.spimdata.explorer.interestpoint;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,6 +29,7 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
+import spim.fiji.spimdata.explorer.ViewSetupExplorer;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
@@ -33,7 +38,9 @@ import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 public class InterestPointExplorerPanel extends JPanel
 {
 	private static final long serialVersionUID = -3767947754096099774L;
-	
+
+	final ViewSetupExplorer< ?, ? > viewSetupExplorer;
+
 	protected JTable table;
 	protected InterestPointTableModel tableModel;
 	protected JLabel label;
@@ -42,18 +49,19 @@ public class InterestPointExplorerPanel extends JPanel
 	//protected ArrayList< Pair< InterestPointList, ViewId > > save;
 	protected ArrayList< Pair< InterestPointList, ViewId > > delete;
 
-	public InterestPointExplorerPanel( final ViewInterestPoints viewInterestPoints )
+	public InterestPointExplorerPanel( final ViewInterestPoints viewInterestPoints, final ViewSetupExplorer< ?, ? > viewSetupExplorer )
 	{
 		//this.save = new ArrayList< Pair< InterestPointList, ViewId > >();
 		this.delete = new ArrayList< Pair< InterestPointList, ViewId > >();
 
+		this.viewSetupExplorer = viewSetupExplorer;
 		initComponent( viewInterestPoints );
 	}
 
 	public InterestPointTableModel getTableModel() { return tableModel; }
 	public JTable getTable() { return table; }
 	
-	public void updateViewDescription( final BasicViewDescription< ? > vd )
+	public void updateViewDescription( final BasicViewDescription< ? > vd, final boolean isFirst )
 	{
 		if ( vd != null && label != null )
 			this.label.setText("View Description --- Timepoint: " + vd.getTimePointId() + ", View Setup Id: " + vd.getViewSetupId() );
@@ -61,7 +69,7 @@ public class InterestPointExplorerPanel extends JPanel
 		if ( vd == null )
 			this.label.setText( "No or multiple View Descriptions selected");
 
-		tableModel.updateViewDescription( vd );
+		tableModel.updateViewDescription( vd, isFirst );
 
 		if ( table.getSelectedRowCount() == 0 )
 			table.getSelectionModel().setSelectionInterval( 0, 0 );
@@ -76,12 +84,12 @@ public class InterestPointExplorerPanel extends JPanel
 		table.setSurrendersFocusOnKeystroke( true );
 		table.setSelectionMode( ListSelectionModel.SINGLE_INTERVAL_SELECTION );
 		
-		final DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-		centerRenderer.setHorizontalAlignment( JLabel.CENTER );
+		final MyRenderer myRenderer = new MyRenderer();
+		myRenderer.setHorizontalAlignment( JLabel.CENTER );
 		
 		// center all columns
 		for ( int column = 0; column < tableModel.getColumnCount(); ++column )
-			table.getColumnModel().getColumn( column ).setCellRenderer( centerRenderer );
+			table.getColumnModel().getColumn( column ).setCellRenderer( myRenderer );
 
 		table.setPreferredScrollableViewportSize( new Dimension( 1020, 300 ) );
 		final Font f = table.getFont();
@@ -99,7 +107,60 @@ public class InterestPointExplorerPanel extends JPanel
 		table.getColumnModel().getColumn( 3 ).setPreferredWidth( 25 );
 		table.getColumnModel().getColumn( 4 ).setPreferredWidth( 400 );
 
+		table.addMouseListener( new MouseListener()
+		{
+			@Override
+			public void mouseReleased(MouseEvent e) {}
+			
+			@Override
+			public void mousePressed(MouseEvent e) {}
+			
+			@Override
+			public void mouseExited(MouseEvent e) {}
+			
+			@Override
+			public void mouseEntered(MouseEvent e) {}
+			
+			@Override
+			public void mouseClicked(MouseEvent e)
+			{
+				int row = table.rowAtPoint( e.getPoint() );
+				int col = table.columnAtPoint( e.getPoint() );
+
+				if ( tableModel.getSelectedRow() == row && tableModel.getSelectedCol() == col )
+					tableModel.setSelected( -1, -1 );
+				else
+					tableModel.setSelected( row, col );
+
+				// update everything
+				final int sr = table.getSelectedRow();
+				tableModel.fireTableDataChanged();
+				table.setRowSelectionInterval( sr, sr );
+			}
+		});
+
 		addPopupMenu( table );
+	}
+
+	protected static class MyRenderer extends DefaultTableCellRenderer
+	{
+		private static final long serialVersionUID = 1L;
+
+		Color backgroundColor = getBackground();
+		
+		@Override
+		public Component getTableCellRendererComponent( JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column )
+		{
+			final Component c = super.getTableCellRendererComponent( table, value, isSelected, hasFocus, row, column );
+			final InterestPointTableModel model = (InterestPointTableModel) table.getModel();
+
+			if ( model.getState( row, column ) )
+				c.setBackground( Color.red );
+			else if ( !isSelected )
+				c.setBackground( backgroundColor );
+
+			return c;
+		}
 	}
 
 	protected void delete()
@@ -123,8 +184,10 @@ public class InterestPointExplorerPanel extends JPanel
 
 		final ViewInterestPoints vip = tableModel.getViewInterestPoints();
 
-		for ( final int row : selectedRows )
+		for ( int rowIndex = selectedRows.length - 1; rowIndex >= 0; rowIndex--)
 		{
+			final int row = selectedRows[ rowIndex ];
+
 			final String label = InterestPointTableModel.label( vip, vd, row );
 
 			IOFunctions.println( "Removing label '' for timepoint_id " + vd.getTimePointId() + " viewsetup_id " + vd.getViewSetupId() + " -- Parsing through all correspondences to remove any links to this interest point list." );
@@ -196,6 +259,9 @@ public class InterestPointExplorerPanel extends JPanel
 
 			vip.getViewInterestPointLists( vd ).getHashMap().remove( label );
 		}
+
+		// reset selection
+		tableModel.setSelected( -1, -1 );
 
 		// update everything
 		tableModel.fireTableDataChanged();

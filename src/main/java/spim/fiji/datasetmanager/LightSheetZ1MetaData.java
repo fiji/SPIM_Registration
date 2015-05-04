@@ -12,7 +12,7 @@ import loci.formats.IFormatReader;
 import loci.formats.Modulo;
 import loci.formats.meta.MetadataRetrieve;
 import mpicbg.spim.io.IOFunctions;
-import ome.xml.model.primitives.PositiveFloat;
+import ome.units.quantity.Length;
 import spim.fiji.spimdata.imgloaders.LightSheetZ1ImgLoader;
 
 public class LightSheetZ1MetaData
@@ -304,9 +304,9 @@ public class LightSheetZ1MetaData
 
 			float cal = 0;
 
-			PositiveFloat f = retrieve.getPixelsPhysicalSizeX( 0 );
+			Length f = retrieve.getPixelsPhysicalSizeX( 0 );
 			if ( f != null )
-				cal = f.getValue().floatValue();
+				cal = f.value().floatValue();
 
 			if ( cal == 0 )
 			{
@@ -317,7 +317,7 @@ public class LightSheetZ1MetaData
 
 			f = retrieve.getPixelsPhysicalSizeY( 0 );
 			if ( f != null )
-				cal = f.getValue().floatValue();
+				cal = f.value().floatValue();
 
 			if ( cal == 0 )
 			{
@@ -328,7 +328,7 @@ public class LightSheetZ1MetaData
 
 			f = retrieve.getPixelsPhysicalSizeZ( 0 );
 			if ( f != null )
-				cal = f.getValue().floatValue();
+				cal = f.value().floatValue();
 
 			if ( cal == 0 )
 			{

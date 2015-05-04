@@ -24,10 +24,10 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.Apply_Transformation;
-import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.FusionHelper;
+import spim.process.fusion.boundingbox.BoundingBoxGUI;
 import spim.process.fusion.export.FixedNameImgTitler;
 import spim.process.fusion.export.ImgExport;
 import spim.process.fusion.export.ImgExportTitle;
@@ -63,7 +63,7 @@ public class WeightedAverageFusion extends Fusion
 	}
 	
 	@Override
-	public boolean fuseData( final BoundingBox bb, final ImgExport exporter )
+	public boolean fuseData( final BoundingBoxGUI bb, final ImgExport exporter )
 	{
 		// set up naming scheme
 		final FixedNameImgTitler titler = new FixedNameImgTitler( "" );
@@ -207,7 +207,7 @@ public class WeightedAverageFusion extends Fusion
 	}
 
 	@Override
-	protected Map< ViewSetup, ViewSetup > createNewViewSetups( final BoundingBox bb )
+	protected Map< ViewSetup, ViewSetup > createNewViewSetups( final BoundingBoxGUI bb )
 	{
 		if ( type == WeightedAvgFusionType.FUSEDATA )
 		{
@@ -242,7 +242,7 @@ public class WeightedAverageFusion extends Fusion
 	public static Map< ViewSetup, ViewSetup > assembleNewViewSetupsFusion(
 			final SpimData2 spimData,
 			final List< ViewId > viewIdsToProcess,
-			final BoundingBox bb,
+			final BoundingBoxGUI bb,
 			final String newAngleName,
 			final String newIlluminationName )
 	{
@@ -316,7 +316,7 @@ public class WeightedAverageFusion extends Fusion
 	public static Map< ViewSetup, ViewSetup > assembleNewViewSetupsSequential(
 			final SpimData2 spimData,
 			final List< ViewId > viewIdsToProcess,
-			final BoundingBox bb )
+			final BoundingBoxGUI bb )
 	{
 		final HashMap< ViewSetup, ViewSetup > map = new HashMap< ViewSetup, ViewSetup >();
 

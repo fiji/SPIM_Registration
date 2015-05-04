@@ -21,6 +21,8 @@ public class ViewSetupTableModel< AS extends AbstractSpimData< ? > > extends Abs
 {
 	private static final long serialVersionUID = -6526338840427674269L;
 
+	protected ArrayList< BasicViewDescription< ? extends BasicViewSetup > > elements = null;
+	
 	final ViewSetupExplorerPanel< AS, ? > panel;
 	final ArrayList< String > columnNames;
 
@@ -60,7 +62,7 @@ public class ViewSetupTableModel< AS extends AbstractSpimData< ? > > extends Abs
 
 	protected ArrayList< BasicViewDescription< ? extends BasicViewSetup > > elements()
 	{
-		final ArrayList< BasicViewDescription< ? extends BasicViewSetup > > elements = new ArrayList< BasicViewDescription< ? extends BasicViewSetup > >();
+		final ArrayList< BasicViewDescription< ? extends BasicViewSetup > > elementsNew = new ArrayList< BasicViewDescription< ? extends BasicViewSetup > >();
 
 		for ( final TimePoint t : panel.getSpimData().getSequenceDescription().getTimePoints().getTimePointsOrdered() )
 			for ( final BasicViewSetup v : panel.getSpimData().getSequenceDescription().getViewSetupsOrdered() )
@@ -69,8 +71,11 @@ public class ViewSetupTableModel< AS extends AbstractSpimData< ? > > extends Abs
 				final BasicViewDescription< ? > viewDesc = panel.getSpimData().getSequenceDescription().getViewDescriptions().get( viewId );
 
 				if ( viewDesc.isPresent() )
-					elements.add( viewDesc );
+					elementsNew.add( viewDesc );
 			}
+
+		if ( this.elements == null || this.elements.size() != elementsNew.size() )
+			this.elements = elementsNew;
 
 		return elements;
 	}

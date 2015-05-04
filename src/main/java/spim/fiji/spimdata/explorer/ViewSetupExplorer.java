@@ -6,7 +6,6 @@ import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 
 import javax.swing.JFrame;
-import javax.swing.UIManager;
 
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
@@ -18,15 +17,6 @@ public class ViewSetupExplorer< AS extends AbstractSpimData< ? >, X extends XmlI
 	
 	public ViewSetupExplorer( final AS data, final String xml, final X io )
 	{
-		try
-		{
-			UIManager.setLookAndFeel( UIManager.getCrossPlatformLookAndFeelClassName() );
-		}
-		catch ( Exception e )
-		{
-			System.out.println( "Could not set look-and-feel" );
-		}
-
 		frame = new JFrame( "ViewSetup Explorer" );
 		panel = new ViewSetupExplorerPanel< AS, X >( this, data, xml, io );
 
@@ -65,6 +55,5 @@ public class ViewSetupExplorer< AS extends AbstractSpimData< ? >, X extends XmlI
 	public ViewSetupExplorerPanel< AS, X > getPanel() { return panel; }
 	public JFrame getFrame() { return frame; }
 	public void addListener( final SelectedViewDescriptionListener< AS > listener ) { panel.addListener( listener ); }
-	public boolean removeListener( final SelectedViewDescriptionListener< AS > listener ) { return panel.removeListener( listener ); }
 	public ArrayList< SelectedViewDescriptionListener< AS > > getListeners() { return panel.getListeners(); }
 }

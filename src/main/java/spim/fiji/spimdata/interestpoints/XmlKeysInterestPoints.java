@@ -1,4 +1,4 @@
-package spim.fiji.spimdata;
+package spim.fiji.spimdata.interestpoints;
 
 public class XmlKeysInterestPoints
 {

@@ -88,7 +88,7 @@ public class ApplyTransformationPopup extends JMenuItem implements ViewExplorerS
 		
 					// update registration panel if available
 					panel.updateContent();
-					panel.bdvPopup().updateBDV();
+					ViewSetupExplorerPanel.bdvPopup().updateBDV();
 				}
 			} ).start();
 		}

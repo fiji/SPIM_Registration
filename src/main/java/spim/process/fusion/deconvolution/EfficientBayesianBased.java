@@ -1,6 +1,7 @@
 package spim.process.fusion.deconvolution;
 
 import fiji.util.gui.GenericDialogPlus;
+import ij.IJ;
 import ij.gui.GenericDialog;
 
 import java.awt.Choice;
@@ -27,7 +28,6 @@ import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
-import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
@@ -39,8 +39,9 @@ import spim.process.cuda.CUDAFourierConvolution;
 import spim.process.cuda.CUDATools;
 import spim.process.cuda.NativeLibraryTools;
 import spim.process.fusion.FusionHelper;
-import spim.process.fusion.boundingbox.ManualBoundingBox.ManageListeners;
 import spim.process.fusion.deconvolution.MVDeconFFT.PSFTYPE;
+import spim.process.fusion.boundingbox.BoundingBoxGUI;
+import spim.process.fusion.boundingbox.BoundingBoxGUI.ManageListeners;
 import spim.process.fusion.export.DisplayImage;
 import spim.process.fusion.export.FixedNameImgTitler;
 import spim.process.fusion.export.ImgExport;
@@ -135,121 +136,130 @@ public class EfficientBayesianBased extends Fusion
 		super( spimData, viewIdsToProcess );
 		
 		// we want the arrayimg by default
-		BoundingBox.defaultImgType = 0;
+		BoundingBoxGUI.defaultImgType = 0;
 		
 		// linear interpolation
 		Fusion.defaultInterpolation = this.interpolation = 1;
 	}
 
 	@Override
-	public boolean fuseData( final BoundingBox bb, final ImgExport exporter )
+	public boolean fuseData( final BoundingBoxGUI bb, final ImgExport exporter )
 	{
-		// set up naming scheme
-		final FixedNameImgTitler titler = new FixedNameImgTitler( "" );
-		if ( exporter instanceof ImgExportTitle )
-			( (ImgExportTitle)exporter).setImgTitler( titler );
-
-		// set up ImgFactory
-		this.factory = bb.getImgFactory( new FloatType() );
-
-		final ProcessForDeconvolution pfd = new ProcessForDeconvolution(
-				spimData,
-				viewIdsToProcess,
-				bb,
-				new int[]{ blendingBorderX, blendingBorderY, blendingBorderZ },
-				new int[]{ blendingRangeX, blendingRangeY, blendingRangeZ } );
-		
-		// set debug mode
-		MVDeconvolution.debug = debugMode;
-		MVDeconvolution.debugInterval = debugInterval;
-
-		int stack = 0;
-
-		for ( final TimePoint t : timepointsToProcess )
-			for ( final Channel c : channelsToProcess )
-			{
-				final List< Angle > anglesToProcess = SpimData2.getAllAnglesForChannelTimepointSorted( spimData, viewIdsToProcess, c, t );
-				final List< Illumination > illumsToProcess = SpimData2.getAllIlluminationsForChannelTimepointSorted( spimData, viewIdsToProcess, c, t );
-
-				// fuse the images, create weights, extract PSFs we need for the deconvolution
-				if ( !pfd.fuseStacksAndGetPSFs(
-						t, c,
-						factory,
-						osemspeedupIndex,
-						osemSpeedUp,
-						justShowWeights,
-						extractPSFLabels,
-						new long[]{ psfSizeX, psfSizeY, psfSizeZ },
-						psfFiles,
-						transformPSFs ) )
+		try
+		{
+			// set up naming scheme
+			final FixedNameImgTitler titler = new FixedNameImgTitler( "" );
+			if ( exporter instanceof ImgExportTitle )
+				( (ImgExportTitle)exporter).setImgTitler( titler );
+	
+			// set up ImgFactory
+			this.factory = bb.getImgFactory( new FloatType() );
+	
+			final ProcessForDeconvolution pfd = new ProcessForDeconvolution(
+					spimData,
+					viewIdsToProcess,
+					bb,
+					new int[]{ blendingBorderX, blendingBorderY, blendingBorderZ },
+					new int[]{ blendingRangeX, blendingRangeY, blendingRangeZ } );
+			
+			// set debug mode
+			MVDeconvolution.debug = debugMode;
+			MVDeconvolution.debugInterval = debugInterval;
+	
+			int stack = 0;
+	
+			for ( final TimePoint t : timepointsToProcess )
+				for ( final Channel c : channelsToProcess )
 				{
-					IOFunctions.println(
-							"FAILED to deconvolve timepoint=" + t.getName() + " (id=" + t.getId() + ")" +
-							", channel=" + c.getName() + " (id=" + c.getId() + ")" );
-
-					continue;
-				}
-				
-				// on the first run update the osemspeedup if necessary
-				if ( stack++ == 0 )
-				{
-					if ( osemspeedupIndex == 1 )
-						osemSpeedUp = pfd.getMinOverlappingViews();
-					else if ( osemspeedupIndex == 2 )
-						osemSpeedUp = pfd.getAvgOverlappingViews();
-				}
-
-				// setup & run the deconvolution
-				displayParametersAndPSFs( bb, c, extractPSFLabels );
-
-				if ( justShowWeights )
-					return true;
-
-				final MVDeconInput deconvolutionData = new MVDeconInput( factory );
-
-				for ( final ViewDescription vd : pfd.getViewDescriptions() )
-				{
-					// device list for CPU or CUDA processing
-					final int[] devList = new int[ deviceList.size() ];
-					for ( int i = 0; i < devList.length; ++i )
-						devList[ i ] = deviceList.get( i ).getDeviceId();
+					final List< Angle > anglesToProcess = SpimData2.getAllAnglesForChannelTimepointSorted( spimData, viewIdsToProcess, c, t );
+					final List< Illumination > illumsToProcess = SpimData2.getAllIlluminationsForChannelTimepointSorted( spimData, viewIdsToProcess, c, t );
+	
+					// fuse the images, create weights, extract PSFs we need for the deconvolution
+					if ( !pfd.fuseStacksAndGetPSFs(
+							t, c,
+							factory,
+							osemspeedupIndex,
+							osemSpeedUp,
+							justShowWeights,
+							extractPSFLabels,
+							new long[]{ psfSizeX, psfSizeY, psfSizeZ },
+							psfFiles,
+							transformPSFs ) )
+					{
+						IOFunctions.println(
+								"FAILED to deconvolve timepoint=" + t.getName() + " (id=" + t.getId() + ")" +
+								", channel=" + c.getName() + " (id=" + c.getId() + ")" );
+	
+						continue;
+					}
 					
-					deconvolutionData.add( new MVDeconFFT(
-							pfd.getTransformedImgs().get( vd ),
-							pfd.getTransformedWeights().get( vd ),
-							pfd.getExtractPSF().getTransformedPSFs().get( vd ),
-							computeFactory,
-							devList,
-							useBlocks,
-							blockSize ) );
+					// on the first run update the osemspeedup if necessary
+					if ( stack++ == 0 )
+					{
+						if ( osemspeedupIndex == 1 )
+							osemSpeedUp = pfd.getMinOverlappingViews();
+						else if ( osemspeedupIndex == 2 )
+							osemSpeedUp = pfd.getAvgOverlappingViews();
+					}
+	
+					// setup & run the deconvolution
+					displayParametersAndPSFs( bb, c, extractPSFLabels );
+	
+					if ( justShowWeights )
+						return true;
+	
+					final MVDeconInput deconvolutionData = new MVDeconInput( factory );
+	
+					for ( final ViewDescription vd : pfd.getViewDescriptions() )
+					{
+						// device list for CPU or CUDA processing
+						final int[] devList = new int[ deviceList.size() ];
+						for ( int i = 0; i < devList.length; ++i )
+							devList[ i ] = deviceList.get( i ).getDeviceId();
+	
+						deconvolutionData.add( new MVDeconFFT(
+								pfd.getTransformedImgs().get( vd ),
+								pfd.getTransformedWeights().get( vd ),
+								pfd.getExtractPSF().getTransformedPSFs().get( vd ),
+								computeFactory,
+								devList,
+								useBlocks,
+								blockSize ) );
+					}
+	
+					if ( !useTikhonovRegularization )
+						lambda = 0;
+	
+					final Img< FloatType > deconvolved;
+	
+					try
+					{
+						deconvolved = new MVDeconvolution( deconvolutionData, iterationType, numIterations, lambda, osemSpeedUp, osemspeedupIndex, "deconvolved" ).getPsi();
+					} 
+					catch (IncompatibleTypeException e)
+					{
+						IOFunctions.println( "Failed to initialize deconvolution: " + e );
+						e.printStackTrace();
+						return false;
+					}
+	
+					// export the final image
+					titler.setTitle( "TP" + t.getName() + "_Ch" + c.getName() + FusionHelper.getIllumName( illumsToProcess ) + FusionHelper.getAngleName( anglesToProcess ) );
+					exporter.exportImage(
+							deconvolved,
+							bb,
+							t,
+							newViewsetups.get( SpimData2.getViewSetup( spimData.getSequenceDescription().getViewSetupsOrdered(), c, anglesToProcess.get( 0 ), illumsToProcess.get( 0 ) ) ),
+							0, 1 );
 				}
-
-				if ( !useTikhonovRegularization )
-					lambda = 0;
-
-				final Img< FloatType > deconvolved;
-
-				try
-				{
-					deconvolved = new MVDeconvolution( deconvolutionData, iterationType, numIterations, lambda, osemSpeedUp, osemspeedupIndex, "deconvolved" ).getPsi();
-				} 
-				catch (IncompatibleTypeException e)
-				{
-					IOFunctions.println( "Failed to initialize deconvolution: " + e );
-					e.printStackTrace();
-					return false;
-				}
-
-				// export the final image
-				titler.setTitle( "TP" + t.getName() + "_Ch" + c.getName() + FusionHelper.getIllumName( illumsToProcess ) + FusionHelper.getAngleName( anglesToProcess ) );
-				exporter.exportImage(
-						deconvolved,
-						bb,
-						t,
-						newViewsetups.get( SpimData2.getViewSetup( spimData.getSequenceDescription().getViewSetupsOrdered(), c, anglesToProcess.get( 0 ), illumsToProcess.get( 0 ) ) ),
-						0, 1 );
-			}
-
+		}
+		catch ( OutOfMemoryError oome )
+		{
+			IJ.log( "Out of Memory" );
+			IJ.error("Multi-View Registration", "Out of memory.  Check \"Edit > Options > Memory & Threads\"");
+			return false;
+		}
+		
 		return true;
 	}
 	
@@ -410,7 +420,7 @@ public class EfficientBayesianBased extends Fusion
 		return totalRam;
 	}
 
-	protected void displayParametersAndPSFs( final BoundingBox bb, final Channel channel, final HashMap< Channel, ChannelPSF > extractPSFLabels  )
+	protected void displayParametersAndPSFs( final BoundingBoxGUI bb, final Channel channel, final HashMap< Channel, ChannelPSF > extractPSFLabels  )
 	{
 		IOFunctions.println( "Type of iteration: " + iterationType );
 		IOFunctions.println( "Number iterations: " + numIterations );
@@ -478,7 +488,10 @@ public class EfficientBayesianBased extends Fusion
 			else if ( displayPSF == 3 )
 			{
 				for ( int i = 0; i < ePSF.getTransformedPSFs().size(); ++i )
-					di.exportImage( ePSF.getTransformedPSFs().get( i ), "transfomed PSF of viewsetup " + ePSF.getViewIdsForPSFs().get( i ).getViewSetupId() );
+				{
+					final ViewId viewId = ePSF.getViewIdsForPSFs().get( i );
+					di.exportImage( ePSF.getTransformedPSFs().get( viewId ), "transfomed PSF of viewsetup " + viewId.getViewSetupId() );
+				}
 			}
 			else if ( displayPSF == 4 )
 			{
@@ -487,7 +500,10 @@ public class EfficientBayesianBased extends Fusion
 			else if ( displayPSF == 5 )
 			{
 				for ( int i = 0; i < ePSF.getInputCalibrationPSFs().size(); ++i )
-					di.exportImage( ePSF.getInputCalibrationPSFs().get( i ), "original PSF of viewsetup " + ePSF.getViewIdsForPSFs().get( i ).getViewSetupId() );
+				{
+					final ViewId viewId = ePSF.getViewIdsForPSFs().get( i );
+					di.exportImage( ePSF.getInputCalibrationPSFs().get( viewId ), "original PSF of viewsetup " + viewId.getViewSetupId() );
+				}
 			}
 		}
 	}
@@ -757,9 +773,11 @@ public class EfficientBayesianBased extends Fusion
 	
 				if ( gd.wasCanceled() )
 					return false;
-	
-				defaultSamePSFForAllAnglesIllums = gd.getNextBoolean();
-				defaultSamePSFForAllChannels = gd.getNextBoolean();
+				
+				if ( anglesToProcess.size() * illumsToProcess.size() > 1 )
+					defaultSamePSFForAllAnglesIllums = gd.getNextBoolean();
+				if ( channelsToProcess.size() > 1 )
+					defaultSamePSFForAllChannels = gd.getNextBoolean();
 			}
 			else
 			{
@@ -1180,7 +1198,7 @@ public class EfficientBayesianBased extends Fusion
 	}
 
 	@Override
-	protected Map< ViewSetup, ViewSetup > createNewViewSetups( final BoundingBox bb )
+	protected Map< ViewSetup, ViewSetup > createNewViewSetups( final BoundingBoxGUI bb )
 	{
 		return WeightedAverageFusion.assembleNewViewSetupsFusion( spimData, viewIdsToProcess, bb, "Decon", "Decon" );
 	}

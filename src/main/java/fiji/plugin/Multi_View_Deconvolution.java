@@ -305,7 +305,7 @@ public class Multi_View_Deconvolution implements PlugIn
 	public static String[] computationOn = new String[]{ "CPU (Java)", "GPU (Nvidia CUDA via JNA)" };
 	public static String[] osemspeedupChoice = new String[]{ "1 (balanced)", "minimal number of overlapping views", "average number of overlapping views", "specify manually" };
 	public static String[] extractPSFs = new String[]{ "Extract from beads", "Provide file with PSF" };
-	public static String[] blocks = new String[]{ "Entire image at once", "in 64x64x64 blocks", "in 128x128x128 blocks", "in 256x256x256 blocks", "in 512x512x512 blocks", "specify maximal blocksize manually" };
+	public static String[] blocks = new String[]{ "Entire image at once", "in 64x64x64 blocks", "in 128x128x128 blocks", "in 256x256x256 blocks", "in 512x512x512 blocks" , "in 1024x512x512 blocks", "in 1024x1024x512 blocks", "specify maximal blocksize manually" };
 	public static String[] displayPSF = new String[]{ "Do not show PSFs", "Show MIP of combined PSF's", "Show combined PSF's", "Show individual PSF's", "Show combined PSF's (original scale)", "Show individual PSF's (original scale)" };
 	
 	PSFTYPE iterationType;
@@ -783,9 +783,19 @@ public class Multi_View_Deconvolution implements PlugIn
 		else if ( blockSizeIndex == 4 )
 		{
 			this.useBlocks = true;
-			blockSize = new int[]{ 512, 512, 512 };
+			blockSize = new int[]{ 512, 512, 512 }; //512 MB of float32
 		}
-		if ( blockSizeIndex == 5 )
+		else if ( blockSizeIndex == 5 )
+		{
+			this.useBlocks = true;
+			blockSize = new int[]{ 1024, 512, 512 }; //1 GB of float32
+		}
+		else if ( blockSizeIndex == 6 )
+		{
+			this.useBlocks = true;
+			blockSize = new int[]{ 1024, 1024, 512 }; //2 GB of float32
+		}
+		if ( blockSizeIndex == 7 )
 		{
 			GenericDialog gd3 = new GenericDialog( "Define block sizes" );
 			

@@ -490,23 +490,53 @@ public class MultipageTiffReader
 	public double calX()
 	{
 		if ( Double.isNaN( calX ) )
-			return Double.parseDouble( summaryMetadata_.get( "PixelSize_um" ).toString() );
+		{
+			final double x = Double.parseDouble( summaryMetadata_.get( "PixelSize_um" ).toString() );
+			
+			if ( x <= 0 )
+				return 1;
+			else
+				return x;
+		}
 		else
 			return calX;
 	}
 	public double calY()
 	{
 		if ( Double.isNaN( calY ) )
-			return Double.parseDouble( summaryMetadata_.get( "PixelSize_um" ).toString() );
+		{
+			final double y = Double.parseDouble( summaryMetadata_.get( "PixelSize_um" ).toString() );
+
+			if ( y <= 0 )
+				return 1;
+			else
+				return y;
+		}
 		else
 			return calY;
 	}
 	public double calZ()
 	{
 		if ( Double.isNaN( calZ ) )
-			return Double.parseDouble( summaryMetadata_.get( "z-step_um" ).toString() );
+		{
+			final Object o = summaryMetadata_.get( "z-step_um" );
+
+			if ( o == null )
+				return 1.0;
+			else
+			{
+				final double z = Double.parseDouble( o.toString() );
+
+				if ( z <= 0 )
+					return 1;
+				else
+					return z;
+			}
+		}
 		else
+		{
 			return calZ;
+		}
 	}
 	public String calUnit() { return unit; }
 	public int numTimepoints() { return Integer.parseInt( summaryMetadata_.get( "Frames" ).toString() ); }

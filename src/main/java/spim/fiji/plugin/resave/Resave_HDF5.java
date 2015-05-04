@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import net.imglib2.Dimensions;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.registration.ViewRegistration;
@@ -70,7 +71,7 @@ public class Resave_HDF5 implements PlugIn
 		Generic_Resave_HDF5.lastExportPath = LoadParseQueryXML.defaultXMLfilename;
 
 		final int firstviewSetupId = xml.getData().getSequenceDescription().getViewSetupsOrdered().get( 0 ).getId();
-		final Parameters params = Generic_Resave_HDF5.getParameters( perSetupExportMipmapInfo.get( firstviewSetupId ), true );
+		final Parameters params = Generic_Resave_HDF5.getParameters( perSetupExportMipmapInfo.get( firstviewSetupId ), true, true );
 
 		if ( params == null )
 			return;
@@ -138,9 +139,19 @@ public class Resave_HDF5 implements PlugIn
 
 					if ( vd.isPresent() )
 					{
-						vs.setSize( spimData.getSequenceDescription().getImgLoader().getImageSize( vd ) );
+						Dimensions dim = spimData.getSequenceDescription().getImgLoader().getImageSize( vd );
+						
+						IOFunctions.println(
+								"Dimensions: " + dim.dimension( 0 ) + "x" + dim.dimension( 1 ) + "x" + dim.dimension( 2 ) +
+								", loaded from tp:" + t.getId() + " vs: " + vs.getId() );
+
+						vs.setSize( dim );
 						loadedDimensions = true;
 						break;
+					}
+					else
+					{
+						IOFunctions.println( "ViewSetup: " + vs.getId() + " not present in timepoint: " + t.getId() );
 					}
 				}
 			}
@@ -182,12 +193,22 @@ public class Resave_HDF5 implements PlugIn
 			views.add( new ViewId( viewId.getTimePointId(), viewId.getViewSetupId() ) );
 
 		final MissingViews oldMissingViews = oldSpimData.getSequenceDescription().getMissingViews();
-		final ArrayList< ViewId > missingViews = new ArrayList< ViewId >();
+		final HashSet< ViewId > missingViews = new HashSet< ViewId >();
 
 		if( oldMissingViews != null && oldMissingViews.getMissingViews() != null )
 			for ( final ViewId id : oldMissingViews.getMissingViews() )
 				if ( views.contains( id ) )
 					missingViews.add( id );
+
+		// add the new missing views!!!
+		for ( final TimePoint t : timepoints.getTimePointsOrdered() )
+			for ( final ViewSetup v : viewSetupsToProcess )
+			{
+				final ViewId viewId = new ViewId( t.getId(), v.getId() );
+
+				if ( !views.contains( viewId ) )
+					missingViews.add( viewId );
+			}
 
 		// instantiate the sequencedescription
 		final SequenceDescription sequenceDescription = new SequenceDescription( timepoints, viewSetupsToProcess, oldSpimData.getSequenceDescription().getImgLoader(), new MissingViews( missingViews ) );
@@ -216,7 +237,8 @@ public class Resave_HDF5 implements PlugIn
 				oldSpimData.getBasePath(),
 				sequenceDescription,
 				viewRegistrations,
-				viewsInterestPoints );
+				viewsInterestPoints,
+				oldSpimData.getBoundingBoxes() );
 
 		return newSpimData;
 	}

@@ -168,6 +168,11 @@ public abstract class GlobalOptimizationType
 				continue;
 
 			final ChannelProcess c = getChannelProcessForChannel( channelsToProcess, vd.getViewSetup().getChannel() );
+
+			// no registration for this viewdescription
+			if ( c == null )
+				continue;
+
 			final Angle a = vd.getViewSetup().getAngle();
 			final Illumination i = vd.getViewSetup().getIllumination();
 

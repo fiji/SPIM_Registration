@@ -13,14 +13,13 @@ import java.util.Vector;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
-import spim.fiji.plugin.fusion.BoundingBox;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.boundingbox.automatic.MinFilterThreshold;
 import spim.process.fusion.export.ImgExport;
 
-public class AutomaticBoundingBox extends ManualBoundingBox
+public class AutomaticBoundingBox extends BoundingBoxGUI
 {
 	public static int defaultTimepointIndex = 0;
 	public static int defaultChannelIndex = 0;
@@ -41,19 +40,26 @@ public class AutomaticBoundingBox extends ManualBoundingBox
 		// first get an idea of the maximal bounding box
 		final double[] minBB = new double[ 3 ];
 		final double[] maxBB = new double[ 3 ];
-		
-		ManualBoundingBox.computeMaximalBoundingBox( spimData, viewIdsToProcess, minBB, maxBB );
-	
+
+		BoundingBoxGUI.computeMaxBoundingBoxDimensions( spimData, viewIdsToProcess, minBB, maxBB );
+
 		// compute dimensions and update size for this instance
 		final long[] dim = new long[ maxBB.length ];
-		
+
+		// first time called on this object
+		if ( this.min == null || this.max == null )
+		{
+			this.min = new int[ minBB.length ];
+			this.max = new int[ minBB.length ];
+		}
+
 		for ( int d = 0; d < dim.length; ++d )
 		{
 			this.min[ d ] = (int)Math.round( minBB[ d ] );
 			this.max[ d ] = (int)Math.round( maxBB[ d ] );
 			dim[ d ] = this.max[ d ] - this.min[ d ] + 1;
 		}
-		
+
 		final GenericDialog gd = new GenericDialog( "Automatically define Bounding Box" );
 
 		final List< TimePoint > timepointsToProcess = SpimData2.getAllTimePointsSorted( spimData, viewIdsToProcess );
@@ -116,10 +122,12 @@ public class AutomaticBoundingBox extends ManualBoundingBox
 		}
 		else
 		{
-			BoundingBox.defaultMin = automatic.getMin();
-			BoundingBox.defaultMax = automatic.getMax();
+			this.min = automatic.getMin().clone();
+			this.max = automatic.getMax().clone();
+			BoundingBoxGUI.defaultMin = automatic.getMin().clone();
+			BoundingBoxGUI.defaultMax = automatic.getMax().clone();
 		}
-				
+
 		return super.queryParameters( fusion, imgExport );
 	}
 	
@@ -163,7 +171,7 @@ public class AutomaticBoundingBox extends ManualBoundingBox
 					downsampling = Integer.parseInt( downsample.getText() );
 					
 					final long numPixels = numPixels( dim, downsampling );
-					final long megabytes = (numPixels * 4) / (1024*1024);				
+					final long megabytes = (numPixels * 4) / (1024*1024);
 					
 					label.setText( "Image size for segmentation: " + 
 							(dim[ 0 ])/downsampling + " x " + 

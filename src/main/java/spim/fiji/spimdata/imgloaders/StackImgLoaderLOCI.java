@@ -34,6 +34,7 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
+import ome.units.quantity.Length;
 import ome.xml.model.primitives.PositiveFloat;
 import spim.fiji.datasetmanager.StackListLOCI;
 
@@ -230,7 +231,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		
 		final MetadataRetrieve retrieve = (MetadataRetrieve)r.getMetadataStore();
 		
-		float cal = retrieve.getPixelsPhysicalSizeX( 0 ).getValue().floatValue();
+		float cal = retrieve.getPixelsPhysicalSizeX( 0 ).value().floatValue();
 		if ( cal == 0 )
 		{
 			cal = 1;
@@ -238,7 +239,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		}
 		final double calX = cal;
 
-		cal = retrieve.getPixelsPhysicalSizeY( 0 ).getValue().floatValue();
+		cal = retrieve.getPixelsPhysicalSizeY( 0 ).value().floatValue();
 		if ( cal == 0 )
 		{
 			cal = 1;
@@ -246,7 +247,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		}
 		final double calY = cal;
 
-		cal = retrieve.getPixelsPhysicalSizeZ( 0 ).getValue().floatValue();
+		cal = retrieve.getPixelsPhysicalSizeZ( 0 ).value().floatValue();
 		if ( cal == 0 )
 		{
 			cal = 1;
@@ -471,9 +472,9 @@ public class StackImgLoaderLOCI extends StackImgLoader
 			
 			float cal = 0;
 			
-			PositiveFloat f = retrieve.getPixelsPhysicalSizeX( 0 );
+			Length f = retrieve.getPixelsPhysicalSizeX( 0 );
 			if ( f != null )
-				cal = f.getValue().floatValue();
+				cal = f.value().floatValue();
 			
 			if ( cal == 0 )
 			{
@@ -484,7 +485,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 
 			f = retrieve.getPixelsPhysicalSizeY( 0 );
 			if ( f != null )
-				cal = f.getValue().floatValue();
+				cal = f.value().floatValue();
 			
 			if ( cal == 0 )
 			{
@@ -495,7 +496,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 
 			f = retrieve.getPixelsPhysicalSizeZ( 0 );
 			if ( f != null )
-				cal = f.getValue().floatValue();
+				cal = f.value().floatValue();
 			
 			if ( cal == 0 )
 			{

@@ -37,6 +37,8 @@ import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizati
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationType;
 import spim.process.interestpointregistration.optimizationtypes.IndividualTimepointRegistration;
 import spim.process.interestpointregistration.optimizationtypes.ReferenceTimepointRegistration;
+import spim.process.interestpointregistration.registrationstatistics.RegistrationStatistics;
+import spim.process.interestpointregistration.registrationstatistics.TimeLapseDisplay;
 
 /**
  *
@@ -80,6 +82,7 @@ public class Interest_Point_Registration implements PlugIn
 
 	public static boolean[] defaultFixedTiles = null;
 	public static int defaultReferenceTile = 0;
+	public static boolean defaultShowStatistics = true;
 
 	public final static String warningLabel = " (WARNING: Only available for "; 
 	
@@ -145,6 +148,7 @@ public class Interest_Point_Registration implements PlugIn
 
 		// ask which channels have the objects we are searching for
 		final List< Channel > channels = SpimData2.getAllChannelsSorted( data, viewIds );
+		final int nAllChannels = data.getSequenceDescription().getAllChannelsOrdered().size();
 
 		// build up the dialog
 		final GenericDialog gd = new GenericDialog( "Basic Registration Parameters" );
@@ -171,8 +175,8 @@ public class Interest_Point_Registration implements PlugIn
 
 		gd.addChoice( "Type_of_registration", choicesGlobal, choicesGlobal[ defaultRegistrationType ] );
 		
-		if ( defaultChannelLabels == null || defaultChannelLabels.length != channels.size() )
-			defaultChannelLabels = new int[ channels.size() ];
+		if ( defaultChannelLabels == null || defaultChannelLabels.length != nAllChannels )
+			defaultChannelLabels = new int[ nAllChannels ];
 
 		// check which channels and labels are available and build the choices
 		final ArrayList< String[] > channelLabels = new ArrayList< String[] >();
@@ -181,12 +185,9 @@ public class Interest_Point_Registration implements PlugIn
 		{
 			final String[] labels = getAllInterestPointLabelsForChannel( data, viewIds, channel, "register" );
 
-			if ( channelLabels == null )
-				return false;
-
 			if ( defaultChannelLabels[ channel.getId() ] >= labels.length )
 				defaultChannelLabels[ channel.getId() ] = 0;
-			
+
 			gd.addChoice( "Interest_points_channel_" + channel.getName(), labels, labels[ defaultChannelLabels[ i++ ] ] );
 			channelLabels.add( labels );
 		}
@@ -301,9 +302,12 @@ public class Interest_Point_Registration implements PlugIn
 		gd2.addMessage( "" );
 		gd2.addMessage( "Algorithm parameters [" + ipr.getDescription() + "]", new Font( Font.SANS_SERIF, Font.BOLD, 12 ) );
 		gd2.addMessage( "" );
-		
+
 		ipr.addQuery( gd2, registrationType );
-		
+
+		if ( timepointToProcess.size() > 1 )
+			gd2.addCheckbox( "Show_timeseries_statistics", defaultShowStatistics );
+
 		// display the dialog
 		gd2.showDialog();
 
@@ -314,7 +318,24 @@ public class Interest_Point_Registration implements PlugIn
 		int range = defaultRange;
 		
 		if ( registrationType == RegistrationType.TO_REFERENCE_TIMEPOINT )
+		{
 			referenceTimePoint = data.getSequenceDescription().getTimePoints().getTimePointsOrdered().get( defaultReferenceTimepointIndex = gd2.getNextChoiceIndex() ).getId();
+
+			// check that at least one of the views of the reference timepoint is part of the viewdescriptions
+			boolean contains = false;
+
+			for ( final ViewId viewId : viewIds )
+				if ( viewId.getTimePointId() == referenceTimePoint )
+					contains = true;
+
+			if ( !contains )
+			{
+				IOFunctions.println( "No views of the reference timepoint are part of the registration." );
+				IOFunctions.println( "Please re-run and select the corresponding views that should be used as reference." );
+
+				return false;
+			}
+		}
 
 		if ( registrationType == RegistrationType.ALL_TO_ALL_WITH_RANGE )
 			range = defaultRange = (int)Math.round( gd2.getNextNumber() );
@@ -340,6 +361,12 @@ public class Interest_Point_Registration implements PlugIn
 		if ( !ipr.parseDialog( gd2, registrationType ) )
 			return false;
 
+		final boolean showStatistics;
+		if ( timepointToProcess.size() > 1 )
+			defaultShowStatistics = showStatistics = gd2.getNextBoolean();
+		else
+			showStatistics = false;
+
 		// perform the actual registration(s)
 		final GlobalOptimizationType type;
 		
@@ -358,12 +385,20 @@ public class Interest_Point_Registration implements PlugIn
 		if ( !setFixedTilesAndReference( fixTiles, mapBack, type ) )
 			return false;
 
-		if ( !ipr.register( type, saveXML ) )
+		if ( !ipr.register( type, saveXML, showStatistics ) )
 			return false;
 
 		// save the XML including transforms and correspondences
 		if ( saveXML )
 			SpimData2.saveXML( data, xmlFileName, clusterExtension );
+
+		if ( showStatistics )
+		{
+			final ArrayList< RegistrationStatistics > rsData = new ArrayList< RegistrationStatistics >();
+			for ( final TimePoint t : timepointToProcess )
+				rsData.add( new RegistrationStatistics( t.getId(), ipr.getStatistics() ) );
+			TimeLapseDisplay.plotData( data.getSequenceDescription().getTimePoints(), rsData, TimeLapseDisplay.getOptimalTimePoint( rsData ), true );
+		}
 
 		return true;
 	}
@@ -692,7 +727,7 @@ public class Interest_Point_Registration implements PlugIn
 					viewId.getTimePointId(), viewId.getViewSetupId() );
 
 			// check if the view is present
-			if ( !viewDescription.isPresent() )
+			if ( !viewDescription.isPresent() || viewDescription.getViewSetup().getChannel().getId() != channel.getId() )
 				continue;
 			
 			// which lists of interest points are available
@@ -732,12 +767,12 @@ public class Interest_Point_Registration implements PlugIn
 		}
 
 		if ( doWhat != null )
-			allLabels[ i ] = "[DO NOT " + doWhat + " this channel]";
+			allLabels[ i ] = "(DO NOT " + doWhat + " this channel)";
 
 		return allLabels;
 	}
 
-	protected String[] assembleTimepoints( final TimePoints timepoints )
+	protected static String[] assembleTimepoints( final TimePoints timepoints )
 	{
 		final String[] tps = new String[ timepoints.size() ];
 
@@ -749,6 +784,7 @@ public class Interest_Point_Registration implements PlugIn
 
 	public static void main( String[] args )
 	{
+		LoadParseQueryXML.defaultXMLfilename = "/Users/preibischs/Downloads/worm7bugtester/worm7.xml";
 		new ImageJ();
 		new Interest_Point_Registration().run( null );
 	}

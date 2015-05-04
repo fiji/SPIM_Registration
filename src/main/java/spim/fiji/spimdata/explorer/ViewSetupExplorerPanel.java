@@ -9,6 +9,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -29,12 +30,14 @@ import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
+import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.type.numeric.ARGBType;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.SpimDataWrapper;
 import spim.fiji.spimdata.explorer.popup.ApplyTransformationPopup;
 import spim.fiji.spimdata.explorer.popup.BDVPopup;
+import spim.fiji.spimdata.explorer.popup.BoundingBoxPopup;
 import spim.fiji.spimdata.explorer.popup.DetectInterestPointsPopup;
 import spim.fiji.spimdata.explorer.popup.DisplayViewPopup;
 import spim.fiji.spimdata.explorer.popup.FusionPopup;
@@ -43,16 +46,23 @@ import spim.fiji.spimdata.explorer.popup.LabelPopUp;
 import spim.fiji.spimdata.explorer.popup.RegisterInterestPointsPopup;
 import spim.fiji.spimdata.explorer.popup.RegistrationExplorerPopup;
 import spim.fiji.spimdata.explorer.popup.RemoveDetectionsPopup;
+import spim.fiji.spimdata.explorer.popup.RemoveTransformationPopup;
+import spim.fiji.spimdata.explorer.popup.ReorientSamplePopup;
 import spim.fiji.spimdata.explorer.popup.ResavePopup;
 import spim.fiji.spimdata.explorer.popup.Separator;
 import spim.fiji.spimdata.explorer.popup.SpecifyCalibrationPopup;
 import spim.fiji.spimdata.explorer.popup.ViewExplorerSetable;
 import spim.fiji.spimdata.explorer.popup.VisualizeDetectionsPopup;
+import spim.fiji.spimdata.explorer.util.ColorStream;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import bdv.BigDataViewer;
 import bdv.img.hdf5.Hdf5ImageLoader;
+import bdv.tools.InitializeViewerState;
+import bdv.tools.brightness.ConverterSetup;
+import bdv.viewer.DisplayMode;
+import bdv.viewer.VisibilityAndGrouping;
 
 public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > > extends JPanel
 {
@@ -69,6 +79,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		staticPopups.add( new LabelPopUp( " Processing" ) );
 		staticPopups.add( new DetectInterestPointsPopup() );
 		staticPopups.add( new RegisterInterestPointsPopup() );
+		staticPopups.add( new BoundingBoxPopup() );
 		staticPopups.add( new FusionPopup() );
 		staticPopups.add( new Separator() );
 
@@ -76,6 +87,8 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		staticPopups.add( new RegistrationExplorerPopup() );
 		staticPopups.add( new SpecifyCalibrationPopup() );
 		staticPopups.add( new ApplyTransformationPopup() );
+		staticPopups.add( new RemoveTransformationPopup() );
+		staticPopups.add( new ReorientSamplePopup() );
 		staticPopups.add( new Separator() );
 
 		staticPopups.add( new LabelPopUp( " Interest Points" ) );
@@ -98,8 +111,10 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 	final String xml;
 	final X io;
 	final boolean isMac;
+	protected boolean colorMode = true;
 
 	final protected HashSet< BasicViewDescription< ? extends BasicViewSetup > > selectedRows;
+	protected BasicViewDescription< ? extends BasicViewSetup > firstSelectedVD;
 
 	public ViewSetupExplorerPanel( final ViewSetupExplorer< AS, X > explorer, final AS data, final String xml, final X io )
 	{
@@ -110,16 +125,27 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		this.io = io;
 		this.isMac = System.getProperty( "os.name" ).toLowerCase().contains( "mac" );
 		this.selectedRows = new HashSet< BasicViewDescription< ? extends BasicViewSetup > >();
+		this.firstSelectedVD = null;
 
 		initComponent();
 
 		if ( Hdf5ImageLoader.class.isInstance( data.getSequenceDescription().getImgLoader() ) )
-			for ( final ViewExplorerSetable s : staticPopups )
-				if ( BDVPopup.class.isInstance( s ) )
-					((BDVPopup)s).bdv = new BigDataViewer( new SpimDataWrapper( getSpimData() ), xml(), null );
+		{
+			final BDVPopup bdvpopup = bdvPopup();
+			
+			if ( bdvpopup != null )
+			{
+				bdvpopup.bdv = new BigDataViewer( getSpimData(), xml(), null );
+
+//				if ( !bdv.tryLoadSettings( panel.xml() ) ) TODO: this should work, but currently tryLoadSettings is protected. fix that.
+					InitializeViewerState.initBrightness( 0.001, 0.999, bdvpopup.bdv.getViewer(), bdvpopup.bdv.getSetupAssignments() );
+
+				setFusedModeSimple( bdvpopup.bdv, data );
+			}
+		}
 	}
 
-	public BDVPopup bdvPopup()
+	public static BDVPopup bdvPopup()
 	{
 		for ( final ViewExplorerSetable s : staticPopups )
 			if ( BDVPopup.class.isInstance( s ) )
@@ -127,6 +153,9 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 
 		return null;
 	}
+
+	public boolean colorMode() { return colorMode; }
+	public BasicViewDescription< ? extends BasicViewSetup > firstSelectedVD() { return firstSelectedVD; }
 	public ViewSetupTableModel< AS > getTableModel() { return tableModel; }
 	public AS getSpimData() { return data; }
 	public String xml() { return xml; }
@@ -164,16 +193,12 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		this.listeners.add( listener );
 		
 		// update it with the currently selected row
-		listener.seletedViewDescription( tableModel.getElements().get( table.getSelectedRow() ) );
+		if ( table.getSelectedRow() != -1 )
+			listener.seletedViewDescription( tableModel.getElements().get( table.getSelectedRow() ) );
 	}
 
-	public boolean removeListener( final SelectedViewDescriptionListener< AS > listener )
-	{
-		return this.listeners.remove( listener );
-	}
-	
 	public ArrayList< SelectedViewDescriptionListener< AS > > getListeners() { return listeners; }
-	
+
 	public void initComponent()
 	{
 		tableModel = new ViewSetupTableModel< AS >( this );
@@ -212,6 +237,8 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 
 		if ( isMac )
 			addAppleA();
+
+		addColorMode();
 
 		table.setPreferredScrollableViewportSize( new Dimension( 750, 300 ) );
 		table.getColumnModel().getColumn( 0 ).setPreferredWidth( 20 );
@@ -269,6 +296,8 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 			@Override
 			public void valueChanged( final ListSelectionEvent arg0 )
 			{
+				BDVPopup b = bdvPopup();
+
 				if ( table.getSelectedRowCount() != 1 )
 				{
 					lastRow = -1;
@@ -278,8 +307,15 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 
 					selectedRows.clear();
 
+					firstSelectedVD = null;
 					for ( final int row : table.getSelectedRows() )
+					{
+						if ( firstSelectedVD == null )
+							firstSelectedVD = tableModel.getElements().get( row );
+
 						selectedRows.add( tableModel.getElements().get( row ) );
+					}
+
 				}
 				else
 				{
@@ -295,11 +331,104 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 							listeners.get( i ).seletedViewDescription( vd );
 
 						selectedRows.clear();
-						selectedRows.add(vd );
+						selectedRows.add( vd );
+
+						firstSelectedVD = vd;
 					}
 				}
+
+				if ( b != null && b.bdv != null )
+					updateBDV( b.bdv, colorMode, data, firstSelectedVD, selectedRows );
 			}
 		};
+	}
+
+	public static void updateBDV(
+			final BigDataViewer bdv,
+			final boolean colorMode,
+			final AbstractSpimData< ? > data,
+			BasicViewDescription< ? extends BasicViewSetup > firstVD,
+			final Collection< ? extends BasicViewDescription< ? extends BasicViewSetup > > selectedRows )
+	{
+		// we always set the fused mode
+		setFusedModeSimple( bdv, data );
+
+		if ( selectedRows == null || selectedRows.size() == 0 )
+			return;
+
+		if ( firstVD == null )
+			firstVD = selectedRows.iterator().next();
+
+		// always use the first timepoint
+		final TimePoint firstTP = firstVD.getTimePoint();
+		bdv.getViewer().setTimepoint( getBDVTimePointIndex( firstTP, data ) );
+
+		final boolean[] active = new boolean[ data.getSequenceDescription().getViewSetupsOrdered().size() ];
+
+		for ( final BasicViewDescription< ? > vd : selectedRows )
+			if ( vd.getTimePointId() == firstTP.getId() )
+				active[ getBDVSourceIndex( vd.getViewSetup(), data ) ] = true;
+
+		if ( selectedRows.size() > 1 && colorMode )
+			colorSources( bdv.getSetupAssignments().getConverterSetups(), 0 );
+		else
+			whiteSources( bdv.getSetupAssignments().getConverterSetups() );
+
+		setVisibleSources( bdv.getViewer().getVisibilityAndGrouping(), active );
+	}
+
+	public static void setFusedModeSimple( final BigDataViewer bdv, final AbstractSpimData< ? > data )
+	{
+		if ( bdv == null )
+			return;
+
+		if ( bdv.getViewer().getVisibilityAndGrouping().getDisplayMode() != DisplayMode.FUSED )
+		{
+			final boolean[] active = new boolean[ data.getSequenceDescription().getViewSetupsOrdered().size() ];
+			active[ 0 ] = true;
+			setVisibleSources( bdv.getViewer().getVisibilityAndGrouping(), active );
+			bdv.getViewer().getVisibilityAndGrouping().setDisplayMode( DisplayMode.FUSED );
+		}
+	}
+
+	public static void colorSources( final List< ConverterSetup > cs, final long j )
+	{
+		for ( int i = 0; i < cs.size(); ++i )
+			cs.get( i ).setColor( new ARGBType( ColorStream.get( i + j ) ) );
+	}
+
+	public static void whiteSources( final List< ConverterSetup > cs )
+	{
+		for ( int i = 0; i < cs.size(); ++i )
+			cs.get( i ).setColor( new ARGBType( ARGBType.rgba( 255, 255, 255, 0 ) ) );
+	}
+
+	public static void setVisibleSources( final VisibilityAndGrouping vag, final boolean[] active )
+	{
+		for ( int i = 0; i < active.length; ++i )
+			vag.setSourceActive( i, active[ i ] );
+	}
+
+	public static int getBDVTimePointIndex( final TimePoint t, final AbstractSpimData< ? > data )
+	{
+		final List< TimePoint > list = data.getSequenceDescription().getTimePoints().getTimePointsOrdered();
+
+		for ( int i = 0; i < list.size(); ++i )
+			if ( list.get( i ).getId() == t.getId() )
+				return i;
+
+		return 0;
+	}
+
+	public static int getBDVSourceIndex( final BasicViewSetup vs, final AbstractSpimData< ? > data )
+	{
+		final List< ? extends BasicViewSetup > list = data.getSequenceDescription().getViewSetupsOrdered();
+		
+		for ( int i = 0; i < list.size(); ++i )
+			if ( list.get( i ).getId() == vs.getId() )
+				return i;
+
+		return 0;
 	}
 
 	public HashSet< BasicViewDescription< ? extends BasicViewSetup > > getSelectedRows() { return selectedRows; }
@@ -360,6 +489,32 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		table.setComponentPopupMenu( popupMenu );
 	}
 
+	protected void addColorMode()
+	{
+		table.addKeyListener( new KeyListener()
+		{
+			@Override
+			public void keyPressed( final KeyEvent arg0 )
+			{
+				if ( arg0.getKeyChar() == 'c' || arg0.getKeyChar() == 'C' )
+				{
+					colorMode = !colorMode;
+					
+					System.out.println( "colormode" );
+
+					final BDVPopup p = bdvPopup();
+					if ( p != null && p.bdv != null && p.bdv.getViewerFrame().isVisible() )
+						updateBDV( p.bdv, colorMode, data, null, selectedRows );
+				}
+			}
+
+			@Override
+			public void keyReleased( final KeyEvent arg0 ) {}
+
+			@Override
+			public void keyTyped( final KeyEvent arg0 ) {}
+		} );
+	}
 	protected void addAppleA()
 	{
 		table.addKeyListener( new KeyListener()

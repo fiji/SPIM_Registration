@@ -17,6 +17,7 @@ import spim.fiji.ImgLib2Temp.ValuePair;
 import spim.fiji.datasetmanager.LightSheetZ1;
 import spim.fiji.datasetmanager.MicroManager;
 import spim.fiji.datasetmanager.MultiViewDatasetDefinition;
+import spim.fiji.datasetmanager.StackList;
 import spim.fiji.datasetmanager.StackListImageJ;
 import spim.fiji.datasetmanager.StackListLOCI;
 import spim.fiji.plugin.queryXML.GenericLoadParseQueryXML;
@@ -180,6 +181,8 @@ public class Define_Multi_View_Dataset implements PlugIn
 	
 	public static void main( String args[] )
 	{
+		StackList.defaultDirectory = "/Users/preibischs/Documents/Microscopy/SPIM/HisYFP-SPIM";
+
 		//new ImageJ();
 		new Define_Multi_View_Dataset().run( null );
 		

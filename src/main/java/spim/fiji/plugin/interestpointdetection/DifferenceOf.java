@@ -6,7 +6,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import bdv.img.hdf5.Hdf5ImageLoader;
+import bdv.img.hdf5.MultiResolutionImgLoader;
 import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.VoxelDimensions;
@@ -16,6 +19,7 @@ import net.imglib2.algorithm.gauss3.Gauss3;
 import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
+import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
 import spim.fiji.plugin.util.GUIHelper;
@@ -25,8 +29,10 @@ import spim.process.interestpointdetection.Downsample;
 
 public abstract class DifferenceOf extends InterestPointDetection
 {
-	public static String[] downsampleChoiceXY = { "1x", "2x", "4x", "8x", "Match Z Resolution (less downsampling)", "Match Z Resolution (more downsampling)"  };
-	public static String[] downsampleChoiceZ = { "1x", "2x", "4x", "8x" };
+	protected static final int[] ds = { 1, 2, 4, 8 };
+
+	public static String[] downsampleChoiceXY = { ds[ 0 ] + "x", ds[ 1 ] + "x", ds[ 2 ] + "x", ds[ 3 ] + "x", "Match Z Resolution (less downsampling)", "Match Z Resolution (more downsampling)"  };
+	public static String[] downsampleChoiceZ = { ds[ 0 ] + "x", ds[ 1 ] + "x", ds[ 2 ] + "x", ds[ 3 ] + "x" };
 	public static String[] localizationChoice = { "None", "3-dimensional quadratic fit", "Gaussian mask localization fit" };	
 	public static String[] brightnessChoice = { "Very weak & small (beads)", "Weak & small (beads)", "Comparable to Sample & small (beads)", "Strong & small (beads)", "Advanced ...", "Interactive ..." };
 	
@@ -52,6 +58,9 @@ public abstract class DifferenceOf extends InterestPointDetection
 	protected double imageSigmaX, imageSigmaY, imageSigmaZ;
 	protected double additionalSigmaX, additionalSigmaY, additionalSigmaZ;
 	protected double minIntensity, maxIntensity;
+
+	// downsampleXY == 0 : a bit less then z-resolution
+	// downsampleXY == -1 : a bit more then z-resolution
 	protected int localization, downsampleXY, downsampleZ;
 
 	final ArrayList< Channel > channelsToProcess;
@@ -301,27 +310,25 @@ public abstract class DifferenceOf extends InterestPointDetection
 	protected abstract boolean setAdvancedValues( final Channel channel );
 	protected abstract boolean setInteractiveValues( final Channel channel );
 
-	protected void correctForDownsampling( final List< InterestPoint > ips, final VoxelDimensions v )
+	protected void correctForDownsampling( final List< InterestPoint > ips, final AffineTransform3D t )
 	{
-		if ( downsampleXY == 1 && downsampleZ == 1 )
-			return;
+		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Correcting coordinates for downsampling (xy=" + downsampleXY + "x, z=" + downsampleZ + "x) using AffineTransform: " + t );
 
-		int downsampleXY = this.downsampleXY;
-
-		if ( downsampleXY < 1 )
-			downsampleXY = downsampleFactor( downsampleXY, downsampleZ, v );
-
-		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Correcting coordinates for downsampling (xy=" + downsampleXY + "x, z=" + downsampleZ + "x)" );
+		final double[] tmp = new double[ ips.get( 0 ).getL().length ];
 
 		for ( final InterestPoint ip : ips )
 		{
-			ip.getL()[ 0 ] *= downsampleXY;
-			ip.getL()[ 1 ] *= downsampleXY;
-			ip.getL()[ 2 ] *= downsampleZ;
+			t.apply( ip.getL(), tmp );
 
-			ip.getW()[ 0 ] *= downsampleXY;
-			ip.getW()[ 1 ] *= downsampleXY;
-			ip.getW()[ 2 ] *= downsampleZ;
+			ip.getL()[ 0 ] = tmp[ 0 ];
+			ip.getL()[ 1 ] = tmp[ 1 ];
+			ip.getL()[ 2 ] = tmp[ 2 ];
+
+			t.apply( ip.getW(), tmp );
+
+			ip.getW()[ 0 ] = tmp[ 0 ];
+			ip.getW()[ 1 ] = tmp[ 1 ];
+			ip.getW()[ 2 ] = tmp[ 2 ];
 		}
 	}
 
@@ -341,34 +348,105 @@ public abstract class DifferenceOf extends InterestPointDetection
 		return (int)Math.round( exp2 );
 	}
 	
-	protected RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > downsample(
-			RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input,
-			final VoxelDimensions v )
+	protected RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > openAndDownsample(
+			final SpimData2 spimData,
+			final ViewDescription vd,
+			final AffineTransform3D t )
 	{
-		final ImgFactory< net.imglib2.type.numeric.real.FloatType > f = ((Img<net.imglib2.type.numeric.real.FloatType>)input).factory();
+		IOFunctions.println(
+				"(" + new Date(System.currentTimeMillis()) + "): "
+				+ "Requesting Img from ImgLoader (tp=" + vd.getTimePointId() + ", setup=" + vd.getViewSetupId() + ")" );
 
 		int downsampleXY = this.downsampleXY;
 
+		// downsampleXY == 0 : a bit less then z-resolution
+		// downsampleXY == -1 : a bit more then z-resolution
 		if ( downsampleXY < 1 )
-			downsampleXY = downsampleFactor( downsampleXY, downsampleZ, v );
+			this.downsampleXY = downsampleXY = downsampleFactor( downsampleXY, downsampleZ, vd.getViewSetup().getVoxelSize() );
 
 		if ( downsampleXY > 1 )
 			IOFunctions.println( "(" + new Date( System.currentTimeMillis() )  + "): Downsampling in XY " + downsampleXY + "x ..." );
 
-		for ( int dsx = downsampleXY; dsx > 1; dsx /= 2 )
-			input = Downsample.simple2x( input, f, new boolean[]{ true, false, false } );
-
-		for ( int dsy = downsampleXY; dsy > 1; dsy /= 2 )
-			input = Downsample.simple2x( input, f, new boolean[]{ false, true, false } );
-
 		if ( downsampleZ > 1 )
 			IOFunctions.println( "(" + new Date( System.currentTimeMillis() )  + "): Downsampling in Z " + downsampleZ + "x ..." );
 
-		for ( int dsz = downsampleZ; dsz > 1; dsz /= 2 )
+		int dsx = downsampleXY;
+		int dsy = downsampleXY;
+		int dsz = downsampleZ;
+
+		RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input = null;
+
+		ImgLoader< ? > imgLoader = spimData.getSequenceDescription().getImgLoader();
+		if ( Hdf5ImageLoader.class.isInstance( imgLoader ) )
+			imgLoader = ( ( Hdf5ImageLoader ) imgLoader ).getMonolithicImageLoader();
+		
+		if ( ( dsx > 1 || dsy > 1 || dsz > 1 ) && MultiResolutionImgLoader.class.isInstance( imgLoader ) )
+		{
+			MultiResolutionImgLoader< ? > mrImgLoader = ( MultiResolutionImgLoader< ? > ) imgLoader;
+
+			double[][] mipmapResolutions = mrImgLoader.getMipmapResolutions( vd.getViewSetupId() );
+			
+			int bestLevel = 0;
+			for ( int level = 0; level < mipmapResolutions.length; ++level )
+			{
+				double[] factors = mipmapResolutions[ level ];
+				
+				// this fails if factors are not ints
+				final int fx = (int)Math.round( factors[ 0 ] );
+				final int fy = (int)Math.round( factors[ 1 ] );
+				final int fz = (int)Math.round( factors[ 2 ] );
+				
+				if ( fx <= dsx && fy <= dsy && fz <= dsz && contains( fx, ds ) && contains( fy, ds ) && contains( fz, ds ) )
+					bestLevel = level;
+			}
+
+			final int fx = (int)Math.round( mipmapResolutions[ bestLevel ][ 0 ] );
+			final int fy = (int)Math.round( mipmapResolutions[ bestLevel ][ 1 ] );
+			final int fz = (int)Math.round( mipmapResolutions[ bestLevel ][ 2 ] );
+
+			t.set( mrImgLoader.getMipmapTransforms(vd.getViewSetupId())[ bestLevel ] );
+
+			dsx /= fx;
+			dsy /= fy;
+			dsz /= fz;
+
+			IOFunctions.println(
+					"(" + new Date(System.currentTimeMillis()) + "): " +
+					"Using precomputed Multiresolution Images [" + fx + "x" + fy + "x" + fz + "], " +
+					"Remaining downsampling [" + dsx + "x" + dsy + "x" + dsz + "]" );
+
+			input = mrImgLoader.getFloatImage( vd, bestLevel, false );
+		}
+		else
+		{
+			input = imgLoader.getFloatImage( vd, false );
+			t.identity();
+		}
+
+		final ImgFactory< net.imglib2.type.numeric.real.FloatType > f = ((Img<net.imglib2.type.numeric.real.FloatType>)input).factory();
+
+		t.set( downsampleXY, 0, 0 );
+		t.set( downsampleXY, 1, 1 );
+		t.set( downsampleZ, 2, 2 );
+
+		for ( ;dsx > 1; dsx /= 2 )
+			input = Downsample.simple2x( input, f, new boolean[]{ true, false, false } );
+
+		for ( ;dsy > 1; dsy /= 2 )
+			input = Downsample.simple2x( input, f, new boolean[]{ false, true, false } );
+
+		for ( ;dsz > 1; dsz /= 2 )
 			input = Downsample.simple2x( input, f, new boolean[]{ false, false, true } );
 
 		return input;
 	}
 
+	private static final boolean contains( final int i, final int[] values )
+	{
+		for ( final int j : values )
+			if ( i == j )
+				return true;
 
+		return false;
+	}
 }

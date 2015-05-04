@@ -8,9 +8,9 @@ import net.imglib2.RealRandomAccess;
 import net.imglib2.img.Img;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
-import spim.fiji.plugin.fusion.BoundingBox;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
+import spim.process.fusion.boundingbox.BoundingBoxGUI;
 import spim.process.fusion.weights.Blending;
 
 /**
@@ -26,7 +26,7 @@ public class ProcessForOverlapOnlyPortion implements Callable< String >
 	final Interval imgInterval;
 	final AffineTransform3D transform;
 	final Img< FloatType > blendingImg, overlapImg;
-	final BoundingBox bb;
+	final BoundingBoxGUI bb;
 	final Blending blending;
 	
 	public ProcessForOverlapOnlyPortion(
@@ -36,7 +36,7 @@ public class ProcessForOverlapOnlyPortion implements Callable< String >
 			final AffineTransform3D transform,
 			final Img< FloatType > overlapImg,
 			final Img< FloatType > blendingImg,
-			final BoundingBox bb )
+			final BoundingBoxGUI bb )
 	{
 		this.portion = portion;
 		this.imgInterval = imgInterval;

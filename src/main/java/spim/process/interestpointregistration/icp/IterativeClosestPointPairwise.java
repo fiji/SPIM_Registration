@@ -48,6 +48,17 @@ public class IterativeClosestPointPairwise implements Callable< PairwiseMatch >
 		for ( final InterestPoint i : pair.getListB() )
 			listB.add( new Detection( i.getId(), i.getL() ) );
 
+		// identity transform
+		Model<?> model = this.model.getModel();
+
+		if ( listA.size() < model.getMinNumMatches() || listB.size() < model.getMinNumMatches() )
+		{
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): " + comparison + ": Not enough detections to match" );
+			pair.setCandidates( new ArrayList< PointMatchGeneric< Detection > >() );
+			pair.setInliers( new ArrayList< PointMatchGeneric< Detection > >(), Double.NaN );
+			return pair;
+		}
+
 		// use the world and not the local coordinates
 		for ( final Detection d : listA )
 			d.setUseW( true );
@@ -55,10 +66,7 @@ public class IterativeClosestPointPairwise implements Callable< PairwiseMatch >
 		for ( final Detection d : listB )
 			d.setUseW( true );
 
-		final ICP< Detection > icp = new ICP<Detection>( listA, listB, (float)ip.getMaxDistance() );
-		
-		// identity transform
-		Model<?> model = this.model.getModel();
+		final ICP< Detection > icp = new ICP< Detection >( listA, listB, (float)ip.getMaxDistance() );
 
 		int i = 0;
 		double lastAvgError = 0;
@@ -104,7 +112,7 @@ public class IterativeClosestPointPairwise implements Callable< PairwiseMatch >
 			inliers.add( new PointMatchGeneric<Detection>( (Detection)pm.getP1(), (Detection)pm.getP2() ) );
 
 		pair.setCandidates( inliers );
-		pair.setInliers( inliers );
+		pair.setInliers( inliers, icp.getAverageError() );
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): " + comparison + ": Found " + icp.getNumPointMatches() + " matches, avg error [px] " + icp.getAverageError() + " after " + i + " iterations" );
 
@@ -118,8 +126,8 @@ public class IterativeClosestPointPairwise implements Callable< PairwiseMatch >
 				"TP=" + pair.getViewIdA().getTimePointId() + ", ViewSetup=" + pair.getViewIdA().getViewSetupId() + " to " + 
 				"TP=" + pair.getViewIdB().getTimePointId() + ", ViewSetup=" + pair.getViewIdB().getViewSetupId() + ": " + e );
 		
-		pair.setCandidates( new ArrayList<PointMatchGeneric<Detection>>() );
-		pair.setInliers( new ArrayList<PointMatchGeneric<Detection>>() );
+		pair.setCandidates( new ArrayList< PointMatchGeneric< Detection > >() );
+		pair.setInliers( new ArrayList< PointMatchGeneric< Detection > >(), Double.NaN );
 	}
 
 	public static void main( final String[] args ) throws Exception

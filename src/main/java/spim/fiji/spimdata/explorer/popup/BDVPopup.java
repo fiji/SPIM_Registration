@@ -10,14 +10,13 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
 import mpicbg.spim.data.registration.ViewRegistration;
-import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.apply.BigDataViewerTransformationWindow;
-import spim.fiji.spimdata.SpimDataWrapper;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import bdv.AbstractSpimSource;
 import bdv.BigDataViewer;
+import bdv.tools.InitializeViewerState;
 import bdv.tools.transformation.TransformedSource;
 import bdv.viewer.Source;
 import bdv.viewer.ViewerPanel;
@@ -28,7 +27,7 @@ public class BDVPopup extends JMenuItem implements ViewExplorerSetable
 {
 	private static final long serialVersionUID = 5234649267634013390L;
 
-	ViewSetupExplorerPanel< ?, ? > panel;
+	public ViewSetupExplorerPanel< ?, ? > panel;
 	public BigDataViewer bdv = null;
 
 	public BDVPopup()
@@ -61,23 +60,16 @@ public class BDVPopup extends JMenuItem implements ViewExplorerSetable
 				@Override
 				public void run()
 				{
+					// if BDV was closed by the user
+					if ( bdv != null && !bdv.getViewerFrame().isVisible() )
+						bdv = null;
+
 					if ( bdv == null )
 					{
-						if ( AbstractImgLoader.class.isInstance( panel.getSpimData().getSequenceDescription().getImgLoader() ) )
-						{
-							if ( JOptionPane.showConfirmDialog( null,
-									"Opening <SpimData> dataset that is not suited for interactive browsing.\n" +
-									"Consider resaving as HDF5 for better performance.\n" +
-									"Proceed anyways?",
-									"Warning",
-									JOptionPane.YES_NO_OPTION ) == JOptionPane.NO_OPTION )
-								return;
-						}
 
-						// TODO: Remove the wrapper
 						try
 						{
-							bdv = new BigDataViewer( new SpimDataWrapper( panel.getSpimData() ), panel.xml(), null );
+							bdv = createBDV( panel );
 						}
 						catch (Exception e)
 						{
@@ -96,6 +88,62 @@ public class BDVPopup extends JMenuItem implements ViewExplorerSetable
 		}
 	}
 
+	public static boolean bdvRunning()
+	{
+		final BDVPopup p = ViewSetupExplorerPanel.bdvPopup();
+		return ( p != null && p.bdv != null && p.bdv.getViewerFrame().isVisible() );
+	}
+	public static BigDataViewer createBDV( final ViewSetupExplorerPanel< ?, ? > panel )
+	{
+		if ( AbstractImgLoader.class.isInstance( panel.getSpimData().getSequenceDescription().getImgLoader() ) )
+		{
+			if ( JOptionPane.showConfirmDialog( null,
+					"Opening <SpimData> dataset that is not suited for interactive browsing.\n" +
+					"Consider resaving as HDF5 for better performance.\n" +
+					"Proceed anyways?",
+					"Warning",
+					JOptionPane.YES_NO_OPTION ) == JOptionPane.NO_OPTION )
+				return null;
+		}
+
+		BigDataViewer bdv = new BigDataViewer( panel.getSpimData(), panel.xml(), null );
+//		if ( !bdv.tryLoadSettings( panel.xml() ) ) TODO: this should work, but currently tryLoadSettings is protected. fix that.
+			InitializeViewerState.initBrightness( 0.001, 0.999, bdv.getViewer(), bdv.getSetupAssignments() );
+		
+		ViewSetupExplorerPanel.updateBDV( bdv, panel.colorMode(), panel.getSpimData(), panel.firstSelectedVD(), panel.selectedRows() );
+
+//		final ArrayList< InterestPointSource > interestPointSources = new ArrayList< InterestPointSource >();
+//		interestPointSources.add( new InterestPointSource()
+//		{
+//			private final ArrayList< RealPoint > points;
+//			{
+//				points = new ArrayList< RealPoint >();
+//				final Random rand = new Random();
+//				for ( int i = 0; i < 1000; ++i )
+//					points.add( new RealPoint( rand.nextDouble() * 1400, rand.nextDouble() * 800, rand.nextDouble() * 300 ) );
+//			}
+//
+//			@Override
+//			public final Collection< ? extends RealLocalizable > getLocalCoordinates( final int timepointIndex )
+//			{
+//				return points;
+//			}
+//
+//			@Override
+//			public void getLocalToGlobalTransform( final int timepointIndex, final AffineTransform3D transform )
+//			{
+//				transform.identity();
+//			}
+//		} );
+//		final InterestPointOverlay interestPointOverlay = new InterestPointOverlay( bdv.getViewer(), interestPointSources );
+//		bdv.getViewer().addRenderTransformListener( interestPointOverlay );
+//		bdv.getViewer().getDisplay().addOverlayRenderer( interestPointOverlay );
+//		bdv.getViewer().removeTransformListener( interestPointOverlay );
+//		bdv.getViewer().getDisplay().removeOverlayRenderer( interestPointOverlay );
+
+		return bdv;
+	}
+
 	public void updateBDV()
 	{
 		if ( bdv == null )
@@ -110,25 +158,24 @@ public class BDVPopup extends JMenuItem implements ViewExplorerSetable
 		
 		for ( final SourceState< ? > state : sources )
 		{
+			Source< ? > source = state.getSpimSource();
+
+			while ( TransformedSource.class.isInstance( source ) )
 			{
-				Source< ? > source = state.getSpimSource();
-
-				while ( TransformedSource.class.isInstance( source ) )
-				{
-					source = ( ( TransformedSource< ? > ) source ).getWrappedSource();
-				}
-
-				if ( AbstractSpimSource.class.isInstance( source ) )
-				{
-					final AbstractSpimSource< ? > s = ( AbstractSpimSource< ? > ) source;
-
-					final int tpi = getCurrentTimePointIndex( s );
-					callLoadTimePoint( s, tpi );
-				}
+				source = ( ( TransformedSource< ? > ) source ).getWrappedSource();
 			}
-			{
-				Source< ? > source = state.asVolatile().getSpimSource();
 
+			if ( AbstractSpimSource.class.isInstance( source ) )
+			{
+				final AbstractSpimSource< ? > s = ( AbstractSpimSource< ? > ) source;
+
+				final int tpi = getCurrentTimePointIndex( s );
+				callLoadTimePoint( s, tpi );
+			}
+
+			if ( state.asVolatile() != null )
+			{
+				source = state.asVolatile().getSpimSource();
 				while ( TransformedSource.class.isInstance( source ) )
 				{
 					source = ( ( TransformedSource< ? > ) source ).getWrappedSource();

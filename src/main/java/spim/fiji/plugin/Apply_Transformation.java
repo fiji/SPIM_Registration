@@ -12,7 +12,6 @@ import java.util.Map;
 import javax.media.j3d.Transform3D;
 
 import mpicbg.spim.data.SpimData;
-import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.registration.ViewTransform;
@@ -40,8 +39,8 @@ import spim.fiji.plugin.apply.ModelLink;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.SpimDataWrapper;
 import spim.fiji.spimdata.ViewSetupUtils;
+import spim.process.fusion.boundingbox.BigDataViewerBoundingBox;
 import bdv.BigDataViewer;
 
 public class Apply_Transformation implements PlugIn
@@ -224,19 +223,12 @@ public class Apply_Transformation implements PlugIn
 
 		try
 		{
-			// TODO: Remove the wrapper
-			final BigDataViewer bdv = new BigDataViewer( new SpimDataWrapper( data ), "Set dataset transformation", null );
+			final Pair< BigDataViewer, Boolean > bdvPair = BigDataViewerBoundingBox.getBDV( data, viewIds );
+			
+			if ( bdvPair == null || bdvPair.getA() == null )
+				return null;
 
-			try
-			{
-				Thread.sleep( 1000 );
-			}
-			catch (InterruptedException e)
-			{
-				e.printStackTrace();
-			}
-
-			final BigDataViewerTransformationWindow bdvw = new BigDataViewerTransformationWindow( bdv );
+			final BigDataViewerTransformationWindow bdvw = new BigDataViewerTransformationWindow( bdvPair.getA() );
 
 			do
 			{
@@ -251,7 +243,9 @@ public class Apply_Transformation implements PlugIn
 			}
 			while ( bdvw.isRunning() );
 
-			BigDataViewerTransformationWindow.disposeViewerWindow( bdv );
+			// was locally launched?
+			if ( bdvPair.getB() )
+				BigDataViewerTransformationWindow.disposeViewerWindow( bdvPair.getA() );
 
 			if ( bdvw.wasCancelled() )
 				return null;
