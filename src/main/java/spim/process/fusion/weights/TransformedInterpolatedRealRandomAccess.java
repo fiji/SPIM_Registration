@@ -40,7 +40,7 @@ public class TransformedInterpolatedRealRandomAccess< T > extends AbstractLocali
 		this.offset = new int[ offset.length ];
 
 		for ( int d = 0; d < n; ++d )
-			this.position[ d ] = this.offset[ d ] = offset[ d ];
+			this.offset[ d ] = offset[ d ];
 
 		this.realRandomAccess = realRandomAccessible.realRandomAccess();
 
@@ -67,7 +67,7 @@ public class TransformedInterpolatedRealRandomAccess< T > extends AbstractLocali
 	@Override
 	public T get()
 	{
-		applyInverse( i00, i01, i02, i03, i10, i11, i12, i13, i20, i21, i22, i23, tmp, position );
+		applyInverse( i00, i01, i02, i03, i10, i11, i12, i13, i20, i21, i22, i23, tmp, position, offset );
 		realRandomAccess.setPosition( tmp );
 		return realRandomAccess.get();
 	}
@@ -77,11 +77,12 @@ public class TransformedInterpolatedRealRandomAccess< T > extends AbstractLocali
 			final double i10, final double i11, final double i12, final double i13,
 			final double i20, final double i21, final double i22, final double i23,
 			final float[] source,
-			final int[] target )
+			final int[] target,
+			final int[] offset )
 	{
-		final double t0 = (double)target[ 0 ];
-		final double t1 = (double)target[ 1 ];
-		final double t2 = (double)target[ 2 ];
+		final double t0 = (double)( target[ 0 ] + offset[ 0 ] );
+		final double t1 = (double)( target[ 1 ] + offset[ 1 ] );
+		final double t2 = (double)( target[ 2 ] + offset[ 2 ] );
 
 		final double s0 = t0 * i00 + t1 * i01 + t2 * i02 + i03;
 		final double s1 = t0 * i10 + t1 * i11 + t2 * i12 + i13;
@@ -129,28 +130,28 @@ public class TransformedInterpolatedRealRandomAccess< T > extends AbstractLocali
 	public void setPosition( final Localizable localizable )
 	{
 		for ( int d = 0; d < n; ++d )
-			this.position[ d ] = localizable.getIntPosition( d ) + offset[ d ];
+			this.position[ d ] = localizable.getIntPosition( d );
 	}
 
 	@Override
 	public void setPosition( final int[] position )
 	{
 		for ( int d = 0; d < n; ++d )
-			this.position[ d ] = position[ d ] + offset[ d ];
+			this.position[ d ] = position[ d ];
 	}
 
 	@Override
 	public void setPosition( final long[] position )
 	{
 		for ( int d = 0; d < n; ++d )
-			this.position[ d ] = (int)position[ d ] + offset[ d ];
+			this.position[ d ] = (int)position[ d ];
 	}
 
 	@Override
-	public void setPosition( final int position, final int d ) { this.position[ d ] = position + offset[ d ]; }
+	public void setPosition( final int position, final int d ) { this.position[ d ] = position; }
 
 	@Override
-	public void setPosition( final long position, final int d ) { this.position[ d ] = (int)position + offset[ d ]; }
+	public void setPosition( final long position, final int d ) { this.position[ d ] = (int)position; }
 
 	@Override
 	public TransformedInterpolatedRealRandomAccess< T > copy() { return new TransformedInterpolatedRealRandomAccess< T >( realRandomAccessible, zero, transformedInterval, transform, offset ); }
