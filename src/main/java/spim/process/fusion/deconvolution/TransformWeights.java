@@ -4,13 +4,13 @@ import java.util.concurrent.Callable;
 
 import net.imglib2.Cursor;
 import net.imglib2.Interval;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccess;
-import net.imglib2.img.Img;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
-import spim.process.fusion.boundingbox.BoundingBoxGUI;
 import spim.process.fusion.weights.Blending;
 
 /**
@@ -20,50 +20,53 @@ import spim.process.fusion.weights.Blending;
  *
  * @param <T>
  */
-public class ProcessForOverlapOnlyPortion implements Callable< String >
+public class TransformWeights implements Callable< String >
 {
 	final ImagePortion portion;
-	final Interval imgInterval;
 	final AffineTransform3D transform;
-	final Img< FloatType > blendingImg, overlapImg;
-	final BoundingBoxGUI bb;
+	final RandomAccessibleInterval< FloatType > blendingImg, overlapImg;
 	final Blending blending;
-	
-	public ProcessForOverlapOnlyPortion(
+	final int offsetX, offsetY, offsetZ, imgSizeX, imgSizeY, imgSizeZ;
+
+	public TransformWeights(
 			final ImagePortion portion,
 			final Interval imgInterval,
 			final Blending blending,
 			final AffineTransform3D transform,
-			final Img< FloatType > overlapImg,
-			final Img< FloatType > blendingImg,
-			final BoundingBoxGUI bb )
+			final RandomAccessibleInterval< FloatType > overlapImg,
+			final RandomAccessibleInterval< FloatType > blendingImg,
+			final long[] offset )
 	{
 		this.portion = portion;
-		this.imgInterval = imgInterval;
 		this.blendingImg = blendingImg;
 		this.transform = transform;
 		this.overlapImg = overlapImg;
 		this.blending = blending;
-		this.bb = bb;
+
+		this.offsetX = (int)offset[ 0 ];
+		this.offsetY = (int)offset[ 1 ];
+		this.offsetZ = (int)offset[ 2 ];
+
+		this.imgSizeX = (int)imgInterval.dimension( 0 );
+		this.imgSizeY = (int)imgInterval.dimension( 1 );
+		this.imgSizeZ = (int)imgInterval.dimension( 2 );
 	}
-	
+
 	@Override
 	public String call() throws Exception 
 	{
 		// make the blending and get the transformations
 		final RealRandomAccess< FloatType > wr = blending.realRandomAccess();
-		
-		final int[] imgSize = new int[]{ (int)imgInterval.dimension( 0 ), (int)imgInterval.dimension( 1 ), (int)imgInterval.dimension( 2 ) };
 
-		final Cursor< FloatType > cursorO = overlapImg.localizingCursor();
-		final Cursor< FloatType > cursorB = blendingImg.cursor();
+		final Cursor< FloatType > cursorO = Views.iterable( overlapImg ).localizingCursor();
+		final Cursor< FloatType > cursorB = Views.iterable( blendingImg ).cursor();
 
 		final float[] s = new float[ 3 ];
 		final float[] t = new float[ 3 ];
-		
+
 		cursorO.jumpFwd( portion.getStartPosition() );
 		cursorB.jumpFwd( portion.getStartPosition() );
-		
+
 		for ( int j = 0; j < portion.getLoopSize(); ++j )
 		{
 			// move img cursor forward any get the value (saves one access)
@@ -73,21 +76,21 @@ public class ProcessForOverlapOnlyPortion implements Callable< String >
 			// move weight cursor forward and get the value 
 			final FloatType b = cursorB.next();
 
-			s[ 0 ] += bb.min( 0 );
-			s[ 1 ] += bb.min( 1 );
-			s[ 2 ] += bb.min( 2 );
-			
+			s[ 0 ] += offsetX;
+			s[ 1 ] += offsetY;
+			s[ 2 ] += offsetZ;
+
 			transform.applyInverse( t, s );
-			
-			if ( FusionHelper.intersects( t[ 0 ], t[ 1 ], t[ 2 ], imgSize[ 0 ], imgSize[ 1 ], imgSize[ 2 ] ) )
+
+			if ( FusionHelper.intersects( t[ 0 ], t[ 1 ], t[ 2 ], imgSizeX, imgSizeY, imgSizeZ ) )
 			{
 				wr.setPosition( t );
-				
+
 				o.set( o.get() + 1 );
 				b.set( wr.get() );
 			}
 		}
-		
-		return portion + " finished successfully (weights only).";
+
+		return portion + " finished successfully (visualize weights).";
 	}
 }

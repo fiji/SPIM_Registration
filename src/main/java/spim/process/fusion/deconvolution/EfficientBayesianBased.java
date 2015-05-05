@@ -40,6 +40,7 @@ import spim.process.cuda.CUDATools;
 import spim.process.cuda.NativeLibraryTools;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.deconvolution.MVDeconFFT.PSFTYPE;
+import spim.process.fusion.deconvolution.ProcessForDeconvolution.ProcessType;
 import spim.process.fusion.boundingbox.BoundingBoxGUI;
 import spim.process.fusion.boundingbox.BoundingBoxGUI.ManageListeners;
 import spim.process.fusion.export.DisplayImage;
@@ -89,7 +90,7 @@ public class EfficientBayesianBased extends Fusion
 	public static boolean defaultCUDAPathIsRelative = true;
 
 	PSFTYPE iterationType;
-	boolean justShowWeights;
+	ProcessType processType;
 	int osemspeedupIndex;
 	int numIterations;
 	boolean useTikhonovRegularization;
@@ -180,7 +181,7 @@ public class EfficientBayesianBased extends Fusion
 							factory,
 							osemspeedupIndex,
 							osemSpeedUp,
-							justShowWeights,
+							processType,
 							extractPSFLabels,
 							new long[]{ psfSizeX, psfSizeY, psfSizeZ },
 							psfFiles,
@@ -205,7 +206,7 @@ public class EfficientBayesianBased extends Fusion
 					// setup & run the deconvolution
 					displayParametersAndPSFs( bb, c, extractPSFLabels );
 	
-					if ( justShowWeights )
+					if ( processType == ProcessType.WEIGHTS_ONLY )
 						return true;
 	
 					final MVDeconInput deconvolutionData = new MVDeconInput( factory );
@@ -968,7 +969,7 @@ public class EfficientBayesianBased extends Fusion
 	
 	protected boolean getDebug()
 	{
-		if ( justShowWeights )
+		if ( processType == ProcessType.WEIGHTS_ONLY )
 			return true;
 
 		if ( debugMode )

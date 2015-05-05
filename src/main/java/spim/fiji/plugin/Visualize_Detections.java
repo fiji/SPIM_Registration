@@ -190,9 +190,7 @@ public class Visualize_Detections implements PlugIn
 					}
 					else
 					{
-						interval = ImgLib2Temp.getIntervalFromDimension( vd.getViewSetup().getSize() );
-						// TODO: change back to imglib2 implementation once uploaded to Fiji
-						//interval = new FinalInterval( viewDescription.getViewSetup().getSize() );
+						interval = new FinalInterval( vd.getViewSetup().getSize() );
 					}
 				}
 				

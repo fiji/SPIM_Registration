@@ -9,6 +9,7 @@ import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
@@ -21,7 +22,6 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.complex.ComplexFloatType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
-import spim.fiji.ImgLib2Temp;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
 import spim.process.fusion.boundingbox.BoundingBoxGUI;
@@ -113,15 +113,11 @@ public abstract class ProcessFusion
 		final ArrayList< RealRandomAccessible< FloatType > > weigheners = new ArrayList< RealRandomAccessible< FloatType > >();
 		
 		if ( useBlending )
-		{
-			weigheners.add( getBlending( ImgLib2Temp.getIntervalFromDimension( img ), desc, imgLoader ) );
-			// TODO: change back to imglib2 implementation once uploaded to Fiji
-			//weigheners.add( getBlending( new FinalInterval( img ), desc, imgLoader ) );
-		}
-		
+			weigheners.add( getBlending( new FinalInterval( img ), desc, imgLoader ) );
+
 		if ( useContentBased )
 			weigheners.add( getContentBased( img, desc, imgLoader ) );
-		
+
 		return weigheners;
 	}
 
