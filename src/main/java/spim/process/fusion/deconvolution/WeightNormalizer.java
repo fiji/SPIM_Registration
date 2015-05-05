@@ -8,11 +8,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import spim.Threads;
-import spim.process.fusion.FusionHelper;
-import spim.process.fusion.ImagePortion;
-import spim.process.fusion.weights.NormalizingRandomAccessibleInterval;
-import spim.process.fusion.weights.TransformedRealRandomAccessibleInterval;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
@@ -21,6 +16,10 @@ import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
+import spim.Threads;
+import spim.process.fusion.FusionHelper;
+import spim.process.fusion.ImagePortion;
+import spim.process.fusion.weights.NormalizingRandomAccessibleInterval;
 
 public class WeightNormalizer
 {

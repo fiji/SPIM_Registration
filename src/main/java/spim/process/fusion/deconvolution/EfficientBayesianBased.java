@@ -40,7 +40,7 @@ import spim.process.cuda.CUDATools;
 import spim.process.cuda.NativeLibraryTools;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.deconvolution.MVDeconFFT.PSFTYPE;
-import spim.process.fusion.deconvolution.ProcessForDeconvolution.ProcessType;
+import spim.process.fusion.deconvolution.ProcessForDeconvolution.WeightType;
 import spim.process.fusion.boundingbox.BoundingBoxGUI;
 import spim.process.fusion.boundingbox.BoundingBoxGUI.ManageListeners;
 import spim.process.fusion.export.DisplayImage;
@@ -56,15 +56,21 @@ public class EfficientBayesianBased extends Fusion
 	public static String[] extractPSFChoice = new String[]{ "Extract from beads", "Provide file with PSF" };
 	public static String[] blocksChoice = new String[]{ "Entire image at once", "in 64x64x64 blocks", "in 128x128x128 blocks", "in 256x256x256 blocks", "in 512x512x512 blocks", "specify maximal blocksize manually" };
 	public static String[] displayPSFChoice = new String[]{ "Do not show PSFs", "Show MIP of combined PSF's", "Show combined PSF's", "Show individual PSF's", "Show combined PSF's (original scale)", "Show individual PSF's (original scale)" };
-	public static String[] iterationTypeString = new String[]{ 
+	public static String[] iterationTypeString = new String[]{
 		"Efficient Bayesian - Optimization II (very fast, imprecise)", 
 		"Efficient Bayesian - Optimization I (fast, precise)", 
 		"Efficient Bayesian (less fast, more precise)", 
-		"Independent (slow, very precise)",
+		"Independent (slow, very precise)" };
+
+	public static String[] weightsString = new String[]{
+		"Precompute weights for all views (more memory, faster)",
+		"Virtual weights (less memory, slower)",
+		"No weights (produces artifacts on partially overlapping data)",
 		"Illustrate overlap of views per pixel (do not deconvolve)" };
 
 	public static boolean makeAllPSFSameSize = false;
-	
+
+	public static int defaultWeightType = 1;
 	public static int defaultIterationType = 1;
 	public static int defaultOSEMspeedupIndex = 0;
 	public static int defaultNumIterations = 10;
@@ -90,7 +96,7 @@ public class EfficientBayesianBased extends Fusion
 	public static boolean defaultCUDAPathIsRelative = true;
 
 	PSFTYPE iterationType;
-	ProcessType processType;
+	WeightType weightType;
 	int osemspeedupIndex;
 	int numIterations;
 	boolean useTikhonovRegularization;
@@ -181,7 +187,7 @@ public class EfficientBayesianBased extends Fusion
 							factory,
 							osemspeedupIndex,
 							osemSpeedUp,
-							processType,
+							weightType,
 							extractPSFLabels,
 							new long[]{ psfSizeX, psfSizeY, psfSizeZ },
 							psfFiles,
@@ -206,7 +212,7 @@ public class EfficientBayesianBased extends Fusion
 					// setup & run the deconvolution
 					displayParametersAndPSFs( bb, c, extractPSFLabels );
 	
-					if ( processType == ProcessType.WEIGHTS_ONLY )
+					if ( weightType == WeightType.WEIGHTS_ONLY )
 						return true;
 	
 					final MVDeconInput deconvolutionData = new MVDeconInput( factory );
@@ -315,6 +321,7 @@ public class EfficientBayesianBased extends Fusion
 	{
 		gd.addChoice( "Type_of_iteration", iterationTypeString, iterationTypeString[ defaultIterationType ] );
 		it = (Choice)gd.getChoices().lastElement();
+		gd.addChoice( "Image_weights", weightsString, weightsString[ defaultWeightType ] );
 		gd.addChoice( "OSEM_acceleration", osemspeedupChoice, osemspeedupChoice[ defaultOSEMspeedupIndex ] );
 		gd.addNumericField( "Number_of_iterations", defaultNumIterations, 0 );
 		gd.addCheckbox( "Debug_mode", defaultDebugMode );
@@ -333,22 +340,29 @@ public class EfficientBayesianBased extends Fusion
 	public boolean parseAdditionalParameters( final GenericDialog gd )
 	{
 		defaultIterationType = gd.getNextChoiceIndex();
-		
-		justShowWeights = false;
-		
+
 		if ( defaultIterationType == 0 )
 			iterationType = PSFTYPE.OPTIMIZATION_II;
 		else if ( defaultIterationType == 1 )
 			iterationType = PSFTYPE.OPTIMIZATION_I;
 		else if ( defaultIterationType == 2 )
 			iterationType = PSFTYPE.EFFICIENT_BAYESIAN;
-		else if ( defaultIterationType == 3 )
+		else //if ( defaultIterationType == 3 )
 			iterationType = PSFTYPE.INDEPENDENT;
+
+		defaultWeightType = gd.getNextChoiceIndex();
+
+		if ( defaultWeightType == 0 )
+			weightType = WeightType.PRECOMPUTED_WEIGHTS;
+		else if ( defaultWeightType == 1 )
+			weightType = WeightType.VIRTUAL_WEIGHTS;
+		else if ( defaultWeightType == 2 )
+			weightType = WeightType.NO_WEIGHTS;
 		else
-			justShowWeights = true; // just show the overlap
-		
+			weightType = WeightType.WEIGHTS_ONLY;
+
 		osemspeedupIndex = defaultOSEMspeedupIndex = gd.getNextChoiceIndex();
-		numIterations = defaultNumIterations = (int)Math.round( gd.getNextNumber() );		
+		numIterations = defaultNumIterations = (int)Math.round( gd.getNextNumber() );
 		debugMode = defaultDebugMode = gd.getNextBoolean();
 		adjustBlending = defaultAdjustBlending = gd.getNextBoolean();
 		useTikhonovRegularization = defaultUseTikhonovRegularization = gd.getNextBoolean();
@@ -969,7 +983,7 @@ public class EfficientBayesianBased extends Fusion
 	
 	protected boolean getDebug()
 	{
-		if ( processType == ProcessType.WEIGHTS_ONLY )
+		if ( weightType == WeightType.WEIGHTS_ONLY )
 			return true;
 
 		if ( debugMode )
