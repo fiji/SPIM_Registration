@@ -109,10 +109,13 @@ public class Image_Fusion implements PlugIn
 		
 		if ( defaultFusionAlgorithm >= fusionDescriptions.length )
 			defaultFusionAlgorithm = 0;
-		if ( defaultBoundingBoxAlgorithm < 0 && data.getBoundingBoxes().getBoundingBoxes().size() > 0 )
-			defaultBoundingBoxAlgorithm = 4;
-		else
-			defaultBoundingBoxAlgorithm = 1;
+		if ( defaultBoundingBoxAlgorithm < 0 )
+		{
+			if ( data.getBoundingBoxes().getBoundingBoxes().size() > 0 )
+				defaultBoundingBoxAlgorithm = 4;
+			else
+				defaultBoundingBoxAlgorithm = 1;
+		}
 		if ( defaultBoundingBoxAlgorithm >= boundingBoxDescriptions.length )
 			defaultBoundingBoxAlgorithm = 0;
 		if ( defaultImgExportAlgorithm >= imgExportDescriptions.length )
