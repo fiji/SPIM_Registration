@@ -190,7 +190,7 @@ public class ProcessForDeconvolution
 			{
 				final Blending blending = getBlending( img, blendingBorder, blendingRange, vd );
 
-				weightImg = new TransformedRealRandomAccessibleInterval< FloatType >( blending, new FloatType(), img, transform, offset );
+				weightImg = new TransformedRealRandomAccessibleInterval< FloatType >( blending, new FloatType(), fusedImg, transform, offset );
 			}
 			else //if ( processType == ProcessType.LOAD_WEIGHTS )
 			{
