@@ -184,7 +184,8 @@ public class LightSheetZ1MetaData
 		}
 		catch ( Exception e )
 		{
-			IOFunctions.println( "An error occured parsing the main meta data: " + e + "\n. Stopping." );
+			IOFunctions.println( "An error occured parsing the main meta data: " + e + ". Stopping." );
+			e.printStackTrace();
 			try { r.close(); } catch (IOException e1) { e1.printStackTrace(); }
 			return false;
 		}
