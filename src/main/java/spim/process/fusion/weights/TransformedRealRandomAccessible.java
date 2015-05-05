@@ -7,10 +7,12 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealPositionable;
 import net.imglib2.RealRandomAccessible;
 import net.imglib2.realtransform.AffineTransform3D;
+import net.imglib2.util.Util;
 
 public class TransformedRealRandomAccessible< T > implements RandomAccessibleInterval< T >
 {
 	final RealRandomAccessible< T > realRandomAccessible;
+	final T zero;
 	final Interval transformedInterval;
 	final AffineTransform3D transform;
 	final long[] offset;
@@ -23,11 +25,13 @@ public class TransformedRealRandomAccessible< T > implements RandomAccessibleInt
 	 */
 	public TransformedRealRandomAccessible(
 			final RealRandomAccessible< T > realRandomAccessible,
+			final T zero,
 			final Interval transformedInterval,
 			final AffineTransform3D transform,
 			final long[] offset )
 	{
 		this.realRandomAccessible = realRandomAccessible;
+		this.zero = zero;
 		this.transformedInterval = transformedInterval;
 		this.transform = transform;
 		this.offset = offset;
@@ -39,8 +43,7 @@ public class TransformedRealRandomAccessible< T > implements RandomAccessibleInt
 	@Override
 	public RandomAccess< T > randomAccess()
 	{
-
-		return null;
+		return new TransformedInterpolatedRealRandomAccess< T >( realRandomAccessible, zero, transformedInterval, transform, Util.long2int( offset ) );
 	}
 
 	@Override
