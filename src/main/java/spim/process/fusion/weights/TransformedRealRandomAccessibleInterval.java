@@ -9,7 +9,7 @@ import net.imglib2.RealRandomAccessible;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.util.Util;
 
-public class TransformedRealRandomAccessible< T > implements RandomAccessibleInterval< T >
+public class TransformedRealRandomAccessibleInterval< T > implements RandomAccessibleInterval< T >
 {
 	final RealRandomAccessible< T > realRandomAccessible;
 	final T zero;
@@ -23,7 +23,7 @@ public class TransformedRealRandomAccessible< T > implements RandomAccessibleInt
 	 * @param transform - the affine transformation
 	 * @param offset - an additional translational offset
 	 */
-	public TransformedRealRandomAccessible(
+	public TransformedRealRandomAccessibleInterval(
 			final RealRandomAccessible< T > realRandomAccessible,
 			final T zero,
 			final Interval transformedInterval,
