@@ -128,7 +128,7 @@ public class PreDefinedBoundingBox extends BoundingBoxGUI
 		final int index = choice.getSelectedIndex();
 		final BoundingBox bb = spimData.getBoundingBoxes().getBoundingBoxes().get( index );
 
-		label1.setText( "BoundingBox size: " + bb.dimension( 0 ) + "x" + bb.dimension( 1 ) + "x" + bb.dimension( 0 ) + " pixels" );
+		label1.setText( "BoundingBox size: " + bb.dimension( 0 ) + "x" + bb.dimension( 1 ) + "x" + bb.dimension( 2 ) + " pixels" );
 		label2.setText( "BoundingBox offset: " + bb.min( 0 ) + "x" + bb.min( 1 ) + "x" + bb.min( 2 ) + " pixels" );
 	}
 
