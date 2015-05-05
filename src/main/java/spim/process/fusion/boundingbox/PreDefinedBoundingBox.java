@@ -109,7 +109,7 @@ public class PreDefinedBoundingBox extends BoundingBoxGUI
 			@Override
 			public boolean dialogItemChanged( final GenericDialog dialog, final AWTEvent e )
 			{
-				if ( e.getSource() == choice )
+				if ( e != null && e.getSource() == choice )
 					update( spimData, choice, label1, label2 );
 
 				return true;
