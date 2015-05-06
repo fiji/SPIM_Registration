@@ -267,12 +267,7 @@ public class ProcessForDeconvolution
 		final ArrayList< RandomAccessibleInterval< FloatType > > weightsSorted = new ArrayList< RandomAccessibleInterval< FloatType > >();
 
 		for ( final ViewDescription vd : viewDescriptions )
-		{
 			weightsSorted.add( weights.get( vd ) );
-			ImageJFunctions.show( weights.get( vd ) );
-		}
-
-		SimpleMultiThreading.threadHaltUnClean();
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Computing weight normalization for deconvolution." );
 
@@ -287,6 +282,10 @@ public class ProcessForDeconvolution
 
 		if ( wn != null && !wn.process() )
 			return false;
+
+		// put the potentially modified weights back
+		for ( int i = 0; i < viewDescriptions.size(); ++i )
+			weights.put( viewDescriptions.get( i ), weightsSorted.get( i ) );
 
 		this.minOverlappingViews = wn.getMinOverlappingViews();
 		this.avgOverlappingViews = wn.getAvgOverlappingViews();
@@ -305,6 +304,11 @@ public class ProcessForDeconvolution
 		}
 
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Finished precomputations for deconvolution." );
+
+		for ( final ViewDescription vd : viewDescriptions )
+			ImageJFunctions.show( weights.get( vd ) );
+		SimpleMultiThreading.threadHaltUnClean();
+
 
 		return true;
 	}
