@@ -44,9 +44,11 @@ public class MVDeconFFT
 	final int[] blockSize, deviceList;
 	final int device0, numDevices;
 	final Block[] blocks;
+	final boolean saveMemory;
 
 	// the imgfactory used to instantiate the blocks and compute the FFTs, must be ArrayImg for CUDA
-	private ImgFactory< FloatType > blockFFTFactory;
+	private ImgFactory< FloatType > blockFactory;
+	private ImgFactory< ComplexFloatType > fftFactory;
 
 	/**
 	 * Used to determine if the Convolutions already have been computed for the current iteration
@@ -57,19 +59,30 @@ public class MVDeconFFT
 			final RandomAccessibleInterval< FloatType > image,
 			final RandomAccessibleInterval< FloatType > weight,
 			final ArrayImg< FloatType, ? > kernel,
-			final ImgFactory< FloatType > blockFFTFactory,
-			final int[] deviceList, final boolean useBlocks, final int[] blockSize )
+			final ImgFactory< FloatType > blockFactory,
+			final int[] deviceList, final boolean useBlocks,
+			final int[] blockSize, final boolean saveMemory )
 	{
 		this.image = image;
 		this.kernel1 = kernel;
 		this.weight = weight;
 		this.n = image.numDimensions();
 		this.service = FFTConvolution.createExecutorService( Threads.numThreads() );
-		this.blockFFTFactory = blockFFTFactory;
+		this.blockFactory = blockFactory;
+		try
+		{
+			this.fftFactory = blockFactory.imgFactory( new ComplexFloatType() );
+		}
+		catch (IncompatibleTypeException e)
+		{
+			e.printStackTrace();
+			throw new RuntimeException( "Cannot cast ImgFactory for ComplexFloatType." );
+		}
 
 		this.deviceList = deviceList;
 		this.device0 = deviceList[ 0 ];
 		this.numDevices = deviceList.length;
+		this.saveMemory = saveMemory;
 
 		// figure out if we need GPU and/or CPU
 		boolean anyGPU = false;
@@ -287,42 +300,8 @@ public class MVDeconFFT
 			// compute the inverted squared kernel
 			this.kernel2 = computeInvertedKernel( exponentialKernel );	
 		}
-
-		//
-		// set up the convolutions
-		//
-		if ( useCPU )
-		{
-			if ( useBlocks )
-			{
-				final Img< FloatType > block = blockFFTFactory.create( blockSize, new FloatType() );
-
-				this.fftConvolution1 = new FFTConvolution< FloatType >( block, this.kernel1 );
-				this.fftConvolution1.setExecutorService( service );
-				this.fftConvolution1.setKeepImgFFT( false );
-				
-				this.fftConvolution2 = new FFTConvolution< FloatType >( block, this.kernel2 );
-				this.fftConvolution2.setExecutorService( service );
-				this.fftConvolution2.setKeepImgFFT( false );
-			}
-			else
-			{
-				this.fftConvolution1 = new FFTConvolution< FloatType >( this.image, this.kernel1, blockFFTFactory.imgFactory( new ComplexFloatType() ) );
-				this.fftConvolution1.setExecutorService( service );
-				this.fftConvolution1.setKeepImgFFT( false );
-
-				this.fftConvolution2 = new FFTConvolution< FloatType >( this.image, this.kernel2, blockFFTFactory.imgFactory( new ComplexFloatType() )  );
-				this.fftConvolution2.setExecutorService( service );
-				this.fftConvolution2.setKeepImgFFT( false );
-			}
-		}
-		else
-		{
-			this.fftConvolution1 = null;
-			this.fftConvolution2 = null;
-		}
 	}
-	
+
 	public static ArrayImg< FloatType, ? > computeExponentialKernel( final ArrayImg< FloatType, ? > kernel, final int numViews )
 	{
 		final ArrayImg< FloatType, ? > exponentialKernel = kernel.copy();
@@ -388,15 +367,35 @@ public class MVDeconFFT
 		{
 			if ( useBlocks )
 			{
-				final Img< FloatType > block = blockFFTFactory.create( blockSize, new FloatType() );
+				final Img< FloatType > block = blockFactory.create( blockSize, new FloatType() );
+
+				if ( this.fftConvolution1 == null )
+				{
+					this.fftConvolution1 = new FFTConvolution< FloatType >( block, this.kernel1 );
+					this.fftConvolution1.setExecutorService( service );
+					this.fftConvolution1.setKeepImgFFT( false );
+				}
 
 				for ( int i = 0; i < blocks.length; ++i )
 					MVDeconFFTThreads.convolve1BlockCPU( blocks[ i ], image, result, block, fftConvolution1, i );
+
+				if ( saveMemory )
+				{
+					this.fftConvolution1 = null;
+					System.gc();
+				}
 
 				return;
 			}
 			else
 			{
+				if ( this.fftConvolution1 == null )
+				{
+					this.fftConvolution1 = new FFTConvolution< FloatType >( this.image, this.kernel1, fftFactory );
+					this.fftConvolution1.setExecutorService( service );
+					this.fftConvolution1.setKeepImgFFT( false );
+				}
+
 				//IJ.log( "Using CPU only to compute as one block ... " );
 				long time = System.currentTimeMillis();
 				final FFTConvolution< FloatType > fftConv = fftConvolution1;
@@ -405,12 +404,18 @@ public class MVDeconFFT
 				fftConv.convolve();
 				System.out.println( " image: compute " + (System.currentTimeMillis() - time) );
 
+				if ( saveMemory )
+				{
+					this.fftConvolution1 = null;
+					System.gc();
+				}
+
 				return;
 			}
 		}
 		else if ( useCUDA && numDevices == 1 )
 		{
-			final Img< FloatType > block = blockFFTFactory.create( blockSize, new FloatType() );
+			final Img< FloatType > block = blockFactory.create( blockSize, new FloatType() );
 
 			for ( int i = 0; i < blocks.length; ++i )
 				MVDeconFFTThreads.convolve1BlockCUDA( blocks[ i ], device0, image, result, block, kernel1, i );
@@ -423,7 +428,7 @@ public class MVDeconFFT
 			final Thread[] threads = new Thread[ deviceList.length ];
 
 			for ( int i = 0; i < deviceList.length; ++i )
-				threads[ i ] = MVDeconFFTThreads.getCUDAThread1( ai, blockFFTFactory, blocks, blockSize, image, result, deviceList[ i ], kernel1 );
+				threads[ i ] = MVDeconFFTThreads.getCUDAThread1( ai, blockFactory, blocks, blockSize, image, result, deviceList[ i ], kernel1 );
 
 			for ( int ithread = 0; ithread < threads.length; ++ithread )
 				threads[ ithread ].start();
@@ -454,26 +459,52 @@ public class MVDeconFFT
 		{
 			if ( useBlocks )
 			{
-				final Img< FloatType > block = blockFFTFactory.create( blockSize, new FloatType() );
+				final Img< FloatType > block = blockFactory.create( blockSize, new FloatType() );
+
+				if ( this.fftConvolution2 == null )
+				{
+					this.fftConvolution2 = new FFTConvolution< FloatType >( block, this.kernel2 );
+					this.fftConvolution2.setExecutorService( service );
+					this.fftConvolution2.setKeepImgFFT( false );
+				}
 
 				for ( int i = 0; i < blocks.length; ++i )
 					MVDeconFFTThreads.convolve2BlockCPU( blocks[ i ], image, result, block, fftConvolution2 );
+
+				if ( saveMemory )
+				{
+					this.fftConvolution2 = null;
+					System.gc();
+				}
 
 				return;
 			}
 			else
 			{
+				if ( this.fftConvolution2 == null )
+				{
+					this.fftConvolution2 = new FFTConvolution< FloatType >( this.image, this.kernel2, fftFactory );
+					this.fftConvolution2.setExecutorService( service );
+					this.fftConvolution2.setKeepImgFFT( false );
+				}
+
 				final FFTConvolution< FloatType > fftConv = fftConvolution2;
 				fftConv.setImg( image );
 				fftConv.setOutput( result );
 				fftConv.convolve();
+
+				if ( saveMemory )
+				{
+					this.fftConvolution2 = null;
+					System.gc();
+				}
 
 				return;
 			}
 		}
 		else if ( useCUDA && numDevices == 1 )
 		{
-			final Img< FloatType > block = blockFFTFactory.create( blockSize, new FloatType() );
+			final Img< FloatType > block = blockFactory.create( blockSize, new FloatType() );
 
 			for ( int i = 0; i < blocks.length; ++i )
 				MVDeconFFTThreads.convolve2BlockCUDA( blocks[ i ], device0, image, result, block, kernel2 );
@@ -486,7 +517,7 @@ public class MVDeconFFT
 			final Thread[] threads = new Thread[ deviceList.length ];
 
 			for ( int i = 0; i < deviceList.length; ++i )
-				threads[ i ] = MVDeconFFTThreads.getCUDAThread2( ai, blockFFTFactory, blocks, blockSize, image, result, deviceList[ i ], kernel2 );
+				threads[ i ] = MVDeconFFTThreads.getCUDAThread2( ai, blockFactory, blocks, blockSize, image, result, deviceList[ i ], kernel2 );
 
 			for ( int ithread = 0; ithread < threads.length; ++ithread )
 				threads[ ithread ].start();

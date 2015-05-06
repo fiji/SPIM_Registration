@@ -71,8 +71,9 @@ public class EfficientBayesianBased extends Fusion
 
 	public static boolean makeAllPSFSameSize = false;
 
-	public static int defaultWeightType = 1;
 	public static int defaultIterationType = 1;
+	public static int defaultWeightType = 1;
+	public static boolean defaultSaveMemory = false;
 	public static int defaultOSEMspeedupIndex = 0;
 	public static int defaultNumIterations = 10;
 	public static boolean defaultUseTikhonovRegularization = true;
@@ -98,6 +99,7 @@ public class EfficientBayesianBased extends Fusion
 
 	PSFTYPE iterationType;
 	WeightType weightType;
+	boolean saveMemory;
 	int osemspeedupIndex;
 	int numIterations;
 	boolean useTikhonovRegularization;
@@ -143,8 +145,8 @@ public class EfficientBayesianBased extends Fusion
 	{
 		super( spimData, viewIdsToProcess );
 		
-		// we want the arrayimg by default
-		BoundingBoxGUI.defaultImgType = 0;
+		// we want the cellimg by default (better with memory, almost same speed)
+		BoundingBoxGUI.defaultImgType = 2;
 		
 		// linear interpolation
 		Fusion.defaultInterpolation = this.interpolation = 1;
@@ -231,10 +233,7 @@ public class EfficientBayesianBased extends Fusion
 								pfd.getTransformedImgs().get( vd ),
 								pfd.getTransformedWeights().get( vd ),
 								pfd.getExtractPSF().getTransformedPSFs().get( vd ),
-								computeFactory,
-								devList,
-								useBlocks,
-								blockSize ) );
+								computeFactory, devList, useBlocks, blockSize, saveMemory ) );
 					}
 	
 					if ( !useTikhonovRegularization )
@@ -325,6 +324,7 @@ public class EfficientBayesianBased extends Fusion
 		gd.addChoice( "Type_of_iteration", iterationTypeString, iterationTypeString[ defaultIterationType ] );
 		it = (Choice)gd.getChoices().lastElement();
 		gd.addChoice( "Image_weights", weightsString, weightsString[ defaultWeightType ] );
+		gd.addCheckbox( "Save_memory (not keep FFT's on CPU, 2x time & 0.5x memory)", defaultSaveMemory );
 		gd.addChoice( "OSEM_acceleration", osemspeedupChoice, osemspeedupChoice[ defaultOSEMspeedupIndex ] );
 		gd.addNumericField( "Number_of_iterations", defaultNumIterations, 0 );
 		gd.addCheckbox( "Debug_mode", defaultDebugMode );
@@ -364,6 +364,7 @@ public class EfficientBayesianBased extends Fusion
 		else
 			weightType = WeightType.WEIGHTS_ONLY;
 
+		saveMemory = defaultSaveMemory = gd.getNextBoolean();
 		osemspeedupIndex = defaultOSEMspeedupIndex = gd.getNextChoiceIndex();
 		numIterations = defaultNumIterations = (int)Math.round( gd.getNextNumber() );
 		debugMode = defaultDebugMode = gd.getNextBoolean();
