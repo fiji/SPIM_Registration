@@ -483,46 +483,42 @@ public class EfficientBayesianBased extends Fusion
 		else
 			IOFunctions.println( "Not using Tikhonov regularization" );
 
-		// only if the PSF was extracted in this channel
-		if ( extractPSFLabels.get( channel ).isExtractedPSF() )
-		{
-			// "Do not show PSFs", 
-			// "Show MIP of combined PSF's",
-			// "Show combined PSF's",
-			// "Show individual PSF's",
-			// "Show combined PSF's (original scale)",
-			// "Show individual PSF's (original scale)" };
-			
-			final ExtractPSF< FloatType > ePSF = extractPSFLabels.get( channel ).getExtractPSFInstance(); 
-			final DisplayImage di = new DisplayImage();
+		// "Do not show PSFs", 
+		// "Show MIP of combined PSF's",
+		// "Show combined PSF's",
+		// "Show individual PSF's",
+		// "Show combined PSF's (original scale)",
+		// "Show individual PSF's (original scale)" };
+		
+		final ExtractPSF< FloatType > ePSF = extractPSFLabels.get( channel ).getExtractPSFInstance(); 
+		final DisplayImage di = new DisplayImage();
 
-			if ( displayPSF == 1 )
+		if ( displayPSF == 1 )
+		{
+			di.exportImage( ExtractPSF.computeMaxProjection( ePSF.computeAverageTransformedPSF(), -1 ), "Max projected avg transformed PSF's" );
+		}
+		else if ( displayPSF == 2 )
+		{
+			di.exportImage( ePSF.computeAverageTransformedPSF(), "Avg transformed PSF's" );				
+		}
+		else if ( displayPSF == 3 )
+		{
+			for ( int i = 0; i < ePSF.getTransformedPSFs().size(); ++i )
 			{
-				di.exportImage( ExtractPSF.computeMaxProjection( ePSF.computeAverageTransformedPSF(), -1 ), "Max projected avg transformed PSF's" );
+				final ViewId viewId = ePSF.getViewIdsForPSFs().get( i );
+				di.exportImage( ePSF.getTransformedPSFs().get( viewId ), "transfomed PSF of viewsetup " + viewId.getViewSetupId() );
 			}
-			else if ( displayPSF == 2 )
+		}
+		else if ( displayPSF == 4 )
+		{
+			di.exportImage( ePSF.computeAveragePSF(), "Avg original PSF's" );				
+		}
+		else if ( displayPSF == 5 )
+		{
+			for ( int i = 0; i < ePSF.getInputCalibrationPSFs().size(); ++i )
 			{
-				di.exportImage( ePSF.computeAverageTransformedPSF(), "Avg transformed PSF's" );				
-			}
-			else if ( displayPSF == 3 )
-			{
-				for ( int i = 0; i < ePSF.getTransformedPSFs().size(); ++i )
-				{
-					final ViewId viewId = ePSF.getViewIdsForPSFs().get( i );
-					di.exportImage( ePSF.getTransformedPSFs().get( viewId ), "transfomed PSF of viewsetup " + viewId.getViewSetupId() );
-				}
-			}
-			else if ( displayPSF == 4 )
-			{
-				di.exportImage( ePSF.computeAveragePSF(), "Avg original PSF's" );				
-			}
-			else if ( displayPSF == 5 )
-			{
-				for ( int i = 0; i < ePSF.getInputCalibrationPSFs().size(); ++i )
-				{
-					final ViewId viewId = ePSF.getViewIdsForPSFs().get( i );
-					di.exportImage( ePSF.getInputCalibrationPSFs().get( viewId ), "original PSF of viewsetup " + viewId.getViewSetupId() );
-				}
+				final ViewId viewId = ePSF.getViewIdsForPSFs().get( i );
+				di.exportImage( ePSF.getInputCalibrationPSFs().get( viewId ), "original PSF of viewsetup " + viewId.getViewSetupId() );
 			}
 		}
 	}
