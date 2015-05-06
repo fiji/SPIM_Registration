@@ -21,6 +21,8 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
@@ -82,13 +84,15 @@ public class MVDeconvolution
 		this.numDimensions = data.get( 0 ).getImage().numDimensions();
 		this.lambda = lambda;
 
+		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Deconvolved & temporary image factory: " + views.imgFactory().getClass().getSimpleName() );
+
 		if ( initialImage != null )
 			this.psi = loadInitialImage(
 					initialImage,
 					checkNumbers,
 					minValue,
 					data.get( 0 ).getImage(),
-					views.imgFactory );
+					views.imgFactory() );
 
 		final double[] result = AdjustInput.normAllImages( data );
 		this.avg = (float)result[ 0 ];
@@ -112,15 +116,15 @@ public class MVDeconvolution
 		//
 		if ( this.psi == null )
 		{
-			this.psi = views.imgFactory.create( data.get( 0 ).getImage(), new FloatType() );
+			this.psi = views.imgFactory().create( data.get( 0 ).getImage(), new FloatType() );
 
 			for ( final FloatType f : psi )
 				f.set( avg );
 		}
 
 		// instantiate the temporary images
-		this.tmp1 = views.imgFactory.create( data.get( 0 ).getImage(), new FloatType() );
-		this.tmp2 = views.imgFactory.create( data.get( 0 ).getImage(), new FloatType() );
+		this.tmp1 = views.imgFactory().create( data.get( 0 ).getImage(), new FloatType() );
+		this.tmp2 = views.imgFactory().create( data.get( 0 ).getImage(), new FloatType() );
 
 		IOFunctions.println( "Deconvolved image container: " + psi.getClass().getSimpleName() );
 
@@ -316,6 +320,7 @@ public class MVDeconvolution
 			// convolve psi (current guess of the image) with the PSF of the current view
 			// [psi >> tmp1]
 			//
+
 			processingData.convolve1( psi, tmp1 );
 
 			//
@@ -549,7 +554,7 @@ public class MVDeconvolution
 			final Cursor< FloatType > cursorPsi = psiIterable.cursor();
 			final Cursor< FloatType > cursorIntegral = integralIterable.cursor();
 			final Cursor< FloatType > cursorWeight = weightIterable.cursor();
-			
+
 			cursorPsi.jumpFwd( start );
 			cursorIntegral.jumpFwd( start );
 			cursorWeight.jumpFwd( start );
@@ -603,6 +608,8 @@ public class MVDeconvolution
 			final Cursor< FloatType > cursorPsi = psiIterable.localizingCursor();
 			final RandomAccess< FloatType > raIntegral = integral.randomAccess();
 			final RandomAccess< FloatType > raWeight = weight.randomAccess();
+
+			cursorPsi.jumpFwd( start );
 
 			for ( long l = 0; l < loopSize; ++l )
 			{
