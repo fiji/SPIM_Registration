@@ -305,11 +305,6 @@ public class ProcessForDeconvolution
 
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Finished precomputations for deconvolution." );
 
-		for ( final ViewDescription vd : viewDescriptions )
-			ImageJFunctions.show( weights.get( vd ) );
-		SimpleMultiThreading.threadHaltUnClean();
-
-
 		return true;
 	}
 	
