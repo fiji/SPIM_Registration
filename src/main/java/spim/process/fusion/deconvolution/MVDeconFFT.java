@@ -46,7 +46,7 @@ public class MVDeconFFT
 	final Block[] blocks;
 
 	// the imgfactory used to instantiate the blocks and compute the FFTs, must be ArrayImg for CUDA
-	ImgFactory< FloatType > blockFFTFactory;
+	private ImgFactory< FloatType > blockFFTFactory;
 
 	/**
 	 * Used to determine if the Convolutions already have been computed for the current iteration
@@ -287,7 +287,10 @@ public class MVDeconFFT
 			// compute the inverted squared kernel
 			this.kernel2 = computeInvertedKernel( exponentialKernel );	
 		}
-		
+
+		//
+		// set up the convolutions
+		//
 		if ( useCPU )
 		{
 			if ( useBlocks )

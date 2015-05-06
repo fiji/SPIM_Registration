@@ -11,7 +11,7 @@ public class MVDeconInput
 {
 	public final static float minValue = 0.0001f;
 	final ArrayList< MVDeconFFT > views = new ArrayList< MVDeconFFT >();
-	final ImgFactory< FloatType > imgFactory;
+	final private ImgFactory< FloatType > imgFactory;
 
 	/**
 	 * the imgfactory used for PSI, the temporary images and inputs

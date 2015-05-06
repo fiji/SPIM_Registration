@@ -8,6 +8,7 @@ import java.awt.Choice;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -217,6 +218,8 @@ public class EfficientBayesianBased extends Fusion
 	
 					final MVDeconInput deconvolutionData = new MVDeconInput( factory );
 	
+					IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Block & FFT image factory: " + computeFactory.getClass().getSimpleName() );
+
 					for ( final ViewDescription vd : pfd.getViewDescriptions() )
 					{
 						// device list for CPU or CUDA processing
