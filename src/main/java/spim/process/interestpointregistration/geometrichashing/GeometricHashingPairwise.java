@@ -79,7 +79,7 @@ public class GeometricHashingPairwise implements Callable< PairwiseMatch >
 
 		pair.setInliers( inliers, result.getB() );
 
-		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): " + comparison + ": " + result );
+		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): " + comparison + ": " + result.getA() );
 
 		return pair;
 	}
