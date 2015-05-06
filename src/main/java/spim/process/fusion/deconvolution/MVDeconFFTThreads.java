@@ -9,6 +9,7 @@ import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.basictypeaccess.array.FloatArray;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
+import net.imglib2.view.Views;
 import spim.process.cuda.Block;
 import spim.process.interestpointdetection.DifferenceOfGaussianCUDA.CUDAOutput;
 
@@ -19,7 +20,7 @@ public class MVDeconFFTThreads
 			final Img< FloatType > block, final FFTConvolution< FloatType > fftConvolution1, final int i )
 	{
 		long time = System.currentTimeMillis();
-		blockStruct.copyBlock( image, block );
+		blockStruct.copyBlock( Views.extendMirrorSingle( image ), block );
 		System.out.println( " block " + i + "(CPU): copy " + (System.currentTimeMillis() - time) );
 
 		time = System.currentTimeMillis();
@@ -37,7 +38,7 @@ public class MVDeconFFTThreads
 			final Block blockStruct, final Img< FloatType > image, final Img< FloatType > result,
 			final Img< FloatType > block, final FFTConvolution< FloatType > fftConvolution2 )
 	{
-		blockStruct.copyBlock( image, block );
+		blockStruct.copyBlock( Views.extendMirrorSingle( image ), block );
 
 		fftConvolution2.setImg( block );
 		fftConvolution2.setOutput( block );
@@ -52,7 +53,7 @@ public class MVDeconFFTThreads
 			final Img< FloatType > result, final Img< FloatType > block, final Img< FloatType > kernel1, final int i )
 	{
 		long time = System.currentTimeMillis();
-		blockStruct.copyBlock( image, block );
+		blockStruct.copyBlock( Views.extendMirrorSingle( image ), block );
 		System.out.println( " block " + i + "(CPU  " + deviceId + "): copy " + (System.currentTimeMillis() - time) );
 
 		// convolve block with kernel1 using CUDA
@@ -76,7 +77,7 @@ public class MVDeconFFTThreads
 			final Block blockStruct, final int deviceId, final Img< FloatType > image,
 			final Img< FloatType > result, final Img< FloatType > block, final Img< FloatType > kernel2 )
 	{
-		blockStruct.copyBlock( image, block );
+		blockStruct.copyBlock( Views.extendMirrorSingle( image ), block );
 
 		// convolve block with kernel2 using CUDA
 		final float[] blockF = ((FloatArray)((ArrayImg< net.imglib2.type.numeric.real.FloatType, ? > )block).update( null ) ).getCurrentStorageArray();
