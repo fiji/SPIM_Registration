@@ -140,7 +140,7 @@ public class LightSheetZ1MetaData
 
 				int w = r.getSizeX();
 				int h = r.getSizeY();
-				int d = (int)Math.round( Double.parseDouble( metaData.get( "Information|Image|V|View|SizeZ #" + (a+1) ).toString() ) );
+				int d = (int)Math.round( getDouble( metaData, "Information|Image|V|View|SizeZ #" + (a+1) ) );
 
 				imageSizes.put( a, new int[]{ w, h, d } );
 
@@ -350,6 +350,25 @@ public class LightSheetZ1MetaData
 			this.r = r;
 
 		return true;
+	}
+
+	protected static double getDouble( final Hashtable< String, Object > metadata, final String key )
+	{
+		if ( metadata == null )
+			throw new RuntimeException( "Missing metadata while looking for: " + key );
+
+		final Object o = metadata.get( key );
+
+		if ( o == null )
+		{
+			final StringBuilder builder = new StringBuilder();
+			for ( final String candidate : metadata.keySet() )
+				builder.append( "\n" + candidate );
+			System.out.println( "Available keys:" + builder );
+			throw new RuntimeException( "Missing key " + key + " in LZ1 metadata" ); 
+		}
+
+		return Double.parseDouble( o.toString() );
 	}
 
 	public static void printMetaData( final IFormatReader r )
