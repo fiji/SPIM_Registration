@@ -32,6 +32,6 @@ public class DefineXmlTask extends BaseTask
 		IOFunctions.printIJLog = false;
 
 		LightSheetZ1 z1 = new LightSheetZ1();
-		z1.defaultProcess( new File(inputFile), xmlFileName );
+		z1.defaultProcess( inputFile, xmlFileName );
 	}
 }

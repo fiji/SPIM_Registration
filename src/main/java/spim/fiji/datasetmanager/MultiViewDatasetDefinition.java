@@ -26,10 +26,10 @@ public interface MultiViewDatasetDefinition
 	 * This method is supposed to (interactively, ideally ImageJ-macroscriptable)
 	 * query all necessary data from the user to build up a SpimData object and
 	 * save it as an XML file.
-	 * 
+	 *
 	 * @return - the saved {@link SpimData} object
 	 */
-	public SpimData2 createDataset();
+	public SpimData2 createDataset(String fileName);
 	
 	/**
 	 * @return - a new instance of this implementation

@@ -3,7 +3,7 @@ package spim.fiji.datasetmanager;
 import fiji.util.gui.GenericDialogPlus;
 import ij.gui.GenericDialog;
 
-import java.awt.Font;
+import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
 
@@ -62,9 +62,14 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 	}
 
 	@Override
-	public SpimData2 createDataset()
+	public SpimData2 createDataset(String fileName)
 	{
-		final File cziFile = queryCZIFile();
+		File cziFile;
+
+		if( fileName == null )
+			cziFile = queryCZIFile();
+		else
+			cziFile = new File(fileName);
 
 		if ( cziFile == null )
 			return null;
@@ -77,7 +82,7 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 			return null;
 		}
 
-		if ( !showDialogs( meta ) )
+		if ( !GraphicsEnvironment.isHeadless() && !showDialogs( meta ) )
 			return null;
 
 		final String directory = cziFile.getParent();
@@ -355,43 +360,14 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 
 	/***
 	 * defaultProcess provides headless process (with default optional parameters) with cziFile and xmlFile to be saved.
-	 * @param cziFile
+	 * @param cziFileName
 	 * @param xmlFile
 	 */
-	public void defaultProcess(File cziFile, String xmlFile)
+	public void defaultProcess(String cziFileName, String xmlFile)
 	{
-		LightSheetZ1MetaData meta = new LightSheetZ1MetaData();
-		if ( !meta.loadMetaData( cziFile ) )
-		{
-			System.out.println( "Failed to analyze file." );
-			return;
-		}
-
-		String directory = cziFile.getParent();
-		ImgFactory< ? extends NativeType< ? > > imgFactory = selectImgFactory( meta );
-		// assemble timepints, viewsetups, missingviews and the imgloader
-		TimePoints timepoints = this.createTimePoints( meta );
-		ArrayList< ViewSetup > setups = this.createViewSetups( meta );
-		MissingViews missingViews = null;
-		// instantiate the sequencedescription
-		SequenceDescription sequenceDescription = new SequenceDescription( timepoints, setups, null, missingViews );
-		ImgLoader< UnsignedShortType > imgLoader = new LightSheetZ1ImgLoader( cziFile, imgFactory, sequenceDescription );
-		sequenceDescription.setImgLoader( imgLoader );
-		// get the minimal resolution of all calibrations
-		double minResolution = Math.min( Math.min( meta.calX(), meta.calY() ), meta.calZ() );
-		System.out.println( "Minimal resolution in all dimensions is: " + minResolution );
-		System.out.println( "(The smallest resolution in any dimension; the distance between two pixels in the output image will be that wide)" );
-		// create the initial view registrations (they are all the identity transform)
-		ViewRegistrations viewRegistrations = StackList.createViewRegistrations( sequenceDescription.getViewDescriptions(), minResolution );
-		// create the initial view interest point object
-		ViewInterestPoints viewInterestPoints = new ViewInterestPoints();
-		viewInterestPoints.createViewInterestPoints( sequenceDescription.getViewDescriptions() );
-		// finally create the SpimData itself based on the sequence description and the view registration
-		SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints, new BoundingBoxes() );
+		SpimData2 spimData = createDataset( cziFileName );
 
 		SpimData2.saveXML( spimData, xmlFile, "" );
-
-		((LightSheetZ1ImgLoader)imgLoader).finalize();
 	}
 
 	public static void main( String[] args )
@@ -401,6 +377,6 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		//defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/abe_Arabidopsis1.czi";
 		defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/multiview.czi";
 		//defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/worm7/Track1.czi";
-		new LightSheetZ1().createDataset();
+		new LightSheetZ1().createDataset( null );
 	}
 }

@@ -3,7 +3,7 @@ package spim.fiji.datasetmanager;
 import fiji.util.gui.GenericDialogPlus;
 import ij.gui.GenericDialog;
 
-import java.awt.Font;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -62,9 +62,14 @@ public class MicroManager implements MultiViewDatasetDefinition
 	}
 
 	@Override
-	public SpimData2 createDataset()
+	public SpimData2 createDataset(String fileName)
 	{
-		final File mmFile = queryMMFile();
+		File mmFile;
+
+		if(fileName == null)
+			mmFile = queryMMFile();
+		else
+			mmFile = new File(fileName);
 
 		if ( mmFile == null )
 			return null;
@@ -81,7 +86,7 @@ public class MicroManager implements MultiViewDatasetDefinition
 			return null;
 		}
 
-		if ( !showDialogs( reader ) )
+		if ( !GraphicsEnvironment.isHeadless() && !showDialogs( reader ) )
 			return null;
 
 		final String directory = mmFile.getParent();
@@ -394,6 +399,6 @@ public class MicroManager implements MultiViewDatasetDefinition
 		//defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/abe_Arabidopsis1.czi";
 		defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/multiview.czi";
 		//defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/worm7/Track1.czi";
-		new MicroManager().createDataset();
+		new MicroManager().createDataset( null );
 	}
 }

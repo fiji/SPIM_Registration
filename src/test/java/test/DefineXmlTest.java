@@ -11,9 +11,9 @@ import java.io.File;
  */
 public class DefineXmlTest
 {
-	File cziFile;
+	String cziFile;
 	String xmlFile;
-	public DefineXmlTest(File cziFile, String xmlFile)
+	public DefineXmlTest(String cziFile, String xmlFile)
 	{
 		this.cziFile = cziFile;
 		this.xmlFile = xmlFile;
