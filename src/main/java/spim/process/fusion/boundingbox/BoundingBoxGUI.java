@@ -275,7 +275,7 @@ public class BoundingBoxGUI extends BoundingBox
 	/**
 	 * @return - to be displayed in the generic dialog
 	 */
-	public String getDescription() { return "Define Manually"; }
+	public String getDescription() { return "Define manually"; }
 
 	/**
 	 * Called before the XML is potentially saved
