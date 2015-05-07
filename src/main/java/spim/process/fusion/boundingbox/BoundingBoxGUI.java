@@ -4,11 +4,13 @@ import ij.gui.GenericDialog;
 
 import java.awt.Choice;
 import java.awt.Label;
+import java.awt.Scrollbar;
 import java.awt.TextField;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.TextEvent;
 import java.awt.event.TextListener;
+import java.lang.reflect.Field;
 import java.util.Date;
 import java.util.List;
 import java.util.Vector;
@@ -80,6 +82,11 @@ public class BoundingBoxGUI extends BoundingBox
 		this.viewIdsToProcess = viewIdsToProcess;
 	}
 
+	public boolean queryParameters( final Fusion fusion, final ImgExport imgExport )
+	{
+		return queryParameters( fusion, imgExport, true );
+	}
+
 	/**
 	 * Query the necessary parameters for the bounding box
 	 * 
@@ -87,13 +94,13 @@ public class BoundingBoxGUI extends BoundingBox
 	 * @param imgExport - the export module used, can be null
 	 * @return
 	 */
-	public boolean queryParameters( final Fusion fusion, final ImgExport imgExport )
+	public boolean queryParameters( final Fusion fusion, final ImgExport imgExport, final boolean allowModifyDimensions )
 	{
 		final boolean compress = fusion == null ? false : fusion.compressBoundingBoxDialog();
 		final boolean supportsDownsampling = fusion == null ? false : fusion.supportsDownsampling();
 		final boolean supports16BitUnsigned = fusion == null ? false : fusion.supports16BitUnsigned();
 
-		final GenericDialog gd = getSimpleDialog( compress );
+		final GenericDialog gd = getSimpleDialog( compress, allowModifyDimensions );
 
 		if ( !compress )
 			gd.addMessage( "" );
@@ -130,14 +137,21 @@ public class BoundingBoxGUI extends BoundingBox
 		if ( gd.wasCanceled() )
 			return false;
 
-		this.min[ 0 ] = (int)Math.round( gd.getNextNumber() );
-		this.min[ 1 ] = (int)Math.round( gd.getNextNumber() );
-		this.min[ 2 ] = (int)Math.round( gd.getNextNumber() );
+		if ( allowModifyDimensions )
+		{
+			this.min[ 0 ] = (int)Math.round( gd.getNextNumber() );
+			this.min[ 1 ] = (int)Math.round( gd.getNextNumber() );
+			this.min[ 2 ] = (int)Math.round( gd.getNextNumber() );
+	
+			this.max[ 0 ] = (int)Math.round( gd.getNextNumber() );
+			this.max[ 1 ] = (int)Math.round( gd.getNextNumber() );
+			this.max[ 2 ] = (int)Math.round( gd.getNextNumber() );
+		}
+		else
+		{
+			setNFIndex( gd, 6 );
+		}
 
-		this.max[ 0 ] = (int)Math.round( gd.getNextNumber() );
-		this.max[ 1 ] = (int)Math.round( gd.getNextNumber() );
-		this.max[ 2 ] = (int)Math.round( gd.getNextNumber() );
-		
 		if ( supportsDownsampling )
 			this.downsampling = BoundingBoxGUI.staticDownsampling = (int)Math.round( gd.getNextNumber() );
 		else
@@ -175,7 +189,7 @@ public class BoundingBoxGUI extends BoundingBox
 		return true;
 	}
 
-	protected GenericDialog getSimpleDialog( final boolean compress )
+	protected GenericDialog getSimpleDialog( final boolean compress, final boolean allowModifyDimensions )
 	{
 		final int[] rangeMin = new int[ 3 ];
 		final int[] rangeMax = new int[ 3 ];
@@ -186,20 +200,29 @@ public class BoundingBoxGUI extends BoundingBox
 
 		gd.addMessage( "Note: Coordinates are in global coordinates as shown " +
 				"in Fiji status bar of a fused datasets", GUIHelper.smallStatusFont );
-		
+
 		if ( !compress )
 			gd.addMessage( "", GUIHelper.smallStatusFont );
-		
+
 		gd.addSlider( "Minimal_X", rangeMin[ 0 ], rangeMax[ 0 ], this.min[ 0 ] );
 		gd.addSlider( "Minimal_Y", rangeMin[ 1 ], rangeMax[ 1 ], this.min[ 1 ] );
 		gd.addSlider( "Minimal_Z", rangeMin[ 2 ], rangeMax[ 2 ], this.min[ 2 ] );
 
 		if ( !compress )
 			gd.addMessage( "" );
-		
+
 		gd.addSlider( "Maximal_X", rangeMin[ 0 ], rangeMax[ 0 ], this.max[ 0 ] );
 		gd.addSlider( "Maximal_Y", rangeMin[ 1 ], rangeMax[ 1 ], this.max[ 1 ] );
 		gd.addSlider( "Maximal_Z", rangeMin[ 2 ], rangeMax[ 2 ], this.max[ 2 ] );
+
+		if ( !allowModifyDimensions )
+		{
+			for ( int i = gd.getSliders().size() - 6; i < gd.getSliders().size(); ++i )
+				((Scrollbar)gd.getSliders().get( i )).setEnabled( false );
+
+			for ( int i = gd.getNumericFields().size() - 6; i < gd.getNumericFields().size(); ++i )
+				((TextField)gd.getNumericFields().get( i )).setEnabled( false );
+		}
 
 		return gd;
 	}
@@ -404,7 +427,7 @@ public class BoundingBoxGUI extends BoundingBox
 				final boolean supports16bit )
 		{
 			this.gd = gd;
-			
+
 			this.minX = (TextField)tf.get( 0 );
 			this.minY = (TextField)tf.get( 1 );
 			this.minZ = (TextField)tf.get( 2 );
@@ -412,7 +435,7 @@ public class BoundingBoxGUI extends BoundingBox
 			this.maxX = (TextField)tf.get( 3 );
 			this.maxY = (TextField)tf.get( 4 );
 			this.maxZ = (TextField)tf.get( 5 );
-			
+
 			if ( supports16bit )
 			{
 				pixelTypeChoice = (Choice)choices.get( 0 );
@@ -475,13 +498,17 @@ public class BoundingBoxGUI extends BoundingBox
 		
 		public void update()
 		{
-			min[ 0 ] = Long.parseLong( minX.getText() );
-			min[ 1 ] = Long.parseLong( minY.getText() );
-			min[ 2 ] = Long.parseLong( minZ.getText() );
-
-			max[ 0 ] = Long.parseLong( maxX.getText() );
-			max[ 1 ] = Long.parseLong( maxY.getText() );
-			max[ 2 ] = Long.parseLong( maxZ.getText() );
+			try
+			{
+				min[ 0 ] = Long.parseLong( minX.getText() );
+				min[ 1 ] = Long.parseLong( minY.getText() );
+				min[ 2 ] = Long.parseLong( minZ.getText() );
+	
+				max[ 0 ] = Long.parseLong( maxX.getText() );
+				max[ 1 ] = Long.parseLong( maxY.getText() );
+				max[ 2 ] = Long.parseLong( maxZ.getText() );
+			}
+			catch (Exception e ) {}
 
 			if ( supportsDownsampling )
 				downsampling = Integer.parseInt( downsample.getText() );
@@ -527,4 +554,45 @@ public class BoundingBoxGUI extends BoundingBox
 					(max[ 2 ] - min[ 2 ] + 1)/downsampling + " pixels @ " + BoundingBoxGUI.pixelTypes[ pixelType ] );
 		}
 	}
+
+	/**
+	 * Increase the counter for GenericDialog.getNextNumber, so we can skip recording it
+	 * 
+	 * @param gd
+	 * @param nfIndex
+	 */
+	private static final void setNFIndex( final GenericDialog gd, final int nfIndex )
+	{
+		try
+		{
+			Class< ? > clazz = null;
+			boolean found = false;
+	
+			do
+			{
+				if ( clazz == null )
+					clazz = gd.getClass();
+				else
+					clazz = clazz.getSuperclass();
+	
+				if ( clazz != null )
+					for ( final Field field : clazz.getDeclaredFields() )
+						if ( field.getName().equals( "nfIndex" ) )
+							found = true;
+			}
+			while ( !found && clazz != null );
+	
+			if ( !found )
+			{
+				System.out.println( "Failed to find GenericDialog.nfIndex field. Quiting." );
+				return;
+			}
+	
+			final Field nfIndexField = clazz.getDeclaredField( "nfIndex" );
+			nfIndexField.setAccessible( true );
+			nfIndexField.setInt( gd, nfIndex );
+		}
+		catch ( Exception e ) { e.printStackTrace(); }
+	}
+
 }
