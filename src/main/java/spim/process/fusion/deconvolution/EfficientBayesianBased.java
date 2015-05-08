@@ -26,6 +26,8 @@ import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.cell.CellImgFactory;
+import net.imglib2.img.imageplus.ImagePlusImgFactory;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
@@ -71,6 +73,7 @@ public class EfficientBayesianBased extends Fusion
 
 	public static boolean makeAllPSFSameSize = false;
 
+	public static int defaultFFTImgType = 0;
 	public static int defaultIterationType = 1;
 	public static int defaultWeightType = 1;
 	public static boolean defaultSaveMemory = false;
@@ -321,10 +324,11 @@ public class EfficientBayesianBased extends Fusion
 	@Override
 	public void queryAdditionalParameters( final GenericDialog gd )
 	{
+		gd.addChoice( "ImgLib2_container_FFTs", BoundingBoxGUI.imgTypes, BoundingBoxGUI.imgTypes[ defaultFFTImgType ] );
+		gd.addCheckbox( "Save_memory (not keep FFT's on CPU, 2x time & 0.5x memory)", defaultSaveMemory );
 		gd.addChoice( "Type_of_iteration", iterationTypeString, iterationTypeString[ defaultIterationType ] );
 		it = (Choice)gd.getChoices().lastElement();
 		gd.addChoice( "Image_weights", weightsString, weightsString[ defaultWeightType ] );
-		gd.addCheckbox( "Save_memory (not keep FFT's on CPU, 2x time & 0.5x memory)", defaultSaveMemory );
 		gd.addChoice( "OSEM_acceleration", osemspeedupChoice, osemspeedupChoice[ defaultOSEMspeedupIndex ] );
 		gd.addNumericField( "Number_of_iterations", defaultNumIterations, 0 );
 		gd.addCheckbox( "Debug_mode", defaultDebugMode );
@@ -342,6 +346,16 @@ public class EfficientBayesianBased extends Fusion
 	@Override
 	public boolean parseAdditionalParameters( final GenericDialog gd )
 	{
+		defaultFFTImgType = gd.getNextChoiceIndex();
+
+		if ( defaultFFTImgType == 0 )
+			computeFactory = new ArrayImgFactory< FloatType >();
+		else if ( defaultFFTImgType == 1 )
+			computeFactory = new ImagePlusImgFactory< FloatType >();
+		else
+			computeFactory = new CellImgFactory< FloatType >( 256 );
+
+		saveMemory = defaultSaveMemory = gd.getNextBoolean();
 		defaultIterationType = gd.getNextChoiceIndex();
 
 		if ( defaultIterationType == 0 )
@@ -364,7 +378,6 @@ public class EfficientBayesianBased extends Fusion
 		else
 			weightType = WeightType.WEIGHTS_ONLY;
 
-		saveMemory = defaultSaveMemory = gd.getNextBoolean();
 		osemspeedupIndex = defaultOSEMspeedupIndex = gd.getNextChoiceIndex();
 		numIterations = defaultNumIterations = (int)Math.round( gd.getNextNumber() );
 		debugMode = defaultDebugMode = gd.getNextBoolean();
