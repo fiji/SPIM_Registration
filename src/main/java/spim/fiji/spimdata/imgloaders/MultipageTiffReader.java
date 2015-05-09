@@ -31,6 +31,8 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -63,10 +65,12 @@ public class MultipageTiffReader
 
 	public static final char MM_METADATA = 51123;
 
+	public static String lastDisplayedFile;
+
 	private ByteOrder byteOrder_;
-	private File file_;
-	private RandomAccessFile raFile_;
-	private FileChannel fileChannel_;
+	private List< File > files;
+	private List< RandomAccessFile > raFiles;
+	private List< FileChannel > fileChannels;
 
 	/*
 	 * Contains pixel size, etc.
@@ -84,8 +88,8 @@ public class MultipageTiffReader
 
 	protected List< String > angleNames = null;
 	protected List< String > channelNames = null;
-	
-	private HashMap< String, Long > indexMap_;
+
+	private HashMap< String, Pair< Long, FileChannel > > indexMap_;
 
 	/**
 	 * This constructor is used for opening datasets that have already been
@@ -93,33 +97,78 @@ public class MultipageTiffReader
 	 */
 	public MultipageTiffReader( final File file ) throws IOException
 	{
-		this.file_ = file;
+		this.files = new ArrayList< File >();
+		this.raFiles = new ArrayList< RandomAccessFile >();
+		this.fileChannels = new ArrayList< FileChannel >();
+
+		int i = 0;
 
 		try
 		{
-			this.raFile_ = new RandomAccessFile( file_, "rw" );
-			this.fileChannel_ = raFile_.getChannel();
+			this.files.add( file );
+
+			// looking for other files
+			if ( file.getAbsolutePath().toLowerCase().endsWith( ".ome.tif" ) || file.getAbsolutePath().toLowerCase().endsWith( ".ome.tiff" ) )
+			{
+				final String begin = file.getName().substring( 0, file.getName().toLowerCase().indexOf( ".ome.tif" ) );
+				final File dir = file.getParentFile();
+				final String[] list = dir.list();
+				Arrays.sort( list );
+
+				for ( final String fn : list )
+					if ( !fn.equals( file.getName() ) && fn.startsWith( begin ) && fn.toLowerCase().endsWith( ".ome.tif" ) || fn.toLowerCase().endsWith( ".ome.tiff" ) )
+						this.files.add( new File( dir, fn ) );
+			}
+
+			if ( lastDisplayedFile == null )
+				lastDisplayedFile = "";
+
+			if ( !lastDisplayedFile.equals( file.getAbsolutePath() ) )
+				IOFunctions.println( "Using the following files for the MicroManager ImgLoader: " );
+
+			for ( i = 0; i < this.files.size(); ++i )
+			{
+				final File f = this.files.get( i );
+
+				if ( !lastDisplayedFile.equals( file.getAbsolutePath() ) )
+					IOFunctions.println( f.getAbsolutePath() );
+
+				this.raFiles.add( new RandomAccessFile( f, "rw" ) );
+				this.fileChannels.add( this.raFiles.get( this.raFiles.size() - 1 ).getChannel() );
+			}
+
+			lastDisplayedFile = file.getAbsolutePath();
 		}
 		catch ( Exception e )
 		{
 			e.printStackTrace();
-			throw new IOException( "Can't successfully open file: " + file_.getName() + ": " + e );
+			throw new IOException( "Can't successfully open file: " + this.files.get( i ).getName() + ": " + e );
 		}
 
-		readHeader();
-		summaryMetadata_ = readSummaryMD();
+		// Assuming byteorders to be the same, where the first image has the last word
+		for ( i = this.fileChannels.size() - 1; i >= 0; --i )
+			readHeader( this.fileChannels.get( i ) );
+
+		summaryMetadata_ = new HashMap< String, Object >();
+
+		// updating the summary metadata object, the first image has the last word if duplicate entries are present
+		for ( i = this.fileChannels.size() - 1; i >= 0; --i )
+			readSummaryMD( this.fileChannels.get( i ), summaryMetadata_ );
 
 		if ( summaryMetadata_ == null )
 			throw new IOException( "Could not read metadata" );
 
+		this.indexMap_ = new HashMap< String, Pair< Long, FileChannel > >();
+
 		try
 		{
-			readIndexMap();
+			for ( i = 0; i < this.files.size(); ++i )
+				readIndexMap( this.fileChannels.get( i ), indexMap_ );
 		}
-		catch (Exception e)
+		catch ( Exception e )
 		{
 			e.printStackTrace();
-			throw new IOException( "Reading of dataset unsuccessful for file: " + file_.getName() );
+			throw new IOException( "Reading of dataset unsuccessful for file: " + this.files.get( i ).getName() );
 		}
 	}
 
@@ -175,23 +224,26 @@ public class MultipageTiffReader
 
 	public HashMap< String, Object > getSummaryMetadata() { return summaryMetadata_; }
 
-	public Pair<Object, HashMap< String, Object > > readImage( final String label )
+	public Pair< Object, HashMap< String, Object > > readImage( final String label )
 	{
-		if (indexMap_.containsKey(label))
+		if ( indexMap_.containsKey( label ) )
 		{
-			if (fileChannel_ == null)
+			final FileChannel fileChannel = indexMap_.get( label ).getB();
+
+			if ( fileChannel == null )
 			{
-				IOFunctions.println("Attempted to read image on FileChannel that is null");
+				IOFunctions.println( "Attempted to read image on FileChannel that is null" );
 				return null;
 			}
+
 			try
 			{
-				long byteOffset = indexMap_.get(label);
+				final long byteOffset = indexMap_.get( label ).getA();
 
-				IFDData data = readIFD(byteOffset);
-				return readTaggedImage(data);
+				final IFDData data = readIFD( byteOffset, fileChannel );
+				return readTaggedImage( data, fileChannel );
 			}
-			catch (IOException ex)
+			catch ( IOException ex )
 			{
 				IOFunctions.println(ex);
 				return null;
@@ -199,6 +251,7 @@ public class MultipageTiffReader
 		}
 		else
 		{
+			IOFunctions.println( "Exception: label '" + label + "' not in present in hashmap, cannot read data." );
 			// label not in map--either writer hasnt finished writing it
 			return null;
 		}
@@ -210,27 +263,28 @@ public class MultipageTiffReader
 		return indexMap_.keySet();
 	}
 
-	private HashMap< String, Object > readSummaryMD()
+	private boolean readSummaryMD( final FileChannel fileChannel, final HashMap< String, Object > summaryMD_ )
 	{
 		try
 		{
-			ByteBuffer mdInfo = ByteBuffer.allocate(8).order(byteOrder_);
-			fileChannel_.read(mdInfo, 32);
-			int header = mdInfo.getInt(0);
-			int length = mdInfo.getInt(4);
+			final ByteBuffer mdInfo = ByteBuffer.allocate(8).order(byteOrder_);
+			fileChannel.read( mdInfo, 32 );
+			final int header = mdInfo.getInt( 0 );
+			final int length = mdInfo.getInt( 4 );
 
-			if (header != SUMMARY_MD_HEADER) {
-				IOFunctions.println("Summary Metadata Header Incorrect");
-				return null;
+			if ( header != SUMMARY_MD_HEADER )
+			{
+				IOFunctions.println( "Summary Metadata Header Incorrect" );
+				return false;
 			}
 
-			ByteBuffer mdBuffer = ByteBuffer.allocate(length).order(byteOrder_);
-			fileChannel_.read(mdBuffer, 40);
+			final ByteBuffer mdBuffer = ByteBuffer.allocate( length ).order( byteOrder_ );
+			fileChannel.read( mdBuffer, 40 );
 
-			HashMap< String, Object > summaryMD = parseJSONSimple( getString( mdBuffer ) );
+			final HashMap< String, Object > summaryMD = parseJSONSimple( getString( mdBuffer ) );
 
 			if ( summaryMD == null )
-				IOFunctions.println( "Couldn't read summary Metadata from file: " + file_.getName());
+				IOFunctions.println( "Couldn't read summary Metadata from file: " + getFileForFileChannel( fileChannel ).getName() );
 
 			// MVRotationAxis = 0_1_0
 			// MVRotations = 0_90_0_90
@@ -252,14 +306,32 @@ public class MultipageTiffReader
 					summaryMD.put( "MVRotations", "0_90_0_90_0_90" );
 			}
 
-			return summaryMD;
+			summaryMD_.putAll( summaryMD );
+
+			return true;
 		}
 		catch (Exception ex)
 		{
 			ex.printStackTrace();
-			IOFunctions.println( "Couldn't read summary Metadata from file: " + file_.getName());
-			return null;
+
+			IOFunctions.println( "Couldn't read summary Metadata from file: " + getFileForFileChannel( fileChannel ).getName() );
+			return false;
 		}
+	}
+
+	private File getFileForFileChannel( final FileChannel fileChannel )
+	{
+		File file = null;
+
+		// same order
+		for ( int i = 0; i < this.fileChannels.size(); ++i )
+			if ( this.fileChannels.get( i ) == fileChannel )
+			{
+				file = this.files.get( i );
+				break;
+			}
+
+		return file;
 	}
 
 	protected HashMap< String, Object > parseJSONSimple( final String json )
@@ -314,22 +386,22 @@ public class MultipageTiffReader
 		return map;
 	}
 
-	private ByteBuffer readIntoBuffer(long position, int length)
-			throws IOException {
-		ByteBuffer buffer = ByteBuffer.allocate(length).order(byteOrder_);
-		fileChannel_.read(buffer, position);
+	private ByteBuffer readIntoBuffer( final long position, final int length, final FileChannel fileChannel_ ) throws IOException
+	{
+		final ByteBuffer buffer = ByteBuffer.allocate(length).order( byteOrder_ );
+		fileChannel_.read( buffer, position );
 		return buffer;
 	}
 
-	private long readOffsetHeaderAndOffset(int offsetHeaderVal, int startOffset)
-			throws IOException {
-		ByteBuffer buffer1 = readIntoBuffer(startOffset, 8);
-		int offsetHeader = buffer1.getInt(0);
-		if (offsetHeader != offsetHeaderVal) {
-			throw new IOException("Offset header incorrect, expected: "
-					+ offsetHeaderVal + "   found: " + offsetHeader);
+	private long readOffsetHeaderAndOffset( final int offsetHeaderVal, final int startOffset, final FileChannel fileChannel_ ) throws IOException
+	{
+		final ByteBuffer buffer1 = readIntoBuffer( startOffset, 8, fileChannel_ );
+		final int offsetHeader = buffer1.getInt( 0 );
+		if ( offsetHeader != offsetHeaderVal )
+		{
+			throw new IOException( "Offset header incorrect, expected: " + offsetHeaderVal + "   found: " + offsetHeader );
 		}
-		return unsignInt(buffer1.getInt(4));
+		return unsignInt( buffer1.getInt( 4 ) );
 	}
 
 	public static String generateLabel( final int channel, final int slice, final int frame, final int position )
@@ -340,51 +412,67 @@ public class MultipageTiffReader
 				+ NumberUtils.intToCoreString(position);
 	}
 
-	private void readIndexMap() throws IOException {
-		long offset = readOffsetHeaderAndOffset(INDEX_MAP_OFFSET_HEADER, 8);
-		ByteBuffer header = readIntoBuffer(offset, 8);
-		if (header.getInt(0) != INDEX_MAP_HEADER) {
-			throw new RuntimeException("Error reading index map header");
-		}
-		int numMappings = header.getInt(4);
-		indexMap_ = new HashMap<String, Long>();
-		ByteBuffer mapBuffer = readIntoBuffer(offset + 8, 20 * numMappings);
-		for (int i = 0; i < numMappings; i++) {
-			int channel = mapBuffer.getInt(i * 20);
-			int slice = mapBuffer.getInt(i * 20 + 4);
-			int frame = mapBuffer.getInt(i * 20 + 8);
-			int position = mapBuffer.getInt(i * 20 + 12);
-			long imageOffset = unsignInt(mapBuffer.getInt(i * 20 + 16));
-			if (imageOffset == 0) {
+	private void readIndexMap( final FileChannel fileChannel, final HashMap< String, Pair< Long, FileChannel > > indexMap_ ) throws IOException
+	{
+		final long offset = readOffsetHeaderAndOffset( INDEX_MAP_OFFSET_HEADER, 8, fileChannel );
+		final ByteBuffer header = readIntoBuffer( offset, 8, fileChannel );
+		if ( header.getInt(0) != INDEX_MAP_HEADER )
+			throw new RuntimeException( "Error reading index map header" );
+
+		final int numMappings = header.getInt( 4 );
+		final ByteBuffer mapBuffer = readIntoBuffer( offset + 8, 20 * numMappings, fileChannel );
+		for ( int i = 0; i < numMappings; ++i )
+		{
+			final int channel = mapBuffer.getInt( i * 20 );
+			final int slice = mapBuffer.getInt( i * 20 + 4 );
+			final int frame = mapBuffer.getInt( i * 20 + 8 );
+			final int position = mapBuffer.getInt( i * 20 + 12 );
+			final long imageOffset = unsignInt( mapBuffer.getInt( i * 20 + 16 ) );
+			if ( imageOffset == 0 )
 				break; // end of index map reached
-			}
+
 			// If a duplicate label is read, forget about the previous one
 			// if data has been intentionally overwritten, this gives the most
 			// current version
-			indexMap_.put(generateLabel(channel, slice, frame, position),
-					imageOffset);
+			final String label = generateLabel( channel, slice, frame, position );
+			if ( indexMap_.containsKey( label ) )
+				IOFunctions.println( "ERROR!!! Label: " + label + " already present." );
+
+			//System.out.println( label + " " + getFileForFileChannel( fileChannel ).getName() );
+
+			indexMap_.put( label, new ValuePair< Long, FileChannel >( imageOffset, fileChannel ) );
 		}
 	}
 
-	private IFDData readIFD(long byteOffset) throws IOException {
-		ByteBuffer buff = readIntoBuffer(byteOffset, 2);
-		int numEntries = buff.getChar(0);
+	private IFDData readIFD( final long byteOffset, final FileChannel fileChannel ) throws IOException
+	{
+		final ByteBuffer buff = readIntoBuffer( byteOffset, 2, fileChannel );
+		final int numEntries = buff.getChar( 0 );
 
-		ByteBuffer entries = readIntoBuffer(byteOffset + 2, numEntries * 12 + 4).order(byteOrder_);
-		IFDData data = new IFDData();
-		for (int i = 0; i < numEntries; i++) {
-			IFDEntry entry = readDirectoryEntry(i * 12, entries);
-			if (entry.tag == MM_METADATA) {
+		final ByteBuffer entries = readIntoBuffer( byteOffset + 2, numEntries * 12 + 4, fileChannel ).order( byteOrder_ );
+		final IFDData data = new IFDData();
+
+		for ( int i = 0; i < numEntries; ++i )
+		{
+			final IFDEntry entry = readDirectoryEntry( i * 12, entries );
+			if ( entry.tag == MM_METADATA )
+			{
 				data.mdOffset = entry.value;
 				data.mdLength = entry.count;
-			} else if (entry.tag == STRIP_OFFSETS) {
+			}
+			else if (entry.tag == STRIP_OFFSETS)
+			{
 				data.pixelOffset = entry.value;
-			} else if (entry.tag == STRIP_BYTE_COUNTS) {
+			}
+			else if (entry.tag == STRIP_BYTE_COUNTS)
+			{
 				data.bytesPerImage = entry.value;
 			}
 		}
-		data.nextIFD = unsignInt(entries.getInt(numEntries * 12));
+
+		data.nextIFD = unsignInt( entries.getInt( numEntries * 12 ) );
 		data.nextIFDOffsetLocation = byteOffset + 2 + numEntries * 12;
+
 		return data;
 	}
 
@@ -397,20 +485,19 @@ public class MultipageTiffReader
 		}
 	}
 
-	private Pair< Object, HashMap< String, Object > > readTaggedImage( final IFDData data ) throws IOException
+	private Pair< Object, HashMap< String, Object > > readTaggedImage( final IFDData data, final FileChannel fileChannel ) throws IOException
 	{
-		ByteBuffer pixelBuffer = ByteBuffer.allocate((int) data.bytesPerImage).order( byteOrder_ );
-		ByteBuffer mdBuffer = ByteBuffer.allocate((int) data.mdLength).order( byteOrder_ );
-		fileChannel_.read(pixelBuffer, data.pixelOffset);
-		fileChannel_.read(mdBuffer, data.mdOffset);
+		final ByteBuffer pixelBuffer = ByteBuffer.allocate( (int)data.bytesPerImage).order( byteOrder_ );
+		final ByteBuffer mdBuffer = ByteBuffer.allocate( (int)data.mdLength).order( byteOrder_ );
+		fileChannel.read( pixelBuffer, data.pixelOffset );
+		fileChannel.read( mdBuffer, data.mdOffset );
 
 		final HashMap< String, Object > md = parseJSONSimple( getString( mdBuffer ) );
 
-		if (byteDepth_ == 0) {
-			getRGBAndByteDepth(md);
-		}
+		if ( byteDepth_ == 0 )
+			getRGBAndByteDepth( md );
 
-		if (rgb_)
+		if ( rgb_ )
 		{
 			IOFunctions.println( "RGB types not supported." );
 			return null;
@@ -423,58 +510,62 @@ public class MultipageTiffReader
 			}
 			else
 			{
-				short[] pix = new short[pixelBuffer.capacity() / 2];
-				for (int i = 0; i < pix.length; i++) {
-					pix[i] = pixelBuffer.getShort(i * 2);
-				}
-				return new ValuePair<Object, HashMap< String, Object >>(pix, md);
+				final short[] pix = new short[ pixelBuffer.capacity() / 2 ];
+				for ( int i = 0; i < pix.length; ++i )
+					pix[ i ] = pixelBuffer.getShort( i * 2 );
+
+				return new ValuePair<Object, HashMap< String, Object >>( pix, md );
 			}
 		}
 	}
 
-	private IFDEntry readDirectoryEntry(int offset, ByteBuffer buffer)
-			throws IOException {
-		char tag = buffer.getChar(offset);
-		char type = buffer.getChar(offset + 2);
-		long count = unsignInt(buffer.getInt(offset + 4));
-		long value;
-		if (type == 3 && count == 1) {
+	private IFDEntry readDirectoryEntry( final int offset, final ByteBuffer buffer ) throws IOException
+	{
+		final char tag = buffer.getChar(offset);
+		final char type = buffer.getChar(offset + 2);
+		final long count = unsignInt(buffer.getInt(offset + 4));
+		final long value;
+
+		if (type == 3 && count == 1)
 			value = buffer.getChar(offset + 8);
-		} else {
+		else
 			value = unsignInt(buffer.getInt(offset + 8));
-		}
-		return (new IFDEntry(tag, type, count, value));
+
+		return ( new IFDEntry( tag, type, count, value ) );
 	}
 
 	// returns byteoffset of first IFD
-	private long readHeader() throws IOException {
-		ByteBuffer tiffHeader = ByteBuffer.allocate(8);
-		fileChannel_.read(tiffHeader, 0);
-		char zeroOne = tiffHeader.getChar(0);
-		if (zeroOne == 0x4949) {
+	private long readHeader( final FileChannel fileChannel ) throws IOException
+	{
+		final ByteBuffer tiffHeader = ByteBuffer.allocate( 8 );
+		fileChannel.read( tiffHeader, 0 );
+		final char zeroOne = tiffHeader.getChar( 0 );
+		if (zeroOne == 0x4949)
 			byteOrder_ = ByteOrder.LITTLE_ENDIAN;
-		} else if (zeroOne == 0x4d4d) {
+		else if (zeroOne == 0x4d4d)
 			byteOrder_ = ByteOrder.BIG_ENDIAN;
-		} else {
+		else
 			throw new IOException("Error reading Tiff header");
-		}
-		tiffHeader.order(byteOrder_);
-		short twoThree = tiffHeader.getShort(2);
-		if (twoThree != 42) {
+
+		tiffHeader.order( byteOrder_ );
+		final short twoThree = tiffHeader.getShort( 2 );
+		if (twoThree != 42)
 			throw new IOException("Tiff identifier code incorrect");
-		}
-		return unsignInt(tiffHeader.getInt(4));
+
+		return unsignInt( tiffHeader.getInt( 4 ) );
 	}
 
-	public void close() throws IOException {
-		if (fileChannel_ != null) {
-			fileChannel_.close();
-			fileChannel_ = null;
-		}
-		if (raFile_ != null) {
-			raFile_.close();
-			raFile_ = null;
-		}
+	public void close() throws IOException
+	{
+		for ( final FileChannel fileChannel : this.fileChannels )
+			if ( fileChannel != null )
+				fileChannel.close();
+		this.fileChannels.clear();
+
+		for ( final RandomAccessFile raFile : this.raFiles )
+		if ( raFile != null )
+			raFile.close();
+		this.raFiles.clear();
 	}
 
 	public void setApplyAxis( final boolean apply ) { this.applyAxis = apply; }
