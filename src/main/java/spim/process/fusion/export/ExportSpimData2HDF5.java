@@ -201,11 +201,11 @@ public class ExportSpimData2HDF5 implements ImgExport
 		return exportImage( img, bb, tp, vs, Double.NaN, Double.NaN );
 	}
 
-	public static < T extends RealType< T > > RandomAccessibleInterval< UnsignedShortType > convert( final RandomAccessibleInterval< T > img, final Parameters params )
+	public static < T extends RealType< T > > double[] updateAndGetMinMax( final RandomAccessibleInterval< T > img, final Parameters params )
 	{
 		double min, max;
 
-		if ( params.getConvertChoice() == 0 || Double.isNaN( params.getMin() ) || Double.isNaN( params.getMin() ) )
+		if ( params == null || params.getConvertChoice() == 0 || Double.isNaN( params.getMin() ) || Double.isNaN( params.getMin() ) )
 		{
 			final float[] minmax = FusionHelper.minMax( img );
 			min = minmax[ 0 ];
@@ -214,8 +214,11 @@ public class ExportSpimData2HDF5 implements ImgExport
 			min = Math.max( 0, min - ((min+max)/2.0) * 0.1 );
 			max = max + ((min+max)/2.0) * 0.1;
 
-			params.setMin( min );
-			params.setMax( max );
+			if ( params != null )
+			{
+				params.setMin( min );
+				params.setMax( max );
+			}
 		}
 		else
 		{
@@ -226,7 +229,14 @@ public class ExportSpimData2HDF5 implements ImgExport
 		IOFunctions.println( "Min intensity for 16bit conversion: " + min );
 		IOFunctions.println( "Max intensity for 16bit conversion: " + max );
 
-		final RealUnsignedShortConverter< T > converter = new RealUnsignedShortConverter< T >( min, max );
+		return new double[]{ min, max };
+	}
+
+	public static < T extends RealType< T > > RandomAccessibleInterval< UnsignedShortType > convert( final RandomAccessibleInterval< T > img, final Parameters params )
+	{
+		final double[] minmax = updateAndGetMinMax( img, params );
+
+		final RealUnsignedShortConverter< T > converter = new RealUnsignedShortConverter< T >( minmax[ 0 ], minmax[ 1 ] );
 
 		return new ConvertedRandomAccessibleInterval<T, UnsignedShortType>( img, converter, new UnsignedShortType() );
 	}
