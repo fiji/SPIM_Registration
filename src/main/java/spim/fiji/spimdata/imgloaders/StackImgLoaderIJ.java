@@ -2,6 +2,7 @@ package spim.fiji.spimdata.imgloaders;
 
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.gui.GenericDialog;
 import ij.io.Opener;
 import ij.process.ImageProcessor;
 
@@ -9,14 +10,20 @@ import java.io.File;
 import java.util.Date;
 
 import spim.fiji.datasetmanager.StackListImageJ;
+import spim.fiji.plugin.resave.Generic_Resave_HDF5;
+import spim.fiji.plugin.resave.Generic_Resave_HDF5.Parameters;
+import spim.fiji.plugin.util.GUIHelper;
+import spim.process.fusion.export.ExportSpimData2HDF5;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.converter.RealUnsignedShortConverter;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImg;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.img.planar.PlanarImg;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
@@ -25,6 +32,8 @@ import net.imglib2.view.Views;
 
 public class StackImgLoaderIJ extends StackImgLoader
 {
+	Parameters params = null;
+
 	public StackImgLoaderIJ(
 			final File path, final String fileNamePattern, final ImgFactory< ? extends NativeType< ? > > imgFactory,
 			final int layoutTP, final int layoutChannels, final int layoutIllum, final int layoutAngles,
@@ -45,7 +54,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 
 		return imp;
 	}
-	
+
 	/**
 	 * Get {@link FloatType} image normalized to the range [0,1].
 	 *
@@ -63,6 +72,8 @@ public class StackImgLoaderIJ extends StackImgLoader
 		if ( file == null )
 			throw new RuntimeException( "Could not find file '" + file + "'." );
 
+		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Loading '" + file + "' ..." );
+
 		final ImagePlus imp = open( file );
 
 		if ( imp == null )
@@ -74,7 +85,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 		if ( img == null )
 			throw new RuntimeException( "Could not instantiate " + getImgFactory().getClass().getSimpleName() + " for '" + file + "', most likely out of memory." );
 		else
-			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Opening '" + file + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] + " image=" + img.getClass().getSimpleName() + "<FloatType>]" );
+			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Opened '" + file + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] + " image=" + img.getClass().getSimpleName() + "<FloatType>]" );
 
 		imagePlus2ImgLib2Img( imp, img, normalize );
 
@@ -104,7 +115,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 				float max = -Float.MAX_VALUE;
 				
 				for ( int z = 0; z < sizeZ; ++z )
-				{				
+				{
 					final ImageProcessor ip = stack.getProcessor( z + 1 );
 	
 					for ( int i = 0; i < sizeXY; ++i )
@@ -199,10 +210,35 @@ public class StackImgLoaderIJ extends StackImgLoader
 		if ( file == null )
 			throw new RuntimeException( "Could not find file '" + file + "'." );
 
+		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Loading '" + file + "' ..." );
+
 		final ImagePlus imp = open( file );
 		
 		if ( imp == null )
 			throw new RuntimeException( "Could not load '" + file + "'." );
+
+		final boolean is32bit;
+		final RealUnsignedShortConverter< FloatType > converter;
+		
+		if ( imp.getType() == ImagePlus.GRAY32 )
+		{
+			is32bit = true;
+			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Image '" + file + "' is 32bit, opening as 16bit with scaling" );
+
+			if ( params == null )
+				params = queryParameters();
+
+			if ( params == null )
+				return null;
+
+			final double[] minmax = ExportSpimData2HDF5.updateAndGetMinMax( ImageJFunctions.wrapFloat( imp ), params );
+			converter = new RealUnsignedShortConverter< FloatType >( minmax[ 0 ], minmax[ 1 ] );
+		}
+		else
+		{
+			is32bit = false;
+			converter = null;
+		}
 
 		final long[] dim = new long[]{ imp.getWidth(), imp.getHeight(), imp.getNSlices() };
 		final Img< UnsignedShortType > img = instantiateImg( dim, new UnsignedShortType() );
@@ -210,7 +246,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 		if ( img == null )
 			throw new RuntimeException( "Could not instantiate " + getImgFactory().getClass().getSimpleName() + " for '" + file + "', most likely out of memory." );
 		else
-			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Opened '" + file + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] + " image=" + img.getClass().getSimpleName() + "<UnsignedShortType>]" );			
+			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Opened '" + file + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] + " image=" + img.getClass().getSimpleName() + "<UnsignedShortType>]" );
 
 		final ImageStack stack = imp.getStack();
 		final int sizeZ = imp.getNSlices();
@@ -223,9 +259,24 @@ public class StackImgLoaderIJ extends StackImgLoader
 			for ( int z = 0; z < sizeZ; ++z )
 			{
 				final ImageProcessor ip = stack.getProcessor( z + 1 );
-				
-				for ( int i = 0; i < sizeXY; ++i )
-					cursor.next().set( ip.get( i ) );
+
+				if( is32bit )
+				{
+					final FloatType input = new FloatType();
+					final UnsignedShortType output = new UnsignedShortType();
+
+					for ( int i = 0; i < sizeXY; ++i )
+					{
+						input.set( ip.getf( i ) );
+						converter.convert( input, output );
+						cursor.next().set( output.get() );
+					}
+				}
+				else
+				{
+					for ( int i = 0; i < sizeXY; ++i )
+						cursor.next().set( ip.get( i ) );
+				}
 			}
 		}
 		else
@@ -236,11 +287,27 @@ public class StackImgLoaderIJ extends StackImgLoader
 			{
 				final Cursor< UnsignedShortType > cursor = Views.iterable( Views.hyperSlice( img, 2, z ) ).localizingCursor();
 				final ImageProcessor ip = stack.getProcessor( z + 1 );
-				
-				while ( cursor.hasNext() )
+
+				if ( is32bit )
 				{
-					cursor.fwd();
-					cursor.get().set( ip.get( cursor.getIntPosition( 0 ) + cursor.getIntPosition( 1 ) * width ) );
+					final FloatType input = new FloatType();
+					final UnsignedShortType output = new UnsignedShortType();
+
+					while ( cursor.hasNext() )
+					{
+						cursor.fwd();
+						input.set( ip.getf( cursor.getIntPosition( 0 ) + cursor.getIntPosition( 1 ) * width ) );
+						converter.convert( input, output );
+						cursor.get().set( output );
+					}
+				}
+				else
+				{
+					while ( cursor.hasNext() )
+					{
+						cursor.fwd();
+						cursor.get().set( ip.get( cursor.getIntPosition( 0 ) + cursor.getIntPosition( 1 ) * width ) );
+					}
 				}
 			}
 		}
@@ -276,5 +343,50 @@ public class StackImgLoaderIJ extends StackImgLoader
 	public String toString()
 	{
 		return new StackListImageJ().getTitle() + ", ImgFactory=" + imgFactory.getClass().getSimpleName();
+	}
+
+	protected static Parameters queryParameters()
+	{
+		final GenericDialog gd = new GenericDialog( "Opening 32bit TIFF as 16bit" );
+
+		gd.addMessage( "You are trying to open 32-bit images as 16-bit (resaving as HDF5 maybe). Please define how to convert to 16bit.", GUIHelper.mediumstatusfont );
+		gd.addMessage( "Note: This dialog will only show up once for the first image.", GUIHelper.mediumstatusfont );
+		gd.addChoice( "Convert_32bit", Generic_Resave_HDF5.convertChoices, Generic_Resave_HDF5.convertChoices[ Generic_Resave_HDF5.defaultConvertChoice ] );
+
+		gd.showDialog();
+
+		if ( gd.wasCanceled() )
+			return null;
+
+		Generic_Resave_HDF5.defaultConvertChoice = gd.getNextChoiceIndex();
+
+		if ( Generic_Resave_HDF5.defaultConvertChoice == 2 )
+		{
+			if ( Double.isNaN( Generic_Resave_HDF5.defaultMin ) )
+				Generic_Resave_HDF5.defaultMin = 0;
+
+			if ( Double.isNaN( Generic_Resave_HDF5.defaultMax ) )
+				Generic_Resave_HDF5.defaultMax = 5;
+
+			final GenericDialog gdMinMax = new GenericDialog( "Define min/max" );
+
+			gdMinMax.addNumericField( "Min_Intensity_for_16bit_conversion", Generic_Resave_HDF5.defaultMin, 1 );
+			gdMinMax.addNumericField( "Max_Intensity_for_16bit_conversion", Generic_Resave_HDF5.defaultMax, 1 );
+			gdMinMax.addMessage( "Note: the typical range for multiview deconvolution is [0 ... 10] & for fusion the same as the input intensities., ",GUIHelper.mediumstatusfont );
+
+			gdMinMax.showDialog();
+
+			if ( gdMinMax.wasCanceled() )
+				return null;
+
+			Generic_Resave_HDF5.defaultMin = gdMinMax.getNextNumber();
+			Generic_Resave_HDF5.defaultMax = gdMinMax.getNextNumber();
+		}
+		else
+		{
+			Generic_Resave_HDF5.defaultMin = Generic_Resave_HDF5.defaultMax = Double.NaN;
+		}
+
+		return new Parameters( false, null, null, null, null, false, false, 0, 0, false, 0, Generic_Resave_HDF5.defaultConvertChoice, Generic_Resave_HDF5.defaultMin, Generic_Resave_HDF5.defaultMax );
 	}
 }

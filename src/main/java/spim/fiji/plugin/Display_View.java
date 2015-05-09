@@ -1,5 +1,6 @@
 package spim.fiji.plugin;
 
+import ij.ImageJ;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
@@ -159,6 +160,7 @@ public class Display_View implements PlugIn
 
 	public static void main( String[] args )
 	{
+		new ImageJ();
 		new Display_View().run( null );
 	}
 }
