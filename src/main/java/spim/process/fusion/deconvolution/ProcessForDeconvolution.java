@@ -121,7 +121,10 @@ public class ProcessForDeconvolution
 	{
 		// TODO: get rid of this hack
 		if ( files != null )
+		{
 			weightType = WeightType.LOAD_WEIGHTS;
+			IOFunctions.println( "WARNING: LOADING WEIGHTS FROM IMAGES" );
+		}
 
 		// get all views that are fused
 		this.viewDescriptions = FusionHelper.assembleInputData( spimData, timepoint, channel, viewIdsToProcess );
@@ -209,6 +212,7 @@ public class ProcessForDeconvolution
 			}
 			else //if ( processType == ProcessType.LOAD_WEIGHTS )
 			{
+				IOFunctions.println( "WARNING: LOADING WEIGHTS FROM: '" + new File( files.get( i ) ) + "'" );
 				ImagePlus imp = StackImgLoaderIJ.open( new File( files.get( i ) ) );
 				weightImg = imgFactory.create( bb.getDimensions(), new FloatType() );
 				StackImgLoaderIJ.imagePlus2ImgLib2Img( imp, (Img< FloatType > )weightImg, false );
