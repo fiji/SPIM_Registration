@@ -5,6 +5,8 @@
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com, 2012
+//		 Stephan Preibisch, stephan.preibisch@gmx.de 2015
+//		 Nico Stuurman 2015
 //
 // COPYRIGHT:    University of California, San Francisco, 2012
 //
@@ -45,6 +47,10 @@ import net.imglib2.util.Util;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
 
+/**
+ * Adapted version from the MicroManager codebase that supports the new diSPIM related tags
+ * and multiple-file reading.
+ */
 public class MultipageTiffReader
 {
 	private static final long BIGGEST_INT_BIT = (long) Math.pow(2, 31);
