@@ -162,7 +162,7 @@ public class MVDeconFFT
 	protected void init( final PSFTYPE iterationType, final ArrayList< MVDeconFFT > views ) throws IncompatibleTypeException
 	{		
 		// normalize kernel so that sum of all pixels == 1
-		AdjustInput.normImage( kernel1 );
+		AdjustInput.normImg( kernel1 );
 
 		this.iterationType = iterationType;
 		this.views = views;
@@ -237,7 +237,7 @@ public class MVDeconFFT
 			}
 
 			// norm the compound kernel
-			AdjustInput.normImage( tmp );
+			AdjustInput.normImg( tmp );
 
 			// set it as kernel2 of the deconvolution
 			this.kernel2 = ( tmp );
@@ -284,7 +284,7 @@ public class MVDeconFFT
 			}
 
 			// norm the compound kernel
-			AdjustInput.normImage( tmp );
+			AdjustInput.normImg( tmp );
 
 			// compute the inverted kernel
 			this.kernel2 = computeInvertedKernel( tmp );
@@ -295,7 +295,7 @@ public class MVDeconFFT
 			final ArrayImg< FloatType, ? > exponentialKernel = computeExponentialKernel( this.kernel1, numViews );
 
 			// norm the squared kernel
-			AdjustInput.normImage( exponentialKernel );
+			AdjustInput.normImg( exponentialKernel );
 
 			// compute the inverted squared kernel
 			this.kernel2 = computeInvertedKernel( exponentialKernel );	

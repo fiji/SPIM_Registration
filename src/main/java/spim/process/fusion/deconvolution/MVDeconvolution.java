@@ -7,10 +7,12 @@ import ij.ImageStack;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
@@ -22,6 +24,7 @@ import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.RealSum;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import spim.Threads;
@@ -44,7 +47,6 @@ public class MVDeconvolution
 	final static float minValue = 0.0001f;
 
 	final int numViews, numDimensions;
-	final float avg;
 	final double lambda;
 
 	ImageStack stack;
@@ -75,6 +77,7 @@ public class MVDeconvolution
 			final int osemspeedupindex,
 			final String name ) throws IncompatibleTypeException
 	{
+		this.psi = null;
 		this.name = name;
 		this.data = views.getViews();
 		this.views = views;
@@ -82,55 +85,42 @@ public class MVDeconvolution
 		this.numDimensions = data.get( 0 ).getImage().numDimensions();
 		this.lambda = lambda;
 
-		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Deconvolved & temporary image factory: " + views.imgFactory().getClass().getSimpleName() );
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Deconvolved & temporary image factory: " + views.imgFactory().getClass().getSimpleName() );
+
+		// init all views
+		views.init( iterationType );
 
 		if ( initialImage != null )
+		{
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Loading intial image '" + initialImage + "'" );
 			this.psi = loadInitialImage(
 					initialImage,
 					checkNumbers,
 					minValue,
 					data.get( 0 ).getImage(),
 					views.imgFactory() );
-
-		final double[] result = AdjustInput.normAllImages( data );
-		this.avg = (float)result[ 0 ];
-
-		if ( osemspeedupindex == 1 )//min
-			osemspeedup = Math.max( 1, result[ 1 ] );//but not smaller than 1
-		else if ( osemspeedupindex == 2 )//avg
-			osemspeedup = Math.max( 1, result[ 2 ] );//but not smaller than 1
-
-		adjustOSEMspeedup( views, osemspeedup );
-
-		IOFunctions.println( "Average intensity in overlapping area: " + avg );
-		IOFunctions.println( "OSEM acceleration: " + osemspeedup );
-
-		// init all views
-		views.init( iterationType );
-
-		//
-		// the real data image psi is initialized with the average 
-		// if there was no initial guess loaded
-		//
-		if ( this.psi == null )
+		}
+		else
 		{
-			this.psi = views.imgFactory().create( data.get( 0 ).getImage(), new FloatType() );
+			// the real data image psi is initialized with the fused image 
+			// if there was no initial guess loaded
 
-			for ( final FloatType f : psi )
-				f.set( avg );
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Fusing image for first iteration" );
+
+			this.psi = views.imgFactory().create( data.get( 0 ).getImage(), new FloatType() );
+			final double avg = fuseFirstIteration( psi, views.getViews() );
+
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Average intensity in overlapping area: " + avg );
 		}
 
 		// instantiate the temporary images
-		this.tmp1 = views.imgFactory().create( data.get( 0 ).getImage(), new FloatType() );
-		this.tmp2 = views.imgFactory().create( data.get( 0 ).getImage(), new FloatType() );
-
-		IOFunctions.println( "Deconvolved image container: " + psi.getClass().getSimpleName() );
+		this.tmp1 = views.imgFactory().create( psi, new FloatType() );
+		this.tmp2 = views.imgFactory().create( psi, new FloatType() );
 
 		// run the deconvolution
 		while ( i < numIterations )
 		{
-			runIteration();
-
+			// show the fused image first
 			if ( debug && (i-1) % debugInterval == 0 )
 			{
 				// if it is slices, wrap & copy otherwise virtual & copy - never use the actual image
@@ -168,22 +158,56 @@ public class MVDeconvolution
 					this.ci.setStack( this.stack, 1, (int)this.psi.dimension( 2 ), stack.getSize() / (int)this.psi.dimension( 2 ) );	
 				}
 			}
+
+			runIteration();
 		}
 
 		IOFunctions.println( "DONE (" + new Date(System.currentTimeMillis()) + ")." );
 	}
-	
-	
-	private void adjustOSEMspeedup( final MVDeconInput views, final double osemspeedup )
-	{
-		if ( osemspeedup == 1.0 )
-			return;
 
-		for ( final MVDeconFFT view : views.getViews() )
+	protected static final double fuseFirstIteration( final Img< FloatType > psi, final ArrayList< MVDeconFFT > views )
+	{
+		final int nThreads = Threads.numThreads();
+		final int nPortions = nThreads * 2;
+
+		// split up into many parts for multithreading
+		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( psi.size(), nPortions );
+		final ArrayList< Callable< RealSum > > tasks = new ArrayList< Callable< RealSum > >();
+
+		final ExecutorService taskExecutor = Executors.newFixedThreadPool( nThreads );
+
+		final ArrayList< RandomAccessibleInterval< FloatType > > imgs = new ArrayList< RandomAccessibleInterval< FloatType > >();
+		final ArrayList< RandomAccessibleInterval< FloatType > > weights = new ArrayList< RandomAccessibleInterval< FloatType > >();
+
+		for ( final MVDeconFFT mvdecon : views )
 		{
-			for ( final FloatType f : Views.iterable( view.getWeight() ) )
-				f.set( Math.min( 1, f.get() * (float)osemspeedup ) ); // individual contribution never higher than 1
+			imgs.add( mvdecon.getImage() );
+			weights.add( mvdecon.getWeight() );
 		}
+
+		for ( final ImagePortion portion : portions )
+			tasks.add( new FirstIteration( portion, psi, imgs, weights ) );
+
+		final RealSum s = new RealSum();
+
+		try
+		{
+			// invokeAll() returns when all tasks are complete
+			final List< Future< RealSum > > imgIntensities = taskExecutor.invokeAll( tasks );
+
+			for ( final Future< RealSum  > future : imgIntensities )
+				s.add( future.get().getSum() );
+		}
+		catch ( final Exception e )
+		{
+			IOFunctions.println( "Failed to fuse initial iteration: " + e );
+			e.printStackTrace();
+			return -1;
+		}
+
+		taskExecutor.shutdown();
+
+		return s.getSum() / (double)psi.size();
 	}
 
 	protected static Img< FloatType > loadInitialImage(
@@ -273,7 +297,6 @@ public class MVDeconvolution
 
 	public MVDeconInput getData() { return views; }
 	public String getName() { return name; }
-	public double getAvg() { return avg; }
 
 	public Img< FloatType > getPsi() { return psi; }	
 	public int getCurrentIteration() { return i; }

@@ -11,23 +11,37 @@ public class NormalizingRandomAccessibleInterval< T extends RealType< T > > impl
 {
 	final RandomAccessibleInterval< T > interval;
 	final RandomAccessibleInterval< T > normalizeInterval;
+	double osemspeedup;
 	final T type;
+
+	public NormalizingRandomAccessibleInterval(
+			final RandomAccessibleInterval< T > interval,
+			final RandomAccessibleInterval< T > normalizeInterval,
+			final double osemspeedup,
+			final T type )
+	{
+		// the assumption is that dimensionality & size matches, we do not test it tough
+		this.interval = interval;
+		this.normalizeInterval = normalizeInterval;
+		this.osemspeedup = osemspeedup;
+		this.type = type;
+	}
 
 	public NormalizingRandomAccessibleInterval(
 			final RandomAccessibleInterval< T > interval,
 			final RandomAccessibleInterval< T > normalizeInterval,
 			final T type )
 	{
-		// the assumption is that dimensionality & size matches, we do not test it tough
-		this.interval = interval;
-		this.normalizeInterval = normalizeInterval;
-		this.type = type;
+		this( interval, normalizeInterval, 1, type );
 	}
+
+	public void setOSEMspeedup( final double osemspeedup ) { this.osemspeedup = osemspeedup; }
+	public double getOSEMspeedup() { return osemspeedup; }
 
 	@Override
 	public RandomAccess< T > randomAccess()
 	{
-		return new NormalizingRandomAccess< T >( interval, normalizeInterval, type );
+		return new NormalizingRandomAccess< T >( interval, normalizeInterval, osemspeedup, type );
 	}
 
 	@Override
