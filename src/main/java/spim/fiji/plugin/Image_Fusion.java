@@ -35,13 +35,13 @@ import bdv.img.hdf5.Hdf5ImageLoader;
 
 public class Image_Fusion implements PlugIn
 {
-	public static ArrayList< Fusion > staticFusionAlgorithms = new ArrayList< Fusion >();
+	public final static ArrayList< Fusion > staticFusionAlgorithms = new ArrayList< Fusion >();
 	public static int defaultFusionAlgorithm = 1;
 
-	public static ArrayList< BoundingBoxGUI > staticBoundingBoxAlgorithms = new ArrayList< BoundingBoxGUI >();
+	public final static ArrayList< BoundingBoxGUI > staticBoundingBoxAlgorithms = new ArrayList< BoundingBoxGUI >();
 	public static int defaultBoundingBoxAlgorithm = -1;
 
-	public static ArrayList< ImgExport > staticImgExportAlgorithms = new ArrayList< ImgExport >();
+	public final static ArrayList< ImgExport > staticImgExportAlgorithms = new ArrayList< ImgExport >();
 	public static int defaultImgExportAlgorithm = 0;
 
 	static
