@@ -29,10 +29,17 @@ public interface MultiViewDatasetDefinition
 	 *
 	 * @return - the saved {@link SpimData} object
 	 */
-	public SpimData2 createDataset(String fileName);
+	public SpimData2 createDataset();
 	
 	/**
 	 * @return - a new instance of this implementation
 	 */
 	public MultiViewDatasetDefinition newInstance();
+
+	/**
+	 * GUI for user inputs
+	 *
+	 * @return
+	 */
+	public boolean queryDialog();
 }

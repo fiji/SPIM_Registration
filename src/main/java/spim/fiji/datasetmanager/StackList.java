@@ -216,7 +216,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	protected abstract StackImgLoader createAndInitImgLoader( final String path, final File basePath, final ImgFactory< ? extends NativeType< ? > > imgFactory, SequenceDescription sequenceDescription );
 	
 	@Override
-	public SpimData2 createDataset(String fileName)
+	public SpimData2 createDataset()
 	{
 		// collect all the information
 		if ( !queryInformation() )
@@ -1030,5 +1030,10 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		setDefaultMultipleAngles( hasMultipleAngles );
 
 		return true;
-	}	
+	}
+
+	@Override public boolean queryDialog()
+	{
+		return false;
+	}
 }

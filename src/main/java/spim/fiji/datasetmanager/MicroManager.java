@@ -62,17 +62,9 @@ public class MicroManager implements MultiViewDatasetDefinition
 	}
 
 	@Override
-	public SpimData2 createDataset(String fileName)
+	public SpimData2 createDataset()
 	{
-		File mmFile;
-
-		if(fileName == null)
-			mmFile = queryMMFile();
-		else
-			mmFile = new File(fileName);
-
-		if ( mmFile == null )
-			return null;
+		final File mmFile = queryMMFile();
 
 		MultipageTiffReader reader = null;
 
@@ -392,6 +384,12 @@ public class MicroManager implements MultiViewDatasetDefinition
 	@Override
 	public MicroManager newInstance() { return new MicroManager(); }
 
+	@Override
+	public boolean queryDialog()
+	{
+		return false;
+	}
+
 	public static void main( String[] args )
 	{
 		//defaultFirstFile = "/Volumes/My Passport/worm7/Track1(3).czi";
@@ -399,6 +397,6 @@ public class MicroManager implements MultiViewDatasetDefinition
 		//defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/abe_Arabidopsis1.czi";
 		defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/multiview.czi";
 		//defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/worm7/Track1.czi";
-		new MicroManager().createDataset( null );
+		new MicroManager().createDataset( );
 	}
 }
