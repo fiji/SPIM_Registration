@@ -1,12 +1,11 @@
 package spim.process.fusion.boundingbox;
 
-import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 
-import java.awt.AWTEvent;
 import java.awt.Label;
 import java.awt.TextField;
 import java.awt.event.TextEvent;
+import java.awt.event.TextListener;
 import java.util.List;
 import java.util.Vector;
 
@@ -88,7 +87,7 @@ public class AutomaticBoundingBox extends BoundingBoxGUI
 		Label l = (Label)gd.getMessage();
 		
 		// add listeners and update values
-		addListeners( gd, gd.getNumericFields(), l, dim ).dialogItemChanged( gd, new TextEvent( gd, TextEvent.TEXT_VALUE_CHANGED ) );		
+		addListeners( gd, gd.getNumericFields(), l, dim );
 		
 		gd.showDialog();
 		
@@ -151,24 +150,21 @@ public class AutomaticBoundingBox extends BoundingBoxGUI
 		return c;
 	}
 
-	protected DialogListener addListeners(
+	protected void addListeners(
 			final GenericDialog gd,
 			final Vector<?> tf,
 			final Label label,
 			final long[] dim )
 	{
 		final TextField downsample = (TextField)tf.get( 2 );
-				
-		DialogListener d = new DialogListener()
-		{
-			int downsampling;
-			
-			@Override
-			public boolean dialogItemChanged( final GenericDialog dialog, final AWTEvent e )
+
+		downsample.addTextListener(
+			new TextListener()
 			{
-				if ( (e instanceof TextEvent) && (e.getID() == TextEvent.TEXT_VALUE_CHANGED) )
+				@Override
+				public void textValueChanged(TextEvent arg0)
 				{
-					downsampling = Integer.parseInt( downsample.getText() );
+					int downsampling = Integer.parseInt( downsample.getText() );
 					
 					final long numPixels = numPixels( dim, downsampling );
 					final long megabytes = (numPixels * 4) / (1024*1024);
@@ -179,13 +175,7 @@ public class AutomaticBoundingBox extends BoundingBoxGUI
 							(dim[ 2 ])/downsampling + " pixels, " + megabytes + " MB" );
 					label.setForeground( GUIHelper.good );
 				}
-				return true;
-			}			
-		};
-		
-		gd.addDialogListener( d );
-		
-		return d;
+			} );
 	}
 
 	protected static long numPixels( final long[] dim, final int downsampling )

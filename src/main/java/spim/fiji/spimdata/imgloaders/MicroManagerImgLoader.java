@@ -1,6 +1,9 @@
 package spim.fiji.spimdata.imgloaders;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
@@ -20,6 +23,7 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.datasetmanager.MicroManager;
 
 public class MicroManagerImgLoader extends AbstractImgLoader
@@ -50,10 +54,25 @@ public class MicroManagerImgLoader extends AbstractImgLoader
 		final int c = vd.getViewSetup().getAttribute( Channel.class ).getId();
 		final int i = vd.getViewSetup().getAttribute( Illumination.class ).getId();
 
+		int countDroppedFrames = 0;
+		ArrayList< Integer > slices = null;
+
 		for ( int z = 0; z < r.depth(); ++z )
 		{
 			final String label = MultipageTiffReader.generateLabel( r.interleavedId( c, a ), z, t, i );
-			final Object o = r.readImage( label ).getA();
+			final Pair< Object, HashMap< String, Object > > result = r.readImage( label );
+
+			if ( result == null )
+			{
+				++countDroppedFrames;
+				if ( slices == null )
+					slices = new ArrayList<Integer>();
+				slices.add( z );
+
+				continue;
+			}
+
+			final Object o = result.getA();
 
 			if ( o instanceof byte[] )
 				for ( final byte b : (byte[])o )
@@ -61,6 +80,14 @@ public class MicroManagerImgLoader extends AbstractImgLoader
 			else
 				for ( final short s : (short[])o )
 					cursor.next().setReal( UnsignedShortType.getUnsignedShort( s ) );
+		}
+
+		if ( countDroppedFrames > 0 )
+		{
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): WARNING!!! " + countDroppedFrames + " DROPPED FRAME(s) in timepoint="  + t + " viewsetup=" + vd.getViewSetupId() + " following slices:" );
+
+			for ( final int z : slices )
+				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): slice=" + z );
 		}
 	}
 

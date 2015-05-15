@@ -6,6 +6,7 @@ import java.util.concurrent.Callable;
 
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
+import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.interestpointregistration.Detection;
 import spim.process.interestpointregistration.PairwiseMatch;
@@ -57,28 +58,28 @@ public class GeometricHashingPairwise implements Callable< PairwiseMatch >
 		if ( listA.size() < 4 || listB.size() < 4 )
 		{
 			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): " + comparison + ": Not enough detections to match" );
-			pair.setCandidates( new ArrayList<PointMatchGeneric<Detection>>() );
-			pair.setInliers( new ArrayList<PointMatchGeneric<Detection>>() );
+			pair.setCandidates( new ArrayList< PointMatchGeneric< Detection > >() );
+			pair.setInliers( new ArrayList<PointMatchGeneric< Detection > >(), Double.NaN );
 			return pair;
 		}
 
 		final ArrayList< PointMatchGeneric< Detection > > candidates = hasher.extractCorrespondenceCandidates( 
-				listA, 
-				listB, 
+				listA,
+				listB,
 				gp.getDifferenceThreshold(), 
 				gp.getRatioOfDistance(), 
 				gp.getUseAssociatedBeads() );
-    	
+
 		pair.setCandidates( candidates );
 
-    	// compute ransac and remove inconsistent candidates
-    	final ArrayList< PointMatchGeneric< Detection > > inliers = new ArrayList< PointMatchGeneric< Detection > >();
+		// compute ransac and remove inconsistent candidates
+		final ArrayList< PointMatchGeneric< Detection > > inliers = new ArrayList< PointMatchGeneric< Detection > >();
 
-		String result = RANSAC.computeRANSAC( candidates, inliers, this.model.getModel(), rp.getMaxEpsilon(), rp.getMinInlierRatio(), rp.getMinInlierFactor(), rp.getNumIterations() );
+		final Pair< String, Double > result = RANSAC.computeRANSAC( candidates, inliers, this.model.getModel(), rp.getMaxEpsilon(), rp.getMinInlierRatio(), rp.getMinInlierFactor(), rp.getNumIterations() );
 
-		pair.setInliers( inliers );
+		pair.setInliers( inliers, result.getB() );
 
-    	IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): " + comparison + ": " + result );
+		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): " + comparison + ": " + result.getA() );
 
 		return pair;
 	}

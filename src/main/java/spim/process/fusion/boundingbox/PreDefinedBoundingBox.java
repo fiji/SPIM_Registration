@@ -1,11 +1,11 @@
 package spim.process.fusion.boundingbox;
 
-import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 
-import java.awt.AWTEvent;
 import java.awt.Choice;
 import java.awt.Label;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.List;
 
 import mpicbg.spim.data.sequence.ViewId;
@@ -19,6 +19,7 @@ import spim.process.fusion.export.ImgExport;
 public class PreDefinedBoundingBox extends BoundingBoxGUI
 {
 	public static int defaultBoundingBox = 0;
+	public static boolean defaultAllowModify = false;
 
 	public PreDefinedBoundingBox( final SpimData2 spimData, final List<ViewId> viewIdsToProcess )
 	{
@@ -34,7 +35,7 @@ public class PreDefinedBoundingBox extends BoundingBoxGUI
 			return false;
 		}
 
-		final GenericDialog gd = new GenericDialog( "Select pre-defined Bounding Box" );
+		final GenericDialog gd1 = new GenericDialog( "Pre-defined Bounding Box" );
 
 		final String[] boundingBoxes = new String[ spimData.getBoundingBoxes().getBoundingBoxes().size() ];
 
@@ -44,29 +45,33 @@ public class PreDefinedBoundingBox extends BoundingBoxGUI
 		if ( defaultBoundingBox >= boundingBoxes.length )
 			defaultBoundingBox = 0;
 
-		gd.addChoice( "Select_Bounding_Box", boundingBoxes, boundingBoxes[ defaultBoundingBox ] );
-		final Choice choice = (Choice)gd.getChoices().lastElement();
+		gd1.addChoice( "Bounding_box_title", boundingBoxes, boundingBoxes[ defaultBoundingBox ] );
+		final Choice choice = (Choice)gd1.getChoices().lastElement();
 
-		gd.addMessage( "" );
-		gd.addMessage( "BoundingBox size: ???x???x??? pixels", GUIHelper.mediumstatusfont );
-		final Label l1 = (Label)gd.getMessage();
+		gd1.addCheckbox( "Allow_to_modify bounding box in next dialog", defaultAllowModify );
+		gd1.addMessage( "Note: Not allowing this is very useful for macro programming", GUIHelper.smallStatusFont );
 
-		gd.addMessage( "BoundingBox offset: ???x???x??? pixels", GUIHelper.mediumstatusfont );
-		final Label l2 = (Label)gd.getMessage();
+		gd1.addMessage( "" );
+		gd1.addMessage( "BoundingBox size: ???x???x??? pixels", GUIHelper.mediumstatusfont );
+		final Label l1 = (Label)gd1.getMessage();
 
-		addListeners( gd, choice, l1, l2 );
+		gd1.addMessage( "BoundingBox offset: ???x???x??? pixels", GUIHelper.mediumstatusfont );
+		final Label l2 = (Label)gd1.getMessage();
 
-		gd.showDialog();
+		addListeners( gd1, choice, l1, l2 );
 
-		if ( gd.wasCanceled() )
+		gd1.showDialog();
+
+		if ( gd1.wasCanceled() )
 			return false;
 
-		final BoundingBox bb = spimData.getBoundingBoxes().getBoundingBoxes().get( defaultBoundingBox = gd.getNextChoiceIndex() );
+		final BoundingBox bb = spimData.getBoundingBoxes().getBoundingBoxes().get( defaultBoundingBox = gd1.getNextChoiceIndex() );
+		final boolean allowModifyDimensions = defaultAllowModify = gd1.getNextBoolean();
 
 		this.min = bb.getMin().clone();
 		this.max = bb.getMax().clone();
 
-		return super.queryParameters( fusion, imgExport );
+		return super.queryParameters( fusion, imgExport, allowModifyDimensions );
 	}
 
 	public static String getBoundingBoxDescription( final BoundingBox bb )
@@ -98,29 +103,22 @@ public class PreDefinedBoundingBox extends BoundingBoxGUI
 		return "Use pre-defined Bounding Box";
 	}
 
-	protected DialogListener addListeners(
+	protected void addListeners(
 			final GenericDialog gd,
 			final Choice choice,
 			final Label label1,
 			final Label label2 )
 	{
-		DialogListener d = new DialogListener()
+		choice.addItemListener( new ItemListener()
 		{
 			@Override
-			public boolean dialogItemChanged( final GenericDialog dialog, final AWTEvent e )
+			public void itemStateChanged(ItemEvent e)
 			{
-				if ( e.getSource() == choice )
-					update( spimData, choice, label1, label2 );
-
-				return true;
+				update( spimData, choice, label1, label2 );
 			}
-		};
-
-		gd.addDialogListener( d );
+		});
 
 		update( spimData, choice, label1, label2 );
-
-		return d;
 	}
 
 	protected final static void update( final SpimData2 spimData, final Choice choice, final Label label1, final Label label2 )
@@ -128,8 +126,8 @@ public class PreDefinedBoundingBox extends BoundingBoxGUI
 		final int index = choice.getSelectedIndex();
 		final BoundingBox bb = spimData.getBoundingBoxes().getBoundingBoxes().get( index );
 
-		label1.setText( "BoundingBox size: " + bb.dimension( 0 ) + "x" + bb.dimension( 1 ) + "x" + bb.dimension( 0 ) + " pixels" );
-		label2.setText( "BoundingBox offset: " + bb.min( 0 ) + "x" + bb.min( 1 ) + "x" + bb.min( 2 ) + " pixels" );
+		label1.setText( "Bounding Box size: " + bb.dimension( 0 ) + "x" + bb.dimension( 1 ) + "x" + bb.dimension( 2 ) + " pixels" );
+		label2.setText( "Bounding Box offset: " + bb.min( 0 ) + "x" + bb.min( 1 ) + "x" + bb.min( 2 ) + " pixels" );
 	}
 
 	public void initDefault( final Fusion fusion, int[] min, int[] max )

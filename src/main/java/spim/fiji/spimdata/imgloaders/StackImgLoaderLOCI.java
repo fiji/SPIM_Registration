@@ -35,7 +35,6 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import ome.units.quantity.Length;
-import ome.xml.model.primitives.PositiveFloat;
 import spim.fiji.datasetmanager.StackListLOCI;
 
 public class StackImgLoaderLOCI extends StackImgLoader
@@ -137,6 +136,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		} 
 		catch ( Exception e )
 		{
+			e.printStackTrace();
 			throw new RuntimeException( "Could not load '" + file + "': " + e );
 		}
 	}
@@ -230,30 +230,40 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		final String pixelTypeString = FormatTools.getPixelTypeString( pixelType );
 		
 		final MetadataRetrieve retrieve = (MetadataRetrieve)r.getMetadataStore();
-		
-		float cal = retrieve.getPixelsPhysicalSizeX( 0 ).value().floatValue();
-		if ( cal == 0 )
-		{
-			cal = 1;
-			IOFunctions.println( "StackListLOCI: Warning, calibration for dimension X seems corrupted, setting to 1." );
-		}
-		final double calX = cal;
 
-		cal = retrieve.getPixelsPhysicalSizeY( 0 ).value().floatValue();
-		if ( cal == 0 )
-		{
-			cal = 1;
-			IOFunctions.println( "StackListLOCI: Warning, calibration for dimension Y seems corrupted, setting to 1." );
-		}
-		final double calY = cal;
+		double calX, calY, calZ;
 
-		cal = retrieve.getPixelsPhysicalSizeZ( 0 ).value().floatValue();
-		if ( cal == 0 )
+		try
 		{
-			cal = 1;
-			IOFunctions.println( "StackListLOCI: Warning, calibration for dimension Z seems corrupted, setting to 1." );
+			float cal = retrieve.getPixelsPhysicalSizeX( 0 ).value().floatValue();
+			if ( cal == 0 )
+			{
+				cal = 1;
+				IOFunctions.println( "StackListLOCI: Warning, calibration for dimension X seems corrupted, setting to 1." );
+			}
+			calX = cal;
+	
+			cal = retrieve.getPixelsPhysicalSizeY( 0 ).value().floatValue();
+			if ( cal == 0 )
+			{
+				cal = 1;
+				IOFunctions.println( "StackListLOCI: Warning, calibration for dimension Y seems corrupted, setting to 1." );
+			}
+			calY = cal;
+	
+			cal = retrieve.getPixelsPhysicalSizeZ( 0 ).value().floatValue();
+			if ( cal == 0 )
+			{
+				cal = 1;
+				IOFunctions.println( "StackListLOCI: Warning, calibration for dimension Z seems corrupted, setting to 1." );
+			}
+			calZ = cal;
 		}
-		final double calZ = cal;
+		catch ( Exception e )
+		{
+			IOFunctions.println( "Failed to read calibration, setting to 1x1x1um." );
+			calX = calY = calZ = 1;
+		}
 
 		// which channel and timepoint to load from this file
 		int t = 0;

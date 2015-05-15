@@ -36,13 +36,13 @@ import bdv.img.hdf5.Hdf5ImageLoader;
 
 public class Image_Fusion implements PlugIn
 {
-	public static ArrayList< Fusion > staticFusionAlgorithms = new ArrayList< Fusion >();
+	public final static ArrayList< Fusion > staticFusionAlgorithms = new ArrayList< Fusion >();
 	public static int defaultFusionAlgorithm = 1;
 
-	public static ArrayList< BoundingBoxGUI > staticBoundingBoxAlgorithms = new ArrayList< BoundingBoxGUI >();
+	public final static ArrayList< BoundingBoxGUI > staticBoundingBoxAlgorithms = new ArrayList< BoundingBoxGUI >();
 	public static int defaultBoundingBoxAlgorithm = -1;
 
-	public static ArrayList< ImgExport > staticImgExportAlgorithms = new ArrayList< ImgExport >();
+	public final static ArrayList< ImgExport > staticImgExportAlgorithms = new ArrayList< ImgExport >();
 	public static int defaultImgExportAlgorithm = 0;
 
 	static
@@ -110,10 +110,13 @@ public class Image_Fusion implements PlugIn
 		
 		if ( defaultFusionAlgorithm >= fusionDescriptions.length )
 			defaultFusionAlgorithm = 0;
-		if ( defaultBoundingBoxAlgorithm < 0 && data.getBoundingBoxes().getBoundingBoxes().size() > 0 )
-			defaultBoundingBoxAlgorithm = 4;
-		else
-			defaultBoundingBoxAlgorithm = 1;
+		if ( defaultBoundingBoxAlgorithm < 0 )
+		{
+			if ( data.getBoundingBoxes().getBoundingBoxes().size() > 0 )
+				defaultBoundingBoxAlgorithm = 4;
+			else
+				defaultBoundingBoxAlgorithm = 1;
+		}
 		if ( defaultBoundingBoxAlgorithm >= boundingBoxDescriptions.length )
 			defaultBoundingBoxAlgorithm = 0;
 		if ( defaultImgExportAlgorithm >= imgExportDescriptions.length )

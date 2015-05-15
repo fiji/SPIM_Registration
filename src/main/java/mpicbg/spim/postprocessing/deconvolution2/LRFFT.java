@@ -50,7 +50,7 @@ public class LRFFT
 	/**
 	 * Used to determine if the Convolutions already have been computed for the current iteration
 	 */
-	int i = -1;
+	int iteration = -1;
 
 	public LRFFT(
 			final Img< net.imglib2.type.numeric.real.FloatType > image,
@@ -359,7 +359,7 @@ public class LRFFT
 		return invKernel;
 	}
 
-	final private static float pow( final float value, final int power )
+	private static float pow( final float value, final int power )
 	{
 		float result = value;
 		
@@ -390,8 +390,8 @@ public class LRFFT
 	public Image<FloatType> getKernel1() { return kernel1; }
 	public Image<FloatType> getKernel2() { return kernel2; }
 	
-	public void setCurrentIteration( final int i ) { this.i = i; }
-	public int getCurrentIteration() { return i; }
+	public void setCurrentIteration( final int i ) { this.iteration = i; }
+	public int getCurrentIteration() { return iteration; }
 
 	/**
 	 * convolves the image with kernel1
@@ -441,7 +441,7 @@ public class LRFFT
 				final FourierConvolution<FloatType, FloatType> fftConv = fftConvolution1;
 				fftConv.replaceImage( image );
 				fftConv.process();
-				System.out.println( " block " + i + ": compute " + (System.currentTimeMillis() - time) );
+				System.out.println(" block " + iteration + ": compute " + (System.currentTimeMillis() - time) );
 				
 				return fftConv.getResult();				
 			}
@@ -612,7 +612,7 @@ public class LRFFT
 		viewClone.numViews = numViews;
 		viewClone.iterationType = iterationType;
 		viewClone.views = views;
-		viewClone.i = i;
+		viewClone.iteration = iteration;
 		
 		if ( this.kernel2 != null )
 			viewClone.kernel2 = kernel2.clone();

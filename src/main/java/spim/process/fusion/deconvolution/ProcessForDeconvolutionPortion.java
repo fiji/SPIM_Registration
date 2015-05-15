@@ -19,8 +19,6 @@ import spim.process.fusion.weights.Blending;
  * Fuse one portion of a paralell fusion, supports no weights
  * 
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
- *
- * @param <T>
  */
 public class ProcessForDeconvolutionPortion implements Callable< String >
 {

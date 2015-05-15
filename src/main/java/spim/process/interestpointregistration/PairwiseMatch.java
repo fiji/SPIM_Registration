@@ -12,7 +12,7 @@ public class PairwiseMatch
 	final MatchPointList listA, listB;
 	final ViewId viewIdA, viewIdB;
 	
-	float error = -1;
+	double error = -1;
 	ArrayList< PointMatchGeneric< Detection > > candidates, inliers;
 	
 	public PairwiseMatch( final ViewId viewIdA, final ViewId viewIdB, final MatchPointList listA, final MatchPointList listB )
@@ -33,7 +33,7 @@ public class PairwiseMatch
 	public ViewId getViewIdB() { return viewIdB; }
 	public int getNumInliers() { return inliers.size(); }
 	public int getNumCandidates() { return candidates.size(); }
-	public float getError() { return error; }
+	public double getAvgError() { return error; }
 	public ArrayList< PointMatchGeneric< Detection > > getCandidates() { return candidates; }
 	public ArrayList< PointMatchGeneric< Detection > > getInliers() { return inliers; }
 
@@ -45,7 +45,10 @@ public class PairwiseMatch
 		return l;
 	}
 
-	public void setError( final float e ) { this.error = e; }
-	public void setCandidates( final ArrayList<PointMatchGeneric<Detection>> candidates ) { this.candidates = candidates; }
-	public void setInliers(ArrayList<PointMatchGeneric<Detection>> inliers) { this.inliers = inliers; }
+	public void setCandidates( final ArrayList< PointMatchGeneric< Detection > > candidates ) { this.candidates = candidates; }
+	public void setInliers( final ArrayList< PointMatchGeneric< Detection > > inliers, final double error )
+	{
+		this.inliers = inliers;
+		this.error = error;
+	}
 }

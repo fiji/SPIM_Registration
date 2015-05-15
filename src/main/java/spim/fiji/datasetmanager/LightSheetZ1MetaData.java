@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Hashtable;
 
+import net.imglib2.multithreading.SimpleMultiThreading;
 import loci.formats.FormatTools;
 import loci.formats.IFormatReader;
 import loci.formats.Modulo;
@@ -140,7 +141,14 @@ public class LightSheetZ1MetaData
 
 				int w = r.getSizeX();
 				int h = r.getSizeY();
-				int d = (int)Math.round( Double.parseDouble( metaData.get( "Information|Image|V|View|SizeZ #" + (a+1) ).toString() ) );
+				double dimZ = getDouble( metaData, "Information|Image|V|View|SizeZ #" + (a+1) );
+				if ( Double.isNaN( dimZ ) )
+					dimZ = getDouble( metaData, "SizeZ|View|V|Image|Information #" + (a+1) );
+
+				if ( Double.isNaN( dimZ ) )
+					throw new RuntimeException( "Could not read stack size for angle " + a + ", stopping." );
+
+				int d = (int)Math.round( dimZ );
 
 				imageSizes.put( a, new int[]{ w, h, d } );
 
@@ -184,7 +192,8 @@ public class LightSheetZ1MetaData
 		}
 		catch ( Exception e )
 		{
-			IOFunctions.println( "An error occured parsing the main meta data: " + e + "\n. Stopping." );
+			IOFunctions.println( "An error occured parsing the main meta data: " + e + ". Stopping." );
+			e.printStackTrace();
 			try { r.close(); } catch (IOException e1) { e1.printStackTrace(); }
 			return false;
 		}
@@ -351,10 +360,34 @@ public class LightSheetZ1MetaData
 		return true;
 	}
 
+	protected static double getDouble( final Hashtable< String, Object > metadata, final String key )
+	{
+		if ( metadata == null )
+			throw new RuntimeException( "Missing metadata while looking for: " + key );
+
+		final Object o = metadata.get( key );
+
+		if ( o == null )
+		{
+			final StringBuilder builder = new StringBuilder();
+			for ( final String candidate : metadata.keySet() )
+				builder.append( "\n" + candidate );
+			System.out.println( "Available keys:" + builder );
+
+			IOFunctions.println( "Missing key " + key + " in LZ1 metadata" );
+			return Double.NaN;
+		}
+
+		return Double.parseDouble( o.toString() );
+	}
+
 	public static void printMetaData( final IFormatReader r )
 	{
-		final Hashtable< String, Object > metaData = r.getGlobalMetadata();
+		printMetaData( r.getGlobalMetadata() );
+	}
 
+	public static void printMetaData( final Hashtable< String, Object > metaData )
+	{
 		ArrayList< String > entries = new ArrayList<String>();
 
 		for ( final String s : metaData.keySet() )
