@@ -6,7 +6,8 @@ import ij.gui.GenericDialog;
 
 import java.awt.*;
 import java.io.File;
-import java.util.ArrayList;
+import java.io.IOException;
+import java.util.*;
 
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.registration.ViewRegistrations;
@@ -31,6 +32,12 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.cli.*;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBoxes;
@@ -39,6 +46,8 @@ import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
 public class LightSheetZ1 extends AbstractMultiViewDataset implements MultiViewDatasetDefinition
 {
+	private static final Logger LOG = LoggerFactory.getLogger( LightSheetZ1.class );
+
 	public static String[] rotAxes = new String[] { "X-Axis", "Y-Axis", "Z-Axis" };
 
 	public static String defaultFirstFile = "";
@@ -378,6 +387,7 @@ public class LightSheetZ1 extends AbstractMultiViewDataset implements MultiViewD
 
 		if(params.getMetaData() == null)
 		{
+			LOG.warn( "No LightSheetZ1 metadata is given. Using default setting." );
 
 			final LightSheetZ1MetaData meta = new LightSheetZ1MetaData();
 
@@ -388,13 +398,31 @@ public class LightSheetZ1 extends AbstractMultiViewDataset implements MultiViewD
 			}
 			params.setMetaData( meta );
 		}
+		else
+		{
+			LOG.info( "LightSheetZ1 metadata is given. Using user-defined setting." );
+		}
 
-		// Fill up the params based on user-given information
+		// Print out meta information
+		final LightSheetZ1MetaData meta = params.getMetaData();
 
-		// Print out additional param information
+		for ( int a = 0; a < meta.numAngles(); ++a )
+			LOG.info( "angle_" + (a + 1) + ":" + meta.angles()[ a ] );
+
+		for ( int c = 0; c < meta.numChannels(); ++c )
+			LOG.info( "channel_" + (c + 1) + ":" + meta.channels()[ c ] );
+
+		for ( int i = 0; i < meta.numIlluminations(); ++i )
+			LOG.info( "illumination_" + (i + 1) + ":" + meta.illuminations()[ i ] );
+
+		LOG.info(  "pixel_distance_x" + ":" + meta.calX() );
+		LOG.info(  "pixel_distance_y" + ":" + meta.calY() );
+		LOG.info(  "pixel_distance_z" + ":" + meta.calZ() );
+		LOG.info(  "pixel_unit" + ":" + meta.calUnit() );
+
+		LOG.info(  "rotation_around" + ":" + meta.rotationAxisName() );
 
 		// Create the dataset
-		final LightSheetZ1MetaData meta = params.getMetaData();
 		final File cziFile = new File( params.getFirstFile() );
 
 		final String directory = cziFile.getParent();
@@ -437,13 +465,128 @@ public class LightSheetZ1 extends AbstractMultiViewDataset implements MultiViewD
 		}
 	}
 
+	@SuppressWarnings( "static-access" )
+	private Parameters getParams( final String[] args )
+	{
+		// create Options object
+		final Options options = new Options();
+
+		final String cmdLineSyntax = "LightSheetZ1 [OPTION]";
+
+		final String description = getTitle();
+
+		options.addOption( Option.builder("c")
+				.required()
+				.longOpt( "czi_file" )
+				.hasArg()
+				.desc( "The first czi file name." )
+				.argName( "czi-file" )
+				.build() );
+
+		options.addOption( Option.builder("x")
+				.required()
+				.longOpt( "xml_file" )
+				.hasArg()
+				.desc( "The defined xml file name." )
+				.argName( "xml-file" )
+				.build() );
+
+		options.addOption( Option.builder( "D" )
+				.hasArgs()
+				.valueSeparator( '=' )
+				.desc( "use value for given property" )
+				.argName( "property=value" )
+				.build() );
+
+		try
+		{
+			final CommandLineParser parser = new DefaultParser();
+			final CommandLine cmd = parser.parse( options, args );
+
+			// czi file
+			final String cziFile = cmd.getOptionValue( "czi_file" );
+
+			// xml file
+			final String xmlFile = cmd.getOptionValue( "xml_file" );
+
+			final Properties props = cmd.getOptionProperties( "D" );
+			Enumeration e = props.propertyNames();
+			while (e.hasMoreElements()) {
+				String key = (String) e.nextElement();
+				System.out.println(key + " -- " + props.getProperty(key));
+			}
+
+			final Parameters params = new Parameters();
+			params.setFirstFile( cziFile );
+			params.setXmlFilename( xmlFile );
+
+			// CZI metadata creation based on the options
+			final LightSheetZ1MetaData meta = new LightSheetZ1MetaData();
+
+			if ( !meta.loadMetaData( new File( params.getFirstFile() ) ))
+			{
+				IOFunctions.println( "Failed to analyze file." );
+				return null;
+			}
+
+			for ( int a = 0; a < meta.numAngles(); ++a )
+				meta.angles()[ a ] = props.getProperty( "angle_" + (a + 1) );
+
+			for ( int c = 0; c < meta.numChannels(); ++c )
+				meta.channels()[ c ] = props.getProperty( "channel_" + ( c + 1 ) );
+
+			for ( int i = 0; i < meta.numIlluminations(); ++i )
+				meta.illuminations()[ i ] = props.getProperty( "illumination_" + ( i + 1 ) );
+
+			meta.setCalX( Double.parseDouble( props.getProperty( "pixel_distance_x" ) ) );
+			meta.setCalY( Double.parseDouble( props.getProperty( "pixel_distance_y" ) ) );
+			meta.setCalZ( Double.parseDouble( props.getProperty( "pixel_distance_z" ) ) );
+			meta.setCalUnit( props.getProperty( "pixel_unit" ) );
+
+			meta.setRotationAxis( Arrays.binarySearch( rotAxes, props.getProperty( "rotation_around" ) ) );
+
+			params.setMetaData( meta );
+
+			return params;
+		}
+		catch ( final ParseException e )
+		{
+			LOG.warn( e.getMessage() );
+			final HelpFormatter formatter = new HelpFormatter();
+			formatter.printHelp( cmdLineSyntax, description, options, null );
+		}
+		catch ( final IllegalArgumentException e )
+		{
+			LOG.warn( e.getMessage() );
+			final HelpFormatter formatter = new HelpFormatter();
+			formatter.printHelp( cmdLineSyntax, description, options, null );
+		}
+		return null;
+	}
+
 	public static void main( String[] args )
 	{
-		//defaultFirstFile = "/Volumes/My Passport/worm7/Track1(3).czi";
-		//defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/130706_Aiptasia8.czi";
-		//defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/abe_Arabidopsis1.czi";
-		defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/multiview.czi";
-		//defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/worm7/Track1.czi";
-		new LightSheetZ1().createDataset( );
+		// Test the below arguments
+		//		-c first.czi
+		//		-x test.xml
+		//		-Dxml_filename="test.xml"
+		//		-Dfirst_czi="first.czi"
+		//		-Dangle_1=0
+		//		-Dangle_2=72
+		//		-Dangle_3=144
+		//		-Dangle_4=216
+		//		-Dangle_5=288
+		//		-Dchannel_1=green
+		//		-Dchannel_2=red
+		//		-Dillumination_1="0"
+		//		-Drotation_around="X-Axis"
+		//		-Dpixel_distance_x="0.28590"
+		//		-Dpixel_distance_y="0.28590"
+		//		-Dpixel_distance_z="1.50000"
+		//		-Dpixel_unit="um"
+
+		LightSheetZ1 define = new LightSheetZ1();
+		Parameters params = define.getParams( args );
+		define.process( params );
 	}
 }
