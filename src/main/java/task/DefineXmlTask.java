@@ -1,9 +1,6 @@
 package task;
 
-import mpicbg.spim.io.IOFunctions;
 import spim.fiji.datasetmanager.LightSheetZ1;
-
-import java.io.File;
 
 /**
  * Created by moon on 4/30/15.
@@ -29,9 +26,29 @@ public class DefineXmlTask extends BaseTask
 
 	public void importLightSheetZ1()
 	{
-		IOFunctions.printIJLog = false;
-
 		LightSheetZ1 z1 = new LightSheetZ1();
-		z1.defaultProcess( inputFile, xmlFileName );
+		LightSheetZ1.Parameters params = new LightSheetZ1.Parameters();
+
+		params.setXmlFilename( xmlFileName );
+		params.setFirstFile( inputFile );
+
+		// default process
+		z1.process( params );
+	}
+
+
+	public void importStackListLOCI()
+	{
+
+	}
+
+	public void importStackListImageJ()
+	{
+
+	}
+
+	public void importMicroManager()
+	{
+
 	}
 }
