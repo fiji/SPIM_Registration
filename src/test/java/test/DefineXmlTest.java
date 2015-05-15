@@ -20,13 +20,13 @@ public class DefineXmlTest
 
 	}
 
-//	public DefineXmlTest(String cziFile, String xmlFile)
-//	{
-//		this.cziFile = cziFile;
-//		this.xmlFile = xmlFile;
-//
-//		IOFunctions.printIJLog = false;
-//	}
+	public DefineXmlTest(String cziFile, String xmlFile)
+	{
+		this.cziFile = cziFile;
+		this.xmlFile = xmlFile;
+
+		IOFunctions.printIJLog = false;
+	}
 
 	@Test
 	public void testIJMacroDefineDataset()
