@@ -961,7 +961,7 @@ public class Interest_Point_Registration implements PlugIn
 		if ( !setFixedTilesAndReference( fixTiles, mapBack, type ) )
 			return;
 
-		if ( !ipr.register( type, true ) )
+		if ( !ipr.register( type, true, true ) )
 			return;
 
 		// save the XML including transforms and correspondences
