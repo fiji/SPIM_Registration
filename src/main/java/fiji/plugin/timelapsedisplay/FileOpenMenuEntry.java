@@ -33,8 +33,6 @@ public class FileOpenMenuEntry extends AbstractAction
 	/**
 	 * This method is called by the GraphFrame upon initialization
 	 * 
-	 * @param xLocation
-	 * @param file - the {@link File} defining the worst view
 	 */
 	public void setChartPanel( final ChartPanel chartPanel ) { this.chartPanel = chartPanel; }
 	

@@ -114,7 +114,7 @@ public class GenericLoadParseQueryXML<
 
 	/**
 	 * Constructor for the class needs an appropriate IO module
-	 * @param xmlIoSpimData
+	 * @param io
 	 */
 	public GenericLoadParseQueryXML( final X io )
 	{
@@ -433,7 +433,7 @@ public class GenericLoadParseQueryXML<
 	 * 
 	 * @param name - type of elements (e.g. "Timepoints")
 	 * @param list - list of available elements
-	 * @param defaultSelection - default selection (array of size 1 to be able to return it)
+	 * @param defaultSelectionArray - default selection (array of size 1 to be able to return it)
 	 * @return the selection or null if cancelled
 	 */
 	public static boolean[] queryPattern( final String name, final String[] list, final String[] defaultSelectionArray )

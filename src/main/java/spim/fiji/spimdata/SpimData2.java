@@ -68,7 +68,7 @@ public class SpimData2 extends SpimData
 	 * @param c
 	 * @param a
 	 * @param i
-	 * @return - the ViewId that fits to timepoint, angle, channel & illumination by ID (or null if it does not exist)
+	 * @return - the ViewId that fits to timepoint, angle, channel &amp; illumination by ID (or null if it does not exist)
 	 */
 	public static ViewId getViewId( final SequenceDescription seqDesc, final TimePoint t, final Channel c, final Angle a, final Illumination i )
 	{

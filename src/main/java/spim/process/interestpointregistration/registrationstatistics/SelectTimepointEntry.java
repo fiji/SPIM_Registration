@@ -29,8 +29,7 @@ public class SelectTimepointEntry extends AbstractAction
 	/**
 	 * This method is called by the GraphFrame upon initialization
 	 * 
-	 * @param xLocation
-	 * @param file - the {@link File} defining the worst view
+	 * @param chartPanel
 	 */
 	public void setChartPanel( final ChartPanel chartPanel ) { this.chartPanel = chartPanel; }
 	

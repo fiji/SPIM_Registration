@@ -171,7 +171,7 @@ public abstract class Fusion
 
 	/**
 	 * @param spimData
-	 * @param viewIdsToPrcoess - which viewIds to fuse
+	 * @param viewIdsToProcess- which viewIds to fuse
 	 * @return - a new instance without any special properties
 	 */
 	public abstract Fusion newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess );

@@ -29,7 +29,7 @@ import mpicbg.models.PointMatch;
  * }
  * </pre>
  * 
- * @author Stephan Saalfeld <saalfeld@mpi-cbg.de> and Johannes Schindelin and Stephan Preibisch
+ * @author Stephan Saalfeld &gt;saalfeld@mpi-cbg.de&lt; and Johannes Schindelin and Stephan Preibisch
  * @version 0.1b
  * 
  */

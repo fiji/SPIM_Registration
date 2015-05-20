@@ -26,7 +26,7 @@ import mpicbg.models.PointMatch;
  * }
  * </pre>
  * 
- * @author Stephan Saalfeld <saalfeld@mpi-cbg.de>
+ * @author Stephan Saalfeld (saalfeld@mpi-cbg.de)
  * @version 0.1b
  * 
  */

@@ -20,8 +20,7 @@ public class LRInput
 	/**
 	 * init all views
 	 * 
-	 * @param exponentialKernel - use exponential kernel?
-	 * 
+	 *
 	 * @return the same instance again for convinience
 	 */
 	public LRInput init( final PSFTYPE iterationType )
