@@ -217,7 +217,7 @@ public class MinFilterThreshold
 	 * on a n-d line by line basis @TODO
 	 * 
 	 * @param tmp1 - input image (overwritten, not necessarily the result, depends if number of dimensions is even or odd)
-	 * @param r - the integer radius of the min filter
+	 * @param radius - the integer radius of the min filter
 	 */
 	final public static < T extends RealType< T > > Img< T > computeLazyMinFilter( final Img< T > tmp1, final int radius )
 	{

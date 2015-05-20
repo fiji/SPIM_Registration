@@ -196,8 +196,6 @@ public class AppendSpimData2 implements ImgExport
 	 * Assembles a new SpimData2 based on the timepoints and viewsetups.
 	 * The imgloader is still not set here.
 	 *
-	 * @param params
-	 * @return
 	 */
 	public static void appendSpimData2(
 			final SpimData2 spimData,

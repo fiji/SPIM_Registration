@@ -163,15 +163,16 @@ public class GUIHelper
 	 * 
 	 * https://github.com/openmicroscopy/bioformats/blob/v4.4.8/components/loci-plugins/src/loci/plugins/util/WindowTools.java#L72
 	 * 
-	 * <dependency>
-     * <groupId>${bio-formats.groupId}</groupId>
-     * <artifactId>loci_plugins</artifactId>
-     * <version>${bio-formats.version}</version>
-     * </dependency>
-	 * 
+	 *
 	 * @param pane
 	 */
 	public static void addScrollBars(Container pane) {
+//        * <dependency>
+//        * <groupId>${bio-formats.groupId}</groupId>
+//        * <artifactId>loci_plugins</artifactId>
+//        * <version>${bio-formats.version}</version>
+//        * </dependency>
+
 		GridBagLayout layout = (GridBagLayout) pane.getLayout();
 
 		// extract components
@@ -240,7 +241,7 @@ public class GUIHelper
 	}	
 
 	/**
-	 * Removes any of those characters from a String: (, ), [, ], {, }, <, >
+	 * Removes any of those characters from a String: (, ), [, ], {, }, &lt;, &gt;
 	 * 
 	 * @param entry input (with brackets)
 	 * @return input, but without any brackets

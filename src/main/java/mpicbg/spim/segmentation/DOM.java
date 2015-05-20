@@ -463,9 +463,9 @@ public class DOM
 	 * fromY - start coordinate in y (exclusive in integral image coordinates, inclusive in image coordinates)
 	 * fromZ - start coordinate in z (exclusive in integral image coordinates, inclusive in image coordinates)
 	 * 
-	 * @param sX - number of pixels in x
-	 * @param sY - number of pixels in y
-	 * @param sZ - number of pixels in z
+	 * @param vX - number of pixels in x
+	 * @param vY - number of pixels in y
+	 * @param vZ - number of pixels in z
 	 * @param randomAccess - randomAccess on the integral image
 	 * @return
 	 */
@@ -503,9 +503,9 @@ public class DOM
 	 * @param fromX - start coordinate in x (exclusive in integral image coordinates, inclusive in image coordinates)
 	 * @param fromY - start coordinate in y (exclusive in integral image coordinates, inclusive in image coordinates)
 	 * @param fromZ - start coordinate in z (exclusive in integral image coordinates, inclusive in image coordinates)
-	 * @param sX - number of pixels in x
-	 * @param sY - number of pixels in y
-	 * @param sZ - number of pixels in z
+	 * @param vX - number of pixels in x
+	 * @param vY - number of pixels in y
+	 * @param vZ - number of pixels in z
 	 * @param randomAccess - randomAccess on the integral image
 	 * @return
 	 */

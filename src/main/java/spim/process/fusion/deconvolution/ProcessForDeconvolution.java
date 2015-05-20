@@ -88,8 +88,6 @@ public class ProcessForDeconvolution
 	/** 
 	 * Fuses one stack, i.e. all angles/illuminations for one timepoint and channel
 	 * 
-	 * @param type
-	 * @param imgFactoryType
 	 * @param timepoint
 	 * @param channel
 	 * @return

@@ -35,9 +35,8 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 	 * All tiles of the reference timepoint are fixed, nothing else
 	 * 
 	 * @param spimData
-	 * @param anglesToProcess
+	 * @param viewIdsToProcess
 	 * @param channelsToProcess
-	 * @param illumsToProcess
 	 * @param referenceTimepoint
 	 * @return
 	 */

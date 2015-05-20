@@ -145,13 +145,13 @@ public class ICP < P extends Point & Leaf<P> >
 	 * Sets the {@link PointMatchIdentification} that defines how {@link PointMatch}es between reference and target are identified.
 	 * The simplest way to do it is the {@link SimplePointMatchIdentification} class which takes the nearest neighbor with a minimal distance threshold. 
 	 *  
-	 * @param assignMethod - the new {@link PointMatchIdentification}
+	 * @param pointMatchIdentifier - the new {@link PointMatchIdentification}
 	 */
 	public void setPointMatchIdentification( final PointMatchIdentification< P > pointMatchIdentifier ) { this.pointMatchIdentifier = pointMatchIdentifier; }
 	
 	/**
 	 * Returns the current {@link PointMatchIdentification} that is used to identfy corresponding points
-	 * @return PointMatchIdentification< P >
+	 * @return PointMatchIdentification&gt; P &lt;
 	 */
 	public PointMatchIdentification< P > getPointMatchIdentification() { return pointMatchIdentifier; }
 	

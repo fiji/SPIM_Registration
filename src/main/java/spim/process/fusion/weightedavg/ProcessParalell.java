@@ -42,7 +42,7 @@ public class ProcessParalell extends ProcessFusion
 	 * Fuses one stack, i.e. all angles/illuminations for one timepoint and channel
 	 * 
 	 * @param type
-	 * @param imgFactoryType
+	 * @param interpolatorFactory
 	 * @param timepoint
 	 * @param channel
 	 * @return

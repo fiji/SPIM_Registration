@@ -23,7 +23,6 @@ public class RegistrationStatistics implements Comparable< RegistrationStatistic
 	 * Call this class after a registration is performed and it will collect the
 	 * information it wants
 	 *
-	 * @param viewStructure - the current {@link ViewStructure}
 	 */
 	public RegistrationStatistics( final int timepoint, final List< List< PairwiseMatch > > matches )
 	{
