@@ -291,7 +291,7 @@ public class Resave_TIFF implements PlugIn
 		final StackImgLoaderIJ imgLoader = new StackImgLoaderIJ(
 				new File( params.xmlFile ).getParentFile(),
 				filename, params.imgFactory,
-				layoutTP, layoutChannels, layoutIllum, layoutAngles, null );
+				layoutTP, layoutChannels, layoutIllum, layoutAngles, newSpimData.getSequenceDescription() );
 		newSpimData.getSequenceDescription().setImgLoader( imgLoader );
 
 		return new ValuePair< SpimData2, List< String > >( newSpimData, filesToCopy );
