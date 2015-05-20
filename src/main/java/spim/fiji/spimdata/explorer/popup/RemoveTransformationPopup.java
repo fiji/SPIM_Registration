@@ -78,6 +78,7 @@ public class RemoveTransformationPopup extends JMenu implements ViewExplorerSeta
 			}
 
 			panel.updateContent();
+			ViewSetupExplorerPanel.bdvPopup().updateBDV();
 		}
 	}
 }
