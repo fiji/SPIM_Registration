@@ -24,8 +24,8 @@ import net.imglib2.type.numeric.ARGBType;
  * Generate a stream of `random' saturated RGB colors with all colors being
  * maximally distinct from each other.
  *
- * @author Stephan Saalfeld <saalfeld@mpi-cbg.de>
- * @author Tobias Pietzsch <tobias.pietzsch@gmail.com>
+ * @author Stephan Saalfeld &gt;saalfeld@mpi-cbg.de&lt;
+ * @author Tobias Pietzsch &gt;tobias.pietzsch@gmail.com&lt;
  */
 public class ColorStream
 {

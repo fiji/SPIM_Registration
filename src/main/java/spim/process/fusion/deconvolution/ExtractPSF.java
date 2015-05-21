@@ -67,7 +67,7 @@ public class ExtractPSF< T extends RealType< T > >
 	 * Get projection along the smallest dimension (which is usually the rotation axis)
 	 * 
 	 * @param avgPSF - the average psf
-	 * @param minDim - along which dimension to project, if set to <0, the smallest dimension will be chosen
+	 * @param minDim - along which dimension to project, if set to &lt;0, the smallest dimension will be chosen
 	 * @return - the averaged, projected PSF
 	 */
 	public static < S extends RealType< S > > Img< S > computeMaxProjection( final Img< S > avgPSF, int minDim )
@@ -223,10 +223,10 @@ public class ExtractPSF< T extends RealType< T > >
 	/**
 	 * 
 	 * @param img
-	 * @param viewDescription
+	 * @param viewId
 	 * @param model
 	 * @param locations
-	 * @param size - dimensions of psf to extract
+	 * @param psfSize - dimensions of psf to extract
 	 */
 	public void extractNextImg(
 			final RandomAccessibleInterval< T > img,
@@ -320,7 +320,6 @@ public class ExtractPSF< T extends RealType< T > >
 		
 	/**
 	 * Extracts the PSF by averaging the local neighborhood RANSAC correspondences
-	 * @param view - the SPIM view
 	 * @param size - the size in which the psf is extracted (in pixel units, z-scaling is ignored)
 	 * @return - the psf, NOT z-scaling corrected
 	 */
@@ -485,8 +484,7 @@ public class ExtractPSF< T extends RealType< T > >
 	
 	/**
 	 * 
-	 * @param fileName
-	 * @param model - if model is null, PSFs will not be transformed
+	 * @param filenames
 	 * @return
 	 */
 	public static < T extends RealType< T > > ExtractPSF< T > loadAndTransformPSFs(

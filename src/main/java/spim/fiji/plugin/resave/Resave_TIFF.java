@@ -349,8 +349,6 @@ public class Resave_TIFF implements PlugIn
 	 * 
 	 * It also fills up a list of filesToCopy from the interestpoints directory if it is not null.
 	 * 
-	 * @param lpq
-	 * @param params
 	 * @param filesToCopy
 	 * @return
 	 */

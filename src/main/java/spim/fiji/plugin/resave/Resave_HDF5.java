@@ -164,8 +164,6 @@ public class Resave_HDF5 implements PlugIn
 	 * Reduces a given SpimData2 to the subset of timepoints and viewsetups as selected by the user, including the original imgloader.
 	 *
 	 * @param oldSpimData
-	 * @param timepointsToProcess
-	 * @param viewSetupsToProcess
 	 * @return
 	 */
 	public static SpimData2 reduceSpimData2( final SpimData2 oldSpimData, final List< ViewId > viewIds )
