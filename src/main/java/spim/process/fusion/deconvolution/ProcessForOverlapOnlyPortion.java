@@ -18,7 +18,6 @@ import spim.process.fusion.weights.Blending;
  * 
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
- * @param <T>
  */
 public class ProcessForOverlapOnlyPortion implements Callable< String >
 {

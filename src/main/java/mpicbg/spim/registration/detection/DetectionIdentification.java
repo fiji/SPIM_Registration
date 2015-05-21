@@ -20,7 +20,7 @@ public abstract class DetectionIdentification< S extends DetectionIdentification
 
 	/**
 	 * This constructor is used when a BeadIdenfication object is initialized during matching from an actual {@link Bead} object. 
-	 * @param bead - The {@link Bead} it should identify
+//	 * @param bead - The {@link Bead} it should identify
 	 */
 	public DetectionIdentification( final DetectionView< S, T > detection )
 	{
@@ -30,7 +30,7 @@ public abstract class DetectionIdentification< S extends DetectionIdentification
 	
 	/**
 	 * This constructor is used when a BeadIdenfication object is initialized from a file where only the BeadID and the {@link ViewDataBeads} are known.
-	 * @param beadID - The BeadID of the {@link Bead} object it links to.
+//	 * @param beadID - The BeadID of the {@link Bead} object it links to.
 	 * @param view - The {@link ViewDataBeads} object the bead belongs to.
 	 */
 	public DetectionIdentification( final int detectionID, final ViewDataBeads view )

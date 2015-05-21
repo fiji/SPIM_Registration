@@ -65,7 +65,6 @@ public class CUDASeparableConvolutionFunctions
 	 * @param dim - the dimensions of the image in 1d/2d/3d
 	 * @param sigma - the sigma for all dimensions
 	 * @param oobs - the OutOfBounds strategy
-	 * @param oobsvalue - the value for out of image pixels if the OutOfBoundsStrategy is OutOfBounds.VALUE
 	 * @return
 	 */
 	public boolean gauss( final float[] img, final int[] dim, final double sigma, final OutOfBounds oobs, final float oobsValue )
@@ -80,7 +79,7 @@ public class CUDASeparableConvolutionFunctions
 	 * @param dim - the dimensions of the image in 1d/2d/3d
 	 * @param sigma - the sigma per dimension
 	 * @param oobs - the OutOfBounds strategy
-	 * @param oobsvalue - the value for out of image pixels if the OutOfBoundsStrategy is OutOfBounds.VALUE
+	 * @param oobsValue - the value for out of image pixels if the OutOfBoundsStrategy is OutOfBounds.VALUE
 	 * @return
 	 */
 	public boolean gauss( final float[] img, final int[] dim, final double[] sigma, final OutOfBounds oobs, final float oobsValue )
@@ -95,7 +94,7 @@ public class CUDASeparableConvolutionFunctions
 	 * @param dim - the dimensions of the image in 1d/2d/3d
 	 * @param sigma - the sigma for all dimensions
 	 * @param oobs - the OutOfBounds strategy
-	 * @param oobsvalue - the value for out of image pixels if the OutOfBoundsStrategy is OutOfBounds.VALUE
+	 * @param oobsValue - the value for out of image pixels if the OutOfBoundsStrategy is OutOfBounds.VALUE
 	 * @param cuda - The {@link CUDASeparableConvolution} interface that loaded the external native library
 	 * @param cudaDeviceId - which CUDA device to use, -1 means single-threaded computation on CPU using native code
 	 * @return
@@ -120,7 +119,7 @@ public class CUDASeparableConvolutionFunctions
 	 * @param dim - the dimensions of the image in 1d/2d/3d
 	 * @param sigma - the sigma per dimension
 	 * @param oobs - the OutOfBounds strategy
-	 * @param oobsvalue - the value for out of image pixels if the OutOfBoundsStrategy is OutOfBounds.VALUE
+	 * @param oobsValue - the value for out of image pixels if the OutOfBoundsStrategy is OutOfBounds.VALUE
 	 * @param cuda - The {@link CUDASeparableConvolution} interface that loaded the external native library
 	 * @param cudaDeviceId - which CUDA device to use, -1 means single-threaded computation on CPU using native code
 	 * @return

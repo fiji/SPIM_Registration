@@ -57,10 +57,10 @@ public class CorrespondingInterestPoints implements Comparable< CorrespondingInt
 	 */
 	final public int getCorrespondingDetectionId() { return correspondingDetectionId; }
 
-	/**
-	 * Order by {@link #getTimePointId() timepoint} id, then
-	 * {@link #getViewSetupId() setup} id, then detection id.
-	 */
+//	/**
+//	 * Order by {@link #getCorrespondingViewId().getTimePointId()  timepoint} id, then
+//	 * {@link #getCorrespondingViewId().getViewSetupId() setup} id, then detection id.
+//	 */
 	@Override
 	public int compareTo( final CorrespondingInterestPoints o )
 	{

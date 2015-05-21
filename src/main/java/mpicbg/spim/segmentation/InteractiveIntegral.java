@@ -469,7 +469,7 @@ MainLoop:           while ( cursor.hasNext() )
 
 		
 	/**
-	 * Normalize and make a copy of the {@link ImagePlus} into an {@link Image}<FloatType> for faster access when copying the slices
+	 * Normalize and make a copy of the {@link ImagePlus} into an {@link Image}&gt;FloatType&lt; for faster access when copying the slices
 	 * 
 	 * @param imp - the {@link ImagePlus} input image
 	 * @return - the normalized copy [0...1]
