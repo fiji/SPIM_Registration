@@ -28,7 +28,7 @@ public class InterestPointList
 	 * Instantiates a new {@link InterestPointList}
 	 * 
 	 * @param baseDir - the path where the xml is
-	 * @param file - relative path to the file to load/save the list from, an extension is added automatically (.ip.txt && .corr.txt)
+	 * @param file - relative path to the file to load/save the list from, an extension is added automatically (.ip.txt &amp;&amp; .corr.txt)
 	 * for interestpoints and correspondences
 	 */
 	public InterestPointList( final File baseDir, final File file )

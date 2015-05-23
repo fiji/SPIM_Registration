@@ -19,7 +19,6 @@ public class BlockGeneratorFixedSizePrecise implements BlockGenerator< Block >
 	 * Divides an image into blocks
 	 * 
 	 * @param imgSize - the size of the image
-	 * @param blockSize - the final size of each block covering the entire image
 	 * @param kernelSize - the size of the kernel (has to be odd!)
 	 * @return
 	 */

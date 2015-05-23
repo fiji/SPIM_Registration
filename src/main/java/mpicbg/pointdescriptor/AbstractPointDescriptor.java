@@ -136,10 +136,10 @@ public abstract class AbstractPointDescriptor< P extends Point, F extends Abstra
 	/**
 	 * Computes a fit between this these {@link PointMatch}es, this method is called by the {@link Matcher}
 	 * 
-	 * @param ArrayList<PointMatch> - The {@link Point}s to match
+	 * @param matches - The {@link Point}s to match
 	 *
-	public abstract CoordinateTransform fit( final ArrayList<PointMatch> pointMatch );
-	*/	
+	*/
+//	public abstract CoordinateTransform fit( final ArrayList<PointMatch> pointMatch );
 	public abstract Object fitMatches( final ArrayList<PointMatch> matches );
 	
 	/**
@@ -187,8 +187,8 @@ public abstract class AbstractPointDescriptor< P extends Point, F extends Abstra
 	
 	/**
 	 * The points forming the {@link AbstractPointDescriptor} relative to the basis point
-	 * @return - Arraylist< P >
 	 */
+//	 * @return - Arraylist< P >
   	public ArrayList< P > getOrderedNearestNeighboringPoints(){ return neighbors; }
 
   	/**
@@ -203,37 +203,38 @@ public abstract class AbstractPointDescriptor< P extends Point, F extends Abstra
   	 */
   	public int numDimensions() { return numDimensions; }
   	
-  	/**
-  	 * Computes the difference between two PointDescriptors by summing up all individual differences.
-  	 * 
-  	 * @param genericPointDescriptor - the PointDescriptor to compare to 
-  	 * @return The differences between two PointDescriptors 
-  	 *
-  	public double getDifference( final AbstractPointDescriptor<P,?> genericPointDescriptor )
-  	{
-  		double difference = 0;
-  		
-  		for ( int d = 0; d < numDimensions; ++d )
-  			difference += Point.distance( getNeighborPoint( d ), genericPointDescriptor.getNeighborPoint( d ) );
-  		
-  		return difference;
-  	}
-
-  	/**
-  	 * Computes the squared difference between two PointDescriptors by summing up all individual squared differences.
-  	 * 
-  	 * @param genericPointDescriptor - the PointDescriptor to compare to 
-  	 * @return The differences between two PointDescriptors 
-  	 *
-  	public double getSquaredDifference( final AbstractPointDescriptor<P,?> genericPointDescriptor )
-  	{
-  		double difference = 0;
-  		
-  		for ( int d = 0; d < numDimensions; ++d )
-  			difference += Point.squareDistance( getNeighborPoint( d ), genericPointDescriptor.getNeighborPoint( d ) );
-  		
-  		return difference;
-  	} 	  	
+//  	/**
+//  	 * Computes the difference between two PointDescriptors by summing up all individual differences.
+//  	 *
+//  	 * @param genericPointDescriptor - the PointDescriptor to compare to
+//  	 * @return The differences between two PointDescriptors
+//  	 *
+//     */
+//  	public double getDifference( final AbstractPointDescriptor<P,?> genericPointDescriptor )
+//  	{
+//  		double difference = 0;
+//
+//  		for ( int d = 0; d < numDimensions; ++d )
+//  			difference += Point.distance( getNeighborPoint( d ), genericPointDescriptor.getNeighborPoint( d ) );
+//
+//  		return difference;
+//  	}
+//
+//  	/**
+//  	 * Computes the squared difference between two PointDescriptors by summing up all individual squared differences.
+//  	 *
+//  	 * @param genericPointDescriptor - the PointDescriptor to compare to
+//  	 * @return The differences between two PointDescriptors
+//  	 */
+//  	public double getSquaredDifference( final AbstractPointDescriptor<P,?> genericPointDescriptor )
+//  	{
+//  		double difference = 0;
+//
+//  		for ( int d = 0; d < numDimensions; ++d )
+//  			difference += Point.squareDistance( getNeighborPoint( d ), genericPointDescriptor.getNeighborPoint( d ) );
+//
+//  		return difference;
+//  	}
   	
   	/**
   	 * Overwrites the toString method

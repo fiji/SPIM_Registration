@@ -688,7 +688,6 @@ public class Interest_Point_Registration implements PlugIn
 	 * Goes through all ViewDescriptions and checks all available labels for interest point detection
 	 * 
 	 * @param spimData
-	 * @param timepointsToProcess
 	 * @param channel
 	 * @return
 	 */
@@ -704,7 +703,6 @@ public class Interest_Point_Registration implements PlugIn
 	 * Goes through all ViewDescriptions and checks all available labels for interest point detection
 	 * 
 	 * @param spimData
-	 * @param timepointsToProcess
 	 * @param channel
 	 * @param doWhat - the text for not doing anything with this channel
 	 * @return

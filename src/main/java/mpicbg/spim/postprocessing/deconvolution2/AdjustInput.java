@@ -248,7 +248,6 @@ public class AdjustInput
 	/**
 	 * Adds additive gaussian noise: i = i + gauss(x, sigma)
 	 * 
-	 * @param amount - how many times sigma
 	 * @return the signal-to-noise ratio (measured)
 	 */
 	public static double addGaussianNoise( final Image< FloatType > img, final Random rnd, final float sigma, boolean onlyPositive )
@@ -269,7 +268,6 @@ public class AdjustInput
 	/**
 	 * Adds additive and multiplicative gaussian noise: i = i*gauss(x,sigma) + gauss(x, sigma)
 	 * 
-	 * @param amount - how many times sigma
 	 * @return the signal-to-noise ratio (measured)
 	 */
 	public static double addGaussianNoiseAddMul( final Image< FloatType > img, final Random rnd, final float sigma, boolean onlyPositive )

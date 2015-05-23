@@ -105,7 +105,7 @@ public class XMLFunctions
 	/**
 	 * I take a xml element and the tag name, look for the tag and get
 	 * the text content 
-	 * i.e for <employee><name>John</name></employee> xml snippet if
+	 * i.e for &gt;employee&lt;&gt;name&lt;John&gt;/name&lt;&gt;/employee&lt; xml snippet if
 	 * the Element points to employee node and tagName is name I will return John  
 	 * @param ele
 	 * @param tagName

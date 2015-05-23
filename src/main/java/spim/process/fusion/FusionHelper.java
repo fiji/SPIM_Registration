@@ -153,9 +153,7 @@ public class FusionHelper
 	/**
 	 * Normalizes the image to the range [0...1]
 	 * 
-	 * @param image - the image to normalize
-	 * @param min - min value
-	 * @param max - max value
+	 * @param img - the image to normalize
 	 * @return - normalized array
 	 */
 	public static boolean normalizeImage( final RandomAccessibleInterval< FloatType > img )
@@ -170,7 +168,7 @@ public class FusionHelper
 	/**
 	 * Normalizes the image to the range [0...1]
 	 * 
-	 * @param image - the image to normalize
+	 * @param img - the image to normalize
 	 * @param min - min value
 	 * @param max - max value
 	 * @return - normalized array

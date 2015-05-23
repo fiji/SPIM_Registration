@@ -118,7 +118,7 @@ public abstract class InterestPointRegistration
 	 * Registers all timepoints. No matter which matching is done it is always the same principle.
 	 * 
 	 * First all pairwise correspondences are established, and then a global optimization is computed.
-	 * The global optimization can is done in subsets, where the number of subsets >= 1.
+	 * The global optimization can is done in subsets, where the number of subsets &gt;= 1.
 	 * 
 	 * @param registrationType - which kind of registration
 	 * @param save - if you want to save the correspondence files

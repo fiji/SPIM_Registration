@@ -161,7 +161,7 @@ public class Duplicate_Transformation implements PlugIn
 	/**
 	 * 
 	 * @param gd
-	 * @return -1 means invalid/cancelled, 0 means all, >0 means how many
+	 * @return -1 means invalid/cancelled, 0 means all, &gt;0 means how many
 	 */
 	protected int parseRegistrations( final GenericDialog gd )
 	{
