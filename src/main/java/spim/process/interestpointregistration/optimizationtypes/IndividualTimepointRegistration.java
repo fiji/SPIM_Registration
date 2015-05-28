@@ -60,6 +60,12 @@ public class IndividualTimepointRegistration extends GlobalOptimizationType
 							final MatchPointList listA = pointLists.get( viewIdA );
 							final MatchPointList listB = pointLists.get( viewIdB );
 	
+							if ( !isValid( viewIdA, listA ) )
+								continue;
+
+							if ( !isValid( viewIdB, listB ) )
+								continue;
+
 							viewPairs.add( new PairwiseMatch( viewIdA, viewIdB, listA, listB ) );
 						}
 					}

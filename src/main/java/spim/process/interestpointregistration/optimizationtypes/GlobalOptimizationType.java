@@ -306,4 +306,17 @@ public abstract class GlobalOptimizationType
 				if ( spimData.getSequenceDescription().getViewDescription( id ).getViewSetup().getChannel().getId() == c.getChannel().getId() )
 					spimData.getViewInterestPoints().getViewInterestPointLists( id ).getInterestPointList( c.getLabel() ).setCorrespondingInterestPoints( new ArrayList< CorrespondingInterestPoints>() );
 	}
+
+	protected static boolean isValid( final ViewId viewId, final MatchPointList list )
+	{
+		if ( list == null )
+		{
+			IOFunctions.println( "Interest points NOT found for timepoint=" + viewId.getTimePointId() + ", viewsetup=" + viewId.getViewSetupId() );
+			return false;
+		}
+		else
+		{
+			return true;
+		}
+	}
 }

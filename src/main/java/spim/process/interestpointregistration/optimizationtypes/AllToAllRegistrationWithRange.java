@@ -62,7 +62,13 @@ public class AllToAllRegistrationWithRange extends GlobalOptimizationType
 				{
 					final MatchPointList listA = allPointLists.get( viewIdA );
 					final MatchPointList listB = allPointLists.get( viewIdB );
-					
+
+					if ( !isValid( viewIdA, listA ) )
+						continue;
+
+					if ( !isValid( viewIdB, listB ) )
+						continue;
+
 					// in case we consider timepoints as units and the pair has the same timepoint, do not add;
 					// i.e. add the pair always if the above statement is false
 					if ( !( considerTimePointsAsUnit() && ( viewIdA.getTimePointId() == viewIdB.getTimePointId() ) ) )
