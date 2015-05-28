@@ -53,7 +53,9 @@ public class ReferenceTimepointRegistration extends GlobalOptimizationType
 			if ( !vd.isPresent() )
 				continue;
 
-			fixedTiles.add( vd );
+			for ( final ChannelProcess cp : channelsToProcess )
+				if ( cp.getChannel().getId() == vd.getViewSetup().getChannel().getId() )
+					fixedTiles.add( vd );
 		}
 
 		return fixedTiles;
