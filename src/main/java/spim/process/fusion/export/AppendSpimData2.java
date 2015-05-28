@@ -4,7 +4,7 @@ import ij.gui.GenericDialog;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -214,7 +214,7 @@ public class AppendSpimData2 implements ImgExport
 		resetViewSetupsAndDescriptions( sequenceDescription );
 
 		// all the timepoints that are not processed are missing views
-		final ArrayList< ViewId > newMissingViews = new ArrayList< ViewId >();
+		final HashSet< ViewId > newMissingViews = new HashSet< ViewId >();
 		final Map< ViewId, ViewInterestPointLists > ips = spimData.getViewInterestPoints().getViewInterestPoints();
 		for ( final TimePoint t : spimData.getSequenceDescription().getTimePoints().getTimePointsOrdered() )
 		{
@@ -234,13 +234,12 @@ public class AppendSpimData2 implements ImgExport
 		if ( newMissingViews.size() > 0 )
 		{
 			MissingViews m = spimData.getSequenceDescription().getMissingViews();
-
-			if ( m == null )
-				setMissingViews( spimData.getSequenceDescription(), m = new MissingViews( newMissingViews ) );
-			else
-				m.getMissingViews().addAll( newMissingViews );
+			if ( m != null )
+				newMissingViews.addAll( m.getMissingViews() );
+			m = new MissingViews( newMissingViews );
 
 			// marking the missing views
+			setMissingViews( spimData.getSequenceDescription(), m );
 			BasicViewDescription.markMissingViews( spimData.getSequenceDescription().getViewDescriptions(), m );
 		}
 
