@@ -74,7 +74,7 @@ public class ProcessForDeconvolution
 	HashMap< ViewId, RandomAccessibleInterval< FloatType > > imgs, weights;
 	ExtractPSF< FloatType > ePSF;
 
-	public static ArrayList< String > files;
+	public static String[] files;
 	public static boolean debugImport = false;
 
 	public ProcessForDeconvolution(
@@ -121,7 +121,7 @@ public class ProcessForDeconvolution
 		if ( files != null )
 		{
 			weightType = WeightType.LOAD_WEIGHTS;
-			IOFunctions.println( "WARNING: LOADING WEIGHTS FROM IMAGES" );
+			IOFunctions.println( "WARNING: LOADING WEIGHTS FROM IMAGES, files.length()=" + files.length );
 		}
 
 		// get all views that are fused
@@ -210,8 +210,8 @@ public class ProcessForDeconvolution
 			}
 			else //if ( processType == ProcessType.LOAD_WEIGHTS )
 			{
-				IOFunctions.println( "WARNING: LOADING WEIGHTS FROM: '" + new File( files.get( i ) ) + "'" );
-				ImagePlus imp = StackImgLoaderIJ.open( new File( files.get( i ) ) );
+				IOFunctions.println( "WARNING: LOADING WEIGHTS FROM: '" + new File( files[ i ] ) + "'" );
+				ImagePlus imp = StackImgLoaderIJ.open( new File( files[ i ] ) );
 				weightImg = imgFactory.create( bb.getDimensions(), new FloatType() );
 				StackImgLoaderIJ.imagePlus2ImgLib2Img( imp, (Img< FloatType > )weightImg, false );
 				imp.close();
