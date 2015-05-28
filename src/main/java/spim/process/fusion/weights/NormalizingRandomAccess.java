@@ -13,10 +13,12 @@ public class NormalizingRandomAccess< T extends RealType< T > > extends Abstract
 	final RandomAccess< T > intervalRandomAccess;
 	final RandomAccess< T > normalizeIntervalRandomAccess;
 	final T type;
+	final double osemspeedup;
 
 	public NormalizingRandomAccess(
 			final RandomAccessibleInterval< T > interval,
 			final RandomAccessibleInterval< T > normalizeInterval,
+			final double osemspeedup,
 			final T type )
 	{
 		super( interval.numDimensions() );
@@ -24,6 +26,7 @@ public class NormalizingRandomAccess< T extends RealType< T > > extends Abstract
 		this.interval = interval;
 		this.normalizeInterval = normalizeInterval;
 		this.type = type.createVariable();
+		this.osemspeedup = osemspeedup;
 
 		this.intervalRandomAccess = interval.randomAccess();
 		this.normalizeIntervalRandomAccess = normalizeInterval.randomAccess();
@@ -35,8 +38,8 @@ public class NormalizingRandomAccess< T extends RealType< T > > extends Abstract
 		intervalRandomAccess.setPosition( position );
 		normalizeIntervalRandomAccess.setPosition( position );
 
-		type.set( intervalRandomAccess.get() );
-		type.div( normalizeIntervalRandomAccess.get() );
+		final double v = intervalRandomAccess.get().getRealDouble() / normalizeIntervalRandomAccess.get().getRealDouble();
+		type.setReal( Math.min( 1, v * osemspeedup ) ); // individual contribution never higher than 1
 
 		return type;
 	}
@@ -102,7 +105,7 @@ public class NormalizingRandomAccess< T extends RealType< T > > extends Abstract
 	public void setPosition( final long position, final int d ) { this.position[ d ] = (int)position; }
 
 	@Override
-	public NormalizingRandomAccess< T > copy() { return new NormalizingRandomAccess< T >( interval, normalizeInterval, type ); }
+	public NormalizingRandomAccess< T > copy() { return new NormalizingRandomAccess< T >( interval, normalizeInterval, osemspeedup, type ); }
 
 	@Override
 	public NormalizingRandomAccess<T> copyRandomAccess() { return copy(); }
