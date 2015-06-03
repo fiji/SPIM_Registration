@@ -260,7 +260,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	 * @param minResolution - the smallest resolution in any dimension (distance between two pixels in the output image will be that wide)
 	 * @return
 	 */
-	protected static ViewRegistrations createViewRegistrations( final Map< ViewId, ViewDescription > viewDescriptionList, final double minResolution )
+	public static ViewRegistrations createViewRegistrations( final Map< ViewId, ViewDescription > viewDescriptionList, final double minResolution )
 	{
 		final HashMap< ViewId, ViewRegistration > viewRegistrationList = new HashMap< ViewId, ViewRegistration >();
 		
