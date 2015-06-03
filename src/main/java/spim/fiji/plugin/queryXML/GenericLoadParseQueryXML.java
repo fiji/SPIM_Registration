@@ -192,6 +192,29 @@ public class GenericLoadParseQueryXML<
 	public GenericDialog getGenericDialog() { return gd; }
 	public void setReturnFalse( final boolean value ) { this.returnfalse = value; }
 
+	public boolean loadXML(List<String> specifyAttributes)
+	{
+		// should not be null, just empty
+		if ( specifyAttributes == null )
+			specifyAttributes = new ArrayList< String >();
+
+		// they are ordered by alphabet (or user defined) so that the details and then queried in the same order
+		if ( comparator == null )
+			Collections.sort( specifyAttributes );
+		else
+			Collections.sort( specifyAttributes, comparator );
+
+		// timepoint is always last
+		if ( specifyAttributes.contains( XmlKeys.TIMEPOINTS_TIMEPOINT_TAG ) )
+		{
+			specifyAttributes.remove( XmlKeys.TIMEPOINTS_TIMEPOINT_TAG );
+			specifyAttributes.add( XmlKeys.TIMEPOINTS_TIMEPOINT_TAG );
+		}
+
+		// try parsing if it ends with XML
+		return tryParsing( defaultXMLfilename, false );
+	}
+
 	/**
 	 * Asks the user for a valid XML (real time parsing)
 	 * 
@@ -203,31 +226,13 @@ public class GenericLoadParseQueryXML<
 			String query,
 			List< String > specifyAttributes )
 	{
-		// should not be null, just empty
-		if ( specifyAttributes == null )
-			specifyAttributes = new ArrayList< String >();
-		
-		// they are ordered by alphabet (or user defined) so that the details and then queried in the same order
-		if ( comparator == null )
-			Collections.sort( specifyAttributes );
-		else
-			Collections.sort( specifyAttributes, comparator );
-		
-		// timepoint is always last
-		if ( specifyAttributes.contains( XmlKeys.TIMEPOINTS_TIMEPOINT_TAG ) )
-		{
-			specifyAttributes.remove( XmlKeys.TIMEPOINTS_TIMEPOINT_TAG );
-			specifyAttributes.add( XmlKeys.TIMEPOINTS_TIMEPOINT_TAG );
-		}
+		loadXML(specifyAttributes);
+
+		this.attributeChoice = new HashMap< String, Integer >();
 		
 		// adjust query to support recording
 		if ( query.contains( " " ) )
 			query = query.replaceAll( " ", "_" );
-		
-		this.attributeChoice = new HashMap< String, Integer >();
-		
-		// try parsing if it ends with XML
-		tryParsing( defaultXMLfilename, false );
 		
 		final GenericDialogPlus gd;
 		

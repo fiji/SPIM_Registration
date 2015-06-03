@@ -1,6 +1,7 @@
 .DS_STORE
 /jars/
 /plugins/
+/out/
 
 # Eclipse #
 /.classpath

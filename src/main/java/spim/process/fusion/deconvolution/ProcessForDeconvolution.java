@@ -1,5 +1,6 @@
 package spim.process.fusion.deconvolution;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -254,8 +255,9 @@ public class ProcessForDeconvolution
 				osemspeedup = getMinOverlappingViews();
 			else if ( osemIndex == 2 )
 				osemspeedup = getAvgOverlappingViews();
-				
-			displayWeights( osemspeedup, weightsSorted, overlapImg );
+
+			if( !GraphicsEnvironment.isHeadless() )
+				displayWeights( osemspeedup, weightsSorted, overlapImg );
 		}
 				
 		return true;

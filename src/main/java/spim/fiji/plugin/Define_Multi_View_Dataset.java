@@ -46,37 +46,97 @@ public class Define_Multi_View_Dataset implements PlugIn
 	@Override
 	public void run( String arg0 ) 
 	{
-		defineDataset( true );
+		if( arg0 == null || arg0 == "")
+			// IJ1 macro support
+			queryDialog();
+		else
+			// Command prompt support
+			parseArgument( arg0 );
 	}
 
-	public Pair< SpimData2, String > defineDataset( final boolean save )
+	public boolean queryDialog()
 	{
 		final ArrayList< MultiViewDatasetDefinition > datasetDefinitions = new ArrayList< MultiViewDatasetDefinition >();
-		
+
 		for ( final MultiViewDatasetDefinition mvd : staticDatasetDefinitions )
 			datasetDefinitions.add( mvd.newInstance() );
-		
+
 		// verify that there are definitions
 		final int numDatasetDefinitions = datasetDefinitions.size();
-		
+
 		if ( numDatasetDefinitions == 0 )
 		{
 			IJ.log( "No Multi-View Dataset Definitions available." );
-			return null;
+			return false;
 		}
-		
+
 		// get their names
 		final String[] titles = new String[ numDatasetDefinitions ];
-		
+
 		for ( int i = 0; i < datasetDefinitions.size(); ++i )
 			titles[ i ] = datasetDefinitions.get( i ).getTitle();
-		
+
 		// query the dataset definition to use
 		final GenericDialogPlus gd1 = new GenericDialogPlus( "Select type of multi-view dataset" );
 
 		if ( defaultDatasetDef >= numDatasetDefinitions )
 			defaultDatasetDef = 0;
-		
+
+		gd1.addChoice( "Type_of_dataset: ", titles, titles[ defaultDatasetDef ] );
+
+		GUIHelper.addWebsite( gd1 );
+
+		gd1.showDialog();
+		if ( gd1.wasCanceled() )
+			return false;
+
+		defaultDatasetDef = gd1.getNextChoiceIndex();
+
+		MultiViewDatasetDefinition def = datasetDefinitions.get( defaultDatasetDef );
+
+		IOFunctions.println( defaultDatasetDef );
+
+		if(def.queryDialog())
+			return true;
+
+		return true;
+	}
+
+	public boolean parseArgument(String args)
+	{
+		//TODO: Parse java plugin arguments
+		System.err.println( "This method will be implemented soon." );
+		return true;
+	}
+
+	public Pair< SpimData2, String > defineDataset( final boolean save )
+	{
+		final ArrayList< MultiViewDatasetDefinition > datasetDefinitions = new ArrayList< MultiViewDatasetDefinition >();
+
+		for ( final MultiViewDatasetDefinition mvd : staticDatasetDefinitions )
+			datasetDefinitions.add( mvd.newInstance() );
+
+		// verify that there are definitions
+		final int numDatasetDefinitions = datasetDefinitions.size();
+
+		if ( numDatasetDefinitions == 0 )
+		{
+			IJ.log( "No Multi-View Dataset Definitions available." );
+			return null;
+		}
+
+		// get their names
+		final String[] titles = new String[ numDatasetDefinitions ];
+
+		for ( int i = 0; i < datasetDefinitions.size(); ++i )
+			titles[ i ] = datasetDefinitions.get( i ).getTitle();
+
+		// query the dataset definition to use
+		final GenericDialogPlus gd1 = new GenericDialogPlus( "Select type of multi-view dataset" );
+
+		if ( defaultDatasetDef >= numDatasetDefinitions )
+			defaultDatasetDef = 0;
+
 		gd1.addChoice( "Type_of_dataset: ", titles, titles[ defaultDatasetDef ] );
 		//Choice choice = (Choice)gd1.getChoices().lastElement();
 		gd1.addStringField( "XML_filename", defaultXMLName, 30 );
@@ -85,25 +145,25 @@ public class Define_Multi_View_Dataset implements PlugIn
 				formatEntry( datasetDefinitions.get( defaultDatasetDef ).getExtendedDescription(), numCharacters, numLinesDocumentation ),
 				new Font( Font.MONOSPACED, Font.PLAIN, 11 ),
 				Color.BLACK );
-						
+
 		addListeners( gd1, choice, label, datasetDefinitions );*/
-		
+
 		GUIHelper.addWebsite( gd1 );
-		
+
 		gd1.showDialog();
 		if ( gd1.wasCanceled() )
 			return null;
-		
+
 		defaultDatasetDef = gd1.getNextChoiceIndex();
 		final String xmlFileName = defaultXMLName = gd1.getNextString();
-		
+
 		// run the definition
 		final MultiViewDatasetDefinition def = datasetDefinitions.get( defaultDatasetDef );
-		
+
 		IOFunctions.println( defaultDatasetDef );
-		
-		final SpimData2 spimData = def.createDataset();
-		
+
+		final SpimData2 spimData = def.createDataset( );
+
 		if ( spimData == null )
 		{
 			IOFunctions.println( "Defining multi-view dataset failed." );
@@ -177,6 +237,71 @@ public class Define_Multi_View_Dataset implements PlugIn
 			}
 		} );
 		
+	}
+
+	public static class Parameters
+	{
+		private String typeOfDataset;
+
+		private LightSheetZ1.Parameters cziParameters;
+
+		/**
+		 * Types of input dataset
+		 * 1. "Image Stacks (LOCI Bioformats)"
+		 * 2. "Image Stacks (ImageJ Opener)"
+		 * 3. "MicroManager diSPIM Dataset"
+		 * 4. "Zeiss Lightsheet Z.1 Dataset (LOCI Bioformats)"
+		 */
+		public String getTypeOfDataset()
+		{
+			return typeOfDataset;
+		}
+
+		public void setTypeOfDataset( String typeOfDataset )
+		{
+			this.typeOfDataset = typeOfDataset;
+		}
+
+		/**
+		 * CZI handler's parameter holder
+		 * @return LightSheetZ1 parameter sets
+		 */
+		public LightSheetZ1.Parameters getCziParameters()
+		{
+			return cziParameters;
+		}
+
+		public void setCziParameters( LightSheetZ1.Parameters cziParameters )
+		{
+			this.cziParameters = cziParameters;
+		}
+	}
+
+	public void process(Parameters params)
+	{
+		if(IJ.debugMode)
+		{
+			System.out.println( "---- Define_Multi_View_Dataset - Parameters ----" );
+			System.out.println( "Input Dataset Type: " + params.getTypeOfDataset() );
+			System.out.println( "------------------------------------------------" );
+		}
+
+		MultiViewDatasetDefinition def = null;
+
+		for(MultiViewDatasetDefinition mvdd : staticDatasetDefinitions)
+		{
+			if(params.getTypeOfDataset().equals( mvdd.getTitle() ))
+				def = mvdd;
+		}
+
+		// Given the type of dataset is wrong
+		if(null == def) {
+			System.err.print( params.getTypeOfDataset() + " is incorrect. Please, try other dataset." );
+			return;
+		}
+
+		if( def.getTitle().equals( "Zeiss Lightsheet Z.1 Dataset (LOCI Bioformats)" ))
+			((LightSheetZ1) def).process( params.getCziParameters() );
 	}
 	
 	public static void main( String args[] )

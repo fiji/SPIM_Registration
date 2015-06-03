@@ -68,7 +68,7 @@ public class EfficientBayesianBased extends Fusion
 	public static int defaultOSEMspeedupIndex = 0;
 	public static int defaultNumIterations = 10;
 	public static boolean defaultUseTikhonovRegularization = true;
-	public static double defaultLambda = 0.006;
+	public static double defaultLambda = 0.10;
 	public static int defaultBlockSizeIndex = 0, defaultBlockSizeX = 256, defaultBlockSizeY = 256, defaultBlockSizeZ = 256;
 	public static int defaultComputationTypeIndex = 0;
 	public static int defaultExtractPSF = 0;
@@ -1026,6 +1026,7 @@ public class EfficientBayesianBased extends Fusion
 			final ArrayList< String > potentialNames = new ArrayList< String >();
 			potentialNames.add( "fftCUDA" );
 			potentialNames.add( "FourierConvolutionCUDA" );
+			potentialNames.add( "libFourierConvolutionCUDALib" );
 			
 			LRFFT.cuda = NativeLibraryTools.loadNativeLibrary( potentialNames, CUDAFourierConvolution.class );
 
@@ -1175,5 +1176,170 @@ public class EfficientBayesianBased extends Fusion
 	protected Map< ViewSetup, ViewSetup > createNewViewSetups( final BoundingBoxGUI bb )
 	{
 		return WeightedAverageFusion.assembleNewViewSetupsFusion( spimData, viewIdsToProcess, bb, "Decon", "Decon" );
+	}
+
+	@Override
+	public void initDefault(int defineBlockSize, int defineComputeType, int defineIterationType)
+	{
+		blockSizeIndex = defineBlockSize;
+		// check blocks
+		if ( !getBlocks() )
+			return;
+
+		// check CUDA
+		computationTypeIndex = defineComputeType;
+		if ( !getCUDA() )
+			return;
+
+		// check PSF
+		// Do not use PSF file in default mode
+		extractPSF = true;
+		this.psfFiles = null;
+
+		final HashMap< Channel, ArrayList< Correspondence > > correspondences = new HashMap< Channel, ArrayList< Correspondence > >();
+
+		// get all interest point labels that have correspondences for all views that are processed
+		assembleAvailableCorrespondences( correspondences, new HashMap< Channel, Integer >(), true );
+
+		int sumChannels = 0;
+		for ( final Channel c : correspondences.keySet() )
+			sumChannels += correspondences.get( c ).size();
+
+		if ( sumChannels == 0 )
+		{
+			IOFunctions.println( "No detections that have been registered are available to extract a PSF. Quitting." );
+			return;
+		}
+
+		// make a list of those labels for the imagej dialog
+		// and set the default selections
+		final String[][] choices = new String[ channelsToProcess.size() ][];
+
+		if ( defaultPSFLabelIndex == null || defaultPSFLabelIndex.length != channelsToProcess.size() )
+			defaultPSFLabelIndex = new int[ channelsToProcess.size() ];
+
+		// remember which choiceindex in the dialog maps to which other channel
+		final ArrayList< HashMap< Integer, Channel > > otherChannels = new ArrayList< HashMap< Integer, Channel > >();
+
+		for ( int i = 0; i < channelsToProcess.size(); ++i )
+		{
+			final Channel c = channelsToProcess.get( i );
+			final ArrayList< Correspondence > corr = correspondences.get( c );
+			choices[ i ] = new String[ corr.size() + channelsToProcess.size() - 1 ];
+
+			for ( int j = 0; j < corr.size(); ++j )
+				choices[ i ][ j ] = corr.get( j ).getLabel();
+
+			final HashMap< Integer, Channel > otherChannel = new HashMap< Integer, Channel >();
+
+			int k = 0;
+			for ( int j = 0; j < channelsToProcess.size(); ++j )
+			{
+				if ( !channelsToProcess.get( j ).equals( c ) )
+				{
+					choices[ i ][ k + corr.size() ] = "Same PSF as channel " + channelsToProcess.get( j ).getName();
+					otherChannel.put( k + corr.size(), channelsToProcess.get( j ) );
+					++k;
+				}
+			}
+
+			otherChannels.add( otherChannel );
+
+			if ( defaultPSFLabelIndex[ i ] < 0 || defaultPSFLabelIndex[ i ] >= choices[ i ].length )
+				defaultPSFLabelIndex[ i ] = 0;
+		}
+
+		this.extractPSFLabels = new HashMap< Channel, ChannelPSF >();
+
+		for ( int j = 0; j < channelsToProcess.size(); ++j )
+		{
+			final Channel c = channelsToProcess.get( j );
+			final int l = defaultPSFLabelIndex[ j ];
+
+			if ( l < correspondences.get( c ).size() )
+			{
+				this.extractPSFLabels.put( c, new ChannelPSF( c, choices[ j ][ l ] ) );
+				IOFunctions.println( "Channel " + c.getName() + ": extract PSF from label '" + choices[ j ][ l ] + "'" );
+			}
+			else
+			{
+				this.extractPSFLabels.put( c, new ChannelPSF( c, otherChannels.get( j ).get( l ) ) );
+				IOFunctions.println( "Channel " + c.getName() + ": uses same PSF as channel " + this.extractPSFLabels.get( c ).getOtherChannel().getName() );
+			}
+		}
+
+		final int oldX = defaultPSFSizeX;
+		final int oldY = defaultPSFSizeY;
+		final int oldZ = defaultPSFSizeZ;
+
+		psfSizeX = defaultPSFSizeX;
+		psfSizeY = defaultPSFSizeY;
+		psfSizeZ = defaultPSFSizeZ;
+
+		// enforce odd number
+		if ( psfSizeX % 2 == 0 )
+			defaultPSFSizeX = ++psfSizeX;
+
+		if ( psfSizeY % 2 == 0 )
+			defaultPSFSizeY = ++psfSizeY;
+
+		if ( psfSizeZ % 2 == 0 )
+			defaultPSFSizeZ = ++psfSizeZ;
+
+		// update the borders if applicable
+		if ( ProcessForDeconvolution.defaultBlendingBorder == null || ProcessForDeconvolution.defaultBlendingBorder.length < 3 ||
+				( oldX/2 == ProcessForDeconvolution.defaultBlendingBorder[ 0 ] && oldY/2 == ProcessForDeconvolution.defaultBlendingBorder[ 1 ] && oldZ/5 == ProcessForDeconvolution.defaultBlendingBorder[ 2 ] ) )
+		{
+			ProcessForDeconvolution.defaultBlendingBorder = new int[]{ psfSizeX/2, psfSizeY/2, psfSizeZ/5 };
+		}
+
+		// reorder the channels so that those who extract a PSF
+		// from the images for a certain timepoint will be processed
+		// first
+		if ( extractPSF )
+			if ( !reOrderChannels() )
+				return;
+
+		// check OSEM
+		osemspeedupIndex = 0;
+		if ( !getOSEM() )
+			return;
+
+		// get the blending parameters
+		adjustBlending = false;
+		if ( !getBlending( ) )
+			return;
+
+		// check debug interval
+		justShowWeights = true;
+		if ( !getDebug() )
+			return;
+
+
+		defaultIterationType = defineIterationType;
+
+		justShowWeights = false;
+
+		if ( defaultIterationType == 0 )
+			iterationType = PSFTYPE.OPTIMIZATION_II;
+		else if ( defaultIterationType == 1 )
+			iterationType = PSFTYPE.OPTIMIZATION_I;
+		else if ( defaultIterationType == 2 )
+			iterationType = PSFTYPE.EFFICIENT_BAYESIAN;
+		else if ( defaultIterationType == 3 )
+			iterationType = PSFTYPE.INDEPENDENT;
+		else
+			justShowWeights = true; // just show the overlap
+
+		osemspeedupIndex = defaultOSEMspeedupIndex;
+		numIterations = defaultNumIterations = 5;
+		debugMode = defaultDebugMode;
+		adjustBlending = defaultAdjustBlending;
+		useTikhonovRegularization = defaultUseTikhonovRegularization;
+		lambda = defaultLambda;
+		blockSizeIndex = defaultBlockSizeIndex;
+		computationTypeIndex = defaultComputationTypeIndex;
+		extractPSFIndex = defaultExtractPSF;
+		displayPSF = defaultDisplayPSF = 0;
 	}
 }

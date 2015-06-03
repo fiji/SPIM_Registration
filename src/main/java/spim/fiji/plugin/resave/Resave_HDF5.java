@@ -2,6 +2,7 @@ package spim.fiji.plugin.resave;
 
 import ij.plugin.PlugIn;
 
+import java.io.File;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -25,10 +26,12 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
+import spim.fiji.ImgLib2Temp;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
 import spim.fiji.plugin.Toggle_Cluster_Options;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
+import spim.fiji.plugin.queryXML.ParseQueryXML;
 import spim.fiji.plugin.resave.Generic_Resave_HDF5.Parameters;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
@@ -73,6 +76,11 @@ public class Resave_HDF5 implements PlugIn
 		final int firstviewSetupId = xml.getData().getSequenceDescription().getViewSetupsOrdered().get( 0 ).getId();
 		final Parameters params = Generic_Resave_HDF5.getParameters( perSetupExportMipmapInfo.get( firstviewSetupId ), true, true );
 
+		resave( xml, params );
+	}
+
+	private void resave(LoadParseQueryXML xml,  Parameters params)
+	{
 		if ( params == null )
 			return;
 
@@ -96,7 +104,7 @@ public class Resave_HDF5 implements PlugIn
 
 				xml.getIO().save( result.getA(), params.seqFile.getAbsolutePath() );
 				progressWriter.setProgress( 0.95 );
-				
+
 				// copy the interest points if they exist
 				Resave_TIFF.copyInterestPoints( xml.getData().getBasePath(), params.getSeqFile().getParentFile(), result.getB() );
 			}
@@ -264,5 +272,73 @@ public class Resave_HDF5 implements PlugIn
 		newSpimData.setBasePath( params.seqFile.getParentFile() );
 
 		return new ValuePair< SpimData2, List< String > >( newSpimData, filesToCopy );
+	}
+
+	/***
+	 * defaultProcess provides headless process (with default optional parameters) with xmlFile name and cluster parameter.
+	 * @param xmlFileName
+	 * @param useCluster
+	 */
+	public void defaultProcess(String xmlFileName, boolean useCluster)
+	{
+		boolean rememberClusterProcessing = Toggle_Cluster_Options.displayClusterProcessing;
+
+		Toggle_Cluster_Options.displayClusterProcessing = false;
+
+		LoadParseQueryXML.defaultXMLfilename = xmlFileName;
+
+		final LoadParseQueryXML xml = new LoadParseQueryXML();
+
+		if ( !xml.loadXML() )
+			return;
+
+		Toggle_Cluster_Options.displayClusterProcessing = rememberClusterProcessing;
+
+		// load all dimensions if they are not known (required for estimating the mipmap layout)
+		if ( loadDimensions( xml.getData(), xml.getViewSetupsToProcess() ) )
+		{
+			// save the XML again with the dimensions loaded
+			SpimData2.saveXML( xml.getData(), xml.getXMLFileName(), xml.getClusterExtension() );
+		}
+
+		final Map< Integer, ExportMipmapInfo > perSetupExportMipmapInfo = proposeMipmaps( xml.getViewSetupsToProcess() );
+
+		Generic_Resave_HDF5.lastExportPath = LoadParseQueryXML.defaultXMLfilename;
+
+		final int firstviewSetupId = xml.getData().getSequenceDescription().getViewSetupsOrdered().get( 0 ).getId();
+		ExportMipmapInfo autoMipmapSettings = perSetupExportMipmapInfo.get( firstviewSetupId );
+
+		boolean lastSetMipmapManual = false;
+		boolean lastSplit = false;
+		int lastTimepointsPerPartition = 1;
+		int lastSetupsPerPartition = 0;
+		boolean lastDeflate = true;
+		int lastJobIndex = 0;
+
+		// If we are using user-defined sub-sampling config, enable the below codes.
+		//
+		//		String lastSubsampling = "{1,1,1}, {2,2,1}, {4,4,2}";
+		//		String lastChunkSizes = "{16,16,16}, {16,16,16}, {16,16,16}";
+		//		final int[][] resolutions = PluginHelper.parseResolutionsString( lastSubsampling );
+		//		final int[][] subdivisions = PluginHelper.parseResolutionsString( lastChunkSizes );
+		final int[][] resolutions = autoMipmapSettings.getExportResolutions();
+		final int[][] subdivisions = autoMipmapSettings.getSubdivisions();
+
+		final File seqFile, hdf5File;
+
+		seqFile = new File(xmlFileName);
+		hdf5File = new File(seqFile.getPath().substring( 0, seqFile.getPath().length() - 4 ) + ".h5");
+
+		int defaultConvertChoice = 1;
+		double defaultMin, defaultMax;
+		defaultMin = defaultMax = Double.NaN;
+		boolean displayClusterProcessing = false;
+
+		Generic_Resave_HDF5.Parameters params = new Generic_Resave_HDF5.Parameters(
+				lastSetMipmapManual, resolutions, subdivisions, seqFile, hdf5File, lastDeflate, lastSplit,
+				lastTimepointsPerPartition, lastSetupsPerPartition, displayClusterProcessing, lastJobIndex,
+				defaultConvertChoice, defaultMin, defaultMax );
+
+		resave(xml, params);
 	}
 }

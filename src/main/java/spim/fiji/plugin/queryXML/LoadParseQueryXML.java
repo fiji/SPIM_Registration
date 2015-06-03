@@ -89,6 +89,20 @@ public class LoadParseQueryXML extends GenericLoadParseQueryXML< SpimData2, Sequ
 		return success;
 	}
 
+	public boolean loadXML()
+	{
+		boolean success = super.loadXML( null );
+
+		if ( !queryDetails() )
+			return false;
+
+		// make sure the internal IO is updated to reflect the cluster saving
+		if ( success )
+			this.getIO().setClusterExt( this.getClusterExtension() );
+
+		return success;
+	}
+
 	/**
 	 * @return All angles that should be processed
 	 */

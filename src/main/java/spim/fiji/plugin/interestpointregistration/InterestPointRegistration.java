@@ -211,4 +211,6 @@ public abstract class InterestPointRegistration
 		else
 			return false;
 	}
+
+	public abstract void initDefault();
 }

@@ -23,11 +23,13 @@ import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
+import spim.fiji.plugin.queryXML.ParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.process.interestpointregistration.ChannelProcess;
+import spim.process.interestpointregistration.TransformationModel;
 import spim.process.interestpointregistration.geometricdescriptor.RGLDM;
 import spim.process.interestpointregistration.geometrichashing.GeometricHashing;
 import spim.process.interestpointregistration.icp.IterativeClosestPoint;
@@ -778,6 +780,190 @@ public class Interest_Point_Registration implements PlugIn
 			tps[ t ] = timepoints.getTimePointsOrdered().get( t ).getName();
 
 		return tps;
+	}
+
+	public void defaultProcess(String xmlFileName)
+	{
+		IOFunctions.printIJLog = false;
+
+		LoadParseQueryXML.defaultXMLfilename = xmlFileName;
+
+		//Interest_Point_Detection detect = new Interest_Point_Detection();
+		ParseQueryXML result = new ParseQueryXML();
+		result.queryXML();
+
+		SpimData2 data = result.getData();
+		List< ViewId > viewIds =	SpimData2.getAllViewIdsSorted( result.getData(), result.getViewSetupsToProcess(), result.getTimePointsToProcess() );
+		String clusterExtension = result.getClusterExtension();
+		xmlFileName = result.getXMLFileName();
+
+		defaultAlgorithm = 0;
+
+		// which timepoints are part of the
+		final List< TimePoint > timepointToProcess = SpimData2.getAllTimePointsSorted( data, viewIds );
+
+		// ask which channels have the objects we are searching for
+		final List< Channel > channels = SpimData2.getAllChannelsSorted( data, viewIds );
+		final int nAllChannels = data.getSequenceDescription().getAllChannelsOrdered().size();
+
+		defaultRegistrationType = 0;
+
+		if ( defaultChannelLabels == null || defaultChannelLabels.length != nAllChannels )
+			defaultChannelLabels = new int[ nAllChannels ];
+
+		// check which channels and labels are available and build the choices
+		final ArrayList< String[] > channelLabels = new ArrayList< String[] >();
+		int i = 0;
+		for ( final Channel channel : channels )
+		{
+			final String[] labels = getAllInterestPointLabelsForChannel( data, viewIds, channel, "register" );
+
+			if ( defaultChannelLabels[ channel.getId() ] >= labels.length )
+				defaultChannelLabels[ channel.getId() ] = 0;
+
+			channelLabels.add( labels );
+		}
+
+		// assemble the last registration names of all viewsetups involved
+		final HashMap< String, Integer > names = GUIHelper.assembleRegistrationNames( data, viewIds );
+
+
+		final int algorithm = defaultAlgorithm;
+
+		final RegistrationType registrationType = RegistrationType.TIMEPOINTS_INDIVIDUALLY;
+
+		// assemble which channels have been selected with with label
+		final ArrayList< ChannelProcess > channelsToProcess = new ArrayList< ChannelProcess >();
+		i = 0;
+
+		for ( final Channel channel : channels )
+		{
+			final int channelChoice = defaultChannelLabels[ channel.getId() ];
+
+			if ( channelChoice < channelLabels.get( i ).length - 1 )
+			{
+				String label = channelLabels.get( i )[ channelChoice ];
+
+				if ( label.contains( warningLabel ) )
+					label = label.substring( 0, label.indexOf( warningLabel ) );
+
+				channelsToProcess.add( new ChannelProcess( channel, label ) );
+			}
+			++i;
+		}
+
+		for ( final ChannelProcess c : channelsToProcess )
+			IOFunctions.println( "registering channel: " + c.getChannel().getId()  + " label: '" + c.getLabel() + "'" );
+
+		final InterestPointRegistration ipr = staticAlgorithms.get( algorithm ).newInstance( data, viewIds, channelsToProcess );
+		ipr.initDefault();
+
+		IOFunctions.println( "Registration algorithm: " + ipr.getDescription() );
+		IOFunctions.println( "Registration type: " + registrationType.name() );
+		IOFunctions.println( "Channels to process: " + channelsToProcess.size() );
+
+		if ( registrationType == RegistrationType.TO_REFERENCE_TIMEPOINT )
+		{
+			// assemble all timepoints, each one could be a reference
+			final String[] tpList = assembleTimepoints( data.getSequenceDescription().getTimePoints() );
+
+			// by default, the reference timepoint is the first one
+			if ( defaultReferenceTimepointIndex < 0 || defaultReferenceTimepointIndex >= tpList.length )
+				defaultReferenceTimepointIndex = 0;
+
+//			gd2.addChoice( "Reference timepoint", tpList, tpList[ defaultReferenceTimepointIndex ] );
+//			gd2.addMessage( "" );
+		}
+		else if ( registrationType == RegistrationType.ALL_TO_ALL_WITH_RANGE )
+		{
+//			gd2.addSlider( "Range for all-to-all timepoint matching", 2, 10, defaultRange );
+		}
+
+		// for all registrations that include multiple timepointss
+		if ( registrationType != RegistrationType.TIMEPOINTS_INDIVIDUALLY )
+		{
+//			gd2.addCheckbox( "Consider_each_timepoint_as_rigid_unit", defaultConsiderTimepointAsUnit );
+//			gd2.addMessage( "Note: This option applies the same transformation model to all views of one timepoint. This makes for example\n" +
+//					"sense if all timepoints are individually pre-registered using an affine transformation model, and for the timeseries\n" +
+//					"stabilization a translation model should be used.\n ", GUIHelper.smallStatusFont );
+		}
+
+		if ( registrationType != RegistrationType.TO_REFERENCE_TIMEPOINT )
+		{
+//			gd2.addChoice( "Fix_tiles", fixTilesChoice, fixTilesChoice[ defaultFixTiles ] );
+//			gd2.addChoice( "Map_back_tiles", mapBackChoice, mapBackChoice[ defaultMapBack ] );
+		}
+
+		IOFunctions.println( "Algorithm parameters [" + ipr.getDescription() + "]" );
+
+
+		int referenceTimePoint = data.getSequenceDescription().getTimePoints().getTimePointsOrdered().get( 0 ).getId();
+		int range = defaultRange;
+
+		if ( registrationType == RegistrationType.TO_REFERENCE_TIMEPOINT )
+		{
+			referenceTimePoint = data.getSequenceDescription().getTimePoints().getTimePointsOrdered().get( defaultReferenceTimepointIndex ).getId();
+
+			// check that at least one of the views of the reference timepoint is part of the viewdescriptions
+			boolean contains = false;
+
+			for ( final ViewId viewId : viewIds )
+				if ( viewId.getTimePointId() == referenceTimePoint )
+					contains = true;
+
+			if ( !contains )
+			{
+				IOFunctions.println( "No views of the reference timepoint are part of the registration." );
+				IOFunctions.println( "Please re-run and select the corresponding views that should be used as reference." );
+
+			}
+		}
+
+		if ( registrationType == RegistrationType.ALL_TO_ALL_WITH_RANGE )
+			range = defaultRange;
+
+		final boolean considerTimepointsAsUnit;
+		if ( registrationType != RegistrationType.TIMEPOINTS_INDIVIDUALLY )
+			considerTimepointsAsUnit = defaultConsiderTimepointAsUnit;
+		else
+			considerTimepointsAsUnit = false;
+
+		int fixTiles, mapBack;
+		mapBack = 3;
+
+		if ( registrationType != RegistrationType.TO_REFERENCE_TIMEPOINT )
+		{
+			fixTiles = defaultFixTiles;
+			mapBack = defaultMapBack;
+		}
+		else
+		{
+			fixTiles = mapBack = -1;
+		}
+
+		// perform the actual registration(s)
+		final GlobalOptimizationType type;
+
+		if ( registrationType == RegistrationType.TIMEPOINTS_INDIVIDUALLY )
+			type = new IndividualTimepointRegistration( data, viewIds, channelsToProcess );
+		else if ( registrationType == RegistrationType.TO_REFERENCE_TIMEPOINT )
+			type = new ReferenceTimepointRegistration( data, viewIds, channelsToProcess, data.getSequenceDescription().getTimePoints().getTimePoints().get( referenceTimePoint ), considerTimepointsAsUnit );
+		else if ( registrationType == RegistrationType.ALL_TO_ALL )
+			type = new AllToAllRegistration( data, viewIds, channelsToProcess, considerTimepointsAsUnit );
+		else if ( registrationType == RegistrationType.ALL_TO_ALL_WITH_RANGE )
+			type = new AllToAllRegistrationWithRange( data, viewIds, channelsToProcess, range, considerTimepointsAsUnit );
+		else
+			type = null;
+
+		// set the fixed tiles and the potential mapping back to some tile
+		if ( !setFixedTilesAndReference( fixTiles, mapBack, type ) )
+			return;
+
+		if ( !ipr.register( type, true, true ) )
+			return;
+
+		// save the XML including transforms and correspondences
+		SpimData2.saveXML( data, xmlFileName, clusterExtension );
 	}
 
 	public static void main( String[] args )

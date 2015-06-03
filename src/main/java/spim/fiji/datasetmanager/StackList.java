@@ -41,6 +41,7 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import org.apache.commons.lang.NotImplementedException;
 import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.NamePattern;
@@ -1030,5 +1031,10 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		setDefaultMultipleAngles( hasMultipleAngles );
 
 		return true;
-	}	
+	}
+
+	@Override public boolean queryDialog()
+	{
+		throw new NotImplementedException("StackList does not support headless operation.");
+	}
 }

@@ -14,6 +14,7 @@ import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
+import spim.fiji.plugin.queryXML.ParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
@@ -196,6 +197,75 @@ public class Image_Fusion implements PlugIn
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Fusion finished." );
 
 		return true;
+	}
+
+	public void defaultProcess(String xmlFileName, int[] min, int[] max)
+	{
+		LoadParseQueryXML.defaultXMLfilename = xmlFileName;
+
+		ParseQueryXML result = new ParseQueryXML();
+		result.queryXML();
+
+		SpimData2 data = result.getData();
+		List< ViewId > viewIds = SpimData2.getAllViewIdsSorted( result.getData(), result.getViewSetupsToProcess(), result.getTimePointsToProcess() );
+
+		String clusterExtension = result.getClusterExtension();
+
+		final Fusion fusion = new EfficientBayesianBased( data, viewIds );
+		// The below data should be given by users
+		// 1: {64, 64, 64}
+		// 0: CPU
+		// 1: PSFTYPE.OPTIMIZATION_I
+		fusion.initDefault(1, 0, 1);
+
+		final PreDefinedBoundingBox boundingBox = new PreDefinedBoundingBox( data, viewIds );
+
+		boundingBox.initDefault( fusion, min, max );
+
+		final ImgExport imgExport = new Save3dTIFF(null);
+
+		if ( data.getSequenceDescription().getImgLoader() instanceof Hdf5ImageLoader )
+			PreDefinedBoundingBox.defaultPixelType = 1; // set to 16 bit by default for hdf5
+
+		// set all the properties required for exporting as a new XML or as addition to an existing XML
+		fusion.defineNewViewSetups( boundingBox );
+		imgExport.setXMLData( fusion.getTimepointsToProcess(), fusion.getNewViewSetups() );
+
+		if ( !imgExport.queryParameters( data, boundingBox.getPixelType() == 1 ) )
+			return;
+
+		// did anyone modify this SpimData object?
+		boolean spimDataModified = false;
+
+		fusion.fuseData( boundingBox, imgExport );
+
+		spimDataModified |= boundingBox.cleanUp();
+
+		// save the XML if metadata was updated
+		if ( data.getSequenceDescription().getImgLoader() instanceof AbstractImgLoader )
+		{
+			try
+			{
+				for ( final ViewSetup setup : data.getSequenceDescription().getViewSetupsOrdered() )
+					spimDataModified |= ( (AbstractImgLoader)data.getSequenceDescription().getImgLoader() ).updateXMLMetaData( setup, false );
+			}
+			catch( Exception e )
+			{
+				IOFunctions.println( "Failed to update metadata, this should not happen: " + e );
+			}
+		}
+
+		spimDataModified |= imgExport.finish();
+
+		if ( spimDataModified )
+		{
+			if(Toggle_Cluster_Options.displayClusterProcessing)
+				SpimData2.saveXML( data, xmlFileName, clusterExtension );
+			else
+				SpimData2.saveXML( data, xmlFileName, "" );
+		}
+
+		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Fusion finished." );
 	}
 
 	public static void main( final String[] args )

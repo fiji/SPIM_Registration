@@ -21,6 +21,7 @@ import spim.fiji.plugin.interestpointdetection.DifferenceOfGaussian;
 import spim.fiji.plugin.interestpointdetection.DifferenceOfMean;
 import spim.fiji.plugin.interestpointdetection.InterestPointDetection;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
+import spim.fiji.plugin.queryXML.ParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
@@ -224,6 +225,34 @@ public class Interest_Point_Detection implements PlugIn
 		}
 
 		return true;
+	}
+
+	private ParseQueryXML parseDefaultXMLFile(String xmlFileName)
+	{
+		LoadParseQueryXML.defaultXMLfilename = xmlFileName;
+
+		ParseQueryXML result = new ParseQueryXML();
+		result.queryXML();
+
+		return result;
+	}
+
+	public void defaultProcessUsingDifferenceOfMean(String xmlFileName)
+	{
+		ParseQueryXML result = parseDefaultXMLFile(xmlFileName);
+		List< ViewId > viewIds = SpimData2.getAllViewIdsSorted( result.getData(), result.getViewSetupsToProcess(), result.getTimePointsToProcess() );
+
+		DifferenceOfMean differenceOfMean = new DifferenceOfMean( result.getData(), viewIds);
+		differenceOfMean.defaultProcess( xmlFileName, result.getClusterExtension() );
+	}
+
+	public void defaultProcessUsingDifferenceOfGaussian(String xmlFileName)
+	{
+		ParseQueryXML result = parseDefaultXMLFile(xmlFileName);
+		List< ViewId > viewIds = SpimData2.getAllViewIdsSorted( result.getData(), result.getViewSetupsToProcess(), result.getTimePointsToProcess() );
+
+		DifferenceOfGaussian differenceOfGaussian = new DifferenceOfGaussian( result.getData(), viewIds);
+		differenceOfGaussian.defaultProcess( xmlFileName, result.getClusterExtension() );
 	}
 
 	public static void main( final String[] args )

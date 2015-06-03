@@ -1,27 +1,33 @@
 package spim.fiji.plugin.interestpointdetection;
 
 import ij.ImagePlus;
+import ij.Macro;
 import ij.gui.GenericDialog;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.wrapper.ImgLib2;
-import mpicbg.spim.data.sequence.Channel;
-import mpicbg.spim.data.sequence.TimePoint;
-import mpicbg.spim.data.sequence.ViewDescription;
-import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.*;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.segmentation.InteractiveIntegral;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.realtransform.AffineTransform3D;
+import spim.fiji.plugin.queryXML.LoadParseQueryXML;
+import spim.fiji.plugin.queryXML.ParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
+import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.fiji.spimdata.interestpoints.InterestPointList;
+import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.process.interestpointdetection.ProcessDOM;
 
 
@@ -29,7 +35,7 @@ public class DifferenceOfMean extends DifferenceOf
 {
 	public static int defaultR1 = 2;
 	public static int defaultR2 = 3;
-	public static double defaultT = 0.02;
+	public static double defaultT = 0.005;
 	
 	public static int defaultRadius1[];
 	public static int defaultRadius2[];
@@ -149,6 +155,8 @@ public class DifferenceOfMean extends DifferenceOf
 			this.threshold[ channelId ] = 0.25f;
 		else
 			return false;
+
+		this.threshold[ channelId ] = defaultT;
 		
 		return true;
 	}
@@ -310,4 +318,6 @@ public class DifferenceOfMean extends DifferenceOf
 
 	@Override
 	protected boolean queryAdditionalParameters( final GenericDialog gd ) { return true; }
+
+
 }
