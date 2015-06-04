@@ -4,13 +4,7 @@ import bdv.export.ExportMipmapInfo;
 import bdv.export.ProgressWriter;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.sequence.ViewId;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spim.fiji.ImgLib2Temp;
@@ -25,7 +19,6 @@ import spim.fiji.spimdata.SpimData2;
 
 import java.io.File;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -180,59 +173,26 @@ public class ResaveHdf5Task extends AbstractTask
 		resave(xml, resaveParameters);
 	}
 
-	@SuppressWarnings( "static-access" )
 	private Parameters getParams( final String[] args )
 	{
-		// create Options object
-		final Options options = new Options();
+		final Properties props = parseArgument( "ResaveHDF5", getTitle(), args );
 
-		final String cmdLineSyntax = "ResaveHDF5 [OPTION]";
+		final Parameters params = new Parameters();
+		params.setXmlFilename( props.getProperty( "xml_filename" ) );
+		params.setSubSampling( props.getProperty( "subsampling_factors", null ) );
+		params.setChunkSize( props.getProperty( "hdf5_chunk_sizes", null ) );
 
-		final String description = getTitle();
-
-		options.addOption( Option.builder( "D" )
-				.hasArgs()
-				.valueSeparator( '=' )
-				.desc( "use value for given property" )
-				.argName( "property=value" )
-				.build() );
-
-		try
-		{
-			final CommandLineParser parser = new DefaultParser();
-			final CommandLine cmd = parser.parse( options, args );
-
-			final Properties props = cmd.getOptionProperties( "D" );
-			Enumeration e = props.propertyNames();
-			while (e.hasMoreElements()) {
-				String key = (String) e.nextElement();
-				LOG.info( key + " -- " + props.getProperty(key) );
-			}
-
-			final Parameters params = new Parameters();
-			params.setXmlFilename( props.getProperty( "xml_filename" ) );
-			params.setSubSampling( props.getProperty( "subsampling_factors", null ) );
-			params.setChunkSize( props.getProperty( "hdf5_chunk_sizes", null ) );
-
-			return params;
-		}
-		catch ( final ParseException e )
-		{
-			LOG.warn( e.getMessage() );
-			final HelpFormatter formatter = new HelpFormatter();
-			formatter.printHelp( cmdLineSyntax, description, options, null );
-		}
-		catch ( final IllegalArgumentException e )
-		{
-			LOG.warn( e.getMessage() );
-			final HelpFormatter formatter = new HelpFormatter();
-			formatter.printHelp( cmdLineSyntax, description, options, null );
-		}
-		return null;
+		return params;
 	}
 
 	@Override public void process( String[] args )
 	{
 		process( getParams( args ) );
+	}
+
+	public static void main( String[] argv )
+	{
+		ResaveHdf5Task task = new ResaveHdf5Task();
+		task.process( argv );
 	}
 }
