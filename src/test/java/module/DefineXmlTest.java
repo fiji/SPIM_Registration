@@ -2,7 +2,7 @@ package module;
 
 import org.junit.Assert;
 import org.junit.Test;
-import task.LightSheetZ1;
+import task.LightSheetZ1DefineXmlTask;
 
 /**
  * Test class for creating xml dataset from CZI
@@ -15,8 +15,8 @@ public class DefineXmlTest
 	@Test
 	public void LightSheetZ1Test()
 	{
-		LightSheetZ1 z1 = new LightSheetZ1();
-		LightSheetZ1.Parameters params = new LightSheetZ1.Parameters();
+		LightSheetZ1DefineXmlTask z1 = new LightSheetZ1DefineXmlTask();
+		LightSheetZ1DefineXmlTask.Parameters params = new LightSheetZ1DefineXmlTask.Parameters();
 
 		params.setXmlFilename( xmlFile );
 		params.setFirstFile( cziFile );
@@ -45,7 +45,7 @@ public class DefineXmlTest
 				"-Dpixel_unit=um"
 		};
 
-		LightSheetZ1 z1 = new LightSheetZ1();
+		LightSheetZ1DefineXmlTask z1 = new LightSheetZ1DefineXmlTask();
 		z1.process( params );
 		Assert.assertNotEquals( z1.getSpimData(), null );
 	}
