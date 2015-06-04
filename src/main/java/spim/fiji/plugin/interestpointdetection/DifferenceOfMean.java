@@ -130,7 +130,7 @@ public class DifferenceOfMean extends DifferenceOf
 	}
 	
 	@Override
-	protected boolean setDefaultValues( final Channel channel, final int brightness )
+	public boolean setDefaultValues( final Channel channel, final int brightness )
 	{
 		final int channelId = channel.getId();
 		
@@ -269,7 +269,7 @@ public class DifferenceOfMean extends DifferenceOf
 	 * @param numChannels - the TOTAL number of channels (not only the ones to process)
 	 */
 	@Override
-	protected void init( final int numChannels )
+	public void init( final int numChannels )
 	{
 		radius1 = new int[ numChannels ];
 		radius2 = new int[ numChannels ];
@@ -310,4 +310,29 @@ public class DifferenceOfMean extends DifferenceOf
 
 	@Override
 	protected boolean queryAdditionalParameters( final GenericDialog gd ) { return true; }
+
+	public void setRadius1( int[] radius1 )
+	{
+		this.radius1 = radius1;
+	}
+
+	public void setRadius2( int[] radius2 )
+	{
+		this.radius2 = radius2;
+	}
+
+	public void setThreshold( double[] threshold )
+	{
+		this.threshold = threshold;
+	}
+
+	public void setFindMin( boolean[] findMin )
+	{
+		this.findMin = findMin;
+	}
+
+	public void setFindMax( boolean[] findMax )
+	{
+		this.findMax = findMax;
+	}
 }

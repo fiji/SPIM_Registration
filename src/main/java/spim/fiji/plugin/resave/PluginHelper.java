@@ -117,6 +117,63 @@ public class PluginHelper
 		return resolutions;
 	}
 
+	public static int[] parseArrayIntegerString( final String s )
+	{
+		final String regex = "\\s*(\\d+)\\s*,?";
+		final Pattern pattern = Pattern.compile( regex );
+		final Matcher matcher = pattern.matcher( s );
+
+		final ArrayList< Integer > tmp = new ArrayList< Integer >();
+		while ( matcher.find() )
+		{
+			tmp.add( Integer.parseInt( matcher.group( 1 ) ) );
+		}
+
+		final int[] array = new int[ tmp.size() ];
+		for ( int i = 0; i < array.length; ++i )
+			array[ i ] = tmp.get( i );
+
+		return array;
+	}
+
+	public static double[] parseArrayDoubleString( final String s )
+	{
+		final String regex = "\\s*(\\d+(\\.\\d+)?)\\s*,?";
+		final Pattern pattern = Pattern.compile( regex );
+		final Matcher matcher = pattern.matcher( s );
+
+		final ArrayList< Double > tmp = new ArrayList< Double >();
+		while ( matcher.find() )
+		{
+			tmp.add( Double.parseDouble( matcher.group( 1 ) ) );
+		}
+
+		final double[] array = new double[ tmp.size() ];
+		for ( int i = 0; i < array.length; ++i )
+			array[ i ] = tmp.get( i );
+
+		return array;
+	}
+
+	public static boolean[] parseArrayBooleanString( final String s )
+	{
+		final String regex = "\\s*([^-\\s,\\{\\}]+)\\s*,?";
+		final Pattern pattern = Pattern.compile( regex );
+		final Matcher matcher = pattern.matcher( s );
+
+		final ArrayList< Boolean > tmp = new ArrayList< Boolean >();
+		while ( matcher.find() )
+		{
+			tmp.add( Boolean.parseBoolean( matcher.group( 1 ) ) );
+		}
+
+		final boolean[] array = new boolean[ tmp.size() ];
+		for ( int i = 0; i < array.length; ++i )
+			array[ i ] = tmp.get( i );
+
+		return array;
+	}
+
 	public static File createNewPartitionFile( final File xmlSequenceFile ) throws IOException
 	{
 		final String seqFilename = xmlSequenceFile.getAbsolutePath();
