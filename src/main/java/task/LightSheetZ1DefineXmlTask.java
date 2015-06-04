@@ -19,13 +19,6 @@ import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,15 +33,14 @@ import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.Properties;
 
 /**
  * Headless module for LightSheetZ1
  */
-public class LightSheetZ1 extends AbstractTask
+public class LightSheetZ1DefineXmlTask extends AbstractTask
 {
-	private static final Logger LOG = LoggerFactory.getLogger( LightSheetZ1.class );
+	private static final Logger LOG = LoggerFactory.getLogger( LightSheetZ1DefineXmlTask.class );
 
 	public static String[] rotAxes = new String[] { "X-Axis", "Y-Axis", "Z-Axis" };
 
@@ -253,85 +245,52 @@ public class LightSheetZ1 extends AbstractTask
 		}
 	}
 
-	@SuppressWarnings( "static-access" )
 	private Parameters getParams( final String[] args )
 	{
-		// create Options object
-		final Options options = new Options();
+		final Properties props = parseArgument( "LightSheetZ1", getTitle(), args );
 
-		final String cmdLineSyntax = "LightSheetZ1 [OPTION]";
+		final Parameters params = new Parameters();
+		params.setFirstFile( props.getProperty( "first_czi" ) );
+		params.setXmlFilename( props.getProperty( "xml_filename" ) );
 
-		final String description = getTitle();
+		// CZI metadata creation based on the options
+		final LightSheetZ1MetaData meta = new LightSheetZ1MetaData();
 
-		options.addOption( Option.builder( "D" )
-				.hasArgs()
-				.valueSeparator( '=' )
-				.desc( "use value for given property" )
-				.argName( "property=value" )
-				.build() );
-
-		try
+		if ( !meta.loadMetaData( new File( params.getFirstFile() ) ))
 		{
-			final CommandLineParser parser = new DefaultParser();
-			final CommandLine cmd = parser.parse( options, args );
-
-			final Properties props = cmd.getOptionProperties( "D" );
-			Enumeration e = props.propertyNames();
-			while (e.hasMoreElements()) {
-				String key = (String) e.nextElement();
-				System.out.println(key + " -- " + props.getProperty(key));
-			}
-
-			final Parameters params = new Parameters();
-			params.setFirstFile( props.getProperty( "first_czi" ) );
-			params.setXmlFilename( props.getProperty( "xml_filename" ) );
-
-			// CZI metadata creation based on the options
-			final LightSheetZ1MetaData meta = new LightSheetZ1MetaData();
-
-			if ( !meta.loadMetaData( new File( params.getFirstFile() ) ))
-			{
-				System.err.println( "Failed to analyze file." );
-				return null;
-			}
-
-			for ( int a = 0; a < meta.numAngles(); ++a )
-				meta.angles()[ a ] = props.getProperty( "angle_" + (a + 1) );
-
-			for ( int c = 0; c < meta.numChannels(); ++c )
-				meta.channels()[ c ] = props.getProperty( "channel_" + ( c + 1 ) );
-
-			for ( int i = 0; i < meta.numIlluminations(); ++i )
-				meta.illuminations()[ i ] = props.getProperty( "illumination_" + ( i + 1 ) );
-
-			meta.setCalX( Double.parseDouble( props.getProperty( "pixel_distance_x" ) ) );
-			meta.setCalY( Double.parseDouble( props.getProperty( "pixel_distance_y" ) ) );
-			meta.setCalZ( Double.parseDouble( props.getProperty( "pixel_distance_z" ) ) );
-			meta.setCalUnit( props.getProperty( "pixel_unit" ) );
-
-			meta.setRotationAxis( Arrays.binarySearch( rotAxes, props.getProperty( "rotation_around" ) ) );
-
-			params.setMetaData( meta );
-
-			return params;
+			System.err.println( "Failed to analyze file." );
+			return null;
 		}
-		catch ( final ParseException e )
-		{
-			LOG.warn( e.getMessage() );
-			final HelpFormatter formatter = new HelpFormatter();
-			formatter.printHelp( cmdLineSyntax, description, options, null );
-		}
-		catch ( final IllegalArgumentException e )
-		{
-			LOG.warn( e.getMessage() );
-			final HelpFormatter formatter = new HelpFormatter();
-			formatter.printHelp( cmdLineSyntax, description, options, null );
-		}
-		return null;
+
+		for ( int a = 0; a < meta.numAngles(); ++a )
+			meta.angles()[ a ] = props.getProperty( "angle_" + (a + 1) );
+
+		for ( int c = 0; c < meta.numChannels(); ++c )
+			meta.channels()[ c ] = props.getProperty( "channel_" + ( c + 1 ) );
+
+		for ( int i = 0; i < meta.numIlluminations(); ++i )
+			meta.illuminations()[ i ] = props.getProperty( "illumination_" + ( i + 1 ) );
+
+		meta.setCalX( Double.parseDouble( props.getProperty( "pixel_distance_x" ) ) );
+		meta.setCalY( Double.parseDouble( props.getProperty( "pixel_distance_y" ) ) );
+		meta.setCalZ( Double.parseDouble( props.getProperty( "pixel_distance_z" ) ) );
+		meta.setCalUnit( props.getProperty( "pixel_unit" ) );
+
+		meta.setRotationAxis( Arrays.binarySearch( rotAxes, props.getProperty( "rotation_around" ) ) );
+
+		params.setMetaData( meta );
+
+		return params;
 	}
 
 	@Override public void process( String[] args )
 	{
 		this.process( getParams( args ) );
+	}
+
+	public static void main( String[] argv )
+	{
+		LightSheetZ1DefineXmlTask task = new LightSheetZ1DefineXmlTask();
+		task.process( argv );
 	}
 }
