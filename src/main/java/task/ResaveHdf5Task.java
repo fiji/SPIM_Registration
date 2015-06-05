@@ -194,5 +194,6 @@ public class ResaveHdf5Task extends AbstractTask
 	{
 		ResaveHdf5Task task = new ResaveHdf5Task();
 		task.process( argv );
+		System.exit( 0 );
 	}
 }

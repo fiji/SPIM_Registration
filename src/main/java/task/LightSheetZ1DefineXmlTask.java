@@ -292,5 +292,6 @@ public class LightSheetZ1DefineXmlTask extends AbstractTask
 	{
 		LightSheetZ1DefineXmlTask task = new LightSheetZ1DefineXmlTask();
 		task.process( argv );
+		System.exit( 0 );
 	}
 }

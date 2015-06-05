@@ -651,5 +651,6 @@ public class DetectInterestPointTask extends AbstractTask
 		// mvn exec:java -Dexec.mainClass="task.DetectInterestPointTask" -Dexec.args="-Dxml_filename=/projects/pilot_spim/moon/test.xml -Dmethod=DifferenceOfGaussian -Dcompute_on=1 -Dseparable_convolution_cuda_lib=lib/libSeparableConvolutionCUDALib.so"
 		DetectInterestPointTask task = new DetectInterestPointTask();
 		task.process( argv );
+		System.exit( 0 );
 	}
 }
