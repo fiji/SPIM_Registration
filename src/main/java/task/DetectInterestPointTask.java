@@ -1,12 +1,12 @@
 package task;
 
+import com.sun.jna.Native;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 
-import mpicbg.spim.io.IOFunctions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +14,6 @@ import spim.fiji.plugin.interestpointdetection.DifferenceOf;
 import spim.fiji.plugin.interestpointdetection.DifferenceOfGaussian;
 import spim.fiji.plugin.interestpointdetection.DifferenceOfMean;
 import spim.fiji.plugin.queryXML.HeadlessParseQueryXML;
-import spim.fiji.plugin.resave.PluginHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
@@ -23,7 +22,6 @@ import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.process.cuda.CUDADevice;
 import spim.process.cuda.CUDASeparableConvolution;
-import spim.process.cuda.NativeLibraryTools;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -79,6 +77,7 @@ public class DetectInterestPointTask extends AbstractTask
 		// 1:"GPU approximate (Nvidia CUDA via JNA)",
 		// 2:"GPU accurate (Nvidia CUDA via JNA)"
 		private int computeOn;
+		private String separableConvolutionCUDALib;
 
 		public Method getMethod()
 		{
@@ -279,6 +278,16 @@ public class DetectInterestPointTask extends AbstractTask
 		{
 			this.computeOn = computeOn;
 		}
+
+		public String getSeparableConvolutionCUDALib()
+		{
+			return separableConvolutionCUDALib;
+		}
+
+		public void setSeparableConvolutionCUDALib( String separableConvolutionCUDALib )
+		{
+			this.separableConvolutionCUDALib = separableConvolutionCUDALib;
+		}
 	}
 
 	public void process( final Parameters params )
@@ -436,10 +445,7 @@ public class DetectInterestPointTask extends AbstractTask
 
 		if(params.getComputeOn() > 0)
 		{
-			final ArrayList< String > potentialNames = new ArrayList< String >();
-			potentialNames.add( "separable" );
-
-			CUDASeparableConvolution cuda = NativeLibraryTools.loadNativeLibrary( potentialNames, CUDASeparableConvolution.class );
+			CUDASeparableConvolution cuda = (CUDASeparableConvolution) Native.loadLibrary( params.getSeparableConvolutionCUDALib(), CUDASeparableConvolution.class );
 
 			if ( cuda == null )
 			{
@@ -462,9 +468,11 @@ public class DetectInterestPointTask extends AbstractTask
 				}
 				else
 				{
+					// TODO: Support multiple GPUs
+					// Use the first GPU
 					final byte[] name = new byte[ 256 ];
 					cuda.getNameDeviceCUDA( 0, name );
-					final String deviceName = new String(name);
+					final String deviceName = new String( name );
 
 					final long mem = cuda.getMemDeviceCUDA( 0 );
 					long freeMem;
@@ -614,6 +622,7 @@ public class DetectInterestPointTask extends AbstractTask
 			// The below is for advanced parameters
 
 			params.setComputeOn( Integer.parseInt( props.getProperty( "compute_on", "0" ) ) );
+			params.setSeparableConvolutionCUDALib( props.getProperty( "separable_convolution_cuda_lib" ) );
 
 //			// -Dsigma={1.8, 1.8, 1.8}
 //			params.setSigma( PluginHelper.parseArrayDoubleString( props.getProperty( "sigma" ) ) );
@@ -635,6 +644,11 @@ public class DetectInterestPointTask extends AbstractTask
 
 	public static void main( String[] argv )
 	{
+		// Test mvn commamnd
+		//
+		// module load cuda/6.5.14
+		// export MAVEN_OPTS="-Xms4g -Xmx16g -Djava.awt.headless=true"
+		// mvn exec:java -Dexec.mainClass="task.DetectInterestPointTask" -Dexec.args="-Dxml_filename=/projects/pilot_spim/moon/test.xml -Dmethod=DifferenceOfGaussian -Dcompute_on=1 -Dseparable_convolution_cuda_lib=lib/libSeparableConvolutionCUDALib.so"
 		DetectInterestPointTask task = new DetectInterestPointTask();
 		task.process( argv );
 	}
