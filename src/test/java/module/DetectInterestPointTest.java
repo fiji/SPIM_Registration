@@ -13,7 +13,7 @@ import java.io.IOException;
 /**
  * Test class for Detect Interest Points task
  */
-public class DetectinterestPointTest
+public class DetectInterestPointTest
 {
 	String xmlFile = "/Users/moon/temp/moon/test.xml";
 
