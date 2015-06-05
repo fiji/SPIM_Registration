@@ -328,7 +328,7 @@ public class DetectInterestPointTask extends AbstractTask
 				DifferenceOfMean.defaultBrightness[ i ] = 1;
 		}
 
-		differenceOfMean.setLocalization( DifferenceOfGaussian.defaultLocalization );
+		differenceOfMean.setLocalization( params.getLocalization() );
 
 		final ArrayList< Channel > channelsToProcess = differenceOfMean.getChannelsToProcess();
 		final int[] brightness = new int[ channelsToProcess.size() ];
@@ -339,13 +339,13 @@ public class DetectInterestPointTask extends AbstractTask
 			brightness[ c ] = DifferenceOfMean.defaultBrightness[ channel.getId() ];
 		}
 
-		differenceOfMean.setDownsampleXY( 1 );
-		differenceOfMean.setDownsampleZ( 1 );
-		differenceOfMean.setAdditionalSigmaX( 0.0 );
-		differenceOfMean.setAdditionalSigmaY( 0.0 );
-		differenceOfMean.setAdditionalSigmaZ( 0.0 );
-		differenceOfMean.setMinIntensity( Double.NaN );
-		differenceOfMean.setMaxIntensity( Double.NaN );
+		differenceOfMean.setDownsampleXY( params.getDownsampleXY() );
+		differenceOfMean.setDownsampleZ( params.getDownsampleZ() );
+		differenceOfMean.setAdditionalSigmaX( params.getAdditionalSigmaX() );
+		differenceOfMean.setAdditionalSigmaY( params.getAdditionalSigmaY() );
+		differenceOfMean.setAdditionalSigmaZ( params.getAdditionalSigmaZ() );
+		differenceOfMean.setMinIntensity( params.getMinIntensity() );
+		differenceOfMean.setMaxIntensity( params.getMaxIntensity() );
 
 		for ( int c = 0; c < channelsToProcess.size(); ++c )
 		{
@@ -369,9 +369,9 @@ public class DetectInterestPointTask extends AbstractTask
 			//			}
 		}
 
-		differenceOfMean.setImageSigmaX( 0.5 );
-		differenceOfMean.setImageSigmaY( 0.5 );
-		differenceOfMean.setImageSigmaZ( 0.5 );
+		differenceOfMean.setImageSigmaX( params.getImageSigmaX() );
+		differenceOfMean.setImageSigmaY( params.getImageSigmaY() );
+		differenceOfMean.setImageSigmaZ( params.getImageSigmaZ() );
 
 		findInterestPoints( differenceOfMean, params, spimData, viewIdsToProcess, result.getClusterExtension() );
 	}
@@ -398,7 +398,7 @@ public class DetectInterestPointTask extends AbstractTask
 				DifferenceOfGaussian.defaultBrightness[ i ] = 1;
 		}
 
-		differenceOfGaussian.setLocalization( DifferenceOfGaussian.defaultLocalization );
+		differenceOfGaussian.setLocalization( params.getLocalization() );
 
 		final ArrayList< Channel > channelsToProcess = differenceOfGaussian.getChannelsToProcess();
 		final int[] brightness = new int[ channelsToProcess.size() ];
@@ -409,13 +409,13 @@ public class DetectInterestPointTask extends AbstractTask
 			brightness[ c ] = DifferenceOfGaussian.defaultBrightness[ channel.getId() ];
 		}
 
-		differenceOfGaussian.setDownsampleXY( 1 );
-		differenceOfGaussian.setDownsampleZ( 1 );
-		differenceOfGaussian.setAdditionalSigmaX( 0.0 );
-		differenceOfGaussian.setAdditionalSigmaY( 0.0 );
-		differenceOfGaussian.setAdditionalSigmaZ( 0.0 );
-		differenceOfGaussian.setMinIntensity( Double.NaN );
-		differenceOfGaussian.setMaxIntensity( Double.NaN );
+		differenceOfGaussian.setDownsampleXY( params.getDownsampleXY() );
+		differenceOfGaussian.setDownsampleZ( params.getDownsampleZ() );
+		differenceOfGaussian.setAdditionalSigmaX( params.getAdditionalSigmaX() );
+		differenceOfGaussian.setAdditionalSigmaY( params.getAdditionalSigmaY() );
+		differenceOfGaussian.setAdditionalSigmaZ( params.getAdditionalSigmaZ() );
+		differenceOfGaussian.setMinIntensity( params.getMinIntensity() );
+		differenceOfGaussian.setMaxIntensity( params.getMaxIntensity() );
 
 		for ( int c = 0; c < channelsToProcess.size(); ++c )
 		{
@@ -439,9 +439,9 @@ public class DetectInterestPointTask extends AbstractTask
 			//			}
 		}
 
-		differenceOfGaussian.setImageSigmaX( 0.5 );
-		differenceOfGaussian.setImageSigmaY( 0.5 );
-		differenceOfGaussian.setImageSigmaZ( 0.5 );
+		differenceOfGaussian.setImageSigmaX( params.getImageSigmaX() );
+		differenceOfGaussian.setImageSigmaY( params.getImageSigmaY() );
+		differenceOfGaussian.setImageSigmaZ( params.getImageSigmaZ() );
 
 		if(params.getComputeOn() > 0)
 		{
@@ -584,8 +584,8 @@ public class DetectInterestPointTask extends AbstractTask
 		params.setAdditionalSigmaZ( Double.parseDouble( props.getProperty( "presmooth_sigma_z", "0.0" ) ) );
 
 		// set min max
-		params.setMinIntensity( Double.parseDouble( props.getProperty( "minimal_intensity", "0.0" ) ) );
-		params.setMinIntensity( Double.parseDouble( props.getProperty( "maximal_intensity", "65535.0" ) ) );
+		params.setMinIntensity( Double.parseDouble( props.getProperty( "minimal_intensity", "NaN" ) ) );
+		params.setMinIntensity( Double.parseDouble( props.getProperty( "maximal_intensity", "NaN" ) ) );
 
 		// define anisotropy
 		params.setImageSigmaX( Double.parseDouble( props.getProperty( "image_sigma_x", "0.5" ) ) );
