@@ -79,4 +79,24 @@ public class GeometricHashing extends InterestPointRegistration
 
 		return true;
 	}
+
+	public void setModel( TransformationModel model )
+	{
+		this.model = model;
+	}
+
+	public TransformationModel getModel()
+	{
+		return model;
+	}
+
+	public void setRansacParams( RANSACParameters ransacParams )
+	{
+		this.ransacParams = ransacParams;
+	}
+
+	public void setGhParams( GeometricHashingParameters ghParams )
+	{
+		this.ghParams = ghParams;
+	}
 }

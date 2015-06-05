@@ -23,7 +23,7 @@ public class DetectInterestPointTest
 		try
 		{
 			Files.copy( new File( xmlFile ), new File( xmlFile + ".org" ) );
-			Files.copy( new File(xmlFile + ".hdf5"), new File(xmlFile));
+			Files.copy( new File( xmlFile + ".hdf5" ), new File( xmlFile ) );
 		}
 		catch ( IOException e )
 		{

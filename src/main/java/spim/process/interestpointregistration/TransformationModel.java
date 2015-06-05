@@ -108,4 +108,19 @@ public class TransformationModel
 
 		return d;
 	}
+
+	public void setRegularize( boolean regularize )
+	{
+		this.regularize = regularize;
+	}
+
+	public void setLambda( double lambda )
+	{
+		this.lambda = lambda;
+	}
+
+	public void setRegularizedModelIndex( int regularizedModelIndex )
+	{
+		this.regularizedModelIndex = regularizedModelIndex;
+	}
 }

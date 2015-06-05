@@ -292,22 +292,6 @@ public class DetectInterestPointTask extends AbstractTask
 
 	public void process( final Parameters params )
 	{
-		if( params.getMethod() != null )
-		{
-			switch( params.getMethod() )
-			{
-				case DifferenceOfGaussian:
-					processGaussian( params );
-					break;
-				case DifferenceOfMean:
-					processMean( params );
-					break;
-			}
-		}
-	}
-
-	private void processMean( final Parameters params )
-	{
 		final HeadlessParseQueryXML result = new HeadlessParseQueryXML();
 		result.loadXML( params.getXmlFilename(), params.isUseCluster() );
 
@@ -315,7 +299,25 @@ public class DetectInterestPointTask extends AbstractTask
 
 		final List< ViewId > viewIdsToProcess = SpimData2.getAllViewIdsSorted( result.getData(), result.getViewSetupsToProcess(), result.getTimePointsToProcess() );
 
-		final DifferenceOfMean differenceOfMean = new DifferenceOfMean( result.getData(), viewIdsToProcess);
+		final String clusterExtention = result.getClusterExtension();
+
+		if( params.getMethod() != null )
+		{
+			switch( params.getMethod() )
+			{
+				case DifferenceOfGaussian:
+					processGaussian( params, viewIdsToProcess, clusterExtention );
+					break;
+				case DifferenceOfMean:
+					processMean( params, viewIdsToProcess, clusterExtention );
+					break;
+			}
+		}
+	}
+
+	private void processMean( final Parameters params, final List< ViewId > viewIdsToProcess, final String clusterExtention )
+	{
+		final DifferenceOfMean differenceOfMean = new DifferenceOfMean( spimData, viewIdsToProcess);
 
 		final ArrayList< Channel > channels = SpimData2.getAllChannelsSorted( spimData, viewIdsToProcess );
 
@@ -373,19 +375,12 @@ public class DetectInterestPointTask extends AbstractTask
 		differenceOfMean.setImageSigmaY( params.getImageSigmaY() );
 		differenceOfMean.setImageSigmaZ( params.getImageSigmaZ() );
 
-		findInterestPoints( differenceOfMean, params, spimData, viewIdsToProcess, result.getClusterExtension() );
+		findInterestPoints( differenceOfMean, params, spimData, viewIdsToProcess, clusterExtention );
 	}
 
-	private void processGaussian( final Parameters params )
+	private void processGaussian( final Parameters params, final List< ViewId > viewIdsToProcess, final String clusterExtention )
 	{
-		final HeadlessParseQueryXML result = new HeadlessParseQueryXML();
-		result.loadXML( params.getXmlFilename(), params.isUseCluster() );
-
-		spimData = result.getData();
-
-		final List< ViewId > viewIdsToProcess = SpimData2.getAllViewIdsSorted( result.getData(), result.getViewSetupsToProcess(), result.getTimePointsToProcess() );
-
-		final DifferenceOfGaussian differenceOfGaussian = new DifferenceOfGaussian( result.getData(), viewIdsToProcess);
+		final DifferenceOfGaussian differenceOfGaussian = new DifferenceOfGaussian( spimData, viewIdsToProcess);
 
 		final ArrayList< Channel > channels = SpimData2.getAllChannelsSorted( spimData, viewIdsToProcess );
 
@@ -506,7 +501,7 @@ public class DetectInterestPointTask extends AbstractTask
 
 		DifferenceOfGaussian.defaultComputationChoiceIndex = params.getComputeOn();
 
-		findInterestPoints( differenceOfGaussian, params, spimData, viewIdsToProcess, result.getClusterExtension() );
+		findInterestPoints( differenceOfGaussian, params, spimData, viewIdsToProcess, clusterExtention );
 	}
 
 	private void findInterestPoints(final DifferenceOf ipd, final Parameters params, final SpimData2 data, final List< ViewId > viewIds, final String clusterExtention)
@@ -573,6 +568,7 @@ public class DetectInterestPointTask extends AbstractTask
 
 		final Parameters params = new Parameters();
 		params.setXmlFilename( props.getProperty( "xml_filename" ) );
+		params.setUseCluster( Boolean.parseBoolean( props.getProperty( "use_cluster", "false" ) ) );
 
 		// downsample { 1, 2, 4, 8 }
 		params.setDownsampleXY( Integer.parseInt( props.getProperty( "downsample_xy", "1" ) ) );

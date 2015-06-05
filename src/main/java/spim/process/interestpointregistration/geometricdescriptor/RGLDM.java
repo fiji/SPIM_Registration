@@ -90,4 +90,24 @@ public class RGLDM extends InterestPointRegistration
 		
 		return true;
 	}
+
+	public void setModel( TransformationModel model )
+	{
+		this.model = model;
+	}
+
+	public TransformationModel getModel()
+	{
+		return model;
+	}
+
+	public void setParameters( RGLDMParameters parameters )
+	{
+		this.parameters = parameters;
+	}
+
+	public void setRansacParams( RANSACParameters ransacParams )
+	{
+		this.ransacParams = ransacParams;
+	}
 }
