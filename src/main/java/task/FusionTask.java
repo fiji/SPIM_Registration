@@ -788,6 +788,12 @@ public class FusionTask extends AbstractTask
 
 		params.setAdjustBlending( Boolean.parseBoolean( props.getProperty( "adjust_blending", "false" ) ) );
 
+		params.setPsfSizeX( Integer.parseInt( props.getProperty( "psf_size_x" ) ) );
+
+		params.setPsfSizeY( Integer.parseInt( props.getProperty( "psf_size_y" ) ) );
+
+		params.setPsfSizeZ( Integer.parseInt( props.getProperty( "psf_size_z" ) ) );
+
 		if( params.isAdjustBlending() )
 		{
 			params.setBlendingBorderX( Integer.parseInt( props.getProperty( "blending_border_x" ) ) );
