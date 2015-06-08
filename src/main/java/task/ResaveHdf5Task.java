@@ -192,6 +192,10 @@ public class ResaveHdf5Task extends AbstractTask
 
 	public static void main( String[] argv )
 	{
+		// Test mvn commamnd
+		//
+		// export MAVEN_OPTS="-Xms4g -Xmx16g -Djava.awt.headless=true"
+		// mvn exec:java -Dexec.mainClass="task.ResaveHdf5Task" -Dexec.args="-Dxml_filename=/projects/pilot_spim/moon/test.xml -Dsubsampling_factors='{1,1,1}, {2,2,1}, {4,4,2}' -Dhdf5_chunk_sizes='{16,16,16}, {16,16,16}, {16,16,16}'"
 		ResaveHdf5Task task = new ResaveHdf5Task();
 		task.process( argv );
 		System.exit( 0 );
