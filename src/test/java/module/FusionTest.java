@@ -60,4 +60,24 @@ public class FusionTest
 
 		task.process( params );
 	}
+
+	@Test
+	public void TestEfficientBayesianCPUCli()
+	{
+		final String[] params = new String[] {
+				"-Dxml_filename=/Users/moon/temp/moon/test.xml",
+				"-Dmethod=EfficientBayesianBased",
+				"-Dcompute_on=0",
+				"-Dblock_size='{256, 256, 256}'",
+				"-Diteration_type=OPTIMIZATION_I",
+				"-Dmin='{183, 45, -690}'",
+				"-Dmax='{910, 1926, 714}'",
+				"-Dexport=Save3dTIFF"
+		};
+
+		final FusionTask task = new FusionTask();
+		task.process( params );
+
+		Assert.assertNotEquals( task.getSpimData(), null );
+	}
 }

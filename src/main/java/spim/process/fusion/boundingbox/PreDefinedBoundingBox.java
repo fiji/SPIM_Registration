@@ -155,11 +155,14 @@ public class PreDefinedBoundingBox extends BoundingBoxGUI
 			return;
 		}
 
-		this.min[0] = min[ 0 ];
-		this.min[1] = min[ 1 ];
-		this.min[2] = min[ 2 ];
-		this.max[0] = max[ 0 ];
-		this.max[1] = max[ 1 ];
-		this.max[2] = max[ 2 ];
+		this.min = min.clone();
+		this.max = max.clone();
+
+		this.min[0] = BoundingBoxGUI.defaultMin[ 0 ] = min[ 0 ];
+		this.min[1] = BoundingBoxGUI.defaultMin[ 1 ] = min[ 1 ];
+		this.min[2] = BoundingBoxGUI.defaultMin[ 2 ] = min[ 2 ];
+		this.max[0] = BoundingBoxGUI.defaultMax[ 0 ] = max[ 0 ];
+		this.max[1] = BoundingBoxGUI.defaultMax[ 1 ] = max[ 1 ];
+		this.max[2] = BoundingBoxGUI.defaultMax[ 2 ] = max[ 2 ];
 	}
 }
