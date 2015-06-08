@@ -82,6 +82,10 @@ public class FusionTask extends AbstractTask
 
 		private int[] blockSize;
 
+		private int psfSizeX;
+		private int psfSizeY;
+		private int psfSizeZ;
+
 		// EfficientByesianBased parameters
 		// computeOn:
 		// 0:"CPU (Java)",
@@ -378,6 +382,36 @@ public class FusionTask extends AbstractTask
 		{
 			this.interpolation = interpolation;
 		}
+
+		public int getPsfSizeX()
+		{
+			return psfSizeX;
+		}
+
+		public void setPsfSizeX( int psfSizeX )
+		{
+			this.psfSizeX = psfSizeX;
+		}
+
+		public int getPsfSizeY()
+		{
+			return psfSizeY;
+		}
+
+		public void setPsfSizeY( int psfSizeY )
+		{
+			this.psfSizeY = psfSizeY;
+		}
+
+		public int getPsfSizeZ()
+		{
+			return psfSizeZ;
+		}
+
+		public void setPsfSizeZ( int psfSizeZ )
+		{
+			this.psfSizeZ = psfSizeZ;
+		}
 	}
 
 	public void process( final Parameters params )
@@ -614,15 +648,19 @@ public class FusionTask extends AbstractTask
 			int psfSizeY = EfficientBayesianBased.defaultPSFSizeY;
 			int psfSizeZ = EfficientBayesianBased.defaultPSFSizeZ;
 
+			ebb.setPsfSizeX( psfSizeX );
+			ebb.setPsfSizeY( psfSizeY );
+			ebb.setPsfSizeZ( psfSizeZ );
+
 			// enforce odd number
-			if ( psfSizeX % 2 == 0 )
-				EfficientBayesianBased.defaultPSFSizeX = ++psfSizeX;
+			if ( ebb.getPsfSizeX() % 2 == 0 )
+				EfficientBayesianBased.defaultPSFSizeX = ebb.getPsfSizeX() + 1;
 
-			if ( psfSizeY % 2 == 0 )
-				EfficientBayesianBased.defaultPSFSizeY = ++psfSizeY;
+			if ( ebb.getPsfSizeY() % 2 == 0 )
+				EfficientBayesianBased.defaultPSFSizeY = ebb.getPsfSizeY() + 1;
 
-			if ( psfSizeZ % 2 == 0 )
-				EfficientBayesianBased.defaultPSFSizeZ = ++psfSizeZ;
+			if ( ebb.getPsfSizeZ() % 2 == 0 )
+				EfficientBayesianBased.defaultPSFSizeZ =  ebb.getPsfSizeZ() + 1;
 
 			// update the borders if applicable
 			if ( ProcessForDeconvolution.defaultBlendingBorder == null || ProcessForDeconvolution.defaultBlendingBorder.length < 3 ||
@@ -633,7 +671,9 @@ public class FusionTask extends AbstractTask
 		}
 		else
 		{
-			// TODO: Get PSF Files from string parameters
+			ebb.setPsfSizeX( params.getPsfSizeX() );
+			ebb.setPsfSizeY( params.getPsfSizeY() );
+			ebb.setPsfSizeZ( params.getPsfSizeZ() );
 		}
 
 		// reorder the channels so that those who extract a PSF
@@ -657,7 +697,7 @@ public class FusionTask extends AbstractTask
 
 			ebb.setBlendingRangeX( params.getBlendingRangeX() );
 			ebb.setBlendingRangeY( params.getBlendingRangeY() );
-			ebb.setBlendingBorderZ( params.getBlendingBorderZ() );
+			ebb.setBlendingRangeZ( params.getBlendingRangeZ() );
 		}
 
 		if ( params.isJustShowWeights() )
