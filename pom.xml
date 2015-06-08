@@ -145,17 +145,20 @@
 		<dependency>
 			<groupId>java3d</groupId>
 			<artifactId>j3d-core</artifactId>
-			<scope>provided</scope>
+            <version>1.5.2</version>
+            <scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>java3d</groupId>
 			<artifactId>j3d-core-utils</artifactId>
-			<scope>provided</scope>
+            <version>1.5.2</version>
+            <scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>java3d</groupId>
 			<artifactId>vecmath</artifactId>
-			<scope>provided</scope>
+            <version>1.5.2</version>
+			<scope>compile</scope>
 		</dependency>
         <dependency>
             <groupId>commons-cli</groupId>
