@@ -38,20 +38,43 @@ public class ExtractPSF< T extends RealType< T > >
 	
 	final protected HashMap< ViewId, Img< T > > pointSpreadFunctions, originalPSFs;
 	final protected ArrayList< ViewId > viewIds;
-	
+
+	// if this ExtractPSF instance manages PSF's for other channels, we store it here
+	final HashMap< ViewId, ViewId > mapViewIds;
+
 	public ExtractPSF( final ImgFactory< T > psfFactory )
 	{		
 		this.pointSpreadFunctions = new HashMap< ViewId, Img< T > >();
 		this.originalPSFs = new HashMap< ViewId, Img< T > >();
 		this.viewIds = new ArrayList< ViewId >();
-		
+
+		this.mapViewIds = new HashMap< ViewId, ViewId >();
 		this.psfFactory = psfFactory;
 	}
-		
+
 	/**
+	 * @return - the current mapping, should be appended by any process that wants to use exisiting PSF's
+	 */
+	public HashMap< ViewId, ViewId > getViewIdMapping() { return mapViewIds; }
+
+	public HashMap< ViewId, Img< T > > getPSFMap() { return pointSpreadFunctions; }
+
+	/**
+	 * Returns the transformed PSF. It will first try to look it up directly, if not available it will
+	 * check the mapping mapViewIds< from, to > which one should be used for this viewid.
+	 *
+	 * @param viewId
 	 * @return - the extracted PSFs after applying the transformations of each view
 	 */
-	public HashMap< ViewId, Img< T > > getTransformedPSFs() { return pointSpreadFunctions; }
+	public Img< T > getTransformedPSF( final ViewId viewId )
+	{
+		if ( pointSpreadFunctions.containsKey( viewId ) )
+			return pointSpreadFunctions.get( viewId );
+		else if ( mapViewIds.containsKey( viewId ) )
+			return pointSpreadFunctions.get( mapViewIds.get( viewId ) );
+		else
+			throw new RuntimeException( "Cannot find PSF for tpid: " + viewId.getTimePointId() + ", setupid=" + viewId.getViewSetupId() );
+	}
 
 	/**
 	 * @return - the extracted PSFs in original calibration for each view
