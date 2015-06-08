@@ -235,7 +235,7 @@ public class EfficientBayesianBased extends Fusion
 						deconvolutionData.add( new MVDeconFFT(
 								pfd.getTransformedImgs().get( vd ),
 								pfd.getTransformedWeights().get( vd ),
-								pfd.getExtractPSF().getTransformedPSFs().get( vd ),
+								pfd.getExtractPSF().getTransformedPSF( vd ),
 								computeFactory, devList, useBlocks, blockSize, saveMemory ) );
 					}
 	
@@ -516,10 +516,10 @@ public class EfficientBayesianBased extends Fusion
 		}
 		else if ( displayPSF == 3 )
 		{
-			for ( int i = 0; i < ePSF.getTransformedPSFs().size(); ++i )
+			for ( int i = 0; i < ePSF.getPSFMap().values().size(); ++i )
 			{
 				final ViewId viewId = ePSF.getViewIdsForPSFs().get( i );
-				di.exportImage( ePSF.getTransformedPSFs().get( viewId ), "transfomed PSF of viewsetup " + viewId.getViewSetupId() );
+				di.exportImage( ePSF.getTransformedPSF( viewId ), "transfomed PSF of viewsetup " + viewId.getViewSetupId() );
 			}
 		}
 		else if ( displayPSF == 4 )
@@ -1123,7 +1123,7 @@ public class EfficientBayesianBased extends Fusion
 				{
 					final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( viewId ); 
 					
-					if ( vd.isPresent() )
+					if ( vd.getViewSetup().getChannel().getId() == c.getId() && vd.isPresent() )
 					{
 						// how many views with correspondences should be there
 						++countViews;

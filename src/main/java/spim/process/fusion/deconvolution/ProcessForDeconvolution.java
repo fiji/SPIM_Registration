@@ -126,7 +126,7 @@ public class ProcessForDeconvolution
 			IOFunctions.println( "WARNING: LOADING WEIGHTS FROM IMAGES, files.length()=" + files.length );
 		}
 
-		// get all views that are fused
+		// get all views that are fused for this timepoint & channel
 		this.viewDescriptions = FusionHelper.assembleInputData( spimData, timepoint, channel, viewIdsToProcess );
 
 		if ( this.viewDescriptions.size() == 0 )
@@ -150,7 +150,9 @@ public class ProcessForDeconvolution
 		else if ( loadPSFs )
 			ePSF = loadPSFs( channel, viewDescriptions, psfFiles, transformLoadedPSFs );
 		else
+		{
 			ePSF = assignOtherChannel( channel, extractPSFLabels );
+		}
 
 		if ( ePSF == null )
 			return false;
@@ -398,7 +400,34 @@ public class ProcessForDeconvolution
 	{
 		final ChannelPSF thisChannelPSF = extractPSFLabels.get( channel );
 		final ChannelPSF otherChannelPSF = extractPSFLabels.get( thisChannelPSF.getOtherChannel() );
-		
+
+		final Channel otherChannel = thisChannelPSF.getOtherChannel();
+		for ( int i = 0; i < viewDescriptions.size(); ++i )
+		{
+			// the viewid to map from
+			final ViewDescription sourceVD = viewDescriptions.get( i );
+
+			// search the viewid to map to
+			for ( final ViewId viewId : viewIdsToProcess )
+			{
+				final ViewDescription otherVD = spimData.getSequenceDescription().getViewDescription( viewId );
+
+				if (
+					otherVD.getViewSetup().getAngle().getId() == sourceVD.getViewSetup().getAngle().getId() &&
+					otherVD.getViewSetup().getIllumination().getId() == sourceVD.getViewSetup().getIllumination().getId() &&
+					otherVD.getTimePointId() == sourceVD.getTimePointId() &&
+					otherVD.getViewSetup().getChannel().getId() == otherChannel.getId() )
+				{
+					ePSF.getViewIdMapping().put( sourceVD, otherVD );
+
+					IOFunctions.println(
+							"ViewID=" + sourceVD.getViewSetupId() + ", TPID=" + sourceVD.getTimePointId() +
+							" takes the PSF from " +
+							"ViewID=" + otherVD.getViewSetupId() + ", TPID=" + otherVD.getTimePointId() );
+				}
+			}
+		}
+
 		return otherChannelPSF.getExtractPSFInstance();
 	}
 
