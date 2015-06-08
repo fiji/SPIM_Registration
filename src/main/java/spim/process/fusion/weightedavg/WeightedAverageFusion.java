@@ -401,4 +401,14 @@ public class WeightedAverageFusion extends Fusion
 
 		return map;
 	}
+
+	public int getNumParalellViews()
+	{
+		return numParalellViews;
+	}
+
+	public void setNumParalellViews( int numParalellViews )
+	{
+		this.numParalellViews = numParalellViews;
+	}
 }
