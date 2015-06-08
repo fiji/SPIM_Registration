@@ -786,6 +786,11 @@ public class FusionTask extends AbstractTask
 
 	public static void main( String[] args )
 	{
+		// Test mvn commamnd
+		//
+		// module load cuda/6.5.14
+		// export MAVEN_OPTS="-Xms4g -Xmx16g -Djava.awt.headless=true"
+		// mvn exec:java -Dexec.mainClass="task.FusionTask" -Dexec.args="-Dxml_filename=/projects/pilot_spim/moon/test.xml -Dmethod=EfficientBayesianBased -Dcompute_on=1 -Dfourier_convolution_cuda_lib=lib/libFourierConvolutionCUDALib.so -Dblock_size='{256, 256, 256}' -Diteration_type=OPTIMIZATION_I -Dmin='{183, 45, -690}' -Dmax='{910, 1926, 714}' -Dexport=Save3dTIFF"
 		FusionTask task = new FusionTask();
 		task.process( args );
 		System.exit( 0 );
