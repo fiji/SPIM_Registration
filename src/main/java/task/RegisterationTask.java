@@ -1,8 +1,13 @@
 package task;
 
+import mpicbg.models.RigidModel3D;
+import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.ViewSetup;
+import mpicbg.spim.io.IOFunctions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spim.fiji.plugin.Interest_Point_Registration;
@@ -20,14 +25,17 @@ import spim.process.interestpointregistration.icp.IterativeClosestPoint;
 import spim.process.interestpointregistration.icp.IterativeClosestPointParameters;
 import spim.process.interestpointregistration.optimizationtypes.AllToAllRegistration;
 import spim.process.interestpointregistration.optimizationtypes.AllToAllRegistrationWithRange;
+import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationSubset;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationType;
 import spim.process.interestpointregistration.optimizationtypes.IndividualTimepointRegistration;
 import spim.process.interestpointregistration.optimizationtypes.ReferenceTimepointRegistration;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * Headless module for Registeration task
@@ -341,8 +349,6 @@ public class RegisterationTask extends AbstractTask
 
 	private GlobalOptimizationType getGlobalOptimizationType( Parameters params, final List< ViewId > viewIdsToProcess, final ArrayList< ChannelProcess > channelsToProcess )
 	{
-
-
 		GlobalOptimizationType type = null;
 
 		switch ( params.getType() )
@@ -375,9 +381,61 @@ public class RegisterationTask extends AbstractTask
 				break;
 		}
 
-		// TODO: Reference Tiles Support
-		//		if ( !setFixedTilesAndReference( fixTiles, mapBack, type ) )
-		//			return;
+		final List< GlobalOptimizationSubset > subsets = type.getAllViewPairs();
+
+		final Set< ViewId > fixedTiles = new HashSet< ViewId >();
+
+		for ( final GlobalOptimizationSubset subset : subsets )
+		{
+			if ( subset.getViews().size() == 0 )
+				LOG.info( "Nothing to do for: " + subset.getDescription() + ". No tiles fixed." );
+			else
+				fixedTiles.add( subset.getViews().get( 0 ) );
+		}
+
+		type.setFixedTiles( fixedTiles );
+
+		LOG.info( "Following tiles are fixed:" );
+		for ( final ViewId id : type.getFixedTiles() )
+		{
+			final ViewDescription vd = type.getSpimData().getSequenceDescription().getViewDescription( id );
+			final ViewSetup vs = vd.getViewSetup();
+
+			LOG.info( "Angle:" + vs.getAngle().getName() + " Channel:" + vs.getChannel().getName() + " Illum:" + vs.getIllumination().getName() + " TimePoint:" + vd.getTimePoint().getId() );
+		}
+
+		if ( params.getMapBackChoice() == 0 )
+		{
+			type.setMapBackModel( null );
+			type.setMapBackReferenceTiles( new HashMap< GlobalOptimizationSubset, ViewId >() );
+		}
+		else if ( params.getMapBackChoice() == 1 || params.getMapBackChoice() == 3 )
+		{
+			type.setMapBackModel( new TranslationModel3D() );
+		}
+		else
+		{
+			type.setMapBackModel( new RigidModel3D() );
+		}
+
+		if ( params.getMapBackChoice() == 1 || params.getMapBackChoice() == 2 )
+		{
+			for ( final GlobalOptimizationSubset subset : subsets )
+				type.setMapBackReferenceTile( subset, subset.getViews().get( 0 ) );
+		}
+
+		LOG.info( "Following tiles are reference tiles (for mapping back if there are no fixed tiles):" );
+		for ( final GlobalOptimizationSubset subset : subsets )
+		{
+			final ViewId id = type.getMapBackReferenceTile( subset );
+			if ( id != null )
+			{
+				final ViewDescription vd = type.getSpimData().getSequenceDescription().getViewDescription( id );
+				final ViewSetup vs = vd.getViewSetup();
+
+				LOG.info( "Angle:" + vs.getAngle().getName() + " Channel:" + vs.getChannel().getName() + " Illum:" + vs.getIllumination().getName() + " TimePoint:" + vd.getTimePoint().getId() );
+			}
+		}
 
 		return type;
 	}
@@ -414,7 +472,7 @@ public class RegisterationTask extends AbstractTask
 
 		icp.setParameters( new IterativeClosestPointParameters( params.getMaxDistance(), params.getMaxIteration() ) );
 
-		icp.register( type, true, true );
+		icp.register( type, true, false );
 	}
 
 	private void processRGLDM( final Parameters params, final GlobalOptimizationType type, final List< ViewId > viewIdsToProcess, final ArrayList< ChannelProcess > channelsToProcess  )
@@ -451,7 +509,7 @@ public class RegisterationTask extends AbstractTask
 
 		rgldm.setRansacParams( new RANSACParameters( params.getAllowedError(), RANSACParameters.min_inlier_ratio, RANSACParameters.min_inlier_factor, RANSACParameters.num_iterations ) );
 
-		rgldm.register( type, true, true );
+		rgldm.register( type, true, false );
 	}
 
 	private void processGeometricHashing( final Parameters params, final GlobalOptimizationType type, final List< ViewId > viewIdsToProcess, final ArrayList< ChannelProcess > channelsToProcess  )
@@ -488,7 +546,7 @@ public class RegisterationTask extends AbstractTask
 
 		gh.setGhParams( new GeometricHashingParameters( GeometricHashingParameters.differenceThreshold, params.getRequiredSignificance(), GeometricHashingParameters.useAssociatedBeads ) );
 
-		gh.register( type, true, true );
+		gh.register( type, true, false );
 	}
 
 	private Parameters getParams( final String[] args )
