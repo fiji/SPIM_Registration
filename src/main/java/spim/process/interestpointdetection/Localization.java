@@ -33,7 +33,7 @@ public class Localization
 				for ( int d = 0; d < n; ++d )
 					pos[ d ] = peak.location[ d ];
 				
-				peaks2.add( new InterestPoint( id, pos ) );
+				peaks2.add( new InterestPoint( id++, pos ) );
 			}
 		}
 		
