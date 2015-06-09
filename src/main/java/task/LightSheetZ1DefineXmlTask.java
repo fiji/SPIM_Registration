@@ -348,7 +348,7 @@ public class LightSheetZ1DefineXmlTask extends AbstractTask
 		// Test mvn commamnd
 		//
 		// export MAVEN_OPTS="-Xms4g -Xmx16g -Djava.awt.headless=true"
-		// mvn exec:java -Dexec.mainClass="task.LightSheetZ1DefineXmlTask" -Dexec.args="-Dxml_filename=/projects/pilot_spim/moon/test.xml -Dfirst_czi=/projects/pilot_spim/moon/2015-02-21_LZ1_Stock68_3.czi -Dangle_1=0 -Dangle_2=72 -Dangle_3=144 -Dangle_4=216 -Dangle_5=288 -Dchannel_1=green -Dchannel_2=red -Dillumination_1=0 -Drotation_around=X-Axis -Dpixel_distance_x=0.28590 -Dpixel_distance_y=0.28590 -Dpixel_distance_z=1.50000 -Dpixel_unit=um"
+		// mvn exec:java -Dexec.mainClass="task.LightSheetZ1DefineXmlTask" -Dexec.args="-Dxml_filename=/projects/pilot_spim/moon/test.xml -Dfirst_czi=/projects/pilot_spim/moon/2015-02-21_LZ1_Stock68_3.czi -Dangle_1=0 -Dangle_2=72 -Dangle_3=144 -Dangle_4=216 -Dangle_5=288 -Dchannel_1=green -Dchannel_2=red -Dillumination_1=0 -Drotation_around=X_Axis -Dpixel_distance_x=0.28590 -Dpixel_distance_y=0.28590 -Dpixel_distance_z=1.50000 -Dpixel_unit=um"
 		LightSheetZ1DefineXmlTask task = new LightSheetZ1DefineXmlTask();
 		task.process( argv );
 		System.exit( 0 );
