@@ -867,7 +867,7 @@ public class RegisterationTask extends AbstractTask
 		//
 		// module load cuda/6.5.14
 		// export MAVEN_OPTS="-Xms4g -Xmx16g -Djava.awt.headless=true"
-		// mvn exec:java -Dexec.mainClass="task.RegisterationTask" -Dexec.args="-Dxml_filename=/projects/pilot_spim/moon/test.xml -Dmethod=GeometricHashing -Dtype_of_registration=TimepointsIndividually"
+		// mvn exec:java -Dexec.mainClass="task.RegisterationTask" -Dexec.args="-Dxml_filename=/projects/pilot_spim/moon/test.xml -Dmethod=GeometricHashing -Dtype_of_registration=TIMEPOINTS_INDIVIDUALLY"
 		RegisterationTask task = new RegisterationTask();
 		task.process( argv );
 		System.exit( 0 );

@@ -98,7 +98,7 @@ public class RegistrationTest
 		final String[] params = new String[] {
 				"-Dxml_filename=/Users/moon/temp/moon/test.xml",
 				"-Dmethod=GeometricHashing",
-				"-Dtype_of_registration=TimepointsIndividually"
+				"-Dtype_of_registration=TIMEPOINTS_INDIVIDUALLY"
 		};
 
 		final RegisterationTask task = new RegisterationTask();

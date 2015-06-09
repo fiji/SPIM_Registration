@@ -38,7 +38,7 @@ public class DefineXmlTest
 				"-Dchannel_1=green",
 				"-Dchannel_2=red",
 				"-Dillumination_1=0",
-				"-Drotation_around=X-Axis",
+				"-Drotation_around=X_Axis",
 				"-Dpixel_distance_x=0.28590",
 				"-Dpixel_distance_y=0.28590",
 				"-Dpixel_distance_z=1.50000",
