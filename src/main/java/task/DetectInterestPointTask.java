@@ -42,10 +42,29 @@ public class DetectInterestPointTask extends AbstractTask
 
 	private static final Logger LOG = LoggerFactory.getLogger( DetectInterestPointTask.class );
 
+	/**
+	 * Gets task title.
+	 *
+	 * @return the title
+	 */
 	public String getTitle() { return "Detect Interest Points Task"; }
 
-	public static enum Method { DifferenceOfMean, DifferenceOfGaussian };
+	/**
+	 * The enum Method.
+	 */
+	public static enum Method {
+		/**
+		 * The DifferenceOfMean.
+		 */
+		DifferenceOfMean,
+		/**
+		 * The DifferenceOfGaussian.
+		 */
+		DifferenceOfGaussian };
 
+	/**
+	 * The type Parameters.
+	 */
 	public static class Parameters extends AbstractTask.Parameters
 	{
 		private Method method;
@@ -72,6 +91,7 @@ public class DetectInterestPointTask extends AbstractTask
 
 		// DifferenceOfGaussian
 		private double[] sigma;
+
 		// computeOn:
 		// 0:"CPU (Java)",
 		// 1:"GPU approximate (Nvidia CUDA via JNA)",
@@ -79,217 +99,432 @@ public class DetectInterestPointTask extends AbstractTask
 		private int computeOn;
 		private String separableConvolutionCUDALib;
 
+		/**
+		 * Gets method.
+		 *
+		 * @return the method
+		 */
 		public Method getMethod()
 		{
 			return method;
 		}
 
+		/**
+		 * Sets method.
+		 *
+		 * @param method the method
+		 */
 		public void setMethod( Method method )
 		{
 			this.method = method;
 		}
 
+		/**
+		 * Is use cluster.
+		 *
+		 * @return the boolean
+		 */
 		public boolean isUseCluster()
 		{
 			return useCluster;
 		}
 
+		/**
+		 * Sets use cluster.
+		 *
+		 * @param useCluster the use cluster
+		 */
 		public void setUseCluster( boolean useCluster )
 		{
 			this.useCluster = useCluster;
 		}
 
+		/**
+		 * Gets image sigma x.
+		 *
+		 * @return the image sigma x
+		 */
 		public double getImageSigmaX()
 		{
 			return imageSigmaX;
 		}
 
+		/**
+		 * Sets image sigma x.
+		 *
+		 * @param imageSigmaX the image sigma x
+		 */
 		public void setImageSigmaX( double imageSigmaX )
 		{
 			this.imageSigmaX = imageSigmaX;
 		}
 
+		/**
+		 * Gets image sigma y.
+		 *
+		 * @return the image sigma y
+		 */
 		public double getImageSigmaY()
 		{
 			return imageSigmaY;
 		}
 
+		/**
+		 * Sets image sigma y.
+		 *
+		 * @param imageSigmaY the image sigma y
+		 */
 		public void setImageSigmaY( double imageSigmaY )
 		{
 			this.imageSigmaY = imageSigmaY;
 		}
 
+		/**
+		 * Gets image sigma z.
+		 *
+		 * @return the image sigma z
+		 */
 		public double getImageSigmaZ()
 		{
 			return imageSigmaZ;
 		}
 
+		/**
+		 * Sets image sigma z.
+		 *
+		 * @param imageSigmaZ the image sigma z
+		 */
 		public void setImageSigmaZ( double imageSigmaZ )
 		{
 			this.imageSigmaZ = imageSigmaZ;
 		}
 
+		/**
+		 * Gets additional sigma x.
+		 *
+		 * @return the additional sigma x
+		 */
 		public double getAdditionalSigmaX()
 		{
 			return additionalSigmaX;
 		}
 
+		/**
+		 * Sets additional sigma x.
+		 *
+		 * @param additionalSigmaX the additional sigma x
+		 */
 		public void setAdditionalSigmaX( double additionalSigmaX )
 		{
 			this.additionalSigmaX = additionalSigmaX;
 		}
 
+		/**
+		 * Gets additional sigma y.
+		 *
+		 * @return the additional sigma y
+		 */
 		public double getAdditionalSigmaY()
 		{
 			return additionalSigmaY;
 		}
 
+		/**
+		 * Sets additional sigma y.
+		 *
+		 * @param additionalSigmaY the additional sigma y
+		 */
 		public void setAdditionalSigmaY( double additionalSigmaY )
 		{
 			this.additionalSigmaY = additionalSigmaY;
 		}
 
+		/**
+		 * Gets additional sigma z.
+		 *
+		 * @return the additional sigma z
+		 */
 		public double getAdditionalSigmaZ()
 		{
 			return additionalSigmaZ;
 		}
 
+		/**
+		 * Sets additional sigma z.
+		 *
+		 * @param additionalSigmaZ the additional sigma z
+		 */
 		public void setAdditionalSigmaZ( double additionalSigmaZ )
 		{
 			this.additionalSigmaZ = additionalSigmaZ;
 		}
 
+		/**
+		 * Gets min intensity.
+		 *
+		 * @return the min intensity
+		 */
 		public double getMinIntensity()
 		{
 			return minIntensity;
 		}
 
+		/**
+		 * Sets min intensity.
+		 *
+		 * @param minIntensity the min intensity
+		 */
 		public void setMinIntensity( double minIntensity )
 		{
 			this.minIntensity = minIntensity;
 		}
 
+		/**
+		 * Gets max intensity.
+		 *
+		 * @return the max intensity
+		 */
 		public double getMaxIntensity()
 		{
 			return maxIntensity;
 		}
 
+		/**
+		 * Sets max intensity.
+		 *
+		 * @param maxIntensity the max intensity
+		 */
 		public void setMaxIntensity( double maxIntensity )
 		{
 			this.maxIntensity = maxIntensity;
 		}
 
+		/**
+		 * Gets localization.
+		 *
+		 * @return the localization
+		 */
 		public int getLocalization()
 		{
 			return localization;
 		}
 
+		/**
+		 * Sets localization.
+		 *
+		 * @param localization the localization
+		 */
 		public void setLocalization( int localization )
 		{
 			this.localization = localization;
 		}
 
+		/**
+		 * Gets downsample xY.
+		 *
+		 * @return the downsample xY
+		 */
 		public int getDownsampleXY()
 		{
 			return downsampleXY;
 		}
 
+		/**
+		 * Sets downsample xY.
+		 *
+		 * @param downsampleXY the downsample xY
+		 */
 		public void setDownsampleXY( int downsampleXY )
 		{
 			this.downsampleXY = downsampleXY;
 		}
 
+		/**
+		 * Gets downsample z.
+		 *
+		 * @return the downsample z
+		 */
 		public int getDownsampleZ()
 		{
 			return downsampleZ;
 		}
 
+		/**
+		 * Sets downsample z.
+		 *
+		 * @param downsampleZ the downsample z
+		 */
 		public void setDownsampleZ( int downsampleZ )
 		{
 			this.downsampleZ = downsampleZ;
 		}
 
+		/**
+		 * Get threshold.
+		 *
+		 * @return the double [ ]
+		 */
 		public double[] getThreshold()
 		{
 			return threshold;
 		}
 
+		/**
+		 * Sets threshold.
+		 *
+		 * @param threshold the threshold
+		 */
 		public void setThreshold( double[] threshold )
 		{
 			this.threshold = threshold;
 		}
 
+		/**
+		 * Get find min.
+		 *
+		 * @return the boolean [ ]
+		 */
 		public boolean[] getFindMin()
 		{
 			return findMin;
 		}
 
+		/**
+		 * Sets find min.
+		 *
+		 * @param findMin the find min
+		 */
 		public void setFindMin( boolean[] findMin )
 		{
 			this.findMin = findMin;
 		}
 
+		/**
+		 * Get find max.
+		 *
+		 * @return the boolean [ ]
+		 */
 		public boolean[] getFindMax()
 		{
 			return findMax;
 		}
 
+		/**
+		 * Sets find max.
+		 *
+		 * @param findMax the find max
+		 */
 		public void setFindMax( boolean[] findMax )
 		{
 			this.findMax = findMax;
 		}
 
+		/**
+		 * Get radius 1.
+		 *
+		 * @return the int [ ]
+		 */
 		public int[] getRadius1()
 		{
 			return radius1;
 		}
 
+		/**
+		 * Sets radius 1.
+		 *
+		 * @param radius1 the radius 1
+		 */
 		public void setRadius1( int[] radius1 )
 		{
 			this.radius1 = radius1;
 		}
 
+		/**
+		 * Get radius 2.
+		 *
+		 * @return the int [ ]
+		 */
 		public int[] getRadius2()
 		{
 			return radius2;
 		}
 
+		/**
+		 * Sets radius 2.
+		 *
+		 * @param radius2 the radius 2
+		 */
 		public void setRadius2( int[] radius2 )
 		{
 			this.radius2 = radius2;
 		}
 
+		/**
+		 * Get sigma.
+		 *
+		 * @return the double [ ]
+		 */
 		public double[] getSigma()
 		{
 			return sigma;
 		}
 
+		/**
+		 * Sets sigma.
+		 *
+		 * @param sigma the sigma
+		 */
 		public void setSigma( double[] sigma )
 		{
 			this.sigma = sigma;
 		}
 
+		/**
+		 * Gets compute on.
+		 *
+		 * @return the compute on
+		 */
 		public int getComputeOn()
 		{
 			return computeOn;
 		}
 
+		/**
+		 * Sets compute on.
+		 *
+		 * @param computeOn the compute on
+		 */
 		public void setComputeOn( int computeOn )
 		{
 			this.computeOn = computeOn;
 		}
 
+		/**
+		 * Gets separable convolution cUDA lib.
+		 *
+		 * @return the separable convolution cUDA lib
+		 */
 		public String getSeparableConvolutionCUDALib()
 		{
 			return separableConvolutionCUDALib;
 		}
 
+		/**
+		 * Sets separable convolution cUDA lib.
+		 *
+		 * @param separableConvolutionCUDALib the separable convolution cUDA lib
+		 */
 		public void setSeparableConvolutionCUDALib( String separableConvolutionCUDALib )
 		{
 			this.separableConvolutionCUDALib = separableConvolutionCUDALib;
 		}
 	}
 
+	/**
+	 * Task Process with the parsed params.
+	 *
+	 * @param params the params
+	 */
 	public void process( final Parameters params )
 	{
 		final HeadlessParseQueryXML result = new HeadlessParseQueryXML();
@@ -504,7 +739,7 @@ public class DetectInterestPointTask extends AbstractTask
 		findInterestPoints( differenceOfGaussian, params, spimData, viewIdsToProcess, clusterExtention );
 	}
 
-	private void findInterestPoints(final DifferenceOf ipd, final Parameters params, final SpimData2 data, final List< ViewId > viewIds, final String clusterExtention)
+	private void findInterestPoints( final DifferenceOf ipd, final Parameters params, final SpimData2 data, final List< ViewId > viewIds, final String clusterExtention )
 	{
 		final String label = "beads";
 
@@ -589,45 +824,49 @@ public class DetectInterestPointTask extends AbstractTask
 		params.setImageSigmaZ( Double.parseDouble( props.getProperty( "image_sigma_z", "0.5" ) ) );
 
 		// sub-pixel localization
+		// 0: None
+		// 1: 3-dimensional quadratic fit (all detections) (default)
+		// 2: Gauss fit (true correspondences)
+		// 3: Gauss fit (all detections)
 		params.setLocalization( Integer.parseInt( props.getProperty( "subpixel_localization", "1" ) ) );
 
+		params.setMethod( Method.valueOf( props.getProperty( "method" ) ) );
 
-		final String method = props.getProperty( "method" );
-
-		if( method.equals( "DifferenceOfMean" ) )
+		switch( params.getMethod() )
 		{
-			params.setMethod( Method.DifferenceOfMean );
+			case DifferenceOfMean:
+				params.setMethod( Method.DifferenceOfMean );
 
-			// The below is for advanced parameters
+				// The below is for advanced parameters
 
-//			// -Dradius_1={2, 2, 2}
-//			params.setRadius1( PluginHelper.parseArrayIntegerString( props.getProperty( "radius_1" ) ) );
-//			// -Dradius_2={3, 3, 3}
-//			params.setRadius2( PluginHelper.parseArrayIntegerString( props.getProperty( "radius_2" ) ) );
-//			// -Dthreshold={0.02, 0.02, 0.02}
-//			params.setThreshold( PluginHelper.parseArrayDoubleString( props.getProperty( "threshold" ) ) );
-//			// -Dfind_minima={false, false, false}
-//			params.setFindMin( PluginHelper.parseArrayBooleanString( props.getProperty( "find_minima" ) ) );
-//			// -Dfind_maxima={true, true, true}
-//			params.setFindMax( PluginHelper.parseArrayBooleanString( props.getProperty( "find_maxima" ) ) );
-		}
-		else if( method.equals( "DifferenceOfGaussian" ) )
-		{
-			params.setMethod( Method.DifferenceOfGaussian );
+				//			// -Dradius_1={2, 2, 2}
+				//			params.setRadius1( PluginHelper.parseArrayIntegerString( props.getProperty( "radius_1" ) ) );
+				//			// -Dradius_2={3, 3, 3}
+				//			params.setRadius2( PluginHelper.parseArrayIntegerString( props.getProperty( "radius_2" ) ) );
+				//			// -Dthreshold={0.02, 0.02, 0.02}
+				//			params.setThreshold( PluginHelper.parseArrayDoubleString( props.getProperty( "threshold" ) ) );
+				//			// -Dfind_minima={false, false, false}
+				//			params.setFindMin( PluginHelper.parseArrayBooleanString( props.getProperty( "find_minima" ) ) );
+				//			// -Dfind_maxima={true, true, true}
+				//			params.setFindMax( PluginHelper.parseArrayBooleanString( props.getProperty( "find_maxima" ) ) );
+				break;
+			case DifferenceOfGaussian:
+				params.setMethod( Method.DifferenceOfGaussian );
 
-			// The below is for advanced parameters
+				// The below is for advanced parameters
 
-			params.setComputeOn( Integer.parseInt( props.getProperty( "compute_on", "0" ) ) );
-			params.setSeparableConvolutionCUDALib( props.getProperty( "separable_convolution_cuda_lib" ) );
+				params.setComputeOn( Integer.parseInt( props.getProperty( "compute_on", "0" ) ) );
+				params.setSeparableConvolutionCUDALib( props.getProperty( "separable_convolution_cuda_lib" ) );
 
-//			// -Dsigma={1.8, 1.8, 1.8}
-//			params.setSigma( PluginHelper.parseArrayDoubleString( props.getProperty( "sigma" ) ) );
-//			// -Dthreshold={0.02, 0.02, 0.02}
-//			params.setThreshold( PluginHelper.parseArrayDoubleString( props.getProperty( "threshold" ) ) );
-//			// -Dfind_minima={false, false, false}
-//			params.setFindMin( PluginHelper.parseArrayBooleanString( props.getProperty( "find_minima" ) ) );
-//			// -Dfind_maxima={true, true, true}
-//			params.setFindMax( PluginHelper.parseArrayBooleanString( props.getProperty( "find_maxima" ) ) );
+				//			// -Dsigma={1.8, 1.8, 1.8}
+				//			params.setSigma( PluginHelper.parseArrayDoubleString( props.getProperty( "sigma" ) ) );
+				//			// -Dthreshold={0.02, 0.02, 0.02}
+				//			params.setThreshold( PluginHelper.parseArrayDoubleString( props.getProperty( "threshold" ) ) );
+				//			// -Dfind_minima={false, false, false}
+				//			params.setFindMin( PluginHelper.parseArrayBooleanString( props.getProperty( "find_minima" ) ) );
+				//			// -Dfind_maxima={true, true, true}
+				//			params.setFindMax( PluginHelper.parseArrayBooleanString( props.getProperty( "find_maxima" ) ) );
+				break;
 		}
 
 		return params;
@@ -638,7 +877,12 @@ public class DetectInterestPointTask extends AbstractTask
 		process( getParams( args ) );
 	}
 
-	public static void main( String[] argv )
+	/**
+	 * The entry point of application.
+	 *
+	 * @param argv the input arguments
+	 */
+	public static void main( final String[] argv )
 	{
 		// Test mvn commamnd
 		//

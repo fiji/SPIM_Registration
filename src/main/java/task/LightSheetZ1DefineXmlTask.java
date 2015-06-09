@@ -32,7 +32,6 @@ import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Properties;
 
 /**
@@ -42,36 +41,74 @@ public class LightSheetZ1DefineXmlTask extends AbstractTask
 {
 	private static final Logger LOG = LoggerFactory.getLogger( LightSheetZ1DefineXmlTask.class );
 
-	public static String[] rotAxes = new String[] { "X-Axis", "Y-Axis", "Z-Axis" };
+	/**
+	 * The enum rotation axes.
+	 */
+	public static enum RotationAxis { X_Axis, Y_Axis, Z_Axis };
 
+	/**
+	 * Gets Task title.
+	 *
+	 * @return the title
+	 */
 	public String getTitle() { return "Zeiss Lightsheet Z.1 Dataset (LOCI Bioformats)"; }
 
+	/**
+	 * The type Parameters.
+	 */
 	public static class Parameters extends AbstractTask.Parameters
 	{
 		private String firstFile;
 		private LightSheetZ1MetaData metaData;
 
+		/**
+		 * Gets first file.
+		 *
+		 * @return the first file
+		 */
 		public String getFirstFile()
 		{
 			return firstFile;
 		}
 
+		/**
+		 * Sets first file.
+		 *
+		 * @param firstFile the first file
+		 */
 		public void setFirstFile( String firstFile )
 		{
 			this.firstFile = firstFile;
 		}
 
+		/**
+		 * Gets meta data.
+		 *
+		 * @return the meta data
+		 */
 		public LightSheetZ1MetaData getMetaData()
 		{
 			return metaData;
 		}
 
+		/**
+		 * Sets meta data.
+		 *
+		 * @param metaData the meta data
+		 */
 		public void setMetaData( LightSheetZ1MetaData metaData )
 		{
 			this.metaData = metaData;
 		}
 	}
 
+	/**
+	 * Create sequence description.
+	 *
+	 * @param meta the meta
+	 * @param cziFile the czi file
+	 * @return the sequence description
+	 */
 	public static SequenceDescription createSequenceDescription( final LightSheetZ1MetaData meta, final File cziFile )
 	{
 		// assemble timepints, viewsetups, missingviews and the imgloader
@@ -167,7 +204,12 @@ public class LightSheetZ1DefineXmlTask extends AbstractTask
 		return sequenceDescription;
 	}
 
-	public void process(Parameters params)
+	/**
+	 * Task Process with the parsed params.
+	 *
+	 * @param params the params
+	 */
+	public void process( final Parameters params )
 	{
 		if( isDebug )
 		{
@@ -185,7 +227,7 @@ public class LightSheetZ1DefineXmlTask extends AbstractTask
 
 			if ( !meta.loadMetaData( new File( params.getFirstFile() ) ) )
 			{
-				System.out.println( "Failed to analyze file." );
+				LOG.warn( "Failed to analyze file." );
 				return;
 			}
 			params.setMetaData( meta );
@@ -236,7 +278,7 @@ public class LightSheetZ1DefineXmlTask extends AbstractTask
 
 		if ( spimData == null )
 		{
-			LOG.info( "Defining multi-view dataset failed." );
+			LOG.warn( "Defining multi-view dataset failed." );
 			return;
 		}
 		else
@@ -258,7 +300,7 @@ public class LightSheetZ1DefineXmlTask extends AbstractTask
 
 		if ( !meta.loadMetaData( new File( params.getFirstFile() ) ))
 		{
-			System.err.println( "Failed to analyze file." );
+			LOG.warn( "Failed to analyze file." );
 			return null;
 		}
 
@@ -276,19 +318,32 @@ public class LightSheetZ1DefineXmlTask extends AbstractTask
 		meta.setCalZ( Double.parseDouble( props.getProperty( "pixel_distance_z" ) ) );
 		meta.setCalUnit( props.getProperty( "pixel_unit" ) );
 
-		meta.setRotationAxis( Arrays.binarySearch( rotAxes, props.getProperty( "rotation_around" ) ) );
+		switch( RotationAxis.valueOf( props.getProperty( "rotation_around" ) ) )
+		{
+			case X_Axis: meta.setRotationAxis( 0 );
+				break;
+			case Y_Axis: meta.setRotationAxis( 1 );
+				break;
+			case Z_Axis: meta.setRotationAxis( 2 );
+				break;
+		}
 
 		params.setMetaData( meta );
 
 		return params;
 	}
 
-	@Override public void process( String[] args )
+	@Override public void process( final String[] args )
 	{
 		this.process( getParams( args ) );
 	}
 
-	public static void main( String[] argv )
+	/**
+	 * The entry point of application.
+	 *
+	 * @param argv the input arguments
+	 */
+	public static void main( final String[] argv )
 	{
 		// Test mvn commamnd
 		//

@@ -30,40 +30,78 @@ public class ResaveHdf5Task extends AbstractTask
 {
 	private static final Logger LOG = LoggerFactory.getLogger( ResaveHdf5Task.class );
 
+	/**
+	 * Gets task title.
+	 *
+	 * @return the title
+	 */
 	public String getTitle() { return "Resave to HDF5 format"; }
 
+	/**
+	 * The type Parameters.
+	 */
 	public static class Parameters extends AbstractTask.Parameters
 	{
 		private String subSampling;
 		private String chunkSize;
 		private boolean useCluster;
 
+		/**
+		 * Gets sub sampling.
+		 *
+		 * @return the sub sampling
+		 */
 		public String getSubSampling()
 		{
 
 			return subSampling;
 		}
 
+		/**
+		 * Sets sub sampling.
+		 *
+		 * @param subSampling the sub sampling
+		 */
 		public void setSubSampling( String subSampling )
 		{
 			this.subSampling = subSampling;
 		}
 
+		/**
+		 * Gets chunk size.
+		 *
+		 * @return the chunk size
+		 */
 		public String getChunkSize()
 		{
 			return chunkSize;
 		}
 
+		/**
+		 * Sets chunk size.
+		 *
+		 * @param chunkSize the chunk size
+		 */
 		public void setChunkSize( String chunkSize )
 		{
 			this.chunkSize = chunkSize;
 		}
 
+		/**
+		 * Is useCluster.
+		 *
+		 * @return the boolean
+		 */
 		public boolean isUseCluster()
 		{
 			return useCluster;
 		}
 
+		/**
+		 * Sets useCluster.
+		 *
+		 * @param useCluster the use cluster
+		 */
 		public void setUseCluster( boolean useCluster )
 		{
 			this.useCluster = useCluster;
@@ -110,7 +148,12 @@ public class ResaveHdf5Task extends AbstractTask
 		LOG.info( "done" );
 	}
 
-	public void process(Parameters params)
+	/**
+	 * Task Process with the parsed params.
+	 *
+	 * @param params the params
+	 */
+	public void process( final Parameters params )
 	{
 		final HeadlessParseQueryXML xml = new HeadlessParseQueryXML();
 
@@ -179,18 +222,25 @@ public class ResaveHdf5Task extends AbstractTask
 
 		final Parameters params = new Parameters();
 		params.setXmlFilename( props.getProperty( "xml_filename" ) );
+		params.setUseCluster( Boolean.parseBoolean( props.getProperty( "use_cluster", "false" ) ) );
+
 		params.setSubSampling( props.getProperty( "subsampling_factors", null ) );
 		params.setChunkSize( props.getProperty( "hdf5_chunk_sizes", null ) );
 
 		return params;
 	}
 
-	@Override public void process( String[] args )
+	@Override public void process( final String[] args )
 	{
 		process( getParams( args ) );
 	}
 
-	public static void main( String[] argv )
+	/**
+	 * The entry point of application.
+	 *
+	 * @param argv the input arguments
+	 */
+	public static void main( final String[] argv )
 	{
 		// Test mvn commamnd
 		//

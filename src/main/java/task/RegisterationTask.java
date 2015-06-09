@@ -11,6 +11,7 @@ import mpicbg.spim.io.IOFunctions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spim.fiji.plugin.Interest_Point_Registration;
+import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
 import spim.fiji.plugin.queryXML.HeadlessParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
@@ -50,16 +51,92 @@ public class RegisterationTask extends AbstractTask
 
 	private static final Logger LOG = LoggerFactory.getLogger( RegisterationTask.class );
 
+	/**
+	 * Gets title.
+	 *
+	 * @return the title
+	 */
 	public String getTitle() { return "Register Interest Points Task"; }
 
-	public static enum Method { GeometricHashing, RGLDM, IterativeClosestPoint };
+	/**
+	 * The enum Method.
+	 */
+	public static enum Method {
+		/**
+		 * The GeometricHashing.
+		 */
+		GeometricHashing,
+		/**
+		 * The RGLDM.
+		 */
+		RGLDM,
+		/**
+		 * The IterativeClosestPoint.
+		 */
+		IterativeClosestPoint };
 
-	public static enum RegistrationType { TIMEPOINTS_INDIVIDUALLY, TO_REFERENCE_TIMEPOINT, ALL_TO_ALL, ALL_TO_ALL_WITH_RANGE }
+	/**
+	 * The enum Registration type.
+	 */
+	public static enum RegistrationType {
+		/**
+		 * The TIMEPOINTS_INDIVIDUALLY.
+		 */
+		TIMEPOINTS_INDIVIDUALLY,
+		/**
+		 * The TO_REFERENCE_TIMEPOINT.
+		 */
+		TO_REFERENCE_TIMEPOINT,
+		/**
+		 * The ALL_TO_ALL.
+		 */
+		ALL_TO_ALL,
+		/**
+		 * The ALL_TO_ALL_WITH_RANGE.
+		 */
+		ALL_TO_ALL_WITH_RANGE }
 
-	public static enum TransformationModel { Translation, Rigid, Affine }
+	/**
+	 * The enum Transformation model.
+	 */
+	public static enum TransformationModel {
+		/**
+		 * The Translation.
+		 */
+		Translation,
+		/**
+		 * The Rigid.
+		 */
+		Rigid,
+		/**
+		 * The Affine.
+		 */
+		Affine }
 
-	public static enum RegularizationModel { Identity, Translation, Rigid, Affine }
+	/**
+	 * The enum Regularization model.
+	 */
+	public static enum RegularizationModel {
+		/**
+		 * The Identity.
+		 */
+		Identity,
+		/**
+		 * The Translation.
+		 */
+		Translation,
+		/**
+		 * The Rigid.
+		 */
+		Rigid,
+		/**
+		 * The Affine.
+		 */
+		Affine }
 
+	/**
+	 * The type Parameters.
+	 */
 	public static class Parameters extends AbstractTask.Parameters
 	{
 		private Method method;
@@ -101,178 +178,352 @@ public class RegisterationTask extends AbstractTask
 		private double maxDistance;		// 5
 		private int maxIteration;	// 100
 
-
+		/**
+		 * Gets method.
+		 *
+		 * @return the method
+		 */
 		public Method getMethod()
 		{
 			return method;
 		}
 
+		/**
+		 * Sets method.
+		 *
+		 * @param method the method
+		 */
 		public void setMethod( Method method )
 		{
 			this.method = method;
 		}
 
+		/**
+		 * Is use cluster.
+		 *
+		 * @return the boolean
+		 */
 		public boolean isUseCluster()
 		{
 			return useCluster;
 		}
 
+		/**
+		 * Sets use cluster.
+		 *
+		 * @param useCluster the use cluster
+		 */
 		public void setUseCluster( boolean useCluster )
 		{
 			this.useCluster = useCluster;
 		}
 
+		/**
+		 * Gets type.
+		 *
+		 * @return the type
+		 */
 		public RegistrationType getType()
 		{
 			return type;
 		}
 
+		/**
+		 * Sets type.
+		 *
+		 * @param type the type
+		 */
 		public void setType( RegistrationType type )
 		{
 			this.type = type;
 		}
 
+		/**
+		 * Gets reference timepoint index.
+		 *
+		 * @return the reference timepoint index
+		 */
 		public int getReferenceTimepointIndex()
 		{
 			return referenceTimepointIndex;
 		}
 
+		/**
+		 * Sets reference timepoint index.
+		 *
+		 * @param referenceTimepointIndex the reference timepoint index
+		 */
 		public void setReferenceTimepointIndex( int referenceTimepointIndex )
 		{
 			this.referenceTimepointIndex = referenceTimepointIndex;
 		}
 
+		/**
+		 * Gets all to all range.
+		 *
+		 * @return the all to all range
+		 */
 		public int getAllToAllRange()
 		{
 			return allToAllRange;
 		}
 
+		/**
+		 * Sets all to all range.
+		 *
+		 * @param allToAllRange the all to all range
+		 */
 		public void setAllToAllRange( int allToAllRange )
 		{
 			this.allToAllRange = allToAllRange;
 		}
 
+		/**
+		 * Is consider timepoint as unit.
+		 *
+		 * @return the boolean
+		 */
 		public boolean isConsiderTimepointAsUnit()
 		{
 			return isConsiderTimepointAsUnit;
 		}
 
+		/**
+		 * Sets consider timepoint as unit.
+		 *
+		 * @param isConsiderTimepointAsUnit the is consider timepoint as unit
+		 */
 		public void setConsiderTimepointAsUnit( boolean isConsiderTimepointAsUnit )
 		{
 			this.isConsiderTimepointAsUnit = isConsiderTimepointAsUnit;
 		}
 
+		/**
+		 * Gets fix tiles choice.
+		 *
+		 * @return the fix tiles choice
+		 */
 		public int getFixTilesChoice()
 		{
 			return fixTilesChoice;
 		}
 
+		/**
+		 * Sets fix tiles choice.
+		 *
+		 * @param fixTilesChoice the fix tiles choice
+		 */
 		public void setFixTilesChoice( int fixTilesChoice )
 		{
 			this.fixTilesChoice = fixTilesChoice;
 		}
 
+		/**
+		 * Gets map back choice.
+		 *
+		 * @return the map back choice
+		 */
 		public int getMapBackChoice()
 		{
 			return mapBackChoice;
 		}
 
+		/**
+		 * Sets map back choice.
+		 *
+		 * @param mapBackChoice the map back choice
+		 */
 		public void setMapBackChoice( int mapBackChoice )
 		{
 			this.mapBackChoice = mapBackChoice;
 		}
 
+		/**
+		 * Gets transformation model.
+		 *
+		 * @return the transformation model
+		 */
 		public TransformationModel getTransformationModel()
 		{
 			return transformationModel;
 		}
 
+		/**
+		 * Sets transformation model.
+		 *
+		 * @param transformationModel the transformation model
+		 */
 		public void setTransformationModel( TransformationModel transformationModel )
 		{
 			this.transformationModel = transformationModel;
 		}
 
+		/**
+		 * Is regularized.
+		 *
+		 * @return the boolean
+		 */
 		public boolean isRegularized()
 		{
 			return isRegularized;
 		}
 
+		/**
+		 * Sets regularized.
+		 *
+		 * @param isRegularized the is regularized
+		 */
 		public void setRegularized( boolean isRegularized )
 		{
 			this.isRegularized = isRegularized;
 		}
 
+		/**
+		 * Gets regularization model.
+		 *
+		 * @return the regularization model
+		 */
 		public RegularizationModel getRegularizationModel()
 		{
 			return regularizationModel;
 		}
 
+		/**
+		 * Sets regularization model.
+		 *
+		 * @param regularizationModel the regularization model
+		 */
 		public void setRegularizationModel( RegularizationModel regularizationModel )
 		{
 			this.regularizationModel = regularizationModel;
 		}
 
+		/**
+		 * Gets number of neighbors.
+		 *
+		 * @return the number of neighbors
+		 */
 		public int getNumberOfNeighbors()
 		{
 			return numberOfNeighbors;
 		}
 
+		/**
+		 * Sets number of neighbors.
+		 *
+		 * @param numberOfNeighbors the number of neighbors
+		 */
 		public void setNumberOfNeighbors( int numberOfNeighbors )
 		{
 			this.numberOfNeighbors = numberOfNeighbors;
 		}
 
+		/**
+		 * Gets redundancy.
+		 *
+		 * @return the redundancy
+		 */
 		public int getRedundancy()
 		{
 			return redundancy;
 		}
 
+		/**
+		 * Sets redundancy.
+		 *
+		 * @param redundancy the redundancy
+		 */
 		public void setRedundancy( int redundancy )
 		{
 			this.redundancy = redundancy;
 		}
 
+		/**
+		 * Gets required significance.
+		 *
+		 * @return the required significance
+		 */
 		public float getRequiredSignificance()
 		{
 			return requiredSignificance;
 		}
 
+		/**
+		 * Sets required significance.
+		 *
+		 * @param requiredSignificance the required significance
+		 */
 		public void setRequiredSignificance( float requiredSignificance )
 		{
 			this.requiredSignificance = requiredSignificance;
 		}
 
+		/**
+		 * Gets allowed error.
+		 *
+		 * @return the allowed error
+		 */
 		public float getAllowedError()
 		{
 			return allowedError;
 		}
 
+		/**
+		 * Sets allowed error.
+		 *
+		 * @param allowedError the allowed error
+		 */
 		public void setAllowedError( float allowedError )
 		{
 			this.allowedError = allowedError;
 		}
 
+		/**
+		 * Gets max distance.
+		 *
+		 * @return the max distance
+		 */
 		public double getMaxDistance()
 		{
 			return maxDistance;
 		}
 
+		/**
+		 * Sets max distance.
+		 *
+		 * @param maxDistance the max distance
+		 */
 		public void setMaxDistance( double maxDistance )
 		{
 			this.maxDistance = maxDistance;
 		}
 
+		/**
+		 * Gets max iteration.
+		 *
+		 * @return the max iteration
+		 */
 		public int getMaxIteration()
 		{
 			return maxIteration;
 		}
 
+		/**
+		 * Sets max iteration.
+		 *
+		 * @param maxIteration the max iteration
+		 */
 		public void setMaxIteration( int maxIteration )
 		{
 			this.maxIteration = maxIteration;
 		}
 	}
 
+	/**
+	 * Task Process with the parsed params.
+	 *
+	 * @param params the params
+	 */
 	public void process( final Parameters params )
 	{
 		final HeadlessParseQueryXML result = new HeadlessParseQueryXML();
@@ -347,7 +598,7 @@ public class RegisterationTask extends AbstractTask
 		SpimData2.saveXML( spimData, params.getXmlFilename(), clusterExtention );
 	}
 
-	private GlobalOptimizationType getGlobalOptimizationType( Parameters params, final List< ViewId > viewIdsToProcess, final ArrayList< ChannelProcess > channelsToProcess )
+	private GlobalOptimizationType getGlobalOptimizationType( final Parameters params, final List< ViewId > viewIdsToProcess, final ArrayList< ChannelProcess > channelsToProcess )
 	{
 		GlobalOptimizationType type = null;
 
@@ -563,100 +814,54 @@ public class RegisterationTask extends AbstractTask
 
 		params.setConsiderTimepointAsUnit( Boolean.parseBoolean( props.getProperty( "consider_each_timepoint_as_rigid_unit", "false" ) ) );
 
-		final String registrationType = props.getProperty( "type_of_registration" );
-		if ( registrationType.equals( "TimepointsIndividually" ) )
+		params.setType( RegistrationType.valueOf( props.getProperty( "type_of_registration" ) ) );
+
+		params.setMethod( Method.valueOf( props.getProperty( "method" ) ) );
+
+		switch ( params.getMethod() )
 		{
-			params.setType( RegistrationType.TIMEPOINTS_INDIVIDUALLY );
-		}
-		else if( registrationType.equals( "ToReferenceTimepoint" ) )
-		{
-			params.setType( RegistrationType.TO_REFERENCE_TIMEPOINT );
-		}
-		else if( registrationType.equals( "AllToAll" ) )
-		{
-			params.setType( RegistrationType.ALL_TO_ALL );
-		}
-		else if( registrationType.equals( "AllToAllWithRange" ) )
-		{
-			params.setType( RegistrationType.ALL_TO_ALL_WITH_RANGE );
+			case IterativeClosestPoint:
+				// InteractiveClosestPoint
+				params.setMaxDistance( Double.parseDouble( props.getProperty( "max_distance", "5" ) ) );
+				params.setMaxIteration( Integer.parseInt( props.getProperty( "max_iteration", "100" ) ) );
+				break;
+			case RGLDM:
+				// RGLDM and GeometricHashing shared parameters. RGLDM's default value is 3
+				params.setRequiredSignificance( Float.parseFloat( props.getProperty( "required_significance", "3" ) ) );
+				params.setAllowedError( Float.parseFloat( props.getProperty( "allowed_error", "5" ) ));
+				break;
+			case GeometricHashing:
+				params.setNumberOfNeighbors( Integer.parseInt( props.getProperty( "number_of_neighbors", "3" ) ) );
+				params.setRedundancy( Integer.parseInt( props.getProperty( "redundancy", "1" ) ) );
+				// RGLDM and GeometricHashing shared parameters. GeometricHashing's default value is 10
+				params.setRequiredSignificance( Float.parseFloat( props.getProperty( "required_significance", "10" ) ) );
+				params.setAllowedError( Float.parseFloat( props.getProperty( "allowed_error", "5" ) ));
+				break;
 		}
 
-		final String method = props.getProperty( "method" );
-
-		if ( method.equals( "IterativeClosestPoint" ) )
-		{
-			params.setMethod( Method.IterativeClosestPoint );
-		}
-		else if ( method.equals( "RGLDM" ))
-		{
-			params.setMethod( Method.IterativeClosestPoint );
-			// RGLDM and GeometricHashing shared parameters. RGLDM's default value is 3
-			params.setRequiredSignificance( Float.parseFloat( props.getProperty( "required_significance", "3" ) ) );
-		}
-		else if ( method.equals( "GeometricHashing" ))
-		{
-			params.setMethod( Method.GeometricHashing );
-			// RGLDM and GeometricHashing shared parameters. GeometricHashing's default value is 10
-			params.setRequiredSignificance( Float.parseFloat( props.getProperty( "required_significance", "10" ) ) );
-		}
-
-		final String transformationModel = props.getProperty( "transformation_model", "Affine" );
-		if ( transformationModel.equals( "Translation" ) )
-		{
-			params.setTransformationModel( TransformationModel.Translation );
-		}
-		else if ( transformationModel.equals( "Rigid" ) )
-		{
-			params.setTransformationModel( TransformationModel.Rigid );
-		}
-		else if ( transformationModel.equals( "Affine" ) )
-		{
-			params.setTransformationModel( TransformationModel.Affine );
-		}
+		params.setTransformationModel( TransformationModel.valueOf( props.getProperty( "transformation_model", "Affine" ) ) );
 
 		params.setRegularized( Boolean.parseBoolean( props.getProperty( "is_regularised" ) ) );
 
 		if ( params.isRegularized() )
 		{
-			final String regularizationModel = props.getProperty( "regularization_model", "Rigid" );
-			if ( regularizationModel.equals( "Identity" ) )
-			{
-				params.setRegularizationModel( RegularizationModel.Identity );
-			}
-			else if ( regularizationModel.equals( "Translation" ) )
-			{
-				params.setRegularizationModel( RegularizationModel.Translation );
-			}
-			else if ( regularizationModel.equals( "Rigid" ) )
-			{
-				params.setRegularizationModel( RegularizationModel.Rigid );
-			}
-			else if ( regularizationModel.equals( "Affine" ) )
-			{
-				params.setRegularizationModel( RegularizationModel.Affine );
-			}
+			params.setRegularizationModel( RegularizationModel.valueOf( props.getProperty( "regularization_model", "Rigid" ) ) );
 		}
-
-		// RGLDM parameters
-		params.setNumberOfNeighbors( Integer.parseInt( props.getProperty( "number_of_neighbors", "3" ) ) );
-		params.setRedundancy( Integer.parseInt( props.getProperty( "redundancy", "1" ) ) );
-
-		// RGLDM and GeometricHashing shared parameters
-		params.setAllowedError( Float.parseFloat( props.getProperty( "allowed_error", "5" ) ));
-
-		// InteractiveClosestPoint
-		params.setMaxDistance( Double.parseDouble( props.getProperty( "max_distance", "5" ) ) );
-		params.setMaxIteration( Integer.parseInt( props.getProperty( "max_iteration", "100" ) ) );
 
 		return params;
 	}
 
-	@Override public void process( String[] args )
+	@Override public void process( final String[] args )
 	{
 		process( getParams( args ) );
 	}
 
-	public static void main( String[] argv )
+	/**
+	 * The entry point of application.
+	 *
+	 * @param argv the input arguments
+	 */
+	public static void main( final String[] argv )
 	{
 		// Test mvn commamnd
 		//

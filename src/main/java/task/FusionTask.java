@@ -63,14 +63,67 @@ public class FusionTask extends AbstractTask
 
 	private static final Logger LOG = LoggerFactory.getLogger( FusionTask.class );
 
+	/**
+	 * Gets task title.
+	 *
+	 * @return the title
+	 */
 	public String getTitle() { return "Fusion Task"; }
 
-	public static enum Method { EfficientBayesianBased, WeightedAverageFusionWithFUSEDATA, WeightedAverageFusionWithINDEPENDENT };
+	/**
+	 * The enum Method.
+	 */
+	public static enum Method {
+		/**
+		 * The EfficientBayesianBased method.
+		 */
+		EfficientBayesianBased,
+		/**
+		 * The WeightedAverageFusion With FUSEDATA.
+		 */
+		WeightedAverageFusionWithFUSEDATA,
+		/**
+		 * The WeightedAverageFusion With INDEPENDENT.
+		 */
+		WeightedAverageFusionWithINDEPENDENT };
 
-	public static enum Export { Save3dTIFF, ExportSpimData2TIFF, ExportSpimData2HDF5, AppendSpimData2 }
+	/**
+	 * The enum Export.
+	 */
+	public static enum Export {
+		/**
+		 * The Save3dTIFF.
+		 */
+		Save3dTIFF,
+		/**
+		 * The ExportSpimData2TIFF.
+		 */
+		ExportSpimData2TIFF,
+		/**
+		 * The ExportSpimData2HDF5.
+		 */
+		ExportSpimData2HDF5,
+		/**
+		 * The AppendSpimData2.
+		 */
+		AppendSpimData2 }
 
-	public static enum Interpolation { NearestNeighbor, NLinear }
+	/**
+	 * The enum Interpolation.
+	 */
+	public static enum Interpolation {
+		/**
+		 * The NearestNeighbor.
+		 */
+		NearestNeighbor,
+		/**
+		 * The NLinear.
+		 */
+		NLinear }
 
+	/**
+	 * The type Parameters.
+	 */
 	public static class Parameters extends AbstractTask.Parameters
 	{
 		private Method method;
@@ -123,297 +176,592 @@ public class FusionTask extends AbstractTask
 		private boolean useContentBased;
 		private Interpolation interpolation;
 
+		/**
+		 * Gets method.
+		 *
+		 * @return the method
+		 */
 		public Method getMethod()
 		{
 			return method;
 		}
 
+		/**
+		 * Sets method.
+		 *
+		 * @param method the method
+		 */
 		public void setMethod( Method method )
 		{
 			this.method = method;
 		}
 
+		/**
+		 * Gets export.
+		 *
+		 * @return the export
+		 */
 		public Export getExport()
 		{
 			return export;
 		}
 
+		/**
+		 * Sets export.
+		 *
+		 * @param export the export
+		 */
 		public void setExport( Export export )
 		{
 			this.export = export;
 		}
 
+		/**
+		 * Is use cluster.
+		 *
+		 * @return the boolean
+		 */
 		public boolean isUseCluster()
 		{
 			return useCluster;
 		}
 
+		/**
+		 * Sets use cluster.
+		 *
+		 * @param useCluster the use cluster
+		 */
 		public void setUseCluster( boolean useCluster )
 		{
 			this.useCluster = useCluster;
 		}
 
+		/**
+		 * Get min.
+		 *
+		 * @return the int [ ]
+		 */
 		public int[] getMin()
 		{
 			return min;
 		}
 
+		/**
+		 * Sets min.
+		 *
+		 * @param min the min
+		 */
 		public void setMin( int[] min )
 		{
 			this.min = min;
 		}
 
+		/**
+		 * Get max.
+		 *
+		 * @return the int [ ]
+		 */
 		public int[] getMax()
 		{
 			return max;
 		}
 
+		/**
+		 * Sets max.
+		 *
+		 * @param max the max
+		 */
 		public void setMax( int[] max )
 		{
 			this.max = max;
 		}
 
+		/**
+		 * Get block size.
+		 *
+		 * @return the int [ ]
+		 */
 		public int[] getBlockSize()
 		{
 			return blockSize;
 		}
 
+		/**
+		 * Sets block size.
+		 *
+		 * @param blockSize the block size
+		 */
 		public void setBlockSize( int[] blockSize )
 		{
 			this.blockSize = blockSize;
 		}
 
+		/**
+		 * Gets compute on.
+		 *
+		 * @return the compute on
+		 */
 		public int getComputeOn()
 		{
 			return computeOn;
 		}
 
+		/**
+		 * Sets compute on.
+		 *
+		 * @param computeOn the compute on
+		 */
 		public void setComputeOn( int computeOn )
 		{
 			this.computeOn = computeOn;
 		}
 
+		/**
+		 * Gets fourier convolution cUDA lib.
+		 *
+		 * @return the fourier convolution cUDA lib
+		 */
 		public String getFourierConvolutionCUDALib()
 		{
 			return fourierConvolutionCUDALib;
 		}
 
+		/**
+		 * Sets fourier convolution cUDA lib.
+		 *
+		 * @param fourierConvolutionCUDALib the fourier convolution cUDA lib
+		 */
 		public void setFourierConvolutionCUDALib( String fourierConvolutionCUDALib )
 		{
 			this.fourierConvolutionCUDALib = fourierConvolutionCUDALib;
 		}
 
+		/**
+		 * Is extract pSF.
+		 *
+		 * @return the boolean
+		 */
 		public boolean isExtractPSF()
 		{
 			return isExtractPSF;
 		}
 
+		/**
+		 * Sets extract pSF.
+		 *
+		 * @param isExtractPSF the is extract pSF
+		 */
 		public void setExtractPSF( boolean isExtractPSF )
 		{
 			this.isExtractPSF = isExtractPSF;
 		}
 
+		/**
+		 * Gets osem speedup.
+		 *
+		 * @return the osem speedup
+		 */
 		public double getOsemSpeedup()
 		{
 			return osemSpeedup;
 		}
 
+		/**
+		 * Sets osem speedup.
+		 *
+		 * @param osemSpeedup the osem speedup
+		 */
 		public void setOsemSpeedup( double osemSpeedup )
 		{
 			this.osemSpeedup = osemSpeedup;
 		}
 
+		/**
+		 * Is adjust blending.
+		 *
+		 * @return the boolean
+		 */
 		public boolean isAdjustBlending()
 		{
 			return isAdjustBlending;
 		}
 
+		/**
+		 * Sets adjust blending.
+		 *
+		 * @param isAdjustBlending the is adjust blending
+		 */
 		public void setAdjustBlending( boolean isAdjustBlending )
 		{
 			this.isAdjustBlending = isAdjustBlending;
 		}
 
+		/**
+		 * Gets blending border x.
+		 *
+		 * @return the blending border x
+		 */
 		public int getBlendingBorderX()
 		{
 			return blendingBorderX;
 		}
 
+		/**
+		 * Sets blending border x.
+		 *
+		 * @param blendingBorderX the blending border x
+		 */
 		public void setBlendingBorderX( int blendingBorderX )
 		{
 			this.blendingBorderX = blendingBorderX;
 		}
 
+		/**
+		 * Gets blending border y.
+		 *
+		 * @return the blending border y
+		 */
 		public int getBlendingBorderY()
 		{
 			return blendingBorderY;
 		}
 
+		/**
+		 * Sets blending border y.
+		 *
+		 * @param blendingBorderY the blending border y
+		 */
 		public void setBlendingBorderY( int blendingBorderY )
 		{
 			this.blendingBorderY = blendingBorderY;
 		}
 
+		/**
+		 * Gets blending border z.
+		 *
+		 * @return the blending border z
+		 */
 		public int getBlendingBorderZ()
 		{
 			return blendingBorderZ;
 		}
 
+		/**
+		 * Sets blending border z.
+		 *
+		 * @param blendingBorderZ the blending border z
+		 */
 		public void setBlendingBorderZ( int blendingBorderZ )
 		{
 			this.blendingBorderZ = blendingBorderZ;
 		}
 
+		/**
+		 * Gets blending range x.
+		 *
+		 * @return the blending range x
+		 */
 		public int getBlendingRangeX()
 		{
 			return blendingRangeX;
 		}
 
+		/**
+		 * Sets blending range x.
+		 *
+		 * @param blendingRangeX the blending range x
+		 */
 		public void setBlendingRangeX( int blendingRangeX )
 		{
 			this.blendingRangeX = blendingRangeX;
 		}
 
+		/**
+		 * Gets blending range y.
+		 *
+		 * @return the blending range y
+		 */
 		public int getBlendingRangeY()
 		{
 			return blendingRangeY;
 		}
 
+		/**
+		 * Sets blending range y.
+		 *
+		 * @param blendingRangeY the blending range y
+		 */
 		public void setBlendingRangeY( int blendingRangeY )
 		{
 			this.blendingRangeY = blendingRangeY;
 		}
 
+		/**
+		 * Gets blending range z.
+		 *
+		 * @return the blending range z
+		 */
 		public int getBlendingRangeZ()
 		{
 			return blendingRangeZ;
 		}
 
+		/**
+		 * Sets blending range z.
+		 *
+		 * @param blendingRangeZ the blending range z
+		 */
 		public void setBlendingRangeZ( int blendingRangeZ )
 		{
 			this.blendingRangeZ = blendingRangeZ;
 		}
 
+		/**
+		 * Is just show weights.
+		 *
+		 * @return the boolean
+		 */
 		public boolean isJustShowWeights()
 		{
 			return isJustShowWeights;
 		}
 
+		/**
+		 * Sets just show weights.
+		 *
+		 * @param isJustShowWeights the is just show weights
+		 */
 		public void setJustShowWeights( boolean isJustShowWeights )
 		{
 			this.isJustShowWeights = isJustShowWeights;
 		}
 
+		/**
+		 * Gets iteration type.
+		 *
+		 * @return the iteration type
+		 */
 		public LRFFT.PSFTYPE getIterationType()
 		{
 			return iterationType;
 		}
 
+		/**
+		 * Sets iteration type.
+		 *
+		 * @param iterationType the iteration type
+		 */
 		public void setIterationType( LRFFT.PSFTYPE iterationType )
 		{
 			this.iterationType = iterationType;
 		}
 
+		/**
+		 * Gets num of iteration.
+		 *
+		 * @return the num of iteration
+		 */
 		public int getNumOfIteration()
 		{
 			return numOfIteration;
 		}
 
+		/**
+		 * Sets num of iteration.
+		 *
+		 * @param numOfIteration the num of iteration
+		 */
 		public void setNumOfIteration( int numOfIteration )
 		{
 			this.numOfIteration = numOfIteration;
 		}
 
+		/**
+		 * Is use tikhonov regularization.
+		 *
+		 * @return the boolean
+		 */
 		public boolean isUseTikhonovRegularization()
 		{
 			return useTikhonovRegularization;
 		}
 
+		/**
+		 * Sets use tikhonov regularization.
+		 *
+		 * @param useTikhonovRegularization the use tikhonov regularization
+		 */
 		public void setUseTikhonovRegularization( boolean useTikhonovRegularization )
 		{
 			this.useTikhonovRegularization = useTikhonovRegularization;
 		}
 
+		/**
+		 * Gets lambda.
+		 *
+		 * @return the lambda
+		 */
 		public double getLambda()
 		{
 			return lambda;
 		}
 
+		/**
+		 * Sets lambda.
+		 *
+		 * @param lambda the lambda
+		 */
 		public void setLambda( double lambda )
 		{
 			this.lambda = lambda;
 		}
 
+		/**
+		 * Gets num paralell views.
+		 *
+		 * @return the num paralell views
+		 */
 		public int getNumParalellViews()
 		{
 			return numParalellViews;
 		}
 
+		/**
+		 * Sets num paralell views.
+		 *
+		 * @param numParalellViews the num paralell views
+		 */
 		public void setNumParalellViews( int numParalellViews )
 		{
 			this.numParalellViews = numParalellViews;
 		}
 
+		/**
+		 * Is use blending.
+		 *
+		 * @return the boolean
+		 */
 		public boolean isUseBlending()
 		{
 			return useBlending;
 		}
 
+		/**
+		 * Sets use blending.
+		 *
+		 * @param useBlending the use blending
+		 */
 		public void setUseBlending( boolean useBlending )
 		{
 			this.useBlending = useBlending;
 		}
 
+		/**
+		 * Is use content based.
+		 *
+		 * @return the boolean
+		 */
 		public boolean isUseContentBased()
 		{
 			return useContentBased;
 		}
 
+		/**
+		 * Sets use content based.
+		 *
+		 * @param useContentBased the use content based
+		 */
 		public void setUseContentBased( boolean useContentBased )
 		{
 			this.useContentBased = useContentBased;
 		}
 
+		/**
+		 * Gets interpolation.
+		 *
+		 * @return the interpolation
+		 */
 		public Interpolation getInterpolation()
 		{
 			return interpolation;
 		}
 
+		/**
+		 * Sets interpolation.
+		 *
+		 * @param interpolation the interpolation
+		 */
 		public void setInterpolation( Interpolation interpolation )
 		{
 			this.interpolation = interpolation;
 		}
 
+		/**
+		 * Gets psf size x.
+		 *
+		 * @return the psf size x
+		 */
 		public int getPsfSizeX()
 		{
 			return psfSizeX;
 		}
 
+		/**
+		 * Sets psf size x.
+		 *
+		 * @param psfSizeX the psf size x
+		 */
 		public void setPsfSizeX( int psfSizeX )
 		{
 			this.psfSizeX = psfSizeX;
 		}
 
+		/**
+		 * Gets psf size y.
+		 *
+		 * @return the psf size y
+		 */
 		public int getPsfSizeY()
 		{
 			return psfSizeY;
 		}
 
+		/**
+		 * Sets psf size y.
+		 *
+		 * @param psfSizeY the psf size y
+		 */
 		public void setPsfSizeY( int psfSizeY )
 		{
 			this.psfSizeY = psfSizeY;
 		}
 
+		/**
+		 * Gets psf size z.
+		 *
+		 * @return the psf size z
+		 */
 		public int getPsfSizeZ()
 		{
 			return psfSizeZ;
 		}
 
+		/**
+		 * Sets psf size z.
+		 *
+		 * @param psfSizeZ the psf size z
+		 */
 		public void setPsfSizeZ( int psfSizeZ )
 		{
 			this.psfSizeZ = psfSizeZ;
 		}
 	}
 
+	/**
+	 * Task Process with the parsed params.
+	 *
+	 * @param params the params
+	 */
 	public void process( final Parameters params )
 	{
 		final HeadlessParseQueryXML result = new HeadlessParseQueryXML();
@@ -721,7 +1069,7 @@ public class FusionTask extends AbstractTask
 		return ebb;
 	}
 
-	public WeightedAverageFusion processWeightedAverageFusion( final Parameters params, final List< ViewId > viewIdsToProcess, final WeightedAverageFusion.WeightedAvgFusionType fusionType )
+	private WeightedAverageFusion processWeightedAverageFusion( final Parameters params, final List< ViewId > viewIdsToProcess, final WeightedAverageFusion.WeightedAvgFusionType fusionType )
 	{
 		WeightedAverageFusion fusion = new WeightedAverageFusion( spimData, viewIdsToProcess, fusionType );
 
@@ -754,29 +1102,17 @@ public class FusionTask extends AbstractTask
 		params.setXmlFilename( props.getProperty( "xml_filename" ) );
 		params.setUseCluster( Boolean.parseBoolean( props.getProperty( "use_cluster", "false" ) ) );
 
-		final String method = props.getProperty( "method" );
+		// EfficientBayesianBased, WeightedAverageFusionWithFUSEDATA, WeightedAverageFusionWithINDEPENDENT;
+		params.setMethod( Method.valueOf( props.getProperty( "method" ) ) );
 
-		if( method != null )
-		{
-			params.setMethod( Method.valueOf( method ) );
-		}
+		// Save3dTIFF, ExportSpimData2TIFF, ExportSpimData2HDF5, AppendSpimData2
+		params.setExport( Export.valueOf( props.getProperty( "export" ) ) );
 
-		final String export = props.getProperty( "export" );
-
-		if( export != null )
-		{
-			params.setExport( Export.valueOf( export ) );
-		}
-
+		// 0: CPU, 1: GPU
 		params.setComputeOn( Integer.parseInt( props.getProperty( "compute_on", "0" ) ) );
 		params.setFourierConvolutionCUDALib( props.getProperty( "fourier_convolution_cuda_lib" ) );
-		// Setup fusion attributes
-		// The below data should be given by users
-		// 1: {64, 64, 64}
-		// 0: CPU
-		// 1: PSFTYPE.OPTIMIZATION_I
-		//  {64, 64, 64}
-		params.setBlockSize( PluginHelper.parseArrayIntegerString( props.getProperty( "block_size" ) ) );
+
+		params.setBlockSize( PluginHelper.parseArrayIntegerString( props.getProperty( "block_size", "{64, 64, 64}" ) ) );
 
 		params.setExtractPSF( Boolean.parseBoolean( props.getProperty( "extract_psf", "true" ) ) );
 
@@ -805,12 +1141,8 @@ public class FusionTask extends AbstractTask
 			params.setBlendingRangeZ( Integer.parseInt( props.getProperty( "blending_range_z" ) ) );
 		}
 
-		final String iteration = props.getProperty( "iteration_type" );
-
-		if( iteration != null )
-		{
-			params.setIterationType( LRFFT.PSFTYPE.valueOf( iteration ) );
-		}
+		// {OPTIMIZATION_II, OPTIMIZATION_I, EFFICIENT_BAYESIAN, INDEPENDENT };
+		params.setIterationType( LRFFT.PSFTYPE.valueOf( props.getProperty( "iteration_type", "OPTIMIZATION_II" ) ) );
 
 		params.setJustShowWeights( Boolean.parseBoolean( props.getProperty( "just_show_weights", "false" ) ) );
 
@@ -820,17 +1152,20 @@ public class FusionTask extends AbstractTask
 
 		params.setLambda( Double.parseDouble( props.getProperty( "lambda", "0.006" ) ) );
 
-
-
 		return params;
 	}
 
-	@Override public void process( String[] args )
+	@Override public void process( final String[] args )
 	{
 		process( getParams( args ) );
 	}
 
-	public static void main( String[] args )
+	/**
+	 * The entry point of application.
+	 *
+	 * @param args the input arguments
+	 */
+	public static void main( final String[] args )
 	{
 		// Test mvn commamnd
 		//
