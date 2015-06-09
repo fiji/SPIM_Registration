@@ -125,24 +125,26 @@ public class ResaveHdf5Task extends AbstractTask
 		Generic_Resave_HDF5.writeHDF5( Resave_HDF5.reduceSpimData2( data, viewIds ), params, progressWriter );
 
 		// write xml sequence description
-		try
+		if ( !params.isOnlyRunSingleJob() || params.getJobId() == 0 )
 		{
-			final ImgLib2Temp.Pair< SpimData2, List< String > > result = Resave_HDF5.createXMLObject( data, viewIds, params, null, false );
+			try
+			{
+				final ImgLib2Temp.Pair< SpimData2, List< String > > result = Resave_HDF5.createXMLObject( data, viewIds, params, null, false );
 
-			xml.getIO().save( result.getA(), params.getSeqFile().getAbsolutePath() );
+				xml.getIO().save( result.getA(), params.getSeqFile().getAbsolutePath() );
 
-
-			// copy the interest points if they exist
-			Resave_TIFF.copyInterestPoints( xml.getData().getBasePath(), params.getSeqFile().getParentFile(), result.getB() );
-		}
-		catch ( SpimDataException e )
-		{
-			LOG.info( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + params.getSeqFile() + "': " + e );
-			throw new RuntimeException( e );
-		}
-		finally
-		{
-			LOG.info( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + params.getSeqFile() + "'." );
+				// copy the interest points if they exist
+				Resave_TIFF.copyInterestPoints( xml.getData().getBasePath(), params.getSeqFile().getParentFile(), result.getB() );
+			}
+			catch ( SpimDataException e )
+			{
+				LOG.info( "(" + new Date( System.currentTimeMillis() ) + "): Could not save xml '" + params.getSeqFile() + "': " + e );
+				throw new RuntimeException( e );
+			}
+			finally
+			{
+				LOG.info( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + params.getSeqFile() + "'." );
+			}
 		}
 
 		LOG.info( "done" );
@@ -177,11 +179,17 @@ public class ResaveHdf5Task extends AbstractTask
 		ExportMipmapInfo autoMipmapSettings = perSetupExportMipmapInfo.get( firstviewSetupId );
 
 		boolean lastSetMipmapManual = false;
+
 		boolean lastSplit = false;
 		int lastTimepointsPerPartition = 1;
 		int lastSetupsPerPartition = 0;
 		boolean lastDeflate = true;
 		int lastJobIndex = 0;
+
+		if ( params.isUseCluster() )
+		{
+			lastSplit = true;
+		}
 
 		// If we are using user-defined sub-sampling config, enable the below codes.
 		//
