@@ -135,15 +135,24 @@ public class LightSheetZ1MetaData
 
 		try
 		{
+			final int numDigits = Integer.toString( numA ).length();
+
 			for ( int a = 0; a < numA; ++a )
 			{
 				r.setSeries( a );
 
 				int w = r.getSizeX();
 				int h = r.getSizeY();
-				double dimZ = getDouble( metaData, "Information|Image|V|View|SizeZ #" + (a+1) );
+				double dimZ = getDouble( metaData, "Information|Image|V|View|SizeZ #" + StackList.leadingZeros( Integer.toString( a+1 ), numDigits ) );
+
 				if ( Double.isNaN( dimZ ) )
-					dimZ = getDouble( metaData, "SizeZ|View|V|Image|Information #" + (a+1) );
+					dimZ = getDouble( metaData, "Information|Image|V|View|SizeZ #" + Integer.toString( a+1 ) );
+
+				if ( Double.isNaN( dimZ ) )
+					dimZ = getDouble( metaData, "SizeZ|View|V|Image|Information #" + StackList.leadingZeros( Integer.toString( a+1 ), numDigits ) );
+
+				if ( Double.isNaN( dimZ ) )
+					dimZ = getDouble( metaData, "SizeZ|View|V|Image|Information #" + Integer.toString( a+1 ) );
 
 				if ( Double.isNaN( dimZ ) )
 					throw new RuntimeException( "Could not read stack size for angle " + a + ", stopping." );
