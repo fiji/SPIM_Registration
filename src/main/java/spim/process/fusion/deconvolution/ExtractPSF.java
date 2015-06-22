@@ -61,7 +61,7 @@ public class ExtractPSF< T extends RealType< T > >
 
 	/**
 	 * Returns the transformed PSF. It will first try to look it up directly, if not available it will
-	 * check the mapping mapViewIds&lt; from, to &gt; which one should be used for this viewid.
+	 * check the mapping mapViewIds< from, to > which one should be used for this viewid.
 	 *
 	 * @param viewId
 	 * @return - the extracted PSFs after applying the transformations of each view
