@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Hashtable;
 
-import net.imglib2.multithreading.SimpleMultiThreading;
 import loci.formats.FormatTools;
 import loci.formats.IFormatReader;
 import loci.formats.Modulo;
@@ -34,6 +33,7 @@ public class LightSheetZ1MetaData
 	private String pixelTypeString = "";
 	private boolean isLittleEndian;
 	private IFormatReader r = null;
+	private boolean applyAxis = true;
 
 	public void setRotationAxis( final int rotAxis ) { this.rotationAxis = rotAxis; }
 	public void setCalX( final double calX ) { this.calX = calX; }
@@ -62,6 +62,7 @@ public class LightSheetZ1MetaData
 	public String pixelTypeString() { return pixelTypeString; }
 	public boolean isLittleEndian() { return isLittleEndian; }
 	public IFormatReader getReader() { return r; }
+
 	public String rotationAxisName()
 	{
 		if ( rotationAxis == 0 )
@@ -73,6 +74,9 @@ public class LightSheetZ1MetaData
 		else
 			return "Unknown";
 	}
+
+	public boolean applyAxis() { return this.applyAxis; }
+	public void setApplyAxis( final boolean apply ) { this.applyAxis = apply; }
 
 	public boolean loadMetaData( final File cziFile )
 	{
