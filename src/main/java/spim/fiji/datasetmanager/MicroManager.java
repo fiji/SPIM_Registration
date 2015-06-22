@@ -8,13 +8,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import javax.media.j3d.Transform3D;
-
 import mpicbg.spim.data.SpimData;
-import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
-import mpicbg.spim.data.registration.ViewTransform;
-import mpicbg.spim.data.registration.ViewTransformAffine;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
@@ -24,7 +19,6 @@ import mpicbg.spim.data.sequence.MissingViews;
 import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.TimePoints;
-import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
@@ -32,10 +26,10 @@ import net.imglib2.Dimensions;
 import net.imglib2.FinalDimensions;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
-import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBoxes;
@@ -114,78 +108,13 @@ public class MicroManager implements MultiViewDatasetDefinition
 		final SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints, new BoundingBoxes() );
 
 		if ( reader.applyAxis() )
-			applyAxis( spimData );
+			Apply_Transformation.applyAxis( spimData );
 
 		try { reader.close(); } catch (IOException e) { IOFunctions.println( "Could not close file '" + mmFile.getAbsolutePath() + "': " + e ); }
 
 		return spimData;
 	}
-	
-	public static void applyAxis( final SpimData data )
-	{
-		ViewRegistrations viewRegistrations = data.getViewRegistrations();
-		for ( final ViewDescription vd : data.getSequenceDescription().getViewDescriptions().values() )
-		{
-			if ( vd.isPresent() )
-			{
-				final Angle a = vd.getViewSetup().getAngle();
-				
-				if ( a.hasRotation() )
-				{
-					final ViewRegistration vr = viewRegistrations.getViewRegistration( vd );
 
-					final Dimensions dim = vd.getViewSetup().getSize();
-
-					AffineTransform3D model = new AffineTransform3D();
-					model.set(
-							1, 0, 0, -dim.dimension( 0 )/2,
-							0, 1, 0, -dim.dimension( 1 )/2,
-							0, 0, 1, -dim.dimension( 2 )/2 );
-					ViewTransform vt = new ViewTransformAffine( "Center view", model );
-					vr.preconcatenateTransform( vt );
-
-					final double[] tmp = new double[ 16 ];
-					final double[] axis = a.getRotationAxis();
-					final double degrees = a.getRotationAngleDegrees();
-					final Transform3D t = new Transform3D();
-					final String d;
-
-					if ( axis[ 0 ] == 1 && axis[ 1 ] == 0 && axis[ 2 ] == 0 )
-					{
-						t.rotX( Math.toRadians( degrees ) );
-						d = "Rotation around x-axis by " + degrees + " degrees";
-					}
-					else if ( axis[ 0 ] == 0 && axis[ 1 ] == 1 && axis[ 2 ] == 0 )
-					{
-						t.rotY( Math.toRadians( degrees ) );
-						d = "Rotation around y-axis by " + degrees + " degrees";
-					}
-					else if ( axis[ 0 ] == 1 && axis[ 0 ] == 0 && axis[ 2 ] == 1 )
-					{
-						t.rotZ( Math.toRadians( degrees ) );
-						d = "Rotation around z-axis by " + degrees + " degrees";
-					}
-					else
-					{
-						IOFunctions.println( "Arbitrary rotation axis not supported yet." );
-						continue;
-					}
-
-					t.get( tmp );
-
-					model = new AffineTransform3D();
-					model.set( tmp[ 0 ], tmp[ 1 ], tmp[ 2 ], tmp[ 3 ],
-							   tmp[ 4 ], tmp[ 5 ], tmp[ 6 ], tmp[ 7 ],
-							   tmp[ 8 ], tmp[ 9 ], tmp[ 10 ], tmp[ 11 ] );
-
-					vt = new ViewTransformAffine( d, model );
-					vr.preconcatenateTransform( vt );
-					vr.updateModel();
-				}
-			}
-		}
-	}
-	
 	/**
 	 * Creates the List of {@link ViewSetup} for the {@link SpimData} object.
 	 * The {@link ViewSetup} are defined independent of the {@link TimePoint},
