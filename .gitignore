@@ -9,3 +9,7 @@
 
 # Maven #
 /target/
+
+# IntelliJ  #
+.idea/
+SPIM_Registration.iml
