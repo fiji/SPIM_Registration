@@ -238,6 +238,17 @@ public class LightSheetZ1MetaData
 
 				if ( channels[ c ].contains( "-" ) )
 					channels[ c ] = channels[ c ].substring( 0, channels[ c ].indexOf( "-" ) );
+
+				if ( channels[ c ].toLowerCase().startsWith( "laser" ) )
+					channels[ c ] = channels[ c ].substring( channels[ c ].toLowerCase().indexOf( "laser" ), channels[ c ].length() );
+
+				if ( channels[ c ].toLowerCase().startsWith( "laser " ) )
+					channels[ c ] = channels[ c ].substring( channels[ c ].toLowerCase().indexOf( "laser " ), channels[ c ].length() );
+
+				channels[ c ] = channels[ c ].trim();
+
+				if ( channels[ c ].length() == 0 )
+					channels[ c ] = String.valueOf( c );
 			}
 		}
 		catch ( Exception e )
