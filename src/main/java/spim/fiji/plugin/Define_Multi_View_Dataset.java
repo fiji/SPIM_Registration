@@ -17,6 +17,7 @@ import spim.fiji.ImgLib2Temp.ValuePair;
 import spim.fiji.datasetmanager.LightSheetZ1;
 import spim.fiji.datasetmanager.MicroManager;
 import spim.fiji.datasetmanager.MultiViewDatasetDefinition;
+import spim.fiji.datasetmanager.SlideBook6;
 import spim.fiji.datasetmanager.StackList;
 import spim.fiji.datasetmanager.StackListImageJ;
 import spim.fiji.datasetmanager.StackListLOCI;
@@ -41,6 +42,7 @@ public class Define_Multi_View_Dataset implements PlugIn
 		staticDatasetDefinitions.add( new StackListImageJ() );
 		staticDatasetDefinitions.add( new MicroManager() );
 		staticDatasetDefinitions.add( new LightSheetZ1() );
+		staticDatasetDefinitions.add( new SlideBook6() );
 	}
 	
 	@Override
