@@ -6,7 +6,6 @@ import loci.formats.in.SlideBook6Reader;
 
 import java.awt.Font;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 
 import javax.media.j3d.Transform3D;
@@ -68,65 +67,73 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 
 		if ( sldFile == null )
 			return null;
-		
-		SlideBook6Reader reader = new SlideBook6Reader();
+
 		try {
+			SlideBook6Reader reader = new SlideBook6Reader();
+
 			if (!reader.isThisType( sldFile.getPath())) {
 				IOFunctions.println( "Wrong file type (SLD)'" + sldFile.getAbsolutePath() + "'" );
 				reader.close();
 				return null;
 			}
+			reader.openFile(sldFile.getPath());
+
+			if ( !showDialogs(reader) ) {
+				reader.close();
+				return null;
+			}
+
+			final String directory = sldFile.getParent();
+			final ImgFactory< ? extends NativeType< ? > > imgFactory = new ArrayImgFactory< FloatType >();
+
+			// assemble timepints, viewsetups, missingviews and the imgloader
+			final TimePoints timepoints = this.createTimePoints( reader );
+			final ArrayList< ViewSetup > setups = this.createViewSetups( reader );
+			final MissingViews missingViews = null;
+
+			// instantiate the sequencedescription
+			final SequenceDescription sequenceDescription = new SequenceDescription( timepoints, setups, null, missingViews );
+			final ImgLoader< UnsignedShortType > imgLoader = new SlideBook6ImgLoader( sldFile, imgFactory, sequenceDescription );
+			sequenceDescription.setImgLoader( imgLoader );
+
+			// get the minimal resolution of all calibrations, TODO: different views can have different calibrations?
+			final int capture = 0;
+			float zSpacing = 1;
+			if (reader.getNumZPlanes(capture) > 1) {
+				zSpacing = (float) Math.abs(reader.getZPosition(capture, 0, 1) - reader.getZPosition(capture, 0, 0));
+			}
+			final double minResolution = Math.min( reader.getVoxelSize(capture), zSpacing );
+
+			IOFunctions.println( "Minimal resolution in all dimensions is: " + minResolution );
+			IOFunctions.println( "(The smallest resolution in any dimension; the distance between two pixels in the output image will be that wide)" );
+
+			// create the initial view registrations (they are all the identity transform)
+			final ViewRegistrations viewRegistrations = StackList.createViewRegistrations( sequenceDescription.getViewDescriptions(), minResolution );
+
+			// create the initial view interest point object
+			final ViewInterestPoints viewInterestPoints = new ViewInterestPoints();
+			viewInterestPoints.createViewInterestPoints( sequenceDescription.getViewDescriptions() );
+
+			// finally create the SpimData itself based on the sequence description and the view registration
+			final SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints, new BoundingBoxes() );
+
+			// TODO: apply rotations, if known
+			//if ( reader.applyAxis() )
+			//	applyAxis( spimData );
+
+			reader.closeFile();
+			
+			return spimData;		
 		}
-		catch (IOException e) {
-			e.printStackTrace(); 
+		catch (UnsatisfiedLinkError e) {
+			IOFunctions.println( "UnsatisfiedLinkError: Missing SlideBook6Reader.dll Library." );
 		}
-
-		if ( !showDialogs(reader) )
-			return null;
-
-		final String directory = sldFile.getParent();
-		final ImgFactory< ? extends NativeType< ? > > imgFactory = new ArrayImgFactory< FloatType >();
-
-		// assemble timepints, viewsetups, missingviews and the imgloader
-		final TimePoints timepoints = this.createTimePoints( reader );
-		final ArrayList< ViewSetup > setups = this.createViewSetups( reader );
-		final MissingViews missingViews = null;
-
-		// instantiate the sequencedescription
-		final SequenceDescription sequenceDescription = new SequenceDescription( timepoints, setups, null, missingViews );
-		final ImgLoader< UnsignedShortType > imgLoader = new SlideBook6ImgLoader( sldFile, imgFactory, sequenceDescription );
-		sequenceDescription.setImgLoader( imgLoader );
-
-		// get the minimal resolution of all calibrations, TODO: different views can have different calibrations?
-		final int capture = 0;
-		float zSpacing = 1;
-		if (reader.getNumZPlanes(capture) > 1) {
-			zSpacing = (float) (reader.getZPosition(capture, 0, 1) - reader.getZPosition(capture, 0, 0));
+		catch (Exception e) {
+			IOFunctions.println( e );
 		}
-		final double minResolution = Math.min( reader.getVoxelSize(capture), zSpacing );
-
-		IOFunctions.println( "Minimal resolution in all dimensions is: " + minResolution );
-		IOFunctions.println( "(The smallest resolution in any dimension; the distance between two pixels in the output image will be that wide)" );
-		
-		// create the initial view registrations (they are all the identity transform)
-		final ViewRegistrations viewRegistrations = StackList.createViewRegistrations( sequenceDescription.getViewDescriptions(), minResolution );
-		
-		// create the initial view interest point object
-		final ViewInterestPoints viewInterestPoints = new ViewInterestPoints();
-		viewInterestPoints.createViewInterestPoints( sequenceDescription.getViewDescriptions() );
-
-		// finally create the SpimData itself based on the sequence description and the view registration
-		final SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints, new BoundingBoxes() );
-
-		// TODO: apply rotations, if known
-		//if ( reader.applyAxis() )
-		//	applyAxis( spimData );
-
-		reader.closeFile();
-
-		return spimData;
+		return null;
 	}
-	
+
 	public static void applyAxis( final SpimData data )
 	{
 		ViewRegistrations viewRegistrations = data.getViewRegistrations();
@@ -135,7 +142,7 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 			if ( vd.isPresent() )
 			{
 				final Angle a = vd.getViewSetup().getAngle();
-				
+
 				if ( a.hasRotation() )
 				{
 					final ViewRegistration vr = viewRegistrations.getViewRegistration( vd );
@@ -181,8 +188,8 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 
 					model = new AffineTransform3D();
 					model.set( tmp[ 0 ], tmp[ 1 ], tmp[ 2 ], tmp[ 3 ],
-							   tmp[ 4 ], tmp[ 5 ], tmp[ 6 ], tmp[ 7 ],
-							   tmp[ 8 ], tmp[ 9 ], tmp[ 10 ], tmp[ 11 ] );
+							tmp[ 4 ], tmp[ 5 ], tmp[ 6 ], tmp[ 7 ],
+							tmp[ 8 ], tmp[ 9 ], tmp[ 10 ], tmp[ 11 ] );
 
 					vt = new ViewTransformAffine( d, model );
 					vr.preconcatenateTransform( vt );
@@ -191,7 +198,7 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 			}
 		}
 	}
-	
+
 	/**
 	 * Creates the List of {@link ViewSetup} for the {@link SpimData} object.
 	 * The {@link ViewSetup} are defined independent of the {@link TimePoint},
@@ -215,7 +222,7 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 		{
 			// TODO: query rotation angle of each image
 			final Angle angle = new Angle( a, "0");
-			
+
 			try
 			{
 				//final double degrees = Double.parseDouble( meta.rotationAngle( a ) );
@@ -239,9 +246,9 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 					float voxelSizeUm = meta.getVoxelSize(capture);
 					float zSpacing = 1;
 					if (meta.getNumZPlanes(a.getId()) > 1) {
-						zSpacing = (float) (meta.getZPosition(capture, 0, 1) - meta.getZPosition(capture, 0, 0));
+						zSpacing = (float) Math.abs(meta.getZPosition(capture, 0, 1) - meta.getZPosition(capture, 0, 0));
 					}
-					
+
 					final VoxelDimensions voxelSize = new FinalVoxelDimensions( "um", voxelSizeUm, voxelSizeUm, zSpacing );
 					final Dimensions dim = new FinalDimensions( new long[]{ meta.getNumXColumns(capture), meta.getNumYRows(capture), meta.getNumZPlanes(capture) } );
 					viewSetups.add( new ViewSetup( viewSetups.size(), null, dim, voxelSize, c, a, i ) );
@@ -291,15 +298,15 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 		float voxelSize = meta.getVoxelSize(0);
 		float zSpacing = 1;
 		if (meta.getNumZPlanes(0) > 1) {
-			zSpacing = (float) (meta.getZPosition(0, 0, 1) - meta.getZPosition(0, 0, 0));
+			zSpacing = (float) Math.abs(meta.getZPosition(0, 0, 1) - meta.getZPosition(0, 0, 0));
 		}	
-		
+
 		gd.addMessage( "Calibration", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
 		gd.addCheckbox( "Modify_calibration", defaultModifyCal );
 		gd.addMessage(
 				"Pixel Distance X: " + voxelSize + " " + "um" + "\n" +
-				"Pixel Distance Y: " + voxelSize + " " + "um" + "\n" +
-				"Pixel Distance Z: " + zSpacing + " " + "um" + "\n" );
+						"Pixel Distance Y: " + voxelSize + " " + "um" + "\n" +
+						"Pixel Distance Z: " + zSpacing + " " + "um" + "\n" );
 
 		gd.addMessage( "Additional Meta Data", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
 		gd.addMessage( "" );
@@ -308,13 +315,13 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 
 		gd.addMessage(
 				"Rotation axis: " + "Rot0" + " axis\n" +
-				"Pixel type: " + meta.getPixelType(),
-				new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
+						"Pixel type: " + "UInt16",
+						new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
 
 		GUIHelper.addScrollBars( gd );
 
 		gd.showDialog();
-		
+
 		if ( gd.wasCanceled() )
 			return false;
 
@@ -368,13 +375,13 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 			if ( modifyAxis )
 			{
 				//int axis = gd.getNextChoiceIndex();
-	
+
 				//if ( axis == 0 )
-					//meta.setRotAxis( new double[]{ 1, 0, 0 } );
+				//meta.setRotAxis( new double[]{ 1, 0, 0 } );
 				//else if ( axis == 1 )
-					//meta.setRotAxis( new double[]{ 0, 1, 0 } );
+				//meta.setRotAxis( new double[]{ 0, 1, 0 } );
 				//else
-					//meta.setRotAxis( new double[]{ 0, 0, 1 } );
+				//meta.setRotAxis( new double[]{ 0, 0, 1 } );
 			}
 		}
 
@@ -384,16 +391,16 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 	protected File querySldFile()
 	{
 		GenericDialogPlus gd = new GenericDialogPlus( "Define SlideBook6 diSPIM Dataset" );
-	
+
 		gd.addFileField( "SlideBook6 SLD file", defaultFirstFile, 50 );
-	
+
 		gd.showDialog();
-	
+
 		if ( gd.wasCanceled() )
 			return null;
-	
+
 		final File firstFile = new File( defaultFirstFile = gd.getNextString() );
-	
+
 		if ( !firstFile.exists() )
 		{
 			IOFunctions.println( "File '" + firstFile.getAbsolutePath() + "' does not exist. Stopping" );
