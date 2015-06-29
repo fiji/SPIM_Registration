@@ -22,6 +22,10 @@
 		</license>
 	</licenses>
 
+	<properties>
+		<bio-formats.version>5.1.3-SNAPSHOT</bio-formats.version>
+	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>sc.fiji</groupId>
