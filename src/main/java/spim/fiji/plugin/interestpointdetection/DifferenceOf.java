@@ -314,6 +314,12 @@ public abstract class DifferenceOf extends InterestPointDetection
 	{
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Correcting coordinates for downsampling (xy=" + downsampleXY + "x, z=" + downsampleZ + "x) using AffineTransform: " + t );
 
+		if ( ips == null || ips.size() == 0 )
+		{
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): WARNING: List is empty." );
+			return;
+		}
+
 		final double[] tmp = new double[ ips.get( 0 ).getL().length ];
 
 		for ( final InterestPoint ip : ips )
