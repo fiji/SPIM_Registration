@@ -79,7 +79,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 		if ( imp == null )
 			throw new RuntimeException( "Could not load '" + file + "'." );
 
-		final long[] dim = new long[]{ imp.getWidth(), imp.getHeight(), imp.getNSlices() };
+		final long[] dim = new long[]{ imp.getWidth(), imp.getHeight(), imp.getStack().getSize() };
 		final Img< FloatType > img = this.instantiateImg( dim, new FloatType() );
 		
 		if ( img == null )
@@ -91,7 +91,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 
 		// update the MetaDataCache of the AbstractImgLoader
 		// this does not update the XML ViewSetup but has to be called explicitly before saving
-		updateMetaDataCache( view, imp.getWidth(), imp.getHeight(), imp.getNSlices(), 
+		updateMetaDataCache( view, imp.getWidth(), imp.getHeight(), imp.getStack().getSize(),
 				imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight, imp.getCalibration().pixelDepth );
 
 		imp.close();
@@ -102,7 +102,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 	public static void imagePlus2ImgLib2Img( final ImagePlus imp, final Img< FloatType > img, final boolean normalize )
 	{
 		final ImageStack stack = imp.getStack();
-		final int sizeZ = imp.getNSlices();
+		final int sizeZ = imp.getStack().getSize();
 
 		if ( img instanceof ArrayImg || img instanceof PlanarImg )
 		{
@@ -240,7 +240,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 			converter = null;
 		}
 
-		final long[] dim = new long[]{ imp.getWidth(), imp.getHeight(), imp.getNSlices() };
+		final long[] dim = new long[]{ imp.getWidth(), imp.getHeight(), imp.getStack().getSize() };
 		final Img< UnsignedShortType > img = instantiateImg( dim, new UnsignedShortType() );
 		
 		if ( img == null )
@@ -249,7 +249,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Opened '" + file + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] + " image=" + img.getClass().getSimpleName() + "<UnsignedShortType>]" );
 
 		final ImageStack stack = imp.getStack();
-		final int sizeZ = imp.getNSlices();
+		final int sizeZ = imp.getStack().getSize();
 
 		if ( img instanceof ArrayImg || img instanceof PlanarImg )
 		{
@@ -314,7 +314,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 		
 		// update the MetaDataCache of the AbstractImgLoader
 		// this does not update the XML ViewSetup but has to be called explicitly before saving
-		updateMetaDataCache( view, imp.getWidth(), imp.getHeight(), imp.getNSlices(), 
+		updateMetaDataCache( view, imp.getWidth(), imp.getHeight(), imp.getStack().getSize(),
 				imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight, imp.getCalibration().pixelDepth );
 
 		imp.close();
@@ -333,7 +333,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 		
 		// update the MetaDataCache of the AbstractImgLoader
 		// this does not update the XML ViewSetup but has to be called explicitly before saving
-		updateMetaDataCache( view, imp.getWidth(), imp.getHeight(), imp.getNSlices(), 
+		updateMetaDataCache( view, imp.getWidth(), imp.getHeight(), imp.getStack().getSize(),
 				imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight, imp.getCalibration().pixelDepth );
 
 		imp.close();
