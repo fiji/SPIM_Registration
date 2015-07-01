@@ -36,6 +36,7 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.imgloaders.LightSheetZ1ImgLoader;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.headless.definedataset.LightSheetZ1MetaData;
 
 public class LightSheetZ1 implements MultiViewDatasetDefinition
 {
