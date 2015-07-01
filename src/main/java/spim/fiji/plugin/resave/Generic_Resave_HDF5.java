@@ -122,6 +122,9 @@ public class Generic_Resave_HDF5 implements PlugIn
 		public int getConvertChoice() { return convertChoice; }
 		public double getMin() { return min; }
 		public double getMax() { return max; }
+
+		public boolean isOnlyRunSingleJob() { return onlyRunSingleJob; }
+		public int getJobId() { return jobId; }
 	}
 
 	@Override

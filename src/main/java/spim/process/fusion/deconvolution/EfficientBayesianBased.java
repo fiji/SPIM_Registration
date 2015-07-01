@@ -29,6 +29,7 @@ import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.img.imageplus.ImagePlusImgFactory;
 import net.imglib2.type.numeric.real.FloatType;
+import spim.fiji.ImgLib2Temp;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
 import spim.fiji.plugin.fusion.Fusion;
@@ -543,7 +544,7 @@ public class EfficientBayesianBased extends Fusion
 	 * 
 	 * @return
 	 */
-	protected boolean reOrderChannels()
+	public boolean reOrderChannels()
 	{
 		final ArrayList< Channel > channelsToExtract = new ArrayList< Channel >();
 		final ArrayList< Channel > channelsUsingAnotherPSF = new ArrayList< Channel >();
@@ -1108,7 +1109,7 @@ public class EfficientBayesianBased extends Fusion
 	 * @param viewsPresent
 	 * @param onlyValid - only return a list of correspondence labels if all views have correspondences
 	 */
-	protected void assembleAvailableCorrespondences( final HashMap< Channel, ArrayList< Correspondence > > correspondences, final HashMap< Channel, Integer > viewsPresent, final boolean onlyValid )
+	public void assembleAvailableCorrespondences( final HashMap< Channel, ArrayList< Correspondence > > correspondences, final HashMap< Channel, Integer > viewsPresent, final boolean onlyValid )
 	{
 		final ViewInterestPoints vp = spimData.getViewInterestPoints();
 				
@@ -1200,7 +1201,7 @@ public class EfficientBayesianBased extends Fusion
 
 	}
 	
-	protected class Correspondence
+	public class Correspondence
 	{
 		final String label;
 		int count;
@@ -1229,5 +1230,315 @@ public class EfficientBayesianBased extends Fusion
 	protected Map< ViewSetup, ViewSetup > createNewViewSetups( final BoundingBoxGUI bb )
 	{
 		return WeightedAverageFusion.assembleNewViewSetupsFusion( spimData, viewIdsToProcess, bb, "Decon", "Decon" );
+	}
+
+	public PSFTYPE getIterationType()
+	{
+		return iterationType;
+	}
+
+	public void setIterationType( PSFTYPE iterationType )
+	{
+		this.iterationType = iterationType;
+	}
+
+	public ArrayList< CUDADevice > getDeviceList()
+	{
+		return deviceList;
+	}
+
+	public void setDeviceList( ArrayList< CUDADevice > deviceList )
+	{
+		this.deviceList = deviceList;
+	}
+
+	public boolean isJustShowWeights()
+	{
+		return justShowWeights;
+	}
+
+	public void setJustShowWeights( boolean justShowWeights )
+	{
+		this.justShowWeights = justShowWeights;
+	}
+
+	public int getOsemspeedupIndex()
+	{
+		return osemspeedupIndex;
+	}
+
+	public void setOsemspeedupIndex( int osemspeedupIndex )
+	{
+		this.osemspeedupIndex = osemspeedupIndex;
+	}
+
+	public int getNumIterations()
+	{
+		return numIterations;
+	}
+
+	public void setNumIterations( int numIterations )
+	{
+		this.numIterations = numIterations;
+	}
+
+	public boolean isUseTikhonovRegularization()
+	{
+		return useTikhonovRegularization;
+	}
+
+	public void setUseTikhonovRegularization( boolean useTikhonovRegularization )
+	{
+		this.useTikhonovRegularization = useTikhonovRegularization;
+	}
+
+	public double getLambda()
+	{
+		return lambda;
+	}
+
+	public void setLambda( double lambda )
+	{
+		this.lambda = lambda;
+	}
+
+	public int getBlockSizeIndex()
+	{
+		return blockSizeIndex;
+	}
+
+	public void setBlockSizeIndex( int blockSizeIndex )
+	{
+		this.blockSizeIndex = blockSizeIndex;
+	}
+
+	public int getComputationTypeIndex()
+	{
+		return computationTypeIndex;
+	}
+
+	public void setComputationTypeIndex( int computationTypeIndex )
+	{
+		this.computationTypeIndex = computationTypeIndex;
+	}
+
+	public int getExtractPSFIndex()
+	{
+		return extractPSFIndex;
+	}
+
+	public void setExtractPSFIndex( int extractPSFIndex )
+	{
+		this.extractPSFIndex = extractPSFIndex;
+	}
+
+	public int getDisplayPSF()
+	{
+		return displayPSF;
+	}
+
+	public void setDisplayPSF( int displayPSF )
+	{
+		this.displayPSF = displayPSF;
+	}
+
+	public boolean isDebugMode()
+	{
+		return debugMode;
+	}
+
+	public void setDebugMode( boolean debugMode )
+	{
+		this.debugMode = debugMode;
+	}
+
+	public boolean isAdjustBlending()
+	{
+		return adjustBlending;
+	}
+
+	public void setAdjustBlending( boolean adjustBlending )
+	{
+		this.adjustBlending = adjustBlending;
+	}
+
+	public boolean isUseBlocks()
+	{
+		return useBlocks;
+	}
+
+	public void setUseBlocks( boolean useBlocks )
+	{
+		this.useBlocks = useBlocks;
+	}
+
+	public int[] getBlockSize()
+	{
+		return blockSize;
+	}
+
+	public void setBlockSize( int[] blockSize )
+	{
+		this.blockSize = blockSize;
+	}
+
+	public boolean isUseCUDA()
+	{
+		return useCUDA;
+	}
+
+	public void setUseCUDA( boolean useCUDA )
+	{
+		this.useCUDA = useCUDA;
+	}
+
+	public int getDebugInterval()
+	{
+		return debugInterval;
+	}
+
+	public void setDebugInterval( int debugInterval )
+	{
+		this.debugInterval = debugInterval;
+	}
+
+	public double getOsemSpeedUp()
+	{
+		return osemSpeedUp;
+	}
+
+	public void setOsemSpeedUp( double osemSpeedUp )
+	{
+		this.osemSpeedUp = osemSpeedUp;
+	}
+
+	public boolean isExtractPSF()
+	{
+		return extractPSF;
+	}
+
+	public void setExtractPSF( boolean extractPSF )
+	{
+		this.extractPSF = extractPSF;
+	}
+
+	public boolean isTransformPSFs()
+	{
+		return transformPSFs;
+	}
+
+	public void setTransformPSFs( boolean transformPSFs )
+	{
+		this.transformPSFs = transformPSFs;
+	}
+
+	public HashMap< Channel, ArrayList< Pair< Pair< Angle, Illumination >, String > > > getPsfFiles()
+	{
+		return psfFiles;
+	}
+
+	public void setPsfFiles( HashMap< Channel, ArrayList< Pair< Pair< Angle, Illumination >, String > > > psfFiles )
+	{
+		this.psfFiles = psfFiles;
+	}
+
+	public HashMap< Channel, ChannelPSF > getExtractPSFLabels()
+	{
+		return extractPSFLabels;
+	}
+
+	public void setExtractPSFLabels( HashMap< Channel, ChannelPSF > extractPSFLabels )
+	{
+		this.extractPSFLabels = extractPSFLabels;
+	}
+
+	public int getBlendingBorderX()
+	{
+		return blendingBorderX;
+	}
+
+	public void setBlendingBorderX( int blendingBorderX )
+	{
+		this.blendingBorderX = blendingBorderX;
+	}
+
+	public int getBlendingBorderY()
+	{
+		return blendingBorderY;
+	}
+
+	public void setBlendingBorderY( int blendingBorderY )
+	{
+		this.blendingBorderY = blendingBorderY;
+	}
+
+	public int getBlendingBorderZ()
+	{
+		return blendingBorderZ;
+	}
+
+	public void setBlendingBorderZ( int blendingBorderZ )
+	{
+		this.blendingBorderZ = blendingBorderZ;
+	}
+
+	public int getBlendingRangeX()
+	{
+		return blendingRangeX;
+	}
+
+	public void setBlendingRangeX( int blendingRangeX )
+	{
+		this.blendingRangeX = blendingRangeX;
+	}
+
+	public int getBlendingRangeY()
+	{
+		return blendingRangeY;
+	}
+
+	public void setBlendingRangeY( int blendingRangeY )
+	{
+		this.blendingRangeY = blendingRangeY;
+	}
+
+	public int getBlendingRangeZ()
+	{
+		return blendingRangeZ;
+	}
+
+	public void setBlendingRangeZ( int blendingRangeZ )
+	{
+		this.blendingRangeZ = blendingRangeZ;
+	}
+
+	public int getPsfSizeX()
+	{
+		return psfSizeX;
+	}
+
+	public void setPsfSizeX( int psfSizeX )
+	{
+		this.psfSizeX = psfSizeX;
+	}
+
+	public int getPsfSizeY()
+	{
+		return psfSizeY;
+	}
+
+	public void setPsfSizeY( int psfSizeY )
+	{
+		this.psfSizeY = psfSizeY;
+	}
+
+	public int getPsfSizeZ()
+	{
+		return psfSizeZ;
+	}
+
+	public void setPsfSizeZ( int psfSizeZ )
+	{
+		this.psfSizeZ = psfSizeZ;
 	}
 }

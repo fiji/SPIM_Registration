@@ -130,4 +130,39 @@ public class PreDefinedBoundingBox extends BoundingBoxGUI
 		label2.setText( "Bounding Box offset: " + bb.min( 0 ) + "x" + bb.min( 1 ) + "x" + bb.min( 2 ) + " pixels" );
 	}
 
+	public void setUpBoundingBox( final Fusion fusion, int[] min, int[] max )
+	{
+		final double[] minBB = new double[ 3 ];
+		final double[] maxBB = new double[ 3 ];
+
+		computeMaxBoundingBoxDimensions( spimData, viewIdsToProcess, minBB, maxBB );
+
+		if ( fusion.supportsDownsampling() )
+			this.downsampling = BoundingBoxGUI.staticDownsampling;
+		else
+			this.downsampling = 1;
+
+		if ( fusion.supports16BitUnsigned() )
+			this.pixelType = BoundingBoxGUI.defaultPixelType = 1;
+		else
+			this.pixelType = BoundingBoxGUI.defaultPixelType = 0; //32-bit
+
+		this.imgtype = BoundingBoxGUI.defaultImgType;
+
+		if ( min[ 0 ] > max[ 0 ] || min[ 1 ] > max[ 1 ] || min[ 2 ] > max[ 2 ] )
+		{
+			IOFunctions.println( "Invalid coordinates, min cannot be larger than max" );
+			return;
+		}
+
+		this.min = min.clone();
+		this.max = max.clone();
+
+		this.min[0] = BoundingBoxGUI.defaultMin[ 0 ] = min[ 0 ];
+		this.min[1] = BoundingBoxGUI.defaultMin[ 1 ] = min[ 1 ];
+		this.min[2] = BoundingBoxGUI.defaultMin[ 2 ] = min[ 2 ];
+		this.max[0] = BoundingBoxGUI.defaultMax[ 0 ] = max[ 0 ];
+		this.max[1] = BoundingBoxGUI.defaultMax[ 1 ] = max[ 1 ];
+		this.max[2] = BoundingBoxGUI.defaultMax[ 2 ] = max[ 2 ];
+	}
 }

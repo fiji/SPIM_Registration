@@ -228,4 +228,39 @@ public abstract class Fusion
 		
 		return maxViews;
 	}
+
+	public List< Channel > getChannelsToProcess()
+	{
+		return channelsToProcess;
+	}
+
+	public void setInterpolation( int interpolation )
+	{
+		this.interpolation = interpolation;
+	}
+
+	public boolean isUseBlending()
+	{
+		return useBlending;
+	}
+
+	public void setUseBlending( boolean useBlending )
+	{
+		this.useBlending = useBlending;
+	}
+
+	public boolean isUseContentBased()
+	{
+		return useContentBased;
+	}
+
+	public void setUseContentBased( boolean useContentBased )
+	{
+		this.useContentBased = useContentBased;
+	}
+
+	public int getMaxNumViews()
+	{
+		return maxNumViews;
+	}
 }

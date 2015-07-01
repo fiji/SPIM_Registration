@@ -149,7 +149,7 @@ public class DifferenceOfGaussian extends DifferenceOf implements GenericDialogA
 	}
 
 	@Override
-	protected boolean setDefaultValues( final Channel channel, final int brightness )
+	public boolean setDefaultValues( final Channel channel, final int brightness )
 	{
 		final int channelId = channel.getId();
 		
@@ -285,7 +285,7 @@ public class DifferenceOfGaussian extends DifferenceOf implements GenericDialogA
 	 * @param numChannels - the TOTAL number of channels (not only the ones to process)
 	 */
 	@Override
-	protected void init( final int numChannels )
+	public void init( final int numChannels )
 	{
 		this.sigma = new double[ numChannels ];
 		this.threshold = new double[ numChannels ];
@@ -392,5 +392,35 @@ public class DifferenceOfGaussian extends DifferenceOf implements GenericDialogA
 	{
 		this.percentGPUMem = defaultUseGPUMem = gd.getNextNumber();
 		return true;
+	}
+
+	public void setSigma( double[] sigma )
+	{
+		this.sigma = sigma;
+	}
+
+	public void setThreshold( double[] threshold )
+	{
+		this.threshold = threshold;
+	}
+
+	public void setFindMin( boolean[] findMin )
+	{
+		this.findMin = findMin;
+	}
+
+	public void setFindMax( boolean[] findMax )
+	{
+		this.findMax = findMax;
+	}
+
+	public void setDeviceList( ArrayList< CUDADevice > deviceList )
+	{
+		this.deviceList = deviceList;
+	}
+
+	public void setCuda( CUDASeparableConvolution cuda )
+	{
+		this.cuda = cuda;
 	}
 }

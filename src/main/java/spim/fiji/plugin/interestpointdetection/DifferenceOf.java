@@ -455,4 +455,64 @@ public abstract class DifferenceOf extends InterestPointDetection
 
 		return false;
 	}
+
+	public void setImageSigmaX( double imageSigmaX )
+	{
+		this.imageSigmaX = imageSigmaX;
+	}
+
+	public void setImageSigmaY( double imageSigmaY )
+	{
+		this.imageSigmaY = imageSigmaY;
+	}
+
+	public void setImageSigmaZ( double imageSigmaZ )
+	{
+		this.imageSigmaZ = imageSigmaZ;
+	}
+
+	public void setAdditionalSigmaX( double additionalSigmaX )
+	{
+		this.additionalSigmaX = additionalSigmaX;
+	}
+
+	public void setAdditionalSigmaY( double additionalSigmaY )
+	{
+		this.additionalSigmaY = additionalSigmaY;
+	}
+
+	public void setAdditionalSigmaZ( double additionalSigmaZ )
+	{
+		this.additionalSigmaZ = additionalSigmaZ;
+	}
+
+	public void setMinIntensity( double minIntensity )
+	{
+		this.minIntensity = minIntensity;
+	}
+
+	public void setMaxIntensity( double maxIntensity )
+	{
+		this.maxIntensity = maxIntensity;
+	}
+
+	public void setLocalization( int localization )
+	{
+		this.localization = localization;
+	}
+
+	public void setDownsampleXY( int downsampleXY )
+	{
+		this.downsampleXY = downsampleXY;
+	}
+
+	public void setDownsampleZ( int downsampleZ )
+	{
+		this.downsampleZ = downsampleZ;
+	}
+
+	public ArrayList< Channel > getChannelsToProcess()
+	{
+		return channelsToProcess;
+	}
 }
