@@ -3,11 +3,14 @@ package spim.process.interestpointdetection;
 import ij.ImageJ;
 
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
@@ -18,10 +21,12 @@ import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.iterator.IntervalIterator;
 import net.imglib2.iterator.ZeroMinIntervalIterator;
+import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import spim.Threads;
+import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
 
@@ -159,6 +164,50 @@ public class Downsample
 		taskExecutor.shutdown();
 		
 		return;
+	}
+
+	public static void correctForDownsampling( final List< InterestPoint > ips, final AffineTransform3D t, final int downsampleXY, final int downsampleZ )
+	{
+		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Correcting coordinates for downsampling (xy=" + downsampleXY + "x, z=" + downsampleZ + "x) using AffineTransform: " + t );
+
+		if ( ips == null || ips.size() == 0 )
+		{
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): WARNING: List is empty." );
+			return;
+		}
+
+		final double[] tmp = new double[ ips.get( 0 ).getL().length ];
+
+		for ( final InterestPoint ip : ips )
+		{
+			t.apply( ip.getL(), tmp );
+
+			ip.getL()[ 0 ] = tmp[ 0 ];
+			ip.getL()[ 1 ] = tmp[ 1 ];
+			ip.getL()[ 2 ] = tmp[ 2 ];
+
+			t.apply( ip.getW(), tmp );
+
+			ip.getW()[ 0 ] = tmp[ 0 ];
+			ip.getW()[ 1 ] = tmp[ 1 ];
+			ip.getW()[ 2 ] = tmp[ 2 ];
+		}
+	}
+
+	public static int downsampleFactor( final int downsampleXY, final int downsampleZ, final VoxelDimensions v )
+	{
+		final double calXY = Math.min( v.dimension( 0 ), v.dimension( 1 ) );
+		final double calZ = v.dimension( 2 ) * downsampleZ;
+		final double log2ratio = Math.log( calZ / calXY ) / Math.log( 2 );
+
+		final double exp2;
+
+		if ( downsampleXY == 0 )
+			exp2 = Math.pow( 2, Math.floor( log2ratio ) );
+		else
+			exp2 = Math.pow( 2, Math.ceil( log2ratio ) );
+
+		return (int)Math.round( exp2 );
 	}
 
 	public static void main( String[] args )
