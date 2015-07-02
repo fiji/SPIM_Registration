@@ -2,8 +2,8 @@ package spim.process.interestpointregistration.pairwise;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
-import java.util.concurrent.Callable;
 
 import mpicbg.icp.ICP;
 import mpicbg.models.IllDefinedDataPointsException;
@@ -17,7 +17,6 @@ import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 import net.imglib2.util.Util;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.headless.registration.PairwiseResult;
 import spim.headless.registration.icp.IterativeClosestPointParameters;
 import spim.process.interestpointregistration.Detection;
@@ -28,7 +27,7 @@ import spim.process.interestpointregistration.Detection;
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
-public class IterativeClosestPointPairwise implements PairwiseInterestPointMatcher
+public class IterativeClosestPointPairwise implements MatcherPairwise
 {
 	final IterativeClosestPointParameters ip;
 	final PairwiseResult result;
@@ -40,21 +39,15 @@ public class IterativeClosestPointPairwise implements PairwiseInterestPointMatch
 	}
 
 	@Override
-	public PairwiseResult match( final InterestPointList listAIn, final InterestPointList listBIn )
+	public PairwiseResult match( final List< InterestPoint > listAIn, final List< InterestPoint > listBIn )
 	{
 		final ArrayList< Detection > listA = new ArrayList< Detection >();
 		final ArrayList< Detection > listB = new ArrayList< Detection >();
 
-		if ( listAIn.getInterestPoints() == null )
-			listAIn.loadInterestPoints();
-
-		if ( listBIn.getInterestPoints() == null )
-			listBIn.loadInterestPoints();
-
-		for ( final InterestPoint i : listAIn.getInterestPoints() )
+		for ( final InterestPoint i : listAIn )
 			listA.add( new Detection( i.getId(), i.getL() ) );
 
-		for ( final InterestPoint i : listBIn.getInterestPoints() )
+		for ( final InterestPoint i : listBIn )
 			listB.add( new Detection( i.getId(), i.getL() ) );
 
 		// identity transform
