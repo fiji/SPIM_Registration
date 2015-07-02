@@ -39,12 +39,10 @@ public class DoMParameters extends InterestPointParameters
     double minIntensity;
     double maxIntensity;
 
-    public final String xmlFilename = "/Users/schmied";
-
     public static void main( String[] args )
     {
         SpimData spimData = SimulatedBeadsImgLoader.spimdataExample();
-
+        public final String xmlFilename = "/Users/schmied";
         DoMParameters dom = new DoMParameters();
 
         dom.imgloader = spimData.getSequenceDescription().getImgLoader();
