@@ -8,6 +8,7 @@ import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.plugin.Interest_Point_Registration.RegistrationType;
 import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
 import spim.fiji.spimdata.SpimData2;
+import spim.headless.registration.icp.IterativeClosestPointParameters;
 import spim.process.interestpointregistration.ChannelProcess;
 import spim.process.interestpointregistration.PairwiseMatch;
 import spim.process.interestpointregistration.TransformationModel;
@@ -18,7 +19,7 @@ import spim.process.interestpointregistration.TransformationModel;
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
-public class IterativeClosestPoint extends InterestPointRegistration
+public class IterativeClosestPointGUI extends InterestPointRegistration
 {
 	public static int defaultModel = 2;
 	public static boolean defaultRegularize = true;
@@ -26,7 +27,7 @@ public class IterativeClosestPoint extends InterestPointRegistration
 
 	protected IterativeClosestPointParameters parameters;
 
-	public IterativeClosestPoint(
+	public IterativeClosestPointGUI(
 			final SpimData2 spimData,
 			final List< ViewId > viewIdsToProcess,
 			final List< ChannelProcess > channelsToProcess )
