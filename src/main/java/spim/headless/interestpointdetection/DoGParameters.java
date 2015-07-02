@@ -64,8 +64,8 @@ public class DoGParameters extends InterestPointParameters
 		dog.downsampleXY = 2;
 		dog.sigma = 1.4;
 
-		dog.deviceList = spim.headless.cuda.CUDADevice.getSeparableCudaList( "lib/libSeparableConvolutionCUDALib.so" );
-		dog.cuda = spim.headless.cuda.CUDADevice.separableConvolution;
+		//dog.deviceList = spim.headless.cuda.CUDADevice.getSeparableCudaList( "lib/libSeparableConvolutionCUDALib.so" );
+		//dog.cuda = spim.headless.cuda.CUDADevice.separableConvolution;
 
 		DoG.findInterestPoints( dog );
 	}

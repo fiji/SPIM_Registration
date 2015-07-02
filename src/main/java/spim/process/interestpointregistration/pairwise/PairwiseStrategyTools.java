@@ -8,12 +8,12 @@ import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
 
-public class PairwiseStrategies
+public class PairwiseStrategyTools
 {
-	public List< Pair< ViewId, ViewId > > allToAll(
+	public static List< Pair< ViewId, ViewId > > allToAll(
 			final List< ViewId > views,
 			final Collection< ViewId > fixed,
-			final Collection< Collection< ViewId > > groups )
+			final Collection< ? extends Collection< ViewId > > groups )
 	{
 		// all pairs that need to be compared
 		final ArrayList< Pair< ViewId, ViewId > > viewPairs = new ArrayList< Pair< ViewId, ViewId > >();
@@ -36,7 +36,7 @@ public class PairwiseStrategies
 			final ViewId viewIdA,
 			final ViewId viewIdB,
 			final Collection< ViewId > fixed,
-			final Collection< Collection< ViewId > > groups )
+			final Collection< ? extends Collection< ViewId > > groups )
 	{
 		if ( fixed.contains( viewIdA ) && fixed.contains( viewIdB ) )
 			return false;
@@ -47,7 +47,7 @@ public class PairwiseStrategies
 		return true;
 	}
 
-	public static boolean oneSetContainsBoth( final ViewId viewIdA, final ViewId viewIdB, final Collection< Collection< ViewId > > sets )
+	public static boolean oneSetContainsBoth( final ViewId viewIdA, final ViewId viewIdB, final Collection< ? extends Collection< ViewId > > sets )
 	{
 		for ( final Collection< ViewId > set : sets )
 			if ( set.contains( viewIdA ) && set.contains( viewIdB ) )
