@@ -1,6 +1,8 @@
 package spim.process.interestpointregistration;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,8 +27,8 @@ import mpicbg.models.TileConfiguration;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
-import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationSubset;
-import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationType;
+import spim.fiji.ImgLib2Temp.Pair;
+import spim.headless.registration.PairwiseResult;
 
 /**
  * 
@@ -44,23 +46,31 @@ public class GlobalOpt
 	 */
 	public static < M extends Model< M > > HashMap< ViewId, Tile< M > > compute(
 			final M model,
-			final GlobalOptimizationType registrationType,
-			final GlobalOptimizationSubset subset,
-			final boolean considerTimePointsAsUnit )
+			final List< Pair< Pair< ViewId, ViewId >, PairwiseResult > > pairs,
+			final Collection< ViewId > fixedViews,
+			final List< ? extends List< ViewId > > groups )
 	{
 		// assemble all views and corresponding points
-		final List< PairwiseMatch > pairs = subset.getViewPairs();
-		final List< ViewId > views = subset.getViews();
-		
+		final HashSet< ViewId > tmpSet = new HashSet<ViewId>();
+		for ( Pair< Pair< ViewId, ViewId >, PairwiseResult > pair : pairs )
+		{
+			tmpSet.add( pair.getA().getA() );
+			tmpSet.add( pair.getA().getB() );
+		}
+
+		final List< ViewId > views = new ArrayList< ViewId >();
+		views.addAll( tmpSet );
+		Collections.sort( views );
+
 		// assign ViewIds to the individual Tiles (either one tile per view or one tile per timepoint)
-		final HashMap< ViewId, Tile< M > > map = assignViewsToTiles( model, views, considerTimePointsAsUnit );
+		final HashMap< ViewId, Tile< M > > map = assignViewsToTiles( model, views, groups );
 
 		// assign the pointmatches to all the tiles
-		for ( final PairwiseMatch pair : pairs )
-			GlobalOpt.addPointMatches( pair.getInliers(), map.get( pair.getViewIdA() ), map.get( pair.getViewIdB() ) );
+		for ( Pair< Pair< ViewId, ViewId >, PairwiseResult > pair : pairs )
+			GlobalOpt.addPointMatches( pair.getB().getInliers(), map.get( pair.getA().getA() ), map.get( pair.getA().getB() ) );
 
 		// add and fix tiles as defined in the GlobalOptimizationType
-		final TileConfiguration tc = addAndFixTiles( views, map, registrationType, subset, considerTimePointsAsUnit );
+		final TileConfiguration tc = addAndFixTiles( views, map, fixedViews, groups );
 		
 		if ( tc.getTiles().size() == 0 )
 		{
@@ -76,15 +86,11 @@ public class GlobalOpt
 				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): pre-aligned all tiles but " + unaligned );
 			else
 				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): prealigned all tiles" );
-			
+
 			tc.optimize( 10, 10000, 200 );
-			
-			if ( considerTimePointsAsUnit )
-				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Global optimization of " + 
-					tc.getTiles().size() +  " timepoint-tiles (Model=" + model.getClass().getSimpleName()  + "):" );
-			else
-				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Global optimization of " + 
-					tc.getTiles().size() +  " view-tiles (Model=" + model.getClass().getSimpleName()  + "):" );
+
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Global optimization of " + 
+				tc.getTiles().size() +  " view-tiles (Model=" + model.getClass().getSimpleName()  + "):" );
 			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "):    Avg Error: " + tc.getError() + "px" );
 			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "):    Min Error: " + tc.getMinError() + "px" );
 			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "):    Max Error: " + tc.getMaxError() + "px" );
@@ -216,9 +222,8 @@ public class GlobalOpt
 	protected static < M extends Model< M > > TileConfiguration addAndFixTiles(
 			final List< ViewId > views,
 			final HashMap< ViewId, Tile< M > > map,
-			final GlobalOptimizationType registrationType,
-			final GlobalOptimizationSubset subset,
-			final boolean considerTimePointsAsUnit )
+			final Collection< ViewId > fixedViews,
+			final List< ? extends List< ViewId > > groups )
 	{
 		// create a new tileconfiguration organizing the global optimization
 		final TileConfiguration tc = new TileConfiguration();
@@ -231,9 +236,9 @@ public class GlobalOpt
 			final Tile< M > tile = map.get( viewId );
 
 			// if one of the views that maps to this tile is fixed, fix this tile if it is not already fixed
-			if ( registrationType.isFixedTile( viewId ) && !tc.getFixedTiles().contains( tile ) )
+			if ( fixedViews.contains( viewId ) && !tc.getFixedTiles().contains( tile ) )
 			{
-				if ( considerTimePointsAsUnit )
+				if ( groups != null && groups.size() > 0 )
 					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Fixing timepoint-tile (timepointId = " + viewId.getTimePointId() + ")" );
 				else
 					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Fixing view-tile (viewSetupId = " + viewId.getViewSetupId() + ")" );
@@ -255,39 +260,32 @@ public class GlobalOpt
 	protected static < M extends Model< M > > HashMap< ViewId, Tile< M > > assignViewsToTiles(
 			final M model,
 			final List< ViewId > views,
-			final boolean considerTimePointsAsUnit )
+			final List< ? extends List< ViewId > > groups )
 	{
 		final HashMap< ViewId, Tile< M > > map = new HashMap< ViewId, Tile< M > >();
-		
-		if ( considerTimePointsAsUnit )
+
+		if ( groups != null && groups.size() > 0 )
 		{
 			//
-			// there is one tile per timepoint
+			// there is one tile per group only
 			//
-			
-			// figure out all timepoints involved
-			final HashSet< Integer > timepoints = new HashSet< Integer >();
-			
-			for ( final ViewId view : views )
-				timepoints.add( view.getTimePointId() );
-			
-			// for all timepoints find the viewIds that belong to this timepoint
-			for ( final int t : timepoints )
+
+			// for all groups find the viewIds that belong to this timepoint
+			for ( final List< ViewId > viewIds : groups )
 			{
 				// one tile per timepoint
-				final Tile< M > tileTimepoint = new Tile< M >( model.copy() );
+				final Tile< M > tileGroup = new Tile< M >( model.copy() );
 
-				// all viewIds of one timepoint map to the same tile (see main method for test, that works)
-				for ( final ViewId viewId : views )
-					if ( viewId.getTimePointId() == t )
-						map.put( viewId, tileTimepoint );
+				// all viewIds of one group map to the same tile (see main method for test, that works)
+				for ( final ViewId viewId : viewIds )
+					map.put( viewId, tileGroup );
 			}
 		}
 		else
 		{
 			// there is one tile per view
 			for ( final ViewId viewId : views )
-				map.put( viewId, new Tile< M >( model.copy() ) );		
+				map.put( viewId, new Tile< M >( model.copy() ) );
 		}
 		
 		return map;
