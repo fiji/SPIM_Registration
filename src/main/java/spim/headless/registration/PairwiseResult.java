@@ -2,7 +2,9 @@ package spim.headless.registration;
 
 import java.util.ArrayList;
 
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
+import spim.fiji.ImgLib2Temp.Pair;
 import spim.process.interestpointregistration.Detection;
 
 public class PairwiseResult
