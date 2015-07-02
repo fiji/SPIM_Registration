@@ -1,37 +1,38 @@
 package spim.headless.interestpointdetection;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 
-import mpicbg.spim.data.SpimData;
-import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
 import simulation.imgloader.SimulatedBeadsImgLoader;
+import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.cuda.CUDADevice;
 import spim.process.cuda.CUDASeparableConvolution;
 
 public class DoGParameters extends InterestPointParameters
 {
-	protected double imageSigmaX = 0.5;
-	protected double imageSigmaY = 0.5;
-	protected double imageSigmaZ = 0.5;
+	public double imageSigmaX = 0.5;
+	public double imageSigmaY = 0.5;
+	public double imageSigmaZ = 0.5;
 
 	/**
 	 * 0 = no subpixel localization
 	 * 1 = quadratic fit
 	 */
-	protected int localization = 1;
+	public int localization = 1;
 
+	public double sigma = 1.8;
+	public double threshold = 0.01;
+	public boolean findMin = false;
+	public boolean findMax = true;
 
-    double sigma = 1.8;
-	double threshold = 0.01;
-	boolean findMin = false;
-	boolean findMax = true;
-
-	double percentGPUMem = 75;
-	ArrayList< CUDADevice > deviceList = null;
-	CUDASeparableConvolution cuda = null;
-	boolean accurateCUDA = false;
+	public double percentGPUMem = 75;
+	public ArrayList< CUDADevice > deviceList = null;
+	public CUDASeparableConvolution cuda = null;
+	public boolean accurateCUDA = false;
 
     public DoGParameters(){
         super();
