@@ -10,25 +10,25 @@ import spim.process.cuda.CUDASeparableConvolution;
 
 public class DoGParameters extends InterestPointParameters
 {
-	protected double imageSigmaX = 0.5;
-	protected double imageSigmaY = 0.5;
-	protected double imageSigmaZ = 0.5;
+	public double imageSigmaX = 0.5;
+	public double imageSigmaY = 0.5;
+	public double imageSigmaZ = 0.5;
 
 	/**
 	 * 0 = no subpixel localization
 	 * 1 = quadratic fit
 	 */
-	protected int localization = 1;
+	public int localization = 1;
 
-	double sigma = 1.8;
-	double threshold = 0.01;
-	boolean findMin = false;
-	boolean findMax = true;
+	public double sigma = 1.8;
+	public double threshold = 0.01;
+	public boolean findMin = false;
+	public boolean findMax = true;
 
-	double percentGPUMem = 75;
-	ArrayList< CUDADevice > deviceList = null;
-	CUDASeparableConvolution cuda = null;
-	boolean accurateCUDA = false;
+	public double percentGPUMem = 75;
+	public ArrayList< CUDADevice > deviceList = null;
+	public CUDASeparableConvolution cuda = null;
+	public boolean accurateCUDA = false;
 
 	public static void main( String[] args )
 	{

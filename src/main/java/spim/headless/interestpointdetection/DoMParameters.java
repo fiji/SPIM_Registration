@@ -15,20 +15,20 @@ public class DoMParameters extends InterestPointParameters
      * 0 = no subpixel localization
      * 1 = quadratic fit
      */
-    protected int localization = 1;
+	public int localization = 1;
 
-    protected double imageSigmaX = 0.5;
-    protected double imageSigmaY = 0.5;
-    protected double imageSigmaZ = 0.5;
+	public double imageSigmaX = 0.5;
+	public double imageSigmaY = 0.5;
+	public double imageSigmaZ = 0.5;
 
-    int radius1 = 2;
-    int radius2 = 3;
-    float threshold = (float) 0.005;
-    boolean findMin = false;
-    boolean findMax = true;
+	public int radius1 = 2;
+	public int radius2 = 3;
+	public float threshold = (float) 0.005;
+	public boolean findMin = false;
+	public boolean findMax = true;
 
-    double minIntensity;
-    double maxIntensity;
+	public double minIntensity;
+	public double maxIntensity;
 
     public static void main( String[] args )
     {
