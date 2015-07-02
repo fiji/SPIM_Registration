@@ -1,18 +1,23 @@
 package spim.headless.removeDetection;
 
 import mpicbg.spim.data.SpimData;
-import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
 import simulation.imgloader.SimulatedBeadsImgLoader;
-import spim.fiji.plugin.thinout.ChannelProcessThinOut;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.boundingbox.BoundingBoxes;
+import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.headless.interestpointdetection.DoG;
 import spim.headless.interestpointdetection.DoGParameters;
+import spim.headless.interestpointdetection.InterestPointTools;
 import spim.process.removeDetection.DetectionRemoval;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -20,15 +25,124 @@ import java.util.List;
  */
 public class RemoveDetectionParameters {
 
+    /**
+     * The view descriptions to work on
+     */
     protected Collection< ViewDescription > toProcess;
-    protected List<ChannelProcessThinOut> channelsToProcess;
-    protected String newLabel;
+    /**
+     * The Label.
+     */
     protected String label;
-    protected double min, max;
+    /**
+     * The Min.
+     */
+    protected double min;
+    /**
+     * The Max.
+     */
+    protected double max;
+    /**
+     * The Keep range.
+     */
     protected boolean keepRange;
 
 
+    /**
+     * Gets to process.
+     *
+     * @return the to process
+     */
+    public Collection<ViewDescription> getToProcess() {
+        return toProcess;
+    }
 
+    /**
+     * Sets to process.
+     *
+     * @param toProcess the to process
+     */
+    public void setToProcess(Collection<ViewDescription> toProcess) {
+        this.toProcess = toProcess;
+    }
+
+    /**
+     * Gets label.
+     *
+     * @return the label
+     */
+    public String getLabel() {
+        return label;
+    }
+
+    /**
+     * Sets label.
+     *
+     * @param label the label
+     */
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
+    /**
+     * Gets min.
+     *
+     * @return the min
+     */
+    public double getMin() {
+        return min;
+    }
+
+    /**
+     * Sets min.
+     *
+     * @param min the min
+     */
+    public void setMin(double min) {
+        this.min = min;
+    }
+
+    /**
+     * Gets max.
+     *
+     * @return the max
+     */
+    public double getMax() {
+        return max;
+    }
+
+    /**
+     * Sets max.
+     *
+     * @param max the max
+     */
+    public void setMax(double max) {
+        this.max = max;
+    }
+
+    /**
+     * Gets keep range.
+     *
+     * @return the keep range
+     */
+    public boolean getKeepRange() {
+        return keepRange;
+    }
+
+    /**
+     * Sets keep range.
+     *
+     * @param keepRange the keep range
+     */
+    public void setKeepRange(boolean keepRange) {
+        this.keepRange = keepRange;
+    }
+
+
+    /**
+     * A method which tests the functionality
+     *
+     * @param args the input arguments
+     */
     public static void main(String[] args)
     {
 
@@ -37,26 +151,35 @@ public class RemoveDetectionParameters {
         List<ViewDescription> viewDescriptions = new ArrayList<ViewDescription>();
         viewDescriptions.addAll(spimData.getSequenceDescription().getViewDescriptions().values());
 
-        DoGParameters dog = new DoGParameters(viewDescriptions,imgLoader,1.4,2);
+        DoGParameters dog = new DoGParameters(viewDescriptions, imgLoader, 1.4, 2);
 
+        ViewInterestPoints viewInterestPoints = new ViewInterestPoints();
+        viewInterestPoints.createViewInterestPoints(spimData.getSequenceDescription().getViewDescriptions());
 
-          DoG.findInterestPoints(dog);
+        String xmlFilename = "/Users/janosch/no_backup/";
+        final SpimData2 spimData2 = new SpimData2(new File(xmlFilename), spimData.getSequenceDescription(), spimData.getViewRegistrations(), viewInterestPoints, new BoundingBoxes());
 
+        String label = "ips";
+
+        //todo add parameters for segmentation
+        InterestPointTools.addInterestPoints(spimData2, label, DoG.findInterestPoints(dog),"",true);
 
         RemoveDetectionParameters removeDetectionParameters = new RemoveDetectionParameters();
 
         removeDetectionParameters.toProcess = new ArrayList<ViewDescription>();
-//        removeDetectionParameters.toProcess.addAll(spimData.getViewRegistrations().getViewRegistrations().values());
-//
-//        final ArrayList< ChannelProcessThinOut > channelsToProcess = new ArrayList< ChannelProcessThinOut >();
-//        Channel channel = spimData.getSequenceDescription().getAllChannelsOrdered().get(0);
-//
-//        channelsToProcess.add(
-//                new ChannelProcessThinOut( channel, "beads", "thinned_beads", false, 0)
-//        );
-//        removeDetectionParameters.channelsToProcess = channelsToProcess;
+        removeDetectionParameters.toProcess.addAll(spimData2.getSequenceDescription().getViewDescriptions().values());
+        removeDetectionParameters.label = label;
+        removeDetectionParameters.min = 0;
+        removeDetectionParameters.max = 10;
+        removeDetectionParameters.keepRange = false;
 
-//        DetectionRemoval.thinOut(spimData, viewIds, removeDetectionParameters.channelsToProcess, true);
+        HashMap<ViewId, List<InterestPoint>> newInterestPoints = DetectionRemoval.removeDetections(spimData2,removeDetectionParameters);
+
+        String parameters = DetectionRemoval.getParameterString(removeDetectionParameters,label);
+        InterestPointTools.addInterestPoints(spimData2, "thinned_" + label, newInterestPoints,parameters,true);
+
+
+        SpimData2.saveXML(spimData2,"one.xml","");
 
     }
 
