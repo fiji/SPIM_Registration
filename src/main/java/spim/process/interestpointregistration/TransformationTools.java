@@ -199,7 +199,7 @@ public class TransformationTools
 	}
 
 	// TODO: move into test package
-	private static void testRegistration(SpimData2 spimData)
+	private static void testRegistration( final SpimData2 spimData )
 	{
 		// run DoG
 		DoGParameters.testDoG( spimData );
@@ -246,13 +246,12 @@ public class TransformationTools
 		final HashMap< ViewId, Tile< AffineModel3D > > models =
 				GlobalOpt.compute( new AffineModel3D(), result, fixedViews, groupedViews );
 
-		// map-back model
-		final RigidModel3D mapBackModel = new RigidModel3D();
+		// map-back model (useless as we fix the first one)
 		final AffineTransform3D mapBack = computeMapBackModel(
 				spimData.getSequenceDescription().getViewDescription( viewIds.get( 0 ) ),
 				transformations.get( viewIds.get( 0 ) ),
 				models.get( viewIds.get( 0 ) ).getModel(),
-				mapBackModel );
+				new RigidModel3D() );
 
 		// pre-concatenate models to spimdata2 viewregistrations
 		for ( final ViewId viewId : models.keySet() )
