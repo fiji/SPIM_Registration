@@ -2,57 +2,44 @@ package spim.process.interestpointregistration.pairwise;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.concurrent.Callable;
+import java.util.List;
 
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.headless.registration.PairwiseResult;
 import spim.headless.registration.RANSACParameters;
 import spim.headless.registration.geometrichashing.GeometricHashingParameters;
 import spim.process.interestpointregistration.Detection;
 import spim.process.interestpointregistration.RANSAC;
 
-public class GeometricHashingPairwise implements Callable< PairwiseResult >
+public class GeometricHashingPairwise implements MatcherPairwise
 {
-	final InterestPointList listA;
-	final InterestPointList listB;
 	final PairwiseResult result;
 	final RANSACParameters rp;
 	final GeometricHashingParameters gp;
 	
 	public GeometricHashingPairwise(
-			final InterestPointList listA,
-			final InterestPointList listB,
 			final RANSACParameters rp,
 			final GeometricHashingParameters gp )
 	{ 
-		this.listA = listA;
-		this.listB = listB;
 		this.result = new PairwiseResult();
 		this.rp = rp;
 		this.gp = gp;
 	}
 
 	@Override
-	public PairwiseResult call() throws Exception 
+	public PairwiseResult match( final List< InterestPoint > listAIn, final List< InterestPoint > listBIn )
 	{
 		final GeometricHasher hasher = new GeometricHasher();
 		
 		final ArrayList< Detection > listA = new ArrayList< Detection >();
 		final ArrayList< Detection > listB = new ArrayList< Detection >();
 
-		if ( this.listA.getInterestPoints() == null )
-			this.listA.loadInterestPoints();
-
-		if ( this.listB.getInterestPoints() == null )
-			this.listB.loadInterestPoints();
-
-		for ( final InterestPoint i : this.listA.getInterestPoints() )
+		for ( final InterestPoint i : listAIn )
 			listA.add( new Detection( i.getId(), i.getL() ) );
 
-		for ( final InterestPoint i : this.listB.getInterestPoints() )
+		for ( final InterestPoint i : listBIn )
 			listB.add( new Detection( i.getId(), i.getL() ) );
 
 		if ( listA.size() < 4 || listB.size() < 4 )
