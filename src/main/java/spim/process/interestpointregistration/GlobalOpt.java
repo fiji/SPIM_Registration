@@ -276,6 +276,8 @@ public class GlobalOpt
 				// one tile per timepoint
 				final Tile< M > tileGroup = new Tile< M >( model.copy() );
 
+				// TODO: take all views, not only those who are in the groups
+
 				// all viewIds of one group map to the same tile (see main method for test, that works)
 				for ( final ViewId viewId : viewIds )
 					map.put( viewId, tileGroup );
