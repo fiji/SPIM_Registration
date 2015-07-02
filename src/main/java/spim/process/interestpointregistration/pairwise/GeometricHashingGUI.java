@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.geometrichashing;
+package spim.process.interestpointregistration.pairwise;
 
 import ij.gui.GenericDialog;
 
