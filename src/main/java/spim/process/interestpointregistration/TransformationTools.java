@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import mpicbg.models.AffineModel3D;
+import mpicbg.models.Tile;
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
@@ -88,20 +89,15 @@ public class TransformationTools
 		return transformedList;
 	}
 
-	public static SpimData2 convert( final SpimData data1 )
+	public static void applyTransformation( final ViewRegistration vr, final AffineTransform3D m)
 	{
-		final SequenceDescription s = data1.getSequenceDescription();
-		final ViewRegistrations vr = data1.getViewRegistrations();
-		final ViewInterestPoints vipl = new ViewInterestPoints();
-		final BoundingBoxes bb = new BoundingBoxes();
-
-		return new SpimData2( data1.getBasePath(), s, vr, vipl, bb );
+		vr.getTransformList().
 	}
 
 	public static void main( String[] args )
 	{
 		// generate 4 views with 1000 corresponding beads, single timepoint
-		SpimData2 spimData = SpimData2.convert( SimulatedBeadsImgLoader.spimdataExample( new int[]{ 0, 90 } ) );
+		SpimData2 spimData = SpimData2.convert( SimulatedBeadsImgLoader.spimdataExample( new int[]{ 0, 90, 135 } ) );
 
 		testRegistration(spimData);
 
@@ -138,7 +134,7 @@ public class TransformationTools
 		fixedViews.add( viewIds.get( 0 ) );
 
 		// define groups
-		final ArrayList< ArrayList< ViewId > > groupedViews = new ArrayList<ArrayList<ViewId>>();
+		final ArrayList< ArrayList< ViewId > > groupedViews = new ArrayList< ArrayList< ViewId > >();
 
 		// define all pairs
 		final List< Pair< ViewId, ViewId > > pairs = PairwiseStrategyTools.allToAll( viewIds, fixedViews, groupedViews );
@@ -151,5 +147,14 @@ public class TransformationTools
 
 		for ( final Pair< Pair< ViewId, ViewId >, PairwiseResult > p : result )
 			System.out.println( p.getA().getA().getViewSetupId() + "<>" + p.getA().getB().getViewSetupId()  + ": " + p.getB().result );
+
+		final HashMap< ViewId, Tile< AffineModel3D > > models =
+				GlobalOpt.compute( new AffineModel3D(), result, fixedViews, groupedViews );
+
+		// map-back model
+
+		// pre-concatenate models to spimdata2 viewregistrations
+
+
 	}
 }
