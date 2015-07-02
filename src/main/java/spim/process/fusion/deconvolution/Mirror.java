@@ -24,8 +24,8 @@ import spim.process.fusion.ImagePortion;
 public class Mirror
 {
 	/**
-	 * @param image - The {@link Image} to mirror
-	 * @param dimension - The axis to mirror (e.g. 0->x-Axis->horizontally, 1->y-axis->vertically)
+	 * @param image - The Image to mirror
+	 * @param dimension - The axis to mirror (e.g. 0-&lt;x-Axis-&lt;horizontally, 1-&lt;y-axis-&lt;vertically)
 	 * @param numThreads - number of threads
 	 */
 	public static < T extends Type< T > > boolean mirror( final Img< T > image, final int dimension, final int numThreads )
