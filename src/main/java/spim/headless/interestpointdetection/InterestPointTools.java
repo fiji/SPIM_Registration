@@ -1,11 +1,14 @@
 package spim.headless.interestpointdetection;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.io.IOFunctions;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
@@ -34,8 +37,13 @@ public class InterestPointTools
 
 			list.setInterestPoints( points.get( viewId ) );
 
+			list.saveInterestPoints();
+			list.setCorrespondingInterestPoints( new ArrayList< CorrespondingInterestPoints >() );
+			list.saveCorrespondingInterestPoints();
+
 			final ViewInterestPointLists vipl = data.getViewInterestPoints().getViewInterestPointLists( viewId );
 			vipl.addInterestPointList( label, list );
 		}
 	}
+
 }
