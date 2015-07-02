@@ -44,18 +44,27 @@ public class LightSheetZ1 extends DefineDataSet
 			return null;
 		}
 
-		for ( int a = 0; a < meta.numAngles(); ++a )
-			meta.angles()[ a ] = params.angles[a];
+		if(params.angles != null)
+				for ( int a = 0; a < meta.numAngles(); ++a )
+					meta.angles()[ a ] = params.angles[a];
 
-		for ( int c = 0; c < meta.numChannels(); ++c )
-			meta.channels()[ c ] = params.channels[c];
+		if(params.channels != null)
+			for ( int c = 0; c < meta.numChannels(); ++c )
+				meta.channels()[ c ] = params.channels[c];
 
-		for ( int i = 0; i < meta.numIlluminations(); ++i )
-			meta.illuminations()[ i ] = params.illuminations[i];
+		if(params.illuminations != null)
+			for ( int i = 0; i < meta.numIlluminations(); ++i )
+				meta.illuminations()[ i ] = params.illuminations[i];
 
-		meta.setCalX( params.pixelDistanceX );
-		meta.setCalY( params.pixelDistanceY );
-		meta.setCalZ( params.pixelDistanceZ );
+		if(params.pixelDistanceX != 0)
+			meta.setCalX( params.pixelDistanceX );
+
+		if(params.pixelDistanceY != 0)
+			meta.setCalY( params.pixelDistanceY );
+
+		if(params.pixelDistanceZ != 0)
+			meta.setCalZ( params.pixelDistanceZ );
+
 		meta.setCalUnit( params.pixelUnit );
 
 		switch ( params.rotationAround )

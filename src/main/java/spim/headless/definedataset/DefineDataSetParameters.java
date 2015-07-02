@@ -24,7 +24,7 @@ public class DefineDataSetParameters
 
 	public String pixelUnit;
 
-	public RotationAxis rotationAround;
+	public RotationAxis rotationAround = RotationAxis.X_Axis;
 
 	// Only MicroManager
 	public boolean applyAxis;

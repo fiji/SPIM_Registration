@@ -51,10 +51,20 @@ public class MicroManager extends DefineDataSet
 			return null;
 		}
 		final ArrayList< String > angles = new ArrayList< String >();
+
+		if ( params.angles == null )
+		{
+			throw new NullPointerException( "angles[] are not provided." );
+		}
+
 		for ( int a = 0; a < reader.numAngles(); ++a )
 			angles.add( params.angles[a] );
 		reader.setAngleNames( angles );
 
+		if ( params.channels == null )
+		{
+			throw new NullPointerException( "channels[] are not provided." );
+		}
 		final ArrayList< String > channels = new ArrayList< String >();
 		for ( int c = 0; c < reader.numChannels(); ++c )
 			channels.add( params.channels[c] );
@@ -63,6 +73,7 @@ public class MicroManager extends DefineDataSet
 		reader.setCalX( params.pixelDistanceX );
 		reader.setCalY( params.pixelDistanceY );
 		reader.setCalZ( params.pixelDistanceZ );
+
 		reader.setCalUnit( params.pixelUnit );
 
 		switch ( params.rotationAround )
