@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.geometrichashing;
+package spim.process.interestpointregistration.pairwise;
 
 import ij.gui.GenericDialog;
 
@@ -8,12 +8,13 @@ import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.plugin.Interest_Point_Registration.RegistrationType;
 import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
 import spim.fiji.spimdata.SpimData2;
+import spim.headless.registration.RANSACParameters;
+import spim.headless.registration.geometrichashing.GeometricHashingParameters;
 import spim.process.interestpointregistration.ChannelProcess;
 import spim.process.interestpointregistration.PairwiseMatch;
-import spim.process.interestpointregistration.RANSACParameters;
 import spim.process.interestpointregistration.TransformationModel;
 
-public class GeometricHashing extends InterestPointRegistration
+public class GeometricHashingGUI extends InterestPointRegistration
 {
 	public static int defaultModel = 2;
 	public static boolean defaultRegularize = true;
@@ -22,7 +23,7 @@ public class GeometricHashing extends InterestPointRegistration
 	protected RANSACParameters ransacParams;
 	protected GeometricHashingParameters ghParams;
 
-	public GeometricHashing(
+	public GeometricHashingGUI(
 			final SpimData2 spimData,
 			final List< ViewId > viewIdsToProcess,
 			final List< ChannelProcess > channelsToProcess )

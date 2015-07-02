@@ -1,4 +1,6 @@
-package spim.process.interestpointregistration.geometrichashing;
+package spim.headless.registration.geometrichashing;
+
+import mpicbg.models.Model;
 
 public class GeometricHashingParameters
 {
@@ -8,21 +10,25 @@ public class GeometricHashingParameters
 
 	protected final float dt, rod;
 	protected final boolean ub;
-	
-	public GeometricHashingParameters()
+	private Model< ? > model = null;
+
+	public GeometricHashingParameters( final Model< ? > model )
 	{
 		this.dt = differenceThreshold;
 		this.rod = ratioOfDistance;
 		this.ub = useAssociatedBeads;
+		this.model = model;
 	}
 	
-	public GeometricHashingParameters( final float differenceThreshold, final float ratioOfDistance, final boolean useAssociatedBeads )
+	public GeometricHashingParameters( final Model< ? > model, final float differenceThreshold, final float ratioOfDistance, final boolean useAssociatedBeads )
 	{
 		this.dt = differenceThreshold;
 		this.rod = ratioOfDistance;
 		this.ub = useAssociatedBeads;
+		this.model = model;
 	}
-	
+
+	public Model< ? > getModel() { return model.copy(); }
 	public float getDifferenceThreshold() { return dt; }
 	public float getRatioOfDistance() { return rod; }
 	public boolean getUseAssociatedBeads() { return ub; }
