@@ -1,4 +1,6 @@
-package spim.process.interestpointregistration.geometricdescriptor;
+package spim.headless.registration.geometricdescriptor;
+
+import mpicbg.models.Model;
 
 public class RGLDMParameters
 {
@@ -10,17 +12,22 @@ public class RGLDMParameters
 	
 	protected final float dt, rod;
 	protected final int nn, re;
-	
-	public RGLDMParameters()
+
+	private Model< ? > model = null;
+	public Model< ? > getModel() { return model.copy(); }
+
+	public RGLDMParameters( final Model< ? > model )
 	{
 		this.dt = differenceThreshold;
 		this.rod = ratioOfDistance;
 		this.nn = numNeighbors;
 		this.re = redundancy;
+		this.model = model;
 	}
 	
-	public RGLDMParameters( final float differenceThreshold, final float ratioOfDistance, final int numNeighbors, final int redundancy )
+	public RGLDMParameters( final Model< ? > model, final float differenceThreshold, final float ratioOfDistance, final int numNeighbors, final int redundancy )
 	{
+		this.model = model;
 		this.dt = differenceThreshold;
 		this.rod = ratioOfDistance;
 		this.nn = numNeighbors;

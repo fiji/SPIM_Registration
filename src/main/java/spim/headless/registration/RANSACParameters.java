@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration;
+package spim.headless.registration;
 
 /**
  * 
