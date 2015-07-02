@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.geometricdescriptor;
+package spim.process.interestpointregistration.pairwise;
 
 import fiji.util.KDTree;
 import fiji.util.NNearestNeighborSearch;

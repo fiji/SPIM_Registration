@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.geometricdescriptor;
+package spim.process.interestpointregistration.pairwise;
 
 import ij.gui.GenericDialog;
 
@@ -8,9 +8,10 @@ import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.plugin.Interest_Point_Registration.RegistrationType;
 import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
 import spim.fiji.spimdata.SpimData2;
+import spim.headless.registration.RANSACParameters;
+import spim.headless.registration.geometricdescriptor.RGLDMParameters;
 import spim.process.interestpointregistration.ChannelProcess;
 import spim.process.interestpointregistration.PairwiseMatch;
-import spim.process.interestpointregistration.RANSACParameters;
 import spim.process.interestpointregistration.TransformationModel;
 
 /**
@@ -19,7 +20,7 @@ import spim.process.interestpointregistration.TransformationModel;
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
-public class RGLDM extends InterestPointRegistration
+public class RGLDMGUI extends InterestPointRegistration
 {
 	public static int defaultModel = 2;
 	public static boolean defaultRegularize = true;
@@ -28,7 +29,7 @@ public class RGLDM extends InterestPointRegistration
 	protected RGLDMParameters parameters;
 	protected RANSACParameters ransacParams;
 
-	public RGLDM(
+	public RGLDMGUI(
 			final SpimData2 spimData,
 			final List< ViewId > viewIdsToProcess,
 			final List< ChannelProcess > channelsToProcess )
