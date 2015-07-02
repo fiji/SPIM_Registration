@@ -15,7 +15,6 @@ import spim.process.interestpointregistration.RANSAC;
 
 public class RGLDMPairwise implements MatcherPairwise
 {
-	final PairwiseResult result;
 	final RANSACParameters rp;
 	final RGLDMParameters dp;
 
@@ -23,7 +22,6 @@ public class RGLDMPairwise implements MatcherPairwise
 			final RANSACParameters rp,
 			final RGLDMParameters dp  )
 	{
-		this.result = new PairwiseResult();
 		this.rp = rp;
 		this.dp = dp;
 	}
@@ -31,6 +29,8 @@ public class RGLDMPairwise implements MatcherPairwise
 	@Override
 	public PairwiseResult match( final List< InterestPoint > listAIn, final List< InterestPoint > listBIn )
 	{
+		final PairwiseResult result = new PairwiseResult();
+
 		final ArrayList< Detection > listA = new ArrayList< Detection >();
 		final ArrayList< Detection > listB = new ArrayList< Detection >();
 
