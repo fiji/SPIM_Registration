@@ -12,23 +12,23 @@ import mpicbg.spim.data.sequence.ViewId;
 import spim.Threads;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
-import spim.fiji.spimdata.interestpoints.InterestPointList;
+import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.headless.registration.PairwiseResult;
 
-public class PairwiseMatching
+public class MatcherPairwiseTools
 {
 	public static List< Pair< Pair< ViewId, ViewId >, PairwiseResult > > computePairs(
 			final List< Pair< ViewId, ViewId > > pairs,
-			final Map< ViewId, InterestPointList > interestpoints,
-			final PairwiseInterestPointMatcher matcher )
+			final Map< ViewId, List< InterestPoint > > interestpoints,
+			final MatcherPairwise matcher )
 	{
 		return computePairs( pairs, interestpoints, matcher, null );
 	}
 
 	public static List< Pair< Pair< ViewId, ViewId >, PairwiseResult > > computePairs(
 			final List< Pair< ViewId, ViewId > > pairs,
-			final Map< ViewId, InterestPointList > interestpoints,
-			final PairwiseInterestPointMatcher matcher,
+			final Map< ViewId, List< InterestPoint > > interestpoints,
+			final MatcherPairwise matcher,
 			final ExecutorService exec )
 	{
 		final ExecutorService taskExecutor;
@@ -54,8 +54,8 @@ public class PairwiseMatching
 					", illum=" + viewB.getViewSetup().getIllumination().getName() + "]";
 			*/
 
-			final InterestPointList listA = interestpoints.get( pair.getA() );
-			final InterestPointList listB = interestpoints.get( pair.getB() );
+			final List< InterestPoint > listA = interestpoints.get( pair.getA() );
+			final List< InterestPoint > listB = interestpoints.get( pair.getB() );
 
 			tasks.add( new Callable< PairwiseResult >()
 			{
