@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.icp;
+package spim.process.interestpointregistration.pairwise;
 
 import ij.gui.GenericDialog;
 

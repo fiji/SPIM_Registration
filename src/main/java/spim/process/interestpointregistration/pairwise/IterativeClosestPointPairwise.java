@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.icp;
+package spim.process.interestpointregistration.pairwise;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -28,34 +28,33 @@ import spim.process.interestpointregistration.Detection;
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
-public class IterativeClosestPointPairwise implements Callable< PairwiseResult >
+public class IterativeClosestPointPairwise implements PairwiseInterestPointMatcher
 {
-	final InterestPointList listA;
-	final InterestPointList listB;
 	final IterativeClosestPointParameters ip;
 	final PairwiseResult result;
 
-	public IterativeClosestPointPairwise(
-			final InterestPointList listA,
-			final InterestPointList listB,
-			final IterativeClosestPointParameters ip  )
+	public IterativeClosestPointPairwise( final IterativeClosestPointParameters ip  )
 	{
-		this.listA = listA;
-		this.listB = listB;
 		this.ip = ip;
 		this.result = new PairwiseResult();
 	}
 
 	@Override
-	public PairwiseResult call() throws Exception
+	public PairwiseResult match( final InterestPointList listAIn, final InterestPointList listBIn )
 	{
 		final ArrayList< Detection > listA = new ArrayList< Detection >();
 		final ArrayList< Detection > listB = new ArrayList< Detection >();
-		
-		for ( final InterestPoint i : this.listA.getInterestPoints() )
+
+		if ( listAIn.getInterestPoints() == null )
+			listAIn.loadInterestPoints();
+
+		if ( listBIn.getInterestPoints() == null )
+			listBIn.loadInterestPoints();
+
+		for ( final InterestPoint i : listAIn.getInterestPoints() )
 			listA.add( new Detection( i.getId(), i.getL() ) );
 
-		for ( final InterestPoint i : this.listB.getInterestPoints() )
+		for ( final InterestPoint i : listBIn.getInterestPoints() )
 			listB.add( new Detection( i.getId(), i.getL() ) );
 
 		// identity transform
@@ -93,17 +92,14 @@ public class IterativeClosestPointPairwise implements Callable< PairwiseResult >
 			catch ( NotEnoughDataPointsException e )
 			{
 				failWith( result, "ICP", "NotEnoughDataPointsException", e );
-				throw new NotEnoughDataPointsException( e );
 			}
 			catch ( IllDefinedDataPointsException e )
 			{
 				failWith( result, "ICP", "IllDefinedDataPointsException", e );
-				throw new IllDefinedDataPointsException( e );
 			}
 			catch ( NoSuitablePointsException e )
 			{
 				failWith( result, "ICP", "NoSuitablePointsException", e );
-				throw new NoSuitablePointsException( e.toString() );
 			}
 
 			if ( lastNumCorresponding == icp.getNumPointMatches() && lastAvgError == icp.getAverageError() )

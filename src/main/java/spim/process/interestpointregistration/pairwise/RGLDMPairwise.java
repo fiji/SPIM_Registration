@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.geometricdescriptor;
+package spim.process.interestpointregistration.pairwise;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -34,7 +34,7 @@ public class RGLDMPairwise implements Callable< PairwiseResult >
 		this.rp = rp;
 		this.dp = dp;
 	}
-	
+
 	@Override
 	public PairwiseResult call() throws Exception
 	{
