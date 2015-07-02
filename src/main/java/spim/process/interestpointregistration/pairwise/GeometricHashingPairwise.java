@@ -15,15 +15,13 @@ import spim.process.interestpointregistration.RANSAC;
 
 public class GeometricHashingPairwise implements MatcherPairwise
 {
-	final PairwiseResult result;
 	final RANSACParameters rp;
 	final GeometricHashingParameters gp;
-	
+
 	public GeometricHashingPairwise(
 			final RANSACParameters rp,
 			final GeometricHashingParameters gp )
 	{ 
-		this.result = new PairwiseResult();
 		this.rp = rp;
 		this.gp = gp;
 	}
@@ -31,6 +29,7 @@ public class GeometricHashingPairwise implements MatcherPairwise
 	@Override
 	public PairwiseResult match( final List< InterestPoint > listAIn, final List< InterestPoint > listBIn )
 	{
+		final PairwiseResult result = new PairwiseResult();
 		final GeometricHasher hasher = new GeometricHasher();
 		
 		final ArrayList< Detection > listA = new ArrayList< Detection >();
