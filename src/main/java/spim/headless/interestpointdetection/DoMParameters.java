@@ -22,29 +22,24 @@ public class DoMParameters extends InterestPointParameters
      * 0 = no subpixel localization
      * 1 = quadratic fit
      */
-    protected static String label = "beads";
+	public int localization = 1;
+	public double imageSigmaX = 0.5;
+    public double imageSigmaY = 0.5;
+    public double imageSigmaZ = 0.5;
 
-    protected int localization = 1;
+    public int radius1 = 2;
+    public int radius2 = 3;
+    public float threshold = (float) 0.005;
+    public boolean findMin = false;
+    public boolean findMax = true;
 
-    protected double imageSigmaX = 0.5;
-    protected double imageSigmaY = 0.5;
-    protected double imageSigmaZ = 0.5;
-
-    int radius1 = 2;
-    int radius2 = 3;
-    float threshold = (float) 0.005;
-    boolean findMin = false;
-    boolean findMax = true;
-
-    double minIntensity;
-    double maxIntensity;
-
-    public final String xmlFilename = "/Users/schmied";
+    public double minIntensity;
+    public double maxIntensity;
 
     public static void main( String[] args )
     {
         SpimData spimData = SimulatedBeadsImgLoader.spimdataExample();
-
+        public final String xmlFilename = "/Users/schmied";
         DoMParameters dom = new DoMParameters();
 
         dom.imgloader = spimData.getSequenceDescription().getImgLoader();

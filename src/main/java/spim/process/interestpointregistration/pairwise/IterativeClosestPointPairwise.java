@@ -30,17 +30,17 @@ import spim.process.interestpointregistration.Detection;
 public class IterativeClosestPointPairwise implements MatcherPairwise
 {
 	final IterativeClosestPointParameters ip;
-	final PairwiseResult result;
 
 	public IterativeClosestPointPairwise( final IterativeClosestPointParameters ip  )
 	{
 		this.ip = ip;
-		this.result = new PairwiseResult();
 	}
 
 	@Override
 	public PairwiseResult match( final List< InterestPoint > listAIn, final List< InterestPoint > listBIn )
 	{
+		final PairwiseResult result = new PairwiseResult();
+
 		final ArrayList< Detection > listA = new ArrayList< Detection >();
 		final ArrayList< Detection > listB = new ArrayList< Detection >();
 

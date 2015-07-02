@@ -326,4 +326,15 @@ public class SpimData2 extends SpimData
 			return null;
 		}
 	}
+
+	public static SpimData2 convert( final SpimData data1 )
+	{
+		final SequenceDescription s = data1.getSequenceDescription();
+		final ViewRegistrations vr = data1.getViewRegistrations();
+		final ViewInterestPoints vipl = new ViewInterestPoints();
+		vipl.createViewInterestPoints( data1.getSequenceDescription().getViewDescriptions() );
+		final BoundingBoxes bb = new BoundingBoxes();
+
+		return new SpimData2( data1.getBasePath(), s, vr, vipl, bb );
+	}
 }
