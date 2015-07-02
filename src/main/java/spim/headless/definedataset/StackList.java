@@ -13,6 +13,7 @@ import mpicbg.spim.data.sequence.MissingViews;
 import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.TimePoints;
+import mpicbg.spim.data.sequence.TimePointsPattern;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
@@ -27,10 +28,16 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import spim.fiji.plugin.Apply_Transformation;
+import spim.fiji.spimdata.NamePattern;
+import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.imgloaders.LightSheetZ1ImgLoader;
 import spim.fiji.spimdata.imgloaders.MicroManagerImgLoader;
+import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
 import java.io.File;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,214 +45,192 @@ import java.util.Map;
 /**
  * Base StackList class for various kinds of DataSet definition class
  */
-public class StackList
+public class StackList extends DefineDataSet
 {
-	public static enum RotationAxis
+	protected static class Calibration
 	{
-		X_Axis, Y_Axis, Z_Axis
-	};
-	/**
-	 * Assembles the {@link mpicbg.spim.data.registration.ViewRegistration} object consisting of a list of {@link mpicbg.spim.data.registration.ViewRegistration}s for all {@link mpicbg.spim.data.sequence.ViewDescription}s that are present
-	 *
-	 * @param viewDescriptionList
-	 * @param minResolution - the smallest resolution in any dimension (distance between two pixels in the output image will be that wide)
-	 * @return
-	 */
-	protected static ViewRegistrations createViewRegistrations( final Map< ViewId, ViewDescription > viewDescriptionList, final double minResolution )
+		public double calX = 1, calY = 1, calZ = 1;
+		public String calUnit = "um";
+
+		public Calibration( final double calX, final double calY, final double calZ, final String calUnit )
+		{
+			this.calX = calX;
+			this.calY = calY;
+			this.calZ = calZ;
+			this.calUnit = calUnit;
+		}
+
+		public Calibration( final double calX, final double calY, final double calZ )
+		{
+			this.calX = calX;
+			this.calY = calY;
+			this.calZ = calZ;
+		}
+
+		public Calibration() {};
+	}
+
+	protected static class ViewSetupPrecursor
 	{
-		final HashMap< ViewId, ViewRegistration > viewRegistrationList = new HashMap< ViewId, ViewRegistration >();
+		final public int c, i, a;
+		final public ArrayList< String> channelNameList, illuminationsNameList, angleNameList;
 
-		for ( final ViewDescription viewDescription : viewDescriptionList.values() )
-			if ( viewDescription.isPresent() )
-			{
-				final ViewRegistration viewRegistration = new ViewRegistration( viewDescription.getTimePointId(), viewDescription.getViewSetupId() );
+		public ViewSetupPrecursor( final int c, final int i, final int a, ArrayList< String> channelNameList, ArrayList< String>  illuminationsNameList, ArrayList< String>  angleNameList )
+		{
+			this.c = c;
+			this.i = i;
+			this.a = a;
 
-				final VoxelDimensions voxelSize = viewDescription.getViewSetup().getVoxelSize();
+			this.channelNameList = channelNameList;
+			this.illuminationsNameList = illuminationsNameList;
+			this.angleNameList = angleNameList;
+		}
 
-				final double calX = voxelSize.dimension( 0 ) / minResolution;
-				final double calY = voxelSize.dimension( 1 ) / minResolution;
-				final double calZ = voxelSize.dimension( 2 ) / minResolution;
+		@Override
+		public int hashCode()
+		{
+			return c * illuminationsNameList.size() * angleNameList.size() + i * angleNameList.size() + a;
+		}
 
-				final AffineTransform3D m = new AffineTransform3D();
-				m.set( calX, 0.0f, 0.0f, 0.0f,
-						0.0f, calY, 0.0f, 0.0f,
-						0.0f, 0.0f, calZ, 0.0f );
-				final ViewTransform vt = new ViewTransformAffine( "calibration", m );
-				viewRegistration.preconcatenateTransform( vt );
+		@Override
+		public boolean equals( final Object o )
+		{
+			if ( o instanceof ViewSetupPrecursor )
+				return c == ((ViewSetupPrecursor)o).c && i == ((ViewSetupPrecursor)o).i && a == ((ViewSetupPrecursor)o).a;
+			else
+				return false;
+		}
 
-				viewRegistrationList.put( viewRegistration, viewRegistration );
-			}
+		@Override
+		public String toString() { return "channel=" + channelNameList.get( c ) + ", ill.dir.=" + illuminationsNameList.get( i ) + ", angle=" + angleNameList.get( a ); }
+	}
 
-		return new ViewRegistrations( viewRegistrationList );
+	protected static String assembleDefaultPattern(final int hasMultipleAngles, final int hasMultipleTimePoints, final int hasMultipleChannels, final int hasMultipleIlluminations)
+	{
+		String pattern = "spim";
+
+		if ( hasMultipleTimePoints == 1 )
+			pattern += "_TL{t}";
+
+		if ( hasMultipleChannels == 1 )
+			pattern += "_Channel{c}";
+
+		if ( hasMultipleIlluminations == 1 )
+			pattern += "_Illum{i}";
+
+		if ( hasMultipleAngles == 1 )
+			pattern += "_Angle{a}";
+
+		return pattern + ".tif";
 	}
 
 	/**
-	 * Create sequence description.
+	 * Create sequence description for StackList.
 	 *
-	 * @param meta the meta
-	 * @param cziFile the czi file
+	 * @param timepoints the timepoints
+	 * @param channels the channels
+	 * @param illuminations the illuminations
+	 * @param angles the angles
+	 * @param calibration the calibration
 	 * @return the sequence description
 	 */
-	public static SequenceDescription createSequenceDescription( final LightSheetZ1MetaData meta, final File cziFile )
+	public static SequenceDescription createSequenceDescription( final String timepoints, final String channels, final String illuminations, final String angles, Calibration calibration )
 	{
 		// assemble timepints, viewsetups, missingviews and the imgloader
-		final ArrayList< TimePoint > timepoints = new ArrayList< TimePoint >();
-
-		for ( int t = 0; t < meta.numTimepoints(); ++t )
-			timepoints.add( new TimePoint( t ) );
-
-
-		final ArrayList< Channel > channels = new ArrayList< Channel >();
-		for ( int c = 0; c < meta.numChannels(); ++c )
-			channels.add( new Channel( c, meta.channels()[ c ] ) );
-
-		final ArrayList< Illumination > illuminations = new ArrayList< Illumination >();
-		for ( int i = 0; i < meta.numIlluminations(); ++i )
-			illuminations.add( new Illumination( i, meta.illuminations()[ i ] ) );
-
-		final ArrayList< Angle > angles = new ArrayList< Angle >();
-		for ( int a = 0; a < meta.numAngles(); ++a )
+		TimePoints timePoints = null;
+		try
 		{
-			final Angle angle = new Angle( a, meta.angles()[ a ] );
-
-			try
-			{
-				final double degrees = Double.parseDouble( meta.angles()[ a ] );
-				double[] axis = null;
-
-				if ( meta.rotationAxis() == 0 )
-					axis = new double[]{ 1, 0, 0 };
-				else if ( meta.rotationAxis() == 1 )
-					axis = new double[]{ 0, 1, 0 };
-				else if ( meta.rotationAxis() == 2 )
-					axis = new double[]{ 0, 0, 1 };
-
-				if ( axis != null && !Double.isNaN( degrees ) &&  !Double.isInfinite( degrees ) )
-					angle.setRotation( axis, degrees );
-			}
-			catch ( Exception e ) {};
-
-			angles.add( angle );
+			timePoints = new TimePointsPattern( timepoints );
 		}
+		catch ( ParseException e )
+		{
+			e.printStackTrace();
+		}
+
+		ArrayList< String > timepointNameList = null, channelNameList = null, illuminationsNameList = null, angleNameList = null;
+
+		try
+		{
+			timepointNameList = ( NamePattern.parseNameString( timepoints, false ) );
+			channelNameList = ( NamePattern.parseNameString( channels, true ) );
+			illuminationsNameList = ( NamePattern.parseNameString( illuminations, true ) );
+			angleNameList = ( NamePattern.parseNameString( angles, true ) );
+		}
+		catch ( ParseException e )
+		{
+			e.printStackTrace();
+		}
+
+
+		final ArrayList< Channel > channelList = new ArrayList< Channel >();
+		for ( int c = 0; c < channelNameList.size(); ++c )
+			channelList.add( new Channel( c, channelNameList.get( c ) ) );
+
+		final ArrayList< Illumination > illuminationList = new ArrayList< Illumination >();
+		for ( int i = 0; i < illuminationsNameList.size(); ++i )
+			illuminationList.add( new Illumination( i, illuminationsNameList.get( i ) ) );
+
+		final ArrayList< Angle > angleList = new ArrayList< Angle >();
+		for ( int a = 0; a < angleNameList.size(); ++a )
+			angleList.add( new Angle( a, angleNameList.get( a ) ) );
+
+		HashMap< ViewSetupPrecursor, Calibration > calibrations = new HashMap< ViewSetupPrecursor, Calibration >();
 
 		final ArrayList< ViewSetup > viewSetups = new ArrayList< ViewSetup >();
-		for ( final Channel c : channels )
-			for ( final Illumination i : illuminations )
-				for ( final Angle a : angles )
+		for ( final Channel c : channelList )
+			for ( final Illumination i : illuminationList )
+				for ( final Angle a : angleList )
 				{
-					final VoxelDimensions voxelSize = new FinalVoxelDimensions( meta.calUnit(), meta.calX(), meta.calY(), meta.calZ() );
-					final Dimensions dim = new FinalDimensions( meta.imageSizes().get( a.getId() ) );
-					viewSetups.add( new ViewSetup( viewSetups.size(), null, dim, voxelSize, c, a, i ) );
+					final Calibration cal = calibrations.get( new ViewSetupPrecursor( c.getId(), i.getId(), a.getId(), channelNameList, illuminationsNameList, angleNameList ) );
+					final VoxelDimensions voxelSize = new FinalVoxelDimensions( cal.calUnit, cal.calX, cal.calY, cal.calZ );
+					viewSetups.add( new ViewSetup( viewSetups.size(), null, null, voxelSize, c, a, i ) );
 				}
 
+		ArrayList< int[] > exceptionIds = new ArrayList< int[] >();
 
-		// Estimate image factory
-		ImgFactory< ? extends NativeType< ? > > imgFactory;
-		long maxNumPixels = 0;
+		// Add exceptionIDs
+		//
+		// exceptionIds.add( new int[]{ t, c, i, a } );
+		// System.out.println( "adding missing views t:" + t + " c:" + c + " i:" + i + " a:" + a );
 
-		for ( int a = 0; a < meta.numAngles(); ++a )
+		if ( exceptionIds.size() == 0 )
+			return null;
+
+		final ArrayList< ViewId > missingViewArray = new ArrayList< ViewId >();
+
+		if ( exceptionIds.size() > 0 )
 		{
-			final int[] dim = meta.imageSizes().get( a );
-
-			long n = 1;
-
-			for ( int d = 0; d < dim.length; ++d )
-				n *= (long)dim[ d ];
-
-			maxNumPixels = Math.max( n, maxNumPixels );
-		}
-
-		int smallerLog2 = (int)Math.ceil( Math.log( maxNumPixels ) / Math.log( 2 ) );
-
-		String s = "Maximum number of pixels in any view: n=" + maxNumPixels +
-				" (2^" + (smallerLog2-1) + " < n < 2^" + smallerLog2 + " px), ";
-
-		if ( smallerLog2 <= 31 )
-		{
-			IOFunctions.println( s + "using ArrayImg." );
-			imgFactory = new ArrayImgFactory< FloatType >();
-		}
-		else
-		{
-			IOFunctions.println( s + "using CellImg(256)." );
-			imgFactory = new CellImgFactory< FloatType >( 256 );
-		}
-
-		// Set imgLoader and missingViews null
-		final SequenceDescription sequenceDescription = new SequenceDescription( new TimePoints( timepoints ), viewSetups, null, null );
-
-		final ImgLoader< UnsignedShortType > imgLoader = new LightSheetZ1ImgLoader( cziFile, imgFactory, sequenceDescription );
-		sequenceDescription.setImgLoader( imgLoader );
-
-		// instantiate the sequencedescription
-		return sequenceDescription;
-	}
-
-
-	/**
-	 * Create sequence description.
-	 *
-	 * @param meta the meta
-	 * @param mmFile the micromanager file
-	 * @return the sequence description
-	 */
-	public static SequenceDescription createSequenceDescription( final MultipageTiffReader meta, final File mmFile  )
-	{
-		// assemble timepints, viewsetups, missingviews and the imgloader
-		final ArrayList< TimePoint > timepoints = new ArrayList< TimePoint >();
-
-		for ( int t = 0; t < meta.numTimepoints(); ++t )
-			timepoints.add( new TimePoint( t ) );
-
-
-		final ArrayList< Channel > channels = new ArrayList< Channel >();
-		for ( int c = 0; c < meta.numChannels(); ++c )
-			channels.add( new Channel( c, meta.channelName( c ) ) );
-
-		final ArrayList< Illumination > illuminations = new ArrayList< Illumination >();
-		for ( int i = 0; i < meta.numPositions(); ++i )
-			illuminations.add( new Illumination( i, String.valueOf( i ) ) );
-
-		final ArrayList< Angle > angles = new ArrayList< Angle >();
-		for ( int a = 0; a < meta.numAngles(); ++a )
-		{
-			final Angle angle = new Angle( a, meta.rotationAngle( a ) );
-
-			try
+			for ( int t = 0; t < timepointNameList.size(); ++t )
 			{
-				final double degrees = Double.parseDouble( meta.rotationAngle( a ) );
-				double[] axis = meta.rotationAxis();
+				// assemble a subset of exceptions for the current timepoint
+				final ArrayList< int[] > tmp = new ArrayList< int[] >();
 
-				if ( axis != null && !Double.isNaN( degrees ) &&  !Double.isInfinite( degrees ) )
-					angle.setRotation( axis, degrees );
+				for ( int[] exceptions : exceptionIds )
+					if ( exceptions[ 0 ] == t )
+						tmp.add( exceptions );
+
+				if ( tmp.size() > 0 )
+				{
+					int setupId = 0;
+
+					for ( int c = 0; c < channelNameList.size(); ++c )
+						for ( int i = 0; i < illuminationsNameList.size(); ++i )
+							for ( int a = 0; a < angleNameList.size(); ++a )
+							{
+								for ( int[] exceptions : tmp )
+									if ( exceptions[ 1 ] == c && exceptions[ 2 ] == i && exceptions[ 3 ] == a )
+									{
+										missingViewArray.add( new ViewId( Integer.parseInt( timepointNameList.get( t ) ), setupId ) );
+										System.out.println( "creating missing views t:" + Integer.parseInt( timepointNameList.get( t ) ) + " c:" + c + " i:" + i + " a:" + a + " setupid: " + setupId );
+									}
+
+								++setupId;
+							}
+				}
 			}
-			catch ( Exception e ) {};
-
-			angles.add( angle );
 		}
 
-		final ArrayList< ViewSetup > viewSetups = new ArrayList< ViewSetup >();
-		for ( final Channel c : channels )
-			for ( final Illumination i : illuminations )
-				for ( final Angle a : angles )
-				{
-					final VoxelDimensions voxelSize = new FinalVoxelDimensions( meta.calUnit(), meta.calX(), meta.calY(), meta.calZ() );
-					final Dimensions dim = new FinalDimensions( new long[]{ meta.width(), meta.height(), meta.depth() } );
-					viewSetups.add( new ViewSetup( viewSetups.size(), null, dim, voxelSize, c, a, i ) );
-				}
-
-		final MissingViews missingViews = null;
-
-		// Estimate image factory
-		final ImgFactory< ? extends NativeType< ? > > imgFactory = new ArrayImgFactory< FloatType >();
-
-		// instantiate the sequencedescription
-		final SequenceDescription sequenceDescription = new SequenceDescription( new TimePoints( timepoints ), viewSetups, null, missingViews );
-		final ImgLoader< UnsignedShortType > imgLoader = new MicroManagerImgLoader( mmFile, imgFactory, sequenceDescription );
-		sequenceDescription.setImgLoader( imgLoader );
-
-		// instantiate the sequencedescription
-		return sequenceDescription;
+		final MissingViews missingViews = new MissingViews( missingViewArray );		// instantiate the sequencedescription
+		return new SequenceDescription( timePoints, viewSetups, null, missingViews );
 	}
-
 }

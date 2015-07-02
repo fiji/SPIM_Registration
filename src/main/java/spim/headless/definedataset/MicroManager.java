@@ -1,9 +1,20 @@
 package spim.headless.definedataset;
 
 import mpicbg.spim.data.registration.ViewRegistrations;
+import mpicbg.spim.data.sequence.Angle;
+import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.FinalVoxelDimensions;
+import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.ImgLoader;
+import mpicbg.spim.data.sequence.MissingViews;
 import mpicbg.spim.data.sequence.SequenceDescription;
+import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.TimePoints;
+import mpicbg.spim.data.sequence.ViewSetup;
+import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.Dimensions;
+import net.imglib2.FinalDimensions;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.NativeType;
@@ -23,9 +34,9 @@ import java.util.Properties;
 /**
  * DataSet definition for MicroManager
  */
-public class MicroManager extends StackList
+public class MicroManager extends DefineDataSet
 {
-	public static SpimData2 createDataset( final String tiffFile, final Properties props )
+	public static SpimData2 createDataset( final String tiffFile, final DefineDataSetParameters params )
 	{
 		MultipageTiffReader reader = null;
 		File mmFile = new File( tiffFile );
@@ -41,20 +52,20 @@ public class MicroManager extends StackList
 		}
 		final ArrayList< String > angles = new ArrayList< String >();
 		for ( int a = 0; a < reader.numAngles(); ++a )
-			angles.add(props.getProperty( "angle_" + ( a + 1 ) ) );
+			angles.add( params.angles[a] );
 		reader.setAngleNames( angles );
 
 		final ArrayList< String > channels = new ArrayList< String >();
 		for ( int c = 0; c < reader.numChannels(); ++c )
-			channels.add( props.getProperty( "channel_" + ( c + 1 ) ) );
+			channels.add( params.channels[c] );
 		reader.setChannelNames( channels );
 
-		reader.setCalX( Double.parseDouble( props.getProperty( "pixel_distance_x" ) ) );
-		reader.setCalY( Double.parseDouble( props.getProperty( "pixel_distance_y" ) ) );
-		reader.setCalZ( Double.parseDouble( props.getProperty( "pixel_distance_z" ) ) );
-		reader.setCalUnit( props.getProperty( "pixel_unit" ) );
+		reader.setCalX( params.pixelDistanceX );
+		reader.setCalY( params.pixelDistanceY );
+		reader.setCalZ( params.pixelDistanceZ );
+		reader.setCalUnit( params.pixelUnit );
 
-		switch ( RotationAxis.valueOf( props.getProperty( "rotation_around", "X_Axis" ) ) )
+		switch ( params.rotationAround )
 		{
 			case X_Axis:
 				reader.setRotAxis( new double[]{ 1, 0, 0 } );
@@ -66,6 +77,8 @@ public class MicroManager extends StackList
 				reader.setRotAxis( new double[]{ 0, 0, 1 } );
 				break;
 		}
+
+		reader.setApplyAxis( params.applyAxis );
 
 		final String directory = mmFile.getParent();
 		final ImgFactory< ? extends NativeType< ? > > imgFactory = new ArrayImgFactory< FloatType >();
@@ -96,5 +109,71 @@ public class MicroManager extends StackList
 		try { reader.close(); } catch (IOException e) { IOFunctions.println( "Could not close file '" + mmFile.getAbsolutePath() + "': " + e ); }
 
 		return spimData;
+	}
+
+	/**
+	 * Create sequence description for MultipageTiffReader.
+	 *
+	 * @param meta the meta
+	 * @param mmFile the micromanager file
+	 * @return the sequence description
+	 */
+	public static SequenceDescription createSequenceDescription( final MultipageTiffReader meta, final File mmFile  )
+	{
+		// assemble timepints, viewsetups, missingviews and the imgloader
+		final ArrayList< TimePoint > timepoints = new ArrayList< TimePoint >();
+
+		for ( int t = 0; t < meta.numTimepoints(); ++t )
+			timepoints.add( new TimePoint( t ) );
+
+
+		final ArrayList< Channel > channels = new ArrayList< Channel >();
+		for ( int c = 0; c < meta.numChannels(); ++c )
+			channels.add( new Channel( c, meta.channelName( c ) ) );
+
+		final ArrayList< Illumination > illuminations = new ArrayList< Illumination >();
+		for ( int i = 0; i < meta.numPositions(); ++i )
+			illuminations.add( new Illumination( i, String.valueOf( i ) ) );
+
+		final ArrayList< Angle > angles = new ArrayList< Angle >();
+		for ( int a = 0; a < meta.numAngles(); ++a )
+		{
+			final Angle angle = new Angle( a, meta.rotationAngle( a ) );
+
+			try
+			{
+				final double degrees = Double.parseDouble( meta.rotationAngle( a ) );
+				double[] axis = meta.rotationAxis();
+
+				if ( axis != null && !Double.isNaN( degrees ) &&  !Double.isInfinite( degrees ) )
+					angle.setRotation( axis, degrees );
+			}
+			catch ( Exception e ) {};
+
+			angles.add( angle );
+		}
+
+		final ArrayList< ViewSetup > viewSetups = new ArrayList< ViewSetup >();
+		for ( final Channel c : channels )
+			for ( final Illumination i : illuminations )
+				for ( final Angle a : angles )
+				{
+					final VoxelDimensions voxelSize = new FinalVoxelDimensions( meta.calUnit(), meta.calX(), meta.calY(), meta.calZ() );
+					final Dimensions dim = new FinalDimensions( new long[]{ meta.width(), meta.height(), meta.depth() } );
+					viewSetups.add( new ViewSetup( viewSetups.size(), null, dim, voxelSize, c, a, i ) );
+				}
+
+		final MissingViews missingViews = null;
+
+		// Estimate image factory
+		final ImgFactory< ? extends NativeType< ? > > imgFactory = new ArrayImgFactory< FloatType >();
+
+		// instantiate the sequencedescription
+		final SequenceDescription sequenceDescription = new SequenceDescription( new TimePoints( timepoints ), viewSetups, null, missingViews );
+		final ImgLoader< UnsignedShortType > imgLoader = new MicroManagerImgLoader( mmFile, imgFactory, sequenceDescription );
+		sequenceDescription.setImgLoader( imgLoader );
+
+		// instantiate the sequencedescription
+		return sequenceDescription;
 	}
 }
