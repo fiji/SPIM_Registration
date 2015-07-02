@@ -1,11 +1,10 @@
-package spim.process.interestpointregistration.icp;
+package spim.process.interestpointregistration.pairwise;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Random;
 import java.util.concurrent.Callable;
 
-import net.imglib2.util.Util;
 import mpicbg.icp.ICP;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.Model;
@@ -16,47 +15,57 @@ import mpicbg.models.TranslationModel3D;
 import mpicbg.pointdescriptor.exception.NoSuitablePointsException;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
+import net.imglib2.util.Util;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.fiji.spimdata.interestpoints.InterestPointList;
+import spim.headless.registration.PairwiseResult;
+import spim.headless.registration.icp.IterativeClosestPointParameters;
 import spim.process.interestpointregistration.Detection;
-import spim.process.interestpointregistration.PairwiseMatch;
-import spim.process.interestpointregistration.TransformationModel;
 
-public class IterativeClosestPointPairwise implements Callable< PairwiseMatch >
+/**
+ * Iterative closest point implementation
+ * 
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de)
+ *
+ */
+public class IterativeClosestPointPairwise implements PairwiseInterestPointMatcher
 {
-	final PairwiseMatch pair;
-	final TransformationModel model;
 	final IterativeClosestPointParameters ip;
-	final String comparison;
+	final PairwiseResult result;
 
-	public IterativeClosestPointPairwise( final PairwiseMatch pair, final TransformationModel model, final String comparison, final IterativeClosestPointParameters ip  )
+	public IterativeClosestPointPairwise( final IterativeClosestPointParameters ip  )
 	{
-		this.pair = pair;
 		this.ip = ip;
-		this.model = model;
-		this.comparison = comparison;
+		this.result = new PairwiseResult();
 	}
 
 	@Override
-	public PairwiseMatch call() throws Exception
+	public PairwiseResult match( final InterestPointList listAIn, final InterestPointList listBIn )
 	{
 		final ArrayList< Detection > listA = new ArrayList< Detection >();
 		final ArrayList< Detection > listB = new ArrayList< Detection >();
-		
-		for ( final InterestPoint i : pair.getListA() )
+
+		if ( listAIn.getInterestPoints() == null )
+			listAIn.loadInterestPoints();
+
+		if ( listBIn.getInterestPoints() == null )
+			listBIn.loadInterestPoints();
+
+		for ( final InterestPoint i : listAIn.getInterestPoints() )
 			listA.add( new Detection( i.getId(), i.getL() ) );
 
-		for ( final InterestPoint i : pair.getListB() )
+		for ( final InterestPoint i : listBIn.getInterestPoints() )
 			listB.add( new Detection( i.getId(), i.getL() ) );
 
 		// identity transform
-		Model<?> model = this.model.getModel();
+		Model<?> model = this.ip.getModel();
 
 		if ( listA.size() < model.getMinNumMatches() || listB.size() < model.getMinNumMatches() )
 		{
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): " + comparison + ": Not enough detections to match" );
-			pair.setCandidates( new ArrayList< PointMatchGeneric< Detection > >() );
-			pair.setInliers( new ArrayList< PointMatchGeneric< Detection > >(), Double.NaN );
-			return pair;
+			result.result = "(" + new Date( System.currentTimeMillis() ) + "): " + /* comparison + */ ": Not enough detections to match";
+			result.setCandidates( new ArrayList< PointMatchGeneric< Detection > >() );
+			result.setInliers( new ArrayList< PointMatchGeneric< Detection > >(), Double.NaN );
+			return result;
 		}
 
 		// use the world and not the local coordinates
@@ -82,18 +91,15 @@ public class IterativeClosestPointPairwise implements Callable< PairwiseMatch >
 			}
 			catch ( NotEnoughDataPointsException e )
 			{
-				failWith( "ICP", "NotEnoughDataPointsException", pair, e );
-				throw new NotEnoughDataPointsException( e );
+				failWith( result, "ICP", "NotEnoughDataPointsException", e );
 			}
 			catch ( IllDefinedDataPointsException e )
 			{
-				failWith( "ICP", "IllDefinedDataPointsException", pair, e );
-				throw new IllDefinedDataPointsException( e );
+				failWith( result, "ICP", "IllDefinedDataPointsException", e );
 			}
 			catch ( NoSuitablePointsException e )
 			{
-				failWith( "ICP", "NoSuitablePointsException", pair, e );
-				throw new NoSuitablePointsException( e.toString() );
+				failWith( result, "ICP", "NoSuitablePointsException", e );
 			}
 
 			if ( lastNumCorresponding == icp.getNumPointMatches() && lastAvgError == icp.getAverageError() )
@@ -111,23 +117,23 @@ public class IterativeClosestPointPairwise implements Callable< PairwiseMatch >
 		for ( final PointMatch pm : icp.getPointMatches() )
 			inliers.add( new PointMatchGeneric<Detection>( (Detection)pm.getP1(), (Detection)pm.getP2() ) );
 
-		pair.setCandidates( inliers );
-		pair.setInliers( inliers, icp.getAverageError() );
+		result.setCandidates( inliers );
+		result.setInliers( inliers, icp.getAverageError() );
 
-		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): " + comparison + ": Found " + icp.getNumPointMatches() + " matches, avg error [px] " + icp.getAverageError() + " after " + i + " iterations" );
+		result.result = "(" + new Date( System.currentTimeMillis() ) + "): " /* + comparison */ + ": Found " + icp.getNumPointMatches() + " matches, avg error [px] " + icp.getAverageError() + " after " + i + " iterations";
 
-		return pair;
+		return result;
 	}
 
-	public static void failWith( final String algo, final String exType, final PairwiseMatch pair, final Exception e )
+	public static void failWith( final PairwiseResult result, final String algo, final String exType, final Exception e )
 	{
-		IOFunctions.println(
-				algo + " failed with " + exType + " matching " + 
-				"TP=" + pair.getViewIdA().getTimePointId() + ", ViewSetup=" + pair.getViewIdA().getViewSetupId() + " to " + 
-				"TP=" + pair.getViewIdB().getTimePointId() + ", ViewSetup=" + pair.getViewIdB().getViewSetupId() + ": " + e );
+		result.result =
+				algo + " failed with " + exType + " matching ";// + 
+				/*"TP=" + pair.getViewIdA().getTimePointId() + ", ViewSetup=" + pair.getViewIdA().getViewSetupId() + " to " + 
+				"TP=" + pair.getViewIdB().getTimePointId() + ", ViewSetup=" + pair.getViewIdB().getViewSetupId() + ": " + e );*/
 		
-		pair.setCandidates( new ArrayList< PointMatchGeneric< Detection > >() );
-		pair.setInliers( new ArrayList< PointMatchGeneric< Detection > >(), Double.NaN );
+		result.setCandidates( new ArrayList< PointMatchGeneric< Detection > >() );
+		result.setInliers( new ArrayList< PointMatchGeneric< Detection > >(), Double.NaN );
 	}
 
 	public static void main( final String[] args ) throws Exception
