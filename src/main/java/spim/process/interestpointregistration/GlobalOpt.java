@@ -270,18 +270,33 @@ public class GlobalOpt
 			// there is one tile per group only
 			//
 
+			// remember those who are not part of a group
+			final HashSet< ViewId > remainingViews = new HashSet< ViewId >();
+			remainingViews.addAll( views );
+
 			// for all groups find the viewIds that belong to this timepoint
 			for ( final List< ViewId > viewIds : groups )
 			{
 				// one tile per timepoint
 				final Tile< M > tileGroup = new Tile< M >( model.copy() );
 
-				// TODO: take all views, not only those who are in the groups
-
 				// all viewIds of one group map to the same tile (see main method for test, that works)
 				for ( final ViewId viewId : viewIds )
+				{
 					map.put( viewId, tileGroup );
+
+					if ( !remainingViews.contains( viewId ) )
+						throw new RuntimeException(
+								"ViewSetupID:" + viewId.getViewSetupId() + ", timepointId: " + viewId.getTimePointId() +
+								" not part of two sets of groups, this is not supported." ); 
+
+					remainingViews.remove( viewId );
+				}
 			}
+
+			// add all remaining views
+			for ( final ViewId viewId : remainingViews )
+				map.put( viewId, new Tile< M >( model.copy() ) );
 		}
 		else
 		{
