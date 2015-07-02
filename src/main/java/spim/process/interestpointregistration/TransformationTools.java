@@ -103,6 +103,13 @@ public class TransformationTools
 		// generate 4 views with 1000 corresponding beads, single timepoint
 		SpimData2 spimData = SpimData2.convert( SimulatedBeadsImgLoader.spimdataExample( new int[]{ 0, 90 } ) );
 
+		testRegistration(spimData);
+
+	}
+
+	// TODO: move into test package
+	private static void testRegistration(SpimData2 spimData)
+	{
 		// run DoG
 		DoGParameters.testDoG( spimData );
 
@@ -144,6 +151,5 @@ public class TransformationTools
 
 		for ( final Pair< Pair< ViewId, ViewId >, PairwiseResult > p : result )
 			System.out.println( p.getA().getA().getViewSetupId() + "<>" + p.getA().getB().getViewSetupId()  + ": " + p.getB().result );
-
 	}
 }
