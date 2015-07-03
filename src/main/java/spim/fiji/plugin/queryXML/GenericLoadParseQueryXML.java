@@ -719,6 +719,7 @@ public class GenericLoadParseQueryXML<
 					Collections.sort( this.allAttributeInstances.get( attribute ),
 							new Comparator<Entity>()
 							{
+								@Override
 								public int compare( final Entity o1, final Entity o2 )
 								{
 									return o1.getId() - o2.getId();
@@ -793,6 +794,7 @@ public class GenericLoadParseQueryXML<
 		// using TextListener instead
 		tf.addTextListener( new TextListener()
 		{	
+			@Override
 			public void textValueChanged( final TextEvent t )
 			{
 				if ( t.getID() == TextEvent.TEXT_VALUE_CHANGED )
