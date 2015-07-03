@@ -44,7 +44,6 @@ public class DoGParameters extends InterestPointParameters
         this.threshold = threshold;
     }
 
-
     public DoGParameters(Collection<ViewDescription> toProcess, ImgLoader<?> imgloader, double sigma, int downsampleXY)
     {
         super(toProcess,imgloader);
@@ -52,10 +51,8 @@ public class DoGParameters extends InterestPointParameters
         this.downsampleXY = downsampleXY;
     }
 
-
-    public static void main( String[] args )
+	public static void testDoG( SpimData2 spimData )
 	{
-		SpimData spimData = SimulatedBeadsImgLoader.spimdataExample();
 		DoGParameters dog = new DoGParameters();
 
 		dog.imgloader = spimData.getSequenceDescription().getImgLoader();
@@ -69,5 +66,20 @@ public class DoGParameters extends InterestPointParameters
 		//dog.cuda = spim.headless.cuda.CUDADevice.separableConvolution;
 
 		DoG.findInterestPoints( dog );
+		// TODO: make cuda headless
+		//dog.deviceList = spim.headless.cuda.CUDADevice.getSeparableCudaList( "lib/libSeparableConvolutionCUDALib.so" );
+		//dog.cuda = spim.headless.cuda.CUDADevice.separableConvolution;
+
+		final HashMap< ViewId, List< InterestPoint > > points = DoG.findInterestPoints( dog );
+
+		InterestPointTools.addInterestPoints( spimData, "beads", points, "DoG, sigma=1.4, downsample=2" );
+	}
+
+	public static void main( String[] args )
+	{
+		// generate 4 views with 1000 corresponding beads, single timepoint
+		SpimData2 spimData = SpimData2.convert( SimulatedBeadsImgLoader.spimdataExample() );
+
+		testDoG( spimData );
 	}
 }
