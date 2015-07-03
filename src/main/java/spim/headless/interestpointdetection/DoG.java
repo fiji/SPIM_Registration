@@ -17,14 +17,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class DoG {
+public class DoG
+{
     final DoGParameters dog;
 
     public DoG(final DoGParameters dog) {
         this.dog = dog;
     }
 
-    public static HashMap<ViewId, List<InterestPoint>> findInterestPoints(final DoGParameters dog) {
+    public static HashMap<ViewId, List<InterestPoint>> findInterestPoints(final DoGParameters dog)
+    {
         final HashMap<ViewId, List<InterestPoint>> interestPoints = new HashMap<ViewId, List<InterestPoint>>();
 
         //TODO: special iterator that takes into account missing views
@@ -70,7 +72,9 @@ public class DoG {
                 Downsample.correctForDownsampling(ips, correctCoordinates, dog.downsampleXY, dog.downsampleZ);
 
                 interestPoints.put(vd, ips);
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 IOFunctions.println("An error occured (DOG): " + e);
                 IOFunctions.println("Failed to segment angleId: " +
                         vd.getViewSetup().getAngle().getId() + " channelId: " +
