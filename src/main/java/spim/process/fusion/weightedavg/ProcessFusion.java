@@ -82,11 +82,6 @@ public abstract class ProcessFusion
 		return weigheners;
 	}
 
-	public static double getMinRes( final ViewDescription desc, final ImgLoader< ? > imgLoader )
-	{
-		final VoxelDimensions size = ViewSetupUtils.getVoxelSizeOrLoad( desc.getViewSetup(), desc.getTimePoint(), imgLoader );
-		return Math.min( size.dimension( 0 ), Math.min( size.dimension( 1 ), size.dimension( 2 ) ) );
-	}
 
 	protected AffineTransform3D getTransform( final ViewDescription inputData )
 	{

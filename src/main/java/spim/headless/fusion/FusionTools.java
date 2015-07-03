@@ -11,6 +11,7 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.img.ImgFactory;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.complex.ComplexFloatType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
@@ -19,7 +20,16 @@ import bdv.img.hdf5.Hdf5ImageLoader;
 
 public class FusionTools
 {
-	public static Blending getBlending( final Interval interval, final ViewDescription desc, final ImgLoader< ? > imgLoader )
+	public static double getMinRes( final ViewDescription desc, final ImgLoader< ? > imgLoader )
+	{
+		final VoxelDimensions size = ViewSetupUtils.getVoxelSizeOrLoad( desc.getViewSetup(), desc.getTimePoint(), imgLoader );
+		return Math.min( size.dimension( 0 ), Math.min( size.dimension( 1 ), size.dimension( 2 ) ) );
+	}
+
+	public static Blending getBlending(
+			final Interval interval,
+			final ViewDescription desc,
+			final ImgLoader< ? > imgLoader )
 	{
 		final float[] blending = ProcessFusion.defaultBlendingRange.clone();
 		final float[] border = ProcessFusion.defaultBlendingBorder.clone();
@@ -39,13 +49,18 @@ public class FusionTools
 		return new Blending( interval, border, blending );
 	}
 	
-	public static < T extends RealType< T > > ContentBased< T > getContentBased( final RandomAccessibleInterval< T > img, final ViewDescription desc, final ImgLoader< ? > imgLoader )
+	public static < T extends RealType< T > > ContentBased< T > getContentBased(
+			final RandomAccessibleInterval< T > img,
+			final ViewDescription desc,
+			final ImgLoader< ? > imgLoader,
+			final ImgFactory< ComplexFloatType > factory )
 	{
 		final double[] sigma1 = ProcessFusion.defaultContentBasedSigma1.clone();
 		final double[] sigma2 = ProcessFusion.defaultContentBasedSigma2.clone();
 
 		final double minRes = getMinRes( desc, imgLoader );
-		final VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSizeOrLoad( desc.getViewSetup(), desc.getTimePoint(), imgLoader );
+		final VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSizeOrLoad(
+				desc.getViewSetup(), desc.getTimePoint(), imgLoader );
 
 		if ( ProcessFusion.defaultAdjustContentBasedSigmaForAnisotropy )
 		{
@@ -56,7 +71,7 @@ public class FusionTools
 			}
 		}
 
-		return new ContentBased<T>( img, bb.getImgFactory( new ComplexFloatType() ), sigma1, sigma2);
+		return new ContentBased< T >( img, factory, sigma1, sigma2 );
 	}
 
 	public static boolean matches( final Interval interval, final BoundingBox bb, final int downsampling )
