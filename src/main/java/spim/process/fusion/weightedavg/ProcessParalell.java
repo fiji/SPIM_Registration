@@ -11,6 +11,8 @@ import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccessible;
+import net.imglib2.img.Img;
+import net.imglib2.img.ImgFactory;
 import net.imglib2.interpolation.InterpolatorFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
@@ -25,6 +27,25 @@ import spim.process.fusion.ImagePortion;
 
 public class ProcessParalell
 {
+	public static < T extends RealType< T > & NativeType< T > > Img< T > fuse(
+			final T type,
+			final InterpolatorFactory< T, RandomAccessible< T > > interpolatorFactory,
+			final ImgFactory< T > factory,
+			final List< RandomAccessibleInterval< T > > input,
+			final List< ? extends List< RealRandomAccessible< FloatType > > > weights,
+			final List< AffineTransform3D > models,
+			final BoundingBox bb,
+			final int downsampling,
+			final ExecutorService exec )
+	{
+		// try creating the output (type needs to be there to define T)
+		final Img< T > fusedImg = factory.create( bb.getDimensions( downsampling ), type );
+
+		fuse( type, interpolatorFactory, fusedImg, input, weights, models, bb, downsampling, exec );
+
+		return fusedImg;
+	}
+
 	/** 
 	 * Fuses one stack
 	 */
@@ -55,7 +76,7 @@ public class ProcessParalell
 
 		final ArrayList< ProcessParalellPortion< T > > tasks = new ArrayList< ProcessParalellPortion< T > >();
 
-		if ( weights.get( 0 ).size() == 0 ) // no weights
+		if ( weights == null || weights.get( 0 ).size() == 0 ) // no weights
 		{
 			for ( final ImagePortion portion : portions )
 				tasks.add( new ProcessParalellPortion< T >( portion, input, interpolatorFactory, models, output, bb, downsampling ) );

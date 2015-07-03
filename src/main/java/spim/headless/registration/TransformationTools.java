@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration;
+package spim.headless.registration;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,9 +29,8 @@ import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.headless.interestpointdetection.DoGParameters;
-import spim.headless.registration.PairwiseResult;
-import spim.headless.registration.RANSACParameters;
 import spim.headless.registration.geometrichashing.GeometricHashingParameters;
+import spim.process.interestpointregistration.GlobalOpt;
 import spim.process.interestpointregistration.pairwise.GeometricHashingPairwise;
 import spim.process.interestpointregistration.pairwise.MatcherPairwiseTools;
 import spim.process.interestpointregistration.pairwise.PairwiseStrategyTools;
@@ -208,7 +207,7 @@ public class TransformationTools
 	}
 
 	// TODO: move into test package
-	private static void testRegistration( final SpimData2 spimData )
+	public static void testRegistration( final SpimData2 spimData )
 	{
 		// run DoG
 		DoGParameters.testDoG( spimData );

@@ -1,21 +1,38 @@
 package spim.headless.fusion;
 
-import spim.fiji.spimdata.ViewSetupUtils;
-import spim.fiji.spimdata.boundingbox.BoundingBox;
-import spim.process.fusion.weightedavg.ProcessFusion;
-import spim.process.fusion.weights.Blending;
-import spim.process.fusion.weights.ContentBased;
+import ij.ImageJ;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
+import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
+import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.complex.ComplexFloatType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import simulation.imgloader.SimulatedBeadsImgLoader;
+import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.ViewSetupUtils;
+import spim.fiji.spimdata.boundingbox.BoundingBox;
+import spim.headless.registration.TransformationTools;
+import spim.process.fusion.weightedavg.ProcessFusion;
+import spim.process.fusion.weightedavg.ProcessParalell;
+import spim.process.fusion.weights.Blending;
+import spim.process.fusion.weights.ContentBased;
 import bdv.img.hdf5.Hdf5ImageLoader;
 
 public class FusionTools
@@ -101,4 +118,86 @@ public class FusionTools
 			return null;
 	}
 
+	public static List< RandomAccessibleInterval< FloatType > > getFloatImages(
+			ImgLoader< ? > imgLoader,
+			final Collection< ViewId > viewIds,
+			final boolean normalize )
+	{
+		return getImages( new FloatType(), imgLoader, viewIds, normalize );
+	}
+
+	public static List< RandomAccessibleInterval< UnsignedShortType > > getUShortImages(
+			ImgLoader< ? > imgLoader,
+			final Collection< ViewId > viewIds )
+	{
+		return getImages( new UnsignedShortType(), imgLoader, viewIds, false );
+	}
+
+	public static < T extends RealType< T > > List< RandomAccessibleInterval< T > > getImages(
+			final T type,
+			ImgLoader< ? > imgLoader,
+			final Collection< ViewId > viewIds,
+			final boolean normalize )
+	{
+		final ArrayList< RandomAccessibleInterval< T > > imgs = new ArrayList< RandomAccessibleInterval< T > >();
+
+		for ( final ViewId viewId : viewIds )
+			imgs.add( getImage( type, imgLoader, viewId, normalize ) );
+		
+		return imgs;
+	}
+
+	public static AffineTransform3D getTransform( final SpimData spimData, final ViewId viewId )
+	{
+		spimData.getViewRegistrations().getViewRegistration( viewId ).updateModel();
+		return spimData.getViewRegistrations().getViewRegistration( viewId ).getModel();
+	}
+
+	public static List< AffineTransform3D > getTransforms( final SpimData spimData, final Collection< ViewId > viewIds )
+	{
+		final ArrayList< AffineTransform3D > transforms = new ArrayList< AffineTransform3D >();
+
+		for ( final ViewId viewId : viewIds )
+			transforms.add( getTransform( spimData, viewId ) );
+		
+		return transforms;
+	}
+
+	public static void testFusion( final SpimData2 spimData )
+	{
+		TransformationTools.testRegistration( spimData );
+
+		// make a bounding box
+		final BoundingBox bb = new BoundingBox(
+				new int[]{ 140, 100, 000 },
+				new int[]{ 500, 600, 200 } );
+
+		// select views to process
+		final List< ViewId > viewIds = new ArrayList< ViewId >();
+		viewIds.addAll( spimData.getSequenceDescription().getViewDescriptions().values() );
+		Collections.sort( viewIds );
+
+		// fuse in parallel
+		Img< UnsignedShortType > fused = ProcessParalell.fuse(
+				new UnsignedShortType(),
+				new NLinearInterpolatorFactory< UnsignedShortType >(),
+				new ArrayImgFactory< UnsignedShortType >(),
+				getUShortImages( spimData.getSequenceDescription().getImgLoader(), viewIds ),
+				null, //weights,
+				getTransforms( spimData, viewIds ),
+				bb,
+				1,
+				null );
+
+		new ImageJ();
+		ImageJFunctions.show( fused );
+	}
+
+	public static void main( String[] args )
+	{
+		// generate 4 views with 1000 corresponding beads, single timepoint
+		SpimData2 spimData = SpimData2.convert( SimulatedBeadsImgLoader.spimdataExample( new int[]{ 0, 90 } ) );
+
+		testFusion( spimData );
+	}
 }

@@ -83,20 +83,5 @@ public abstract class ProcessFusion
 	}
 
 
-	protected AffineTransform3D getTransform( final ViewDescription inputData )
-	{
-		return spimData.getViewRegistrations().getViewRegistration( inputData ).getModel();
-	}
-
-	protected AffineTransform3D[] getTransforms( final ArrayList< ViewDescription > inputData )
-	{
-		final int numViews = inputData.size();
-		final AffineTransform3D[] transforms = new AffineTransform3D[ numViews ];
-
-		for ( int i = 0; i < numViews; ++i )
-			transforms[ i ] = getTransform( inputData.get( i ) );
-		
-		return transforms;
-	}
 
 }
