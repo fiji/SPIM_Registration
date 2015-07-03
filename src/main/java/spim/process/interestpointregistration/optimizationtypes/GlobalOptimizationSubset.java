@@ -65,7 +65,7 @@ public class GlobalOptimizationSubset
 			final List< ChannelProcess > channelsToProcess,
 			final String description )
 	{
-		final HashMap< ViewId, Tile< M > > tiles = GlobalOpt.compute( model, type, this, type.considerTimePointsAsUnit() );
+		final HashMap< ViewId, Tile< M > > tiles = null; //GlobalOpt.compute( model, type, this, type.considerTimePointsAsUnit() );
 
 		if ( tiles == null )
 			return false;
