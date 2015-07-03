@@ -74,7 +74,7 @@ public class Generic_Resave_HDF5 implements PlugIn
 
 		public Parameters(
 				final boolean setMipmapManual, final int[][] resolutions, final int[][] subdivisions,
-				final File seqFile, final File hdf5File,
+				final String seqFile, final File hdf5File,
 				final boolean deflate,
 				final boolean split, final int timepointsPerPartition, final int setupsPerPartition,
 				final boolean onlyRunSingleJob, final int jobId,

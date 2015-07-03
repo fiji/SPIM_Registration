@@ -1,13 +1,13 @@
 package spim.process.fusion.weightedavg;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccess;
-import net.imglib2.img.Img;
 import net.imglib2.interpolation.InterpolatorFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.RealType;
@@ -26,10 +26,10 @@ import spim.process.fusion.ImagePortion;
 public class ProcessParalellPortion< T extends RealType< T > > implements Callable< String >
 {
 	final ImagePortion portion;
-	final ArrayList< RandomAccessibleInterval< T > > imgs;
+	final List< RandomAccessibleInterval< T > > imgs;
 	final InterpolatorFactory<T, RandomAccessible< T > > interpolatorFactory;
 	final AffineTransform3D[] transforms;
-	final Img< T > fusedImg;
+	final RandomAccessibleInterval< T > fusedImg;
 	final BoundingBox bb;
 	
 	final boolean doDownSampling;
@@ -37,17 +37,19 @@ public class ProcessParalellPortion< T extends RealType< T > > implements Callab
 	
 	public ProcessParalellPortion(
 			final ImagePortion portion,
-			final ArrayList< RandomAccessibleInterval< T > > imgs,
+			final List< RandomAccessibleInterval< T > > imgs,
 			final InterpolatorFactory<T, RandomAccessible< T > > interpolatorFactory,
-			final AffineTransform3D[] transforms,
-			final Img< T > fusedImg,
+			final List< AffineTransform3D > transforms,
+			final RandomAccessibleInterval< T > fusedImg,
 			final BoundingBox bb,
 			final int downsampling )
 	{
 		this.portion = portion;
 		this.imgs = imgs;
 		this.interpolatorFactory = interpolatorFactory;
-		this.transforms = transforms;
+		this.transforms = new AffineTransform3D[ transforms.size() ];
+		for ( int i = 0; i < transforms.size(); ++i )
+			this.transforms[ i ] = transforms.get( i );
 		this.fusedImg = fusedImg;
 		this.bb = bb;
 		this.downSampling = downsampling;
@@ -75,7 +77,7 @@ public class ProcessParalellPortion< T extends RealType< T > > implements Callab
 			interpolators.add( Views.interpolate( Views.extendMirrorSingle( img ), interpolatorFactory ).realRandomAccess() );
 		}
 
-		final Cursor< T > cursor = fusedImg.localizingCursor();
+		final Cursor< T > cursor = Views.iterable( fusedImg ).localizingCursor();
 		final float[] s = new float[ 3 ];
 		final float[] t = new float[ 3 ];
 		

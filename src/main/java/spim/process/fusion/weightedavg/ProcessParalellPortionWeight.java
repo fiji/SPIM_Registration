@@ -1,13 +1,13 @@
 package spim.process.fusion.weightedavg;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccess;
 import net.imglib2.RealRandomAccessible;
-import net.imglib2.img.Img;
 import net.imglib2.interpolation.InterpolatorFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.RealType;
@@ -16,7 +16,6 @@ import net.imglib2.view.Views;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
-import spim.process.fusion.boundingbox.BoundingBoxGUI;
 
 /**
  * Fuse one portion of a paralell fusion, supports one weight function
@@ -27,15 +26,15 @@ import spim.process.fusion.boundingbox.BoundingBoxGUI;
  */
 public class ProcessParalellPortionWeight< T extends RealType< T > > extends ProcessParalellPortion< T >
 {
-	final ArrayList< RealRandomAccessible< FloatType > > weights;
+	final List< RealRandomAccessible< FloatType > > weights;
 	
 	public ProcessParalellPortionWeight(
 			final ImagePortion portion,
-			final ArrayList< RandomAccessibleInterval< T > > imgs,
-			final ArrayList< RealRandomAccessible< FloatType > > weights,
+			final List< RandomAccessibleInterval< T > > imgs,
+			final List< RealRandomAccessible< FloatType > > weights,
 			final InterpolatorFactory< T, RandomAccessible< T > > interpolatorFactory,
-			final AffineTransform3D[] transforms,
-			final Img< T > fusedImg,
+			final List< AffineTransform3D > transforms,
+			final RandomAccessibleInterval< T > fusedImg,
 			final BoundingBox bb,
 			final int downsampling )
 	{
@@ -64,7 +63,7 @@ public class ProcessParalellPortionWeight< T extends RealType< T > > extends Pro
 			weightAccess.add( weights.get( i ).realRandomAccess() );
 		}
 
-		final Cursor< T > cursor = fusedImg.localizingCursor();
+		final Cursor< T > cursor = Views.iterable( fusedImg ).localizingCursor();
 		final float[] s = new float[ 3 ];
 		final float[] t = new float[ 3 ];
 		
