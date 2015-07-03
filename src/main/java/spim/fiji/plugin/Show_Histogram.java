@@ -2,27 +2,24 @@ package spim.fiji.plugin;
 
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
+import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.data.sequence.VoxelDimensions;
-import mpicbg.spim.io.IOFunctions;
-import net.imglib2.KDTree;
-import net.imglib2.RealPoint;
-import net.imglib2.neighborsearch.KNearestNeighborSearchOnKDTree;
+import simulation.imgloader.SimulatedBeadsImgLoader;
 import spim.fiji.plugin.queryXML.GenericLoadParseQueryXML;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.thinout.ChannelProcessThinOut;
-import spim.fiji.plugin.thinout.Histogram;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.fiji.spimdata.interestpoints.InterestPointList;
-import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
-import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.headless.interestpointdetection.DoG;
+import spim.headless.interestpointdetection.DoGParameters;
+import spim.headless.interestpointdetection.InterestPointTools;
+import spim.process.histogram.HistogramDisplay;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 /**
  * Created by Stephan Janosch on 01/07/15.
@@ -33,71 +30,6 @@ public class Show_Histogram implements PlugIn {
     public static int[] defaultSubSampling;
     public static int defaultSubSamplingValue = 1;
 
-
-
-
-    public static Histogram plotHistogram( final SpimData2 spimData, final List< ViewId > viewIds, final ChannelProcessThinOut channel )
-    {
-        final ViewInterestPoints vip = spimData.getViewInterestPoints();
-
-        // list of all distances
-        final ArrayList< Double > distances = new ArrayList< Double >();
-        final Random rnd = new Random( System.currentTimeMillis() );
-        String unit = null;
-
-        for ( final ViewId viewId : viewIds )
-        {
-            final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( viewId );
-
-            if ( !vd.isPresent() || vd.getViewSetup().getChannel().getId() != channel.getChannel().getId() )
-                continue;
-
-            final ViewInterestPointLists vipl = vip.getViewInterestPointLists( viewId );
-            final InterestPointList ipl = vipl.getInterestPointList( channel.getLabel() );
-
-            final VoxelDimensions voxelSize = vd.getViewSetup().getVoxelSize();
-
-            if ( ipl.getInterestPoints() == null )
-                ipl.loadInterestPoints();
-
-            if ( unit == null )
-                unit = vd.getViewSetup().getVoxelSize().unit();
-
-            // assemble the list of points
-            final List<RealPoint> list = new ArrayList< RealPoint >();
-
-            for ( final InterestPoint ip : ipl.getInterestPoints() )
-            {
-                list.add ( new RealPoint(
-                        ip.getL()[ 0 ] * voxelSize.dimension( 0 ),
-                        ip.getL()[ 1 ] * voxelSize.dimension( 1 ),
-                        ip.getL()[ 2 ] * voxelSize.dimension( 2 ) ) );
-            }
-
-            // make the KDTree
-            final KDTree< RealPoint > tree = new KDTree< RealPoint >( list, list );
-
-            // Nearest neighbor for each point
-            final KNearestNeighborSearchOnKDTree< RealPoint > nn = new KNearestNeighborSearchOnKDTree< RealPoint >( tree, 2 );
-
-            for ( final RealPoint p : list )
-            {
-                // every n'th point only
-                if ( rnd.nextDouble() < 1.0 / (double)channel.getSubsampling() )
-                {
-                    nn.search( p );
-
-                    // first nearest neighbor is the point itself, we need the second nearest
-                    distances.add( nn.getDistance( 1 ) );
-                }
-            }
-        }
-
-        final Histogram h = new Histogram( distances, 100, "Distance Histogram [Channel=" + channel.getChannel().getName() + "]", unit  );
-        h.showHistogram();
-        IOFunctions.println("Channel " + channel.getChannel().getName() + ": min distance=" + h.getMin() + ", max distance=" + h.getMax());
-        return h;
-    }
 
     public static ArrayList< ChannelProcessThinOut > getChannelsAndLabels(
             final SpimData2 spimData,
@@ -196,13 +128,35 @@ public class Show_Histogram implements PlugIn {
 
         for ( final ChannelProcessThinOut channel : channels )
             if ( channel.showHistogram() )
-                plotHistogram( data, viewIds, channel );
+                HistogramDisplay.plotHistogram(data, viewIds, channel);
+
+    }
+
+    private static void testShowHistogram()
+    {
+        SpimData spimData = SimulatedBeadsImgLoader.spimdataExample();
+        SpimData2 spimData2 = SpimData2.convert(spimData);
+
+        ImgLoader imgLoader = spimData2.getSequenceDescription().getImgLoader();
+        List<ViewDescription> viewDescriptions = new ArrayList<ViewDescription>();
+        viewDescriptions.addAll(spimData2.getSequenceDescription().getViewDescriptions().values());
+
+        DoGParameters dog = new DoGParameters(viewDescriptions, imgLoader, 1.4, 2);
+
+        String label = "ips";
+
+        InterestPointTools.addInterestPoints(spimData2, label, DoG.findInterestPoints(dog), "");
+
+        HistogramDisplay.plotHistogram(spimData2,viewDescriptions,label,1);
 
     }
 
     public static void main( final String[] args )
     {
-        GenericLoadParseQueryXML.defaultXMLfilename = "/Volumes/LaCie/150424_OP227_TubeScaleA2/Worm1_G1/dataset_detect.xml";
-        new Show_Histogram().run( null );
+//        GenericLoadParseQueryXML.defaultXMLfilename = "/Users/janosch/no_backup/one.xml";
+//        new Show_Histogram().run( null );
+        testShowHistogram();
+
+
     }
 }
