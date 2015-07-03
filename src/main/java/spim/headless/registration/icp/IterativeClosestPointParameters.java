@@ -9,6 +9,8 @@ public class IterativeClosestPointParameters
 		this.model = model;
 	}
 
+	public static double maxDistance;
+
 	protected double d = 5;
 	protected int maxIt = 100;
 

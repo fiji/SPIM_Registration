@@ -13,7 +13,6 @@ import loci.formats.Modulo;
 import loci.formats.meta.MetadataRetrieve;
 import mpicbg.spim.io.IOFunctions;
 import ome.units.quantity.Length;
-import spim.fiji.datasetmanager.StackList;
 import spim.fiji.spimdata.imgloaders.LightSheetZ1ImgLoader;
 
 public class LightSheetZ1MetaData
