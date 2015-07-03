@@ -1,9 +1,11 @@
 package spim.headless.interestpointdetection;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
+import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import simulation.imgloader.SimulatedBeadsImgLoader;
@@ -34,6 +36,23 @@ public class DoGParameters extends InterestPointParameters
 	public CUDASeparableConvolution cuda = null;
 	public boolean accurateCUDA = false;
 
+    public DoGParameters(){
+        super();
+    }
+
+    public DoGParameters(Collection<ViewDescription> toProcess, ImgLoader<?> imgloader, double sigma, double threshold) {
+        super(toProcess, imgloader);
+        this.sigma = sigma;
+        this.threshold = threshold;
+    }
+
+    public DoGParameters(Collection<ViewDescription> toProcess, ImgLoader<?> imgloader, double sigma, int downsampleXY)
+    {
+        super(toProcess,imgloader);
+        this.sigma = sigma;
+        this.downsampleXY = downsampleXY;
+    }
+
 	public static void testDoG( SpimData2 spimData )
 	{
 		DoGParameters dog = new DoGParameters();
@@ -45,6 +64,10 @@ public class DoGParameters extends InterestPointParameters
 		dog.downsampleXY = 2;
 		dog.sigma = 1.4;
 
+		//dog.deviceList = spim.headless.cuda.CUDADevice.getSeparableCudaList( "lib/libSeparableConvolutionCUDALib.so" );
+		//dog.cuda = spim.headless.cuda.CUDADevice.separableConvolution;
+
+		DoG.findInterestPoints( dog );
 		// TODO: make cuda headless
 		//dog.deviceList = spim.headless.cuda.CUDADevice.getSeparableCudaList( "lib/libSeparableConvolutionCUDALib.so" );
 		//dog.cuda = spim.headless.cuda.CUDADevice.separableConvolution;
@@ -59,6 +82,6 @@ public class DoGParameters extends InterestPointParameters
 		// generate 4 views with 1000 corresponding beads, single timepoint
 		SpimData2 spimData = SpimData2.convert( SimulatedBeadsImgLoader.spimdataExample() );
 
-		testDoG( spimData );
+		testDoG(spimData);
 	}
 }

@@ -15,5 +15,13 @@ public class InterestPointParameters
 
 	// downsampleXY == 0 : a bit less then z-resolution
 	// downsampleXY == -1 : a bit more then z-resolution
-	public  int downsampleXY = 1, downsampleZ = 1;
+	public int downsampleXY = 1, downsampleZ = 1;
+
+    public InterestPointParameters() {
+    }
+
+    public InterestPointParameters(Collection<ViewDescription> toProcess, ImgLoader<?> imgloader) {
+        this.toProcess = toProcess;
+        this.imgloader = imgloader;
+    }
 }
