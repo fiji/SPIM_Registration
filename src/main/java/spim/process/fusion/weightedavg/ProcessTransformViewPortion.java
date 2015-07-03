@@ -21,7 +21,7 @@ import spim.process.fusion.ImagePortion;
  *
  * @param <T>
  */
-public class ProcessIndependentPortion< T extends RealType< T > > implements Callable< String >
+public class ProcessTransformViewPortion< T extends RealType< T > > implements Callable< String >
 {
 	final ImagePortion portion;
 	final RandomAccessibleInterval< T > img;
@@ -33,7 +33,7 @@ public class ProcessIndependentPortion< T extends RealType< T > > implements Cal
 	final boolean doDownSampling;
 	final int downSampling;
 	
-	public ProcessIndependentPortion(
+	public ProcessTransformViewPortion(
 			final ImagePortion portion,
 			final RandomAccessibleInterval< T > input,
 			final InterpolatorFactory<T, RandomAccessible< T > > interpolatorFactory,

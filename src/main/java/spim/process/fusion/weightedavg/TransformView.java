@@ -77,10 +77,10 @@ public class TransformView
 		else
 			taskExecutor = exec;
 
-		final ArrayList< ProcessIndependentPortion< T > > tasks = new ArrayList< ProcessIndependentPortion< T > >();
+		final ArrayList< ProcessTransformViewPortion< T > > tasks = new ArrayList< ProcessTransformViewPortion< T > >();
 
 		for ( final ImagePortion portion : portions )
-			tasks.add( new ProcessIndependentPortion< T >( portion, input, interpolatorFactory, model, output, bb, downsampling ) );
+			tasks.add( new ProcessTransformViewPortion< T >( portion, input, interpolatorFactory, model, output, bb, downsampling ) );
 
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting fusion process.");
 
