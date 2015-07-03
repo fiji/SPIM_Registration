@@ -50,7 +50,7 @@ import spim.process.fusion.export.DisplayImage;
 import spim.process.fusion.export.FixedNameImgTitler;
 import spim.process.fusion.export.ImgExport;
 import spim.process.fusion.export.ImgExportTitle;
-import spim.process.fusion.weightedavg.WeightedAverageFusion;
+import spim.process.fusion.weightedavg.WeightedAverageFusionGUI;
 
 public class EfficientBayesianBased extends Fusion
 {
@@ -1228,6 +1228,6 @@ public class EfficientBayesianBased extends Fusion
 	@Override
 	protected Map< ViewSetup, ViewSetup > createNewViewSetups( final BoundingBoxGUI bb )
 	{
-		return WeightedAverageFusion.assembleNewViewSetupsFusion( spimData, viewIdsToProcess, bb, "Decon", "Decon" );
+		return WeightedAverageFusionGUI.assembleNewViewSetupsFusion( spimData, viewIdsToProcess, bb, "Decon", "Decon" );
 	}
 }

@@ -143,18 +143,4 @@ public abstract class ProcessFusion
 		return transforms;
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public static < T extends RealType< T > > RandomAccessibleInterval< T > getImage( final T type, final SpimData2 spimData, final ViewId view, final boolean normalize )
-	{
-		ImgLoader< ? > imgLoader = spimData.getSequenceDescription().getImgLoader();
-		if ( imgLoader instanceof Hdf5ImageLoader )
-			imgLoader = ( ( Hdf5ImageLoader ) imgLoader ).getMonolithicImageLoader();
-
-		if ( (RealType)type instanceof FloatType )
-			return (RandomAccessibleInterval)imgLoader.getFloatImage( view, normalize );
-		else if ( (RealType)type instanceof UnsignedShortType )
-			return (RandomAccessibleInterval)imgLoader.getImage( view );
-		else
-			return null;
-	}
 }

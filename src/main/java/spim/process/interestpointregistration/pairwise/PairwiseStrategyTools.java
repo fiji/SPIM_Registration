@@ -11,7 +11,7 @@ import spim.fiji.ImgLib2Temp.ValuePair;
 public class PairwiseStrategyTools
 {
 	public static List< Pair< ViewId, ViewId > > allToAll(
-			final List< ViewId > views,
+			final List< ? extends ViewId > views,
 			final Collection< ViewId > fixed,
 			final Collection< ? extends Collection< ViewId > > groups )
 	{
