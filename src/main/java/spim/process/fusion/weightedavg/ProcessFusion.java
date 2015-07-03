@@ -65,45 +65,6 @@ public abstract class ProcessFusion
 			final TimePoint timepoint, 
 			final Channel channel );
 
-	protected Blending getBlending( final Interval interval, final ViewDescription desc, final ImgLoader< ? > imgLoader )
-	{
-		final float[] blending = ProcessFusion.defaultBlendingRange.clone();
-		final float[] border = ProcessFusion.defaultBlendingBorder.clone();
-		
-		final float minRes = (float)getMinRes( desc, imgLoader );
-		final VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSizeOrLoad( desc.getViewSetup(), desc.getTimePoint(), imgLoader );
-
-		if ( ProcessFusion.defaultAdjustBlendingForAnisotropy )
-		{
-			for ( int d = 0; d < 2; ++d )
-			{
-				blending[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
-				border[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
-			}
-		}
-		
-		return new Blending( interval, border, blending );
-	}
-	
-	protected < T extends RealType< T > > ContentBased< T > getContentBased( final RandomAccessibleInterval< T > img, final ViewDescription desc, final ImgLoader< ? > imgLoader )
-	{
-		final double[] sigma1 = ProcessFusion.defaultContentBasedSigma1.clone();
-		final double[] sigma2 = ProcessFusion.defaultContentBasedSigma2.clone();
-
-		final double minRes = getMinRes( desc, imgLoader );
-		final VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSizeOrLoad( desc.getViewSetup(), desc.getTimePoint(), imgLoader );
-
-		if ( ProcessFusion.defaultAdjustContentBasedSigmaForAnisotropy )
-		{
-			for ( int d = 0; d < 2; ++d )
-			{
-				sigma1[ d ] /= voxelSize.dimension( d ) / minRes;
-				sigma2[ d ] /= voxelSize.dimension( d ) / minRes;
-			}
-		}
-
-		return new ContentBased<T>( img, bb.getImgFactory( new ComplexFloatType() ), sigma1, sigma2);
-	}
 	
 	protected < T extends RealType< T > > ArrayList< RealRandomAccessible< FloatType > > getAllWeights(
 			final RandomAccessibleInterval< T > img,
