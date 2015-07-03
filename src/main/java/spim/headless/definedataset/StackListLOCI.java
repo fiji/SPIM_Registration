@@ -10,12 +10,12 @@ import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.imgloaders.StackImgLoader;
 import spim.fiji.spimdata.imgloaders.StackImgLoaderLOCI;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
-import spim.headless.util.ApplyTransformation;
 
 import java.io.File;
 import java.util.Properties;
@@ -43,7 +43,7 @@ public class StackListLOCI extends StackList
 		sequenceDescription.setImgLoader( imgLoader );
 
 		// get the minimal resolution of all calibrations
-		final double minResolution = ApplyTransformation.assembleAllMetaData(
+		final double minResolution = Apply_Transformation.assembleAllMetaData(
 				sequenceDescription,
 				sequenceDescription.getViewDescriptions().values() );
 
