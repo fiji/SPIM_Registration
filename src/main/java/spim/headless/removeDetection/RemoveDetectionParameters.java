@@ -147,22 +147,19 @@ public class RemoveDetectionParameters {
     {
 
         SpimData spimData = SimulatedBeadsImgLoader.spimdataExample();
-        ImgLoader imgLoader = spimData.getSequenceDescription().getImgLoader();
+        SpimData2 spimData2 = SpimData2.convert(spimData);
+        spimData2.setBasePath(new File("/Users/janosch/no_backup"));
+
+        ImgLoader imgLoader = spimData2.getSequenceDescription().getImgLoader();
         List<ViewDescription> viewDescriptions = new ArrayList<ViewDescription>();
-        viewDescriptions.addAll(spimData.getSequenceDescription().getViewDescriptions().values());
+        viewDescriptions.addAll(spimData2.getSequenceDescription().getViewDescriptions().values());
 
         DoGParameters dog = new DoGParameters(viewDescriptions, imgLoader, 1.4, 2);
-
-        ViewInterestPoints viewInterestPoints = new ViewInterestPoints();
-        viewInterestPoints.createViewInterestPoints(spimData.getSequenceDescription().getViewDescriptions());
-
-        String xmlFilename = "/Users/janosch/no_backup/";
-        final SpimData2 spimData2 = new SpimData2(new File(xmlFilename), spimData.getSequenceDescription(), spimData.getViewRegistrations(), viewInterestPoints, new BoundingBoxes());
 
         String label = "ips";
 
         //todo add parameters for segmentation
-        InterestPointTools.addInterestPoints(spimData2, label, DoG.findInterestPoints(dog),"",true);
+        InterestPointTools.addInterestPoints(spimData2, label, DoG.findInterestPoints(dog),"");
 
         RemoveDetectionParameters removeDetectionParameters = new RemoveDetectionParameters();
 
@@ -177,7 +174,6 @@ public class RemoveDetectionParameters {
 
         String parameters = DetectionRemoval.getParameterString(removeDetectionParameters,label);
         InterestPointTools.addInterestPoints(spimData2, "thinned_" + label, newInterestPoints,parameters,true);
-
 
         SpimData2.saveXML(spimData2,"one.xml","");
 
