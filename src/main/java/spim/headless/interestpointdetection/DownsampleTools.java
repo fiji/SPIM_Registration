@@ -21,7 +21,7 @@ public class DownsampleTools
 	
 	/**
 	 * 
-	 * @param imgloader
+	 * @param imgLoader
 	 * @param vd
 	 * @param t - will be filled if downsampling is performed, otherwise identity transform
 	 * @param downsampleXYIndex - specify which downsampling (0 == ?? )

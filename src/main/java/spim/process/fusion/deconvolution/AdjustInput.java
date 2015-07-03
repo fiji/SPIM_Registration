@@ -24,7 +24,7 @@ public class AdjustInput
 	/**
 	 * Norms an image so that the sum over all pixels is 1.
 	 * 
-	 * @param img - the {@link Image} to normalize
+	 * @param img - the Image to normalize
 	 */
 	final public static void normImg( final IterableInterval< FloatType > img )
 	{
@@ -35,7 +35,7 @@ public class AdjustInput
 	}
 	
 	/**
-	 * @param img - the input {@link Image}
+	 * @param img - the input Image
 	 * @return - the sum of all pixels using {@link RealSum}
 	 */
 	final public static double sumImg( final IterableInterval< FloatType > img )
