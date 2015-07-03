@@ -38,11 +38,19 @@ import spim.process.interestpointregistration.pairwise.PairwiseStrategyTools;
 
 public class TransformationTools
 {
-	public static < M extends Model< M > > AffineTransform3D computeMapBackModel(
+	/**
+	 * 
+	 * @param mapBackView - which view to use to map back
+	 * @param mapBackViewRegistration - the registration of this view before computing the new registration
+	 * @param computedModel - the new model
+	 * @param mapBackModel - which model to use to map back (e.g. rigid, translation)
+	 * @return the transformation to map back, pre-concatenate this to all views that are registered
+	 */
+	public static AffineTransform3D computeMapBackModel(
 			final ViewDescription mapBackView,
 			final ViewRegistration mapBackViewRegistration,
 			final AffineModel3D computedModel,
-			final M mapBackModel )
+			final Model< ? > mapBackModel )
 	{
 		if ( mapBackModel.getMinNumMatches() > 4 )
 		{
@@ -58,20 +66,21 @@ public class TransformationTools
 			long w = size.dimension( 0 );
 			long h = size.dimension( 1 );
 
+			// the top 4 corner points of the stack
 			final double[][] p = new double[][]{
 					{ 0, 0, 0 },
 					{ w, 0, 0 },
 					{ 0, h, 0 },
 					{ w, h, 0 } };
 
-			// original coordinates == pa
+			// original coordinates == pa (from mapBackViewRegistration)
 			final double[][] pa = new double[ 4 ][ 3 ];
 
 			// map coordinates to the actual input coordinates
 			for ( int i = 0; i < p.length; ++i )
 				mapBackViewRegistration.getModel().apply( p[ i ], pa[ i ] );
 
-			// transformed coordinates == pb
+			// transformed coordinates == pb (from mapBackViewRegistration+computedModel)
 			final double[][] pb = new double[ 4 ][ 3 ];
 
 			for ( int i = 0; i < p.length; ++i )
@@ -109,7 +118,7 @@ public class TransformationTools
 
 	/** call this method to load interestpoints and apply current transformation */
 	public static Map< ViewId, List< InterestPoint > > getAllTransformedInterestPoints(
-			final Collection< ViewId > viewIds,
+			final Collection< ? extends ViewId > viewIds,
 			final Map< ViewId, ViewRegistration > registrations,
 			final Map< ViewId, InterestPointList > interestpoints )
 	{
@@ -253,8 +262,8 @@ public class TransformationTools
 				models.get( viewIds.get( 0 ) ).getModel(),
 				new RigidModel3D() );
 
-		// pre-concatenate models to spimdata2 viewregistrations
-		for ( final ViewId viewId : models.keySet() )
+		// pre-concatenate models to spimdata2 viewregistrations (from SpimData(2))
+		for ( final ViewId viewId : viewIds )
 		{
 			final Tile< AffineModel3D > tile = models.get( viewId );
 			final ViewRegistration vr = transformations.get( viewId );

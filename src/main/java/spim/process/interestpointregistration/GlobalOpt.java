@@ -285,6 +285,7 @@ public class GlobalOpt
 				{
 					map.put( viewId, tileGroup );
 
+					// TODO: merge groups that share tiles
 					if ( !remainingViews.contains( viewId ) )
 						throw new RuntimeException(
 								"ViewSetupID:" + viewId.getViewSetupId() + ", timepointId: " + viewId.getTimePointId() +
