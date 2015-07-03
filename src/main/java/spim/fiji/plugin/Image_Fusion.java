@@ -29,8 +29,8 @@ import spim.process.fusion.export.ExportSpimData2HDF5;
 import spim.process.fusion.export.ExportSpimData2TIFF;
 import spim.process.fusion.export.ImgExport;
 import spim.process.fusion.export.Save3dTIFF;
-import spim.process.fusion.weightedavg.WeightedAverageFusion;
-import spim.process.fusion.weightedavg.WeightedAverageFusion.WeightedAvgFusionType;
+import spim.process.fusion.weightedavg.WeightedAverageFusionGUI;
+import spim.process.fusion.weightedavg.WeightedAverageFusionGUI.WeightedAvgFusionType;
 import bdv.img.hdf5.Hdf5ImageLoader;
 
 public class Image_Fusion implements PlugIn
@@ -48,8 +48,8 @@ public class Image_Fusion implements PlugIn
 	{
 		IOFunctions.printIJLog = true;
 		staticFusionAlgorithms.add( new EfficientBayesianBased( null, null ) );
-		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, WeightedAvgFusionType.FUSEDATA ) );
-		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, WeightedAvgFusionType.INDEPENDENT ) );
+		staticFusionAlgorithms.add( new WeightedAverageFusionGUI( null, null, WeightedAvgFusionType.FUSEDATA ) );
+		staticFusionAlgorithms.add( new WeightedAverageFusionGUI( null, null, WeightedAvgFusionType.INDEPENDENT ) );
 
 		staticBoundingBoxAlgorithms.add( new BoundingBoxGUI( null, null ) );
 		staticBoundingBoxAlgorithms.add( new BigDataViewerBoundingBox( null, null ) );

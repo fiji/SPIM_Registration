@@ -328,20 +328,6 @@ public class BoundingBoxGUI extends BoundingBox
 	}
 
 	/**
-	 * @return - the final dimensions including downsampling of this bounding box (to instantiate an img)
-	 */
-	public long[] getDimensions()
-	{
-		final long[] dim = new long[ this.numDimensions() ];
-		this.dimensions( dim );
-		
-		for ( int d = 0; d < this.numDimensions(); ++d )
-			dim[ d ] /= this.getDownSampling();
-		
-		return dim;
-	}
-
-	/**
 	 * @param spimData
 	 * @param viewIdsToProcess
 	 * @param minBB

@@ -13,6 +13,7 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
+import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
 import spim.process.fusion.boundingbox.BoundingBoxGUI;
@@ -35,9 +36,10 @@ public class ProcessParalellPortionWeight< T extends RealType< T > > extends Pro
 			final InterpolatorFactory< T, RandomAccessible< T > > interpolatorFactory,
 			final AffineTransform3D[] transforms,
 			final Img< T > fusedImg,
-			final BoundingBoxGUI bb )
+			final BoundingBox bb,
+			final int downsampling )
 	{
-		super( portion, imgs, interpolatorFactory, transforms, fusedImg, bb );
+		super( portion, imgs, interpolatorFactory, transforms, fusedImg, bb, downsampling );
 		
 		this.weights = weights;
 	}
