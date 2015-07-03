@@ -20,16 +20,16 @@ import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
-import spim.fiji.plugin.Apply_Transformation;
+
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.imgloaders.MicroManagerImgLoader;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.headless.util.ApplyTransformation;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Properties;
 
 /**
  * DataSet definition for MicroManager
@@ -115,7 +115,7 @@ public class MicroManager extends DefineDataSet
 		final SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints, new BoundingBoxes() );
 
 		if ( reader.applyAxis() )
-			Apply_Transformation.applyAxis( spimData );
+			ApplyTransformation.applyAxis( spimData );
 
 		try { reader.close(); } catch (IOException e) { IOFunctions.println( "Could not close file '" + mmFile.getAbsolutePath() + "': " + e ); }
 

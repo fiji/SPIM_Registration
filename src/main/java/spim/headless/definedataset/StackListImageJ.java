@@ -4,10 +4,7 @@ import ij.ImagePlus;
 import ij.io.Opener;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.ImgLoader;
-import mpicbg.spim.data.sequence.MissingViews;
 import mpicbg.spim.data.sequence.SequenceDescription;
-import mpicbg.spim.data.sequence.TimePoints;
-import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
@@ -15,16 +12,15 @@ import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
-import spim.fiji.plugin.Apply_Transformation;
+
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.imgloaders.StackImgLoader;
 import spim.fiji.spimdata.imgloaders.StackImgLoaderIJ;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.headless.util.ApplyTransformation;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Properties;
 
 /**
  * DataSet definition for ImageJ
@@ -49,7 +45,7 @@ public class StackListImageJ extends StackList
 		sequenceDescription.setImgLoader( imgLoader );
 
 		// get the minimal resolution of all calibrations
-		final double minResolution = Apply_Transformation.assembleAllMetaData(
+		final double minResolution = ApplyTransformation.assembleAllMetaData(
 				sequenceDescription,
 				sequenceDescription.getViewDescriptions().values() );
 
