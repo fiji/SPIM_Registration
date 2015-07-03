@@ -204,7 +204,6 @@ public class TransformationTools
 		SpimData2 spimData = SpimData2.convert( SimulatedBeadsImgLoader.spimdataExample( new int[]{ 0, 90, 135 } ) );
 
 		testRegistration(spimData);
-
 	}
 
 	// TODO: move into test package
