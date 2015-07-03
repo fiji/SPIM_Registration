@@ -12,9 +12,9 @@ import net.imglib2.interpolation.InterpolatorFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
+import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
-import spim.process.fusion.boundingbox.BoundingBoxGUI;
 
 /**
  * Fuse one portion of a paralell fusion, supports no weights
@@ -30,7 +30,7 @@ public class ProcessParalellPortion< T extends RealType< T > > implements Callab
 	final InterpolatorFactory<T, RandomAccessible< T > > interpolatorFactory;
 	final AffineTransform3D[] transforms;
 	final Img< T > fusedImg;
-	final BoundingBoxGUI bb;
+	final BoundingBox bb;
 	
 	final boolean doDownSampling;
 	final int downSampling;
@@ -41,7 +41,8 @@ public class ProcessParalellPortion< T extends RealType< T > > implements Callab
 			final InterpolatorFactory<T, RandomAccessible< T > > interpolatorFactory,
 			final AffineTransform3D[] transforms,
 			final Img< T > fusedImg,
-			final BoundingBoxGUI bb )
+			final BoundingBox bb,
+			final int downsampling )
 	{
 		this.portion = portion;
 		this.imgs = imgs;
@@ -49,7 +50,7 @@ public class ProcessParalellPortion< T extends RealType< T > > implements Callab
 		this.transforms = transforms;
 		this.fusedImg = fusedImg;
 		this.bb = bb;
-		this.downSampling = bb.getDownSampling();
+		this.downSampling = downsampling;
 		
 		if ( downSampling == 1 )
 			doDownSampling = false;

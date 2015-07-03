@@ -29,6 +29,20 @@ public class BoundingBox implements Interval, Comparable< BoundingBox >
 	public int[] getMin() { return min; }
 	public int[] getMax() { return max; }
 
+	/**
+	 * @return - the final dimensions including downsampling of this bounding box (to instantiate an img)
+	 */
+	public long[] getDimensions( final int downsampling )
+	{
+		final long[] dim = new long[ this.numDimensions() ];
+		this.dimensions( dim );
+
+		for ( int d = 0; d < this.numDimensions(); ++d )
+			dim[ d ] /= downsampling;
+
+		return dim;
+	}
+
 	@Override
 	public long min( final int d ) { return min[ d ]; }
 

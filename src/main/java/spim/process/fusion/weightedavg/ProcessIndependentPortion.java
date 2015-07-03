@@ -6,14 +6,13 @@ import net.imglib2.Cursor;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccess;
-import net.imglib2.img.Img;
 import net.imglib2.interpolation.InterpolatorFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
+import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
-import spim.process.fusion.boundingbox.BoundingBoxGUI;
 
 /**
  * Fuse one portion of a paralell fusion, supports no weights
@@ -26,29 +25,30 @@ public class ProcessIndependentPortion< T extends RealType< T > > implements Cal
 {
 	final ImagePortion portion;
 	final RandomAccessibleInterval< T > img;
-	final InterpolatorFactory<T, RandomAccessible< T > > interpolatorFactory;
+	final InterpolatorFactory< T, RandomAccessible< T > > interpolatorFactory;
 	final AffineTransform3D transform;
-	final Img< T > fusedImg;
-	final BoundingBoxGUI bb;
+	final RandomAccessibleInterval< T > fusedImg;
+	final BoundingBox bb;
 	
 	final boolean doDownSampling;
 	final int downSampling;
 	
 	public ProcessIndependentPortion(
 			final ImagePortion portion,
-			final RandomAccessibleInterval< T > img,
+			final RandomAccessibleInterval< T > input,
 			final InterpolatorFactory<T, RandomAccessible< T > > interpolatorFactory,
 			final AffineTransform3D transform,
-			final Img< T > fusedImg,
-			final BoundingBoxGUI bb )
+			final RandomAccessibleInterval< T > output,
+			final BoundingBox bb,
+			final int downsampling )
 	{
 		this.portion = portion;
-		this.img = img;
+		this.img = input;
 		this.interpolatorFactory = interpolatorFactory;
 		this.transform = transform;
-		this.fusedImg = fusedImg;
+		this.fusedImg = output;
 		this.bb = bb;
-		this.downSampling = bb.getDownSampling();
+		this.downSampling = downsampling;
 		
 		if ( downSampling == 1 )
 			doDownSampling = false;
@@ -63,7 +63,7 @@ public class ProcessIndependentPortion< T extends RealType< T > > implements Cal
 		final RealRandomAccess< T > r = Views.interpolate( Views.extendMirrorSingle( img ), interpolatorFactory ).realRandomAccess();
 		final int[] imgSize = new int[]{ (int)img.dimension( 0 ), (int)img.dimension( 1 ), (int)img.dimension( 2 ) };
 
-		final Cursor< T > cursor = fusedImg.localizingCursor();
+		final Cursor< T > cursor = Views.iterable( fusedImg ).localizingCursor();
 		final float[] s = new float[ 3 ];
 		final float[] t = new float[ 3 ];
 		
