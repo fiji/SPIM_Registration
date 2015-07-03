@@ -19,7 +19,7 @@ import spim.process.interestpointregistration.TransformationModel;
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
-public class IterativeClosestPointGUI extends InterestPointRegistration
+public class IterativeClosestPointGUI extends IterativeClosestPointPairwise
 {
 	public static int defaultModel = 2;
 	public static boolean defaultRegularize = true;
@@ -27,33 +27,31 @@ public class IterativeClosestPointGUI extends InterestPointRegistration
 
 	protected IterativeClosestPointParameters parameters;
 
-	public IterativeClosestPointGUI(
-			final SpimData2 spimData,
-			final List< ViewId > viewIdsToProcess,
-			final List< ChannelProcess > channelsToProcess )
+	public IterativeClosestPointGUI(final IterativeClosestPointParameters ip)
 	{
-		super( spimData, viewIdsToProcess, channelsToProcess );
+		super(ip);
 	}
 
-	@Override
+//	@Override
 	protected IterativeClosestPointPairwise pairwiseMatchingInstance( final PairwiseMatch pair, final String description)
 	{
-		return new IterativeClosestPointPairwise( pair, model, description, parameters );
+		IterativeClosestPointParameters ip = new IterativeClosestPointParameters( model.getModel() );
+		return new IterativeClosestPointPairwise( ip );
 	}
 
-	@Override
+//	@Override
 	protected TransformationModel getTransformationModel() { return model; }
 
-	@Override
+//	@Override
 	public void addQuery( final GenericDialog gd, final RegistrationType registrationType )
 	{
-		gd.addChoice( "Transformation model", TransformationModel.modelChoice, TransformationModel.modelChoice[ defaultModel ] );
-		gd.addCheckbox( "Regularize_model", defaultRegularize );
-		gd.addSlider( "Maximal_distance for correspondence (px)", 0.25, 40.0, IterativeClosestPointParameters.maxDistance );
-		gd.addNumericField( "Maximal_number of iterations", IterativeClosestPointParameters.maxIterations, 0 );
+//		gd.addChoice( "Transformation model", TransformationModel.modelChoice, TransformationModel.modelChoice[ defaultModel ] );
+//		gd.addCheckbox( "Regularize_model", defaultRegularize );
+//		gd.addSlider( "Maximal_distance for correspondence (px)", 0.25, 40.0, IterativeClosestPointParameters.maxDistance );
+//		gd.addNumericField( "Maximal_number of iterations", IterativeClosestPointParameters.maxIterations, 0 );
 	}
 
-	@Override
+//	@Override
 	public boolean parseDialog( final GenericDialog gd, final RegistrationType registrationType )
 	{
 		model = new TransformationModel( defaultModel = gd.getNextChoiceIndex() );
@@ -65,22 +63,20 @@ public class IterativeClosestPointGUI extends InterestPointRegistration
 		}
 
 		final double maxDistance = IterativeClosestPointParameters.maxDistance = gd.getNextNumber();
-		final int maxIterations = IterativeClosestPointParameters.maxIterations = (int)Math.round( gd.getNextNumber() );
+		final int maxIterations = (int)Math.round( gd.getNextNumber() );
 		
-		this.parameters = new IterativeClosestPointParameters( maxDistance, maxIterations );
+		this.parameters = new IterativeClosestPointParameters( model.getModel() );
 		
 		return true;
 	}
 
-	@Override
-	public IterativeClosestPoint newInstance(
-			final SpimData2 spimData,
-			final List< ViewId > viewIdsToProcess,
-			final List< ChannelProcess > channelsToProcess )
+//	@Override
+	public IterativeClosestPointGUI newInstance(
+			final IterativeClosestPointParameters ip )
 	{
-		return new IterativeClosestPoint( spimData, viewIdsToProcess, channelsToProcess );
+		return new IterativeClosestPointGUI( ip );
 	}
 
-	@Override
+//	@Override
 	public String getDescription() { return "Iterative closest-point (ICP, no invariance)";}
 }
