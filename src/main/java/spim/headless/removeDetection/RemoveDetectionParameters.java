@@ -1,24 +1,22 @@
 package spim.headless.removeDetection;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import simulation.imgloader.SimulatedBeadsImgLoader;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.headless.interestpointdetection.DoG;
 import spim.headless.interestpointdetection.DoGParameters;
 import spim.headless.interestpointdetection.InterestPointTools;
 import spim.process.removeDetection.DetectionRemoval;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
 
 /**
  * Created by Stephan Janosch on 01/07/15.
@@ -173,7 +171,7 @@ public class RemoveDetectionParameters {
         HashMap<ViewId, List<InterestPoint>> newInterestPoints = DetectionRemoval.removeDetections(spimData2,removeDetectionParameters);
 
         String parameters = DetectionRemoval.getParameterString(removeDetectionParameters,label);
-        InterestPointTools.addInterestPoints(spimData2, "thinned_" + label, newInterestPoints,parameters,true);
+        InterestPointTools.addInterestPoints(spimData2, "thinned_" + label, newInterestPoints,parameters );
 
         SpimData2.saveXML(spimData2,"one.xml","");
 
