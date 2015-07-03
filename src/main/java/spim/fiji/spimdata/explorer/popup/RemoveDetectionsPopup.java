@@ -53,6 +53,7 @@ public class RemoveDetectionsPopup extends JMenu implements ViewExplorerSetable
 		this.add( interactivelyYZ );
 	}
 
+	@Override
 	public JMenuItem setViewExplorer( final ViewSetupExplorerPanel< ?, ? > panel )
 	{
 		this.panel = panel;
@@ -68,6 +69,7 @@ public class RemoveDetectionsPopup extends JMenu implements ViewExplorerSetable
 			this.index = index;
 		}
 
+		@Override
 		public void actionPerformed( final ActionEvent e )
 		{
 			if ( panel == null )
@@ -132,6 +134,7 @@ public class RemoveDetectionsPopup extends JMenu implements ViewExplorerSetable
 
 				ip.runWhenDone( new Thread( new Runnable()
 				{
+					@Override
 					public void run()
 					{
 						if ( ip.wasCanceled() )
