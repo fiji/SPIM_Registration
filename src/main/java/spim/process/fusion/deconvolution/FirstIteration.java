@@ -17,7 +17,6 @@ import spim.process.fusion.ImagePortion;
  * 
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
- * @param <T>
  */
 public class FirstIteration implements Callable< RealSum >
 {

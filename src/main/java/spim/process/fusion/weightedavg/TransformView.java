@@ -2,7 +2,6 @@ package spim.process.fusion.weightedavg;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -10,52 +9,55 @@ import java.util.concurrent.Executors;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.RealRandomAccessible;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.interpolation.InterpolatorFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import spim.Threads;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.headless.fusion.FusionTools;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
+import spim.process.fusion.boundingbox.BoundingBoxGUI;
 
-public class ProcessParalell
+/**
+ * Fused individual images for each input stack, uses the exporter directly
+ * 
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de)
+ *
+ */
+public class TransformView
 {
-	public static < T extends RealType< T > & NativeType< T > > Img< T > fuse(
+	public static < T extends RealType< T > & NativeType< T > > Img< T > render(
 			final T type,
 			final InterpolatorFactory< T, RandomAccessible< T > > interpolatorFactory,
+			final RandomAccessibleInterval< T > input,
+			final AffineTransform3D model,
 			final ImgFactory< T > factory,
-			final List< RandomAccessibleInterval< T > > input,
-			final List< ? extends List< RealRandomAccessible< FloatType > > > weights,
-			final List< AffineTransform3D > models,
-			final BoundingBox bb,
+			final BoundingBoxGUI bb,
 			final int downsampling,
 			final ExecutorService exec )
 	{
 		// try creating the output (type needs to be there to define T)
 		final Img< T > fusedImg = factory.create( bb.getDimensions( downsampling ), type );
 
-		fuse( type, interpolatorFactory, fusedImg, input, weights, models, bb, downsampling, exec );
+		render( type, interpolatorFactory, input, fusedImg, model, bb, downsampling, exec );
 
 		return fusedImg;
 	}
 
 	/** 
-	 * Fuses one stack
+	 * Transforms one stack
 	 */
-	public static < T extends RealType< T > & NativeType< T > > void fuse(
+	public static < T extends RealType< T > & NativeType< T > > void render(
 			final T type,
 			final InterpolatorFactory< T, RandomAccessible< T > > interpolatorFactory,
+			final RandomAccessibleInterval< T > input,
 			final RandomAccessibleInterval< T > output,
-			final List< RandomAccessibleInterval< T > > input,
-			final List< ? extends List< RealRandomAccessible< FloatType > > > weights,
-			final List< AffineTransform3D > models,
+			final AffineTransform3D model,
 			final BoundingBox bb,
 			final int downsampling,
 			final ExecutorService exec )
@@ -64,7 +66,8 @@ public class ProcessParalell
 			throw new RuntimeException( "Output RAI does not match BoundingBox with downsampling" );
 
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( Views.iterable( output ).size(), Threads.numThreads() * 4 );
+		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions(
+				Views.iterable( output ).size(), Threads.numThreads() * 4 );
 
 		// set up executor service
 		final ExecutorService taskExecutor;
@@ -74,30 +77,12 @@ public class ProcessParalell
 		else
 			taskExecutor = exec;
 
-		final ArrayList< ProcessParalellPortion< T > > tasks = new ArrayList< ProcessParalellPortion< T > >();
+		final ArrayList< ProcessTransformViewPortion< T > > tasks = new ArrayList< ProcessTransformViewPortion< T > >();
 
-		if ( weights == null || weights.get( 0 ).size() == 0 ) // no weights
-		{
-			for ( final ImagePortion portion : portions )
-				tasks.add( new ProcessParalellPortion< T >( portion, input, interpolatorFactory, models, output, bb, downsampling ) );
-		}
-		else if ( weights.get( 0 ).size() > 1 ) // many weights
-		{
-			for ( final ImagePortion portion : portions )
-				tasks.add( new ProcessParalellPortionWeights< T >( portion, input, weights, interpolatorFactory, models, output, bb, downsampling ) );
-		}
-		else // one weight
-		{
-			final ArrayList< RealRandomAccessible< FloatType > > singleWeight = new ArrayList< RealRandomAccessible< FloatType > >();
-			
-			for ( int i = 0; i < input.size(); ++i )
-				singleWeight.add( weights.get( i ).get( 0 ) );
-			
-			for ( final ImagePortion portion : portions )
-				tasks.add( new ProcessParalellPortionWeight< T >( portion, input, singleWeight, interpolatorFactory, models, output, bb, downsampling ) );
-		}
+		for ( final ImagePortion portion : portions )
+			tasks.add( new ProcessTransformViewPortion< T >( portion, input, interpolatorFactory, model, output, bb, downsampling ) );
 
-		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Starting fusion process.");
+		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting fusion process.");
 
 		try
 		{
@@ -113,7 +98,14 @@ public class ProcessParalell
 
 		if ( exec == null )
 			taskExecutor.shutdown();
-		
+
+		/*titler.setTitle( "TP" + inputData.getTimePointId() + 
+					"_Channel" + inputData.getViewSetup().getChannel().getName() +
+					"_Illum" + inputData.getViewSetup().getIllumination().getName() +
+					"_Angle" + inputData.getViewSetup().getAngle().getName() );
+			export.exportImage( fusedImg, bb, timepoint, newViewsetups.get( inputData.getViewSetup() ) );
+		*/
+
 		return;
 	}
 }

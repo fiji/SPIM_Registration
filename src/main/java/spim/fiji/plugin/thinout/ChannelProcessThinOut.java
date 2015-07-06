@@ -3,6 +3,7 @@ package spim.fiji.plugin.thinout;
 import mpicbg.spim.data.sequence.Channel;
 import spim.process.interestpointregistration.ChannelProcess;
 
+@Deprecated
 public class ChannelProcessThinOut extends ChannelProcess
 {
 	final boolean showHistogram;

@@ -32,7 +32,7 @@ import spim.process.fusion.export.FixedNameImgTitler;
 import spim.process.fusion.export.ImgExport;
 import spim.process.fusion.export.ImgExportTitle;
 
-public class WeightedAverageFusion extends Fusion
+public class WeightedAverageFusionGUI extends Fusion
 {
 	public enum WeightedAvgFusionType { FUSEDATA, INDEPENDENT };
 	final WeightedAvgFusionType type;
@@ -42,7 +42,7 @@ public class WeightedAverageFusion extends Fusion
 	
 	protected Choice sequentialViews = null;
 
-	public WeightedAverageFusion(
+	public WeightedAverageFusionGUI(
 			final SpimData2 spimData,
 			final List< ViewId > viewIdsToProcess,
 			final WeightedAvgFusionType type )
@@ -77,7 +77,7 @@ public class WeightedAverageFusion extends Fusion
 		else if ( getFusionType() == WeightedAvgFusionType.FUSEDATA )
 			process = new ProcessSequential( spimData, viewIdsToProcess, bb, useBlending, useContentBased, numParalellViews );
 		else
-			process = new ProcessIndependent( spimData, viewIdsToProcess, bb, exporter, newViewsetups );
+			process = new TransformView( spimData, viewIdsToProcess, bb, exporter, newViewsetups );
 
 
 		for ( final TimePoint t : timepointsToProcess )
@@ -115,9 +115,9 @@ public class WeightedAverageFusion extends Fusion
 	}
 
 	@Override
-	public WeightedAverageFusion newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
+	public WeightedAverageFusionGUI newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
-		return new WeightedAverageFusion( spimData, viewIdsToProcess, type );
+		return new WeightedAverageFusionGUI( spimData, viewIdsToProcess, type );
 	}
 
 	@Override
