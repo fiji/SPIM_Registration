@@ -109,7 +109,7 @@ public class TransformationTools
 
 	/** call this method to load interestpoints and apply current transformation */
 	public static Map< ViewId, List< InterestPoint > > getAllTransformedInterestPoints(
-			final Collection< ViewId > viewIds,
+			final Collection< ? extends ViewId > viewIds,
 			final Map< ViewId, ViewRegistration > registrations,
 			final Map< ViewId, InterestPointList > interestpoints )
 	{
