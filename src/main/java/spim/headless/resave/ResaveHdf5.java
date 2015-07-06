@@ -1,4 +1,4 @@
-package spim.headless.resavehdf5;
+package spim.headless.resave;
 
 import bdv.export.ExportMipmapInfo;
 import bdv.export.ProgressWriter;

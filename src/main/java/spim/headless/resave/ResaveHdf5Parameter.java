@@ -1,4 +1,4 @@
-package spim.headless.resavehdf5;
+package spim.headless.resave;
 
 import java.io.File;
 

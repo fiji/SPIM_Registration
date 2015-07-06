@@ -1,4 +1,4 @@
-package spim.headless.resavehdf5;
+package spim.headless.resave;
 
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.SequenceDescription;
