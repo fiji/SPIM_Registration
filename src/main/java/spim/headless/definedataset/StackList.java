@@ -1,46 +1,21 @@
 package spim.headless.definedataset;
 
-import mpicbg.spim.data.registration.ViewRegistration;
-import mpicbg.spim.data.registration.ViewRegistrations;
-import mpicbg.spim.data.registration.ViewTransform;
-import mpicbg.spim.data.registration.ViewTransformAffine;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.Illumination;
-import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.MissingViews;
 import mpicbg.spim.data.sequence.SequenceDescription;
-import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.TimePoints;
 import mpicbg.spim.data.sequence.TimePointsPattern;
-import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.VoxelDimensions;
-import mpicbg.spim.io.IOFunctions;
-import net.imglib2.Dimensions;
-import net.imglib2.FinalDimensions;
-import net.imglib2.img.ImgFactory;
-import net.imglib2.img.array.ArrayImgFactory;
-import net.imglib2.img.cell.CellImgFactory;
-import net.imglib2.realtransform.AffineTransform3D;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.integer.UnsignedShortType;
-import net.imglib2.type.numeric.real.FloatType;
-import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.spimdata.NamePattern;
-import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.boundingbox.BoundingBoxes;
-import spim.fiji.spimdata.imgloaders.LightSheetZ1ImgLoader;
-import spim.fiji.spimdata.imgloaders.MicroManagerImgLoader;
-import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
-import java.io.File;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Base StackList class for various kinds of DataSet definition class
@@ -232,5 +207,13 @@ public class StackList extends DefineDataSet
 
 		final MissingViews missingViews = new MissingViews( missingViewArray );		// instantiate the sequencedescription
 		return new SequenceDescription( timePoints, viewSetups, null, missingViews );
+	}
+
+	public static String leadingZeros( String s, final int numDigits )
+	{
+		while ( s.length() < numDigits )
+			s = "0" + s;
+
+		return s;
 	}
 }
