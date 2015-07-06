@@ -20,7 +20,7 @@ import spim.process.interestpointregistration.TransformationModel;
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
-public class RGLDMGUI extends InterestPointRegistration
+public class RGLDMGUI extends RGLDMPairwise
 {
 	public static int defaultModel = 2;
 	public static boolean defaultRegularize = true;
@@ -30,36 +30,34 @@ public class RGLDMGUI extends InterestPointRegistration
 	protected RANSACParameters ransacParams;
 
 	public RGLDMGUI(
-			final SpimData2 spimData,
-			final List< ViewId > viewIdsToProcess,
-			final List< ChannelProcess > channelsToProcess )
+			final RANSACParameters rp,
+			final RGLDMParameters dp )
 	{
-		super( spimData, viewIdsToProcess, channelsToProcess );
+		super(rp, dp);
 	}
 
-	@Override
+//	@Override
 	protected RGLDMPairwise pairwiseMatchingInstance( final PairwiseMatch pair, final String description )
 	{
-		return new RGLDMPairwise( pair, model, description, ransacParams, parameters );
+		return new RGLDMPairwise( ransacParams, parameters );
 	}
 
-	@Override
+//	@Override
 	protected TransformationModel getTransformationModel() { return model; }
 
-	@Override
-	public RGLDM newInstance(
-			final SpimData2 spimData,
-			final List< ViewId > viewIdsToProcess,
-			final List< ChannelProcess > channelsToProcess )
+//	@Override
+	public RGLDMGUI newInstance(
+			final RANSACParameters rp,
+			final RGLDMParameters dp  )
 	{
-		return new RGLDM( spimData, viewIdsToProcess, channelsToProcess );
+		return new RGLDMGUI( rp, dp );
 	}
 
 
-	@Override
+//	@Override
 	public String getDescription() { return "Redundant geometric local descriptor matching (translation invariant)";}
 
-	@Override
+//	@Override
 	public void addQuery( final GenericDialog gd, final RegistrationType registrationType )
 	{
 		gd.addChoice( "Transformation model", TransformationModel.modelChoice, TransformationModel.modelChoice[ defaultModel ] );
@@ -70,7 +68,7 @@ public class RGLDMGUI extends InterestPointRegistration
 		gd.addSlider( "Allowed_error_for_RANSAC (px)", 0.5, 20.0, RANSACParameters.max_epsilon );
 	}
 
-	@Override
+//	@Override
 	public boolean parseDialog( final GenericDialog gd, final RegistrationType registrationType )
 	{
 		model = new TransformationModel( defaultModel = gd.getNextChoiceIndex() );
@@ -86,7 +84,7 @@ public class RGLDMGUI extends InterestPointRegistration
 		final float significance = RGLDMParameters.ratioOfDistance = (float)gd.getNextNumber();
 		final float maxEpsilon = RANSACParameters.max_epsilon = (float)gd.getNextNumber();
 		
-		this.parameters = new RGLDMParameters( RGLDMParameters.differenceThreshold, significance, numNeighbors, redundancy );
+		this.parameters = new RGLDMParameters( model.getModel(), RGLDMParameters.differenceThreshold, significance, numNeighbors, redundancy );
 		this.ransacParams = new RANSACParameters( maxEpsilon, RANSACParameters.min_inlier_ratio, RANSACParameters.min_inlier_factor, RANSACParameters.num_iterations );
 		
 		return true;
