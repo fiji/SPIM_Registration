@@ -173,6 +173,7 @@ public class RemoveDetectionParameters {
         String parameters = DetectionRemoval.getParameterString(removeDetectionParameters,label);
         InterestPointTools.addInterestPoints(spimData2, "thinned_" + label, newInterestPoints,parameters );
 
+        // TODO: should save interest points as well
         SpimData2.saveXML(spimData2,"one.xml","");
 
     }

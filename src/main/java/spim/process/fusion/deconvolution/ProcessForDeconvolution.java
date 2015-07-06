@@ -35,6 +35,7 @@ import spim.Threads;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
+import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.fiji.spimdata.imgloaders.StackImgLoaderIJ;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
@@ -66,7 +67,7 @@ public class ProcessForDeconvolution
 
 	final protected SpimData2 spimData;
 	final protected List< ViewId > viewIdsToProcess;
-	final BoundingBoxGUI bb;
+	final BoundingBox bb;
 	final int[] blendingBorder;
 	final int[] blendingRange;
 	
@@ -82,7 +83,7 @@ public class ProcessForDeconvolution
 	public ProcessForDeconvolution(
 			final SpimData2 spimData,
 			final List< ViewId > viewIdsToProcess,
-			final BoundingBoxGUI bb,
+			final BoundingBox bb,
 			final int[] blendingBorder,
 			final int[] blendingRange )
 	{
@@ -138,7 +139,7 @@ public class ProcessForDeconvolution
 		final Img< FloatType > overlapImg;
 
 		if ( weightType == WeightType.WEIGHTS_ONLY )
-			overlapImg = imgFactory.create( bb.getDimensions(), new FloatType() );
+			overlapImg = imgFactory.create( bb.getDimensions( 1 ), new FloatType() );
 		else
 			overlapImg = null;
 
@@ -175,7 +176,7 @@ public class ProcessForDeconvolution
 			if ( weightType == WeightType.WEIGHTS_ONLY )
 				transformedImg = overlapImg;
 			else
-				transformedImg = imgFactory.create( bb.getDimensions(), new FloatType() );
+				transformedImg = imgFactory.create( bb.getDimensions( 1 ), new FloatType() );
 
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Transformed image factory: " + imgFactory.getClass().getSimpleName() );
 
@@ -203,7 +204,7 @@ public class ProcessForDeconvolution
 			final long[] offset = new long[]{ bb.min( 0 ), bb.min( 1 ), bb.min( 2 ) };
 
 			if ( weightType == WeightType.PRECOMPUTED_WEIGHTS || weightType == WeightType.WEIGHTS_ONLY )
-				weightImg = imgFactory.create( bb.getDimensions(), new FloatType() );
+				weightImg = imgFactory.create( bb.getDimensions( 1 ), new FloatType() );
 			else if ( weightType == WeightType.NO_WEIGHTS )
 				weightImg = Views.interval( new ConstantRandomAccessible< FloatType >( new FloatType( 1 ), transformedImg.numDimensions() ), transformedImg );
 			else if ( weightType == WeightType.VIRTUAL_WEIGHTS )
@@ -216,7 +217,7 @@ public class ProcessForDeconvolution
 			{
 				IOFunctions.println( "WARNING: LOADING WEIGHTS FROM: '" + new File( files[ i ] ) + "'" );
 				ImagePlus imp = StackImgLoaderIJ.open( new File( files[ i ] ) );
-				weightImg = imgFactory.create( bb.getDimensions(), new FloatType() );
+				weightImg = imgFactory.create( bb.getDimensions( 1 ), new FloatType() );
 				StackImgLoaderIJ.imagePlus2ImgLib2Img( imp, (Img< FloatType > )weightImg, false );
 				imp.close();
 				if ( debugImport )
