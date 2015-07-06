@@ -112,21 +112,7 @@ public class GeometricHashingTest
 			storeTransformation( vr, viewId, tile, mapBack, "AffineModel3D" );
 		}
 
-		// 4. Store interest points and spimdata
-		String basePath = "/Users/moon/temp/moon/";
-		String xmlFile = basePath + "geoTest.xml";
-
-		for ( final ViewId viewId : viewIds )
-		{
-			interestpointLists.get( viewId ).setBaseDir( new File( basePath ) );
-			interestpointLists.get( viewId ).saveInterestPoints();
-			interestpointLists.get( viewId ).setCorrespondingInterestPoints( new ArrayList< CorrespondingInterestPoints >() );
-			interestpointLists.get( viewId ).saveCorrespondingInterestPoints();
-		}
-
-		spimData.setBasePath( new File( basePath ) );
-		SpimData2.saveXML( spimData, xmlFile, "" );
-
-		Assert.assertTrue( new File( xmlFile ).exists() );
+		Assert.assertEquals( "MapBack", mapBack.toString(),
+				"3d-affine: (1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0)" );
 	}
 }
