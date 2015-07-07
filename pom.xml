@@ -154,6 +154,10 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>net.imglib2.simulation</groupId>
 			<artifactId>multiview-simulation</artifactId>
 			<version>0.0.6</version>
