@@ -8,7 +8,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import mpicbg.spim.data.sequence.ViewId;
 import spim.Threads;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
@@ -17,17 +16,17 @@ import spim.headless.registration.PairwiseResult;
 
 public class MatcherPairwiseTools
 {
-	public static List< Pair< Pair< ViewId, ViewId >, PairwiseResult > > computePairs(
-			final List< Pair< ViewId, ViewId > > pairs,
-			final Map< ViewId, List< InterestPoint > > interestpoints,
+	public static <V> List< Pair< Pair< V, V >, PairwiseResult > > computePairs(
+			final List< Pair< V, V > > pairs,
+			final Map< V, List< InterestPoint > > interestpoints,
 			final MatcherPairwise matcher )
 	{
 		return computePairs( pairs, interestpoints, matcher, null );
 	}
 
-	public static List< Pair< Pair< ViewId, ViewId >, PairwiseResult > > computePairs(
-			final List< Pair< ViewId, ViewId > > pairs,
-			final Map< ViewId, List< InterestPoint > > interestpoints,
+	public static <V> List< Pair< Pair< V, V >, PairwiseResult > > computePairs(
+			final List< Pair< V, V > > pairs,
+			final Map< V, List< InterestPoint > > interestpoints,
 			final MatcherPairwise matcher,
 			final ExecutorService exec )
 	{
@@ -40,7 +39,7 @@ public class MatcherPairwiseTools
 
 		final ArrayList< Callable< PairwiseResult > > tasks = new ArrayList< Callable< PairwiseResult > >(); // your tasks
 
-		for ( final Pair< ViewId, ViewId > pair : pairs )
+		for ( final Pair< V, V > pair : pairs )
 		{
 			/*
 			// just for logging the names and results of pairwise comparison
@@ -67,8 +66,8 @@ public class MatcherPairwiseTools
 			});
 		}
 
-		final List< Pair< Pair< ViewId, ViewId >, PairwiseResult > > r =
-				new ArrayList< Pair< Pair< ViewId, ViewId >, PairwiseResult > >();
+		final List< Pair< Pair< V, V >, PairwiseResult > > r =
+				new ArrayList< Pair< Pair< V, V >, PairwiseResult > >();
 		try
 		{
 			// invokeAll() returns when all tasks are complete
@@ -76,7 +75,7 @@ public class MatcherPairwiseTools
 
 			for ( int i = 0; i < pairs.size(); ++i )
 			{
-				r.add( new ValuePair< Pair< ViewId, ViewId >, PairwiseResult >( pairs.get( i ), futures.get( i ).get() ) );
+				r.add( new ValuePair< Pair< V, V >, PairwiseResult >( pairs.get( i ), futures.get( i ).get() ) );
 			}
 		}
 		catch ( final Exception e )

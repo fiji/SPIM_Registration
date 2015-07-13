@@ -98,8 +98,8 @@ public class GeometricHashingTest
 
 		// 3.2 Apply map-back model (useless as we fix the first one)
 		final AffineTransform3D mapBack = computeMapBackModel(
-				spimData.getSequenceDescription().getViewDescription( viewIds.get( 0 ) ),
-				transformations.get( viewIds.get( 0 ) ),
+				spimData.getSequenceDescription().getViewDescription( viewIds.get( 0 ) ).getViewSetup().getSize(),
+				transformations.get( viewIds.get( 0 ) ).getModel(),
 				models.get( viewIds.get( 0 ) ).getModel(),
 				new RigidModel3D() );
 
