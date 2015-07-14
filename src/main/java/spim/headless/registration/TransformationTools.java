@@ -16,7 +16,6 @@ import mpicbg.models.Tile;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewTransform;
 import mpicbg.spim.data.registration.ViewTransformAffine;
-import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Dimensions;
@@ -39,15 +38,15 @@ public class TransformationTools
 {
 	/**
 	 * 
-	 * @param mapBackView - which view to use to map back
-	 * @param mapBackViewRegistration - the registration of this view before computing the new registration
+	 * @param size - size of view which is used to map back
+	 * @param mapBackViewRegistration - the registration model of this view before computing the new registration
 	 * @param computedModel - the new model
 	 * @param mapBackModel - which model to use to map back (e.g. rigid, translation)
 	 * @return the transformation to map back, pre-concatenate this to all views that are registered
 	 */
 	public static AffineTransform3D computeMapBackModel(
-			final ViewDescription mapBackView,
-			final ViewRegistration mapBackViewRegistration,
+			final Dimensions size,
+			final AffineTransform3D mapBackViewRegistration,
 			final AffineModel3D computedModel,
 			final Model< ? > mapBackModel )
 	{
@@ -61,7 +60,6 @@ public class TransformationTools
 		{
 			IOFunctions.println( "Mapping back to reference frame using a " + mapBackModel.getClass().getSimpleName() );
 
-			final Dimensions size = mapBackView.getViewSetup().getSize(); //ViewSetupUtils.getSizeOrLoad( referenceTileSetup, mapBackView.getTimePoint(), imgLoader );
 			long w = size.dimension( 0 );
 			long h = size.dimension( 1 );
 
@@ -77,7 +75,7 @@ public class TransformationTools
 
 			// map coordinates to the actual input coordinates
 			for ( int i = 0; i < p.length; ++i )
-				mapBackViewRegistration.getModel().apply( p[ i ], pa[ i ] );
+				mapBackViewRegistration.apply( p[ i ], pa[ i ] );
 
 			// transformed coordinates == pb (from mapBackViewRegistration+computedModel)
 			final double[][] pb = new double[ 4 ][ 3 ];
@@ -116,25 +114,25 @@ public class TransformationTools
 	}
 
 	/** call this method to load interestpoints and apply current transformation */
-	public static Map< ViewId, List< InterestPoint > > getAllTransformedInterestPoints(
-			final Collection< ? extends ViewId > viewIds,
-			final Map< ViewId, ViewRegistration > registrations,
-			final Map< ViewId, InterestPointList > interestpoints )
+	public static <V> Map< V, List< InterestPoint > > getAllTransformedInterestPoints(
+			final Collection< ? extends V > viewIds,
+			final Map< V, ViewRegistration > registrations,
+			final Map< V, InterestPointList > interestpoints )
 	{
-		final HashMap< ViewId, List< InterestPoint > > transformedInterestpoints =
-				new HashMap< ViewId, List< InterestPoint > >();
+		final HashMap< V, List< InterestPoint > > transformedInterestpoints =
+				new HashMap< V, List< InterestPoint > >();
 
-		for ( final ViewId viewId : viewIds )
+		for ( final V viewId : viewIds )
 			transformedInterestpoints.put( viewId, getTransformedInterestPoints( viewId, registrations, interestpoints ) );
 
 		return transformedInterestpoints;
 	}
 
 	/** call this method to load interestpoints and apply current transformation */
-	public static List< InterestPoint > getTransformedInterestPoints(
-			final ViewId viewId,
-			final Map< ViewId, ViewRegistration > registrations,
-			final Map< ViewId, InterestPointList > interestpoints )
+	public static <V> List< InterestPoint > getTransformedInterestPoints(
+			final V viewId,
+			final Map< V, ViewRegistration > registrations,
+			final Map< V, InterestPointList > interestpoints )
 	{
 		final List< InterestPoint > list = loadInterestPoints( interestpoints.get( viewId ) );
 		final AffineTransform3D t = getTransform( viewId, registrations );
@@ -150,7 +148,7 @@ public class TransformationTools
 		return list.getInterestPoints();
 	}
 
-	public static AffineTransform3D getTransform( final ViewId viewId, final Map< ViewId, ViewRegistration > registrations )
+	public static <V> AffineTransform3D getTransform( final V viewId, final Map< V, ViewRegistration > registrations )
 	{
 		final ViewRegistration r = registrations.get( viewId );
 		r.updateModel();
@@ -172,9 +170,9 @@ public class TransformationTools
 		return transformedList;
 	}
 
-	public static void storeTransformation(
+	public static <V> void storeTransformation(
 			final ViewRegistration vr,
-			final ViewId viewId,
+			final V viewId,
 			final Tile< ? > tile,
 			final AffineGet mapBackModel,
 			final String modelDescription )
@@ -256,8 +254,8 @@ public class TransformationTools
 
 		// map-back model (useless as we fix the first one)
 		final AffineTransform3D mapBack = computeMapBackModel(
-				spimData.getSequenceDescription().getViewDescription( viewIds.get( 0 ) ),
-				transformations.get( viewIds.get( 0 ) ),
+				spimData.getSequenceDescription().getViewDescription( viewIds.get( 0 ) ).getViewSetup().getSize(),
+				transformations.get( viewIds.get( 0 ) ).getModel(),
 				models.get( viewIds.get( 0 ) ).getModel(),
 				new RigidModel3D() );
 
