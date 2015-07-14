@@ -2,6 +2,8 @@ package spim.fiji.spimdata.imgloaders;
 
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.nio.ShortBuffer;
+import java.nio.ByteOrder;
 
 import loci.formats.in.SlideBook6Reader;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
@@ -75,19 +77,22 @@ public class SlideBook6ImgLoader extends AbstractImgLoader
 		
 		final int bpp = r.getBytesPerPixel(a);
 
-		byte[] data = new byte[(int) (bpp * img.size())];
+		byte[] data = new byte[(int) (bpp * img.dimension(0) * img.dimension(1))];
 		
-		ByteBuffer buffer = ByteBuffer.wrap(data);
-
+		ByteBuffer byteBuffer = ByteBuffer.wrap(data);
+		
 		for ( int z = 0; z < img.dimension(2); ++z )
 		{
 			// SlideBook6Reader.dll
 			// a = angle id (SPIMdata) = capture index (SlideBook)
-			r.readImagePlaneBuf(data, a, 0, t, z, c);
+			// r.readImagePlaneBuf(data, a, 0, t, z, c);
 			
-			// TODO: handle endian conversion
-			for ( final char v : buffer.asCharBuffer().array() )
-				cursor.next().setReal( v );
+			// a = angle id (SPIMdata) = channel index (SlideBook)
+			r.readImagePlaneBuf(data, 0, 0, t, z, a);
+
+			ShortBuffer shortBuffer = byteBuffer.order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
+			while ( shortBuffer.hasRemaining())
+				cursor.next().setReal( shortBuffer.get() );
 		}
 	}
 
@@ -100,12 +105,14 @@ public class SlideBook6ImgLoader extends AbstractImgLoader
 			SlideBook6Reader reader = new SlideBook6Reader();
 
 			reader.openFile(sldFile.getPath());
+			int capture = 0;
+			int position = 0;
 			
 			final BasicViewDescription< ? > vd = sequenceDescription.getViewDescriptions().get( view );
 			final int a = vd.getViewSetup().getAttribute( Angle.class ).getId();
-			final int w = reader.getNumXColumns(a);
-			final int h = reader.getNumYRows(a);
-			final int d = reader.getNumZPlanes(a);
+			final int w = reader.getNumXColumns(capture);
+			final int h = reader.getNumYRows(capture);
+			final int d = reader.getNumZPlanes(capture);
 			final ArrayImg< FloatType, ? > img = ArrayImgs.floats( w, h, d );
 			
 			populateImage( img, vd, reader );
@@ -114,10 +121,10 @@ public class SlideBook6ImgLoader extends AbstractImgLoader
 				normalize( img );
 
 			// TODO: make sure a < getNumCaptures()
-			float voxelSize = reader.getVoxelSize(a);
+			float voxelSize = reader.getVoxelSize(capture);
 			float zSpacing = 1;
-			if (reader.getNumZPlanes(a) > 1) {
-				zSpacing = (float) (reader.getZPosition(a, 0, 1) - reader.getZPosition(a, 0, 0));
+			if (reader.getNumZPlanes(capture) > 1) {
+				zSpacing = (float) (reader.getZPosition(capture, position, 1) - reader.getZPosition(capture, position, 0));
 			}
 			
 			updateMetaDataCache( view, w, h, d, voxelSize, voxelSize, zSpacing );
@@ -144,20 +151,23 @@ public class SlideBook6ImgLoader extends AbstractImgLoader
 			SlideBook6Reader reader = new SlideBook6Reader();
 
 			reader.openFile(sldFile.getPath());
+			int capture = 0;
+			int position = 0;
+			
 			final BasicViewDescription< ? > vd = sequenceDescription.getViewDescriptions().get( view );
 			final int a = vd.getViewSetup().getAttribute( Angle.class ).getId();
-			final int w = reader.getNumXColumns(a);
-			final int h = reader.getNumYRows(a);
-			final int d = reader.getNumZPlanes(a);
+			final int w = reader.getNumXColumns(capture);
+			final int h = reader.getNumYRows(capture);
+			final int d = reader.getNumZPlanes(capture);
 			final ArrayImg< UnsignedShortType, ? > img = ArrayImgs.unsignedShorts( w, h, d );
 
 			populateImage( img, vd, reader );
 			
 			// TODO: make sure a < getNumCaptures()
-			float voxelSize = reader.getVoxelSize(a);
+			float voxelSize = reader.getVoxelSize(capture);
 			float zSpacing = 1;
-			if (reader.getNumZPlanes(a) > 1) {
-				zSpacing = (float) (reader.getZPosition(a, 0, 1) - reader.getZPosition(a, 0, 0));
+			if (reader.getNumZPlanes(capture) > 1) {
+				zSpacing = (float) (reader.getZPosition(capture, position, 1) - reader.getZPosition(capture, position, 0));
 			}
 			
 			updateMetaDataCache( view, w, h, d, voxelSize, voxelSize, zSpacing );
@@ -184,6 +194,8 @@ public class SlideBook6ImgLoader extends AbstractImgLoader
 		try
 		{
 			reader.openFile(sldFile.getPath());
+			int capture = 0;
+			int position = 0;
 
 			final BasicViewDescription< ? > vd = sequenceDescription.getViewDescriptions().get( view );
 			final int a = vd.getViewSetup().getAttribute( Angle.class ).getId();
@@ -192,17 +204,17 @@ public class SlideBook6ImgLoader extends AbstractImgLoader
 			final int d = reader.getNumZPlanes(a);
 
 			// TODO: make sure a < getNumCaptures()
-			float voxelSize = reader.getVoxelSize(a);
+			float voxelSize = reader.getVoxelSize(capture);
 			float zSpacing = 1;
-			if (reader.getNumZPlanes(a) > 1) {
-				zSpacing = (float) (reader.getZPosition(a, 0, 1) - reader.getZPosition(a, 0, 0));
+			if (reader.getNumZPlanes(capture) > 1) {
+				zSpacing = (float) (reader.getZPosition(capture, position, 1) - reader.getZPosition(capture, position, 0));
 			}
 
 			updateMetaDataCache( view, w, h, d, 
 					voxelSize, voxelSize, zSpacing );
 
 			// SlideBook6Reader.dll
-			reader.close();
+			reader.closeFile();
 		}
 		catch ( Exception e )
 		{
