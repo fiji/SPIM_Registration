@@ -36,22 +36,28 @@ public class DoGParameters extends InterestPointParameters
 	public CUDASeparableConvolution cuda = null;
 	public boolean accurateCUDA = false;
 
-    public DoGParameters(){
-        super();
-    }
+	public DoGParameters() { super(); }
 
-    public DoGParameters(Collection<ViewDescription> toProcess, ImgLoader<?> imgloader, double sigma, double threshold) {
-        super(toProcess, imgloader);
-        this.sigma = sigma;
-        this.threshold = threshold;
-    }
+	public DoGParameters(
+			final Collection<ViewDescription> toProcess,
+			final ImgLoader<?> imgloader,
+			final double sigma,
+			final double threshold )
+	{
+		super( toProcess, imgloader );
+		this.sigma = sigma;
+		this.threshold = threshold;
+	}
 
-    public DoGParameters(Collection<ViewDescription> toProcess, ImgLoader<?> imgloader, double sigma, int downsampleXY)
-    {
-        super(toProcess,imgloader);
-        this.sigma = sigma;
-        this.downsampleXY = downsampleXY;
-    }
+	public DoGParameters(
+			final Collection<ViewDescription> toProcess,
+			final ImgLoader<?> imgloader,
+			final double sigma, final int downsampleXY )
+	{
+		super( toProcess, imgloader );
+		this.sigma = sigma;
+		this.downsampleXY = downsampleXY;
+	}
 
 	public static void testDoG( SpimData2 spimData )
 	{

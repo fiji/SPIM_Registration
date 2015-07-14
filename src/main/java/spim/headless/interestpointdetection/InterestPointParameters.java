@@ -7,8 +7,8 @@ import mpicbg.spim.data.sequence.ViewDescription;
 
 public class InterestPointParameters
 {
-	public Collection< ViewDescription > toProcess;
-	public ImgLoader< ? > imgloader;
+	public Collection<ViewDescription> toProcess;
+	public ImgLoader<?> imgloader;
 
 	public double minIntensity = Double.NaN;
 	public double maxIntensity = Double.NaN;
@@ -17,11 +17,13 @@ public class InterestPointParameters
 	// downsampleXY == -1 : a bit more then z-resolution
 	public int downsampleXY = 1, downsampleZ = 1;
 
-    public InterestPointParameters() {
-    }
+	public InterestPointParameters() {}
 
-    public InterestPointParameters(Collection<ViewDescription> toProcess, ImgLoader<?> imgloader) {
-        this.toProcess = toProcess;
-        this.imgloader = imgloader;
-    }
+	public InterestPointParameters(
+			final Collection<ViewDescription> toProcess,
+			final ImgLoader<?> imgloader )
+	{
+		this.toProcess = toProcess;
+		this.imgloader = imgloader;
+	}
 }
