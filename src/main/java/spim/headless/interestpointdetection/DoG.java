@@ -26,13 +26,19 @@ public class DoG
 		this.dog = dog;
 	}
 
-	public static HashMap< ViewId, List< InterestPoint >> findInterestPoints(
-			final DoGParameters dog )
+	public static HashMap< ViewId, List< InterestPoint >> findInterestPoints( final DoGParameters dog )
 	{
 		final HashMap< ViewId, List< InterestPoint >> interestPoints = new HashMap< ViewId, List< InterestPoint >>();
 
+		addInterestPoints( interestPoints, dog );
+
+		return interestPoints;
+	}
+
+	public static void addInterestPoints( final HashMap< ViewId, List< InterestPoint > > interestPoints, final DoGParameters dog )
+	{
 		// TODO: special iterator that takes into account missing views
-		for (final ViewDescription vd : dog.toProcess)
+		for ( final ViewDescription vd : dog.toProcess )
 		{
 			// make sure not everything crashes if one file is missing
 			try
@@ -84,8 +90,5 @@ public class DoG
 				e.printStackTrace();
 			}
 		}
-
-		return interestPoints;
 	}
-
 }

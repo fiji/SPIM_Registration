@@ -25,7 +25,7 @@ import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.interestpointdetection.ProcessDOM;
 
 
-public class DifferenceOfMean extends DifferenceOf
+public class DifferenceOfMean extends DifferenceOfGUI
 {
 	public static int defaultR1 = 2;
 	public static int defaultR2 = 3;

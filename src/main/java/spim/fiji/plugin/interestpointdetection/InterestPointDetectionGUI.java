@@ -5,11 +5,10 @@ import java.util.List;
 
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.registration.bead.SegmentationBenchmark;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 
-public abstract class InterestPointDetection 
+public abstract class InterestPointDetectionGUI
 {
 	/**
 	 * which viewIds to process, set in queryParameters
@@ -17,13 +16,12 @@ public abstract class InterestPointDetection
 	final List< ViewId > viewIdsToProcess;
 
 	final SpimData2 spimData;
-	final public SegmentationBenchmark benchmark = new SegmentationBenchmark();
 
 	/**
 	 * @param spimData
 	 * @param viewIdsToProcess - which view id's to segment
 	 */
-	public InterestPointDetection(
+	public InterestPointDetectionGUI(
 			final SpimData2 spimData,
 			final List< ViewId > viewIdsToProcess )
 	{
@@ -32,8 +30,7 @@ public abstract class InterestPointDetection
 	}
 
 	public List< ViewId > getViewIdsToProcess() { return viewIdsToProcess; }
-	public SegmentationBenchmark getBenchmark() { return benchmark; }
-	
+
 	/**
 	 * Perform the interestpoint detection for one timepoint
 	 * 
@@ -44,16 +41,12 @@ public abstract class InterestPointDetection
 	/**
 	 * Query the necessary parameters for the interestpoint detection
 	 * 
-	 * @param downsample - whether to downsample the images before performing the blob detection
 	 * @param defineAnisotropy - whether to use/query for anisotropy in resolution of the data
-	 * @param additionalSmoothing - smooth in certain dimensions before computing the segmentation
 	 * @param setMinMax - whether to define minimal and maximal intensity relative to whom everything is normalized to [0...1]
 	 * @return
 	 */
 	public abstract boolean queryParameters(
-			final boolean downsample,
 			final boolean defineAnisotropy,
-			final boolean additionalSmoothing,
 			final boolean setMinMax );
 	
 	/**
@@ -61,7 +54,7 @@ public abstract class InterestPointDetection
 	 * @param viewIdsToProcess - which view id's to segment
 	 * @return - a new instance without any special properties
 	 */
-	public abstract InterestPointDetection newInstance(
+	public abstract InterestPointDetectionGUI newInstance(
 			final SpimData2 spimData,
 			final List< ViewId > viewIdsToProcess );
 	

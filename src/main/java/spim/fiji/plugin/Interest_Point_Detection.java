@@ -10,16 +10,14 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
-import spim.fiji.plugin.interestpointdetection.DifferenceOf;
 import spim.fiji.plugin.interestpointdetection.DifferenceOfGaussian;
 import spim.fiji.plugin.interestpointdetection.DifferenceOfMean;
-import spim.fiji.plugin.interestpointdetection.InterestPointDetection;
+import spim.fiji.plugin.interestpointdetection.InterestPointDetectionGUI;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
@@ -33,18 +31,16 @@ import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
  * Plugin to detect interest points, store them on disk, and link them into the XML
  * 
  * Different plugins to detect interest points are supported, needs to implement the
- * {@link InterestPointDetection} interface
+ * {@link InterestPointDetectionGUI} interface
  * 
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
 public class Interest_Point_Detection implements PlugIn
 {
-	public static ArrayList< InterestPointDetection > staticAlgorithms = new ArrayList< InterestPointDetection >();
+	public static ArrayList< InterestPointDetectionGUI > staticAlgorithms = new ArrayList< InterestPointDetectionGUI >();
 	public static int defaultAlgorithm = 1;
-	public static boolean defaultDownSample = true;
 	public static boolean defaultDefineAnisotropy = false;
-	public static boolean defaultAdditionalSmoothing = false;
 	public static boolean defaultSetMinMax = false;
 	public static String defaultLabel = "beads";
 	
@@ -116,19 +112,7 @@ public class Interest_Point_Detection implements PlugIn
 		gd.addChoice( "Type_of_interest_point_detection", descriptions, descriptions[ defaultAlgorithm ] );
 		gd.addStringField( "Label_interest_points", defaultLabel );
 
-		gd.addMessage( "" );
-		gd.addMessage( "Channels to detect interest points in", GUIHelper.largefont );
-
-		final ArrayList< Channel > channels = SpimData2.getAllChannelsSorted( data, viewIds );
-
-		for ( int i = 0; i < channels.size(); ++i )
-			gd.addMessage( "Channel " + channels.get( i ).getName(), GUIHelper.smallStatusFont );
-
-		gd.addMessage( "" );
-
-		gd.addCheckbox( "Downsample_images prior to segmentation", defaultDownSample );
 		gd.addCheckbox( "Define_anisotropy for segmentation", defaultDefineAnisotropy );
-		gd.addCheckbox( "Additional_smoothing", defaultAdditionalSmoothing );
 		gd.addCheckbox( "Set_minimal_and_maximal_intensity", defaultSetMinMax );
 		
 		gd.addMessage( "" );
@@ -143,35 +127,22 @@ public class Interest_Point_Detection implements PlugIn
 
 		// how are the detections called (e.g. beads, nuclei, ...)
 		final String label = defaultLabel = gd.getNextString();
-		final ArrayList< Channel> channelsToProcess = new ArrayList< Channel >();
-
-		for ( int i = 0; i < channels.size(); ++i )
-			channelsToProcess.add( channels.get( i ) );
-
-		final boolean downsample = defaultDownSample = gd.getNextBoolean();
 		final boolean defineAnisotropy = defaultDefineAnisotropy = gd.getNextBoolean();
-		final boolean additionalSmoothing = defaultAdditionalSmoothing = gd.getNextBoolean();
 		final boolean setMinMax = defaultSetMinMax = gd.getNextBoolean();
-		
-		final InterestPointDetection ipd = staticAlgorithms.get( algorithm ).newInstance(
+
+		final InterestPointDetectionGUI ipd = staticAlgorithms.get( algorithm ).newInstance(
 				data,
 				viewIds );
-		
+
 		// the interest point detection should query its parameters
-		if ( !ipd.queryParameters( downsample, defineAnisotropy, additionalSmoothing, setMinMax ) )
+		if ( !ipd.queryParameters( defineAnisotropy, setMinMax ) )
 			return false;
 		
 		// now extract all the detections
 		for ( final TimePoint tp : SpimData2.getAllTimePointsSorted( data, viewIds ) )
 		{
 			final HashMap< ViewId, List< InterestPoint > > points = ipd.findInterestPoints( tp );
-			
-			if ( ipd instanceof DifferenceOf )
-			{
-				IOFunctions.println( "Opening of files took: " + ((DifferenceOf)ipd).getBenchmark().openFiles/1000 + " sec." );
-				IOFunctions.println( "Detecting interest points took: " + ((DifferenceOf)ipd).getBenchmark().computation/1000 + " sec." );
-			}
-			
+
 			// save the file and the path in the XML
 			final SequenceDescription seqDesc = data.getSequenceDescription();
 			
@@ -203,7 +174,7 @@ public class Interest_Point_Detection implements PlugIn
 				final ViewInterestPointLists vipl = data.getViewInterestPoints().getViewInterestPointLists( viewId );
 				vipl.addInterestPointList( label, list );
 			}
-			
+
 			// update metadata if necessary
 			if ( data.getSequenceDescription().getImgLoader() instanceof AbstractImgLoader )
 			{
