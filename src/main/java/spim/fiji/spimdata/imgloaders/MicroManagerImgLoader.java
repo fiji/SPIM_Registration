@@ -14,7 +14,6 @@ import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayCursor;
 import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.array.ArrayImgs;
@@ -33,14 +32,12 @@ public class MicroManagerImgLoader extends AbstractImgLoader
 
 	public MicroManagerImgLoader(
 			final File mmFile,
-			final ImgFactory< ? extends NativeType< ? > > imgFactory,
 			final AbstractSequenceDescription< ? extends BasicViewSetup, ? extends BasicViewDescription< ? >, ? > sequenceDescription )
 	{
 		super();
 		this.mmFile = mmFile;
 		this.sequenceDescription = sequenceDescription;
 
-		setImgFactory( imgFactory );
 	}
 
 	public File getFile() { return mmFile; }
@@ -167,6 +164,6 @@ public class MicroManagerImgLoader extends AbstractImgLoader
 	@Override
 	public String toString()
 	{
-		return new MicroManager().getTitle() + ", ImgFactory=" + imgFactory.getClass().getSimpleName();
+		return new MicroManager().getTitle() + ", ImgFactory=ArrayImgFactory";
 	}
 }

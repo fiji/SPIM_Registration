@@ -5,17 +5,13 @@ import static mpicbg.spim.data.XmlKeys.IMGLOADER_FORMAT_ATTRIBUTE_NAME;
 
 import java.io.File;
 
-import net.imglib2.img.ImgFactory;
-import net.imglib2.img.array.ArrayImgFactory;
-import net.imglib2.img.cell.CellImgFactory;
-import net.imglib2.type.numeric.real.FloatType;
-
-import org.jdom2.Element;
-
 import mpicbg.spim.data.XmlHelpers;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.generic.sequence.ImgLoaderIo;
 import mpicbg.spim.data.generic.sequence.XmlIoBasicImgLoader;
+import net.imglib2.img.array.ArrayImgFactory;
+
+import org.jdom2.Element;
 
 @ImgLoaderIo( format = "spimreconstruction.micromanager", type = MicroManagerImgLoader.class )
 public class XmlIoMicroManagerImgLoader implements XmlIoBasicImgLoader< MicroManagerImgLoader >
@@ -32,7 +28,7 @@ public class XmlIoMicroManagerImgLoader implements XmlIoBasicImgLoader< MicroMan
 
 		elem.addContent( XmlHelpers.pathElement( DIRECTORY_TAG, imgLoader.getFile().getParentFile(), basePath ) );
 		elem.addContent( XmlHelpers.textElement( MASTER_FILE_TAG, imgLoader.getFile().getName() ) );
-		elem.addContent( XmlHelpers.textElement( IMGLIB2CONTAINER_PATTERN_TAG, imgLoader.getImgFactory().getClass().getSimpleName() ) );
+		elem.addContent( XmlHelpers.textElement( IMGLIB2CONTAINER_PATTERN_TAG, ArrayImgFactory.class.getSimpleName() ) );
 		
 		return elem;
 	}
@@ -48,35 +44,12 @@ public class XmlIoMicroManagerImgLoader implements XmlIoBasicImgLoader< MicroMan
 			final String masterFile = XmlHelpers.getText( elem, MASTER_FILE_TAG );
 			final String container = XmlHelpers.getText( elem, IMGLIB2CONTAINER_PATTERN_TAG );
 
-			final ImgFactory< FloatType > imgFactory;
-
 			if ( container == null )
-			{
 				System.out.println( "WARNING: No Img implementation defined in XML, using ArrayImg." );
+			else if ( !container.toLowerCase().contains( "arrayimg" ) )
+				System.out.println( "WARNING: Only ArrayImg supported for MicroManager ImgLoader, using ArrayImg." );
 
-				// if no factory is defined we define an ArrayImgFactory
-				imgFactory = new ArrayImgFactory< FloatType >();
-			}
-			else
-			{
-				if ( container.toLowerCase().contains( "cellimg" ) )
-				{
-					imgFactory = new CellImgFactory< FloatType >( 256 );
-				}
-				else if ( container.toLowerCase().contains( "arrayimg" ) )
-				{
-					imgFactory = new ArrayImgFactory< FloatType >();
-				}
-				else
-				{
-					// if factory is unknown we define an ArrayImgFactory
-					imgFactory = new ArrayImgFactory< FloatType >();
-					
-					System.out.println( "WARNING: Unknown Img implementation defined in XML:'" + container + "', using ArrayImg." );
-				}
-			}
-
-			return new MicroManagerImgLoader( new File( path, masterFile ), imgFactory, sequenceDescription );
+			return new MicroManagerImgLoader( new File( path, masterFile ), sequenceDescription );
 		}
 		catch ( final Exception e )
 		{

@@ -38,6 +38,7 @@ import spim.fiji.datasetmanager.LightSheetZ1MetaData;
 
 public class LightSheetZ1ImgLoader extends AbstractImgLoader
 {
+	protected ImgFactory< ? extends NativeType< ? > > imgFactory;
 	final File cziFile;
 	final AbstractSequenceDescription<?, ?, ?> sequenceDescription;
 
@@ -58,6 +59,9 @@ public class LightSheetZ1ImgLoader extends AbstractImgLoader
 	}
 
 	public File getCZIFile() { return cziFile; }
+
+	public ImgFactory< ? extends NativeType< ? > > getImgFactory() { return imgFactory; }
+	public void setImgFactory( final ImgFactory< ? extends NativeType< ? > > imgFactory ) { this.imgFactory = imgFactory; }
 
 	@Override
 	public RandomAccessibleInterval< FloatType > getFloatImage( final ViewId view, final boolean normalize )
