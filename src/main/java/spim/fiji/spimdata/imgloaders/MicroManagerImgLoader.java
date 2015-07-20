@@ -66,6 +66,10 @@ public class MicroManagerImgLoader extends AbstractImgLoader
 					slices = new ArrayList<Integer>();
 				slices.add( z );
 
+				// leave the slice empty
+				for ( int j = 0; j < img.dimension( 0 ) * img.dimension( 1 ); ++j )
+					cursor.next();
+
 				continue;
 			}
 
