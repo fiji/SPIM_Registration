@@ -10,9 +10,12 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
+import mpicbg.spim.data.generic.AbstractSpimData;
+import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.ImgLib2Temp.Pair;
@@ -23,11 +26,11 @@ import spim.fiji.plugin.resave.Resave_TIFF;
 import spim.fiji.plugin.resave.Resave_TIFF.Parameters;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
-import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
+import spim.fiji.spimdata.imgloaders.LightSheetZ1ImgLoader;
+import spim.fiji.spimdata.imgloaders.MicroManagerImgLoader;
+import spim.fiji.spimdata.imgloaders.StackImgLoader;
 import bdv.export.ExportMipmapInfo;
 import bdv.export.ProgressWriter;
-import mpicbg.spim.data.generic.AbstractSpimData;
-import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 
 public class ResavePopup extends JMenu implements ViewExplorerSetable
 {
@@ -124,8 +127,12 @@ public class ResavePopup extends JMenu implements ViewExplorerSetable
 
 						params.compress = index != 0;
 
-						if ( AbstractImgLoader.class.isInstance( data.getSequenceDescription().getImgLoader() ) )
-							params.imgFactory = ( (AbstractImgLoader)data.getSequenceDescription().getImgLoader() ).getImgFactory();
+						if ( StackImgLoader.class.isInstance( data.getSequenceDescription().getImgLoader() ) )
+							params.imgFactory = ( (StackImgLoader)data.getSequenceDescription().getImgLoader() ).getImgFactory();
+						else if ( LightSheetZ1ImgLoader.class.isInstance( data.getSequenceDescription().getImgLoader() ) )
+							params.imgFactory = ( (LightSheetZ1ImgLoader)data.getSequenceDescription().getImgLoader() ).getImgFactory();
+						else if ( MicroManagerImgLoader.class.isInstance( data.getSequenceDescription().getImgLoader() ) )
+							params.imgFactory = new ArrayImgFactory< FloatType >();
 						else
 							params.imgFactory = new CellImgFactory< FloatType >();
 
