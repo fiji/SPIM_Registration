@@ -18,9 +18,8 @@ import net.imglib2.type.NativeType;
 import spim.fiji.datasetmanager.StackList;
 
 
-public abstract class StackImgLoader extends AbstractImgLoader
+public abstract class StackImgLoader extends AbstractImgFactoryImgLoader
 {
-	protected ImgFactory< ? extends NativeType< ? > > imgFactory;
 	protected File path = null;
 	protected String fileNamePattern = null;
 	
@@ -117,9 +116,6 @@ public abstract class StackImgLoader extends AbstractImgLoader
 		
 		this.init( imgFactory );
 	}
-
-	public ImgFactory< ? extends NativeType< ? > > getImgFactory() { return imgFactory; }
-	public void setImgFactory( final ImgFactory< ? extends NativeType< ? > > imgFactory ) { this.imgFactory = imgFactory; }
 
 	protected void init( final ImgFactory< ? extends NativeType< ? > > imgFactory )
 	{

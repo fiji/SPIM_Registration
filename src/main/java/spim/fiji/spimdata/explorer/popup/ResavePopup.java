@@ -26,9 +26,8 @@ import spim.fiji.plugin.resave.Resave_TIFF;
 import spim.fiji.plugin.resave.Resave_TIFF.Parameters;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
-import spim.fiji.spimdata.imgloaders.LightSheetZ1ImgLoader;
+import spim.fiji.spimdata.imgloaders.AbstractImgFactoryImgLoader;
 import spim.fiji.spimdata.imgloaders.MicroManagerImgLoader;
-import spim.fiji.spimdata.imgloaders.StackImgLoader;
 import bdv.export.ExportMipmapInfo;
 import bdv.export.ProgressWriter;
 
@@ -127,10 +126,8 @@ public class ResavePopup extends JMenu implements ViewExplorerSetable
 
 						params.compress = index != 0;
 
-						if ( StackImgLoader.class.isInstance( data.getSequenceDescription().getImgLoader() ) )
-							params.imgFactory = ( (StackImgLoader)data.getSequenceDescription().getImgLoader() ).getImgFactory();
-						else if ( LightSheetZ1ImgLoader.class.isInstance( data.getSequenceDescription().getImgLoader() ) )
-							params.imgFactory = ( (LightSheetZ1ImgLoader)data.getSequenceDescription().getImgLoader() ).getImgFactory();
+						if ( AbstractImgFactoryImgLoader.class.isInstance( data.getSequenceDescription().getImgLoader() ) )
+							params.imgFactory = ( (AbstractImgFactoryImgLoader)data.getSequenceDescription().getImgLoader() ).getImgFactory();
 						else if ( MicroManagerImgLoader.class.isInstance( data.getSequenceDescription().getImgLoader() ) )
 							params.imgFactory = new ArrayImgFactory< FloatType >();
 						else
