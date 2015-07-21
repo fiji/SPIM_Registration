@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
+import spim.fiji.datasetmanager.DHM;
 import spim.fiji.datasetmanager.LightSheetZ1;
 import spim.fiji.datasetmanager.MicroManager;
 import spim.fiji.datasetmanager.MultiViewDatasetDefinition;
@@ -41,6 +42,7 @@ public class Define_Multi_View_Dataset implements PlugIn
 		staticDatasetDefinitions.add( new StackListImageJ() );
 		staticDatasetDefinitions.add( new MicroManager() );
 		staticDatasetDefinitions.add( new LightSheetZ1() );
+		staticDatasetDefinitions.add( new DHM() );
 	}
 	
 	@Override
