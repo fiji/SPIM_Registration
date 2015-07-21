@@ -90,7 +90,7 @@ public class DHMImgLoader extends AbstractImgLoader
 		else
 			throw new RuntimeException( "viewSetupId=" + view.getViewSetupId() + " is not Amplitude nor phase." );
 
-		populateImage( img, directory, ampOrPhaseDir, zPlanes, timepoints.get( view.getTimePointId() ), extension );
+		populateImage( img, directory, stackDir, ampOrPhaseDir, zPlanes, timepoints.get( view.getTimePointId() ), extension );
 
 		if ( normalize )
 			normalize( img );
@@ -118,7 +118,7 @@ public class DHMImgLoader extends AbstractImgLoader
 		else
 			throw new RuntimeException( "viewSetupId=" + view.getViewSetupId() + " is not Amplitude nor phase." );
 
-		populateImage( img, directory, ampOrPhaseDir, zPlanes, timepoints.get( view.getTimePointId() ), extension );
+		populateImage( img, directory, stackDir, ampOrPhaseDir, zPlanes, timepoints.get( view.getTimePointId() ), extension );
 
 		updateMetaDataCache( view, (int)d.dimension( 0 ), (int)d.dimension( 1 ), (int)d.dimension( 2 ), dv.dimension( 0 ), dv.dimension( 1 ), dv.dimension( 2 ) );
 
@@ -138,6 +138,7 @@ public class DHMImgLoader extends AbstractImgLoader
 	final public static < T extends RealType< T > & NativeType< T > > void populateImage(
 			final ArrayImg< T, ? > img,
 			final File directory,
+			final String stackDir,
 			final String ampOrPhaseDirectory,
 			final List< String > zPlanes,
 			final String timepoint,
@@ -151,7 +152,8 @@ public class DHMImgLoader extends AbstractImgLoader
 
 		for ( int z = 0; z < zPlanes.size(); ++z )
 		{
-			final ImagePlus imp = io.openImage( new File( directory.getAbsolutePath(), ampOrPhaseDirectory + "/" + zPlanes.get( z ) + "/" + timepoint + extension ).getAbsolutePath() );
+			final File imgF = new File( new File( new File( new File( directory.getAbsolutePath(), stackDir ), ampOrPhaseDirectory ), zPlanes.get( z ) ), timepoint + extension );
+			final ImagePlus imp = io.openImage( imgF.getAbsolutePath() );
 
 			if ( imp == null )
 			{
