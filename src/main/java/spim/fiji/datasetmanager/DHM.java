@@ -31,7 +31,7 @@ public class DHM implements MultiViewDatasetDefinition
 	public static String defaultDir = "";
 	public static double defaulCalX = 0.1725; //3.45 / 20.0;
 	public static double defaulCalY = 0.1725; //3.45 / 20.0;
-	public static double defaulCalZ = 12.5; //( 0.5 / ( 20.0 * 20.0 ) ) * 10000;
+	public static double defaulCalZ = 1.25; //( 0.5 / ( 20.0 * 20.0 ) ) * 1000;
 	public static String defaulCalUnit = "um";
 	public static boolean defaultOpenAll = false;
 
@@ -157,7 +157,7 @@ public class DHM implements MultiViewDatasetDefinition
 		gd.addMessage( "Camera pixel size (e.g. 3.45um) / Magnification (e.g. 20):" );
 		gd.addNumericField( "Pixel_distance_x", defaulCalX, 5 );
 		gd.addNumericField( "Pixel_distance_y", defaulCalY, 5 );
-		gd.addMessage( "Depth between planes (e.g. 0.5cm) / Magnification^2 (e.g. 20^2) * 10000 (cm to um):" );
+		gd.addMessage( "Depth between planes (e.g. 0.5mm) / Magnification^2 (e.g. 20^2) * 1000 (mm to um):" );
 		gd.addNumericField( "Pixel_distance_z", defaulCalZ, 5 );
 		gd.addStringField( "Pixel_unit", defaulCalUnit );
 		gd.addMessage( "" );
