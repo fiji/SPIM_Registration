@@ -223,10 +223,10 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 		// angle0.setRotation(axis, 0);
 		angles.add( angle0 );
 
-		final Angle angle180 = new Angle( 1, "0");
-		// TODO: set to known rotation
-		// angle180.setRotation(axis, 180);
-		angles.add( angle180 );
+		final Angle angle90 = new Angle( 1, "90");
+		double[] axis = new double[]{ 0, 0, 1 }; // z axis
+		angle90.setRotation(axis, 90);
+		angles.add( angle90 );
 
 		// TODO: process more than one image in SLD file
 		final int capture = 0;
