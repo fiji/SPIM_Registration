@@ -144,7 +144,8 @@ public class InterestPointList
 				dir.mkdirs();
 			}
 
-			final PrintWriter out = TextFileAccess.openFileWriteEx( new File( getBaseDir(), getFile().toString() + getInterestPointsExt() ) );
+			final File f = new File( getBaseDir(), getFile().toString() + getInterestPointsExt() );
+			final PrintWriter out = TextFileAccess.openFileWriteEx( f );
 
 			// header
 			out.println( "id" + "\t" + "x" + "\t" + "y" + "\t" + "z" );
@@ -156,6 +157,8 @@ public class InterestPointList
 			out.close();
 
 			modifiedInterestPoints = false;
+
+			IOFunctions.println( "Saved: " + f );
 
 			return true;
 		}
@@ -187,7 +190,9 @@ public class InterestPointList
 				dir.mkdirs();
 			}
 
-			final PrintWriter out = TextFileAccess.openFileWriteEx( new File( getBaseDir(), getFile().toString() + getCorrespondencesExt() ) );
+			final File f = new File( getBaseDir(), getFile().toString() + getCorrespondencesExt() );
+
+			final PrintWriter out = TextFileAccess.openFileWriteEx( f );
 
 			// header
 			out.println( "id" + "\t" + "corresponding_timepoint_id" + "\t" + "corresponding_viewsetup_id" + "\t" + "corresponding_label" + "\t" + "corresponding_id" );
@@ -204,6 +209,8 @@ public class InterestPointList
 			out.close();
 
 			modifiedCorrespondingInterestPoints = false;
+
+			IOFunctions.println( "Saved: " + f );
 
 			return true;
 		}
