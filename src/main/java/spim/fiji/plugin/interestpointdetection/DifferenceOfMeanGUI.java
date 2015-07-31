@@ -27,8 +27,8 @@ public class DifferenceOfMeanGUI extends DifferenceOfGUI
 	public static int defaultRadius1 = 2;
 	public static int defaultRadius2 = 3;
 	public static double defaultThreshold = 0.005;
-	public static boolean defaultFindMin;
-	public static boolean defaultFindMax;
+	public static boolean defaultFindMin = false;
+	public static boolean defaultFindMax = true;
 	
 	int radius1;
 	int radius2;

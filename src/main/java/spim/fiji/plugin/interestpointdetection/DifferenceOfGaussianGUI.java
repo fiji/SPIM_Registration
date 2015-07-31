@@ -32,8 +32,8 @@ public class DifferenceOfGaussianGUI extends DifferenceOfGUI implements GenericD
 
 	public static double defaultSigma = 1.8;
 	public static double defaultThreshold = 0.008;
-	public static boolean defaultFindMin;
-	public static boolean defaultFindMax;
+	public static boolean defaultFindMin = false;
+	public static boolean defaultFindMax = true;
 
 	public static String[] computationOnChoice = new String[]{
 		"CPU (Java)",
