@@ -199,6 +199,8 @@ public class Interest_Point_Detection implements PlugIn
 
 	public static void main( final String[] args )
 	{
+		LoadParseQueryXML.defaultXMLfilename = "/Users/spreibi/Documents/Microscopy/SPIM/HisYFP-SPIM/dataset.xml";
+
 		new ImageJ();
 		new Interest_Point_Detection().run( null );
 	}
