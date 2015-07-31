@@ -16,7 +16,7 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.interestpointdetection.DifferenceOfGaussianGUI;
-import spim.fiji.plugin.interestpointdetection.DifferenceOfMean;
+import spim.fiji.plugin.interestpointdetection.DifferenceOfMeanGUI;
 import spim.fiji.plugin.interestpointdetection.InterestPointDetectionGUI;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
@@ -47,7 +47,7 @@ public class Interest_Point_Detection implements PlugIn
 	static
 	{
 		IOFunctions.printIJLog = true;
-		staticAlgorithms.add( new DifferenceOfMean( null, null ) );
+		staticAlgorithms.add( new DifferenceOfMeanGUI( null, null ) );
 		staticAlgorithms.add( new DifferenceOfGaussianGUI( null, null ) );
 	}
 	

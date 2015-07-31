@@ -22,7 +22,7 @@ import spim.headless.interestpointdetection.DoMParameters;
 import spim.headless.interestpointdetection.DownsampleTools;
 
 
-public class DifferenceOfMean extends DifferenceOfGUI
+public class DifferenceOfMeanGUI extends DifferenceOfGUI
 {
 	public static int defaultRadius1 = 2;
 	public static int defaultRadius2 = 3;
@@ -36,7 +36,7 @@ public class DifferenceOfMean extends DifferenceOfGUI
 	boolean findMin;
 	boolean findMax;
 	
-	public DifferenceOfMean( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
+	public DifferenceOfMeanGUI( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
 		super( spimData, viewIdsToProcess );
 	}
@@ -45,9 +45,9 @@ public class DifferenceOfMean extends DifferenceOfGUI
 	public String getDescription() { return "Difference-of-Mean (Integral image based)"; }
 
 	@Override
-	public DifferenceOfMean newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
+	public DifferenceOfMeanGUI newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{ 
-		return new DifferenceOfMean( spimData, viewIdsToProcess );
+		return new DifferenceOfMeanGUI( spimData, viewIdsToProcess );
 	}
 
 	@Override
