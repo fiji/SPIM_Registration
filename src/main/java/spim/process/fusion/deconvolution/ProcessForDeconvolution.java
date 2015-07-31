@@ -439,13 +439,13 @@ public class ProcessForDeconvolution
 		// we use a hashset as a detection can correspond with several other detections, and we only want it once
 		final HashSet< Integer > ipWithCorrespondences = new HashSet< Integer >();
 		
-		for ( final CorrespondingInterestPoints cip : iplist.getCorrespondingInterestPoints() )
+		for ( final CorrespondingInterestPoints cip : iplist.getCorrespondingInterestPointsCopy() )
 			ipWithCorrespondences.add( cip.getDetectionId() );
 		
 		final ArrayList< double[] > llist = new ArrayList< double[] >();
 		
 		// now go over all detections and see if they had correspondences
-		for ( final InterestPoint ip : iplist.getInterestPoints() )
+		for ( final InterestPoint ip : iplist.getInterestPointsCopy() )
 			if ( ipWithCorrespondences.contains( ip.getId() ) )
 				llist.add( ip.getL().clone() );
 

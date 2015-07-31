@@ -1140,13 +1140,13 @@ public class EfficientBayesianBased extends Fusion
 									label + " --- channel: " + c.getName() + " angle: " + vd.getViewSetup().getAngle().getName() +
 									" illum: " + vd.getViewSetup().getIllumination().getName() + " timepoint: " + t.getName() + ": ";
 
-							if ( ipl.getInterestPoints() == null )
+							if ( !ipl.hasInterestPoints() )
 								ipl.loadInterestPoints();
-							
-							if ( ipl.getCorrespondingInterestPoints() == null )
+
+							if ( !ipl.hasCorrespondingInterestPoints() )
 								ipl.loadCorrespondingInterestPoints();
-							
-							if ( ipl.getCorrespondingInterestPoints().size() > 0 )
+
+							if ( ipl.getNumCorrespondingInterestPoints() > 0 )
 							{
 								Correspondence corrTmp = new Correspondence( label );
 								boolean foundEntry = false;
@@ -1164,7 +1164,7 @@ public class EfficientBayesianBased extends Fusion
 								if ( !foundEntry )
 									corrList.add( corrTmp );
 								
-								IOFunctions.println( name + ipl.getCorrespondingInterestPoints().size() + " correspondences." );
+								IOFunctions.println( name + ipl.getNumCorrespondingInterestPoints() + " correspondences." );
 							}
 							else
 							{

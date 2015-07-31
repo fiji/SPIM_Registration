@@ -25,7 +25,6 @@ import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
-import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 
 /**
  * Plugin to detect interest points, store them on disk, and link them into the XML
@@ -157,22 +156,8 @@ public class Interest_Point_Detection implements PlugIn
 				
 				list.setParameters( ipd.getParameters( channelId ) );
 				list.setInterestPoints( points.get( viewId ) );
-
-				if ( saveXML )
-				{
-					if ( !list.saveInterestPoints() )
-					{
-						IOFunctions.println( "Error saving interest point list: " + new File( list.getBaseDir(), list.getFile().toString() + list.getInterestPointsExt() ) );
-						return false;
-					}
-	
-					list.setCorrespondingInterestPoints( new ArrayList< CorrespondingInterestPoints >() );
-					if ( !list.saveCorrespondingInterestPoints() )
-						IOFunctions.println( "Failed to clear corresponding interest point list: " + new File( list.getBaseDir(), list.getFile().toString() + list.getCorrespondencesExt() ) );
-				}
-
-				final ViewInterestPointLists vipl = data.getViewInterestPoints().getViewInterestPointLists( viewId );
-				vipl.addInterestPointList( label, list );
+				list.setCorrespondingInterestPoints( new ArrayList< CorrespondingInterestPoints >() );
+				data.getViewInterestPoints().getViewInterestPointLists( viewId ).addInterestPointList( label, list );
 			}
 
 			// update metadata if necessary

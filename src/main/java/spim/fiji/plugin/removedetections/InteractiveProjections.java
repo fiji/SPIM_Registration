@@ -162,15 +162,10 @@ public class InteractiveProjections
 		final ViewInterestPointLists lists = interestPoints.getViewInterestPointLists( id );
 		final InterestPointList list = lists.getInterestPointList( label );
 
-		if ( list.getInterestPoints() == null )
+		if ( !list.hasInterestPoints() )
 			list.loadInterestPoints();
 
-		final ArrayList< InterestPoint > newList = new ArrayList< InterestPoint >();
-
-		for ( final InterestPoint p : list.getInterestPoints() )
-			newList.add( new InterestPoint( p.getId(), p.getL().clone() ) );
-
-		return newList;
+		return list.getInterestPointsCopy();
 	}
 
 	protected ImagePlus showProjection( final Img< FloatType > img )

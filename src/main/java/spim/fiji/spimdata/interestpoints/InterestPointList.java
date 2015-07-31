@@ -23,7 +23,9 @@ public class InterestPointList
 	List< InterestPoint > interestPoints;
 	List< CorrespondingInterestPoints > correspondingInterestPoints;
 	String parameters;
-	
+
+	boolean modifiedInterestPoints, modifiedCorrespondingInterestPoints;
+
 	/**
 	 * Instantiates a new {@link InterestPointList}
 	 * 
@@ -38,34 +40,96 @@ public class InterestPointList
 		this.interestPoints = null;
 		this.correspondingInterestPoints = null;
 		this.parameters = "";
+		this.modifiedInterestPoints = false;
+		this.modifiedCorrespondingInterestPoints = false;
+	}
+
+	public boolean hasInterestPoints() { return interestPoints != null; }
+	public boolean hasCorrespondingInterestPoints() { return correspondingInterestPoints != null; }
+	public boolean hasModifiedInterestPoints() { return modifiedInterestPoints; }
+	public boolean hasModifiedCorrespondingInterestPoints() { return modifiedCorrespondingInterestPoints; }
+
+	/**
+	 * @return - a list of interest points (copied) or null if never instantiated or loaded from disc
+	 */
+	public List< InterestPoint > getInterestPointsCopy()
+	{
+		if ( this.interestPoints == null )
+			return null;
+
+		final ArrayList< InterestPoint > list = new ArrayList< InterestPoint >();
+
+		for ( final InterestPoint p : this.interestPoints )
+			list.add( new InterestPoint( p.id, p.getL().clone() ) );
+
+		return list;
 	}
 
 	/**
-	 * @return - the list of interest points, tries to load it from disk if not available
+	 * @return - the list of corresponding interest points (copied) or null if never instantiated or loaded from disc
 	 */
-	public List< InterestPoint > getInterestPoints() { return this.interestPoints; }
+	public List< CorrespondingInterestPoints > getCorrespondingInterestPointsCopy()
+	{
+		if ( this.correspondingInterestPoints == null )
+			return null;
 
-	/**
-	 * @return - the list of corresponding interest points, tries to load it from disk if not available
-	 */
-	public List< CorrespondingInterestPoints > getCorrespondingInterestPoints() { return this.correspondingInterestPoints; }
+		final ArrayList< CorrespondingInterestPoints > list = new ArrayList< CorrespondingInterestPoints >();
+
+		for ( final CorrespondingInterestPoints p : this.correspondingInterestPoints )
+			list.add( new CorrespondingInterestPoints( p ) );
+
+		return list;
+	}
 
 	public File getBaseDir() { return baseDir; }
 	public File getFile() { return file; }
 	public String getParameters() { return parameters; }
 	public void setParameters( final String parameters ) { this.parameters = parameters; }
-	public void setInterestPoints( final List< InterestPoint > list ) { this.interestPoints = list; }
-	public void setCorrespondingInterestPoints( final List< CorrespondingInterestPoints > list ) { this.correspondingInterestPoints = list; }
-	
-	public void setFile( final File file ) { this.file = file; }
-	public void setBaseDir( final File baseDir ) { this.baseDir = baseDir; }
-	
+	public void setInterestPoints( final List< InterestPoint > list )
+	{
+		this.interestPoints = list;
+		this.modifiedInterestPoints = true;
+	}
+	public void setCorrespondingInterestPoints( final List< CorrespondingInterestPoints > list )
+	{
+		this.correspondingInterestPoints = list;
+		this.modifiedCorrespondingInterestPoints = true;
+	}
+	public void setFile( final File file )
+	{
+		this.file = file;
+		this.modifiedCorrespondingInterestPoints = true;
+		this.modifiedInterestPoints = true;
+	}
+	public void setBaseDir( final File baseDir )
+	{
+		this.baseDir = baseDir;
+		this.modifiedCorrespondingInterestPoints = true;
+		this.modifiedInterestPoints = true;
+	}
+
+	public int getNumInterestPoints()
+	{
+		if ( interestPoints == null )
+			return -1;
+		else return interestPoints.size();
+	}
+	public int getNumCorrespondingInterestPoints()
+	{
+		if ( correspondingInterestPoints == null )
+			return -1;
+		else return correspondingInterestPoints.size();
+	}
+
 	public String getInterestPointsExt() { return ".ip.txt"; }
 	public String getCorrespondencesExt() { return ".corr.txt"; }
-	
-	public boolean saveInterestPoints()
+
+	public boolean saveInterestPoints( final boolean forceWrite )
 	{
-		final List< InterestPoint > list = getInterestPoints();
+		if ( !modifiedInterestPoints && !forceWrite )
+			return true;
+
+		final List< InterestPoint > list = this.interestPoints;
 
 		if ( list == null )
 			return false;
@@ -91,6 +155,8 @@ public class InterestPointList
 
 			out.close();
 
+			modifiedInterestPoints = false;
+
 			return true;
 		}
 		catch ( final IOException e )
@@ -101,9 +167,12 @@ public class InterestPointList
 		}
 	}
 
-	public boolean saveCorrespondingInterestPoints()
+	public boolean saveCorrespondingInterestPoints( final boolean forceWrite )
 	{
-		final List< CorrespondingInterestPoints > list = getCorrespondingInterestPoints();
+		if ( !modifiedCorrespondingInterestPoints && !forceWrite )
+			return true;
+
+		final List< CorrespondingInterestPoints > list = this.correspondingInterestPoints;
 
 		if ( list == null )
 			return false;
@@ -134,6 +203,8 @@ public class InterestPointList
 
 			out.close();
 
+			modifiedCorrespondingInterestPoints = false;
+
 			return true;
 		}
 		catch ( final IOException e )
@@ -141,16 +212,16 @@ public class InterestPointList
 			IOFunctions.println( "InterestPointList.saveCorrespondingInterestPoints(): " + e );
 			e.printStackTrace();
 			return false;
-		}				
+		}
 	}
 
 	public boolean loadCorrespondingInterestPoints()
 	{
-		try 
+		try
 		{
 			this.correspondingInterestPoints = new ArrayList< CorrespondingInterestPoints >();
 
-			final BufferedReader in = TextFileAccess.openFileReadEx( new File( getBaseDir(), getFile().toString() + getCorrespondencesExt() ) );			
+			final BufferedReader in = TextFileAccess.openFileReadEx( new File( getBaseDir(), getFile().toString() + getCorrespondencesExt() ) );
 
 			// the header
 			do {} while ( !in.readLine().startsWith( "id" ) );
@@ -171,6 +242,8 @@ public class InterestPointList
 			}
 
 			in.close();
+
+			modifiedCorrespondingInterestPoints = false;
 
 			return true;
 		}
@@ -197,9 +270,9 @@ public class InterestPointList
 			{
 				final String p[] = in.readLine().split( "\t" );
 				
-				final InterestPoint point = new InterestPoint( 
+				final InterestPoint point = new InterestPoint(
 						Integer.parseInt( p[ 0 ].trim() ),
-						new double[]{ 
+						new double[]{
 							Double.parseDouble( p[ 1 ].trim() ),
 							Double.parseDouble( p[ 2 ].trim() ),
 							Double.parseDouble( p[ 3 ].trim() ) } );
@@ -208,7 +281,9 @@ public class InterestPointList
 			}
 
 			in.close();
-			
+
+			modifiedInterestPoints = false;
+
 			return true;
 		} 
 		catch ( final IOException e )

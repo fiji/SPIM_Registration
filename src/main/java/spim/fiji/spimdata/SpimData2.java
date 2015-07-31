@@ -342,8 +342,8 @@ public class SpimData2 extends SpimData
 					final InterestPointList ipl = vipl.getHashMap().get( label );
 
 					// save if interestpoints were loaded or created, potentially modified
-					ipl.saveInterestPoints();
-					ipl.saveCorrespondingInterestPoints();
+					ipl.saveInterestPoints( false );
+					ipl.saveCorrespondingInterestPoints( false );
 				}
 			}
 

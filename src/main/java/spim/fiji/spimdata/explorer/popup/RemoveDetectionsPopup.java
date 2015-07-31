@@ -101,7 +101,7 @@ public class RemoveDetectionsPopup extends JMenu implements ViewExplorerSetable
 					return;
 
 				// thin out detections and save the new interestpoint files
-				if ( !DetectionRemoval.thinOut(data, viewIds, channels, false) )
+				if ( !DetectionRemoval.thinOut( data, viewIds, channels ) )
 					return;
 
 				panel.updateContent(); // update interestpoint panel if available

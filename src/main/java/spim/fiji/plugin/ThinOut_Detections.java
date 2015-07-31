@@ -47,7 +47,7 @@ public class ThinOut_Detections implements PlugIn
 			return;
 
 		// thin out detections and save the new interestpoint files
-		if ( !DetectionRemoval.thinOut(data, viewIds, channels, true) )
+		if ( !DetectionRemoval.thinOut(data, viewIds, channels ) )
 			return;
 
 		// write new xml

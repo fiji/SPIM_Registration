@@ -1,5 +1,10 @@
 package spim.process.histogram;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Random;
+
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.VoxelDimensions;
@@ -14,11 +19,6 @@ import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Random;
 
 /**
  * Created by Stephan Janosch on 03/07/15.
@@ -121,10 +121,10 @@ public class HistogramDisplay {
     public static ArrayList<Double> getDistances(InterestPointList ipl, final VoxelDimensions voxelSize, final double subSampling)
     {
 
-        if (ipl.getInterestPoints() == null)
+        if ( !ipl.hasInterestPoints() )
             ipl.loadInterestPoints();
 
-        List<InterestPoint> ipList = ipl.getInterestPoints();
+        List<InterestPoint> ipList = ipl.getInterestPointsCopy();
         return getDistances(ipList, voxelSize, subSampling);
     }
 
