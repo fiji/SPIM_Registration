@@ -5,7 +5,6 @@ import ij.gui.GenericDialog;
 import java.util.ArrayList;
 import java.util.List;
 
-import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.plugin.util.GUIHelper;
@@ -164,18 +163,22 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 	 * 
 	 * @param dialogHeader
 	 * @param text
-	 * @param channel
 	 * @return
 	 */
-	protected ViewId getViewSelection( final String dialogHeader, final String text, final Channel channel )
+	protected ViewId getViewSelection( final String dialogHeader, final String text )
 	{
-		final ArrayList< ViewDescription > views = SpimData2.getAllViewIdsForChannelSorted( spimData, viewIdsToProcess, channel );
+		final ArrayList< ViewDescription > views = SpimData2.getAllViewDescriptionsSorted( spimData, viewIdsToProcess );
 		final String[] viewChoice = new String[ views.size() ];
 
 		for ( int i = 0; i < views.size(); ++i )
 		{
 			final ViewDescription vd = views.get( i );
-			viewChoice[ i ] = "Timepoint " + vd.getTimePointId() + ", Angle " + vd.getViewSetup().getAngle().getName() + ", Illum " + vd.getViewSetup().getIllumination().getName() + ", ViewSetupId " + vd.getViewSetupId();
+			viewChoice[ i ] =
+					"Timepoint " + vd.getTimePointId() +
+					", Angle " + vd.getViewSetup().getAngle().getName() +
+					", Channel " + vd.getViewSetup().getChannel().getName() +
+					", Illum " + vd.getViewSetup().getIllumination().getName() +
+					", ViewSetupId " + vd.getViewSetupId();
 		}
 
 		if ( defaultViewChoice >= views.size() )

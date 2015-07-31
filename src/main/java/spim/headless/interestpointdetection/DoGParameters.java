@@ -16,10 +16,6 @@ import spim.process.cuda.CUDASeparableConvolution;
 
 public class DoGParameters extends InterestPointParameters
 {
-	public double imageSigmaX = 0.5;
-	public double imageSigmaY = 0.5;
-	public double imageSigmaZ = 0.5;
-
 	/**
 	 * 0 = no subpixel localization
 	 * 1 = quadratic fit

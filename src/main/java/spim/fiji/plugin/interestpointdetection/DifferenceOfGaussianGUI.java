@@ -7,17 +7,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.numeric.real.FloatType;
-import mpicbg.imglib.wrapper.ImgLib2;
-import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.segmentation.InteractiveDoG;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.realtransform.AffineTransform3D;
 import spim.fiji.plugin.util.GenericDialogAppender;
@@ -25,25 +20,25 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.headless.interestpointdetection.DoG;
 import spim.headless.interestpointdetection.DoGParameters;
+import spim.headless.interestpointdetection.DownsampleTools;
 import spim.process.cuda.CUDADevice;
 import spim.process.cuda.CUDASeparableConvolution;
 import spim.process.cuda.CUDATools;
 import spim.process.cuda.NativeLibraryTools;
-import spim.process.interestpointdetection.ProcessDOG;
 
-public class DifferenceOfGaussian extends DifferenceOfGUI implements GenericDialogAppender
+public class DifferenceOfGaussianGUI extends DifferenceOfGUI implements GenericDialogAppender
 {
 	public static double defaultUseGPUMem = 75;
 
-	public static double defaultS = 1.8;
-	public static double defaultT = 0.008;
-
-	public static double defaultSigma;
-	public static double defaultThreshold;
+	public static double defaultSigma = 1.8;
+	public static double defaultThreshold = 0.008;
 	public static boolean defaultFindMin;
 	public static boolean defaultFindMax;
 
-	public static String[] computationOnChoice = new String[]{ "CPU (Java)", "GPU approximate (Nvidia CUDA via JNA)", "GPU accurate (Nvidia CUDA via JNA)" };
+	public static String[] computationOnChoice = new String[]{
+		"CPU (Java)",
+		"GPU approximate (Nvidia CUDA via JNA)",
+		"GPU accurate (Nvidia CUDA via JNA)" };
 	public static int defaultComputationChoiceIndex = 0;
 
 	double sigma;
@@ -60,7 +55,7 @@ public class DifferenceOfGaussian extends DifferenceOfGUI implements GenericDial
 	CUDASeparableConvolution cuda = null;
 	boolean accurateCUDA = false;
 
-	public DifferenceOfGaussian( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
+	public DifferenceOfGaussianGUI( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
 		super( spimData, viewIdsToProcess );
 	}
@@ -69,21 +64,26 @@ public class DifferenceOfGaussian extends DifferenceOfGUI implements GenericDial
 	public String getDescription() { return "Difference-of-Gaussian"; }
 
 	@Override
-	public DifferenceOfGaussian newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
+	public DifferenceOfGaussianGUI newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
-		return new DifferenceOfGaussian( spimData, viewIdsToProcess );
+		return new DifferenceOfGaussianGUI( spimData, viewIdsToProcess );
 	}
 
 	@Override
 	public HashMap< ViewId, List< InterestPoint > > findInterestPoints( final TimePoint t )
 	{
-		DoGParameters dog = new DoGParameters();
+		final DoGParameters dog = new DoGParameters();
 
 		dog.imgloader = spimData.getSequenceDescription().getImgLoader();
 		dog.toProcess = new ArrayList< ViewDescription >();
 
+		dog.localization = this.localization;
 		dog.downsampleXY = this.downsampleXY;
 		dog.downsampleZ = this.downsampleZ;
+		dog.imageSigmaX = this.imageSigmaX;
+		dog.imageSigmaY = this.imageSigmaY;
+		dog.imageSigmaZ = this.imageSigmaZ;
+
 		dog.sigma = this.sigma;
 		dog.findMin = this.findMin;
 		dog.findMax = this.findMax;
@@ -94,7 +94,7 @@ public class DifferenceOfGaussian extends DifferenceOfGUI implements GenericDial
 		dog.percentGPUMem = this.percentGPUMem;
 
 		final HashMap< ViewId, List< InterestPoint > > interestPoints = new HashMap< ViewId, List< InterestPoint > >();
-		
+
 		for ( final ViewDescription vd : SpimData2.getAllViewIdsForTimePointSorted( spimData, viewIdsToProcess, t ) )
 		{
 			// make sure not everything crashes if one file is missing
@@ -125,7 +125,7 @@ public class DifferenceOfGaussian extends DifferenceOfGUI implements GenericDial
 	@Override
 	protected boolean setDefaultValues( final int brightness )
 	{
-		this.sigma = defaultS;
+		this.sigma = defaultSigma;
 		this.findMin = false;
 		this.findMax = true;
 
@@ -187,32 +187,34 @@ public class DifferenceOfGaussian extends DifferenceOfGUI implements GenericDial
 		}
 
 		RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > img =
-				openAndDownsample( spimData, viewDescription, new AffineTransform3D() );
+				DownsampleTools.openAndDownsample(
+						spimData.getSequenceDescription().getImgLoader(),
+						viewDescription,
+						new AffineTransform3D(),
+						downsampleXY,
+						downsampleZ );
 
 		if ( img == null )
 		{
 			IOFunctions.println( "View not found: " + viewDescription );
 			return false;
 		}
-	
-		preSmooth( img );
 
 		final ImagePlus imp = ImageJFunctions.wrapFloat( img, "" ).duplicate();
 		img = null;
 		imp.setDimensions( 1, imp.getStackSize(), 1 );
 		imp.setTitle( "tp: " + viewDescription.getTimePoint().getName() + " viewSetup: " + viewDescription.getViewSetupId() );		
-		imp.show();		
+		imp.show();
 		imp.setSlice( imp.getStackSize() / 2 );
-		imp.setRoi( 0, 0, imp.getWidth()/3, imp.getHeight()/3 );		
+		imp.setRoi( 0, 0, imp.getWidth()/3, imp.getHeight()/3 );
 
 		final InteractiveDoG idog = new InteractiveDoG( imp );
-		final int channelId = channel.getId();
 
 		idog.setSigma2isAdjustable( false );
-		idog.setInitialSigma( (float)defaultSigma[ channelId ] );
-		idog.setThreshold( (float)defaultThreshold[ channelId ] );
-		idog.setLookForMinima( defaultFindMin[ channelId ] );
-		idog.setLookForMaxima( defaultFindMax[ channelId ] );
+		idog.setInitialSigma( (float)defaultSigma );
+		idog.setThreshold( (float)defaultThreshold );
+		idog.setLookForMinima( defaultFindMin );
+		idog.setLookForMaxima( defaultFindMax );
 		idog.setMinIntensityImage( minIntensity ); // if is Double.NaN will be ignored
 		idog.setMaxIntensityImage( maxIntensity ); // if is Double.NaN will be ignored
 
@@ -232,11 +234,11 @@ public class DifferenceOfGaussian extends DifferenceOfGUI implements GenericDial
 		if ( idog.wasCanceled() )
 			return false;
 
-		this.sigma[ channelId ] = defaultSigma[ channelId ] = idog.getInitialSigma();
-		this.threshold[ channelId ] = defaultThreshold[ channelId ] = idog.getThreshold();
-		this.findMin[ channelId ] = defaultFindMin[ channelId ] = idog.getLookForMinima();
-		this.findMax[ channelId ] = defaultFindMax[ channelId ] = idog.getLookForMaxima();
-		
+		this.sigma = defaultSigma = idog.getInitialSigma();
+		this.threshold = defaultThreshold = idog.getThreshold();
+		this.findMin = defaultFindMin = idog.getLookForMinima();
+		this.findMax = defaultFindMax = idog.getLookForMaxima();
+
 		return true;
 	}
 
