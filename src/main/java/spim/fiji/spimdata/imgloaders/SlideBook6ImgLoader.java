@@ -11,7 +11,7 @@ import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
-//import mpicbg.spim.data.sequence.Illumination;
+import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessibleInterval;
@@ -73,7 +73,7 @@ public class SlideBook6ImgLoader extends AbstractImgLoader
 		final int t = vd.getTimePoint().getId();
 		final int a = vd.getViewSetup().getAttribute( Angle.class ).getId();
 		final int c = vd.getViewSetup().getAttribute( Channel.class ).getId();
-		// final int i = vd.getViewSetup().getAttribute( Illumination.class ).getId();
+		final int i = vd.getViewSetup().getAttribute( Illumination.class ).getId();
 		
 		final int bpp = r.getBytesPerPixel(a);
 
@@ -84,11 +84,9 @@ public class SlideBook6ImgLoader extends AbstractImgLoader
 		for ( int z = 0; z < img.dimension(2); ++z )
 		{
 			// SlideBook6Reader.dll
-			// a = angle id (SPIMdata) = capture index (SlideBook)
-			// r.readImagePlaneBuf(data, a, 0, t, z, c);
-			
+			// i = illumination id (SPIMdata) = capture index (SlideBook)
 			// a = angle id (SPIMdata) = channel index (SlideBook)
-			r.readImagePlaneBuf(data, 0, 0, t, z, a);
+			r.readImagePlaneBuf(data, i, 0, t, z, a);
 
 			ShortBuffer shortBuffer = byteBuffer.order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
 			while ( shortBuffer.hasRemaining())
@@ -105,14 +103,14 @@ public class SlideBook6ImgLoader extends AbstractImgLoader
 			SlideBook6Reader reader = new SlideBook6Reader();
 
 			reader.openFile(sldFile.getPath());
-			int capture = 0;
 			int position = 0;
 			
 			final BasicViewDescription< ? > vd = sequenceDescription.getViewDescriptions().get( view );
+			final int i = vd.getViewSetup().getAttribute( Illumination.class ).getId();
 			final int a = vd.getViewSetup().getAttribute( Angle.class ).getId();
-			final int w = reader.getNumXColumns(capture);
-			final int h = reader.getNumYRows(capture);
-			final int d = reader.getNumZPlanes(capture);
+			final int w = reader.getNumXColumns(i);
+			final int h = reader.getNumYRows(i);
+			final int d = reader.getNumZPlanes(i);
 			final ArrayImg< FloatType, ? > img = ArrayImgs.floats( w, h, d );
 			
 			populateImage( img, vd, reader );
@@ -121,10 +119,10 @@ public class SlideBook6ImgLoader extends AbstractImgLoader
 				normalize( img );
 
 			// TODO: make sure a < getNumCaptures()
-			float voxelSize = reader.getVoxelSize(capture);
+			float voxelSize = reader.getVoxelSize(i);
 			float zSpacing = 1;
-			if (reader.getNumZPlanes(capture) > 1) {
-				zSpacing = (float) (reader.getZPosition(capture, position, 1) - reader.getZPosition(capture, position, 0));
+			if (reader.getNumZPlanes(i) > 1) {
+				zSpacing = (float) (reader.getZPosition(i, position, 1) - reader.getZPosition(i, position, 0));
 			}
 			
 			updateMetaDataCache( view, w, h, d, voxelSize, voxelSize, zSpacing );
@@ -151,23 +149,23 @@ public class SlideBook6ImgLoader extends AbstractImgLoader
 			SlideBook6Reader reader = new SlideBook6Reader();
 
 			reader.openFile(sldFile.getPath());
-			int capture = 0;
 			int position = 0;
 			
 			final BasicViewDescription< ? > vd = sequenceDescription.getViewDescriptions().get( view );
+			final int i = vd.getViewSetup().getAttribute( Illumination.class).getId();
 			final int a = vd.getViewSetup().getAttribute( Angle.class ).getId();
-			final int w = reader.getNumXColumns(capture);
-			final int h = reader.getNumYRows(capture);
-			final int d = reader.getNumZPlanes(capture);
+			final int w = reader.getNumXColumns(i);
+			final int h = reader.getNumYRows(i);
+			final int d = reader.getNumZPlanes(i);
 			final ArrayImg< UnsignedShortType, ? > img = ArrayImgs.unsignedShorts( w, h, d );
 
 			populateImage( img, vd, reader );
 			
 			// TODO: make sure a < getNumCaptures()
-			float voxelSize = reader.getVoxelSize(capture);
+			float voxelSize = reader.getVoxelSize(i);
 			float zSpacing = 1;
-			if (reader.getNumZPlanes(capture) > 1) {
-				zSpacing = (float) (reader.getZPosition(capture, position, 1) - reader.getZPosition(capture, position, 0));
+			if (reader.getNumZPlanes(i) > 1) {
+				zSpacing = (float) (reader.getZPosition(i, position, 1) - reader.getZPosition(i, position, 0));
 			}
 			
 			updateMetaDataCache( view, w, h, d, voxelSize, voxelSize, zSpacing );
@@ -194,20 +192,20 @@ public class SlideBook6ImgLoader extends AbstractImgLoader
 		try
 		{
 			reader.openFile(sldFile.getPath());
-			int capture = 0;
 			int position = 0;
 
 			final BasicViewDescription< ? > vd = sequenceDescription.getViewDescriptions().get( view );
+			final int i = vd.getViewSetup().getAttribute( Illumination.class ).getId();
 			final int a = vd.getViewSetup().getAttribute( Angle.class ).getId();
 			final int w = reader.getNumXColumns(a);
 			final int h = reader.getNumYRows(a);
 			final int d = reader.getNumZPlanes(a);
 
 			// TODO: make sure a < getNumCaptures()
-			float voxelSize = reader.getVoxelSize(capture);
+			float voxelSize = reader.getVoxelSize(i);
 			float zSpacing = 1;
-			if (reader.getNumZPlanes(capture) > 1) {
-				zSpacing = (float) (reader.getZPosition(capture, position, 1) - reader.getZPosition(capture, position, 0));
+			if (reader.getNumZPlanes(i) > 1) {
+				zSpacing = (float) (reader.getZPosition(i, position, 1) - reader.getZPosition(i, position, 0));
 			}
 
 			updateMetaDataCache( view, w, h, d, 

@@ -224,11 +224,11 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 		final double[] yaxis = new double[]{ 0, 1, 0 }; 
 		final ArrayList< Angle > angles = new ArrayList< Angle >();
 		final Angle angleA= new Angle( 0, "Path A");
-		angleA.setRotation(yaxis, -45);
+		angleA.setRotation(yaxis, 0);
 		angles.add( angleA );
 
 		final Angle angleB = new Angle( 1, "Path B");
-		angleB.setRotation(yaxis, 45);
+		angleB.setRotation(yaxis, 90);
 		angles.add( angleB );
 
 		final ArrayList< ViewSetup > viewSetups = new ArrayList< ViewSetup >();
