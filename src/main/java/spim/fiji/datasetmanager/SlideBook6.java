@@ -117,9 +117,8 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 			// finally create the SpimData itself based on the sequence description and the view registration
 			final SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints, new BoundingBoxes() );
 
-			// TODO: apply rotations, if known
-			//if ( reader.applyAxis() )
-			//	applyAxis( spimData );
+			// TODO: only apply axis if configured in SLD file
+			applyAxis( spimData );
 
 			reader.closeFile();
 			
@@ -173,7 +172,7 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 						t.rotY( Math.toRadians( degrees ) );
 						d = "Rotation around y-axis by " + degrees + " degrees";
 					}
-					else if ( axis[ 0 ] == 1 && axis[ 0 ] == 0 && axis[ 2 ] == 1 )
+					else if ( axis[ 0 ] == 0 && axis[ 0 ] == 0 && axis[ 2 ] == 1 )
 					{
 						t.rotZ( Math.toRadians( degrees ) );
 						d = "Rotation around z-axis by " + degrees + " degrees";
@@ -209,41 +208,50 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 	 */
 	protected ArrayList< ViewSetup > createViewSetups( final SlideBook6Reader meta )
 	{
-		// only one channel per view (SlideBook channels are diSPIM angles, there should have only two)
-		// TODO: define multiple channels
-		final Channel c  = new Channel( 0, meta.getChannelName( 0, 0 ) );
-
-		// TODO: define multiple illuminations
-		final Illumination i = new Illumination( 0, String.valueOf( 0 ) ) ;
+		// define multiple illuminations, one per capture in the slide file
+		final int captures = meta.getNumCaptures();
+		final ArrayList< Illumination > illuminations = new ArrayList< Illumination >();
+		for ( int i = 0; i < captures; i++)
+		{
+			if (meta.getNumChannels(i) == 2)
+			{
+				final String name = meta.getImageName(i);
+				illuminations.add(new Illumination(i, name ) ) ;
+			}
+		}	
 		
 		// TODO: query rotation angle of each SlideBook channel
+		final double[] yaxis = new double[]{ 0, 1, 0 }; 
 		final ArrayList< Angle > angles = new ArrayList< Angle >();
-		final Angle angle0 = new Angle( 0, "0");
-		// TODO: set to known rotation
-		// angle0.setRotation(axis, 0);
-		angles.add( angle0 );
+		final Angle angleA= new Angle( 0, "Path A");
+		angleA.setRotation(yaxis, -45);
+		angles.add( angleA );
 
-		final Angle angle90 = new Angle( 1, "90");
-		double[] axis = new double[]{ 0, 0, 1 }; // z axis
-		angle90.setRotation(axis, 90);
-		angles.add( angle90 );
+		final Angle angleB = new Angle( 1, "Path B");
+		angleB.setRotation(yaxis, 45);
+		angles.add( angleB );
 
-		// TODO: process more than one image in SLD file
-		final int capture = 0;
 		final ArrayList< ViewSetup > viewSetups = new ArrayList< ViewSetup >();
-		for ( final Angle a : angles )
+		
+		for ( final Illumination i : illuminations )
 		{
-			int channel = a.getId();
-			// TODO: make sure a < getNumCaptures()
-			float voxelSizeUm = meta.getVoxelSize(capture);
-			float zSpacing = 1;
-			if (meta.getNumZPlanes(capture) > 1) {
-				zSpacing = (float) Math.abs(meta.getZPosition(capture, 0, 1) - meta.getZPosition(capture, 0, 0));
-			}
+			for ( final Angle a : angles )
+			{
+				// TODO: make sure a < getNumCaptures()
+				float voxelSizeUm = meta.getVoxelSize(i.getId());
+				float zSpacing = 1;
+				if (meta.getNumZPlanes(i.getId()) > 1) {
+					zSpacing = (float) Math.abs(meta.getZPosition(i.getId(), 0, 1) - meta.getZPosition(i.getId(), 0, 0));
+				}
 
-			final VoxelDimensions voxelSize = new FinalVoxelDimensions( "um", voxelSizeUm, voxelSizeUm, zSpacing );
-			final Dimensions dim = new FinalDimensions( new long[]{ meta.getNumXColumns(capture), meta.getNumYRows(capture), meta.getNumZPlanes(capture) } );
-			viewSetups.add( new ViewSetup( viewSetups.size(), a.getName(), dim, voxelSize, c, a, i ) );
+				final VoxelDimensions voxelSize = new FinalVoxelDimensions( "um", voxelSizeUm, voxelSizeUm, zSpacing );
+				final Dimensions dim = new FinalDimensions( new long[]{ meta.getNumXColumns(i.getId()), meta.getNumYRows(i.getId()), meta.getNumZPlanes(i.getId()) } );
+
+				// use name of first channel, SlideBook channels are diSPIM angles and each image should have only two
+				final Channel channel  = new Channel( 0, meta.getChannelName( i.getId(), 0) );
+
+				viewSetups.add( new ViewSetup( viewSetups.size(), a.getName(), dim, voxelSize, channel, a, i ) );
+			}
 		}
 
 		return viewSetups;
@@ -256,8 +264,12 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 	{
 		final ArrayList< TimePoint > timepoints = new ArrayList< TimePoint >();
 
-		for ( int t = 0; t < meta.getNumTimepoints(0); ++t )
-			timepoints.add( new TimePoint( t ) );
+		int t = 0;
+		for ( int c = 0; c < meta.getNumCaptures(); c++)
+		{
+			for (; t < meta.getNumTimepoints(0); ++t )
+				timepoints.add( new TimePoint( t ) );
+		}
 
 		return new TimePoints( timepoints );
 	}
@@ -280,7 +292,7 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 
 		if ( meta.getNumPositions(0) > 1 )
 		{
-			IOFunctions.println( "WARNING: " + meta.getNumPositions(0) + " stage positions detected. This will be imported as different illumination directions." );
+			IOFunctions.println( "WARNING: " + meta.getNumCaptures() + " captures detected. These will be imported as different illumination directions." );
 			gd.addMessage( "" );
 		}
 
