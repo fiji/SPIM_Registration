@@ -134,6 +134,23 @@ public class SpimData2 extends SpimData
 		return viewIds;
 	}
 
+	public static ArrayList< ViewDescription > getAllViewDescriptionsSorted( final SpimData data, final List< ? extends ViewId > viewIds )
+	{
+		final ArrayList< ViewDescription > vds = new ArrayList< ViewDescription >();
+
+		for ( final ViewId v : viewIds )
+		{
+			final ViewDescription vd = data.getSequenceDescription().getViewDescription( v );
+
+			if ( vd.isPresent() )
+				vds.add( vd );
+		}
+
+		Collections.sort( vds );
+
+		return vds;
+	}
+
 	public static ArrayList< Angle > getAllAnglesForChannelTimepointSorted( final SpimData data, final Collection< ? extends ViewId > viewIds, final Channel c, final TimePoint t )
 	{
 		final HashSet< Angle > angleSet = new HashSet< Angle >();
