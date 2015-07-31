@@ -21,6 +21,8 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.spimdata.boundingbox.BoundingBoxes;
+import spim.fiji.spimdata.interestpoints.InterestPointList;
+import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
 /**
@@ -330,8 +332,21 @@ public class SpimData2 extends SpimData
 		final XmlIoSpimData2 io = new XmlIoSpimData2( clusterExtension );
 		
 		final String xml = new File( data.getBasePath(), new File( xmlFileName ).getName() ).getAbsolutePath();
-		try 
+		try
 		{
+			for ( final ViewId viewId : data.getViewInterestPoints().getViewInterestPoints().keySet() )
+			{
+				final ViewInterestPointLists vipl = data.getViewInterestPoints().getViewInterestPoints().get( viewId );
+				for ( final String label : vipl.getHashMap().keySet() )
+				{
+					final InterestPointList ipl = vipl.getHashMap().get( label );
+
+					// save if interestpoints were loaded or created, potentially modified
+					ipl.saveInterestPoints();
+					ipl.saveCorrespondingInterestPoints();
+				}
+			}
+
 			io.save( data, xml );
 			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + io.lastFileName() + "'." );
 			return xml;

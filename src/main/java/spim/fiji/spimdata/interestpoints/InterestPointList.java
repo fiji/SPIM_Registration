@@ -66,10 +66,10 @@ public class InterestPointList
 	public boolean saveInterestPoints()
 	{
 		final List< InterestPoint > list = getInterestPoints();
-		
+
 		if ( list == null )
 			return false;
-		
+
 		try
 		{
 			final File dir = new File( getBaseDir(), getFile().getParent() );
@@ -79,18 +79,18 @@ public class InterestPointList
 				IOFunctions.println( "Creating directory: " + dir );
 				dir.mkdirs();
 			}
-			
-			PrintWriter out = TextFileAccess.openFileWriteEx( new File( getBaseDir(), getFile().toString() + getInterestPointsExt() ) );
-			
+
+			final PrintWriter out = TextFileAccess.openFileWriteEx( new File( getBaseDir(), getFile().toString() + getInterestPointsExt() ) );
+
 			// header
 			out.println( "id" + "\t" + "x" + "\t" + "y" + "\t" + "z" );
-			
+
 			// id && coordinates in the local image stack for each interestpoint
 			for ( final InterestPoint p : list )
-				out.println( p.getId() + "\t" + p.getL()[0] + "\t" + p.getL()[1] + "\t" + p.getL()[2] );
-						
+				out.println( Integer.toString( p.getId() ).concat( "\t" ).concat( Double.toString( p.getL()[0] ) ).concat( "\t" ).concat( Double.toString( p.getL()[1] ) ).concat( "\t" ).concat( Double.toString( p.getL()[2] ) ) );
+
 			out.close();
-			
+
 			return true;
 		}
 		catch ( final IOException e )
@@ -98,16 +98,16 @@ public class InterestPointList
 			IOFunctions.println( "InterestPointList.saveInterestPoints(): " + e );
 			e.printStackTrace();
 			return false;
-		}				
+		}
 	}
 
 	public boolean saveCorrespondingInterestPoints()
 	{
 		final List< CorrespondingInterestPoints > list = getCorrespondingInterestPoints();
-		
+
 		if ( list == null )
 			return false;
-		
+
 		try
 		{
 			final File dir = new File( getBaseDir(), getFile().getParent() );
@@ -117,18 +117,23 @@ public class InterestPointList
 				IOFunctions.println( "Creating directory: " + dir );
 				dir.mkdirs();
 			}
-			
-			PrintWriter out = TextFileAccess.openFileWriteEx( new File( getBaseDir(), getFile().toString() + getCorrespondencesExt() ) );
-			
+
+			final PrintWriter out = TextFileAccess.openFileWriteEx( new File( getBaseDir(), getFile().toString() + getCorrespondencesExt() ) );
+
 			// header
 			out.println( "id" + "\t" + "corresponding_timepoint_id" + "\t" + "corresponding_viewsetup_id" + "\t" + "corresponding_label" + "\t" + "corresponding_id" );
-			
+
 			// id of the interestpoint from this List && for the corresponding interestpoint viewid(timepointId, viewsetupId), label, and id
 			for ( final CorrespondingInterestPoints p : list )
-				out.println( p.getDetectionId() + "\t" + p.getCorrespondingViewId().getTimePointId() + "\t" + p.getCorrespondingViewId().getViewSetupId() + "\t" + p.getCorrespodingLabel() + "\t" + p.getCorrespondingDetectionId() );
-						
+				out.println(
+						Integer.toString( p.getDetectionId() ).concat( "\t" ).concat(
+						Integer.toString( p.getCorrespondingViewId().getTimePointId() ) ).concat( "\t" ).concat(
+						Integer.toString( p.getCorrespondingViewId().getViewSetupId() ) ).concat( "\t" ).concat(
+						p.getCorrespodingLabel() ).concat( "\t" ).concat(
+						Integer.toString( p.getCorrespondingDetectionId() ) ) );
+
 			out.close();
-			
+
 			return true;
 		}
 		catch ( final IOException e )
