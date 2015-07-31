@@ -59,7 +59,6 @@ public class DifferenceOfMeanGUI extends DifferenceOfGUI
 		dom.toProcess = new ArrayList< ViewDescription >();
 
 		dom.localization = this.localization;
-		dom.downsampleXY = this.downsampleXY;
 		dom.downsampleZ = this.downsampleZ;
 		dom.imageSigmaX = this.imageSigmaX;
 		dom.imageSigmaY = this.imageSigmaY;
@@ -83,6 +82,13 @@ public class DifferenceOfMeanGUI extends DifferenceOfGUI
 
 				dom.toProcess.clear();
 				dom.toProcess.add( vd );
+
+				// downsampleXY == 0 : a bit less then z-resolution
+				// downsampleXY == -1 : a bit more then z-resolution
+				if ( downsampleXYIndex < 1 )
+					dom.downsampleXY = DownsampleTools.downsampleFactor( downsampleXYIndex, downsampleZ, vd.getViewSetup().getVoxelSize() );
+				else
+					dom.downsampleXY = downsampleXYIndex;
 
 				DoM.addInterestPoints( interestPoints, dom );
 			}
@@ -156,7 +162,7 @@ public class DifferenceOfMeanGUI extends DifferenceOfGUI
 			return false;
 
 		final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( view.getTimePointId(), view.getViewSetupId() );
-		
+
 		if ( !viewDescription.isPresent() )
 		{
 			IOFunctions.println( "You defined the view you selected as not present at this timepoint." );
@@ -166,13 +172,22 @@ public class DifferenceOfMeanGUI extends DifferenceOfGUI
 								 " illum: " + viewDescription.getViewSetup().getIllumination().getName() );
 			return false;
 		}
-		
+
+		// downsampleXY == 0 : a bit less then z-resolution
+		// downsampleXY == -1 : a bit more then z-resolution
+		final int downsampleXY;
+
+		if ( downsampleXYIndex < 1 )
+			downsampleXY = DownsampleTools.downsampleFactor( downsampleXYIndex, downsampleZ, viewDescription.getViewSetup().getVoxelSize() );
+		else
+			downsampleXY = downsampleXYIndex;
+
 		RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > img =
 				DownsampleTools.openAndDownsample(
 						spimData.getSequenceDescription().getImgLoader(),
 						viewDescription,
 						new AffineTransform3D(),
-						this.downsampleXY,
+						downsampleXY,
 						this.downsampleZ );
 
 		if ( img == null )
@@ -223,10 +238,10 @@ public class DifferenceOfMeanGUI extends DifferenceOfGUI
 	}
 
 	@Override
-	public String getParameters( final int channelId )
+	public String getParameters()
 	{
 		return "DOM r1=" + radius1 + " t=" + threshold + " min=" + findMin + " max=" + findMax + 
-				" imageSigmaX=" + imageSigmaX + " imageSigmaY=" + imageSigmaY + " imageSigmaZ=" + imageSigmaZ + " downsampleXY=" + downsampleXY +
+				" imageSigmaX=" + imageSigmaX + " imageSigmaY=" + imageSigmaY + " imageSigmaZ=" + imageSigmaZ + " downsampleXYIndex=" + downsampleXYIndex +
 				" downsampleZ=" + downsampleZ + " minIntensity=" + minIntensity + " maxIntensity=" + maxIntensity;
 	}
 

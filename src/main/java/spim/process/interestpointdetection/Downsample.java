@@ -10,7 +10,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
@@ -192,22 +191,6 @@ public class Downsample
 			ip.getW()[ 1 ] = tmp[ 1 ];
 			ip.getW()[ 2 ] = tmp[ 2 ];
 		}
-	}
-
-	public static int downsampleFactor( final int downsampleXY, final int downsampleZ, final VoxelDimensions v )
-	{
-		final double calXY = Math.min( v.dimension( 0 ), v.dimension( 1 ) );
-		final double calZ = v.dimension( 2 ) * downsampleZ;
-		final double log2ratio = Math.log( calZ / calXY ) / Math.log( 2 );
-
-		final double exp2;
-
-		if ( downsampleXY == 0 )
-			exp2 = Math.pow( 2, Math.floor( log2ratio ) );
-		else
-			exp2 = Math.pow( 2, Math.ceil( log2ratio ) );
-
-		return (int)Math.round( exp2 );
 	}
 
 	public static void main( String[] args )

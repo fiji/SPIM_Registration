@@ -41,9 +41,9 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 	protected double imageSigmaX, imageSigmaY, imageSigmaZ;
 	protected double minIntensity, maxIntensity;
 
-	// downsampleXY == 0 : a bit less then z-resolution
-	// downsampleXY == -1 : a bit more then z-resolution
-	protected int localization, downsampleXY, downsampleZ;
+	// downsampleXYIndex == 0 : a bit less then z-resolution
+	// downsampleXYIndex == -1 : a bit more then z-resolution
+	protected int localization, downsampleXYIndex, downsampleZ;
 
 	public DifferenceOfGUI( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
@@ -103,17 +103,17 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 				downsampleZ = 8;
 
 			if ( dsxy == 0 )
-				downsampleXY = 1;
+				downsampleXYIndex = 1;
 			else if ( dsxy == 1 )
-				downsampleXY = 2;
+				downsampleXYIndex = 2;
 			else if ( dsxy == 2 )
-				downsampleXY = 4;
+				downsampleXYIndex = 4;
 			else if ( dsxy == 3 )
-				downsampleXY = 8;
+				downsampleXYIndex = 8;
 			else if ( dsxy == 4 )
-				downsampleXY = 0;
+				downsampleXYIndex = 0;
 			else
-				downsampleXY = -1;
+				downsampleXYIndex = -1;
 
 		if ( setMinMax )
 		{

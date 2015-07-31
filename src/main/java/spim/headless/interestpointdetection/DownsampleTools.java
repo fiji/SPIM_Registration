@@ -4,6 +4,7 @@ import java.util.Date;
 
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
@@ -17,34 +18,41 @@ public class DownsampleTools
 {
 	protected static final int[] ds = { 1, 2, 4, 8 };
 
-	//TODO: make this more clean (XY, Z downsample)
-	
+	public static int downsampleFactor( final int downsampleXY, final int downsampleZ, final VoxelDimensions v )
+	{
+		final double calXY = Math.min( v.dimension( 0 ), v.dimension( 1 ) );
+		final double calZ = v.dimension( 2 ) * downsampleZ;
+		final double log2ratio = Math.log( calZ / calXY ) / Math.log( 2 );
+
+		final double exp2;
+
+		if ( downsampleXY == 0 )
+			exp2 = Math.pow( 2, Math.floor( log2ratio ) );
+		else
+			exp2 = Math.pow( 2, Math.ceil( log2ratio ) );
+
+		return (int)Math.round( exp2 );
+	}
+
 	/**
 	 * 
 	 * @param imgLoader
 	 * @param vd
 	 * @param t - will be filled if downsampling is performed, otherwise identity transform
-	 * @param downsampleXYIndex - specify which downsampling (0 == ?? )
-	 * @param downsampleZ - 
+	 * @param downsampleXY - specify which downsampling ( 1,2,4,8 )
+	 * @param downsampleZ - specify which downsampling ( 1,2,4,8 )
 	 * @return
 	 */
 	public static RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > openAndDownsample(
 			ImgLoader< ? > imgLoader,
 			final ViewDescription vd,
 			final AffineTransform3D t,
-			final int downsampleXYIndex,
-			final int downsampleZ )
+			final int downsampleXY,
+			final int downsampleZ  )
 	{
 		IOFunctions.println(
 				"(" + new Date(System.currentTimeMillis()) + "): "
 				+ "Requesting Img from ImgLoader (tp=" + vd.getTimePointId() + ", setup=" + vd.getViewSetupId() + ")" );
-
-		int downsampleXY = downsampleXYIndex;
-
-		// downsampleXY == 0 : a bit less then z-resolution
-		// downsampleXY == -1 : a bit more then z-resolution
-		if ( downsampleXY < 1 )
-			downsampleXY = Downsample.downsampleFactor( downsampleXYIndex, downsampleZ, vd.getViewSetup().getVoxelSize() );
 
 		if ( downsampleXY > 1 )
 			IOFunctions.println( "(" + new Date( System.currentTimeMillis() )  + "): Downsampling in XY " + downsampleXY + "x ..." );

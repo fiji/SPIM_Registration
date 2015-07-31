@@ -50,9 +50,12 @@ public class DoG
 					continue;
 
 				final AffineTransform3D correctCoordinates = new AffineTransform3D();
-				final RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input = DownsampleTools
-						.openAndDownsample( dog.imgloader, vd,
-								correctCoordinates, dog.downsampleXY,
+				final RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input =
+						DownsampleTools.openAndDownsample(
+								dog.imgloader,
+								vd,
+								correctCoordinates,
+								dog.downsampleXY,
 								dog.downsampleZ );
 
 				final Image< FloatType > img = ImgLib2

@@ -66,5 +66,5 @@ public abstract class InterestPointDetectionGUI
 	/**
 	 * @return - stored in the XML so that it is reproducible how the points were segmented
 	 */
-	public abstract String getParameters( final int channelId );
+	public abstract String getParameters();
 }

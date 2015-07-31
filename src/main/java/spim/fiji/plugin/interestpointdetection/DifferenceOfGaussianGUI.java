@@ -78,7 +78,6 @@ public class DifferenceOfGaussianGUI extends DifferenceOfGUI implements GenericD
 		dog.toProcess = new ArrayList< ViewDescription >();
 
 		dog.localization = this.localization;
-		dog.downsampleXY = this.downsampleXY;
 		dog.downsampleZ = this.downsampleZ;
 		dog.imageSigmaX = this.imageSigmaX;
 		dog.imageSigmaY = this.imageSigmaY;
@@ -105,6 +104,13 @@ public class DifferenceOfGaussianGUI extends DifferenceOfGUI implements GenericD
 
 				dog.toProcess.clear();
 				dog.toProcess.add( vd );
+
+				// downsampleXY == 0 : a bit less then z-resolution
+				// downsampleXY == -1 : a bit more then z-resolution
+				if ( downsampleXYIndex < 1 )
+					dog.downsampleXY = DownsampleTools.downsampleFactor( downsampleXYIndex, downsampleZ, vd.getViewSetup().getVoxelSize() );
+				else
+					dog.downsampleXY = downsampleXYIndex;
 
 				DoG.addInterestPoints( interestPoints, dog );
 			}
@@ -186,6 +192,15 @@ public class DifferenceOfGaussianGUI extends DifferenceOfGUI implements GenericD
 			return false;
 		}
 
+		// downsampleXY == 0 : a bit less then z-resolution
+		// downsampleXY == -1 : a bit more then z-resolution
+		final int downsampleXY;
+
+		if ( downsampleXYIndex < 1 )
+			downsampleXY = DownsampleTools.downsampleFactor( downsampleXYIndex, downsampleZ, viewDescription.getViewSetup().getVoxelSize() );
+		else
+			downsampleXY = downsampleXYIndex;
+
 		RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > img =
 				DownsampleTools.openAndDownsample(
 						spimData.getSequenceDescription().getImgLoader(),
@@ -243,10 +258,10 @@ public class DifferenceOfGaussianGUI extends DifferenceOfGUI implements GenericD
 	}
 
 	@Override
-	public String getParameters( final int channelId )
+	public String getParameters()
 	{
 		return "DOG s=" + sigma + " t=" + threshold + " min=" + findMin + " max=" + findMax +
-				" imageSigmaX=" + imageSigmaX + " imageSigmaY=" + imageSigmaY + " imageSigmaZ=" + imageSigmaZ + " downsampleXY=" + downsampleXY +
+				" imageSigmaX=" + imageSigmaX + " imageSigmaY=" + imageSigmaY + " imageSigmaZ=" + imageSigmaZ + " downsampleXYIndex=" + downsampleXYIndex +
 				" downsampleZ=" + downsampleZ + " minIntensity=" + minIntensity + " maxIntensity=" + maxIntensity;
 	}
 

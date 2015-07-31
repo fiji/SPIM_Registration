@@ -4,15 +4,12 @@ import ij.ImageJ;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
-import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.interestpointdetection.DifferenceOfGaussianGUI;
@@ -22,9 +19,8 @@ import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
-import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.fiji.spimdata.interestpoints.InterestPointList;
+import spim.headless.interestpointdetection.InterestPointTools;
 
 /**
  * Plugin to detect interest points, store them on disk, and link them into the XML
@@ -142,23 +138,7 @@ public class Interest_Point_Detection implements PlugIn
 		{
 			final HashMap< ViewId, List< InterestPoint > > points = ipd.findInterestPoints( tp );
 
-			// save the file and the path in the XML
-			final SequenceDescription seqDesc = data.getSequenceDescription();
-			
-			for ( final ViewId viewId : points.keySet() )
-			{
-				final ViewDescription viewDesc = seqDesc.getViewDescription( viewId.getTimePointId(), viewId.getViewSetupId() );
-				final int channelId = viewDesc.getViewSetup().getChannel().getId();		
-				
-				final InterestPointList list = new InterestPointList(
-						data.getBasePath(),
-						new File( "interestpoints", "tpId_" + viewId.getTimePointId() + "_viewSetupId_" + viewId.getViewSetupId() + "." + label ) );
-				
-				list.setParameters( ipd.getParameters( channelId ) );
-				list.setInterestPoints( points.get( viewId ) );
-				list.setCorrespondingInterestPoints( new ArrayList< CorrespondingInterestPoints >() );
-				data.getViewInterestPoints().getViewInterestPointLists( viewId ).addInterestPointList( label, list );
-			}
+			InterestPointTools.addInterestPoints( data, label, points, ipd.getParameters() );
 
 			// update metadata if necessary
 			if ( data.getSequenceDescription().getImgLoader() instanceof AbstractImgLoader )
@@ -173,7 +153,7 @@ public class Interest_Point_Detection implements PlugIn
 					IOFunctions.println( "Failed to update metadata, this should not happen: " + e );
 				}
 			}
-			
+
 			// save the xml
 			if ( saveXML )
 				SpimData2.saveXML( data, xmlFileName, clusterExtension );
