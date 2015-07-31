@@ -142,10 +142,10 @@ public class TransformationTools
 
 	public static List< InterestPoint > loadInterestPoints( final InterestPointList list )
 	{
-		if ( list.getInterestPoints() == null )
+		if ( !list.hasInterestPoints() )
 			list.loadInterestPoints();
 
-		return list.getInterestPoints();
+		return list.getInterestPointsCopy();
 	}
 
 	public static <V> AffineTransform3D getTransform( final V viewId, final Map< V, ViewRegistration > registrations )
