@@ -2,7 +2,6 @@ package spim.fiji.plugin.interestpointregistration.statistics;
 
 import java.awt.Point;
 import java.awt.event.ActionEvent;
-import java.io.File;
 import java.util.ArrayList;
 
 import javax.swing.AbstractAction;
