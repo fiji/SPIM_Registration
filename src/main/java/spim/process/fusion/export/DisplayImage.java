@@ -21,7 +21,7 @@ public class DisplayImage implements ImgExportTitle
 {
 	final boolean virtualDisplay;
 	ImgTitler imgTitler = new DefaultImgTitler();
-	
+
 	public DisplayImage() { this( false ); }
 	public DisplayImage( final boolean virtualDisplay ) { this.virtualDisplay = virtualDisplay; }
 
@@ -29,9 +29,9 @@ public class DisplayImage implements ImgExportTitle
 	{
 		final ImgTitler current = this.getImgTitler();
 		this.setImgTitler( new FixedNameImgTitler( title ) );
-		
+
 		exportImage( img, null, null, null );
-		
+
 		this.setImgTitler( current );
 	}
 
@@ -39,9 +39,9 @@ public class DisplayImage implements ImgExportTitle
 	{
 		final ImgTitler current = this.getImgTitler();
 		this.setImgTitler( new FixedNameImgTitler( title ) );
-		
+
 		exportImage( img, bb, null, null );
-		
+
 		this.setImgTitler( current );
 	}
 
@@ -51,8 +51,7 @@ public class DisplayImage implements ImgExportTitle
 		return exportImage( img, bb, tp, vs, Double.NaN, Double.NaN );
 	}
 
-	@SuppressWarnings("unchecked")
-	public <T extends RealType<T> & NativeType<T>> boolean exportImage( final RandomAccessibleInterval<T> img, final BoundingBoxGUI bb, final TimePoint tp, final ViewSetup vs, final double min, final double max )
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval<T> img, final BoundingBoxGUI bb, final TimePoint tp, final ViewSetup vs, final double min, final double max )
 	{
 		// do nothing in case the image is null
 		if ( img == null )
@@ -66,20 +65,7 @@ public class DisplayImage implements ImgExportTitle
 		else
 			minmax = new float[]{ (float)min, (float)max };
 
-		ImagePlus imp = null;
-		
-		if ( img instanceof ImagePlusImg )
-			try { imp = ((ImagePlusImg<T, ?>)img).getImagePlus(); } catch (ImgLibException e) {}
-
-		if ( imp == null )
-		{
-			if ( virtualDisplay )
-				imp = ImageJFunctions.wrap( img, getImgTitler().getImageTitle( tp, vs ) );
-			else
-				imp = ImageJFunctions.wrap( img, getImgTitler().getImageTitle( tp, vs ) ).duplicate();
-		}
-
-		imp.setTitle( getImgTitler().getImageTitle( tp, vs ) );
+		ImagePlus imp = getImagePlusInstance( img, virtualDisplay, getImgTitler().getImageTitle( tp, vs ), minmax[ 0 ], minmax[ 1 ] );
 
 		if ( bb != null )
 		{
@@ -88,15 +74,39 @@ public class DisplayImage implements ImgExportTitle
 			imp.getCalibration().zOrigin = -(bb.min( 2 ) / bb.getDownSampling());
 			imp.getCalibration().pixelWidth = imp.getCalibration().pixelHeight = imp.getCalibration().pixelDepth = bb.getDownSampling();
 		}
-		
-		imp.setDimensions( 1, (int)img.dimension( 2 ), 1 );
-		
-		imp.setDisplayRange( minmax[ 0 ], minmax[ 1 ] );
-		
+
 		imp.updateAndDraw();
 		imp.show();
 
 		return true;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static < T extends RealType< T > & NativeType< T > > ImagePlus getImagePlusInstance(
+			final RandomAccessibleInterval< T > img,
+			final boolean virtualDisplay,
+			final String title,
+			final double min,
+			final double max )
+	{
+		ImagePlus imp = null;
+
+		if ( img instanceof ImagePlusImg )
+			try { imp = ((ImagePlusImg<T, ?>)img).getImagePlus(); } catch (ImgLibException e) {}
+
+		if ( imp == null )
+		{
+			if ( virtualDisplay )
+				imp = ImageJFunctions.wrap( img, title );
+			else
+				imp = ImageJFunctions.wrap( img, title ).duplicate();
+		}
+
+		imp.setTitle( title );
+		imp.setDimensions( 1, (int)img.dimension( 2 ), 1 );
+		imp.setDisplayRange( min, max );
+
+		return imp;
 	}
 
 	@Override

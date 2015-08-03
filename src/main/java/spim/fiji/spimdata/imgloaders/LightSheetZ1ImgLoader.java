@@ -36,7 +36,7 @@ import net.imglib2.view.Views;
 import spim.fiji.datasetmanager.LightSheetZ1;
 import spim.fiji.datasetmanager.LightSheetZ1MetaData;
 
-public class LightSheetZ1ImgLoader extends AbstractImgLoader
+public class LightSheetZ1ImgLoader extends AbstractImgFactoryImgLoader
 {
 	final File cziFile;
 	final AbstractSequenceDescription<?, ?, ?> sequenceDescription;

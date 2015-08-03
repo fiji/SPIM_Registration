@@ -18,7 +18,7 @@ import net.imglib2.type.NativeType;
 import spim.fiji.datasetmanager.StackList;
 
 
-public abstract class StackImgLoader extends AbstractImgLoader
+public abstract class StackImgLoader extends AbstractImgFactoryImgLoader
 {
 	protected File path = null;
 	protected String fileNamePattern = null;
@@ -48,7 +48,7 @@ public abstract class StackImgLoader extends AbstractImgLoader
 		{
 			try
 			{
-				img = new CellImgFactory< T >( 256 ).create( dim, type );				 
+				img = new CellImgFactory< T >( 256 ).create( dim, type );
 			}
 			catch ( Exception e2 )
 			{

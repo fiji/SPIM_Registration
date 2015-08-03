@@ -27,7 +27,7 @@ import spim.fiji.datasetmanager.SlideBook6;
 
 import org.scijava.nativelib.NativeLibraryUtil;
 
-public class SlideBook6ImgLoader extends AbstractImgLoader
+public class SlideBook6ImgLoader extends AbstractImgFactoryImgLoader
 {
 	final File sldFile;
 	final AbstractSequenceDescription< ? extends BasicViewSetup, ? extends BasicViewDescription< ? >, ? > sequenceDescription;

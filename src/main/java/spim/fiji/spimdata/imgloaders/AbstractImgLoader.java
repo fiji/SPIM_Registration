@@ -12,8 +12,6 @@ import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.Dimensions;
 import net.imglib2.FinalDimensions;
 import net.imglib2.img.Img;
-import net.imglib2.img.ImgFactory;
-import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.ImgLib2Temp.Pair;
@@ -21,14 +19,11 @@ import spim.fiji.ImgLib2Temp.ValuePair;
 
 public abstract class AbstractImgLoader implements ImgLoader< UnsignedShortType >
 {
-	protected ImgFactory< ? extends NativeType< ? > > imgFactory;
-	
 	private final HashMap< ViewId, Pair< Dimensions, VoxelDimensions > > imageMetaDataCache;
 	private final HashMap< Integer, ViewId > viewIdLookUp;
 
 	protected AbstractImgLoader()
 	{
-		imgFactory = null;
 		imageMetaDataCache = new HashMap< ViewId, Pair< Dimensions, VoxelDimensions > >();
 		viewIdLookUp = new HashMap< Integer, ViewId >();
 	}
@@ -88,10 +83,7 @@ public abstract class AbstractImgLoader implements ImgLoader< UnsignedShortType 
 	public UnsignedShortType getImageType()
 	{
 		return new UnsignedShortType();
-	}	
-		
-	public ImgFactory< ? extends NativeType< ? > > getImgFactory() { return imgFactory; }
-	public void setImgFactory( final ImgFactory< ? extends NativeType< ? > > imgFactory ) { this.imgFactory = imgFactory; }
+	}
 
 	/**
 	 * Updates the ViewSetups using the imageMetaDataCache

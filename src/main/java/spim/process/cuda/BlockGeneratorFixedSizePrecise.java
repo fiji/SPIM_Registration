@@ -8,9 +8,9 @@ import net.imglib2.util.Util;
 
 public class BlockGeneratorFixedSizePrecise implements BlockGenerator< Block >
 {
-	final int[] blockSize;
+	final long[] blockSize;
 
-	public BlockGeneratorFixedSizePrecise( final int[] blockSize )
+	public BlockGeneratorFixedSizePrecise( final long[] blockSize )
 	{
 		this.blockSize = blockSize;
 	}
@@ -22,14 +22,14 @@ public class BlockGeneratorFixedSizePrecise implements BlockGenerator< Block >
 	 * @param kernelSize - the size of the kernel (has to be odd!)
 	 * @return
 	 */
-	public Block[] divideIntoBlocks( final int[] imgSize, final int[] kernelSize )
+	public Block[] divideIntoBlocks( final long[] imgSize, final long[] kernelSize )
 	{
 		final int numDimensions = imgSize.length;
 		
 		// compute the effective size & local offset of each block
 		// this is the same for all blocks
-		final int[] effectiveSizeGeneral = new int[ numDimensions ];
-		final int[] effectiveLocalOffset = new int[ numDimensions ];
+		final long[] effectiveSizeGeneral = new long[ numDimensions ];
+		final long[] effectiveLocalOffset = new long[ numDimensions ];
 		
 		for ( int d = 0; d < numDimensions; ++d )
 		{
@@ -45,7 +45,7 @@ public class BlockGeneratorFixedSizePrecise implements BlockGenerator< Block >
 		}
 		
 		// compute the amount of blocks needed
-		final int[] numBlocks = new int[ numDimensions ];
+		final long[] numBlocks = new long[ numDimensions ];
 
 		for ( int d = 0; d < numDimensions; ++d )
 		{
@@ -76,9 +76,9 @@ public class BlockGeneratorFixedSizePrecise implements BlockGenerator< Block >
 			cursor.localize( currentBlock );
 
 			// compute the current offset
-			final int[] offset = new int[ numDimensions ];
-			final int[] effectiveOffset = new int[ numDimensions ];
-			final int[] effectiveSize = effectiveSizeGeneral.clone();
+			final long[] offset = new long[ numDimensions ];
+			final long[] effectiveOffset = new long[ numDimensions ];
+			final long[] effectiveSize = effectiveSizeGeneral.clone();
 
 			for ( int d = 0; d < numDimensions; ++d )
 			{

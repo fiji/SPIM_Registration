@@ -42,7 +42,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 		super( path, fileNamePattern, imgFactory, layoutTP, layoutChannels, layoutIllum, layoutAngles, sequenceDescription );
 	}
 
-	protected ImagePlus open( File file )
+	public static ImagePlus open( File file )
 	{
 		final ImagePlus imp = new Opener().openImage( file.getAbsolutePath() );
 
@@ -51,7 +51,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 			IOFunctions.println( "Could not open file with ImageJ TIFF reader: '" + file.getAbsolutePath() + "'" );
 			return null;
 		}
-		
+
 		return imp;
 	}
 
@@ -79,7 +79,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 		if ( imp == null )
 			throw new RuntimeException( "Could not load '" + file + "'." );
 
-		final long[] dim = new long[]{ imp.getWidth(), imp.getHeight(), imp.getNSlices() };
+		final long[] dim = new long[]{ imp.getWidth(), imp.getHeight(), imp.getStack().getSize() };
 		final Img< FloatType > img = this.instantiateImg( dim, new FloatType() );
 		
 		if ( img == null )
@@ -87,8 +87,22 @@ public class StackImgLoaderIJ extends StackImgLoader
 		else
 			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Opened '" + file + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] + " image=" + img.getClass().getSimpleName() + "<FloatType>]" );
 
+		imagePlus2ImgLib2Img( imp, img, normalize );
+
+		// update the MetaDataCache of the AbstractImgLoader
+		// this does not update the XML ViewSetup but has to be called explicitly before saving
+		updateMetaDataCache( view, imp.getWidth(), imp.getHeight(), imp.getStack().getSize(),
+				imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight, imp.getCalibration().pixelDepth );
+
+		imp.close();
+
+		return img;
+	}
+
+	public static void imagePlus2ImgLib2Img( final ImagePlus imp, final Img< FloatType > img, final boolean normalize )
+	{
 		final ImageStack stack = imp.getStack();
-		final int sizeZ = imp.getNSlices();
+		final int sizeZ = imp.getStack().getSize();
 
 		if ( img instanceof ArrayImg || img instanceof PlanarImg )
 		{
@@ -110,19 +124,19 @@ public class StackImgLoaderIJ extends StackImgLoader
 						
 						if ( v < min )
 							min = v;
-						
+
 						if ( v > max )
 							max = v;
-						
+
 						cursor.next().set( v );
 					}
 				}
-				
+
 				for ( final FloatType t : img )
 					t.set( ( t.get() - min ) / ( max - min ) );
 			}
 			else
-			{			
+			{
 				for ( int z = 0; z < sizeZ; ++z )
 				{
 					final ImageProcessor ip = stack.getProcessor( z + 1 );
@@ -140,12 +154,12 @@ public class StackImgLoaderIJ extends StackImgLoader
 			{
 				float min = Float.MAX_VALUE;
 				float max = -Float.MAX_VALUE;
-				
+
 				for ( int z = 0; z < sizeZ; ++z )
 				{
 					final Cursor< FloatType > cursor = Views.iterable( Views.hyperSlice( img, 2, z ) ).localizingCursor();
 					final ImageProcessor ip = stack.getProcessor( z + 1 );
-					
+
 					while ( cursor.hasNext() )
 					{
 						cursor.fwd();
@@ -153,41 +167,32 @@ public class StackImgLoaderIJ extends StackImgLoader
 
 						if ( v < min )
 							min = v;
-						
+
 						if ( v > max )
 							max = v;
-						
+
 						cursor.get().set( v );
 					}
 				}
-				
+
 				for ( final FloatType t : img )
 					t.set( ( t.get() - min ) / ( max - min ) );
 			}
 			else
-			{				
+			{
 				for ( int z = 0; z < sizeZ; ++z )
 				{
 					final Cursor< FloatType > cursor = Views.iterable( Views.hyperSlice( img, 2, z ) ).localizingCursor();
 					final ImageProcessor ip = stack.getProcessor( z + 1 );
-					
+
 					while ( cursor.hasNext() )
 					{
 						cursor.fwd();
 						cursor.get().set( ip.getf( cursor.getIntPosition( 0 ) + cursor.getIntPosition( 1 ) * width ) );
 					}
-				}				
+				}
 			}
 		}
-
-		// update the MetaDataCache of the AbstractImgLoader
-		// this does not update the XML ViewSetup but has to be called explicitly before saving
-		updateMetaDataCache( view, imp.getWidth(), imp.getHeight(), imp.getNSlices(), 
-				imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight, imp.getCalibration().pixelDepth );
-
-		imp.close();
-	
-		return img;
 	}
 
 	/**
@@ -235,7 +240,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 			converter = null;
 		}
 
-		final long[] dim = new long[]{ imp.getWidth(), imp.getHeight(), imp.getNSlices() };
+		final long[] dim = new long[]{ imp.getWidth(), imp.getHeight(), imp.getStack().getSize() };
 		final Img< UnsignedShortType > img = instantiateImg( dim, new UnsignedShortType() );
 		
 		if ( img == null )
@@ -244,7 +249,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Opened '" + file + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] + " image=" + img.getClass().getSimpleName() + "<UnsignedShortType>]" );
 
 		final ImageStack stack = imp.getStack();
-		final int sizeZ = imp.getNSlices();
+		final int sizeZ = imp.getStack().getSize();
 
 		if ( img instanceof ArrayImg || img instanceof PlanarImg )
 		{
@@ -309,7 +314,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 		
 		// update the MetaDataCache of the AbstractImgLoader
 		// this does not update the XML ViewSetup but has to be called explicitly before saving
-		updateMetaDataCache( view, imp.getWidth(), imp.getHeight(), imp.getNSlices(), 
+		updateMetaDataCache( view, imp.getWidth(), imp.getHeight(), imp.getStack().getSize(),
 				imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight, imp.getCalibration().pixelDepth );
 
 		imp.close();
@@ -328,7 +333,7 @@ public class StackImgLoaderIJ extends StackImgLoader
 		
 		// update the MetaDataCache of the AbstractImgLoader
 		// this does not update the XML ViewSetup but has to be called explicitly before saving
-		updateMetaDataCache( view, imp.getWidth(), imp.getHeight(), imp.getNSlices(), 
+		updateMetaDataCache( view, imp.getWidth(), imp.getHeight(), imp.getStack().getSize(),
 				imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight, imp.getCalibration().pixelDepth );
 
 		imp.close();

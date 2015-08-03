@@ -25,31 +25,32 @@ import net.imglib2.RealInterval;
 import net.imglib2.RealRandomAccess;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
+import net.imglib2.img.array.ArrayImg;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.array.ArrayLocalizingCursor;
 import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.realtransform.AffineTransform3D;
+import net.imglib2.type.NativeType;
 import net.imglib2.type.Type;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 
-public class ExtractPSF< T extends RealType< T > >
+public class ExtractPSF< T extends RealType< T > & NativeType< T > >
 {
-	final ImgFactory< T > psfFactory;
-	
-	final protected HashMap< ViewId, Img< T > > pointSpreadFunctions, originalPSFs;
+	final protected HashMap< ViewId, ArrayImg< T, ? > > pointSpreadFunctions, originalPSFs;
 	final protected ArrayList< ViewId > viewIds;
 
 	// if this ExtractPSF instance manages PSF's for other channels, we store it here
 	final HashMap< ViewId, ViewId > mapViewIds;
 
-	public ExtractPSF( final ImgFactory< T > psfFactory )
+	public ExtractPSF()
 	{		
-		this.pointSpreadFunctions = new HashMap< ViewId, Img< T > >();
-		this.originalPSFs = new HashMap< ViewId, Img< T > >();
+		this.pointSpreadFunctions = new HashMap< ViewId, ArrayImg< T, ? > >();
+		this.originalPSFs = new HashMap< ViewId, ArrayImg< T, ? > >();
 		this.viewIds = new ArrayList< ViewId >();
 
 		this.mapViewIds = new HashMap< ViewId, ViewId >();
-		this.psfFactory = psfFactory;
 	}
 
 	/**
@@ -57,16 +58,16 @@ public class ExtractPSF< T extends RealType< T > >
 	 */
 	public HashMap< ViewId, ViewId > getViewIdMapping() { return mapViewIds; }
 
-	public HashMap< ViewId, Img< T > > getPSFMap() { return pointSpreadFunctions; }
+	public HashMap< ViewId, ArrayImg< T, ? > > getPSFMap() { return pointSpreadFunctions; }
 
 	/**
 	 * Returns the transformed PSF. It will first try to look it up directly, if not available it will
-	 * check the mapping mapViewIds< from, to > which one should be used for this viewid.
+	 * check the mapping mapViewIds&lt; from, to &gt; which one should be used for this viewid.
 	 *
 	 * @param viewId
 	 * @return - the extracted PSFs after applying the transformations of each view
 	 */
-	public Img< T > getTransformedPSF( final ViewId viewId )
+	public ArrayImg< T, ? > getTransformedPSF( final ViewId viewId )
 	{
 		if ( pointSpreadFunctions.containsKey( viewId ) )
 			return pointSpreadFunctions.get( viewId );
@@ -79,7 +80,7 @@ public class ExtractPSF< T extends RealType< T > >
 	/**
 	 * @return - the extracted PSFs in original calibration for each view
 	 */
-	public HashMap< ViewId, Img< T > > getInputCalibrationPSFs() { return originalPSFs; }
+	public HashMap< ViewId, ArrayImg< T, ? > > getInputCalibrationPSFs() { return originalPSFs; }
 	
 	/**
 	 * @return - the viewdescriptions corresponding to the PSFs
@@ -260,12 +261,12 @@ public class ExtractPSF< T extends RealType< T > >
 	{
 		IOFunctions.println( "PSF size: " + Util.printCoordinates( psfSize ) );
 
-		final Img< T > originalPSF = extractPSFLocal( img, psfFactory, locations, psfSize );
+		final ArrayImg< T, ? > originalPSF = extractPSFLocal( img, locations, psfSize );
 
 		// normalize PSF
 		normalize( originalPSF );
 
-		final Img< T > psf = transformPSF( originalPSF, model );
+		final ArrayImg< T, ? > psf = transformPSF( originalPSF, model );
 
 		viewIds.add( viewId );
 		pointSpreadFunctions.put( viewId, psf );
@@ -299,7 +300,9 @@ public class ExtractPSF< T extends RealType< T > >
 	 * @param model - the transformation model
 	 * @return the transformed psf which has odd sizes and where the center of the psf is also the center of the transformed psf
 	 */
-	protected static < T extends RealType< T > > Img< T > transformPSF( final Img< T > psf, final AffineTransform3D model )
+	protected static < T extends RealType< T > & NativeType< T > > ArrayImg< T, ? > transformPSF(
+			final RandomAccessibleInterval< T > psf,
+			final AffineTransform3D model )
 	{
 		// here we compute a slightly different transformation than the ImageTransform does
 		// two things are necessary:
@@ -346,21 +349,20 @@ public class ExtractPSF< T extends RealType< T > >
 	 * @param size - the size in which the psf is extracted (in pixel units, z-scaling is ignored)
 	 * @return - the psf, NOT z-scaling corrected
 	 */
-	protected static < T extends RealType< T > > Img< T > extractPSFLocal(
+	protected static < T extends RealType< T > & NativeType< T > > ArrayImg< T, ? > extractPSFLocal(
 			final RandomAccessibleInterval< T > img,
-			final ImgFactory< T > psfFactory,
 			final ArrayList< double[] > locations,
 			final long[] size )
 	{
 		final int numDimensions = size.length;
 		
-		final Img< T > psf = psfFactory.create( size, Views.iterable( img ).firstElement() );
+		final ArrayImg< T, ? > psf = new ArrayImgFactory< T >().create( size, Views.iterable( img ).firstElement() );
 		
 		// Mirror produces some artifacts ... so we use periodic
 		final RealRandomAccess< T > interpolator =
 				Views.interpolate( Views.extendPeriodic( img ), new NLinearInterpolatorFactory< T >() ).realRandomAccess();
 		
-		final Cursor< T > psfCursor = psf.localizingCursor();
+		final ArrayLocalizingCursor< T > psfCursor = psf.localizingCursor();
 		
 		final long[] sizeHalf = size.clone();
 		for ( int d = 0; d < numDimensions; ++d )
@@ -390,15 +392,19 @@ public class ExtractPSF< T extends RealType< T > >
 		return psf;
 	}
 	
-	public static < T extends RealType< T > > Img< T > transform( final Img< T > image, final AffineTransform3D transformIn, final long[] newDim, final double[] offset )
+	public static < T extends RealType< T > & NativeType< T > > ArrayImg< T, ? > transform(
+			final RandomAccessibleInterval< T > image,
+			final AffineTransform3D transformIn,
+			final long[] newDim,
+			final double[] offset )
 	{
 		final int numDimensions = image.numDimensions();
 		final AffineTransform3D transform = transformIn.inverse(); 
 
 		// create the new output image
-		final Img< T > transformed = image.factory().create( newDim, image.firstElement() );
+		final ArrayImg< T, ? > transformed = new ArrayImgFactory< T >().create( newDim, Views.iterable( image ).firstElement() );
 
-		final Cursor<T> transformedIterator = transformed.localizingCursor();		
+		final ArrayLocalizingCursor<T> transformedIterator = transformed.localizingCursor();
 		final RealRandomAccess<T> interpolator = Views.interpolate( Views.extendZero( image ), new NLinearInterpolatorFactory<T>() ).realRandomAccess();
 		
 		final double[] tmp1 = new double[ numDimensions ];
@@ -510,14 +516,13 @@ public class ExtractPSF< T extends RealType< T > >
 	 * @param filenames
 	 * @return
 	 */
-	public static < T extends RealType< T > > ExtractPSF< T > loadAndTransformPSFs(
+	public static < T extends RealType< T > & NativeType< T > > ExtractPSF< T > loadAndTransformPSFs(
 			final ArrayList< Pair< Pair< Angle, Illumination >, String > > filenames,
 			final ArrayList< ViewDescription > viewDesc,
-			final ImgFactory< T > factory,
 			final T type,
 			final HashMap< ViewId, AffineTransform3D > models )
 	{
-		final ExtractPSF< T > extractPSF = new ExtractPSF< T >( factory );
+		final ExtractPSF< T > extractPSF = new ExtractPSF< T >();
 
 		for ( final ViewDescription vd : viewDesc )
 		{
@@ -535,7 +540,7 @@ public class ExtractPSF< T extends RealType< T > >
 			final int width = imp.getWidth();
 			final int sizeZ = imp.getNSlices();
 	
-			Img< T > psfImage = factory.create( new long[]{ width, imp.getHeight(), sizeZ }, type );
+			ArrayImg< T, ? > psfImage = new ArrayImgFactory< T >().create( new long[]{ width, imp.getHeight(), sizeZ }, type );
 
 			for ( int z = 0; z < sizeZ; ++z )
 			{
@@ -549,7 +554,7 @@ public class ExtractPSF< T extends RealType< T > >
 				}
 			}
 
-			final Img< T > psf;
+			final ArrayImg< T, ? > psf;
 
 			if ( models != null )
 			{

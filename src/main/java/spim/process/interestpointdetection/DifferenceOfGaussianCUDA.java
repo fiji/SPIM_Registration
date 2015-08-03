@@ -119,7 +119,7 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianNewPeakFinder
 			final long memAvail = Math.round( cudaDevice.getFreeDeviceMemory() * ( percentGPUMem / 100.0 ) );
 			final long imgBytes = numPixels() * 4 * 2; // float, two images on the card at once
 
-			final int[] numBlocksDim = computeNumBlocksDim( memAvail, imgBytes, percentGPUMem, img.numDimensions(), "CUDA-Device " + cudaDevice.getDeviceId() );
+			final long[] numBlocksDim = net.imglib2.util.Util.int2long( computeNumBlocksDim( memAvail, imgBytes, percentGPUMem, img.numDimensions(), "CUDA-Device " + cudaDevice.getDeviceId() ) );
 			final BlockGenerator< Block > generator;
 
 			if ( accurate )
@@ -141,7 +141,7 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianNewPeakFinder
 
 				// convolve
 				final float[] resultF = ((FloatArray)((ArrayImg< net.imglib2.type.numeric.real.FloatType, ? > )result).update( null ) ).getCurrentStorageArray();
-				cudaconvolve.gauss( resultF, getImgSize( result ), sigma, OutOfBounds.EXTEND_BORDER_PIXELS, 0 );
+				cudaconvolve.gauss( resultF, getImgSizeInt( result ), sigma, OutOfBounds.EXTEND_BORDER_PIXELS, 0 );
 				IOFunctions.println( "Convolution took " + ( System.currentTimeMillis() - copy ) + "ms using device=" + cudaDevice.getDeviceName() + " (id=" + cudaDevice.getDeviceId() + ")" );
 
 				// no copy back required
@@ -167,7 +167,7 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianNewPeakFinder
 
 					// convolve
 					final float[] imgBlockF = ((FloatArray)((ArrayImg< net.imglib2.type.numeric.real.FloatType, ? > )imgBlock).update( null ) ).getCurrentStorageArray();
-					cudaconvolve.gauss( imgBlockF, getImgSize( imgBlock ), sigma, OutOfBounds.EXTEND_BORDER_PIXELS, 0 );
+					cudaconvolve.gauss( imgBlockF, getImgSizeInt( imgBlock ), sigma, OutOfBounds.EXTEND_BORDER_PIXELS, 0 );
 					//long convolve = System.currentTimeMillis();
 					//IOFunctions.println( "Convolution took " + ( convolve - copy ) + "ms using device=" + cudaDevice.getDeviceName() + " (id=" + cudaDevice.getDeviceId() + ")" );
 
@@ -186,8 +186,23 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianNewPeakFinder
 		@Override
 		public Image<FloatType> getResult() { return ImgLib2.wrapFloatToImgLib1( result ); }
 
+		protected static long[] getKernelSize( final double[] sigma )
+		{
+			final long[] dim = new long[ sigma.length ];
+			for ( int d = 0; d < sigma.length; ++d )
+				dim[ d ] = Util.createGaussianKernel1DDouble( sigma[ d ], false ).length;
+			return dim;
+		}
 
-		protected static int[] getKernelSize( final double[] sigma )
+		public static long[] getImgSize( final Interval img )
+		{
+			final long[] dim = new long[ img.numDimensions() ];
+			for ( int d = 0; d < img.numDimensions(); ++d )
+				dim[ d ] = img.dimension( d );
+			return dim;
+		}
+
+		protected static int[] getKernelSizeInt( final double[] sigma )
 		{
 			final int[] dim = new int[ sigma.length ];
 			for ( int d = 0; d < sigma.length; ++d )
@@ -195,7 +210,7 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianNewPeakFinder
 			return dim;
 		}
 
-		protected static int[] getImgSize( final Interval img )
+		public static int[] getImgSizeInt( final Interval img )
 		{
 			final int[] dim = new int[ img.numDimensions() ];
 			for ( int d = 0; d < img.numDimensions(); ++d )

@@ -1,5 +1,8 @@
 package spim.process.fusion.deconvolution;
 
+import ij.ImagePlus;
+
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -9,7 +12,6 @@ import java.util.Vector;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
@@ -19,16 +21,21 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
+import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
+import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
+import net.imglib2.img.ImgFactory;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
 import spim.Threads;
-import spim.fiji.ImgLib2Temp;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
+import spim.fiji.spimdata.imgloaders.StackImgLoaderIJ;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
@@ -38,6 +45,9 @@ import spim.process.fusion.boundingbox.BoundingBoxGUI;
 import spim.process.fusion.export.DisplayImage;
 import spim.process.fusion.weightedavg.ProcessFusion;
 import spim.process.fusion.weights.Blending;
+import spim.process.fusion.weights.NormalizingRandomAccessibleInterval;
+import spim.process.fusion.weights.TransformedRealRandomAccessibleInterval;
+import bdv.util.ConstantRandomAccessible;
 
 /**
  * Fused individual images for each input stack, uses the exporter directly
@@ -47,6 +57,8 @@ import spim.process.fusion.weights.Blending;
  */
 public class ProcessForDeconvolution
 {
+	public static enum WeightType { WEIGHTS_ONLY, NO_WEIGHTS, VIRTUAL_WEIGHTS, PRECOMPUTED_WEIGHTS, LOAD_WEIGHTS };
+
 	public static int defaultBlendingRangeNumber = 25;
 	public static int defaultBlendingBorderNumber = 15;
 	public static int[] defaultBlendingRange = new int[]{ defaultBlendingRangeNumber, defaultBlendingRangeNumber, defaultBlendingRangeNumber };
@@ -61,9 +73,12 @@ public class ProcessForDeconvolution
 	int minOverlappingViews;
 	double avgOverlappingViews;
 	ArrayList< ViewDescription > viewDescriptions;
-	HashMap< ViewId, Img< FloatType > > imgs, weights;
+	HashMap< ViewId, RandomAccessibleInterval< FloatType > > imgs, weights;
 	ExtractPSF< FloatType > ePSF;
-	
+
+	public static String[] files;
+	public static boolean debugImport = false;
+
 	public ProcessForDeconvolution(
 			final SpimData2 spimData,
 			final List< ViewId > viewIdsToProcess,
@@ -79,8 +94,8 @@ public class ProcessForDeconvolution
 	}
 	
 	public ExtractPSF< FloatType > getExtractPSF() { return ePSF; }
-	public HashMap< ViewId, Img< FloatType > > getTransformedImgs() { return imgs; }
-	public HashMap< ViewId, Img< FloatType > > getTransformedWeights() { return weights; }
+	public HashMap< ViewId, RandomAccessibleInterval< FloatType > > getTransformedImgs() { return imgs; }
+	public HashMap< ViewId, RandomAccessibleInterval< FloatType > > getTransformedWeights() { return weights; }
 	public ArrayList< ViewDescription > getViewDescriptions() { return viewDescriptions; }
 	public int getMinOverlappingViews() { return minOverlappingViews; }
 	public double getAvgOverlappingViews() { return avgOverlappingViews; }
@@ -95,35 +110,43 @@ public class ProcessForDeconvolution
 	public boolean fuseStacksAndGetPSFs(
 			final TimePoint timepoint, 
 			final Channel channel,
+			final ImgFactory< FloatType > imgFactory,
 			final int osemIndex,
 			double osemspeedup,
-			final boolean weightsOnly,
+			WeightType weightType,
 			final HashMap< Channel, ChannelPSF > extractPSFLabels,
 			final long[] psfSize,
 			final HashMap< Channel, ArrayList< Pair< Pair< Angle, Illumination >, String > > > psfFiles,
 			final boolean transformLoadedPSFs )
 	{
+		// TODO: get rid of this hack
+		if ( files != null )
+		{
+			weightType = WeightType.LOAD_WEIGHTS;
+			IOFunctions.println( "WARNING: LOADING WEIGHTS FROM IMAGES, files.length()=" + files.length );
+		}
+
 		// get all views that are fused for this timepoint & channel
 		this.viewDescriptions = FusionHelper.assembleInputData( spimData, timepoint, channel, viewIdsToProcess );
 
 		if ( this.viewDescriptions.size() == 0 )
 			return false;
 
-		this.imgs = new HashMap< ViewId, Img< FloatType > >();
-		this.weights = new HashMap< ViewId, Img< FloatType > >();
-		
+		this.imgs = new HashMap< ViewId, RandomAccessibleInterval< FloatType > >();
+		this.weights = new HashMap< ViewId, RandomAccessibleInterval< FloatType > >();
+
 		final Img< FloatType > overlapImg;
-		
-		if ( weightsOnly )
-			overlapImg = bb.getImgFactory( new FloatType() ).create( bb.getDimensions(), new FloatType() );
+
+		if ( weightType == WeightType.WEIGHTS_ONLY )
+			overlapImg = imgFactory.create( bb.getDimensions(), new FloatType() );
 		else
 			overlapImg = null;
-				
+
 		final boolean extractPSFs = (extractPSFLabels != null) && (extractPSFLabels.get( channel ).getLabel() != null);
 		final boolean loadPSFs = (psfFiles != null);
-				
+
 		if ( extractPSFs )
-			ePSF = new ExtractPSF<FloatType>( bb.getImgFactory( new FloatType() ) );
+			ePSF = new ExtractPSF< FloatType >();
 		else if ( loadPSFs )
 			ePSF = loadPSFs( channel, viewDescriptions, psfFiles, transformLoadedPSFs );
 		else
@@ -140,69 +163,103 @@ public class ProcessForDeconvolution
 		// we will need to run some batches until all is fused
 		for ( int i = 0; i < viewDescriptions.size(); ++i )
 		{
-			IOFunctions.println( "Fusing view " + i + " of " + (viewDescriptions.size()-1) );
-			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Reserving memory for fused & weight image.");
+			final ViewDescription vd = viewDescriptions.get( i );
 
-			// try creating the output (type needs to be there to define T)
-			final Img< FloatType > fusedImg; 
-			
-			if ( weightsOnly )
-				fusedImg = overlapImg;
+			IOFunctions.println( "Transforming view " + i + " of " + (viewDescriptions.size()-1) + " (viewsetup=" + vd.getViewSetupId() + ", tp=" + vd.getTimePointId() + ")" );
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Reserving memory for transformed & weight image.");
+
+			// creating the output
+			RandomAccessibleInterval< FloatType > transformedImg; // might be null if WEIGHTS_ONLY
+			final RandomAccessibleInterval< FloatType > weightImg; // never null (except LOAD_WEIGHTS which is not implemented yet)
+
+			if ( weightType == WeightType.WEIGHTS_ONLY )
+				transformedImg = overlapImg;
 			else
-				fusedImg = bb.getImgFactory( new FloatType() ).create( bb.getDimensions(), new FloatType() );
-			
-			final Img< FloatType > weightImg = fusedImg.factory().create( bb.getDimensions(), new FloatType() );
+				transformedImg = imgFactory.create( bb.getDimensions(), new FloatType() );
 
-			if ( fusedImg == null || weightImg == null )
-			{
-				IOFunctions.println( "ProcessForDeconvolution: Cannot create output images."  );
-				return false;
-			}
-	
-			final ViewDescription inputData = viewDescriptions.get( i );
-			
-			// same as in the paralell fusion now more or less
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Transformed image factory: " + imgFactory.getClass().getSimpleName() );
+
+			// loading the input if necessary
 			final RandomAccessibleInterval< FloatType > img;
-			
-			if ( weightsOnly && !extractPSFs )
+
+			if ( weightType == WeightType.WEIGHTS_ONLY && !extractPSFs )
+			{
 				img = null;
+			}
 			else
-				img = ProcessFusion.getImage( new FloatType(), spimData, inputData, true );
-						
+			{
+				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Loading image.");
+				img = ProcessFusion.getImage( new FloatType(), spimData, vd, true );
+
+				if ( Img.class.isInstance( img ) )
+					IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Input image factory: " + ((Img< FloatType >)img).factory().getClass().getSimpleName() );
+			}
+
+			// initializing weights
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Initializing transformation & weights: " + weightType.name() );
+
+			spimData.getViewRegistrations().getViewRegistration( vd ).updateModel();
+			final AffineTransform3D transform = spimData.getViewRegistrations().getViewRegistration( vd ).getModel();
+			final long[] offset = new long[]{ bb.min( 0 ), bb.min( 1 ), bb.min( 2 ) };
+
+			if ( weightType == WeightType.PRECOMPUTED_WEIGHTS || weightType == WeightType.WEIGHTS_ONLY )
+				weightImg = imgFactory.create( bb.getDimensions(), new FloatType() );
+			else if ( weightType == WeightType.NO_WEIGHTS )
+				weightImg = Views.interval( new ConstantRandomAccessible< FloatType >( new FloatType( 1 ), transformedImg.numDimensions() ), transformedImg );
+			else if ( weightType == WeightType.VIRTUAL_WEIGHTS )
+			{
+				final Blending blending = getBlending( img, blendingBorder, blendingRange, vd );
+
+				weightImg = new TransformedRealRandomAccessibleInterval< FloatType >( blending, new FloatType(), transformedImg, transform, offset );
+			}
+			else //if ( processType == ProcessType.LOAD_WEIGHTS )
+			{
+				IOFunctions.println( "WARNING: LOADING WEIGHTS FROM: '" + new File( files[ i ] ) + "'" );
+				ImagePlus imp = StackImgLoaderIJ.open( new File( files[ i ] ) );
+				weightImg = imgFactory.create( bb.getDimensions(), new FloatType() );
+				StackImgLoaderIJ.imagePlus2ImgLib2Img( imp, (Img< FloatType > )weightImg, false );
+				imp.close();
+				if ( debugImport )
+				{
+					imp = ImageJFunctions.show( weightImg );
+					imp.setTitle( "ViewSetup " + vd.getViewSetupId() + " Timepoint " + vd.getTimePointId() );
+				}
+			}
+
 			// split up into many parts for multithreading
-			final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( fusedImg.size(), Threads.numThreads() * 4 );
+			final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( Views.iterable( transformedImg ).size(), Threads.numThreads() * 4 );
 
 			// set up executor service
 			final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
 			final ArrayList< Callable< String > > tasks = new ArrayList< Callable< String > >();
 
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Transforming image & computing weights.");
+
 			for ( final ImagePortion portion : portions )
-				if ( weightsOnly )
+			{
+				if ( weightType == WeightType.WEIGHTS_ONLY )
 				{
-					final Interval imgInterval = ImgLib2Temp.getIntervalFromDimension( ViewSetupUtils.getSizeOrLoad( inputData.getViewSetup(), inputData.getTimePoint(), spimData.getSequenceDescription().getImgLoader() ) );
-					// TODO: change back to imglib2 implementation once uploaded to Fiji
-					//final Interval imgInterval = new FinalInterval( ViewSetupUtils.getSizeOrLoad( inputData.getViewSetup(), inputData.getTimePoint(), spimData.getSequenceDescription().getImgLoader() ) );
-					
-					tasks.add( new ProcessForOverlapOnlyPortion(
-							portion,
-							imgInterval,
-							getBlending( imgInterval, blendingBorder, blendingRange, inputData ),
-							spimData.getViewRegistrations().getViewRegistration( inputData ).getModel(),
-							overlapImg,
-							weightImg,
-							bb ) );					
+					final Interval imgInterval = new FinalInterval( ViewSetupUtils.getSizeOrLoad( vd.getViewSetup(), vd.getTimePoint(), spimData.getSequenceDescription().getImgLoader() ) );
+					final Blending blending = getBlending( imgInterval, blendingBorder, blendingRange, vd );
+
+					tasks.add( new TransformWeights( portion, imgInterval, blending, transform, overlapImg, weightImg, offset ) );
+				}
+				else if ( weightType == WeightType.PRECOMPUTED_WEIGHTS )
+				{
+					final Blending blending = getBlending( img, blendingBorder, blendingRange, vd );
+
+					tasks.add( new TransformInputAndWeights( portion, img, blending, transform, transformedImg, weightImg, offset ) );
+				}
+				else if ( weightType == WeightType.NO_WEIGHTS || weightType == WeightType.VIRTUAL_WEIGHTS || weightType == WeightType.LOAD_WEIGHTS )
+				{
+					tasks.add( new TransformInput( portion, img, transform, transformedImg, offset ) );
 				}
 				else
 				{
-					tasks.add( new ProcessForDeconvolutionPortion(
-							portion,
-							img,
-							getBlending( img, blendingBorder, blendingRange, inputData ),
-							spimData.getViewRegistrations().getViewRegistration( inputData ).getModel(),
-							fusedImg,
-							weightImg,
-							bb ) );
+					throw new RuntimeException( weightType.name() + " not implemented yet." );
 				}
+			}
+
 			try
 			{
 				// invokeAll() returns when all tasks are complete
@@ -216,53 +273,106 @@ public class ProcessForDeconvolution
 			}
 
 			taskExecutor.shutdown();
-			
+
 			// extract PSFs if wanted
 			if ( extractPSFs )
 			{
-				final ArrayList< double[] > llist = getLocationsOfCorrespondingBeads( timepoint, inputData, extractPSFLabels.get( channel ).getLabel() );
-				
-				IOFunctions.println( "Extracting PSF for viewsetup " + inputData.getViewSetupId() + " using label '" + extractPSFLabels.get( channel ).getLabel() + "'" +
-						" (" +llist.size() + " corresponding detections available)" );
-				
-				ePSF.extractNextImg(
-						img,
-						inputData,
-						spimData.getViewRegistrations().getViewRegistration( inputData ).getModel(),
-						llist,
-						psfSize );
+				final ArrayList< double[] > llist = getLocationsOfCorrespondingBeads( timepoint, vd, extractPSFLabels.get( channel ).getLabel() );
+
+				IOFunctions.println(
+					"(" + new Date(System.currentTimeMillis()) + "): Extracting PSF for viewsetup " + vd.getViewSetupId() +
+					" using label '" + extractPSFLabels.get( channel ).getLabel() + "'" + " (" +llist.size() + " corresponding detections available)" );
+
+				ePSF.extractNextImg( img, vd, transform, llist, psfSize );
 			}
 			
-			if ( !weightsOnly )
-				imgs.put( inputData, fusedImg );
-			weights.put( inputData, weightImg );
+			if ( weightType != WeightType.WEIGHTS_ONLY )
+				imgs.put( vd, transformedImg );
+			weights.put( vd, weightImg );
 		}
 		
 		// normalize the weights
-		final ArrayList< Img< FloatType > > weightsSorted = new ArrayList< Img< FloatType> >();
+		final ArrayList< RandomAccessibleInterval< FloatType > > weightsSorted = new ArrayList< RandomAccessibleInterval< FloatType > >();
 
 		for ( final ViewDescription vd : viewDescriptions )
 			weightsSorted.add( weights.get( vd ) );
 
-		if ( !normalizeWeightsAndComputeMinAvgViews( weightsSorted ) )
-			return false;
-				
-		IOFunctions.println( "Minimal number of overlapping views: " + getMinOverlappingViews() + ", using " + (this.minOverlappingViews = Math.max( 1, this.minOverlappingViews ) ) );
-		IOFunctions.println( "Average number of overlapping views: " + getAvgOverlappingViews() + ", using " + (this.avgOverlappingViews = Math.max( 1, this.avgOverlappingViews ) ) );
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Computing weight normalization for deconvolution." );
 
-		if ( weightsOnly )
-		{
-			if ( osemIndex == 1 )
-				osemspeedup = getMinOverlappingViews();
-			else if ( osemIndex == 2 )
-				osemspeedup = getAvgOverlappingViews();
-				
-			displayWeights( osemspeedup, weightsSorted, overlapImg );
-		}
-				
+		final WeightNormalizer wn;
+
+		if ( weightType == WeightType.WEIGHTS_ONLY || weightType == WeightType.PRECOMPUTED_WEIGHTS || weightType == WeightType.LOAD_WEIGHTS )
+			wn = new WeightNormalizer( weightsSorted );
+		else if ( weightType == WeightType.VIRTUAL_WEIGHTS )
+			wn = new WeightNormalizer( weightsSorted, imgFactory );
+		else //if ( processType == ProcessType.NO_WEIGHTS )
+			wn = null;
+
+		if ( wn != null && !wn.process() )
+			return false;
+
+		// put the potentially modified weights back
+		for ( int i = 0; i < viewDescriptions.size(); ++i )
+			weights.put( viewDescriptions.get( i ), weightsSorted.get( i ) );
+
+		this.minOverlappingViews = wn.getMinOverlappingViews();
+		this.avgOverlappingViews = wn.getAvgOverlappingViews();
+
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Minimal number of overlapping views: " + getMinOverlappingViews() + ", using " + ( this.minOverlappingViews = Math.max( 1, this.minOverlappingViews ) ) );
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Average number of overlapping views: " + getAvgOverlappingViews() + ", using " + ( this.avgOverlappingViews = Math.max( 1, this.avgOverlappingViews ) ) );
+
+		if ( osemIndex == 1 )
+			osemspeedup = getMinOverlappingViews();
+		else if ( osemIndex == 2 )
+			osemspeedup = getAvgOverlappingViews();
+
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Adjusting for OSEM speedup = " + osemspeedup );
+
+		if ( weightType == WeightType.WEIGHTS_ONLY )
+			displayWeights( osemspeedup, weightsSorted, overlapImg, imgFactory );
+		else
+			adjustForOSEM( weights, weightType, osemspeedup );
+
+		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Finished precomputations for deconvolution." );
+
 		return true;
 	}
-	
+
+	private static void adjustForOSEM( final HashMap< ViewId, RandomAccessibleInterval< FloatType > > weights, final WeightType weightType, final double osemspeedup )
+	{
+		if ( osemspeedup == 1.0 )
+			return;
+
+		if ( weightType == WeightType.PRECOMPUTED_WEIGHTS || weightType == WeightType.WEIGHTS_ONLY || weightType == WeightType.LOAD_WEIGHTS )
+		{
+			for ( final RandomAccessibleInterval< FloatType > w : weights.values() )
+			{
+				for ( final FloatType f : Views.iterable( w ) )
+					f.set( Math.min( 1, f.get() * (float)osemspeedup ) ); // individual contribution never higher than 1
+			}
+		}
+		else if ( weightType == WeightType.NO_WEIGHTS )
+		{
+			for ( final RandomAccessibleInterval< FloatType > w : weights.values() )
+			{
+				final RandomAccess< FloatType > r = w.randomAccess();
+				final long[] min = new long[ w.numDimensions() ];
+				w.min( min );
+				r.setPosition( min );
+				r.get().set( Math.min( 1, r.get().get() * (float)osemspeedup ) ); // individual contribution never higher than 1
+			}
+		}
+		else if ( weightType == WeightType.VIRTUAL_WEIGHTS )
+		{
+			for ( final RandomAccessibleInterval< FloatType > w : weights.values() )
+				((NormalizingRandomAccessibleInterval< FloatType >) w).setOSEMspeedup( osemspeedup );
+		}
+		else
+		{
+			throw new RuntimeException( "Weight Type: " + weightType.name() + " not supported in ProcessForDeconvolution.adjustForOSEM()" );
+		}
+	}
+
 	private ExtractPSF<FloatType> loadPSFs(
 			final Channel ch,
 			final ArrayList< ViewDescription > allInputData,
@@ -283,7 +393,7 @@ public class ProcessForDeconvolution
 			models = null;
 		}
 
-		return ExtractPSF.loadAndTransformPSFs( psfFiles.get( ch ), allInputData, bb.getImgFactory( new FloatType() ), new FloatType(), models );
+		return ExtractPSF.loadAndTransformPSFs( psfFiles.get( ch ), allInputData, new FloatType(), models );
 	}
 
 	protected ExtractPSF< FloatType > assignOtherChannel( final Channel channel, final HashMap< Channel, ChannelPSF > extractPSFLabels )
@@ -341,17 +451,21 @@ public class ProcessForDeconvolution
 		return llist;
 	}
 	
-	protected void displayWeights( final double osemspeedup, final ArrayList< Img< FloatType > > weights, final Img< FloatType > overlapImg )
+	protected void displayWeights(
+			final double osemspeedup,
+			final ArrayList< RandomAccessibleInterval< FloatType > > weights,
+			final RandomAccessibleInterval< FloatType > overlapImg,
+			final ImgFactory< FloatType > imgFactory )
 	{
 		final DisplayImage d = new DisplayImage();
 		
 		d.exportImage( overlapImg, bb, "Number of views per pixel" );
 		
-		final Img< FloatType > w = overlapImg.factory().create( overlapImg, new FloatType() );
-		final Img< FloatType > wosem = overlapImg.factory().create( overlapImg, new FloatType() );
+		final Img< FloatType > w = imgFactory.create( overlapImg, new FloatType() );
+		final Img< FloatType > wosem = imgFactory.create( overlapImg, new FloatType() );
 		
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( weights.get( 0 ).size(), Threads.numThreads() * 2 );
+		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( Views.iterable( weights.get( 0 ) ).size(), Threads.numThreads() * 2 );
 
 		// set up executor service
 		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
@@ -368,9 +482,9 @@ public class ProcessForDeconvolution
 							final Cursor< FloatType > sum = w.cursor();
 							final Cursor< FloatType > sumOsem = wosem.cursor();
 							
-							for ( final Img< FloatType > imgW : weights )
+							for ( final RandomAccessibleInterval< FloatType > imgW : weights )
 							{
-								final Cursor< FloatType > c = imgW.cursor();
+								final Cursor< FloatType > c = Views.iterable( imgW ).cursor();
 								c.jumpFwd( portion.getStartPosition() );
 								cursors.add( c );
 							}
@@ -416,94 +530,6 @@ public class ProcessForDeconvolution
 
 		d.exportImage( w, bb, "Sum of weights per pixel" );
 		d.exportImage( wosem, bb, "OSEM=" + osemspeedup + ", sum of weights per pixel" );
-	}
-	
-	protected boolean normalizeWeightsAndComputeMinAvgViews( final List< Img< FloatType > > weights )
-	{
-		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( weights.get( 0 ).size(), Threads.numThreads() * 2 );
-
-		// set up executor service
-		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
-		final ArrayList< Callable< double[] > > tasks = new ArrayList< Callable< double[] > >();
-		
-		for ( final ImagePortion portion : portions )
-		{
-			tasks.add( new Callable< double[] >() 
-					{
-						@Override
-						public double[] call() throws Exception
-						{
-							final ArrayList< Cursor< FloatType > > cursors = new ArrayList< Cursor< FloatType > >(); 
-							
-							for ( final Img< FloatType > imgW : weights )
-							{
-								final Cursor< FloatType > c = imgW.cursor();
-								c.jumpFwd( portion.getStartPosition() );
-								cursors.add( c );
-							}
-						
-							int minNumViews = cursors.size();
-							long countViews = 0;
-							
-							for ( long j = 0; j < portion.getLoopSize(); ++j )
-							{
-								double sumW = 0;
-								int count = 0;
-								
-								for ( final Cursor< FloatType > c : cursors )
-								{
-									final float w = c.next().get(); 
-									sumW += w;
-									
-									if ( w > 0 )
-										++count;
-								}
-								
-								countViews += count;
-								minNumViews = Math.min( minNumViews, count );
-								
-								if ( sumW > 1 )
-									for ( final Cursor< FloatType > c : cursors )
-										c.get().set( (float)( c.get().get() / sumW ) );
-							}
-							
-							final double avgNumViews = (double)countViews / (double)( portion.getLoopSize() );
-							
-							return new double[]{ minNumViews, avgNumViews };
-						}
-					});
-		}
-		
-		// run threads
-		try
-		{
-			// invokeAll() returns when all tasks are complete
-			final List< Future< double[] > > futures = taskExecutor.invokeAll( tasks );
-			
-			this.minOverlappingViews = weights.size();
-			this.avgOverlappingViews = 0;
-			
-			for ( final Future< double[] > f : futures )
-			{
-				final double[] minAvg = f.get();
-				
-				this.minOverlappingViews = Math.min( this.minOverlappingViews, (int)Math.round( minAvg[ 0 ] ) );
-				this.avgOverlappingViews += minAvg[ 1 ];
-			}
-			
-			this.avgOverlappingViews /= futures.size();
-		}
-		catch ( final Exception e )
-		{
-			IOFunctions.println( "Failed to compute weight normalization for deconvolution: " + e );
-			e.printStackTrace();
-			return false;
-		}
-
-		taskExecutor.shutdown();
-
-		return true;
 	}
 
 	protected Blending getBlending( final Interval interval, final int[] blendingBorder, final int[] blendingRange, final ViewDescription desc )

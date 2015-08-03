@@ -8,6 +8,7 @@ import java.awt.Choice;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,11 +22,12 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
-import mpicbg.spim.postprocessing.deconvolution2.BayesMVDeconvolution;
-import mpicbg.spim.postprocessing.deconvolution2.LRFFT;
-import mpicbg.spim.postprocessing.deconvolution2.LRFFT.PSFTYPE;
-import mpicbg.spim.postprocessing.deconvolution2.LRInput;
+import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.Img;
+import net.imglib2.img.ImgFactory;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.cell.CellImgFactory;
+import net.imglib2.img.imageplus.ImagePlusImgFactory;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
@@ -40,6 +42,8 @@ import spim.process.cuda.CUDAFourierConvolution;
 import spim.process.cuda.CUDATools;
 import spim.process.cuda.NativeLibraryTools;
 import spim.process.fusion.FusionHelper;
+import spim.process.fusion.deconvolution.MVDeconFFT.PSFTYPE;
+import spim.process.fusion.deconvolution.ProcessForDeconvolution.WeightType;
 import spim.process.fusion.boundingbox.BoundingBoxGUI;
 import spim.process.fusion.boundingbox.BoundingBoxGUI.ManageListeners;
 import spim.process.fusion.export.DisplayImage;
@@ -55,16 +59,24 @@ public class EfficientBayesianBased extends Fusion
 	public static String[] extractPSFChoice = new String[]{ "Extract from beads", "Provide file with PSF" };
 	public static String[] blocksChoice = new String[]{ "Entire image at once", "in 64x64x64 blocks", "in 128x128x128 blocks", "in 256x256x256 blocks", "in 512x512x512 blocks", "specify maximal blocksize manually" };
 	public static String[] displayPSFChoice = new String[]{ "Do not show PSFs", "Show MIP of combined PSF's", "Show combined PSF's", "Show individual PSF's", "Show combined PSF's (original scale)", "Show individual PSF's (original scale)" };
-	public static String[] iterationTypeString = new String[]{ 
+	public static String[] iterationTypeString = new String[]{
 		"Efficient Bayesian - Optimization II (very fast, imprecise)", 
 		"Efficient Bayesian - Optimization I (fast, precise)", 
 		"Efficient Bayesian (less fast, more precise)", 
-		"Independent (slow, very precise)",
+		"Independent (slow, very precise)" };
+
+	public static String[] weightsString = new String[]{
+		"Precompute weights for all views (more memory, faster)",
+		"Virtual weights (less memory, slower)",
+		"No weights (produces artifacts on partially overlapping data)",
 		"Illustrate overlap of views per pixel (do not deconvolve)" };
 
 	public static boolean makeAllPSFSameSize = false;
-	
+
+	public static int defaultFFTImgType = 0;
 	public static int defaultIterationType = 1;
+	public static int defaultWeightType = 1;
+	public static boolean defaultSaveMemory = false;
 	public static int defaultOSEMspeedupIndex = 0;
 	public static int defaultNumIterations = 10;
 	public static boolean defaultUseTikhonovRegularization = true;
@@ -89,7 +101,8 @@ public class EfficientBayesianBased extends Fusion
 	public static boolean defaultCUDAPathIsRelative = true;
 
 	PSFTYPE iterationType;
-	boolean justShowWeights;
+	WeightType weightType;
+	boolean saveMemory;
 	int osemspeedupIndex;
 	int numIterations;
 	boolean useTikhonovRegularization;
@@ -100,6 +113,14 @@ public class EfficientBayesianBased extends Fusion
 	int displayPSF;
 	boolean debugMode;
 	boolean adjustBlending;
+
+	// set in fuseData method
+	ImgFactory< FloatType > factory;
+
+	/**
+	 * The ImgFactory used for Blocks and for computing the actual FFT ... should be ArrayImg if there is no good reason
+	 */
+	ImgFactory< FloatType > computeFactory = new ArrayImgFactory< FloatType >();
 
 	boolean useBlocks;
 	int[] blockSize;
@@ -127,109 +148,126 @@ public class EfficientBayesianBased extends Fusion
 	{
 		super( spimData, viewIdsToProcess );
 		
-		// we want the arrayimg by default
-		BoundingBoxGUI.defaultImgType = 0;
+		// we want the cellimg by default (better with memory, almost same speed)
+		BoundingBoxGUI.defaultImgType = 2;
 		
 		// linear interpolation
 		Fusion.defaultInterpolation = this.interpolation = 1;
 	}
 
 	@Override
-	public boolean fuseData(final BoundingBoxGUI bb, final ImgExport exporter) {
-		try {
+	public boolean fuseData( final BoundingBoxGUI bb, final ImgExport exporter )
+	{
+		try
+		{
 			// set up naming scheme
-			final FixedNameImgTitler titler = new FixedNameImgTitler("");
-			if (exporter instanceof ImgExportTitle) {
-				((ImgExportTitle) exporter).setImgTitler(titler);
-			}
-			
+			final FixedNameImgTitler titler = new FixedNameImgTitler( "" );
+			if ( exporter instanceof ImgExportTitle )
+				( (ImgExportTitle)exporter).setImgTitler( titler );
+	
+			// set up ImgFactory
+			this.factory = bb.getImgFactory( new FloatType() );
+	
 			final ProcessForDeconvolution pfd = new ProcessForDeconvolution(
-					  spimData,
-					  viewIdsToProcess,
-					  bb,
-					  new int[]{blendingBorderX, blendingBorderY, blendingBorderZ},
-					  new int[]{blendingRangeX, blendingRangeY, blendingRangeZ});
-
+					spimData,
+					viewIdsToProcess,
+					bb,
+					new int[]{ blendingBorderX, blendingBorderY, blendingBorderZ },
+					new int[]{ blendingRangeX, blendingRangeY, blendingRangeZ } );
+			
 			// set debug mode
-			BayesMVDeconvolution.debug = debugMode;
-			BayesMVDeconvolution.debugInterval = debugInterval;
-			
+			MVDeconvolution.debug = debugMode;
+			MVDeconvolution.debugInterval = debugInterval;
+	
 			int stack = 0;
-			
-			for (final TimePoint t : timepointsToProcess) {
-				for (final Channel c : channelsToProcess) {
-					final List< Angle> anglesToProcess = SpimData2.getAllAnglesForChannelTimepointSorted(spimData, viewIdsToProcess, c, t);
-					final List< Illumination> illumsToProcess = SpimData2.getAllIlluminationsForChannelTimepointSorted(spimData, viewIdsToProcess, c, t);
-
+	
+			for ( final TimePoint t : timepointsToProcess )
+				for ( final Channel c : channelsToProcess )
+				{
+					final List< Angle > anglesToProcess = SpimData2.getAllAnglesForChannelTimepointSorted( spimData, viewIdsToProcess, c, t );
+					final List< Illumination > illumsToProcess = SpimData2.getAllIlluminationsForChannelTimepointSorted( spimData, viewIdsToProcess, c, t );
+	
 					// fuse the images, create weights, extract PSFs we need for the deconvolution
-					if (!pfd.fuseStacksAndGetPSFs(
-							  t, c,
-							  osemspeedupIndex,
-							  osemSpeedUp,
-							  justShowWeights,
-							  extractPSFLabels,
-							  new long[]{psfSizeX, psfSizeY, psfSizeZ},
-							  psfFiles,
-							  transformPSFs)) {
+					if ( !pfd.fuseStacksAndGetPSFs(
+							t, c,
+							factory,
+							osemspeedupIndex,
+							osemSpeedUp,
+							weightType,
+							extractPSFLabels,
+							new long[]{ psfSizeX, psfSizeY, psfSizeZ },
+							psfFiles,
+							transformPSFs ) )
+					{
 						IOFunctions.println(
-								  "FAILED to deconvolve timepoint=" + t.getName() + " (id=" + t.getId() + ")"
-								  + ", channel=" + c.getName() + " (id=" + c.getId() + ")");
-						
+								"FAILED to deconvolve timepoint=" + t.getName() + " (id=" + t.getId() + ")" +
+								", channel=" + c.getName() + " (id=" + c.getId() + ")" );
+	
 						continue;
 					}
-
+					
 					// on the first run update the osemspeedup if necessary
-					if (stack++ == 0) {
-						if (osemspeedupIndex == 1) {
+					if ( stack++ == 0 )
+					{
+						if ( osemspeedupIndex == 1 )
 							osemSpeedUp = pfd.getMinOverlappingViews();
-						} else if (osemspeedupIndex == 2) {
+						else if ( osemspeedupIndex == 2 )
 							osemSpeedUp = pfd.getAvgOverlappingViews();
-						}
 					}
-
+	
 					// setup & run the deconvolution
-					displayParametersAndPSFs(bb, c, extractPSFLabels);
-					
-					if (justShowWeights) {
+					displayParametersAndPSFs( bb, c, extractPSFLabels );
+	
+					if ( weightType == WeightType.WEIGHTS_ONLY )
 						return true;
-					}
-					
-					final LRInput deconvolutionData = new LRInput();
-					
-					for (final ViewDescription vd : pfd.getViewDescriptions()) {
-						// device list for CPU or CUDA processing
-						final int[] devList = new int[deviceList.size()];
-						for (int i = 0; i < devList.length; ++i) {
-							devList[i] = deviceList.get(i).getDeviceId();
-						}
-						
-						deconvolutionData.add(new LRFFT(
-								  pfd.getTransformedImgs().get(vd),
-								  pfd.getTransformedWeights().get(vd),
-								  pfd.getExtractPSF().getTransformedPSF( vd ), devList, useBlocks, blockSize));
-					}
-					
-					final Img<FloatType> deconvolved;
-					
-					if (useTikhonovRegularization) {
-						deconvolved = LRFFT.wrap(new BayesMVDeconvolution(deconvolutionData, iterationType, numIterations, lambda, osemSpeedUp, osemspeedupIndex, "deconvolved").getPsi());
-					} else {
-						deconvolved = LRFFT.wrap(new BayesMVDeconvolution(deconvolutionData, iterationType, numIterations, 0, osemSpeedUp, osemspeedupIndex, "deconvolved").getPsi());
-					}
+	
+					final MVDeconInput deconvolutionData = new MVDeconInput( factory );
+	
+					IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Block & FFT image factory: " + computeFactory.getClass().getSimpleName() );
 
+					for ( final ViewDescription vd : pfd.getViewDescriptions() )
+					{
+						// device list for CPU or CUDA processing
+						final int[] devList = new int[ deviceList.size() ];
+						for ( int i = 0; i < devList.length; ++i )
+							devList[ i ] = deviceList.get( i ).getDeviceId();
+	
+						deconvolutionData.add( new MVDeconFFT(
+								pfd.getTransformedImgs().get( vd ),
+								pfd.getTransformedWeights().get( vd ),
+								pfd.getExtractPSF().getTransformedPSF( vd ),
+								computeFactory, devList, useBlocks, blockSize, saveMemory ) );
+					}
+	
+					if ( !useTikhonovRegularization )
+						lambda = 0;
+	
+					final Img< FloatType > deconvolved;
+	
+					try
+					{
+						deconvolved = new MVDeconvolution( deconvolutionData, iterationType, numIterations, lambda, osemSpeedUp, osemspeedupIndex, "deconvolved" ).getPsi();
+					} 
+					catch (IncompatibleTypeException e)
+					{
+						IOFunctions.println( "Failed to initialize deconvolution: " + e );
+						e.printStackTrace();
+						return false;
+					}
+	
 					// export the final image
-					titler.setTitle("TP" + t.getName() + "_Ch" + c.getName() + FusionHelper.getIllumName(illumsToProcess) + FusionHelper.getAngleName(anglesToProcess));
+					titler.setTitle( "TP" + t.getName() + "_Ch" + c.getName() + FusionHelper.getIllumName( illumsToProcess ) + FusionHelper.getAngleName( anglesToProcess ) );
 					exporter.exportImage(
-							  deconvolved,
-							  bb,
-							  t,
-							  newViewsetups.get(SpimData2.getViewSetup(spimData.getSequenceDescription().getViewSetupsOrdered(), c, anglesToProcess.get(0), illumsToProcess.get(0))),
-							  0, 1);
+							deconvolved,
+							bb,
+							t,
+							newViewsetups.get( SpimData2.getViewSetup( spimData.getSequenceDescription().getViewSetupsOrdered(), c, anglesToProcess.get( 0 ), illumsToProcess.get( 0 ) ) ),
+							0, 1 );
 				}
-			}
-			
-		} catch (OutOfMemoryError oome) {
-			IJ.log("Out of Memory");
+		}
+		catch ( OutOfMemoryError oome )
+		{
+			IJ.log( "Out of Memory" );
 			IJ.error("Multi-View Registration", "Out of memory.  Check \"Edit > Options > Memory & Threads\"");
 			return false;
 		}
@@ -286,8 +324,11 @@ public class EfficientBayesianBased extends Fusion
 	@Override
 	public void queryAdditionalParameters( final GenericDialog gd )
 	{
+		gd.addChoice( "ImgLib2_container_FFTs", BoundingBoxGUI.imgTypes, BoundingBoxGUI.imgTypes[ defaultFFTImgType ] );
+		gd.addCheckbox( "Save_memory (not keep FFT's on CPU, 2x time & 0.5x memory)", defaultSaveMemory );
 		gd.addChoice( "Type_of_iteration", iterationTypeString, iterationTypeString[ defaultIterationType ] );
 		it = (Choice)gd.getChoices().lastElement();
+		gd.addChoice( "Image_weights", weightsString, weightsString[ defaultWeightType ] );
 		gd.addChoice( "OSEM_acceleration", osemspeedupChoice, osemspeedupChoice[ defaultOSEMspeedupIndex ] );
 		gd.addNumericField( "Number_of_iterations", defaultNumIterations, 0 );
 		gd.addCheckbox( "Debug_mode", defaultDebugMode );
@@ -305,23 +346,40 @@ public class EfficientBayesianBased extends Fusion
 	@Override
 	public boolean parseAdditionalParameters( final GenericDialog gd )
 	{
+		defaultFFTImgType = gd.getNextChoiceIndex();
+
+		if ( defaultFFTImgType == 0 )
+			computeFactory = new ArrayImgFactory< FloatType >();
+		else if ( defaultFFTImgType == 1 )
+			computeFactory = new ImagePlusImgFactory< FloatType >();
+		else
+			computeFactory = new CellImgFactory< FloatType >( 256 );
+
+		saveMemory = defaultSaveMemory = gd.getNextBoolean();
 		defaultIterationType = gd.getNextChoiceIndex();
-		
-		justShowWeights = false;
-		
+
 		if ( defaultIterationType == 0 )
 			iterationType = PSFTYPE.OPTIMIZATION_II;
 		else if ( defaultIterationType == 1 )
 			iterationType = PSFTYPE.OPTIMIZATION_I;
 		else if ( defaultIterationType == 2 )
 			iterationType = PSFTYPE.EFFICIENT_BAYESIAN;
-		else if ( defaultIterationType == 3 )
+		else //if ( defaultIterationType == 3 )
 			iterationType = PSFTYPE.INDEPENDENT;
+
+		defaultWeightType = gd.getNextChoiceIndex();
+
+		if ( defaultWeightType == 0 )
+			weightType = WeightType.PRECOMPUTED_WEIGHTS;
+		else if ( defaultWeightType == 1 )
+			weightType = WeightType.VIRTUAL_WEIGHTS;
+		else if ( defaultWeightType == 2 )
+			weightType = WeightType.NO_WEIGHTS;
 		else
-			justShowWeights = true; // just show the overlap
-		
+			weightType = WeightType.WEIGHTS_ONLY;
+
 		osemspeedupIndex = defaultOSEMspeedupIndex = gd.getNextChoiceIndex();
-		numIterations = defaultNumIterations = (int)Math.round( gd.getNextNumber() );		
+		numIterations = defaultNumIterations = (int)Math.round( gd.getNextNumber() );
 		debugMode = defaultDebugMode = gd.getNextBoolean();
 		adjustBlending = defaultAdjustBlending = gd.getNextBoolean();
 		useTikhonovRegularization = defaultUseTikhonovRegularization = gd.getNextBoolean();
@@ -438,46 +496,42 @@ public class EfficientBayesianBased extends Fusion
 		else
 			IOFunctions.println( "Not using Tikhonov regularization" );
 
-		// only if the PSF was extracted in this channel
-		if ( extractPSFLabels.get( channel ).isExtractedPSF() )
-		{
-			// "Do not show PSFs", 
-			// "Show MIP of combined PSF's",
-			// "Show combined PSF's",
-			// "Show individual PSF's",
-			// "Show combined PSF's (original scale)",
-			// "Show individual PSF's (original scale)" };
-			
-			final ExtractPSF< FloatType > ePSF = extractPSFLabels.get( channel ).getExtractPSFInstance(); 
-			final DisplayImage di = new DisplayImage();
+		// "Do not show PSFs", 
+		// "Show MIP of combined PSF's",
+		// "Show combined PSF's",
+		// "Show individual PSF's",
+		// "Show combined PSF's (original scale)",
+		// "Show individual PSF's (original scale)" };
+		
+		final ExtractPSF< FloatType > ePSF = extractPSFLabels.get( channel ).getExtractPSFInstance(); 
+		final DisplayImage di = new DisplayImage();
 
-			if ( displayPSF == 1 )
+		if ( displayPSF == 1 )
+		{
+			di.exportImage( ExtractPSF.computeMaxProjection( ePSF.computeAverageTransformedPSF(), -1 ), "Max projected avg transformed PSF's" );
+		}
+		else if ( displayPSF == 2 )
+		{
+			di.exportImage( ePSF.computeAverageTransformedPSF(), "Avg transformed PSF's" );				
+		}
+		else if ( displayPSF == 3 )
+		{
+			for ( int i = 0; i < ePSF.getPSFMap().values().size(); ++i )
 			{
-				di.exportImage( ExtractPSF.computeMaxProjection( ePSF.computeAverageTransformedPSF(), -1 ), "Max projected avg transformed PSF's" );
+				final ViewId viewId = ePSF.getViewIdsForPSFs().get( i );
+				di.exportImage( ePSF.getTransformedPSF( viewId ), "transfomed PSF of viewsetup " + viewId.getViewSetupId() );
 			}
-			else if ( displayPSF == 2 )
+		}
+		else if ( displayPSF == 4 )
+		{
+			di.exportImage( ePSF.computeAveragePSF(), "Avg original PSF's" );				
+		}
+		else if ( displayPSF == 5 )
+		{
+			for ( int i = 0; i < ePSF.getInputCalibrationPSFs().size(); ++i )
 			{
-				di.exportImage( ePSF.computeAverageTransformedPSF(), "Avg transformed PSF's" );				
-			}
-			else if ( displayPSF == 3 )
-			{
-				for ( int i = 0; i < ePSF.getPSFMap().values().size(); ++i )
-				{
-					final ViewId viewId = ePSF.getViewIdsForPSFs().get( i );
-					di.exportImage( ePSF.getTransformedPSF( viewId ), "transfomed PSF of viewsetup " + viewId.getViewSetupId() );
-				}
-			}
-			else if ( displayPSF == 4 )
-			{
-				di.exportImage( ePSF.computeAveragePSF(), "Avg original PSF's" );				
-			}
-			else if ( displayPSF == 5 )
-			{
-				for ( int i = 0; i < ePSF.getInputCalibrationPSFs().size(); ++i )
-				{
-					final ViewId viewId = ePSF.getViewIdsForPSFs().get( i );
-					di.exportImage( ePSF.getInputCalibrationPSFs().get( viewId ), "original PSF of viewsetup " + viewId.getViewSetupId() );
-				}
+				final ViewId viewId = ePSF.getViewIdsForPSFs().get( i );
+				di.exportImage( ePSF.getInputCalibrationPSFs().get( viewId ), "original PSF of viewsetup " + viewId.getViewSetupId() );
 			}
 		}
 	}
@@ -942,7 +996,7 @@ public class EfficientBayesianBased extends Fusion
 	
 	protected boolean getDebug()
 	{
-		if ( justShowWeights )
+		if ( weightType == WeightType.WEIGHTS_ONLY )
 			return true;
 
 		if ( debugMode )
@@ -1027,15 +1081,15 @@ public class EfficientBayesianBased extends Fusion
 			potentialNames.add( "fftCUDA" );
 			potentialNames.add( "FourierConvolutionCUDA" );
 			
-			LRFFT.cuda = NativeLibraryTools.loadNativeLibrary( potentialNames, CUDAFourierConvolution.class );
+			MVDeconFFT.cuda = NativeLibraryTools.loadNativeLibrary( potentialNames, CUDAFourierConvolution.class );
 
-			if ( LRFFT.cuda == null )
+			if ( MVDeconFFT.cuda == null )
 			{
 				IOFunctions.println( "Cannot load CUDA JNA library." );
 				return false;
 			}
 			
-			final ArrayList< CUDADevice > selectedDevices = CUDATools.queryCUDADetails( LRFFT.cuda, useBlocks );
+			final ArrayList< CUDADevice > selectedDevices = CUDATools.queryCUDADetails( MVDeconFFT.cuda, useBlocks );
 			
 			if ( selectedDevices == null || selectedDevices.size() == 0 )
 				return false;

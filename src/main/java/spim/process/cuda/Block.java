@@ -31,27 +31,27 @@ public class Block
 	/**
 	 * The dimensions of the block
 	 */
-	final int[] blockSize;
+	final long[] blockSize;
 	
 	/**
 	 * The offset in coordinates (coordinate system of the original image) 
 	 */
-	final int[] offset;
+	final long[] offset;
 	
 	/**
 	 * The effective size that can be convolved (depends on the kernelsize)
 	 */
-	final int[] effectiveSize;
+	final long[] effectiveSize;
 	
 	/**
 	 * The effective offset, i.e. where the useful convolved data starts (coordinate system of the original image)
 	 */
-	final int[] effectiveOffset;
+	final long[] effectiveOffset;
 	
 	/**
 	 * The effective offset, i.e. where the useful convoved data starts (local coordinate system)
 	 */
-	final int[] effectiveLocalOffset;
+	final long[] effectiveLocalOffset;
 
 	/**
 	 * If the blocks that cover the image are precise or an approximation
@@ -59,15 +59,14 @@ public class Block
 	final boolean isPrecise;
 
 	final Vector< ImagePortion > portions;
-	//final int numThreads;
 	final ExecutorService taskExecutor;
 
 	public Block(
-			final int[] blockSize,
-			final int[] offset,
-			final int[] effectiveSize,
-			final int[] effectiveOffset,
-			final int[] effectiveLocalOffset,
+			final long[] blockSize,
+			final long[] offset,
+			final long[] effectiveSize,
+			final long[] effectiveOffset,
+			final long[] effectiveLocalOffset,
 			final boolean isPrecise )
 	{
 		this.numDimensions = blockSize.length;
@@ -76,7 +75,6 @@ public class Block
 		this.effectiveSize = effectiveSize.clone();
 		this.effectiveOffset = effectiveOffset.clone();
 		this.effectiveLocalOffset = effectiveLocalOffset.clone();
-		//this.numThreads = Threads.numThreads();
 		this.isPrecise = isPrecise;
 
 		long n = blockSize[ 0 ];
@@ -190,7 +188,7 @@ public class Block
 		}
 	}
 
-	private static final void copy( final long start, final long loopSize, final RandomAccessible< FloatType > source, final RandomAccessibleInterval< FloatType > block, final int[] offset )
+	private static final void copy( final long start, final long loopSize, final RandomAccessible< FloatType > source, final RandomAccessibleInterval< FloatType > block, final long[] offset )
 	{
 		final int numDimensions = source.numDimensions();
 		final Cursor< FloatType > cursor = Views.iterable( block ).localizingCursor();
@@ -211,7 +209,7 @@ public class Block
 
 		cursor.jumpFwd( start );
 
-		final int[] tmp = new int[ numDimensions ];
+		final long[] tmp = new long[ numDimensions ];
 
 		for ( long l = 0; l < loopSize; ++l )
 		{
@@ -226,22 +224,22 @@ public class Block
 		}
 	}
 
-	private static final void copy3dArray( final int threadIdx, final int numThreads, final RandomAccessible< FloatType > source, final ArrayImg< FloatType, ? > block, final int[] offset )
+	private static final void copy3dArray( final int threadIdx, final int numThreads, final RandomAccessible< FloatType > source, final ArrayImg< FloatType, ? > block, final long[] offset )
 	{
 		final int w = (int)block.dimension( 0 );
 		final int h = (int)block.dimension( 1 );
 		final int d = (int)block.dimension( 2 );
 
-		final int offsetX = offset[ 0 ];
-		final int offsetY = offset[ 1 ];
-		final int offsetZ = offset[ 2 ];
+		final long offsetX = offset[ 0 ];
+		final long offsetY = offset[ 1 ];
+		final long offsetZ = offset[ 2 ];
 		final float[] blockArray = ((FloatArray)block.update( null ) ).getCurrentStorageArray();
 
 		// define where we will query the RandomAccess on the source
 		final FinalInterval interval = new FinalInterval( new long[] { offsetX, offsetY, offsetZ }, new long[] { offsetX + w - 1, offsetY + h - 1, offsetZ + d - 1 } );
 		final RandomAccess< FloatType > randomAccess = source.randomAccess( interval );
 
-		final int[] tmp = new int[]{ offsetX, offsetY, 0 };
+		final long[] tmp = new long[]{ offsetX, offsetY, 0 };
 
 		for ( int z = threadIdx; z < d; z += numThreads )
 		{
@@ -267,7 +265,7 @@ public class Block
 	}
 
 	private static final void paste( final long start, final long loopSize, final RandomAccessibleInterval< FloatType > target, final RandomAccessibleInterval< FloatType > block, 
-			final int[] effectiveOffset, final int[] effectiveSize, final int[] effectiveLocalOffset )
+			final long[] effectiveOffset, final long[] effectiveSize, final long[] effectiveLocalOffset )
 	{
 		final int numDimensions = target.numDimensions();
 		
@@ -282,7 +280,7 @@ public class Block
 		
 		cursor.jumpFwd( start );
 		
-		final int[] tmp = new int[ numDimensions ];
+		final long[] tmp = new long[ numDimensions ];
 		
 		for ( long l = 0; l < loopSize; ++l )
 		{
@@ -307,24 +305,24 @@ public class Block
 	}
 
 	private static final void paste3d( final int threadIdx, final int numThreads, final ArrayImg< FloatType, ? > target, final ArrayImg< FloatType, ? > block, 
-			final int[] effectiveOffset, final int[] effectiveSize, final int[] effectiveLocalOffset )
+			final long[] effectiveOffset, final long[] effectiveSize, final long[] effectiveLocalOffset )
 	{
 		// min position in the output
-		final int minX = effectiveOffset[ 0 ];
-		final int minY = effectiveOffset[ 1 ];
-		final int minZ = effectiveOffset[ 2 ];
+		final int minX = (int)effectiveOffset[ 0 ];
+		final int minY = (int)effectiveOffset[ 1 ];
+		final int minZ = (int)effectiveOffset[ 2 ];
 
 		// max+1 of the output area
-		final int maxY = effectiveSize[ 1 ] + minY;
-		final int maxZ = effectiveSize[ 2 ] + minZ;
+		final int maxY = (int)effectiveSize[ 1 ] + minY;
+		final int maxZ = (int)effectiveSize[ 2 ] + minZ;
 
 		// size of the output area
-		final int sX = effectiveSize[ 0 ];
+		final int sX = (int)effectiveSize[ 0 ];
 
 		// min position in the output
-		final int minXb = effectiveLocalOffset[ 0 ];
-		final int minYb = effectiveLocalOffset[ 1 ];
-		final int minZb = effectiveLocalOffset[ 2 ];
+		final int minXb = (int)effectiveLocalOffset[ 0 ];
+		final int minYb = (int)effectiveLocalOffset[ 1 ];
+		final int minZb = (int)effectiveLocalOffset[ 2 ];
 
 		// size of the target image
 		final int w = (int)target.dimension( 0 );

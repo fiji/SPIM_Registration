@@ -30,6 +30,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
+import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBoxes;
@@ -43,6 +44,7 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 	public static String defaultFirstFile = "";
 	public static boolean defaultModifyCal = false;
 	public static boolean defaultRotAxis = false;
+	public static boolean defaultApplyRotAxis = true;
 
 	@Override
 	public String getTitle() { return "Zeiss Lightsheet Z.1 Dataset (LOCI Bioformats)"; }
@@ -108,6 +110,8 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 
 		// finally create the SpimData itself based on the sequence description and the view registration
 		final SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints, new BoundingBoxes() );
+
+		Apply_Transformation.applyAxis( spimData );
 
 		return spimData;
 	}
@@ -248,6 +252,7 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		gd.addMessage( "Additional Meta Data", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
 		gd.addMessage( "" );
 		gd.addCheckbox( "Modify_rotation_axis", defaultRotAxis );
+		gd.addCheckbox( "Apply_rotation_to_dataset", defaultApplyRotAxis );
 
 		gd.addMessage(
 				"Acquisition Objective: " + meta.objective() + "\n" +
