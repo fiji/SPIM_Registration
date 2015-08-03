@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration;
+package spim.fiji.plugin.interestpointregistration;
 
 import ij.gui.GenericDialog;
 import mpicbg.models.AbstractModel;
@@ -8,7 +8,7 @@ import mpicbg.models.InterpolatedAffineModel3D;
 import mpicbg.models.RigidModel3D;
 import mpicbg.models.TranslationModel3D;
 
-public class TransformationModel
+public class TransformationModelGUI
 {
 	public static String modelChoice[] = new String[] { "Translation", "Rigid", "Affine" };
 	public static String regularizationModelChoice[] = new String[] { "Identity", "Translation", "Rigid", "Affine" };
@@ -20,12 +20,12 @@ public class TransformationModel
 	double lambda;
 	boolean regularize;
 
-	public TransformationModel( final int modelIndex )
+	public TransformationModelGUI( final int modelIndex )
 	{
 		this( modelIndex, -1, 0.1, false );
 	}
 
-	public TransformationModel( final int modelIndex, final int regularizedModelIndex, final double lambda, final boolean regularize )
+	public TransformationModelGUI( final int modelIndex, final int regularizedModelIndex, final double lambda, final boolean regularize )
 	{
 		this.modelIndex = modelIndex;
 		this.regularize = regularize;

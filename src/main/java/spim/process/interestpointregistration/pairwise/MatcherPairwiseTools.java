@@ -12,7 +12,6 @@ import spim.Threads;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.headless.registration.PairwiseResult;
 
 public class MatcherPairwiseTools
 {

@@ -32,6 +32,7 @@ import spim.headless.registration.geometrichashing.GeometricHashingParameters;
 import spim.process.interestpointregistration.GlobalOpt;
 import spim.process.interestpointregistration.pairwise.GeometricHashingPairwise;
 import spim.process.interestpointregistration.pairwise.MatcherPairwiseTools;
+import spim.process.interestpointregistration.pairwise.PairwiseResult;
 import spim.process.interestpointregistration.pairwise.PairwiseStrategyTools;
 
 public class TransformationTools

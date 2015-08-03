@@ -7,7 +7,6 @@ import java.util.List;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.headless.registration.PairwiseResult;
 import spim.headless.registration.RANSACParameters;
 import spim.headless.registration.geometrichashing.GeometricHashingParameters;
 import spim.process.interestpointregistration.Detection;

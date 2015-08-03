@@ -1,25 +1,22 @@
 package spim.headless.registration;
 
 import net.imglib2.realtransform.AffineTransform3D;
-
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.RigidModel3D;
 import mpicbg.models.Tile;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.ViewId;
-
 import spim.fiji.ImgLib2Temp;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
-
 import spim.process.interestpointregistration.GlobalOpt;
 import spim.process.interestpointregistration.pairwise.GeometricHashingPairwise;
 import spim.process.interestpointregistration.pairwise.MatcherPairwiseTools;
+import spim.process.interestpointregistration.pairwise.PairwiseResult;
 import spim.process.interestpointregistration.pairwise.PairwiseStrategyTools;
-
 import spim.headless.interestpointdetection.DoGParameters;
 import spim.headless.registration.geometrichashing.GeometricHashingParameters;
 import simulation.imgloader.SimulatedBeadsImgLoader;

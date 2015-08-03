@@ -17,7 +17,6 @@ import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 import net.imglib2.util.Util;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.headless.registration.PairwiseResult;
 import spim.headless.registration.icp.IterativeClosestPointParameters;
 import spim.process.interestpointregistration.Detection;
 

@@ -28,7 +28,7 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 import spim.fiji.ImgLib2Temp.Pair;
-import spim.headless.registration.PairwiseResult;
+import spim.process.interestpointregistration.pairwise.PairwiseResult;
 
 /**
  * 
