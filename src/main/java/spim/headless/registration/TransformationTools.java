@@ -246,9 +246,10 @@ public class TransformationTools
 		final GeometricHashingParameters gp = new GeometricHashingParameters( new AffineModel3D() );
 		final List< Pair< Pair< ViewId, ViewId >, PairwiseResult > > result =
 				MatcherPairwiseTools.computePairs( pairs, interestpoints, new GeometricHashingPairwise( rp, gp ) );
+		MatcherPairwiseTools.assignViewIdsAndErrorMessages( result, spimData.getSequenceDescription() );
 
 		for ( final Pair< Pair< ViewId, ViewId >, PairwiseResult > p : result )
-			System.out.println( p.getA().getA().getViewSetupId() + "<>" + p.getA().getB().getViewSetupId()  + ": " + p.getB().result );
+			System.out.println( p.getB().getFullDesc() );
 
 		final HashMap< ViewId, Tile< AffineModel3D > > models =
 				GlobalOpt.compute( new AffineModel3D(), result, fixedViews, groupedViews );

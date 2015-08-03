@@ -54,7 +54,7 @@ public class IterativeClosestPointPairwise implements MatcherPairwise
 
 		if ( listA.size() < model.getMinNumMatches() || listB.size() < model.getMinNumMatches() )
 		{
-			result.result = "(" + new Date( System.currentTimeMillis() ) + "): " + /* comparison + */ ": Not enough detections to match";
+			result.setResult( System.currentTimeMillis(), "Not enough detections to match" );
 			result.setCandidates( new ArrayList< PointMatchGeneric< Detection > >() );
 			result.setInliers( new ArrayList< PointMatchGeneric< Detection > >(), Double.NaN );
 			return result;
@@ -112,17 +112,14 @@ public class IterativeClosestPointPairwise implements MatcherPairwise
 		result.setCandidates( inliers );
 		result.setInliers( inliers, icp.getAverageError() );
 
-		result.result = "(" + new Date( System.currentTimeMillis() ) + "): " /* + comparison */ + ": Found " + icp.getNumPointMatches() + " matches, avg error [px] " + icp.getAverageError() + " after " + i + " iterations";
+		result.setResult( System.currentTimeMillis(), "Found " + icp.getNumPointMatches() + " matches, avg error [px] " + icp.getAverageError() + " after " + i + " iterations" );
 
 		return result;
 	}
 
 	public static void failWith( final PairwiseResult result, final String algo, final String exType, final Exception e )
 	{
-		result.result =
-				algo + " failed with " + exType + " matching ";// + 
-				/*"TP=" + pair.getViewIdA().getTimePointId() + ", ViewSetup=" + pair.getViewIdA().getViewSetupId() + " to " + 
-				"TP=" + pair.getViewIdB().getTimePointId() + ", ViewSetup=" + pair.getViewIdB().getViewSetupId() + ": " + e );*/
+		result.setResult( System.currentTimeMillis(), algo + " failed with " + exType + " matching " );
 		
 		result.setCandidates( new ArrayList< PointMatchGeneric< Detection > >() );
 		result.setInliers( new ArrayList< PointMatchGeneric< Detection > >(), Double.NaN );

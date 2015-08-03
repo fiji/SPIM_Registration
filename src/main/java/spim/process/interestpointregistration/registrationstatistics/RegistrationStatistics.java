@@ -1,9 +1,8 @@
 package spim.process.interestpointregistration.registrationstatistics;
 
-import java.util.List;
+import java.util.Collection;
 
-import mpicbg.spim.registration.ViewStructure;
-import spim.process.interestpointregistration.PairwiseMatch;
+import spim.process.interestpointregistration.pairwise.PairwiseResult;
 
 public class RegistrationStatistics implements Comparable< RegistrationStatistics >
 {
@@ -24,11 +23,11 @@ public class RegistrationStatistics implements Comparable< RegistrationStatistic
 	 * information it wants
 	 *
 	 */
-	public RegistrationStatistics( final int timepoint, final List< List< PairwiseMatch > > matches )
+	public RegistrationStatistics( final int timepoint, final Collection< PairwiseResult > pairwiseResults )
 	{
 		this.timePoint = timepoint;
 
-		collect( timepoint, matches );
+		collect( timepoint, pairwiseResults );
 	}
 
 	public RegistrationStatistics( final int timePoint, final double minError, final double avgError, final double maxError, final double minRatio, final double avgRatio, final double maxRatio, final int numValidPairs, final int numInvalidPairs )
@@ -54,7 +53,7 @@ public class RegistrationStatistics implements Comparable< RegistrationStatistic
 	int getNumValidPairs() { return numValidPairs; }
 	int getNumInvalidPairs() { return numInvalidPairs; }
 
-	protected void collect( final int timepoint, final List< List< PairwiseMatch > > matches )
+	protected void collect( final int timepoint, final Collection< PairwiseResult > pairwiseResults )
 	{
 		minError = Double.MAX_VALUE;
 		avgError = 0;
@@ -64,32 +63,31 @@ public class RegistrationStatistics implements Comparable< RegistrationStatistic
 		maxRatio = 0;
 		avgRatio = 0;
 
-		for ( final List< PairwiseMatch > subset : matches )
-			for ( final PairwiseMatch match : subset )
-				if ( match.getViewIdA().getTimePointId() == timepoint || match.getViewIdB().getTimePointId() == timepoint )
+		for ( final PairwiseResult match : pairwiseResults )
+			if ( match.getViewIdA().getTimePointId() == timepoint || match.getViewIdB().getTimePointId() == timepoint )
+			{
+				final int numCandidates = match.getCandidates().size();
+				final int numInliers = match.getInliers().size();
+				final double error = match.getError();
+
+				if ( !Double.isNaN( error ) && numCandidates > 0 && numInliers > 0 )
 				{
-					final int numCandidates = match.getNumCandidates();
-					final int numInliers = match.getNumInliers();
-					final double error = match.getAvgError();
+					++numValidPairs;
 
-					if ( !Double.isNaN( error ) && numCandidates > 0 && numInliers > 0 )
-					{
-						++numValidPairs;
+					maxError = Math.max( maxError, error );
+					avgError += error;
+					minError = Math.min( minError, error );
 
-						maxError = Math.max( maxError, error );
-						avgError += error;
-						minError = Math.min( minError, error );
-
-						final double ratio = (double)numInliers / (double)numCandidates;
-						maxRatio = Math.max( maxRatio, ratio );
-						avgRatio += ratio;
-						minRatio = Math.min( minRatio, ratio );
-					}
-					else
-					{
-						++numInvalidPairs;
-					}
+					final double ratio = (double)numInliers / (double)numCandidates;
+					maxRatio = Math.max( maxRatio, ratio );
+					avgRatio += ratio;
+					minRatio = Math.min( minRatio, ratio );
 				}
+				else
+				{
+					++numInvalidPairs;
+				}
+			}
 
 		if ( numValidPairs > 0 )
 		{

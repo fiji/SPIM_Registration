@@ -1,7 +1,6 @@
 package spim.process.interestpointregistration.pairwise;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import mpicbg.spim.mpicbg.PointMatchGeneric;
@@ -42,7 +41,7 @@ public class GeometricHashingPairwise implements MatcherPairwise
 
 		if ( listA.size() < 4 || listB.size() < 4 )
 		{
-			result.result = "(" + new Date( System.currentTimeMillis() ) + "): " /* + comparison */ + ": Not enough detections to match";
+			result.setResult( System.currentTimeMillis(), "Not enough detections to match" );
 			result.setCandidates( new ArrayList< PointMatchGeneric< Detection > >() );
 			result.setInliers( new ArrayList<PointMatchGeneric< Detection > >(), Double.NaN );
 			return result;
@@ -64,7 +63,7 @@ public class GeometricHashingPairwise implements MatcherPairwise
 
 		result.setInliers( inliers, ransacResult.getB() );
 
-		result.result = "(" + new Date( System.currentTimeMillis() ) + "): " + /*comparison +*/ ": " + ransacResult.getA();
+		result.setResult( System.currentTimeMillis(), ransacResult.getA() );
 
 		return result;
 	}

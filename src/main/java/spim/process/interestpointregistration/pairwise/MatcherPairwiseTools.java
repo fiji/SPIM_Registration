@@ -1,6 +1,7 @@
 package spim.process.interestpointregistration.pairwise;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -8,6 +9,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import mpicbg.spim.data.sequence.SequenceDescription;
+import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
 import spim.Threads;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
@@ -23,7 +27,31 @@ public class MatcherPairwiseTools
 		return computePairs( pairs, interestpoints, matcher, null );
 	}
 
-	public static <V> List< Pair< Pair< V, V >, PairwiseResult > > computePairs(
+	public static void assignViewIdsAndErrorMessages(
+			final Collection< ? extends Pair< ? extends Pair< ? extends ViewId, ? extends ViewId >, ? extends PairwiseResult > > r,
+			final SequenceDescription sd )
+	{
+		for ( final Pair< ? extends Pair< ? extends ViewId, ? extends ViewId >, ? extends PairwiseResult > p : r )
+		{
+			// just for logging the names and results of pairwise comparison
+			final ViewDescription viewA = sd.getViewDescription( p.getA().getA() );
+			final ViewDescription viewB = sd.getViewDescription( p.getA().getB() );
+			final PairwiseResult pwr = p.getB();
+
+			pwr.setViewIdA( viewA );
+			pwr.setViewIdB( viewB );
+
+			final String description = "[TP=" + viewA.getTimePoint().getName() + 
+					" angle=" + viewA.getViewSetup().getAngle().getName() + ", ch=" + viewA.getViewSetup().getChannel().getName() +
+					", illum=" + viewA.getViewSetup().getIllumination().getName() + " >>> TP=" + viewB.getTimePoint().getName() +
+					" angle=" + viewB.getViewSetup().getAngle().getName() + ", ch=" + viewB.getViewSetup().getChannel().getName() +
+					", illum=" + viewB.getViewSetup().getIllumination().getName() + "]";
+
+			pwr.setResultMessage( description );
+		}
+	}
+
+	public static < V > List< Pair< Pair< V, V >, PairwiseResult > > computePairs(
 			final List< Pair< V, V > > pairs,
 			final Map< V, List< InterestPoint > > interestpoints,
 			final MatcherPairwise matcher,
@@ -40,18 +68,6 @@ public class MatcherPairwiseTools
 
 		for ( final Pair< V, V > pair : pairs )
 		{
-			/*
-			// just for logging the names and results of pairwise comparison
-			final ViewDescription viewA = spimData.getSequenceDescription().getViewDescription( pair.getViewIdA() );
-			final ViewDescription viewB = spimData.getSequenceDescription().getViewDescription( pair.getViewIdB() );
-
-			final String description = "[TP=" + viewA.getTimePoint().getName() + 
-					" angle=" + viewA.getViewSetup().getAngle().getName() + ", ch=" + viewA.getViewSetup().getChannel().getName() +
-					", illum=" + viewA.getViewSetup().getIllumination().getName() + " >>> TP=" + viewB.getTimePoint().getName() +
-					" angle=" + viewB.getViewSetup().getAngle().getName() + ", ch=" + viewB.getViewSetup().getChannel().getName() +
-					", illum=" + viewB.getViewSetup().getIllumination().getName() + "]";
-			*/
-
 			final List< InterestPoint > listA = interestpoints.get( pair.getA() );
 			final List< InterestPoint > listB = interestpoints.get( pair.getB() );
 
@@ -74,7 +90,9 @@ public class MatcherPairwiseTools
 
 			for ( int i = 0; i < pairs.size(); ++i )
 			{
-				r.add( new ValuePair< Pair< V, V >, PairwiseResult >( pairs.get( i ), futures.get( i ).get() ) );
+				final PairwiseResult pwr = futures.get( i ).get();
+				final Pair< V, V > pair = pairs.get( i );
+				r.add( new ValuePair< Pair< V, V >, PairwiseResult >( pair, pwr ) );
 			}
 		}
 		catch ( final Exception e )

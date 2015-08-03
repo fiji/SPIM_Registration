@@ -16,22 +16,22 @@ import spim.Threads;
 import spim.fiji.plugin.Interest_Point_Registration.RegistrationType;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.interestpointregistration.ChannelProcess;
-import spim.process.interestpointregistration.PairwiseMatch;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationSubset;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationType;
+import spim.process.interestpointregistration.pairwise.PairwiseResult;
 
 /**
  * 
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
-public abstract class InterestPointRegistration
+public abstract class InterestPointRegistrationGUI
 {
 	final SpimData2 spimData1;
 	final List< ViewId > viewIdsToProcess;
 	final List< ChannelProcess > channelsToProcess;
 
-	List< List< PairwiseMatch > > statistics;
+	List< PairwiseResult > statistics;
 
 	/**
 	 * Instantiate the interest point registration. It is performed for a spimdata object on a
@@ -42,7 +42,10 @@ public abstract class InterestPointRegistration
 	 * @param viewIdsToProcess - which view id's to register
 	 * @param channelsToProcess - which Channel uses which label for registration
 	 */
-	public InterestPointRegistration( final SpimData2 spimData, final List< ViewId > viewIdsToProcess, final List< ChannelProcess > channelsToProcess )
+	public InterestPointRegistrationGUI(
+			final SpimData2 spimData,
+			final List< ViewId > viewIdsToProcess,
+			final List< ChannelProcess > channelsToProcess )
 	{
 		this.spimData1 = spimData;
 		this.viewIdsToProcess = viewIdsToProcess;
@@ -69,7 +72,10 @@ public abstract class InterestPointRegistration
 	/**
 	 * @return - a new instance without any special properties
 	 */
-	public abstract InterestPointRegistration newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess, final List< ChannelProcess > channelsToProcess );
+	public abstract InterestPointRegistrationGUI newInstance(
+			final SpimData2 spimData,
+			final List< ViewId > viewIdsToProcess,
+			final List< ChannelProcess > channelsToProcess );
 	
 	/**
 	 * @return - to be displayed in the generic dialog
@@ -86,7 +92,7 @@ public abstract class InterestPointRegistration
 	/**
 	 * @return - the transformation model to be used for the global optimization, and in most cases also for RANSAC
 	 */
-	protected abstract TransformationModel getTransformationModel();
+	protected abstract TransformationModelGUI getTransformationModel();
 
 	/**
 	 * Run the global optimization on the subset
@@ -111,7 +117,7 @@ public abstract class InterestPointRegistration
 	protected SpimData2 getSpimData() { return spimData1; }
 	public List< ViewId > getViewIdsToProcess() { return viewIdsToProcess; }
 	public List< ChannelProcess > getChannelsToProcess() { return channelsToProcess; }
-	public List< List< PairwiseMatch > > getStatistics() { return statistics; }
+	public List< PairwiseResult > getStatistics() { return statistics; }
 
 	/**
 	 * Registers all timepoints. No matter which matching is done it is always the same principle.
@@ -130,7 +136,7 @@ public abstract class InterestPointRegistration
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Starting registration" );
 
 		if ( collectStatistics )
-			this.statistics = new ArrayList< List< PairwiseMatch > >();
+			this.statistics = new ArrayList< PairwiseResult >();
 
 		// get a list of all pairs for this specific GlobalOptimizationType
 		final List< GlobalOptimizationSubset > list = registrationType.getAllViewPairs();

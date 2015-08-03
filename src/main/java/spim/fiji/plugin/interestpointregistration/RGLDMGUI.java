@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.pairwise;
+package spim.fiji.plugin.interestpointregistration;
 
 import ij.gui.GenericDialog;
 
