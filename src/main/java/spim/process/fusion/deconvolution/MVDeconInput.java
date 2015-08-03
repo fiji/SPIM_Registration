@@ -41,6 +41,8 @@ public class MVDeconInput
 	 */
 	public MVDeconInput init( final PSFTYPE iterationType ) throws IncompatibleTypeException
 	{
+		// TODO: AdjustInput.normImg( kernel1 );
+
 		for ( final MVDeconFFT view : views )
 			view.init( iterationType, views );
 		
