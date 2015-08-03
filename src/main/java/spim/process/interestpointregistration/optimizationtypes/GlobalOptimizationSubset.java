@@ -21,9 +21,9 @@ import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Dimensions;
 import net.imglib2.realtransform.AffineTransform3D;
 import spim.fiji.plugin.Apply_Transformation;
+import spim.fiji.plugin.interestpointregistration.ChannelProcess;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
-import spim.process.interestpointregistration.ChannelProcess;
 import spim.process.interestpointregistration.GlobalOpt;
 import spim.process.interestpointregistration.PairwiseMatch;
 

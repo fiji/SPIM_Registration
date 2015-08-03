@@ -282,11 +282,13 @@ public class TransformationTools
 				MatcherPairwiseTools.computePairs( pairs, interestpoints, new GeometricHashingPairwise( rp, gp ) );
 		MatcherPairwiseTools.assignViewIdsAndErrorMessages( result, spimData.getSequenceDescription() );
 
+		// save the corresponding detections and output result
 		for ( final Pair< Pair< ViewId, ViewId >, PairwiseResult > p : result )
 		{
 			final InterestPointList listA = spimData.getViewInterestPoints().getViewInterestPointLists( p.getA().getA() ).getInterestPointList( "beads" );
 			final InterestPointList listB = spimData.getViewInterestPoints().getViewInterestPointLists( p.getA().getB() ).getInterestPointList( "beads" );
 			setCorrespondences( p.getB().getInliers(), p.getA().getA(), p.getA().getB(), "beads", "beads", listA, listB );
+
 			System.out.println( p.getB().getFullDesc() );
 		}
 		

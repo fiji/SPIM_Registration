@@ -1,7 +1,7 @@
 package spim.fiji.plugin.thinout;
 
 import mpicbg.spim.data.sequence.Channel;
-import spim.process.interestpointregistration.ChannelProcess;
+import spim.fiji.plugin.interestpointregistration.ChannelProcess;
 
 @Deprecated
 public class ChannelProcessThinOut extends ChannelProcess

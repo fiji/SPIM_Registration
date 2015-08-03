@@ -15,9 +15,9 @@ import mpicbg.spim.io.IOFunctions;
 import spim.Threads;
 import spim.fiji.plugin.Interest_Point_Registration.RegistrationType;
 import spim.fiji.spimdata.SpimData2;
-import spim.process.interestpointregistration.ChannelProcess;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationSubset;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationType;
+import spim.process.interestpointregistration.pairwise.MatcherPairwise;
 import spim.process.interestpointregistration.pairwise.PairwiseResult;
 
 /**
@@ -27,9 +27,9 @@ import spim.process.interestpointregistration.pairwise.PairwiseResult;
  */
 public abstract class InterestPointRegistrationGUI
 {
-	final SpimData2 spimData1;
+	final SpimData2 spimData;
 	final List< ViewId > viewIdsToProcess;
-	final List< ChannelProcess > channelsToProcess;
+	final List< ChannelProcessGUI > channelsToProcess;
 
 	List< PairwiseResult > statistics;
 
@@ -45,9 +45,9 @@ public abstract class InterestPointRegistrationGUI
 	public InterestPointRegistrationGUI(
 			final SpimData2 spimData,
 			final List< ViewId > viewIdsToProcess,
-			final List< ChannelProcess > channelsToProcess )
+			final List< ChannelProcessGUI > channelsToProcess )
 	{
-		this.spimData1 = spimData;
+		this.spimData = spimData;
 		this.viewIdsToProcess = viewIdsToProcess;
 		this.channelsToProcess = channelsToProcess;
 	}
@@ -75,7 +75,7 @@ public abstract class InterestPointRegistrationGUI
 	public abstract InterestPointRegistrationGUI newInstance(
 			final SpimData2 spimData,
 			final List< ViewId > viewIdsToProcess,
-			final List< ChannelProcess > channelsToProcess );
+			final List< ChannelProcessGUI > channelsToProcess );
 	
 	/**
 	 * @return - to be displayed in the generic dialog
@@ -83,40 +83,13 @@ public abstract class InterestPointRegistrationGUI
 	public abstract String getDescription();
 
 	/**
-	 * @param pair - which pair to compare
-	 * @param description - a description String which pairs are compared
 	 * @return - the object that will perform a pairwise matching and can return a result
 	 */
-	protected abstract Callable< PairwiseMatch > pairwiseMatchingInstance( final PairwiseMatch pair, final String description );
+	protected abstract MatcherPairwise pairwiseMatchingInstance();
 
-	/**
-	 * @return - the transformation model to be used for the global optimization, and in most cases also for RANSAC
-	 */
-	protected abstract TransformationModelGUI getTransformationModel();
-
-	/**
-	 * Run the global optimization on the subset
-	 * 
-	 * @param subset
-	 * @param registrationType
-	 * @return - true if the global optimization could be run successfully, otherwise false (XML will not be saved if false)
-	 */
-	@SuppressWarnings("unchecked")
-	final protected boolean runGlobalOpt(
-			final GlobalOptimizationSubset subset,
-			final GlobalOptimizationType registrationType )
-	{
-		return subset.computeGlobalOpt(
-				getTransformationModel().getModel(),
-				registrationType,
-				getSpimData(),
-				getChannelsToProcess(),
-				getDescription() + ", " + getTransformationModel().getDescription() );
-	}
-
-	protected SpimData2 getSpimData() { return spimData1; }
+	protected SpimData2 getSpimData() { return spimData; }
 	public List< ViewId > getViewIdsToProcess() { return viewIdsToProcess; }
-	public List< ChannelProcess > getChannelsToProcess() { return channelsToProcess; }
+	public List< ChannelProcessGUI > getChannelsToProcess() { return channelsToProcess; }
 	public List< PairwiseResult > getStatistics() { return statistics; }
 
 	/**

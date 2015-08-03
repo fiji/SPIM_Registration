@@ -4,19 +4,27 @@ import mpicbg.models.Model;
 
 public class IterativeClosestPointParameters
 {
-	public IterativeClosestPointParameters( final Model< ? > model )
-	{
-		this.model = model;
-	}
+	public static double maxDistance = 5;
+	public static int maxIterations = 100;
 
-	public static double maxDistance;
-
-	protected double d = 5;
-	protected int maxIt = 100;
+	private double d = 5;
+	private int maxIt = 100;
 
 	private Model< ? > model = null;
-	public Model< ? > getModel() { return model.copy(); }
 
+	public IterativeClosestPointParameters( final Model< ? > model, final double maxDistance, final int maxIterations )
+	{
+		this.model = model;
+		this.d = maxDistance;
+		this.maxIt = maxIterations;
+	}
+
+	public IterativeClosestPointParameters( final Model< ? > model )
+	{
+		this( model, maxDistance, maxIterations );
+	}
+
+	public Model< ? > getModel() { return model.copy(); }
 	public double getMaxDistance() { return d; }
 	public int getMaxNumIterations() { return maxIt; }
 }

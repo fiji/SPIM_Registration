@@ -6,12 +6,9 @@ import java.util.List;
 
 import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.plugin.Interest_Point_Registration.RegistrationType;
-import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
-import spim.fiji.plugin.interestpointregistration.TransformationModel;
 import spim.fiji.spimdata.SpimData2;
 import spim.headless.registration.icp.IterativeClosestPointParameters;
-import spim.process.interestpointregistration.ChannelProcess;
-import spim.process.interestpointregistration.PairwiseMatch;
+import spim.process.interestpointregistration.pairwise.IterativeClosestPointPairwise;
 
 /**
  * Iterative closest point implementation
@@ -19,42 +16,42 @@ import spim.process.interestpointregistration.PairwiseMatch;
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
-public class IterativeClosestPointGUI extends IterativeClosestPointPairwise
+public class IterativeClosestPointGUI extends InterestPointRegistrationGUI
 {
 	public static int defaultModel = 2;
 	public static boolean defaultRegularize = true;
-	protected TransformationModel model = null;
+	protected TransformationModelGUI model = null;
 
 	protected IterativeClosestPointParameters parameters;
 
-	public IterativeClosestPointGUI(final IterativeClosestPointParameters ip)
+	public IterativeClosestPointGUI(
+			final SpimData2 spimData,
+			final List< ViewId > viewIdsToProcess,
+			final List< ChannelProcessGUI > channelsToProcess )
 	{
-		super(ip);
+		super( spimData, viewIdsToProcess, channelsToProcess );
 	}
 
-//	@Override
-	protected IterativeClosestPointPairwise pairwiseMatchingInstance( final PairwiseMatch pair, final String description)
+	@Override
+	protected IterativeClosestPointPairwise pairwiseMatchingInstance()
 	{
 		IterativeClosestPointParameters ip = new IterativeClosestPointParameters( model.getModel() );
 		return new IterativeClosestPointPairwise( ip );
 	}
 
-//	@Override
-	protected TransformationModel getTransformationModel() { return model; }
-
-//	@Override
+	@Override
 	public void addQuery( final GenericDialog gd, final RegistrationType registrationType )
 	{
-//		gd.addChoice( "Transformation model", TransformationModel.modelChoice, TransformationModel.modelChoice[ defaultModel ] );
-//		gd.addCheckbox( "Regularize_model", defaultRegularize );
-//		gd.addSlider( "Maximal_distance for correspondence (px)", 0.25, 40.0, IterativeClosestPointParameters.maxDistance );
-//		gd.addNumericField( "Maximal_number of iterations", IterativeClosestPointParameters.maxIterations, 0 );
+		gd.addChoice( "Transformation model", TransformationModelGUI.modelChoice, TransformationModelGUI.modelChoice[ defaultModel ] );
+		gd.addCheckbox( "Regularize_model", defaultRegularize );
+		gd.addSlider( "Maximal_distance for correspondence (px)", 0.25, 40.0, IterativeClosestPointParameters.maxDistance );
+		gd.addNumericField( "Maximal_number of iterations", IterativeClosestPointParameters.maxIterations, 0 );
 	}
 
-//	@Override
+	@Override
 	public boolean parseDialog( final GenericDialog gd, final RegistrationType registrationType )
 	{
-		model = new TransformationModel( defaultModel = gd.getNextChoiceIndex() );
+		model = new TransformationModelGUI( defaultModel = gd.getNextChoiceIndex() );
 		
 		if ( defaultRegularize = gd.getNextBoolean() )
 		{
@@ -63,20 +60,22 @@ public class IterativeClosestPointGUI extends IterativeClosestPointPairwise
 		}
 
 		final double maxDistance = IterativeClosestPointParameters.maxDistance = gd.getNextNumber();
-		final int maxIterations = (int)Math.round( gd.getNextNumber() );
-		
-		this.parameters = new IterativeClosestPointParameters( model.getModel() );
-		
+		final int maxIterations = IterativeClosestPointParameters.maxIterations = (int)Math.round( gd.getNextNumber() );
+
+		this.parameters = new IterativeClosestPointParameters( model.getModel(), maxDistance, maxIterations );
+
 		return true;
 	}
 
-//	@Override
+	@Override
 	public IterativeClosestPointGUI newInstance(
-			final IterativeClosestPointParameters ip )
+			final SpimData2 spimData,
+			final List< ViewId > viewIdsToProcess,
+			final List< ChannelProcessGUI > channelsToProcess )
 	{
-		return new IterativeClosestPointGUI( ip );
+		return new IterativeClosestPointGUI( spimData, viewIdsToProcess, channelsToProcess );
 	}
 
-//	@Override
+	@Override
 	public String getDescription() { return "Iterative closest-point (ICP, no invariance)";}
 }

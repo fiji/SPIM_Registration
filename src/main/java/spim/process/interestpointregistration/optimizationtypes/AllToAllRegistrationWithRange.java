@@ -7,8 +7,8 @@ import java.util.List;
 
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
+import spim.fiji.plugin.interestpointregistration.ChannelProcess;
 import spim.fiji.spimdata.SpimData2;
-import spim.process.interestpointregistration.ChannelProcess;
 import spim.process.interestpointregistration.MatchPointList;
 import spim.process.interestpointregistration.PairwiseMatch;
 

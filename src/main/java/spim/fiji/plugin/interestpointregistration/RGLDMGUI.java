@@ -6,13 +6,10 @@ import java.util.List;
 
 import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.plugin.Interest_Point_Registration.RegistrationType;
-import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
-import spim.fiji.plugin.interestpointregistration.TransformationModel;
 import spim.fiji.spimdata.SpimData2;
 import spim.headless.registration.RANSACParameters;
 import spim.headless.registration.geometricdescriptor.RGLDMParameters;
-import spim.process.interestpointregistration.ChannelProcess;
-import spim.process.interestpointregistration.PairwiseMatch;
+import spim.process.interestpointregistration.pairwise.RGLDMPairwise;
 
 /**
  * Redundant Geometric Local Descriptor Matching (RGLDM)
@@ -20,47 +17,46 @@ import spim.process.interestpointregistration.PairwiseMatch;
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
-public class RGLDMGUI extends RGLDMPairwise
+public class RGLDMGUI extends InterestPointRegistrationGUI
 {
 	public static int defaultModel = 2;
 	public static boolean defaultRegularize = true;
-	protected TransformationModel model = null;
+	protected TransformationModelGUI model = null;
 
 	protected RGLDMParameters parameters;
 	protected RANSACParameters ransacParams;
 
 	public RGLDMGUI(
-			final RANSACParameters rp,
-			final RGLDMParameters dp )
+			final SpimData2 spimData,
+			final List< ViewId > viewIdsToProcess,
+			final List< ChannelProcessGUI > channelsToProcess )
 	{
-		super(rp, dp);
+		super( spimData, viewIdsToProcess, channelsToProcess );
 	}
 
-//	@Override
-	protected RGLDMPairwise pairwiseMatchingInstance( final PairwiseMatch pair, final String description )
+	@Override
+	protected RGLDMPairwise pairwiseMatchingInstance()
 	{
 		return new RGLDMPairwise( ransacParams, parameters );
 	}
 
-//	@Override
-	protected TransformationModel getTransformationModel() { return model; }
-
-//	@Override
+	@Override
 	public RGLDMGUI newInstance(
-			final RANSACParameters rp,
-			final RGLDMParameters dp  )
+			final SpimData2 spimData,
+			final List< ViewId > viewIdsToProcess,
+			final List< ChannelProcessGUI > channelsToProcess )
 	{
-		return new RGLDMGUI( rp, dp );
+		return new RGLDMGUI( spimData, viewIdsToProcess, channelsToProcess );
 	}
 
 
-//	@Override
+	@Override
 	public String getDescription() { return "Redundant geometric local descriptor matching (translation invariant)";}
 
-//	@Override
+	@Override
 	public void addQuery( final GenericDialog gd, final RegistrationType registrationType )
 	{
-		gd.addChoice( "Transformation model", TransformationModel.modelChoice, TransformationModel.modelChoice[ defaultModel ] );
+		gd.addChoice( "Transformation model", TransformationModelGUI.modelChoice, TransformationModelGUI.modelChoice[ defaultModel ] );
 		gd.addCheckbox( "Regularize_model", defaultRegularize );
 		gd.addSlider( "Number_of_neighbors for the descriptors", 3, 10, RGLDMParameters.numNeighbors );
 		gd.addSlider( "Redundancy for descriptor matching", 0, 10, RGLDMParameters.redundancy );		
@@ -68,10 +64,10 @@ public class RGLDMGUI extends RGLDMPairwise
 		gd.addSlider( "Allowed_error_for_RANSAC (px)", 0.5, 20.0, RANSACParameters.max_epsilon );
 	}
 
-//	@Override
+	@Override
 	public boolean parseDialog( final GenericDialog gd, final RegistrationType registrationType )
 	{
-		model = new TransformationModel( defaultModel = gd.getNextChoiceIndex() );
+		model = new TransformationModelGUI( defaultModel = gd.getNextChoiceIndex() );
 		
 		if ( defaultRegularize = gd.getNextBoolean() )
 		{

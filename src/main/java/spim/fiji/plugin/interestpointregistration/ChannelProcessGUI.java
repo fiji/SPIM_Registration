@@ -1,13 +1,13 @@
-package spim.process.interestpointregistration;
+package spim.fiji.plugin.interestpointregistration;
 
 import mpicbg.spim.data.sequence.Channel;
 
-public class ChannelProcess
+public class ChannelProcessGUI
 {
 	protected Channel channel;
 	protected String label;
 	
-	public ChannelProcess( final Channel channel, final String label )
+	public ChannelProcessGUI( final Channel channel, final String label )
 	{
 		this.channel = channel;
 		this.label = label;

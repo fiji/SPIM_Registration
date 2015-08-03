@@ -28,13 +28,13 @@ import spim.fiji.ImgLib2Temp.ValuePair;
 import spim.fiji.plugin.Interest_Point_Registration;
 import spim.fiji.plugin.Visualize_Detections;
 import spim.fiji.plugin.fusion.Fusion;
+import spim.fiji.plugin.interestpointregistration.ChannelProcess;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.process.fusion.export.ImgExport;
-import spim.process.interestpointregistration.ChannelProcess;
 
 public class AutomaticReorientation extends BoundingBoxGUI
 {

@@ -6,62 +6,59 @@ import java.util.List;
 
 import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.plugin.Interest_Point_Registration.RegistrationType;
-import spim.fiji.plugin.interestpointregistration.TransformationModel;
 import spim.fiji.spimdata.SpimData2;
 import spim.headless.registration.RANSACParameters;
 import spim.headless.registration.geometrichashing.GeometricHashingParameters;
-import spim.process.interestpointregistration.ChannelProcess;
-import spim.process.interestpointregistration.PairwiseMatch;
+import spim.process.interestpointregistration.pairwise.GeometricHashingPairwise;
 
-public class GeometricHashingGUI extends GeometricHashingPairwise
+public class GeometricHashingGUI extends InterestPointRegistrationGUI
 {
 	public static int defaultModel = 2;
 	public static boolean defaultRegularize = true;
-	protected TransformationModel model = null;
+	protected TransformationModelGUI model = null;
 
 	protected RANSACParameters ransacParams;
 	protected GeometricHashingParameters ghParams;
 
 	public GeometricHashingGUI(
-			final RANSACParameters rp,
-			final GeometricHashingParameters gp )
+			final SpimData2 spimData,
+			final List< ViewId > viewIdsToProcess,
+			final List< ChannelProcessGUI > channelsToProcess )
 	{
-		super(rp, gp);
+		super( spimData, viewIdsToProcess, channelsToProcess );
 	}
 
-//	@Override
-	protected GeometricHashingPairwise pairwiseMatchingInstance( final PairwiseMatch pair, final String description )
+	@Override
+	protected GeometricHashingPairwise pairwiseMatchingInstance()
 	{
 		return new GeometricHashingPairwise( ransacParams, ghParams );
 	}
 
-//	@Override
-	protected TransformationModel getTransformationModel() { return model; }
-
-//	@Override
+	@Override
 	public GeometricHashingGUI newInstance(
-			final RANSACParameters rp,
-			final GeometricHashingParameters gp  )
+			final SpimData2 spimData,
+			final List< ViewId > viewIdsToProcess,
+			final List< ChannelProcessGUI > channelsToProcess )
 	{
-		return new GeometricHashingGUI( rp, gp );
+		return new GeometricHashingGUI( spimData, viewIdsToProcess, channelsToProcess );
 	}
 
-//	@Override
+	@Override
 	public String getDescription() { return "Fast 3d geometric hashing (rotation invariant)";}
 
-//	@Override
+	@Override
 	public void addQuery( final GenericDialog gd, final RegistrationType registrationType )
 	{
-		gd.addChoice( "Transformation model", TransformationModel.modelChoice, TransformationModel.modelChoice[ defaultModel ] );
+		gd.addChoice( "Transformation model", TransformationModelGUI.modelChoice, TransformationModelGUI.modelChoice[ defaultModel ] );
 		gd.addCheckbox( "Regularize_model", defaultRegularize );
 		gd.addSlider( "Allowed_error_for_RANSAC (px)", 0.5, 20.0, RANSACParameters.max_epsilon );
 		gd.addSlider( "Significance required for a descriptor match", 1.0, 20.0, GeometricHashingParameters.ratioOfDistance );
 	}
 
-//	@Override
+	@Override
 	public boolean parseDialog( final GenericDialog gd, final RegistrationType registrationType )
 	{
-		model = new TransformationModel( defaultModel = gd.getNextChoiceIndex() );
+		model = new TransformationModelGUI( defaultModel = gd.getNextChoiceIndex() );
 		
 		if ( defaultRegularize = gd.getNextBoolean() )
 		{
