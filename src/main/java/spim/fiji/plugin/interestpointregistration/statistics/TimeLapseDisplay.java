@@ -1,4 +1,4 @@
-package spim.fiji.plugin.interestpointregistration.registrationstatistics;
+package spim.fiji.plugin.interestpointregistration.statistics;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
