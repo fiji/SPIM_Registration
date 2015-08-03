@@ -18,17 +18,20 @@ import mpicbg.spim.data.registration.ViewTransform;
 import mpicbg.spim.data.registration.ViewTransformAffine;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+import mpicbg.spim.mpicbg.PointMatchGeneric;
 import net.imglib2.Dimensions;
 import net.imglib2.realtransform.AffineGet;
 import net.imglib2.realtransform.AffineTransform3D;
 import simulation.imgloader.SimulatedBeadsImgLoader;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.headless.interestpointdetection.DoGParameters;
 import spim.headless.registration.geometrichashing.GeometricHashingParameters;
+import spim.process.interestpointregistration.Detection;
 import spim.process.interestpointregistration.GlobalOpt;
 import spim.process.interestpointregistration.pairwise.GeometricHashingPairwise;
 import spim.process.interestpointregistration.pairwise.MatcherPairwiseTools;
@@ -37,6 +40,37 @@ import spim.process.interestpointregistration.pairwise.PairwiseStrategyTools;
 
 public class TransformationTools
 {
+	/**
+	 * Replace all correspondences in the interestpointlists
+	 */
+	public static void setCorrespondences(
+			final List< PointMatchGeneric< Detection > > correspondences,
+			final ViewId viewIdA,
+			final ViewId viewIdB,
+			final String labelA,
+			final String labelB,
+			final InterestPointList listA,
+			final InterestPointList listB )
+	{
+		final ArrayList< CorrespondingInterestPoints > corrListA = new ArrayList< CorrespondingInterestPoints >();
+		final ArrayList< CorrespondingInterestPoints > corrListB = new ArrayList< CorrespondingInterestPoints >();
+
+		for ( final PointMatchGeneric< Detection > d : correspondences )
+		{
+			final Detection dA = d.getPoint1();
+			final Detection dB = d.getPoint2();
+			
+			final CorrespondingInterestPoints correspondingToA = new CorrespondingInterestPoints( dA.getId(), viewIdB, labelB, dB.getId() );
+			final CorrespondingInterestPoints correspondingToB = new CorrespondingInterestPoints( dB.getId(), viewIdA, labelA, dA.getId() );
+			
+			corrListA.add( correspondingToA );
+			corrListB.add( correspondingToB );
+		}
+
+		listA.setCorrespondingInterestPoints( corrListA );
+		listB.setCorrespondingInterestPoints( corrListB );
+	}
+
 	/**
 	 * 
 	 * @param size - size of view which is used to map back
@@ -249,8 +283,13 @@ public class TransformationTools
 		MatcherPairwiseTools.assignViewIdsAndErrorMessages( result, spimData.getSequenceDescription() );
 
 		for ( final Pair< Pair< ViewId, ViewId >, PairwiseResult > p : result )
+		{
+			final InterestPointList listA = spimData.getViewInterestPoints().getViewInterestPointLists( p.getA().getA() ).getInterestPointList( "beads" );
+			final InterestPointList listB = spimData.getViewInterestPoints().getViewInterestPointLists( p.getA().getB() ).getInterestPointList( "beads" );
+			setCorrespondences( p.getB().getInliers(), p.getA().getA(), p.getA().getB(), "beads", "beads", listA, listB );
 			System.out.println( p.getB().getFullDesc() );
-
+		}
+		
 		final HashMap< ViewId, Tile< AffineModel3D > > models =
 				GlobalOpt.compute( new AffineModel3D(), result, fixedViews, groupedViews );
 
