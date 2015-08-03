@@ -22,6 +22,8 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
+import spim.fiji.plugin.interestpointregistration.registrationstatistics.RegistrationStatistics;
+import spim.fiji.plugin.interestpointregistration.registrationstatistics.TimeLapseDisplay;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
@@ -34,8 +36,6 @@ import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizati
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationType;
 import spim.process.interestpointregistration.optimizationtypes.IndividualTimepointRegistration;
 import spim.process.interestpointregistration.optimizationtypes.ReferenceTimepointRegistration;
-import spim.process.interestpointregistration.registrationstatistics.RegistrationStatistics;
-import spim.process.interestpointregistration.registrationstatistics.TimeLapseDisplay;
 
 /**
  *

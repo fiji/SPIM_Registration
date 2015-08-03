@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.registrationstatistics;
+package spim.fiji.plugin.interestpointregistration.registrationstatistics;
 
 import ij.gui.GUI;
 
