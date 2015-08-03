@@ -82,10 +82,6 @@ public abstract class InterestPointRegistrationGUI
 	 */
 	public abstract String getDescription();
 
-	/**
-	 * @return - the object that will perform a pairwise matching and can return a result
-	 */
-	protected abstract MatcherPairwise pairwiseMatchingInstance();
 
 	protected SpimData2 getSpimData() { return spimData; }
 	public List< ViewId > getViewIdsToProcess() { return viewIdsToProcess; }

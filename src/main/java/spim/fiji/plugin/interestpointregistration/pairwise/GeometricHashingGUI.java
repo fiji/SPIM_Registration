@@ -1,17 +1,12 @@
-package spim.fiji.plugin.interestpointregistration;
+package spim.fiji.plugin.interestpointregistration.pairwise;
 
 import ij.gui.GenericDialog;
-
-import java.util.List;
-
-import mpicbg.spim.data.sequence.ViewId;
-import spim.fiji.plugin.Interest_Point_Registration.RegistrationType;
-import spim.fiji.spimdata.SpimData2;
+import spim.fiji.plugin.interestpointregistration.TransformationModelGUI;
 import spim.headless.registration.RANSACParameters;
 import spim.headless.registration.geometrichashing.GeometricHashingParameters;
 import spim.process.interestpointregistration.pairwise.GeometricHashingPairwise;
 
-public class GeometricHashingGUI extends InterestPointRegistrationGUI
+public class GeometricHashingGUI implements PairwiseGUI
 {
 	public static int defaultModel = 2;
 	public static boolean defaultRegularize = true;
@@ -20,34 +15,17 @@ public class GeometricHashingGUI extends InterestPointRegistrationGUI
 	protected RANSACParameters ransacParams;
 	protected GeometricHashingParameters ghParams;
 
-	public GeometricHashingGUI(
-			final SpimData2 spimData,
-			final List< ViewId > viewIdsToProcess,
-			final List< ChannelProcessGUI > channelsToProcess )
-	{
-		super( spimData, viewIdsToProcess, channelsToProcess );
-	}
+	@Override
+	public GeometricHashingPairwise pairwiseMatchingInstance() { return new GeometricHashingPairwise( ransacParams, ghParams ); }
 
 	@Override
-	protected GeometricHashingPairwise pairwiseMatchingInstance()
-	{
-		return new GeometricHashingPairwise( ransacParams, ghParams );
-	}
-
-	@Override
-	public GeometricHashingGUI newInstance(
-			final SpimData2 spimData,
-			final List< ViewId > viewIdsToProcess,
-			final List< ChannelProcessGUI > channelsToProcess )
-	{
-		return new GeometricHashingGUI( spimData, viewIdsToProcess, channelsToProcess );
-	}
+	public GeometricHashingGUI newInstance() { return new GeometricHashingGUI(); }
 
 	@Override
 	public String getDescription() { return "Fast 3d geometric hashing (rotation invariant)";}
 
 	@Override
-	public void addQuery( final GenericDialog gd, final RegistrationType registrationType )
+	public void addQuery( final GenericDialog gd )
 	{
 		gd.addChoice( "Transformation model", TransformationModelGUI.modelChoice, TransformationModelGUI.modelChoice[ defaultModel ] );
 		gd.addCheckbox( "Regularize_model", defaultRegularize );
@@ -56,7 +34,7 @@ public class GeometricHashingGUI extends InterestPointRegistrationGUI
 	}
 
 	@Override
-	public boolean parseDialog( final GenericDialog gd, final RegistrationType registrationType )
+	public boolean parseDialog( final GenericDialog gd )
 	{
 		model = new TransformationModelGUI( defaultModel = gd.getNextChoiceIndex() );
 		

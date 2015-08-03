@@ -1,12 +1,7 @@
-package spim.fiji.plugin.interestpointregistration;
+package spim.fiji.plugin.interestpointregistration.pairwise;
 
 import ij.gui.GenericDialog;
-
-import java.util.List;
-
-import mpicbg.spim.data.sequence.ViewId;
-import spim.fiji.plugin.Interest_Point_Registration.RegistrationType;
-import spim.fiji.spimdata.SpimData2;
+import spim.fiji.plugin.interestpointregistration.TransformationModelGUI;
 import spim.headless.registration.icp.IterativeClosestPointParameters;
 import spim.process.interestpointregistration.pairwise.IterativeClosestPointPairwise;
 
@@ -16,7 +11,7 @@ import spim.process.interestpointregistration.pairwise.IterativeClosestPointPair
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
-public class IterativeClosestPointGUI extends InterestPointRegistrationGUI
+public class IterativeClosestPointGUI implements PairwiseGUI
 {
 	public static int defaultModel = 2;
 	public static boolean defaultRegularize = true;
@@ -24,23 +19,15 @@ public class IterativeClosestPointGUI extends InterestPointRegistrationGUI
 
 	protected IterativeClosestPointParameters parameters;
 
-	public IterativeClosestPointGUI(
-			final SpimData2 spimData,
-			final List< ViewId > viewIdsToProcess,
-			final List< ChannelProcessGUI > channelsToProcess )
-	{
-		super( spimData, viewIdsToProcess, channelsToProcess );
-	}
-
 	@Override
-	protected IterativeClosestPointPairwise pairwiseMatchingInstance()
+	public IterativeClosestPointPairwise pairwiseMatchingInstance()
 	{
 		IterativeClosestPointParameters ip = new IterativeClosestPointParameters( model.getModel() );
 		return new IterativeClosestPointPairwise( ip );
 	}
 
 	@Override
-	public void addQuery( final GenericDialog gd, final RegistrationType registrationType )
+	public void addQuery( final GenericDialog gd )
 	{
 		gd.addChoice( "Transformation model", TransformationModelGUI.modelChoice, TransformationModelGUI.modelChoice[ defaultModel ] );
 		gd.addCheckbox( "Regularize_model", defaultRegularize );
@@ -49,7 +36,7 @@ public class IterativeClosestPointGUI extends InterestPointRegistrationGUI
 	}
 
 	@Override
-	public boolean parseDialog( final GenericDialog gd, final RegistrationType registrationType )
+	public boolean parseDialog( final GenericDialog gd )
 	{
 		model = new TransformationModelGUI( defaultModel = gd.getNextChoiceIndex() );
 		
@@ -68,13 +55,7 @@ public class IterativeClosestPointGUI extends InterestPointRegistrationGUI
 	}
 
 	@Override
-	public IterativeClosestPointGUI newInstance(
-			final SpimData2 spimData,
-			final List< ViewId > viewIdsToProcess,
-			final List< ChannelProcessGUI > channelsToProcess )
-	{
-		return new IterativeClosestPointGUI( spimData, viewIdsToProcess, channelsToProcess );
-	}
+	public IterativeClosestPointGUI newInstance() { return new IterativeClosestPointGUI(); }
 
 	@Override
 	public String getDescription() { return "Iterative closest-point (ICP, no invariance)";}
