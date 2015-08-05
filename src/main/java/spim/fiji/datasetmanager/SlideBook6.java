@@ -36,8 +36,10 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.ViewSetupUtils;
 import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.imgloaders.SlideBook6ImgLoader;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
@@ -117,8 +119,8 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 			// finally create the SpimData itself based on the sequence description and the view registration
 			final SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints, new BoundingBoxes() );
 
-			// TODO: only apply axis if configured in SLD file
-			applyAxis( spimData );
+			// Apply_Transformation.applyAxis( spimData );
+			applyAxis( spimData, minResolution );
 
 			reader.closeFile();
 			
@@ -133,7 +135,7 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 		return null;
 	}
 
-	public static void applyAxis( final SpimData data )
+	public static void applyAxis( final SpimData data, final double minResolution )
 	{
 		ViewRegistrations viewRegistrations = data.getViewRegistrations();
 		for ( final ViewDescription vd : data.getSequenceDescription().getViewDescriptions().values() )
@@ -147,12 +149,17 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 					final ViewRegistration vr = viewRegistrations.getViewRegistration( vd );
 
 					final Dimensions dim = vd.getViewSetup().getSize();
+					
+					VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSizeOrLoad( vd.getViewSetup(), vd.getTimePoint(), data.getSequenceDescription().getImgLoader() );
+					final double calX = voxelSize.dimension( 0 ) / minResolution;
+					final double calY = voxelSize.dimension( 1 ) / minResolution;
+					final double calZ = voxelSize.dimension( 2 ) / minResolution;
 
 					AffineTransform3D model = new AffineTransform3D();
 					model.set(
-							1, 0, 0, -dim.dimension( 0 )/2,
-							0, 1, 0, -dim.dimension( 1 )/2,
-							0, 0, 1, -dim.dimension( 2 )/2 );
+							1, 0, 0, -dim.dimension( 0 )/2 * calX,
+							0, 1, 0, -dim.dimension( 1 )/2 * calY,
+							0, 0, 1, -dim.dimension( 2 )/2 * calZ);
 					ViewTransform vt = new ViewTransformAffine( "Center view", model );
 					vr.preconcatenateTransform( vt );
 
