@@ -1204,34 +1204,7 @@ public class EfficientBayesianBased extends Fusion
 		}
 
 	}
-//
-//	protected void assembleUnregisteredDetectionLabels(final HashMap< Channel, ArrayList< Correspondence > > correspondences)
-//	{
-//		//all interest point lists?
-//		final ViewInterestPoints vp = spimData.getViewInterestPoints();
-//		//each channel
-//		for ( final Channel c : channelsToProcess ) {
-//			//prepare list of detection for that channel
-//			final ArrayList< Correspondence > corrList = new ArrayList< Correspondence >();
-//
-//			//also take time points into account
-//			for ( final TimePoint t : timepointsToProcess )
-//				for ( final ViewId viewId : SpimData2.getAllViewIdsForTimePointSorted( spimData, viewIdsToProcess, t ) ) {
-//					//get the view desc for the view id
-//					final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( viewId );
-//					//same channel and present?
-//					if ( vd.getViewSetup().getChannel().getId() == c.getId() && vd.isPresent() )
-//					{
-//
-//					}
-//				}
-//
-//
-//			}
-//
-//
-//	}
-	
+
 	protected class Correspondence
 	{
 		final String label;
