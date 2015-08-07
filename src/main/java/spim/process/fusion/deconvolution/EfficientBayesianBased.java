@@ -684,12 +684,16 @@ public class EfficientBayesianBased extends Fusion
 			if ( defaultPSFLabelIndex == null || defaultPSFLabelIndex.length != channelsToProcess.size() )
 				defaultPSFLabelIndex = new int[ channelsToProcess.size() ];
 
-			// remember which choiceindex in the dialog maps to which other channel
+			// remember which choice index in the dialog maps to which other channel
 			final ArrayList< HashMap< Integer, Channel > > otherChannels = new ArrayList< HashMap< Integer, Channel > >();
 			
 			for ( int i = 0; i < channelsToProcess.size(); ++i )
 			{
+				//get the channel
 				final Channel c = channelsToProcess.get( i );
+				//get correspondences for channel (registrations)
+
+
 				final ArrayList< Correspondence > corr = correspondences.get( c ); 
 				choices[ i ] = new String[ corr.size() + channelsToProcess.size() - 1 ];
 				
@@ -1108,7 +1112,7 @@ public class EfficientBayesianBased extends Fusion
 	 * @param viewsPresent
 	 * @param onlyValid - only return a list of correspondence labels if all views have correspondences
 	 */
-	protected void assembleAvailableCorrespondences( final HashMap< Channel, ArrayList< Correspondence > > correspondences, final HashMap< Channel, Integer > viewsPresent, final boolean onlyValid )
+	protected void assembleAvailableCorrespondences( final HashMap< Channel, ArrayList< Correspondence > > correspondences, final HashMap< Channel, Integer > viewsPresent, final boolean onlyValid)
 	{
 		final ViewInterestPoints vp = spimData.getViewInterestPoints();
 				
@@ -1146,8 +1150,8 @@ public class EfficientBayesianBased extends Fusion
 							if ( ipl.getCorrespondingInterestPoints() == null )
 								ipl.loadCorrespondingInterestPoints();
 							
-							if ( ipl.getCorrespondingInterestPoints().size() > 0 )
-							{
+//							if ( ipl.getCorrespondingInterestPoints().size() > 0 )
+//							{
 								Correspondence corrTmp = new Correspondence( label );
 								boolean foundEntry = false;
 								
@@ -1164,12 +1168,13 @@ public class EfficientBayesianBased extends Fusion
 								if ( !foundEntry )
 									corrList.add( corrTmp );
 								
-								IOFunctions.println( name + ipl.getCorrespondingInterestPoints().size() + " correspondences." );
-							}
-							else
-							{
-								IOFunctions.println( name + " NO correspondences." );
-							}
+								IOFunctions.println( name + ipl.getInterestPoints().size() + " interest points." );
+//								IOFunctions.println( name + ipl.getCorrespondingInterestPoints().size() + " correspondences." );
+//							}
+//							else
+//							{
+//								IOFunctions.println( name + " NO correspondences." );
+//							}
 						}
 					}
 				}
@@ -1199,6 +1204,33 @@ public class EfficientBayesianBased extends Fusion
 		}
 
 	}
+//
+//	protected void assembleUnregisteredDetectionLabels(final HashMap< Channel, ArrayList< Correspondence > > correspondences)
+//	{
+//		//all interest point lists?
+//		final ViewInterestPoints vp = spimData.getViewInterestPoints();
+//		//each channel
+//		for ( final Channel c : channelsToProcess ) {
+//			//prepare list of detection for that channel
+//			final ArrayList< Correspondence > corrList = new ArrayList< Correspondence >();
+//
+//			//also take time points into account
+//			for ( final TimePoint t : timepointsToProcess )
+//				for ( final ViewId viewId : SpimData2.getAllViewIdsForTimePointSorted( spimData, viewIdsToProcess, t ) ) {
+//					//get the view desc for the view id
+//					final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( viewId );
+//					//same channel and present?
+//					if ( vd.getViewSetup().getChannel().getId() == c.getId() && vd.isPresent() )
+//					{
+//
+//					}
+//				}
+//
+//
+//			}
+//
+//
+//	}
 	
 	protected class Correspondence
 	{
