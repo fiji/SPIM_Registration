@@ -1,37 +1,36 @@
 package mpicbg.pointdescriptor.model;
 
-import Jama.EigenvalueDecomposition;
-import Jama.Matrix;
-
 import java.util.Collection;
 
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.PointMatch;
+import Jama.EigenvalueDecomposition;
+import Jama.Matrix;
 
 /**
  * 3d-rigid transformation models to be applied to points in 3d-space.
- * 
+ *
  * This function uses the method by Horn, using quaternions:
  * Closed-form solution of absolute orientation using unit quaternions,
  * Horn, B. K. P., Journal of the Optical Society of America A,
  * Vol. 4, page 629, April 1987
- * 
+ *
  * @author Johannes Schindelin (quaternion logic and implementation) and Stephan Preibisch
  * @version 0.1b
- * 
+ *
  */
-public class TranslationInvariantSimilarityModel3D extends TranslationInvariantModel<TranslationInvariantSimilarityModel3D> 
+public class TranslationInvariantSimilarityModel3D extends TranslationInvariantModel<TranslationInvariantSimilarityModel3D>
 {
 	static final protected int MIN_NUM_MATCHES = 3;
-	
+
 	protected double
 		m00 = 1.0, m01 = 0.0, m02 = 0.0,
 		m10 = 0.0, m11 = 1.0, m12 = 0.0,
 		m20 = 0.0, m21 = 0.0, m22 = 1.0;
 
 	final protected double[][] N = new double[4][4];
-	
+
 	@Override
 	public boolean canDoNumDimension( final int numDimensions ) { return numDimensions == 3; }
 
@@ -39,63 +38,41 @@ public class TranslationInvariantSimilarityModel3D extends TranslationInvariantM
 	final public <P extends PointMatch> void fit( final Collection< P > matches )
 		throws NotEnoughDataPointsException, IllDefinedDataPointsException
 	{
-		final int numMatches = matches.size(); 
+		final int numMatches = matches.size();
 		if ( numMatches < MIN_NUM_MATCHES )
 			throw new NotEnoughDataPointsException( matches.size() + " data points are not enough to estimate a 3d similarity model, at least " + MIN_NUM_MATCHES + " data points required." );
-
-		double c1x, c1y, c1z, c2x, c2y, c2z;
-		c1x = c1y = c1z = c2x = c2y = c2z = 0;
-
-		for ( final PointMatch m : matches )
-		{
-			final double[] p = m.getP1().getL(); 
-			final double[] q = m.getP2().getW();
-			
-			c1x += p[ 0 ];
-			c1y += p[ 1 ];
-			c1z += p[ 2 ];
-			c2x += q[ 0 ];
-			c2y += q[ 1 ];
-			c2z += q[ 2 ];
-		}
-		c1x /= numMatches;
-		c1y /= numMatches;
-		c1z /= numMatches;
-		c2x /= numMatches;
-		c2y /= numMatches;
-		c2z /= numMatches;
 
 		double r1 = 0, r2 = 0;
 		for ( final PointMatch m : matches )
 		{
-			final double[] p = m.getP1().getL(); 
+			final double[] p = m.getP1().getL();
 			final double[] q = m.getP2().getW();
-			
-			double x1 = p[ 0 ] - c1x;
-			double y1 = p[ 1 ] - c1y;
-			double z1 = p[ 2 ] - c1z;
-			double x2 = q[ 0 ] - c2x;
-			double y2 = q[ 1 ] - c2y;
-			double z2 = q[ 2 ] - c2z;
+
+			final double x1 = p[ 0 ];
+			final double y1 = p[ 1 ];
+			final double z1 = p[ 2 ];
+			final double x2 = q[ 0 ];
+			final double y2 = q[ 1 ];
+			final double z2 = q[ 2 ];
 			r1 += x1 * x1 + y1 * y1 + z1 * z1;
 			r2 += x2 * x2 + y2 * y2 + z2 * z2;
 		}
 		final double s = Math.sqrt(r2 / r1);
-		
+
 		// calculate N
 		double Sxx, Sxy, Sxz, Syx, Syy, Syz, Szx, Szy, Szz;
 		Sxx = Sxy = Sxz = Syx = Syy = Syz = Szx = Szy = Szz = 0;
 		for ( final PointMatch m : matches )
 		{
-			final double[] p = m.getP1().getL(); 
+			final double[] p = m.getP1().getL();
 			final double[] q = m.getP2().getW();
-			
-			final double x1 = (p[ 0 ] - c1x) * s;
-			final double y1 = (p[ 1 ] - c1y) * s;
-			final double z1 = (p[ 2 ] - c1z) * s;
-			final double x2 = q[ 0 ] - c2x;
-			final double y2 = q[ 1 ] - c2y;
-			final double z2 = q[ 2 ] - c2z;
+
+			final double x1 = p[ 0 ] * s;
+			final double y1 = p[ 1 ] * s;
+			final double z1 = p[ 2 ] * s;
+			final double x2 = q[ 0 ];
+			final double y2 = q[ 1 ];
+			final double z2 = q[ 2 ];
 			Sxx += x1 * x2;
 			Sxy += x1 * y2;
 			Sxz += x1 * z2;
@@ -140,7 +117,7 @@ public class TranslationInvariantSimilarityModel3D extends TranslationInvariantM
 		// calculate eigenvector with maximal eigenvalue
 
 		final EigenvalueDecomposition evd = new EigenvalueDecomposition( new Matrix( N ) );
-		
+
 		final double[] eigenvalues = evd.getRealEigenvalues();
 		final Matrix eigenVectors = evd.getV();
 
@@ -149,7 +126,7 @@ public class TranslationInvariantSimilarityModel3D extends TranslationInvariantM
 			if (eigenvalues[i] > eigenvalues[index])
 				index = i;
 
-		final double q0 = eigenVectors.get( 0, index ); 
+		final double q0 = eigenVectors.get( 0, index );
 		final double qx = eigenVectors.get( 1, index );
 		final double qy = eigenVectors.get( 2, index );
 		final double qz = eigenVectors.get( 3, index );
@@ -166,7 +143,7 @@ public class TranslationInvariantSimilarityModel3D extends TranslationInvariantM
 		m20 = s * 2 * (qz * qx - q0 * qy);
 		m21 = s * 2 * (qz * qy + q0 * qx);
 		m22 = s * (q0 * q0 - qx * qx - qy * qy + qz * qz);
-		
+
 		/*
 		// translational part
 		result.apply(c1x, c1y, c1z);
@@ -175,7 +152,7 @@ public class TranslationInvariantSimilarityModel3D extends TranslationInvariantM
 		result.a23 = c2z - result.z;
 		*/
 	}
-	
+
 	@Override
 	final public void set( final TranslationInvariantSimilarityModel3D m )
 	{
@@ -187,7 +164,7 @@ public class TranslationInvariantSimilarityModel3D extends TranslationInvariantM
 		m21 = m.m21;
 		m02 = m.m02;
 		m12 = m.m12;
-		m22 = m.m22;		
+		m22 = m.m22;
 
 		cost = m.cost;
 	}
@@ -195,7 +172,7 @@ public class TranslationInvariantSimilarityModel3D extends TranslationInvariantM
 	@Override
 	public TranslationInvariantSimilarityModel3D copy()
 	{
-		TranslationInvariantSimilarityModel3D m = new TranslationInvariantSimilarityModel3D();
+		final TranslationInvariantSimilarityModel3D m = new TranslationInvariantSimilarityModel3D();
 		m.m00 = m00;
 		m.m10 = m10;
 		m.m20 = m20;
@@ -205,15 +182,15 @@ public class TranslationInvariantSimilarityModel3D extends TranslationInvariantM
 		m.m02 = m02;
 		m.m12 = m12;
 		m.m22 = m22;
-		
+
 		m.cost = cost;
 
 		return m;
 	}
-	
+
 	@Override
 	final public int getMinNumMatches(){ return MIN_NUM_MATCHES; }
-	
+
 	@Override
 	final public double[] apply( final double[] l )
 	{
@@ -221,20 +198,21 @@ public class TranslationInvariantSimilarityModel3D extends TranslationInvariantM
 		applyInPlace( transformed );
 		return transformed;
 	}
-	
+
 	@Override
 	final public void applyInPlace( final double[] l )
 	{
 		assert l.length == 3 : "3d affine transformations can be applied to 3d points only.";
-		
+
 		final double l0 = l[ 0 ];
 		final double l1 = l[ 1 ];
 		l[ 0 ] = l0 * m00 + l1 * m01 + l[ 2 ] * m02;
 		l[ 1 ] = l0 * m10 + l1 * m11 + l[ 2 ] * m12;
 		l[ 2 ] = l0 * m20 + l1 * m21 + l[ 2 ] * m22;
 	}
-	
-	final public String toString()
+
+	@Override
+    final public String toString()
 	{
 		return
 			"3d-affine: (" +
@@ -242,5 +220,5 @@ public class TranslationInvariantSimilarityModel3D extends TranslationInvariantM
 			m10 + ", " + m11 + ", " + m12 + ", " +
 			m20 + ", " + m21 + ", " + m22 + ")";
 	}
-	
+
 }
