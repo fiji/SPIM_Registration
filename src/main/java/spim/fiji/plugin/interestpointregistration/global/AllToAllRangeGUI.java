@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.optimizationtypes;
+package spim.fiji.plugin.interestpointregistration.global;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,15 +12,20 @@ import spim.fiji.spimdata.SpimData2;
 import spim.process.interestpointregistration.MatchPointList;
 import spim.process.interestpointregistration.PairwiseMatch;
 
-public class AllToAllRegistration extends GlobalOptimizationType
+public class AllToAllRangeGUI extends GlobalOptimizationType
 {
-	public AllToAllRegistration(
+	final int range;
+	
+	public AllToAllRangeGUI(
 			final SpimData2 spimData,
 			final List< ViewId > viewIdsToProcess,
 			final List< ChannelProcess > channelsToProcess,
+			final int range,
 			final boolean considerTimePointsAsUnit )
-	{ 
+	{
 		super( spimData, viewIdsToProcess, channelsToProcess, considerTimePointsAsUnit );
+
+		this.range = range;
 	}
 
 	@Override
@@ -50,8 +55,10 @@ public class AllToAllRegistration extends GlobalOptimizationType
 				final ViewId viewIdA = views.get( a );
 				final ViewId viewIdB = views.get( b );
 				
-				// only compare those to views if not both are fixed
-				if ( !isFixedTile( viewIdA ) && !isFixedTile( viewIdB ) )
+				// only compare those to views if not both are fixed and timepoints are within range
+				if (
+					!isFixedTile( viewIdA ) && !isFixedTile( viewIdB ) &&
+					Math.abs( viewIdA.getTimePointId() - viewIdB.getTimePointId() ) <= range )
 				{
 					final MatchPointList listA = allPointLists.get( viewIdA );
 					final MatchPointList listB = allPointLists.get( viewIdB );
@@ -70,7 +77,8 @@ public class AllToAllRegistration extends GlobalOptimizationType
 			}
 
 		final ArrayList< GlobalOptimizationSubset > list = new ArrayList< GlobalOptimizationSubset >();
-		list.add( new GlobalOptimizationSubset( viewPairs, "all-to-all matching over all timepoints" ) );
+		list.add( new GlobalOptimizationSubset( viewPairs, "all-to-all matching with range " + range + 
+				" over all timepoints" ) );
 		
 		return list;
 	}

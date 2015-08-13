@@ -21,8 +21,11 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
-import spim.fiji.plugin.interestpointregistration.ChannelProcess;
-import spim.fiji.plugin.interestpointregistration.InterestPointRegistration;
+import spim.fiji.plugin.interestpointregistration.ChannelProcessGUI;
+import spim.fiji.plugin.interestpointregistration.pairwise.GeometricHashingGUI;
+import spim.fiji.plugin.interestpointregistration.pairwise.IterativeClosestPointGUI;
+import spim.fiji.plugin.interestpointregistration.pairwise.PairwiseGUI;
+import spim.fiji.plugin.interestpointregistration.pairwise.RGLDMGUI;
 import spim.fiji.plugin.interestpointregistration.statistics.RegistrationStatistics;
 import spim.fiji.plugin.interestpointregistration.statistics.TimeLapseDisplay;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
@@ -44,7 +47,7 @@ import spim.process.interestpointregistration.optimizationtypes.ReferenceTimepoi
  */
 public class Interest_Point_Registration implements PlugIn
 {
-	public static ArrayList< InterestPointRegistration > staticAlgorithms = new ArrayList< InterestPointRegistration >();
+	public static ArrayList< PairwiseGUI > staticPairwiseAlgorithms = new ArrayList< PairwiseGUI >();
 
 	public static String[] registrationTypes = {
 		"Register timepoints individually", 
@@ -86,9 +89,9 @@ public class Interest_Point_Registration implements PlugIn
 	static
 	{
 		IOFunctions.printIJLog = true;
-		staticAlgorithms.add( new GeometricHashing( null, null, null ) );
-		staticAlgorithms.add( new RGLDM( null, null, null ) );
-		staticAlgorithms.add( new IterativeClosestPoint( null, null, null ) );
+		staticPairwiseAlgorithms.add( new GeometricHashingGUI() );
+		staticPairwiseAlgorithms.add( new RGLDMGUI() );
+		staticPairwiseAlgorithms.add( new IterativeClosestPointGUI() );
 	}
 
 	@Override
@@ -132,10 +135,10 @@ public class Interest_Point_Registration implements PlugIn
 			final boolean saveXML )
 	{
 		// the GenericDialog needs a list[] of String for the algorithms that can register
-		final String[] descriptions = new String[ staticAlgorithms.size() ];
+		final String[] descriptions = new String[ staticPairwiseAlgorithms.size() ];
 		
-		for ( int i = 0; i < staticAlgorithms.size(); ++i )
-			descriptions[ i ] = staticAlgorithms.get( i ).getDescription();
+		for ( int i = 0; i < staticPairwiseAlgorithms.size(); ++i )
+			descriptions[ i ] = staticPairwiseAlgorithms.get( i ).getDescription();
 		
 		if ( defaultAlgorithm >= descriptions.length )
 			defaultAlgorithm = 0;
@@ -228,7 +231,7 @@ public class Interest_Point_Registration implements PlugIn
 		}
 
 		// assemble which channels have been selected with with label
-		final ArrayList< ChannelProcess > channelsToProcess = new ArrayList< ChannelProcess >();
+		final ArrayList< ChannelProcessGUI > channelsToProcess = new ArrayList< ChannelProcessGUI >();
 		i = 0;
 		
 		for ( final Channel channel : channels )
@@ -242,7 +245,7 @@ public class Interest_Point_Registration implements PlugIn
 				if ( label.contains( warningLabel ) )
 					label = label.substring( 0, label.indexOf( warningLabel ) );
 				
-				channelsToProcess.add( new ChannelProcess( channel, label ) );
+				channelsToProcess.add( new ChannelProcessGUI( channel, label ) );
 			}
 			++i;
 		}
@@ -253,12 +256,12 @@ public class Interest_Point_Registration implements PlugIn
 			return false;
 		}
 
-		for ( final ChannelProcess c : channelsToProcess )
+		for ( final ChannelProcessGUI c : channelsToProcess )
 			IOFunctions.println( "registering channel: " + c.getChannel().getId()  + " label: '" + c.getLabel() + "'" );
 		
-		final InterestPointRegistration ipr = staticAlgorithms.get( algorithm ).newInstance( data, viewIds, channelsToProcess );
+		final PairwiseGUI pwr = staticPairwiseAlgorithms.get( algorithm ).newInstance();
 
-		IOFunctions.println( "Registration algorithm: " + ipr.getDescription() );
+		IOFunctions.println( "Registration algorithm: " + pwr.getDescription() );
 		IOFunctions.println( "Registration type: " + registrationType.name() );
 		IOFunctions.println( "Channels to process: " + channelsToProcess.size() );
 
@@ -297,10 +300,10 @@ public class Interest_Point_Registration implements PlugIn
 		}
 
 		gd2.addMessage( "" );
-		gd2.addMessage( "Algorithm parameters [" + ipr.getDescription() + "]", new Font( Font.SANS_SERIF, Font.BOLD, 12 ) );
+		gd2.addMessage( "Algorithm parameters [" + pwr.getDescription() + "]", new Font( Font.SANS_SERIF, Font.BOLD, 12 ) );
 		gd2.addMessage( "" );
 
-		ipr.addQuery( gd2, registrationType );
+		pwr.addQuery( gd2 );
 
 		if ( timepointToProcess.size() > 1 )
 			gd2.addCheckbox( "Show_timeseries_statistics", defaultShowStatistics );
@@ -355,7 +358,7 @@ public class Interest_Point_Registration implements PlugIn
 			fixTiles = mapBack = -1;
 		}
 
-		if ( !ipr.parseDialog( gd2, registrationType ) )
+		if ( !pwr.parseDialog( gd2 ) )
 			return false;
 
 		final boolean showStatistics;
@@ -368,13 +371,13 @@ public class Interest_Point_Registration implements PlugIn
 		final GlobalOptimizationType type;
 		
 		if ( registrationType == RegistrationType.TIMEPOINTS_INDIVIDUALLY )
-			type = new IndividualTimepointRegistration( data, viewIds, channelsToProcess );
+			type = new IndividualTimepointGUI( data, viewIds, channelsToProcess );
 		else if ( registrationType == RegistrationType.TO_REFERENCE_TIMEPOINT )
-			type = new ReferenceTimepointRegistration( data, viewIds, channelsToProcess, data.getSequenceDescription().getTimePoints().getTimePoints().get( referenceTimePoint ), considerTimepointsAsUnit );
+			type = new ReferenceTimepointGUI( data, viewIds, channelsToProcess, data.getSequenceDescription().getTimePoints().getTimePoints().get( referenceTimePoint ), considerTimepointsAsUnit );
 		else if ( registrationType == RegistrationType.ALL_TO_ALL )
-			type = new AllToAllRegistration( data, viewIds, channelsToProcess, considerTimepointsAsUnit );
+			type = new AllToAllGUI( data, viewIds, channelsToProcess, considerTimepointsAsUnit );
 		else if ( registrationType == RegistrationType.ALL_TO_ALL_WITH_RANGE )
-			type = new AllToAllRegistrationWithRange( data, viewIds, channelsToProcess, range, considerTimepointsAsUnit );
+			type = new AllToAllRangeGUI( data, viewIds, channelsToProcess, range, considerTimepointsAsUnit );
 		else
 			type = null;
 
@@ -393,7 +396,7 @@ public class Interest_Point_Registration implements PlugIn
 		{
 			final ArrayList< RegistrationStatistics > rsData = new ArrayList< RegistrationStatistics >();
 			for ( final TimePoint t : timepointToProcess )
-				rsData.add( new RegistrationStatistics( t.getId(), ipr.getStatistics() ) );
+				rsData.add( new RegistrationStatistics( t.getId(), pwr.getStatistics() ) );
 			TimeLapseDisplay.plotData( data.getSequenceDescription().getTimePoints(), rsData, TimeLapseDisplay.getOptimalTimePoint( rsData ), true );
 		}
 

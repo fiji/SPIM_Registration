@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.optimizationtypes;
+package spim.fiji.plugin.interestpointregistration.global;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -14,11 +14,11 @@ import spim.fiji.spimdata.SpimData2;
 import spim.process.interestpointregistration.MatchPointList;
 import spim.process.interestpointregistration.PairwiseMatch;
 
-public class ReferenceTimepointRegistration extends GlobalOptimizationType
+public class ReferenceTimepointGUI extends GlobalOptimizationType
 {
 	final TimePoint referenceTimepoint;
 
-	public ReferenceTimepointRegistration(
+	public ReferenceTimepointGUI(
 			final SpimData2 spimData,
 			final List< ViewId > viewIdsToProcess,
 			final List< ChannelProcess > channelsToProcess,

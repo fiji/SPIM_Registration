@@ -32,7 +32,7 @@ import spim.process.interestpointregistration.PairwiseMatch;
 
 /**
  * A certain type of global optimization, must be able to define all view pairs
- * that need to be matched and optimized inidivdually
+ * that need to be matched and optimized individually
  * 
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  */
