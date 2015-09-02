@@ -280,17 +280,38 @@ public class SpimData2 extends SpimData
 		return views;
 	}
 
+	public static ArrayList< ViewSetup> getAllViewSetups( final Collection< ? extends ViewDescription >  vds )
+	{
+		final HashSet< ViewSetup > set = new HashSet< ViewSetup >();
+
+		for ( final ViewDescription vd : vds )
+			if ( vd.isPresent() )
+				set.add( vd.getViewSetup() );
+
+		final ArrayList< ViewSetup > setups = new ArrayList< ViewSetup >();
+		setups.addAll( set );
+		Collections.sort( setups );
+
+		return setups;
+	}
+
 	public static ArrayList< TimePoint > getAllTimePointsSorted( final SpimData data, final Collection< ? extends ViewId > viewIds )
+	{
+		final ArrayList< ViewDescription > vds = new ArrayList< ViewDescription >();
+
+		for ( final ViewId v : viewIds )
+			vds.add( data.getSequenceDescription().getViewDescription( v ) );
+
+		return getAllTimePointsSorted( vds );
+	}
+
+	public static ArrayList< TimePoint > getAllTimePointsSorted( final Collection< ? extends ViewDescription > vds )
 	{
 		final HashSet< TimePoint > timepointSet = new HashSet< TimePoint >();
 
-		for ( final ViewId v : viewIds )
-		{
-			final ViewDescription vd = data.getSequenceDescription().getViewDescription( v );
-			
+		for ( final ViewDescription vd : vds )
 			if ( vd.isPresent() )
 				timepointSet.add( vd.getTimePoint() );
-		}
 
 		final ArrayList< TimePoint > timepoints = new ArrayList< TimePoint >();
 		timepoints.addAll( timepointSet );

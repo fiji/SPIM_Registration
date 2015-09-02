@@ -43,6 +43,7 @@ import spim.fiji.spimdata.explorer.popup.DisplayViewPopup;
 import spim.fiji.spimdata.explorer.popup.FusionPopup;
 import spim.fiji.spimdata.explorer.popup.InterestPointsExplorerPopup;
 import spim.fiji.spimdata.explorer.popup.LabelPopUp;
+import spim.fiji.spimdata.explorer.popup.MaxProjectPopup;
 import spim.fiji.spimdata.explorer.popup.RegisterInterestPointsPopup;
 import spim.fiji.spimdata.explorer.popup.RegistrationExplorerPopup;
 import spim.fiji.spimdata.explorer.popup.RemoveDetectionsPopup;
@@ -74,6 +75,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		staticPopups.add( new LabelPopUp( " Displaying" ) );
 		staticPopups.add( new BDVPopup() );
 		staticPopups.add( new DisplayViewPopup() );
+		staticPopups.add( new MaxProjectPopup() );
 		staticPopups.add( new Separator() );
 
 		staticPopups.add( new LabelPopUp( " Processing" ) );
