@@ -326,13 +326,6 @@ public class MVDeconvolution
 		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( psi.size(), nPortions );
 		final ArrayList< Callable< Void > > tasks = new ArrayList< Callable< Void > >();
 
-		final Img< FloatType > lastIteration;
-		
-		if ( collectStatistic )
-			lastIteration = psi.copy();
-		else
-			lastIteration = null;
-
 		for ( int view = 0; view < numViews; ++view )
 		{
 			final MVDeconFFT processingData = data.get( view );
@@ -372,6 +365,27 @@ public class MVDeconvolution
 			//
 			processingData.convolve2( tmp1, tmp2 );
 
+			// copy psi if collecting statistics
+			if ( collectStatistic )
+			{
+				tasks.clear();
+
+				for ( final ImagePortion portion : portions )
+				{
+					tasks.add( new Callable< Void >()
+					{
+						@Override
+						public Void call() throws Exception
+						{
+							copyImg( portion.getStartPosition(), portion.getLoopSize(), psi, tmp1 );
+							return null;
+						}
+					});
+				}
+				
+				execTasks( tasks, nThreads, "duplicate PSI" );
+			}
+
 			//
 			// compute final values
 			// [psi, weights, tmp2 >> psi]
@@ -409,7 +423,7 @@ public class MVDeconvolution
 					@Override
 					public Void call() throws Exception
 					{
-						collectStatistics( portion.getStartPosition(), portion.getLoopSize(), psi, lastIteration, sumMax[ portionId ] );
+						collectStatistics( portion.getStartPosition(), portion.getLoopSize(), psi, tmp1, sumMax[ portionId ] );
 						return null;
 					}
 				});
@@ -542,6 +556,51 @@ public class MVDeconvolution
 				final float imgValue = cursorImg.get().get();
 	
 				raPsiBlurred.get().set( imgValue / psiBlurredValue );
+			}
+		}
+	}
+
+	/**
+	 * One thread of a method to compute the quotient between two images of the multiview deconvolution
+	 * 
+	 * @param start
+	 * @param loopSize
+	 * @param source
+	 * @param target
+	 */
+	private static final void copyImg(
+			final long start,
+			final long loopSize,
+			final RandomAccessibleInterval< FloatType > source,
+			final RandomAccessibleInterval< FloatType > target )
+	{
+		final IterableInterval< FloatType > sourceIterable = Views.iterable( source );
+		final IterableInterval< FloatType > targetIterable = Views.iterable( target );
+
+		if ( sourceIterable.iterationOrder().equals( sourceIterable.iterationOrder() ) )
+		{
+			final Cursor< FloatType > cursorSource = sourceIterable.cursor();
+			final Cursor< FloatType > cursorTarget = targetIterable.cursor();
+	
+			cursorSource.jumpFwd( start );
+			cursorTarget.jumpFwd( start );
+	
+			for ( long l = 0; l < loopSize; ++l )
+				cursorTarget.next().set( cursorSource.next() );
+		}
+		else
+		{
+			final RandomAccess< FloatType > raSource = source.randomAccess();
+			final Cursor< FloatType > cursorTarget = targetIterable.localizingCursor();
+
+			cursorTarget.jumpFwd( start );
+
+			for ( long l = 0; l < loopSize; ++l )
+			{
+				cursorTarget.fwd();
+				raSource.setPosition( cursorTarget );
+
+				cursorTarget.get().set( raSource.get() );
 			}
 		}
 	}
