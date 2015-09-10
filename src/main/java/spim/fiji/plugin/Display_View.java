@@ -23,7 +23,7 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
+import spim.fiji.spimdata.imgloaders.AbstractImgFactoryImgLoader;
 import spim.process.fusion.boundingbox.BoundingBoxGUI;
 import spim.process.fusion.export.DisplayImage;
 
@@ -126,12 +126,12 @@ public class Display_View implements PlugIn
 	{
 		final ImgLoader< ? > imgLoader = (ImgLoader< ? >)spimData.getSequenceDescription().getImgLoader();
 		final ImgFactory< ? extends NativeType< ? > > factory;
-		final AbstractImgLoader il;
+		final AbstractImgFactoryImgLoader il;
 
 		// load as ImagePlus directly if possible
-		if ( AbstractImgLoader.class.isInstance( imgLoader ) )
+		if ( AbstractImgFactoryImgLoader.class.isInstance( imgLoader ) )
 		{
-			il = (AbstractImgLoader)imgLoader;
+			il = (AbstractImgFactoryImgLoader)imgLoader;
 			factory = il.getImgFactory();
 			il.setImgFactory( new ImagePlusImgFactory< FloatType >());
 		}

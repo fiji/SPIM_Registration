@@ -50,7 +50,7 @@ public class TransformedRealRandomAccessibleInterval< T > implements RandomAcces
 	public RandomAccess< T > randomAccess( final Interval interval ) { return randomAccess(); }
 
 	@Override
-	public long min( final int d ){ return transformedInterval.min( 0 ); }
+	public long min( final int d ){ return transformedInterval.min( d ); }
 
 	@Override
 	public void min( final long[] min ) { transformedInterval.min( min ); }

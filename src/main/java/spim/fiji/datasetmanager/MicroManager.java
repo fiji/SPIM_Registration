@@ -24,11 +24,7 @@ import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Dimensions;
 import net.imglib2.FinalDimensions;
-import net.imglib2.img.ImgFactory;
-import net.imglib2.img.array.ArrayImgFactory;
-import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
-import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
@@ -79,7 +75,6 @@ public class MicroManager implements MultiViewDatasetDefinition
 			return null;
 
 		final String directory = mmFile.getParent();
-		final ImgFactory< ? extends NativeType< ? > > imgFactory = new ArrayImgFactory< FloatType >();
 
 		// assemble timepints, viewsetups, missingviews and the imgloader
 		final TimePoints timepoints = this.createTimePoints( reader );
@@ -88,7 +83,7 @@ public class MicroManager implements MultiViewDatasetDefinition
 
 		// instantiate the sequencedescription
 		final SequenceDescription sequenceDescription = new SequenceDescription( timepoints, setups, null, missingViews );
-		final ImgLoader< UnsignedShortType > imgLoader = new MicroManagerImgLoader( mmFile, imgFactory, sequenceDescription );
+		final ImgLoader< UnsignedShortType > imgLoader = new MicroManagerImgLoader( mmFile, sequenceDescription );
 		sequenceDescription.setImgLoader( imgLoader );
 
 		// get the minimal resolution of all calibrations
