@@ -72,21 +72,22 @@ public class SlideBook6ImgLoader extends AbstractImgFactoryImgLoader
 		
 		final int t = vd.getTimePoint().getId();
 		final int a = vd.getViewSetup().getAttribute( Angle.class ).getId();
-		final int c = vd.getViewSetup().getAttribute( Channel.class ).getId();
+		final int ch = vd.getViewSetup().getAttribute( Channel.class ).getId();
 		final int i = vd.getViewSetup().getAttribute( Illumination.class ).getId();
-		
-		final int bpp = r.getBytesPerPixel(a);
+		final int c = i / 8; // map from illumination id to SlideBook capture index, up to 8 channels per SlideBook capture
+
+		final int bpp = r.getBytesPerPixel(c);
 
 		byte[] data = new byte[(int) (bpp * img.dimension(0) * img.dimension(1))];
 		
 		ByteBuffer byteBuffer = ByteBuffer.wrap(data);
-		
+
 		for ( int z = 0; z < img.dimension(2); ++z )
 		{
 			// SlideBook6Reader.dll
-			// i = illumination id (SPIMdata) = capture index (SlideBook)
-			// a = angle id (SPIMdata) = channel index (SlideBook)
-			r.readImagePlaneBuf(data, i, 0, t, z, a);
+			// i = illumination id (SPIMdata) = capture index * 8 (SlideBook)
+			// a = angle id (SPIMdata) = channel index  (SlideBook)
+			r.readImagePlaneBuf(data, c, 0, t, z, (ch*2) + a);
 
 			ShortBuffer shortBuffer = byteBuffer.order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
 			while ( shortBuffer.hasRemaining())
@@ -104,26 +105,23 @@ public class SlideBook6ImgLoader extends AbstractImgFactoryImgLoader
 
 			reader.openFile(sldFile.getPath());
 			int position = 0;
-			
+		
 			final BasicViewDescription< ? > vd = sequenceDescription.getViewDescriptions().get( view );
 			final int i = vd.getViewSetup().getAttribute( Illumination.class ).getId();
 			final int a = vd.getViewSetup().getAttribute( Angle.class ).getId();
-			final int w = reader.getNumXColumns(i);
-			final int h = reader.getNumYRows(i);
-			final int d = reader.getNumZPlanes(i);
+			final int c = i / 8; // map from illumination id to SlideBook capture index, up to 8 channels per SlideBook capture
+			final int w = reader.getNumXColumns(c);
+			final int h = reader.getNumYRows(c);
+			final int d = reader.getNumZPlanes(c);
 			final ArrayImg< FloatType, ? > img = ArrayImgs.floats( w, h, d );
 			
 			populateImage( img, vd, reader );
 
 			if ( normalize )
 				normalize( img );
-
-			// TODO: make sure a < getNumCaptures()
-			float voxelSize = reader.getVoxelSize(i);
-			float zSpacing = 1;
-			if (reader.getNumZPlanes(i) > 1) {
-				zSpacing = (float) (reader.getZPosition(i, position, 1) - reader.getZPosition(i, position, 0));
-			}
+			
+			final float voxelSize = reader.getVoxelSize(i);
+			final float zSpacing = SlideBook6.getZSpacing(reader, c, position);
 			
 			updateMetaDataCache( view, w, h, d, voxelSize, voxelSize, zSpacing );
 
@@ -153,20 +151,17 @@ public class SlideBook6ImgLoader extends AbstractImgFactoryImgLoader
 			
 			final BasicViewDescription< ? > vd = sequenceDescription.getViewDescriptions().get( view );
 			final int i = vd.getViewSetup().getAttribute( Illumination.class).getId();
+			final int c = i / 8; // map from illumination id to SlideBook capture index, up to 8 channels per SlideBook capture
 			final int a = vd.getViewSetup().getAttribute( Angle.class ).getId();
-			final int w = reader.getNumXColumns(i);
-			final int h = reader.getNumYRows(i);
-			final int d = reader.getNumZPlanes(i);
+			final int w = reader.getNumXColumns(c);
+			final int h = reader.getNumYRows(c);
+			final int d = reader.getNumZPlanes(c);
 			final ArrayImg< UnsignedShortType, ? > img = ArrayImgs.unsignedShorts( w, h, d );
 
 			populateImage( img, vd, reader );
-			
-			// TODO: make sure a < getNumCaptures()
-			float voxelSize = reader.getVoxelSize(i);
-			float zSpacing = 1;
-			if (reader.getNumZPlanes(i) > 1) {
-				zSpacing = (float) (reader.getZPosition(i, position, 1) - reader.getZPosition(i, position, 0));
-			}
+					
+			final float voxelSize = reader.getVoxelSize(c);
+			final float zSpacing = SlideBook6.getZSpacing(reader, c, position);
 			
 			updateMetaDataCache( view, w, h, d, voxelSize, voxelSize, zSpacing );
 
@@ -196,17 +191,14 @@ public class SlideBook6ImgLoader extends AbstractImgFactoryImgLoader
 
 			final BasicViewDescription< ? > vd = sequenceDescription.getViewDescriptions().get( view );
 			final int i = vd.getViewSetup().getAttribute( Illumination.class ).getId();
+			final int c = i / 8; // map from illumination id to SlideBook capture index, up to 8 channels per SlideBook capture
 			final int a = vd.getViewSetup().getAttribute( Angle.class ).getId();
-			final int w = reader.getNumXColumns(a);
-			final int h = reader.getNumYRows(a);
-			final int d = reader.getNumZPlanes(a);
+			final int w = reader.getNumXColumns(c);
+			final int h = reader.getNumYRows(c);
+			final int d = reader.getNumZPlanes(c);
 
-			// TODO: make sure a < getNumCaptures()
-			float voxelSize = reader.getVoxelSize(i);
-			float zSpacing = 1;
-			if (reader.getNumZPlanes(i) > 1) {
-				zSpacing = (float) (reader.getZPosition(i, position, 1) - reader.getZPosition(i, position, 0));
-			}
+			final float voxelSize = reader.getVoxelSize(c);
+			final float zSpacing = SlideBook6.getZSpacing(reader, c, position);
 
 			updateMetaDataCache( view, w, h, d, 
 					voxelSize, voxelSize, zSpacing );
@@ -226,5 +218,4 @@ public class SlideBook6ImgLoader extends AbstractImgFactoryImgLoader
 	{
 		return new SlideBook6().getTitle() + ", ImgFactory=" + imgFactory.getClass().getSimpleName();
 	}
-		
 }
