@@ -38,10 +38,12 @@ public class MVDeconvolution
 {
 	// if you want to start from a certain iteration
 	public static String initialImage = null;
-	
+
+	public static boolean setToAvg = false;
+
 	// check in advance if values are reasonable
 	public static boolean checkNumbers = true;
-	
+
 	public static boolean debug = true;
 	public static int debugInterval = 1;
 	final static float minValue = 0.0001f;
@@ -111,6 +113,14 @@ public class MVDeconvolution
 			final double avg = fuseFirstIteration( psi, views.getViews() );
 
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Average intensity in overlapping area: " + avg );
+
+			if ( setToAvg )
+			{
+				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting image to average intensity: " + avg );
+
+				for ( final FloatType t : psi )
+					t.set( (float)avg );
+			}
 		}
 
 		// instantiate the temporary images
