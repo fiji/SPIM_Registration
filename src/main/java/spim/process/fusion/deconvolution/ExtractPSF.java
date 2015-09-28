@@ -189,7 +189,8 @@ public class ExtractPSF< T extends RealType< T > & NativeType< T > >
 		{
 			final Img< T > psf = pointSpreadFunctions.get( viewId );
 
-			final RandomAccess< T > avgCursor = avgPSF.randomAccess();
+			// works if the kernel is even
+			final RandomAccess< T > avgCursor = Views.extendZero( avgPSF ).randomAccess();
 			final Cursor< T > psfCursor = psf.localizingCursor();
 			
 			final long[] loc = new long[ numDimensions ];
