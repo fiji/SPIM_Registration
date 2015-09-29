@@ -315,11 +315,14 @@ public class ProcessForDeconvolution
 		for ( int i = 0; i < viewDescriptions.size(); ++i )
 			weights.put( viewDescriptions.get( i ), weightsSorted.get( i ) );
 
-		this.minOverlappingViews = wn.getMinOverlappingViews();
-		this.avgOverlappingViews = wn.getAvgOverlappingViews();
-
-		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Minimal number of overlapping views: " + getMinOverlappingViews() + ", using " + ( this.minOverlappingViews = Math.max( 1, this.minOverlappingViews ) ) );
-		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Average number of overlapping views: " + getAvgOverlappingViews() + ", using " + ( this.avgOverlappingViews = Math.max( 1, this.avgOverlappingViews ) ) );
+		if ( wn != null )
+		{
+			this.minOverlappingViews = wn.getMinOverlappingViews();
+			this.avgOverlappingViews = wn.getAvgOverlappingViews();
+	
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Minimal number of overlapping views: " + getMinOverlappingViews() + ", using " + ( this.minOverlappingViews = Math.max( 1, this.minOverlappingViews ) ) );
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Average number of overlapping views: " + getAvgOverlappingViews() + ", using " + ( this.avgOverlappingViews = Math.max( 1, this.avgOverlappingViews ) ) );
+		}
 
 		if ( osemIndex == 1 )
 			osemspeedup = getMinOverlappingViews();
