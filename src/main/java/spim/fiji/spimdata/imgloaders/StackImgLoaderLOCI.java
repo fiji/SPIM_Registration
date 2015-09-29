@@ -218,7 +218,11 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		final String id = path.getAbsolutePath();
 		
 		r.setId( id );
-		r.setSeries( view.getViewSetupId() );
+
+		// Find the current series id by using the file name
+		String[] files = r.getUsedFiles( false );
+		final int seriesId = java.util.Arrays.asList( files ).indexOf( id );
+		r.setSeries( seriesId );
 					
 		final boolean isLittleEndian = r.isLittleEndian();			
 		final int width = r.getSizeX();
