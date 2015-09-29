@@ -50,7 +50,7 @@ public class GenericLoadParseQueryXML<
 		S extends AbstractSequenceDescription< V, D, L >,
 		V extends BasicViewSetup,
 		D extends BasicViewDescription< V >,
-		L extends BasicImgLoader< ? >,
+		L extends BasicImgLoader,
 		X extends XmlIoAbstractSpimData< S, AS > >
 {
 	public static String defaultXMLfilename = "";
