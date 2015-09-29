@@ -218,6 +218,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		final String id = path.getAbsolutePath();
 		
 		r.setId( id );
+		r.setSeries( view.getViewSetupId() );
 					
 		final boolean isLittleEndian = r.isLittleEndian();			
 		final int width = r.getSizeX();
