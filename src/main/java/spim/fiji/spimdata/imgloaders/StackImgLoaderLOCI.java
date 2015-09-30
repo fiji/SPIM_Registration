@@ -22,6 +22,8 @@ import loci.formats.meta.MetadataRetrieve;
 import loci.formats.services.OMEXMLService;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
+import mpicbg.spim.data.generic.sequence.BasicViewSetup;
+import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
@@ -219,10 +221,10 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		
 		r.setId( id );
 
-		// Find the current series id by using the file name
-		String[] files = r.getUsedFiles( false );
-		final int seriesId = java.util.Arrays.asList( files ).indexOf( id );
-		r.setSeries( seriesId );
+		// Find the current series id by using angle
+		// Thanks to @StephanPreibisch, @ctrueden
+		final Angle angle = getAngle( viewDescription );
+		r.setSeries( angle.getId() );
 					
 		final boolean isLittleEndian = r.isLittleEndian();			
 		final int width = r.getSizeX();
@@ -534,6 +536,17 @@ public class StackImgLoaderLOCI extends StackImgLoader
 			e.printStackTrace();
 			return null;
 		}
+	}
+
+	protected static Angle getAngle( final BasicViewDescription< ? > vd )
+	{
+		final BasicViewSetup vs = vd.getViewSetup();
+		final Angle angle = vs.getAttribute( Angle.class );
+
+		if ( angle == null )
+			throw new RuntimeException( "This XML does not have the 'Angle' attribute for their ViewSetup. Cannot continue." );
+
+		return angle;
 	}
 
 	@Override
