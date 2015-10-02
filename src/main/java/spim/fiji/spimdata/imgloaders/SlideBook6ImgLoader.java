@@ -120,7 +120,7 @@ public class SlideBook6ImgLoader extends AbstractImgFactoryImgLoader
 			if ( normalize )
 				normalize( img );
 			
-			final float voxelSize = reader.getVoxelSize(i);
+			final float voxelSize = reader.getVoxelSize(c);
 			final float zSpacing = SlideBook6.getZSpacing(reader, c, position);
 			
 			updateMetaDataCache( view, w, h, d, voxelSize, voxelSize, zSpacing );
