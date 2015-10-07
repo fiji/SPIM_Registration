@@ -25,6 +25,8 @@ import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.Illumination;
+import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
@@ -223,15 +225,18 @@ public class StackImgLoaderLOCI extends StackImgLoader
 
 		// Find the current series id by using angle
 		// Thanks to @StephanPreibisch, @ctrueden
-		final Angle angle = getAngle( viewDescription );
+		Angle angle = getAngle( viewDescription );
 		r.setSeries( angle.getId() );
+
+		final TimePoint timePoint = viewDescription.getTimePoint();
+		final Channel channel = getChannel( viewDescription );
 					
 		final boolean isLittleEndian = r.isLittleEndian();			
 		final int width = r.getSizeX();
 		final int height = r.getSizeY();
 		final int depth = r.getSizeZ();				
-		int timepoints = r.getSizeT();
-		int channels = r.getSizeC();
+		final int timepoints = r.getSizeT();
+		final int channels = r.getSizeC();
 		final int pixelType = r.getPixelType();
 		final int bytesPerPixel = FormatTools.getBytesPerPixel( pixelType ); 
 		final String pixelTypeString = FormatTools.getPixelTypeString( pixelType );
@@ -325,13 +330,16 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		final int planeX = 0;
 		final int planeY = 1;
 
+		int ch = channel.getId();
+		t = sequenceDescription.getTimePoints().getTimePointsOrdered().indexOf( timePoint );
+
 		for ( int z = 0; z < depth; ++z )
 		{
 			IJ.showProgress( (double)z / (double)depth );
 
 			final Cursor< T > cursor = Views.iterable( Views.hyperSlice( img, 2, z ) ).localizingCursor();
-			
-			r.openBytes( r.getIndex( z, c, t ), b );	
+
+			r.openBytes( r.getIndex( z, ch, t ), b );
 			
 			if ( pixelType == FormatTools.UINT8 )
 			{						
@@ -547,6 +555,17 @@ public class StackImgLoaderLOCI extends StackImgLoader
 			throw new RuntimeException( "This XML does not have the 'Angle' attribute for their ViewSetup. Cannot continue." );
 
 		return angle;
+	}
+
+	protected static Channel getChannel( final BasicViewDescription< ? > vd )
+	{
+		final BasicViewSetup vs = vd.getViewSetup();
+		final Channel channel = vs.getAttribute( Channel.class );
+
+		if ( channel == null )
+			throw new RuntimeException( "This XML does not have the 'Channel' attribute for their ViewSetup. Cannot continue." );
+
+		return channel;
 	}
 
 	@Override
