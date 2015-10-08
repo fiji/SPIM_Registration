@@ -331,7 +331,7 @@ public class StackImgLoaderLOCI extends StackImgLoader
 		final int planeY = 1;
 
 		int ch = channel.getId();
-		t = sequenceDescription.getTimePoints().getTimePointsOrdered().indexOf( timePoint );
+		t = timePoint.getId();
 
 		for ( int z = 0; z < depth; ++z )
 		{
