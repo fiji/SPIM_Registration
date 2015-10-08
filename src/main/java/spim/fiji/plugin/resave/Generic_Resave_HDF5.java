@@ -220,7 +220,7 @@ public class Generic_Resave_HDF5 implements PlugIn
 		}
 	}
 
-	public static < T extends AbstractSpimData< A >, A extends AbstractSequenceDescription< ?, ?, ? super ImgLoader< ? > > > void writeXML(
+	public static < T extends AbstractSpimData< A >, A extends AbstractSequenceDescription< ?, ?, ? super ImgLoader > > void writeXML(
 			final T spimData,
 			final XmlIoAbstractSpimData< A, T > io,
 			final Parameters params,

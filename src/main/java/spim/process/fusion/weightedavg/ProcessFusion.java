@@ -1,5 +1,7 @@
 package spim.process.fusion.weightedavg;
 
+import static mpicbg.spim.data.generic.sequence.ImgLoaderHints.LOAD_COMPLETELY;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +29,6 @@ import spim.fiji.spimdata.ViewSetupUtils;
 import spim.process.fusion.boundingbox.BoundingBoxGUI;
 import spim.process.fusion.weights.Blending;
 import spim.process.fusion.weights.ContentBased;
-import bdv.img.hdf5.Hdf5ImageLoader;
 
 public abstract class ProcessFusion
 {
@@ -65,7 +66,7 @@ public abstract class ProcessFusion
 			final TimePoint timepoint, 
 			final Channel channel );
 
-	protected Blending getBlending( final Interval interval, final ViewDescription desc, final ImgLoader< ? > imgLoader )
+	protected Blending getBlending( final Interval interval, final ViewDescription desc, final ImgLoader imgLoader )
 	{
 		final float[] blending = ProcessFusion.defaultBlendingRange.clone();
 		final float[] border = ProcessFusion.defaultBlendingBorder.clone();
@@ -84,8 +85,8 @@ public abstract class ProcessFusion
 		
 		return new Blending( interval, border, blending );
 	}
-	
-	protected < T extends RealType< T > > ContentBased< T > getContentBased( final RandomAccessibleInterval< T > img, final ViewDescription desc, final ImgLoader< ? > imgLoader )
+
+	protected < T extends RealType< T > > ContentBased< T > getContentBased( final RandomAccessibleInterval< T > img, final ViewDescription desc, final ImgLoader imgLoader )
 	{
 		final double[] sigma1 = ProcessFusion.defaultContentBasedSigma1.clone();
 		final double[] sigma2 = ProcessFusion.defaultContentBasedSigma2.clone();
@@ -108,7 +109,7 @@ public abstract class ProcessFusion
 	protected < T extends RealType< T > > ArrayList< RealRandomAccessible< FloatType > > getAllWeights(
 			final RandomAccessibleInterval< T > img,
 			final ViewDescription desc,
-			final ImgLoader< ? > imgLoader )
+			final ImgLoader imgLoader )
 	{
 		final ArrayList< RealRandomAccessible< FloatType > > weigheners = new ArrayList< RealRandomAccessible< FloatType > >();
 		
@@ -121,7 +122,7 @@ public abstract class ProcessFusion
 		return weigheners;
 	}
 
-	public static double getMinRes( final ViewDescription desc, final ImgLoader< ? > imgLoader )
+	public static double getMinRes( final ViewDescription desc, final ImgLoader imgLoader )
 	{
 		final VoxelDimensions size = ViewSetupUtils.getVoxelSizeOrLoad( desc.getViewSetup(), desc.getTimePoint(), imgLoader );
 		return Math.min( size.dimension( 0 ), Math.min( size.dimension( 1 ), size.dimension( 2 ) ) );
@@ -149,15 +150,12 @@ public abstract class ProcessFusion
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public static < T extends RealType< T > > RandomAccessibleInterval< T > getImage( final T type, ImgLoader< ? > imgLoader, final ViewId view, final boolean normalize )
+	public static < T extends RealType< T > > RandomAccessibleInterval< T > getImage( final T type, ImgLoader imgLoader, final ViewId view, final boolean normalize )
 	{
-		if ( imgLoader instanceof Hdf5ImageLoader )
-			imgLoader = ( ( Hdf5ImageLoader ) imgLoader ).getMonolithicImageLoader();
-
 		if ( (RealType)type instanceof FloatType )
-			return (RandomAccessibleInterval)imgLoader.getFloatImage( view, normalize );
+			return (RandomAccessibleInterval)imgLoader.getSetupImgLoader( view.getViewSetupId() ).getFloatImage( view.getTimePointId(), normalize, LOAD_COMPLETELY );
 		else if ( (RealType)type instanceof UnsignedShortType )
-			return (RandomAccessibleInterval)imgLoader.getImage( view );
+			return (RandomAccessibleInterval)imgLoader.getSetupImgLoader( view.getViewSetupId() ).getImage( view.getTimePointId(), LOAD_COMPLETELY );
 		else
 			return null;
 	}

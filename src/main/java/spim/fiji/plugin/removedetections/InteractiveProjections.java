@@ -50,7 +50,7 @@ public class InteractiveProjections
 		this.runAfterFinished = new ArrayList< Thread >();
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + ": Loading image ..." );
-		RandomAccessibleInterval< FloatType > img = spimData.getSequenceDescription().getImgLoader().getFloatImage( vd, false );
+		RandomAccessibleInterval< FloatType > img = spimData.getSequenceDescription().getImgLoader().getSetupImgLoader( vd.getViewSetupId() ).getFloatImage( vd.getTimePointId(), false );
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + ": Computing max projection along dimension " + projectionDim + " ..." );
 		final Img< FloatType > maxProj = ExtractPSF.computeMaxProjection( img, new ArrayImgFactory< FloatType >(), projectionDim );

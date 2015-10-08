@@ -66,7 +66,7 @@ public class Max_Project implements PlugIn
 
 	public static < T extends RealType< T > & NativeType< T > > boolean maxProject(
 			final List< ? extends ViewDescription > vds,
-			final ImgLoader< ? > imgLoader,
+			final ImgLoader imgLoader,
 			final T type )
 	{
 		Collections.sort( vds );

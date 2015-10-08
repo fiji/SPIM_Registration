@@ -124,7 +124,7 @@ public class Display_View implements PlugIn
 
 	public static void display( final AbstractSpimData< ? > spimData, final ViewId viewId, final int pixelType, final String name )
 	{
-		final ImgLoader< ? > imgLoader = (ImgLoader< ? >)spimData.getSequenceDescription().getImgLoader();
+		final ImgLoader imgLoader = (ImgLoader)spimData.getSequenceDescription().getImgLoader();
 		final ImgFactory< ? extends NativeType< ? > > factory;
 		final AbstractImgFactoryImgLoader il;
 
@@ -145,12 +145,12 @@ public class Display_View implements PlugIn
 		DisplayImage export = new DisplayImage();
 		
 		if ( pixelType == 0 )
-			export.exportImage( ((ImgLoader< ? >)spimData.getSequenceDescription().getImgLoader()).getFloatImage( viewId, false ), name );
+			export.exportImage( ((ImgLoader)spimData.getSequenceDescription().getImgLoader()).getSetupImgLoader( viewId.getViewSetupId() ).getFloatImage( viewId.getTimePointId(), false ), name );
 		else
 		{
 			@SuppressWarnings( "unchecked" )
 			RandomAccessibleInterval< UnsignedShortType > img =
-				( RandomAccessibleInterval< UnsignedShortType > ) ((ImgLoader< ? >)spimData.getSequenceDescription().getImgLoader()).getImage( viewId );
+				( RandomAccessibleInterval< UnsignedShortType > ) ((ImgLoader)spimData.getSequenceDescription().getImgLoader()).getSetupImgLoader( viewId.getViewSetupId() ).getImage( viewId.getTimePointId() );
 			export.exportImage( img, name );
 		}
 

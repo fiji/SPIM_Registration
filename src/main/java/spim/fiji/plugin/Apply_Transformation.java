@@ -806,7 +806,7 @@ public class Apply_Transformation implements PlugIn
 			// only use calibration as defined in the metadata
 			if ( !setup.hasVoxelSize() )
 			{
-				VoxelDimensions voxelSize = sequenceDescription.getImgLoader().getVoxelSize( viewId );
+				VoxelDimensions voxelSize = sequenceDescription.getImgLoader().getSetupImgLoader( viewId.getViewSetupId() ).getVoxelSize( viewId.getTimePointId() );
 				if ( voxelSize == null )
 				{
 					IOFunctions.println( "An error occured. Cannot load calibration for" +

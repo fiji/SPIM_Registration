@@ -17,7 +17,7 @@ import net.imglib2.type.numeric.real.FloatType;
 
 import org.jdom2.Element;
 
-public abstract class XmlIoStackImgLoader< T extends StackImgLoader > implements XmlIoBasicImgLoader< T >
+public abstract class XmlIoStackImgLoader< T extends StackImgLoader< ? > > implements XmlIoBasicImgLoader< T >
 {
 	public static final String DIRECTORY_TAG = "imagedirectory";
 	public static final String FILE_PATTERN_TAG = "filePattern";
@@ -33,13 +33,13 @@ public abstract class XmlIoStackImgLoader< T extends StackImgLoader > implements
 	{
 		final Element elem = new Element( "ImageLoader" );
 		elem.setAttribute( IMGLOADER_FORMAT_ATTRIBUTE_NAME, this.getClass().getAnnotation( ImgLoaderIo.class ).format() );
-		elem.addContent( XmlHelpers.pathElement( DIRECTORY_TAG, imgLoader.path, basePath ) );
+		elem.addContent( XmlHelpers.pathElement( DIRECTORY_TAG, imgLoader.getPath(), basePath ) );
 
-		elem.addContent( XmlHelpers.textElement( FILE_PATTERN_TAG, imgLoader.fileNamePattern ) );
-		elem.addContent( XmlHelpers.intElement( LAYOUT_TP_TAG, imgLoader.layoutTP ) );
-		elem.addContent( XmlHelpers.intElement( LAYOUT_CHANNEL_TAG, imgLoader.layoutChannels ) );
-		elem.addContent( XmlHelpers.intElement( LAYOUT_ILLUMINATION_TAG, imgLoader.layoutIllum ) );
-		elem.addContent( XmlHelpers.intElement( LAYOUT_ANGLE_TAG, imgLoader.layoutAngles ) );
+		elem.addContent( XmlHelpers.textElement( FILE_PATTERN_TAG, imgLoader.getFileNamePattern() ) );
+		elem.addContent( XmlHelpers.intElement( LAYOUT_TP_TAG, imgLoader.getLayoutTimePoints() ) );
+		elem.addContent( XmlHelpers.intElement( LAYOUT_CHANNEL_TAG, imgLoader.getLayoutChannels() ) );
+		elem.addContent( XmlHelpers.intElement( LAYOUT_ILLUMINATION_TAG, imgLoader.getLayoutIlluminations() ) );
+		elem.addContent( XmlHelpers.intElement( LAYOUT_ANGLE_TAG, imgLoader.getLayoutAngles() ) );
 		elem.addContent( XmlHelpers.textElement( IMGLIB2CONTAINER_PATTERN_TAG, imgLoader.getImgFactory().getClass().getSimpleName() ) );
 		
 		return elem;
