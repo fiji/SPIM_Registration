@@ -38,6 +38,7 @@ import bdv.img.hdf5.Hdf5ImageLoader;
 import bdv.img.hdf5.Partition;
 import bdv.spimdata.SpimDataMinimal;
 import bdv.spimdata.XmlIoSpimDataMinimal;
+import spim.Threads;
 
 public class Generic_Resave_HDF5 implements PlugIn
 {
@@ -208,7 +209,7 @@ public class Generic_Resave_HDF5 implements PlugIn
 				final ProgressWriter p = new SubTaskProgressWriter( progressWriter, 0, 0.95 * i / partitions.size() );
 				progressWriter.out().printf( "proccessing partition %d / %d\n", ( i + 1 ), partitions.size() );
 				if ( !params.onlyRunSingleJob || params.jobId == i + 1 )
-					WriteSequenceToHdf5.writeHdf5PartitionFile( seq, perSetupExportMipmapInfo, params.deflate, partition, new DefaultLoopbackHeuristic(), null, p );
+					WriteSequenceToHdf5.writeHdf5PartitionFile( seq, perSetupExportMipmapInfo, params.deflate, partition, new DefaultLoopbackHeuristic(), null, Threads.numThreads(), p );
 			}
 			if ( !params.onlyRunSingleJob || params.jobId == 0 )
 				WriteSequenceToHdf5.writeHdf5PartitionLinkFile( seq, perSetupExportMipmapInfo, partitions, params.hdf5File );
@@ -216,7 +217,7 @@ public class Generic_Resave_HDF5 implements PlugIn
 		else
 		{
 			final ProgressWriter p = new SubTaskProgressWriter( progressWriter, 0, 0.95 );
-			WriteSequenceToHdf5.writeHdf5File( seq, perSetupExportMipmapInfo, params.deflate, params.hdf5File, new DefaultLoopbackHeuristic(), null, p );
+			WriteSequenceToHdf5.writeHdf5File( seq, perSetupExportMipmapInfo, params.deflate, params.hdf5File, new DefaultLoopbackHeuristic(), null, Threads.numThreads(), p );
 		}
 	}
 
