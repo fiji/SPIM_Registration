@@ -91,7 +91,7 @@ public class SlideBook6ImgLoader extends AbstractImgFactoryImgLoader
 
 			ShortBuffer shortBuffer = byteBuffer.order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
 			while ( shortBuffer.hasRemaining())
-				cursor.next().setReal( shortBuffer.get() );
+				cursor.next().setReal( UnsignedShortType.getUnsignedShort( shortBuffer.get() ) );
 		}
 	}
 
