@@ -1,5 +1,6 @@
 package spim.fiji.plugin.resave;
 
+import static mpicbg.spim.data.generic.sequence.ImgLoaderHints.LOAD_COMPLETELY;
 import fiji.util.gui.GenericDialogPlus;
 import ij.plugin.PlugIn;
 
@@ -222,7 +223,7 @@ public class Resave_TIFF implements PlugIn
 			if ( !viewDescription.isPresent() )
 				continue;
 
-			final RandomAccessibleInterval img = spimData.getSequenceDescription().getImgLoader().getImage( viewId );
+			final RandomAccessibleInterval img = spimData.getSequenceDescription().getImgLoader().getSetupImgLoader( viewId.getViewSetupId() ).getImage( viewId.getTimePointId(), LOAD_COMPLETELY );
 
 			String filename = "img";
 

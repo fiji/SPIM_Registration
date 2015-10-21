@@ -1,15 +1,15 @@
 package spim.fiji.plugin.interestpointdetection;
 
+import static mpicbg.spim.data.generic.sequence.ImgLoaderHints.LOAD_COMPLETELY;
 import ij.gui.GenericDialog;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import bdv.img.hdf5.Hdf5ImageLoader;
-import bdv.img.hdf5.MultiResolutionImgLoader;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.ImgLoader;
+import mpicbg.spim.data.sequence.MultiResolutionImgLoader;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.VoxelDimensions;
@@ -382,16 +382,14 @@ public abstract class DifferenceOf extends InterestPointDetection
 
 		RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > input = null;
 
-		ImgLoader< ? > imgLoader = spimData.getSequenceDescription().getImgLoader();
-		if ( Hdf5ImageLoader.class.isInstance( imgLoader ) )
-			imgLoader = ( ( Hdf5ImageLoader ) imgLoader ).getMonolithicImageLoader();
-		
+		ImgLoader imgLoader = spimData.getSequenceDescription().getImgLoader();
+
 		if ( ( dsx > 1 || dsy > 1 || dsz > 1 ) && MultiResolutionImgLoader.class.isInstance( imgLoader ) )
 		{
-			MultiResolutionImgLoader< ? > mrImgLoader = ( MultiResolutionImgLoader< ? > ) imgLoader;
+			MultiResolutionImgLoader mrImgLoader = ( MultiResolutionImgLoader ) imgLoader;
 
-			double[][] mipmapResolutions = mrImgLoader.getMipmapResolutions( vd.getViewSetupId() );
-			
+			double[][] mipmapResolutions = mrImgLoader.getSetupImgLoader( vd.getViewSetupId() ).getMipmapResolutions();
+
 			int bestLevel = 0;
 			for ( int level = 0; level < mipmapResolutions.length; ++level )
 			{
@@ -410,7 +408,7 @@ public abstract class DifferenceOf extends InterestPointDetection
 			final int fy = (int)Math.round( mipmapResolutions[ bestLevel ][ 1 ] );
 			final int fz = (int)Math.round( mipmapResolutions[ bestLevel ][ 2 ] );
 
-			t.set( mrImgLoader.getMipmapTransforms(vd.getViewSetupId())[ bestLevel ] );
+			t.set( mrImgLoader.getSetupImgLoader( vd.getViewSetupId() ).getMipmapTransforms()[ bestLevel ] );
 
 			dsx /= fx;
 			dsy /= fy;
@@ -421,11 +419,11 @@ public abstract class DifferenceOf extends InterestPointDetection
 					"Using precomputed Multiresolution Images [" + fx + "x" + fy + "x" + fz + "], " +
 					"Remaining downsampling [" + dsx + "x" + dsy + "x" + dsz + "]" );
 
-			input = mrImgLoader.getFloatImage( vd, bestLevel, false );
+			input = mrImgLoader.getSetupImgLoader( vd.getViewSetupId() ).getFloatImage( vd.getTimePointId(), bestLevel, false, LOAD_COMPLETELY );
 		}
 		else
 		{
-			input = imgLoader.getFloatImage( vd, false );
+			input = imgLoader.getSetupImgLoader( vd.getViewSetupId() ).getFloatImage( vd.getTimePointId(), false, LOAD_COMPLETELY );
 			t.identity();
 		}
 

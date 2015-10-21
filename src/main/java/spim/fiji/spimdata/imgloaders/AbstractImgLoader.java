@@ -4,8 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 
 import mpicbg.spim.data.SpimData;
+import mpicbg.spim.data.legacy.LegacyImgLoader;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
-import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.VoxelDimensions;
@@ -17,7 +17,7 @@ import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
 
-public abstract class AbstractImgLoader implements ImgLoader< UnsignedShortType >
+public abstract class AbstractImgLoader implements LegacyImgLoader< UnsignedShortType >
 {
 	private final HashMap< ViewId, Pair< Dimensions, VoxelDimensions > > imageMetaDataCache;
 	private final HashMap< Integer, ViewId > viewIdLookUp;

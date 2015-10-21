@@ -19,7 +19,6 @@ import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Dimensions;
 import net.imglib2.FinalDimensions;
-import net.imglib2.type.numeric.integer.UnsignedShortType;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.imgloaders.DHMImgLoader;
@@ -68,7 +67,7 @@ public class DHM implements MultiViewDatasetDefinition
 		// instantiate the sequencedescription
 		final SequenceDescription sequenceDescription =
 				new SequenceDescription( timepoints, setups, null, missingViews );
-		final ImgLoader< UnsignedShortType > imgLoader =
+		final ImgLoader imgLoader =
 				new DHMImgLoader(
 						meta.getDir(),
 						meta.getStackDir(),

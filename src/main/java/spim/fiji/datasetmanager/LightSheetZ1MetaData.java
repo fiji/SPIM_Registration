@@ -14,7 +14,7 @@ import loci.formats.Modulo;
 import loci.formats.meta.MetadataRetrieve;
 import mpicbg.spim.io.IOFunctions;
 import ome.units.quantity.Length;
-import spim.fiji.spimdata.imgloaders.LightSheetZ1ImgLoader;
+import spim.fiji.spimdata.imgloaders.LegacyLightSheetZ1ImgLoader;
 
 public class LightSheetZ1MetaData
 {
@@ -81,9 +81,9 @@ public class LightSheetZ1MetaData
 
 	public boolean loadMetaData( final File cziFile, final boolean keepFileOpen )
 	{
-		final IFormatReader r = LightSheetZ1ImgLoader.instantiateImageReader();
+		final IFormatReader r = LegacyLightSheetZ1ImgLoader.instantiateImageReader();
 
-		if ( !LightSheetZ1ImgLoader.createOMEXMLMetadata( r ) )
+		if ( !LegacyLightSheetZ1ImgLoader.createOMEXMLMetadata( r ) )
 		{
 			try { r.close(); } catch (IOException e) { e.printStackTrace(); }
 			IOFunctions.println( "Creating MetaDataStore failed. Stopping" );
