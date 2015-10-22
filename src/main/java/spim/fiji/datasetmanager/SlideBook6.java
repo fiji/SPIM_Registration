@@ -95,7 +95,7 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 
 			// instantiate the sequence descriptions
 			final SequenceDescription sequenceDescription = new SequenceDescription( timepoints, setups, null, missingViews );
-			final ImgLoader< UnsignedShortType > imgLoader = new SlideBook6ImgLoader( sldFile, imgFactory, sequenceDescription );
+			final ImgLoader imgLoader = new SlideBook6ImgLoader( sldFile, imgFactory, sequenceDescription );
 			sequenceDescription.setImgLoader( imgLoader );
 
 			// get the minimal resolution of all calibrations, TODO: different views can have different calibrations?
