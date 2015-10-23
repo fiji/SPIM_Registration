@@ -23,6 +23,7 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
+import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.RealSum;
 import net.imglib2.util.Util;
@@ -347,6 +348,8 @@ public class MVDeconvolution
 
 			processingData.convolve1( psi, tmp1 );
 
+			new DisplayImage().exportImage( tmp1, "tmp1" );
+
 			//
 			// compute quotient img/psiBlurred
 			// [tmp1, img >> tmp1]
@@ -366,6 +369,9 @@ public class MVDeconvolution
 
 			execTasks( tasks, nThreads, "compute quotient" );
 
+			new DisplayImage().exportImage( processingData.getImage(), "img" );
+			new DisplayImage().exportImage( tmp1, "quotient" );
+			SimpleMultiThreading.threadHaltUnClean();
 			//
 			// blur the residuals image with the kernel
 			// (this cannot be don in-place as it might be computed in blocks sequentially,
@@ -374,6 +380,8 @@ public class MVDeconvolution
 			// [tmp1 >> tmp2]
 			//
 			processingData.convolve2( tmp1, tmp2 );
+
+			new DisplayImage().exportImage( tmp2, "quotient blurred" );
 
 			// copy psi if collecting statistics
 			if ( collectStatistic )
@@ -416,7 +424,12 @@ public class MVDeconvolution
 			}
 
 			execTasks( tasks, nThreads, "compute final values" );
+
+			new DisplayImage().exportImage( psi, "psi new" );
+
+			SimpleMultiThreading.threadHaltUnClean();
 		}
+
 
 		if ( collectStatistic )
 		{
@@ -546,8 +559,11 @@ public class MVDeconvolution
 	
 				final float psiBlurredValue = cursorPsiBlurred.get().get();
 				final float imgValue = cursorImg.get().get();
-	
-				cursorPsiBlurred.get().set( imgValue / psiBlurredValue );
+
+				if ( imgValue > 0 )
+					cursorPsiBlurred.get().set( imgValue / psiBlurredValue );
+				else
+					cursorPsiBlurred.get().set( 1 ); // no image data, quotient=1
 			}
 		}
 		else
@@ -565,7 +581,10 @@ public class MVDeconvolution
 				final float psiBlurredValue = raPsiBlurred.get().get();
 				final float imgValue = cursorImg.get().get();
 	
-				raPsiBlurred.get().set( imgValue / psiBlurredValue );
+				if ( imgValue > 0 )
+					raPsiBlurred.get().set( imgValue / psiBlurredValue );
+				else
+					raPsiBlurred.get().set( 1 ); // no image data, quotient=1
 			}
 		}
 	}
