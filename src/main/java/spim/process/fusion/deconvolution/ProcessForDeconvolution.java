@@ -274,11 +274,6 @@ public class ProcessForDeconvolution
 
 			taskExecutor.shutdown();
 
-			// do not accept 0 values in the data
-			for ( final FloatType t : Views.iterable( transformedImg ) )
-				if ( t.get() < MVDeconvolution.minValue )
-					t.set( MVDeconvolution.minValue );
-
 			// extract PSFs if wanted
 			if ( extractPSFs )
 			{
