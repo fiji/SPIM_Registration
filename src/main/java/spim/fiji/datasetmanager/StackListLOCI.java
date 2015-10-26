@@ -6,6 +6,7 @@ import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.type.NativeType;
+import spim.fiji.spimdata.imgloaders.LegacyStackImgLoaderLOCI;
 import spim.fiji.spimdata.imgloaders.StackImgLoader;
 import spim.fiji.spimdata.imgloaders.StackImgLoaderLOCI;
 
@@ -23,7 +24,7 @@ public class StackListLOCI extends StackList
 	}
 
 	@Override
-	protected StackImgLoader createAndInitImgLoader( final String path, final File basePath, final ImgFactory< ? extends NativeType< ? > > imgFactory, SequenceDescription sequenceDescription )
+	protected StackImgLoader< ? > createAndInitImgLoader( final String path, final File basePath, final ImgFactory< ? extends NativeType< ? > > imgFactory, SequenceDescription sequenceDescription )
 	{
 		return new StackImgLoaderLOCI(
 				new File( basePath.getAbsolutePath(), path ),
@@ -61,8 +62,8 @@ public class StackListLOCI extends StackList
 			return null;
 		}
 
-		final spim.fiji.spimdata.imgloaders.Calibration cal = StackImgLoaderLOCI.loadMetaData( file );
-		
+		final spim.fiji.spimdata.imgloaders.Calibration cal = LegacyStackImgLoaderLOCI.loadMetaData( file );
+
 		if ( cal == null )
 			return null;
 		

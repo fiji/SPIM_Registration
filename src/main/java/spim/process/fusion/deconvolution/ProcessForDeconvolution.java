@@ -35,7 +35,7 @@ import spim.Threads;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
-import spim.fiji.spimdata.imgloaders.StackImgLoaderIJ;
+import spim.fiji.spimdata.imgloaders.LegacyStackImgLoaderIJ;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
@@ -210,9 +210,9 @@ public class ProcessForDeconvolution
 			else //if ( processType == ProcessType.LOAD_WEIGHTS )
 			{
 				IOFunctions.println( "WARNING: LOADING WEIGHTS FROM: '" + new File( files[ i ] ) + "'" );
-				ImagePlus imp = StackImgLoaderIJ.open( new File( files[ i ] ) );
+				ImagePlus imp = LegacyStackImgLoaderIJ.open( new File( files[ i ] ) );
 				weightImg = imgFactory.create( bb.getDimensions(), new FloatType() );
-				StackImgLoaderIJ.imagePlus2ImgLib2Img( imp, (Img< FloatType > )weightImg, false );
+				LegacyStackImgLoaderIJ.imagePlus2ImgLib2Img( imp, (Img< FloatType > )weightImg, false );
 				imp.close();
 				if ( debugImport )
 				{

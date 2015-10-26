@@ -28,12 +28,12 @@ public class ViewSetupUtils
 	 * @param loader - the {@link ImgLoader}
 	 * @return - the Voxelsize for this {@link ViewSetup}
 	 */
-	public static VoxelDimensions getVoxelSizeOrLoad( final BasicViewSetup setup, final TimePoint t, final ImgLoader< ? > loader )
+	public static VoxelDimensions getVoxelSizeOrLoad( final BasicViewSetup setup, final TimePoint t, final ImgLoader loader )
 	{
 		if ( setup.hasVoxelSize() )
 			return setup.getVoxelSize();
 		else
-			return loader.getVoxelSize( new ViewId( t.getId(), setup.getId() ) );
+			return loader.getSetupImgLoader( setup.getId() ).getVoxelSize( t.getId() );
 	}
 
 	/**
@@ -54,11 +54,11 @@ public class ViewSetupUtils
 	 * @param loader - the {@link ImgLoader}
 	 * @return - the image size of this {@link ViewSetup}
 	 */
-	public static Dimensions getSizeOrLoad( final BasicViewSetup setup, final TimePoint t, final ImgLoader< ? > loader )
+	public static Dimensions getSizeOrLoad( final BasicViewSetup setup, final TimePoint t, final ImgLoader loader )
 	{
 		if ( setup.hasSize() )
 			return setup.getSize();
 		else
-			return loader.getImageSize( new ViewId( t.getId(), setup.getId() ) );
+			return loader.getSetupImgLoader( setup.getId() ).getImageSize( t.getId() );
 	}
 }

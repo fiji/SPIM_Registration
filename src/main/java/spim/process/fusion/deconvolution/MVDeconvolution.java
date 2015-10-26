@@ -27,7 +27,7 @@ import net.imglib2.util.RealSum;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import spim.Threads;
-import spim.fiji.spimdata.imgloaders.StackImgLoaderIJ;
+import spim.fiji.spimdata.imgloaders.LegacyStackImgLoaderIJ;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
 import spim.process.fusion.deconvolution.MVDeconFFT.PSFTYPE;
@@ -240,7 +240,7 @@ public class MVDeconvolution
 	{
 		IOFunctions.println( "Loading image '" + fileName + "' as start for iteration." );
 
-		final ImagePlus impPSI = StackImgLoaderIJ.open( new File( fileName ) );
+		final ImagePlus impPSI = LegacyStackImgLoaderIJ.open( new File( fileName ) );
 
 		if ( impPSI == null )
 		{
@@ -251,7 +251,7 @@ public class MVDeconvolution
 		final long[] dimPsi = impPSI.getStack().getSize() == 1 ? 
 				new long[]{ impPSI.getWidth(), impPSI.getHeight() } : new long[]{ impPSI.getWidth(), impPSI.getHeight(), impPSI.getStack().getSize() };
 		final Img< FloatType > psi = imageFactory.create( dimPsi, new FloatType() );
-		StackImgLoaderIJ.imagePlus2ImgLib2Img( impPSI, psi, false );
+		LegacyStackImgLoaderIJ.imagePlus2ImgLib2Img( impPSI, psi, false );
 
 		if ( psi == null )
 		{
