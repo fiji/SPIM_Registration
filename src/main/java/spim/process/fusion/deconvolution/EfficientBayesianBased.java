@@ -72,6 +72,11 @@ public class EfficientBayesianBased extends Fusion
 		"No weights (produces artifacts on partially overlapping data)",
 		"Illustrate overlap of views per pixel (do not deconvolve)" };
 
+	public static int defaultBlendingRangeNumber = 12;
+	public static int defaultBlendingBorderNumber = -8;
+	public static int[] defaultBlendingRange = null;
+	public static int[] defaultBlendingBorder = null;
+
 	public static boolean makeAllPSFSameSize = false;
 
 	public static int defaultFFTImgType = 0;
@@ -613,18 +618,18 @@ public class EfficientBayesianBased extends Fusion
 		{
 			final GenericDialog gd = new GenericDialog( "Adjust blending parameters" );
 			
-			if ( ProcessForDeconvolution.defaultBlendingBorder == null || ProcessForDeconvolution.defaultBlendingBorder.length < 3 )
-				ProcessForDeconvolution.defaultBlendingBorder = new int[]{ ProcessForDeconvolution.defaultBlendingBorderNumber, ProcessForDeconvolution.defaultBlendingBorderNumber, ProcessForDeconvolution.defaultBlendingBorderNumber };
+			if ( defaultBlendingBorder == null || defaultBlendingBorder.length < 3 )
+				defaultBlendingBorder = new int[]{ defaultBlendingBorderNumber, defaultBlendingBorderNumber, Math.round( defaultBlendingBorderNumber/2.5f ) };
 			
-			if ( ProcessForDeconvolution.defaultBlendingRange == null || ProcessForDeconvolution.defaultBlendingRange.length < 3 )
-				ProcessForDeconvolution.defaultBlendingRange =  new int[]{ ProcessForDeconvolution.defaultBlendingRangeNumber, ProcessForDeconvolution.defaultBlendingRangeNumber, ProcessForDeconvolution.defaultBlendingRangeNumber };
+			if ( defaultBlendingRange == null || defaultBlendingRange.length < 3 )
+				defaultBlendingRange =  new int[]{ defaultBlendingRangeNumber, defaultBlendingRangeNumber, defaultBlendingRangeNumber };
 			
-			gd.addSlider( "Boundary_pixels_X", 0, 100, ProcessForDeconvolution.defaultBlendingBorder[ 0 ] );
-			gd.addSlider( "Boundary_pixels_Y", 0, 100, ProcessForDeconvolution.defaultBlendingBorder[ 1 ] );
-			gd.addSlider( "Boundary_pixels_Z", 0, 100, ProcessForDeconvolution.defaultBlendingBorder[ 2 ] );
-			gd.addSlider( "Blending_range_X", 0, 100, ProcessForDeconvolution.defaultBlendingRange[ 0 ] );
-			gd.addSlider( "Blending_range_Y", 0, 100, ProcessForDeconvolution.defaultBlendingRange[ 1 ] );
-			gd.addSlider( "Blending_range_Z", 0, 100, ProcessForDeconvolution.defaultBlendingRange[ 2 ] );
+			gd.addSlider( "Boundary_pixels_X", -50, 50, defaultBlendingBorder[ 0 ] );
+			gd.addSlider( "Boundary_pixels_Y", -50, 50, defaultBlendingBorder[ 1 ] );
+			gd.addSlider( "Boundary_pixels_Z", -50, 50, defaultBlendingBorder[ 2 ] );
+			gd.addSlider( "Blending_range_X", 0, 100, defaultBlendingRange[ 0 ] );
+			gd.addSlider( "Blending_range_Y", 0, 100, defaultBlendingRange[ 1 ] );
+			gd.addSlider( "Blending_range_Z", 0, 100, defaultBlendingRange[ 2 ] );
 			
 			gd.addMessage( "" );
 			gd.addMessage( "Note: both sizes are in local coordinates of the input views. Increase one or both of those values if stripy artifacts\n" +
@@ -640,39 +645,39 @@ public class EfficientBayesianBased extends Fusion
 			if ( gd.wasCanceled() )
 				return false;
 			
-			blendingBorderX = ProcessForDeconvolution.defaultBlendingBorder[ 0 ] = (int)Math.round( gd.getNextNumber() );
-			blendingBorderY = ProcessForDeconvolution.defaultBlendingBorder[ 1 ] = (int)Math.round( gd.getNextNumber() );
-			blendingBorderZ = ProcessForDeconvolution.defaultBlendingBorder[ 2 ] = (int)Math.round( gd.getNextNumber() );
-			blendingRangeX = ProcessForDeconvolution.defaultBlendingRange[ 0 ] = (int)Math.round( gd.getNextNumber() );
-			blendingRangeY = ProcessForDeconvolution.defaultBlendingRange[ 1 ] = (int)Math.round( gd.getNextNumber() );
-			blendingRangeZ = ProcessForDeconvolution.defaultBlendingRange[ 2 ] = (int)Math.round( gd.getNextNumber() );
+			blendingBorderX = defaultBlendingBorder[ 0 ] = (int)Math.round( gd.getNextNumber() );
+			blendingBorderY = defaultBlendingBorder[ 1 ] = (int)Math.round( gd.getNextNumber() );
+			blendingBorderZ = defaultBlendingBorder[ 2 ] = (int)Math.round( gd.getNextNumber() );
+			blendingRangeX = defaultBlendingRange[ 0 ] = (int)Math.round( gd.getNextNumber() );
+			blendingRangeY = defaultBlendingRange[ 1 ] = (int)Math.round( gd.getNextNumber() );
+			blendingRangeZ = defaultBlendingRange[ 2 ] = (int)Math.round( gd.getNextNumber() );
 		}
 		else
 		{
-			if ( ProcessForDeconvolution.defaultBlendingBorder != null && ProcessForDeconvolution.defaultBlendingBorder.length >= 3 )
+			if ( defaultBlendingBorder != null && defaultBlendingBorder.length >= 3 )
 			{
-				blendingBorderX = ProcessForDeconvolution.defaultBlendingBorder[ 0 ];
-				blendingBorderY = ProcessForDeconvolution.defaultBlendingBorder[ 1 ];
-				blendingBorderZ = ProcessForDeconvolution.defaultBlendingBorder[ 2 ];
+				blendingBorderX = defaultBlendingBorder[ 0 ];
+				blendingBorderY = defaultBlendingBorder[ 1 ];
+				blendingBorderZ = defaultBlendingBorder[ 2 ];
 			}
 			else
 			{
-				blendingBorderX = ProcessForDeconvolution.defaultBlendingBorderNumber;
-				blendingBorderY = ProcessForDeconvolution.defaultBlendingBorderNumber;
-				blendingBorderZ = ProcessForDeconvolution.defaultBlendingBorderNumber;
+				blendingBorderX = defaultBlendingBorderNumber;
+				blendingBorderY = defaultBlendingBorderNumber;
+				blendingBorderZ = defaultBlendingBorderNumber;
 			}
 			
-			if ( ProcessForDeconvolution.defaultBlendingRange != null && ProcessForDeconvolution.defaultBlendingRange.length >= 3 )
+			if ( defaultBlendingRange != null && defaultBlendingRange.length >= 3 )
 			{
-				blendingRangeX = ProcessForDeconvolution.defaultBlendingRange[ 0 ];
-				blendingRangeY = ProcessForDeconvolution.defaultBlendingRange[ 1 ];
-				blendingRangeZ = ProcessForDeconvolution.defaultBlendingRange[ 2 ];
+				blendingRangeX = defaultBlendingRange[ 0 ];
+				blendingRangeY = defaultBlendingRange[ 1 ];
+				blendingRangeZ = defaultBlendingRange[ 2 ];
 			}
 			else
 			{
-				blendingRangeX = ProcessForDeconvolution.defaultBlendingRangeNumber;
-				blendingRangeY = ProcessForDeconvolution.defaultBlendingRangeNumber;
-				blendingRangeZ = ProcessForDeconvolution.defaultBlendingRangeNumber;
+				blendingRangeX = defaultBlendingRangeNumber;
+				blendingRangeY = defaultBlendingRangeNumber;
+				blendingRangeZ = defaultBlendingRangeNumber;
 			}
 		}
 		
@@ -775,15 +780,11 @@ public class EfficientBayesianBased extends Fusion
 					IOFunctions.println( "Channel " + c.getName() + ": uses same PSF as channel " + this.extractPSFLabels.get( c ).getOtherChannel().getName() );
 				}
 			}
-			
-			final int oldX = defaultPSFSizeX;
-			final int oldY = defaultPSFSizeY;
-			final int oldZ = defaultPSFSizeZ;
-			
+
 			psfSizeX = defaultPSFSizeX = (int)Math.round( gd.getNextNumber() );
 			psfSizeY = defaultPSFSizeY = (int)Math.round( gd.getNextNumber() );
 			psfSizeZ = defaultPSFSizeZ = (int)Math.round( gd.getNextNumber() );
-			
+
 			// enforce odd number
 			if ( psfSizeX % 2 == 0 )
 				defaultPSFSizeX = ++psfSizeX;
@@ -793,13 +794,6 @@ public class EfficientBayesianBased extends Fusion
 
 			if ( psfSizeZ % 2 == 0 )
 				defaultPSFSizeZ = ++psfSizeZ;
-
-			// update the borders if applicable
-			if ( ProcessForDeconvolution.defaultBlendingBorder == null || ProcessForDeconvolution.defaultBlendingBorder.length < 3 ||
-				 ( oldX/2 == ProcessForDeconvolution.defaultBlendingBorder[ 0 ] && oldY/2 == ProcessForDeconvolution.defaultBlendingBorder[ 1 ] && oldZ/5 == ProcessForDeconvolution.defaultBlendingBorder[ 2 ] ) )
-			{
-				ProcessForDeconvolution.defaultBlendingBorder = new int[]{ psfSizeX/2, psfSizeY/2, psfSizeZ/5 };
-			}			
 		}
 		else
 		{
