@@ -174,7 +174,10 @@ public class EfficientBayesianBased extends Fusion
 	
 			// set up ImgFactory
 			this.factory = bb.getImgFactory( new FloatType() );
-	
+
+			IOFunctions.println( "BlendingBorder: " + blendingBorderX + ", " + blendingBorderY + ", " + blendingBorderZ );
+			IOFunctions.println( "BlendingBorder: " + blendingRangeX + ", " + blendingRangeY + ", " + blendingRangeZ );
+
 			final ProcessForDeconvolution pfd = new ProcessForDeconvolution(
 					spimData,
 					viewIdsToProcess,
@@ -664,7 +667,7 @@ public class EfficientBayesianBased extends Fusion
 			{
 				blendingBorderX = defaultBlendingBorderNumber;
 				blendingBorderY = defaultBlendingBorderNumber;
-				blendingBorderZ = defaultBlendingBorderNumber;
+				blendingBorderZ = Math.round( defaultBlendingBorderNumber/2.5f );
 			}
 			
 			if ( defaultBlendingRange != null && defaultBlendingRange.length >= 3 )
