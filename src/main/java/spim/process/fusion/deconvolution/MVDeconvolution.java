@@ -1,9 +1,5 @@
 package spim.process.fusion.deconvolution;
 
-import ij.CompositeImage;
-import ij.ImagePlus;
-import ij.ImageStack;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
@@ -14,6 +10,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import ij.CompositeImage;
+import ij.ImagePlus;
+import ij.ImageStack;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.Dimensions;
@@ -23,7 +22,6 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
-import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.RealSum;
 import net.imglib2.util.Util;
@@ -40,13 +38,12 @@ public class MVDeconvolution
 	// if you want to start from a certain iteration
 	public static String initialImage = null;
 
-	public static boolean setToAvg = false;
-
 	// check in advance if values are reasonable
 	public static boolean checkNumbers = true;
 
 	public static boolean debug = true;
 	public static int debugInterval = 1;
+	public static boolean setBackgroundToAvg = false;
 	final static float minValue = 0.0001f;
 
 	final int numViews, numDimensions;
@@ -115,14 +112,17 @@ public class MVDeconvolution
 
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Average intensity in overlapping area: " + avg );
 
-			if ( setToAvg )
-			{
+			if ( setBackgroundToAvg )
 				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting image to average intensity: " + avg );
+			else
+				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting image to average intensity (only where image data is present): " + avg );
 
-				for ( final FloatType t : psi )
+			for ( final FloatType t : psi )
+				if ( setBackgroundToAvg || t.get() > MVDeconvolution.minValue )
 					t.set( (float)avg );
-			}
 		}
+
+		//new DisplayImage().exportImage( psi, "psi" );
 
 		// instantiate the temporary images
 		this.tmp1 = views.imgFactory().create( psi, new FloatType() );
@@ -348,7 +348,7 @@ public class MVDeconvolution
 
 			processingData.convolve1( psi, tmp1 );
 
-			new DisplayImage().exportImage( tmp1, "tmp1" );
+			//new DisplayImage().exportImage( tmp1, "tmp1" );
 
 			//
 			// compute quotient img/psiBlurred
@@ -369,9 +369,9 @@ public class MVDeconvolution
 
 			execTasks( tasks, nThreads, "compute quotient" );
 
-			new DisplayImage().exportImage( processingData.getImage(), "img" );
-			new DisplayImage().exportImage( tmp1, "quotient" );
-			SimpleMultiThreading.threadHaltUnClean();
+			//new DisplayImage().exportImage( processingData.getImage(), "img" );
+			//new DisplayImage().exportImage( tmp1, "quotient" );
+
 			//
 			// blur the residuals image with the kernel
 			// (this cannot be don in-place as it might be computed in blocks sequentially,
@@ -381,7 +381,7 @@ public class MVDeconvolution
 			//
 			processingData.convolve2( tmp1, tmp2 );
 
-			new DisplayImage().exportImage( tmp2, "quotient blurred" );
+			//new DisplayImage().exportImage( tmp2, "quotient blurred" );
 
 			// copy psi if collecting statistics
 			if ( collectStatistic )
@@ -425,10 +425,11 @@ public class MVDeconvolution
 
 			execTasks( tasks, nThreads, "compute final values" );
 
-			new DisplayImage().exportImage( psi, "psi new" );
+			//new DisplayImage().exportImage( psi, "psi new" );
 
-			SimpleMultiThreading.threadHaltUnClean();
 		}
+
+	//	SimpleMultiThreading.threadHaltUnClean();
 
 
 		if ( collectStatistic )
