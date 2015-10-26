@@ -108,9 +108,15 @@ public class MVDeconvolution
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Fusing image for first iteration" );
 
 			this.psi = views.imgFactory().create( data.get( 0 ).getImage(), new FloatType() );
-			final double avg = fuseFirstIteration( psi, views.getViews() );
+			double avg = fuseFirstIteration( psi, views.getViews() );
 
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Average intensity in overlapping area: " + avg );
+
+			if ( Double.isNaN( avg ) )
+			{
+				avg = 0.5;
+				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): ERROR! Computing average FAILED, is NaN, setting it to: " + avg );
+			}
 
 			if ( setBackgroundToAvg )
 				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting image to average intensity: " + avg );

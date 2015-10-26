@@ -149,7 +149,8 @@ public class FirstIteration implements Callable< RealSum >
 		if ( sumW > 0 )
 		{
 			final double i = sum / sumW;
-			realSum.add( i );
+			if ( !Double.isNaN( i ) )
+				realSum.add( i );
 			psiCursor.next().set( Math.max( MVDeconvolution.minValue, (float)sumW ) ); // has data (to be replaced with average intensity later)
 		}
 		else
@@ -187,7 +188,8 @@ public class FirstIteration implements Callable< RealSum >
 		if ( sumW > 0 )
 		{
 			final double i = sum / sumW;
-			realSum.add( i );
+			if ( !Double.isNaN( i ) )
+				realSum.add( i );
 			p.set( Math.max( MVDeconvolution.minValue, (float)sumW ) ); // has data (to be replaced with average intensity later)
 		}
 		else
