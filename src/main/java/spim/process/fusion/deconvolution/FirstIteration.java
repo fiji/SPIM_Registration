@@ -142,18 +142,15 @@ public class FirstIteration implements Callable< RealSum >
 			final double w = cursorWeights.get( j ).next().get();
 			final double i = cursorImgs.get( j ).next().get();
 
-			if ( i > 0 )
-			{
-				sum += i*w;
-				sumW += w;
-			}
+			sum += i*w;
+			sumW += w;
 		}
 
 		if ( sumW > 0 )
 		{
 			final double i = sum / sumW;
 			realSum.add( i );
-			psiCursor.next().set( 1 ); // has data (to be replaced with average intensity later)
+			psiCursor.next().set( Math.max( MVDeconvolution.minValue, (float)sumW ) ); // has data (to be replaced with average intensity later)
 		}
 		else
 		{
@@ -183,18 +180,15 @@ public class FirstIteration implements Callable< RealSum >
 			final double w = randomAccessWeight.get().get();
 			final double i = randomAccessImg.get().get();
 
-			if ( i > 0 )
-			{
-				sum += i*w;
-				sumW += w;
-			}
+			sum += i*w;
+			sumW += w;
 		}
 
 		if ( sumW > 0 )
 		{
 			final double i = sum / sumW;
 			realSum.add( i );
-			p.set( 1 ); // has data (to be replaced with average intensity later)
+			p.set( Math.max( MVDeconvolution.minValue, (float)sumW ) ); // has data (to be replaced with average intensity later)
 		}
 		else
 		{

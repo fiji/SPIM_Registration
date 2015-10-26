@@ -117,9 +117,19 @@ public class MVDeconvolution
 			else
 				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting image to average intensity (only where image data is present): " + avg );
 
-			for ( final FloatType t : psi )
-				if ( setBackgroundToAvg || t.get() > MVDeconvolution.minValue )
+			if ( setBackgroundToAvg )
+			{
+				for ( final FloatType t : psi )
 					t.set( (float)avg );
+			}
+			else
+			{
+				// set the pixels to (avg * how much the pixel value is updated (but not more than 1))
+				// this ensures smooth borders where the image data ends later
+				// if no image data is present, it will be set to MVDeconvolution.minValue
+				for ( final FloatType t : psi )
+					t.set( Math.max( MVDeconvolution.minValue, Math.min( 1, t.get() ) * (float)avg ) );
+			}
 		}
 
 		//new DisplayImage().exportImage( psi, "psi" );
