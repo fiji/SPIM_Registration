@@ -1,7 +1,6 @@
 package spim.process.fusion.weights;
 
 import net.imglib2.AbstractLocalizableInt;
-import net.imglib2.Interval;
 import net.imglib2.Localizable;
 import net.imglib2.RandomAccess;
 import net.imglib2.RealRandomAccess;
@@ -12,7 +11,6 @@ public class TransformedInterpolatedRealRandomAccess< T > extends AbstractLocali
 {
 	final RealRandomAccessible< T > realRandomAccessible;
 	final RealRandomAccess< T > realRandomAccess;
-	final Interval transformedInterval;
 	final AffineTransform3D transform;
 	final int[] offset;
 	final T zero;
@@ -27,13 +25,11 @@ public class TransformedInterpolatedRealRandomAccess< T > extends AbstractLocali
 	public TransformedInterpolatedRealRandomAccess(
 			final RealRandomAccessible< T > realRandomAccessible,
 			final T zero,
-			final Interval transformedInterval,
 			final AffineTransform3D transform,
 			final int[] offset )
 	{
 		super( realRandomAccessible.numDimensions() );
 
-		this.transformedInterval = transformedInterval;
 		this.zero = zero;
 		this.realRandomAccessible = realRandomAccessible;
 		this.transform = transform;
@@ -154,7 +150,7 @@ public class TransformedInterpolatedRealRandomAccess< T > extends AbstractLocali
 	public void setPosition( final long position, final int d ) { this.position[ d ] = (int)position; }
 
 	@Override
-	public TransformedInterpolatedRealRandomAccess< T > copy() { return new TransformedInterpolatedRealRandomAccess< T >( realRandomAccessible, zero, transformedInterval, transform, offset ); }
+	public TransformedInterpolatedRealRandomAccess< T > copy() { return new TransformedInterpolatedRealRandomAccess< T >( realRandomAccessible, zero, transform, offset ); }
 
 	@Override
 	public TransformedInterpolatedRealRandomAccess<T> copyRandomAccess() { return copy(); }

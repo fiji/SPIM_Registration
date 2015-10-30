@@ -227,10 +227,7 @@ public class EfficientBayesianBased extends Fusion
 	
 					// setup & run the deconvolution
 					displayParametersAndPSFs( bb, c, extractPSFLabels );
-	
-					if ( weightType == WeightType.WEIGHTS_ONLY )
-						return true;
-	
+
 					final MVDeconInput deconvolutionData = new MVDeconInput( factory );
 	
 					IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Block & FFT image factory: " + computeFactory.getClass().getSimpleName() );
@@ -391,10 +388,8 @@ public class EfficientBayesianBased extends Fusion
 			weightType = WeightType.PRECOMPUTED_WEIGHTS;
 		else if ( defaultWeightType == 1 )
 			weightType = WeightType.VIRTUAL_WEIGHTS;
-		else if ( defaultWeightType == 2 )
+		else //if ( defaultWeightType == 2 )
 			weightType = WeightType.NO_WEIGHTS;
-		else
-			weightType = WeightType.WEIGHTS_ONLY;
 
 		osemspeedupIndex = defaultOSEMspeedupIndex = gd.getNextChoiceIndex();
 		numIterations = defaultNumIterations = (int)Math.round( gd.getNextNumber() );
@@ -1017,9 +1012,6 @@ public class EfficientBayesianBased extends Fusion
 	
 	protected boolean getDebug()
 	{
-		if ( weightType == WeightType.WEIGHTS_ONLY )
-			return true;
-
 		if ( debugMode )
 		{
 			GenericDialog gdDebug = new GenericDialog( "Debug options" );

@@ -4,6 +4,7 @@ import spim.process.fusion.FusionHelper;
 import net.imglib2.AbstractLocalizableInt;
 import net.imglib2.Localizable;
 import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccess;
 import net.imglib2.converter.RealFloatConverter;
@@ -25,6 +26,7 @@ public class InputRandomAccess< T extends RealType< T > > extends AbstractLocali
 	final RealRandomAccess< FloatType > ir;
 	final int offsetX, offsetY, offsetZ, imgSizeX, imgSizeY, imgSizeZ;
 
+	@SuppressWarnings("unchecked")
 	public InputRandomAccess(
 			final RandomAccessibleInterval< T > img, // from ImgLoader
 			final AffineTransform3D transform,
@@ -48,15 +50,25 @@ public class InputRandomAccess< T extends RealType< T > > extends AbstractLocali
 		this.v = new FloatType();
 
 		// extend input image and convert to floats
-		final ConvertedRandomAccessible< T, FloatType > convertedInput =
+		final RandomAccessible< T > extendedImg = Views.extendMirrorSingle( img );
+		final RandomAccessible< FloatType > input;
+
+		if ( FloatType.class.isInstance( extendedImg.randomAccess().get() ) )
+		{
+			input = (RandomAccessibleInterval< FloatType >)extendedImg;
+		}
+		else
+		{
+			input =
 				new ConvertedRandomAccessible< T, FloatType >(
-						Views.extendMirrorSingle( img ),
+						extendedImg,
 						new RealFloatConverter< T >(),
 						new FloatType() );
+		}
 
 		// make the interpolator
 		final NLinearInterpolatorFactory< FloatType > f = new NLinearInterpolatorFactory< FloatType >();
-		this.ir = Views.interpolate( convertedInput, f ).realRandomAccess();
+		this.ir = Views.interpolate( input, f ).realRandomAccess();
 	}
 
 	@Override
