@@ -83,7 +83,7 @@ public class BlendingRealRandomAccess implements RealRandomAccess< FloatType >
 		else if ( minDistance <= 0)
 			return 0;
 		else
-			return (float)( Math.cos( (1 - minDistance) * Math.PI ) + 1 ) / 2;
+			return (float)( Math.cos( (1 - minDistance) * Math.PI ) + 1 ) / 2; //TODO: lookup?
 	}
 
 	@Override
@@ -242,7 +242,7 @@ public class BlendingRealRandomAccess implements RealRandomAccess< FloatType >
 		BlendingRealRandomAccess blend = new BlendingRealRandomAccess(
 				img,
 				new float[]{ 100, 0 },
-				new float[]{ 50, 150 } );
+				new float[]{ 12, 150 } );
 		
 		Cursor< FloatType > c = img.localizingCursor();
 		
