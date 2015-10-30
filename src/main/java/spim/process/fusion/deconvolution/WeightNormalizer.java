@@ -60,6 +60,9 @@ public class WeightNormalizer
 				tasks.add( new ApplyDirectly( portion ) );
 			else
 				tasks.add( new ComputeSumImage( portion, sumWeights ) );
+			
+			// TOOD: do not use null as indication
+			// TODO: completely virtual sumweights, where each virtual weight randomaccesibleint knows all others to compute sumweight on the fly
 		}
 
 		// run threads
