@@ -83,7 +83,12 @@ public class BlendingRealRandomAccess implements RealRandomAccess< FloatType >
 		else if ( minDistance <= 0)
 			return 0;
 		else
-			return (float)( Math.cos( (1 - minDistance) * Math.PI ) + 1 ) / 2; //TODO: lookup?
+			return computCosine( minDistance );
+	}
+
+	private static final float computCosine( final float minDistance )
+	{
+		return (float)( Math.cos( (1 - minDistance) * Math.PI ) + 1 ) / 2; //TODO: lookup?
 	}
 
 	@Override
