@@ -284,6 +284,10 @@ public class ProcessForDeconvolution
 			if ( weightType != WeightType.WEIGHTS_ONLY )
 				imgs.put( vd, transformedImg );
 			weights.put( vd, weightImg );
+
+			// remove temporarily loaded image
+			tasks.clear();
+			System.gc();
 		}
 		
 		// normalize the weights
