@@ -110,9 +110,30 @@ public class GlobalOpt
 			String output = "ViewId=" + viewId.getViewSetupId() + ": " + printAffine3D( (Affine3D<?>)tile.getModel() );
 			
 			if ( (Model)tile.getModel() instanceof RigidModel3D )
-				IOFunctions.println( output + ", " + getRotationAxis( (RigidModel3D)(Model)tile.getModel() ) );
+			{
+				String rotA = "Java3D is MISSING!";
+
+				try
+				{
+					rotA = getRotationAxis( (RigidModel3D)(Model)tile.getModel() );
+				}
+				catch( NoClassDefFoundError e ) {}
+
+				IOFunctions.println( output + ", Rotation Axis=" + rotA );
+				
+			}
 			else
-				IOFunctions.println( output + ", " + getScaling( (Affine3D<?>)tile.getModel() ) );
+			{
+				String scaling = "Java3D is MISSING!";
+
+				try
+				{
+					scaling = getScaling( (Affine3D<?>)tile.getModel() );
+				}
+				catch( NoClassDefFoundError e ) {}
+
+				IOFunctions.println( output + ", Scaling=" + scaling );
+			}
 		}
 		
 		return map;
