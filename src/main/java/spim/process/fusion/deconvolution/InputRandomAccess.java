@@ -55,7 +55,7 @@ public class InputRandomAccess< T extends RealType< T > > extends AbstractLocali
 
 		if ( FloatType.class.isInstance( extendedImg.randomAccess().get() ) )
 		{
-			input = (RandomAccessibleInterval< FloatType >)extendedImg;
+			input = (RandomAccessible< FloatType >)extendedImg;
 		}
 		else
 		{
