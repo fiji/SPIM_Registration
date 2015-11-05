@@ -75,9 +75,9 @@ public class InputRandomAccess< T extends RealType< T > > extends AbstractLocali
 	public FloatType get()
 	{
 		// go from PSI(Decon)_image local coordinate system to world coordinate system
-		s[ 0 ] += offsetX;
-		s[ 1 ] += offsetY;
-		s[ 2 ] += offsetZ;
+		s[ 0 ] = position[ 0 ] + offsetX;
+		s[ 1 ] = position[ 1 ] + offsetY;
+		s[ 2 ] = position[ 2 ] + offsetZ;
 
 		// go from world coordinate system to local coordinate system of input image (pixel coordinates)
 		transform.applyInverse( t, s );
