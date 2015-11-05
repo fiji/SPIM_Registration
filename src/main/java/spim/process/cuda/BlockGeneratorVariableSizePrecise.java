@@ -6,8 +6,8 @@ import net.imglib2.iterator.LocalizingZeroMinIntervalIterator;
 import net.imglib2.util.Util;
 
 /**
- * This BlockGenerator only cares that the overlap within the image is accounted for, not about
- * an outofbounds strategy.
+ * This BlockGenerator cares that the overlap within the image is accounted for and that
+ * an outofbounds strategy is taken into account.
  * 
  * @author Stephan Preibisch
  */

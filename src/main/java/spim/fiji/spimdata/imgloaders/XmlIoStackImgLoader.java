@@ -12,6 +12,7 @@ import mpicbg.spim.data.generic.sequence.XmlIoBasicImgLoader;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.cell.CellImgFactory;
+import net.imglib2.img.planar.PlanarImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.real.FloatType;
 
@@ -29,7 +30,7 @@ public abstract class XmlIoStackImgLoader< T extends StackImgLoader< ? > > imple
 	public static final String LAYOUT_ANGLE_TAG = "layoutAngles";
 
 	@Override
-	public Element toXml( final StackImgLoader imgLoader, final File basePath )
+	public Element toXml( final T imgLoader, final File basePath )
 	{
 		final Element elem = new Element( "ImageLoader" );
 		elem.setAttribute( IMGLOADER_FORMAT_ATTRIBUTE_NAME, this.getClass().getAnnotation( ImgLoaderIo.class ).format() );
@@ -76,6 +77,10 @@ public abstract class XmlIoStackImgLoader< T extends StackImgLoader< ? > > imple
 				else if ( container.toLowerCase().contains( "arrayimg" ) )
 				{
 					imgFactory = new ArrayImgFactory< FloatType >();
+				}
+				else if ( container.toLowerCase().contains( "planarimg" ) )
+				{
+					imgFactory = new PlanarImgFactory< FloatType >();
 				}
 				else
 				{

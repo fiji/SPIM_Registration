@@ -270,6 +270,10 @@ public class ProcessForDeconvolution
 
 			imgs.put( vd, tImg );
 			weights.put( vd, tWeight );
+
+			// remove temporarily loaded image
+			tasks.clear();
+			System.gc();
 		}
 
 		// normalize the weights
