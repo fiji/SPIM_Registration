@@ -606,6 +606,30 @@ public class MVDeconvolution
 		}
 	}
 
+	public static < T > void copyImg( final RandomAccessibleInterval< FloatType > input, final RandomAccessibleInterval< FloatType > output )
+	{
+		final int nThreads = Threads.numThreads();
+		final int nPortions = nThreads * 2;
+		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( Views.iterable( input ).size(), nPortions );
+		final ArrayList< Callable< Void > > tasks = new ArrayList< Callable< Void > >();
+
+		for ( final ImagePortion portion : portions )
+		{
+			tasks.add( new Callable< Void >()
+			{
+				@Override
+				public Void call() throws Exception
+				{
+					copyImg( portion.getStartPosition(), portion.getLoopSize(), input, output );
+					return null;
+				}
+			});
+		}
+
+		execTasks( tasks, nThreads, "copy image" );
+	}
+
+
 	/**
 	 * One thread of a method to compute the quotient between two images of the multiview deconvolution
 	 * 
@@ -623,7 +647,7 @@ public class MVDeconvolution
 		final IterableInterval< FloatType > sourceIterable = Views.iterable( source );
 		final IterableInterval< FloatType > targetIterable = Views.iterable( target );
 
-		if ( sourceIterable.iterationOrder().equals( sourceIterable.iterationOrder() ) )
+		if ( sourceIterable.iterationOrder().equals( targetIterable.iterationOrder() ) )
 		{
 			final Cursor< FloatType > cursorSource = sourceIterable.cursor();
 			final Cursor< FloatType > cursorTarget = targetIterable.cursor();
