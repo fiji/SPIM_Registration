@@ -26,6 +26,7 @@ import net.imglib2.Cursor;
 import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
@@ -166,8 +167,7 @@ public class ProcessForDeconvolution
 
 			// define the output
 			final Interval outputInterval = new FinalInterval( bb.getDimensions() );
-			final RandomAccessibleInterval< FloatType > tImg;
-			final RandomAccessibleInterval< FloatType > tWeight;
+			final RandomAccessibleInterval< FloatType > tImg, tWeight;
 
 			// set up transformations
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Setup transformations.");
@@ -192,6 +192,7 @@ public class ProcessForDeconvolution
 			else
 			{
 				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Loading image using " + spimData.getSequenceDescription().getImgLoader().getClass().getSimpleName() );
+				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Load type: " + loadType );
 
 				final Object type = spimData.getSequenceDescription().getImgLoader().getSetupImgLoader( vd.getViewSetupId() ).getImageType();
 				
@@ -213,31 +214,75 @@ public class ProcessForDeconvolution
 
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Image dimensions: " + inputImgInterval.dimension( 0 ) + "x" + inputImgInterval.dimension( 1 ) + "x" + inputImgInterval.dimension( 2 ) + " px." );
 
+			//
+			// initializing transformed image
+			//
+
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Initializing transformed image: " + imgType.name() );
 
-			if ( imgType == ImgType.VIRTUAL_IMGS )
-				tImg = Views.interval( new InputRandomAccessible( inputImg, transform, offset ), outputInterval );
-			else if ( imgType == ImgType.NO_IMGS )
-				tImg = Views.interval( new ConstantRandomAccessible< FloatType >( new FloatType( 0 ), bb.numDimensions() ), outputInterval );
-			else
+			if ( imgType == ImgType.VIRTUAL_IMGS || imgType == ImgType.PRECOMPUTED_IMGS )
 			{
-				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Transformed image factory: " + imgFactory.getClass().getSimpleName() );
-				tImg = imgFactory.create( bb.getDimensions(), new FloatType() );
+				// the virtual transformed image construct
+				final RandomAccessible< FloatType > virtual = new InputRandomAccessible( inputImg, transform, offset );
+				final RandomAccessibleInterval< FloatType > virtualInterval = Views.interval( virtual, outputInterval );
+
+				if ( imgType == ImgType.PRECOMPUTED_IMGS )
+				{
+					IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Transformed image factory: " + imgFactory.getClass().getSimpleName() );
+					tImg = imgFactory.create( bb.getDimensions(), new FloatType() );
+
+					// copy the virtual construct into an actual image
+					long t = System.currentTimeMillis();
+					MVDeconvolution.copyImg( virtualInterval, tImg );
+					System.out.println( "copy img: " +  ( System.currentTimeMillis() - t ) );
+				}
+				else
+				{
+					tImg = virtualInterval;
+				}
+			}
+			else //if ( imgType == ImgType.NO_IMGS )
+			{
+				tImg = Views.interval( new ConstantRandomAccessible< FloatType >( new FloatType( 0 ), bb.numDimensions() ), outputInterval );
 			}
 
+			//
 			// initializing weights
+			//
+
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Initializing weights: " + weightType.name() );
 
-			if ( weightType == WeightType.PRECOMPUTED_WEIGHTS )
+			if ( weightType == WeightType.VIRTUAL_WEIGHTS || weightType == WeightType.PRECOMPUTED_WEIGHTS )
 			{
-				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Weight image factory: " + imgFactory.getClass().getSimpleName() );
-				tWeight = imgFactory.create( bb.getDimensions(), new FloatType() );
+				// the virtual weight construct
+				final RandomAccessible< FloatType > virtual = 
+						new TransformedRealRandomAccessible< FloatType >(
+							getBlending( inputImgInterval, blendingBorder, blendingRange, vd ),
+							new FloatType(),
+							transform,
+							offset );
+				final RandomAccessibleInterval< FloatType > virtualInterval = Views.interval( virtual, outputInterval );
+
+				if ( weightType == WeightType.PRECOMPUTED_WEIGHTS )
+				{
+					IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Weight image factory: " + imgFactory.getClass().getSimpleName() );
+					tWeight = imgFactory.create( bb.getDimensions(), new FloatType() );
+
+					// copy the virtual construct into an actual image
+					long t = System.currentTimeMillis();
+					MVDeconvolution.copyImg( virtualInterval, tWeight );
+					System.out.println( "copy weight: " +  ( System.currentTimeMillis() - t ) );
+				}
+				else
+				{
+					tWeight = virtualInterval;
+				}
 			}
 			else if ( weightType == WeightType.NO_WEIGHTS )
+			{
 				tWeight = Views.interval( new ConstantRandomAccessible< FloatType >( new FloatType( 1 ), bb.numDimensions() ), outputInterval );
-			else if ( weightType == WeightType.VIRTUAL_WEIGHTS )
-				tWeight = Views.interval( new TransformedRealRandomAccessible< FloatType >( getBlending( inputImgInterval, blendingBorder, blendingRange, vd ), new FloatType(), transform, offset ), outputInterval );
-			else //if ( processType == ProcessType.LOAD_WEIGHTS )
+			}
+			else //if ( weightType == WeightType.LOAD_WEIGHTS )
 			{
 				IOFunctions.println( "WARNING: LOADING WEIGHTS FROM: '" + new File( files[ i ] ) + "'" );
 				ImagePlus imp = LegacyStackImgLoaderIJ.open( new File( files[ i ] ) );
@@ -249,41 +294,6 @@ public class ProcessForDeconvolution
 					imp = ImageJFunctions.show( tWeight );
 					imp.setTitle( "ViewSetup " + vd.getViewSetupId() + " Timepoint " + vd.getTimePointId() );
 				}
-			}
-
-			if ( weightType == WeightType.PRECOMPUTED_WEIGHTS || imgType == ImgType.PRECOMPUTED_IMGS )
-			{
-				// split up into many parts for multithreading (only if weights or img is precomputed)
-				final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( Views.iterable( tImg ).size(), Threads.numThreads() * 4 );
-	
-				// set up executor service
-				final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
-				final ArrayList< Callable< String > > tasks = new ArrayList< Callable< String > >();
-
-				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Transforming image & computing weights.");
-
-				for ( final ImagePortion portion : portions )
-				{
-					if ( weightType == WeightType.PRECOMPUTED_WEIGHTS )
-						tasks.add( new TransformWeights( portion, getBlending( inputImgInterval, blendingBorder, blendingRange, vd ), transform, tWeight, offset ) );
-	
-					//if ( imgType == ImgType.PRECOMPUTED_IMGS )
-					// tasks.add( new TransformInput( portion, inputImg, transform, tImg, offset ) );
-				}
-	
-				try
-				{
-					// invokeAll() returns when all tasks are complete
-					taskExecutor.invokeAll( tasks );
-				}
-				catch ( final InterruptedException e )
-				{
-					IOFunctions.println( "Failed to compute fusion: " + e );
-					e.printStackTrace();
-					return false;
-				}
-	
-				taskExecutor.shutdown();
 			}
 
 			// extract PSFs if wanted
@@ -301,13 +311,14 @@ public class ProcessForDeconvolution
 			imgs.put( vd, tImg );
 			weights.put( vd, tWeight );
 
-			ImageJFunctions.show( tImg );
+			//ImageJFunctions.show( tImg );
+			//ImageJFunctions.show( tWeight );
 
 			// remove temporarily loaded image
 			System.gc();
 		}
 
-		SimpleMultiThreading.threadHaltUnClean();
+		//SimpleMultiThreading.threadHaltUnClean();
 
 		// normalize the weights
 		final ArrayList< RandomAccessibleInterval< FloatType > > weightsSorted = new ArrayList< RandomAccessibleInterval< FloatType > >();
