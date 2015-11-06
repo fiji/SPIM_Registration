@@ -44,6 +44,8 @@ import spim.process.cuda.CUDATools;
 import spim.process.cuda.NativeLibraryTools;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.deconvolution.MVDeconFFT.PSFTYPE;
+import spim.process.fusion.deconvolution.ProcessForDeconvolution.ImgType;
+import spim.process.fusion.deconvolution.ProcessForDeconvolution.LoadType;
 import spim.process.fusion.deconvolution.ProcessForDeconvolution.WeightType;
 import spim.process.fusion.boundingbox.BoundingBoxGUI;
 import spim.process.fusion.boundingbox.BoundingBoxGUI.ManageListeners;
@@ -69,8 +71,15 @@ public class EfficientBayesianBased extends Fusion
 	public static String[] weightsString = new String[]{
 		"Precompute weights for all views (more memory, faster)",
 		"Virtual weights (less memory, slower)",
-		"No weights (produces artifacts on partially overlapping data)",
-		"Illustrate overlap of views per pixel (do not deconvolve)" };
+		"No weights (produces artifacts on partially overlapping data)" };
+
+	public static String[] imgString = new String[]{
+			"Precompute images for all views (more memory, faster)",
+			"Virtual images (less memory, slower)" };
+
+	public static String[] loadString = new String[]{
+			"Load input images entirely (more memory, faster if no small bounding box)",
+			"Try to load images virtually (not supported by all; less memory, slower)" };
 
 	public static int defaultBlendingRangeNumber = 12;
 	public static int defaultBlendingBorderNumber = -8;
@@ -82,6 +91,8 @@ public class EfficientBayesianBased extends Fusion
 	public static int defaultFFTImgType = 0;
 	public static int defaultIterationType = 1;
 	public static int defaultWeightType = 1;
+	public static int defaultImgType = 1;
+	public static int defaultLoadType = 1;
 	public static boolean defaultSaveMemory = false;
 	public static int defaultOSEMspeedupIndex = 0;
 	public static int defaultNumIterations = 10;
@@ -108,6 +119,8 @@ public class EfficientBayesianBased extends Fusion
 
 	PSFTYPE iterationType;
 	WeightType weightType;
+	ImgType imgType;
+	LoadType loadType;
 	boolean saveMemory;
 	int osemspeedupIndex;
 	int numIterations;
@@ -204,6 +217,8 @@ public class EfficientBayesianBased extends Fusion
 							osemspeedupIndex,
 							osemSpeedUp,
 							weightType,
+							imgType,
+							loadType,
 							extractPSFLabels,
 							new long[]{ psfSizeX, psfSizeY, psfSizeZ },
 							psfFiles,
@@ -343,6 +358,8 @@ public class EfficientBayesianBased extends Fusion
 		gd.addChoice( "Type_of_iteration", iterationTypeString, iterationTypeString[ defaultIterationType ] );
 		it = (Choice)gd.getChoices().lastElement();
 		gd.addChoice( "Image_weights", weightsString, weightsString[ defaultWeightType ] );
+		gd.addChoice( "Transform_images", imgString, imgString[ defaultImgType ] );
+		gd.addChoice( "Load_input_images", loadString, loadString[ defaultLoadType ] );
 		weight = (Choice)gd.getChoices().lastElement();
 		gd.addChoice( "OSEM_acceleration", osemspeedupChoice, osemspeedupChoice[ defaultOSEMspeedupIndex ] );
 		gd.addNumericField( "Number_of_iterations", defaultNumIterations, 0 );
@@ -383,6 +400,8 @@ public class EfficientBayesianBased extends Fusion
 			iterationType = PSFTYPE.INDEPENDENT;
 
 		defaultWeightType = gd.getNextChoiceIndex();
+		defaultImgType = gd.getNextChoiceIndex();
+		defaultLoadType = gd.getNextChoiceIndex();
 
 		if ( defaultWeightType == 0 )
 			weightType = WeightType.PRECOMPUTED_WEIGHTS;
@@ -390,6 +409,16 @@ public class EfficientBayesianBased extends Fusion
 			weightType = WeightType.VIRTUAL_WEIGHTS;
 		else //if ( defaultWeightType == 2 )
 			weightType = WeightType.NO_WEIGHTS;
+
+		if ( defaultImgType == 0 )
+			imgType = ImgType.PRECOMPUTED_IMGS;
+		else
+			imgType = ImgType.VIRTUAL_IMGS;
+
+		if ( defaultLoadType == 0 )
+			loadType = LoadType.LOAD_INPUT_COMPLETELY;
+		else
+			loadType = LoadType.LOAD_INPUT_ONDEMAND;
 
 		osemspeedupIndex = defaultOSEMspeedupIndex = gd.getNextChoiceIndex();
 		numIterations = defaultNumIterations = (int)Math.round( gd.getNextNumber() );
