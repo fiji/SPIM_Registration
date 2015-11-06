@@ -305,7 +305,7 @@ public class ProcessForDeconvolution
 					"(" + new Date(System.currentTimeMillis()) + "): Extracting PSF for viewsetup " + vd.getViewSetupId() +
 					" using label '" + extractPSFLabels.get( channel ).getLabel() + "'" + " (" +llist.size() + " corresponding detections available)" );
 
-				ePSF.extractNextImg( tImg, vd, transform, llist, psfSize );
+				ePSF.extractNextImg( inputImg, vd, transform, llist, psfSize );
 			}
 
 			imgs.put( vd, tImg );
