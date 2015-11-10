@@ -254,7 +254,7 @@ public class ExtractPSF< T extends RealType< T > & NativeType< T > >
 	 * @param psfSize - dimensions of psf to extract
 	 */
 	public void extractNextImg(
-			final RandomAccessibleInterval< T > img,
+			final RandomAccessibleInterval< ? > img,
 			final ViewId viewId,
 			final AffineTransform3D model,
 			final ArrayList< double[] > locations,
