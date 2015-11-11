@@ -262,7 +262,7 @@ public class ExtractPSF< T extends RealType< T > & NativeType< T > >
 	{
 		IOFunctions.println( "PSF size: " + Util.printCoordinates( psfSize ) );
 
-		final ArrayImg< T, ? > originalPSF = extractPSFLocal( img, locations, psfSize );
+		final ArrayImg< T, ? > originalPSF =   extractPSFLocal( img, locations, psfSize );
 
 		// normalize PSF
 		normalize( originalPSF );
