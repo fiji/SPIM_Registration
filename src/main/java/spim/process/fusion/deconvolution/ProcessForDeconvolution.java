@@ -373,10 +373,17 @@ public class ProcessForDeconvolution
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private static < T extends RealType< T > > RandomAccessibleInterval< FloatType > floatInterval( final RandomAccessibleInterval interval )
 	{
-		return new ConvertedRandomAccessibleInterval< T, FloatType >(
-				interval,
-				new RealFloatConverter< T >(),
-				new FloatType() );
+		if ( FloatType.class.isInstance( Views.iterable( interval ).firstElement() ) )
+		{
+			return (RandomAccessibleInterval< FloatType >)interval;
+		}
+		else
+		{
+			return new ConvertedRandomAccessibleInterval< T, FloatType >(
+					interval,
+					new RealFloatConverter< T >(),
+					new FloatType() );
+		}
 	}
 
 	private static void adjustForOSEM( final HashMap< ViewId, RandomAccessibleInterval< FloatType > > weights, final WeightType weightType, final double osemspeedup )
