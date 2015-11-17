@@ -28,6 +28,9 @@ import net.imglib2.Interval;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.converter.RealFloatConverter;
+import net.imglib2.converter.read.ConvertedRandomAccessible;
+import net.imglib2.converter.read.ConvertedRandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
@@ -305,7 +308,7 @@ public class ProcessForDeconvolution
 					"(" + new Date(System.currentTimeMillis()) + "): Extracting PSF for viewsetup " + vd.getViewSetupId() +
 					" using label '" + extractPSFLabels.get( channel ).getLabel() + "'" + " (" +llist.size() + " corresponding detections available)" );
 
-				ePSF.extractNextImg( inputImg, vd, transform, llist, psfSize );
+				ePSF.extractNextImg( floatInterval( inputImg ), vd, transform, llist, psfSize );
 			}
 
 			imgs.put( vd, tImg );
@@ -365,6 +368,15 @@ public class ProcessForDeconvolution
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Finished precomputations for deconvolution." );
 
 		return true;
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private static < T extends RealType< T > > RandomAccessibleInterval< FloatType > floatInterval( final RandomAccessibleInterval interval )
+	{
+		return new ConvertedRandomAccessibleInterval< T, FloatType >(
+				interval,
+				new RealFloatConverter< T >(),
+				new FloatType() );
 	}
 
 	private static void adjustForOSEM( final HashMap< ViewId, RandomAccessibleInterval< FloatType > > weights, final WeightType weightType, final double osemspeedup )

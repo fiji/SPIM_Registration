@@ -254,7 +254,7 @@ public class ExtractPSF< T extends RealType< T > & NativeType< T > >
 	 * @param psfSize - dimensions of psf to extract
 	 */
 	public void extractNextImg(
-			final RandomAccessibleInterval< ? > img,
+			final RandomAccessibleInterval< T > img,
 			final ViewId viewId,
 			final AffineTransform3D model,
 			final ArrayList< double[] > locations,
@@ -262,7 +262,7 @@ public class ExtractPSF< T extends RealType< T > & NativeType< T > >
 	{
 		IOFunctions.println( "PSF size: " + Util.printCoordinates( psfSize ) );
 
-		final ArrayImg< T, ? > originalPSF =   extractPSFLocal( img, locations, psfSize );
+		final ArrayImg< T, ? > originalPSF = extractPSFLocal( img, locations, psfSize );
 
 		// normalize PSF
 		normalize( originalPSF );
