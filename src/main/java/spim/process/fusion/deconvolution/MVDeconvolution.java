@@ -22,11 +22,13 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
+import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.RealSum;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import spim.Threads;
+import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.spimdata.imgloaders.LegacyStackImgLoaderIJ;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
@@ -43,7 +45,7 @@ public class MVDeconvolution
 
 	public static boolean debug = true;
 	public static int debugInterval = 1;
-	public static boolean setBackgroundToAvg = false;
+	public static boolean setBackgroundToAvg = true;//false;
 	final static float minValue = 0.0001f;
 
 	final int numViews, numDimensions;
@@ -118,24 +120,10 @@ public class MVDeconvolution
 				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): ERROR! Computing average FAILED, is NaN, setting it to: " + avg );
 			}
 
-			if ( setBackgroundToAvg )
-				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting image to average intensity: " + avg );
-			else
-				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting image to average intensity (only where image data is present): " + avg );
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting image to average intensity: " + avg );
 
-			if ( setBackgroundToAvg )
-			{
-				for ( final FloatType t : psi )
-					t.set( (float)avg );
-			}
-			else
-			{
-				// set the pixels to (avg * how much the pixel value is updated (but not more than 1))
-				// this ensures smooth borders where the image data ends later
-				// if no image data is present, it will be set to MVDeconvolution.minValue
-				for ( final FloatType t : psi )
-					t.set( Math.max( MVDeconvolution.minValue, Math.min( 1, t.get() ) * (float)avg ) );
-			}
+			for ( final FloatType t : psi )
+				t.set( (float)avg );
 		}
 
 		//new DisplayImage().exportImage( psi, "psi" );
@@ -199,31 +187,31 @@ public class MVDeconvolution
 
 		// split up into many parts for multithreading
 		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( psi.size(), nPortions );
-		final ArrayList< Callable< RealSum > > tasks = new ArrayList< Callable< RealSum > >();
+		final ArrayList< Callable< Pair< RealSum, Long > > > tasks = new ArrayList< Callable< Pair< RealSum, Long > > >();
 
 		final ExecutorService taskExecutor = Executors.newFixedThreadPool( nThreads );
 
 		final ArrayList< RandomAccessibleInterval< FloatType > > imgs = new ArrayList< RandomAccessibleInterval< FloatType > >();
-		final ArrayList< RandomAccessibleInterval< FloatType > > weights = new ArrayList< RandomAccessibleInterval< FloatType > >();
 
 		for ( final MVDeconFFT mvdecon : views )
-		{
 			imgs.add( mvdecon.getImage() );
-			weights.add( mvdecon.getWeight() );
-		}
 
 		for ( final ImagePortion portion : portions )
-			tasks.add( new FirstIteration( portion, psi, imgs, weights ) );
+			tasks.add( new FirstIteration( portion, psi, imgs ) );
 
 		final RealSum s = new RealSum();
+		long count = 0;
 
 		try
 		{
 			// invokeAll() returns when all tasks are complete
-			final List< Future< RealSum > > imgIntensities = taskExecutor.invokeAll( tasks );
+			final List< Future< Pair< RealSum, Long > > > imgIntensities = taskExecutor.invokeAll( tasks );
 
-			for ( final Future< RealSum  > future : imgIntensities )
-				s.add( future.get().getSum() );
+			for ( final Future< Pair< RealSum, Long >  > future : imgIntensities )
+			{
+				s.add( future.get().getA().getSum() );
+				count += future.get().getB().longValue();
+			}
 		}
 		catch ( final Exception e )
 		{
@@ -234,7 +222,7 @@ public class MVDeconvolution
 
 		taskExecutor.shutdown();
 
-		return s.getSum() / (double)psi.size();
+		return s.getSum() / (double)count;
 	}
 
 	protected static Img< FloatType > loadInitialImage(
@@ -364,7 +352,7 @@ public class MVDeconvolution
 
 			processingData.convolve1( psi, tmp1 );
 
-			//new DisplayImage().exportImage( tmp1, "tmp1" );
+			new DisplayImage().exportImage( tmp1, "tmp1" );
 
 			//
 			// compute quotient img/psiBlurred
@@ -385,8 +373,8 @@ public class MVDeconvolution
 
 			execTasks( tasks, nThreads, "compute quotient" );
 
-			//new DisplayImage().exportImage( processingData.getImage(), "img" );
-			//new DisplayImage().exportImage( tmp1, "quotient" );
+			new DisplayImage().exportImage( processingData.getImage(), "img" );
+			new DisplayImage().exportImage( tmp1, "quotient" );
 
 			//
 			// blur the residuals image with the kernel
@@ -397,7 +385,7 @@ public class MVDeconvolution
 			//
 			processingData.convolve2( tmp1, tmp2 );
 
-			//new DisplayImage().exportImage( tmp2, "quotient blurred" );
+			new DisplayImage().exportImage( tmp2, "quotient blurred" );
 
 			//
 			// compute final values
@@ -436,9 +424,11 @@ public class MVDeconvolution
 
 			IOFunctions.println( "iteration: " + iteration + ", view: " + view + " --- sum change: " + sumChange + " --- max change per pixel: " + maxChange );
 			
-			//new DisplayImage().exportImage( psi, "psi new" );
-
+			new DisplayImage().exportImage( processingData.getWeight(), "weight" );
+			new DisplayImage().exportImage( psi, "psi new" );
 		}
+
+		SimpleMultiThreading.threadHaltUnClean();
 	}
 
 	private static final void execTasks( final ArrayList< Callable< Void > > tasks, final int nThreads, final String jobDescription )
@@ -656,7 +646,7 @@ public class MVDeconvolution
 		sumMax[ 1 ] = maxChange;
 	}
 
-	private static final float change( final float lastPsiValue, final float nextPsiValue ) { return Math.abs( ( nextPsiValue - lastPsiValue ) / 65535.0f ); }
+	private static final float change( final float lastPsiValue, final float nextPsiValue ) { return Math.abs( ( nextPsiValue - lastPsiValue ) ); }
 
 	/**
 	 * compute the next value for a specific pixel
