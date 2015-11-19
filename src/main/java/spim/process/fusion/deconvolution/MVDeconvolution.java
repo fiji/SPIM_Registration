@@ -701,4 +701,13 @@ public class MVDeconvolution
 	}
 
 	private static final double tikhonov( final double value, final double lambda ) { return ( Math.sqrt( 1.0 + 2.0*lambda*value ) - 1.0 ) / lambda; }
+
+	public static void main( String[] args )
+	{
+		for ( double d = 0; d < 10; d = d + 0.1 )
+		{
+			System.out.println( d*10000 + ": " + tikhonov( d*10000, 0.0006 ) );
+			System.out.println( d + ": " + tikhonov( d, 0.0006 ) );
+		}
+	}
 }
