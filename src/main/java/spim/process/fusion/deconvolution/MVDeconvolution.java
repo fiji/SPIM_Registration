@@ -177,6 +177,15 @@ public class MVDeconvolution
 			runIteration();
 		}
 
+		IOFunctions.println( "Masking never updated pixels." );
+		fuseFirstIteration( tmp1, views.getViews() );
+
+		final Cursor< FloatType > tmp1c = tmp1.cursor();
+
+		for ( final FloatType t : psi )
+			if ( tmp1c.next().get() == 0 )
+				t.set( 0 );
+
 		IOFunctions.println( "DONE (" + new Date(System.currentTimeMillis()) + ")." );
 	}
 
