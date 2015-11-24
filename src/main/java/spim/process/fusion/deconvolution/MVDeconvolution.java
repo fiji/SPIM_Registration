@@ -22,11 +22,13 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
+import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.RealSum;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import spim.Threads;
+import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.spimdata.imgloaders.LegacyStackImgLoaderIJ;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
@@ -43,7 +45,7 @@ public class MVDeconvolution
 
 	public static boolean debug = true;
 	public static int debugInterval = 1;
-	public static boolean setBackgroundToAvg = false;
+	public static boolean setBackgroundToAvg = true;//false;
 	final static float minValue = 0.0001f;
 
 	final int numViews, numDimensions;
@@ -118,24 +120,10 @@ public class MVDeconvolution
 				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): ERROR! Computing average FAILED, is NaN, setting it to: " + avg );
 			}
 
-			if ( setBackgroundToAvg )
-				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting image to average intensity: " + avg );
-			else
-				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting image to average intensity (only where image data is present): " + avg );
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting image to average intensity: " + avg );
 
-			if ( setBackgroundToAvg )
-			{
-				for ( final FloatType t : psi )
-					t.set( (float)avg );
-			}
-			else
-			{
-				// set the pixels to (avg * how much the pixel value is updated (but not more than 1))
-				// this ensures smooth borders where the image data ends later
-				// if no image data is present, it will be set to MVDeconvolution.minValue
-				for ( final FloatType t : psi )
-					t.set( Math.max( MVDeconvolution.minValue, Math.min( 1, t.get() ) * (float)avg ) );
-			}
+			for ( final FloatType t : psi )
+				t.set( (float)avg );
 		}
 
 		//new DisplayImage().exportImage( psi, "psi" );
@@ -189,6 +177,15 @@ public class MVDeconvolution
 			runIteration();
 		}
 
+		IOFunctions.println( "Masking never updated pixels." );
+		fuseFirstIteration( tmp1, views.getViews() );
+
+		final Cursor< FloatType > tmp1c = tmp1.cursor();
+
+		for ( final FloatType t : psi )
+			if ( tmp1c.next().get() == 0 )
+				t.set( 0 );
+
 		IOFunctions.println( "DONE (" + new Date(System.currentTimeMillis()) + ")." );
 	}
 
@@ -199,31 +196,31 @@ public class MVDeconvolution
 
 		// split up into many parts for multithreading
 		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( psi.size(), nPortions );
-		final ArrayList< Callable< RealSum > > tasks = new ArrayList< Callable< RealSum > >();
+		final ArrayList< Callable< Pair< RealSum, Long > > > tasks = new ArrayList< Callable< Pair< RealSum, Long > > >();
 
 		final ExecutorService taskExecutor = Executors.newFixedThreadPool( nThreads );
 
 		final ArrayList< RandomAccessibleInterval< FloatType > > imgs = new ArrayList< RandomAccessibleInterval< FloatType > >();
-		final ArrayList< RandomAccessibleInterval< FloatType > > weights = new ArrayList< RandomAccessibleInterval< FloatType > >();
 
 		for ( final MVDeconFFT mvdecon : views )
-		{
 			imgs.add( mvdecon.getImage() );
-			weights.add( mvdecon.getWeight() );
-		}
 
 		for ( final ImagePortion portion : portions )
-			tasks.add( new FirstIteration( portion, psi, imgs, weights ) );
+			tasks.add( new FirstIteration( portion, psi, imgs ) );
 
 		final RealSum s = new RealSum();
+		long count = 0;
 
 		try
 		{
 			// invokeAll() returns when all tasks are complete
-			final List< Future< RealSum > > imgIntensities = taskExecutor.invokeAll( tasks );
+			final List< Future< Pair< RealSum, Long > > > imgIntensities = taskExecutor.invokeAll( tasks );
 
-			for ( final Future< RealSum  > future : imgIntensities )
-				s.add( future.get().getSum() );
+			for ( final Future< Pair< RealSum, Long >  > future : imgIntensities )
+			{
+				s.add( future.get().getA().getSum() );
+				count += future.get().getB().longValue();
+			}
 		}
 		catch ( final Exception e )
 		{
@@ -234,7 +231,7 @@ public class MVDeconvolution
 
 		taskExecutor.shutdown();
 
-		return s.getSum() / (double)psi.size();
+		return s.getSum() / (double)count;
 	}
 
 	protected static Img< FloatType > loadInitialImage(
@@ -364,7 +361,7 @@ public class MVDeconvolution
 
 			processingData.convolve1( psi, tmp1 );
 
-			//new DisplayImage().exportImage( tmp1, "tmp1" );
+			new DisplayImage().exportImage( tmp1, "tmp1" );
 
 			//
 			// compute quotient img/psiBlurred
@@ -385,8 +382,8 @@ public class MVDeconvolution
 
 			execTasks( tasks, nThreads, "compute quotient" );
 
-			//new DisplayImage().exportImage( processingData.getImage(), "img" );
-			//new DisplayImage().exportImage( tmp1, "quotient" );
+			new DisplayImage().exportImage( processingData.getImage(), "img" );
+			new DisplayImage().exportImage( tmp1, "quotient" );
 
 			//
 			// blur the residuals image with the kernel
@@ -397,59 +394,12 @@ public class MVDeconvolution
 			//
 			processingData.convolve2( tmp1, tmp2 );
 
-			//new DisplayImage().exportImage( tmp2, "quotient blurred" );
-
-			// copy psi if collecting statistics
-			if ( collectStatistic )
-			{
-				tasks.clear();
-
-				for ( final ImagePortion portion : portions )
-				{
-					tasks.add( new Callable< Void >()
-					{
-						@Override
-						public Void call() throws Exception
-						{
-							copyImg( portion.getStartPosition(), portion.getLoopSize(), psi, tmp1 );
-							return null;
-						}
-					});
-				}
-				
-				execTasks( tasks, nThreads, "duplicate PSI" );
-			}
+			new DisplayImage().exportImage( tmp2, "quotient blurred" );
 
 			//
 			// compute final values
 			// [psi, weights, tmp2 >> psi]
 			//
-			tasks.clear();
-
-			for ( final ImagePortion portion : portions )
-			{
-				tasks.add( new Callable< Void >()
-				{
-					@Override
-					public Void call() throws Exception
-					{
-						computeFinalValues( portion.getStartPosition(), portion.getLoopSize(), psi, tmp2, processingData.getWeight(), lambda );
-						return null;
-					}
-				});
-			}
-
-			execTasks( tasks, nThreads, "compute final values" );
-
-			//new DisplayImage().exportImage( psi, "psi new" );
-
-		}
-
-	//	SimpleMultiThreading.threadHaltUnClean();
-
-
-		if ( collectStatistic )
-		{
 			final double[][] sumMax = new double[ nPortions ][ 2 ];
 			tasks.clear();
 
@@ -463,13 +413,13 @@ public class MVDeconvolution
 					@Override
 					public Void call() throws Exception
 					{
-						collectStatistics( portion.getStartPosition(), portion.getLoopSize(), psi, tmp1, sumMax[ portionId ] );
+						computeFinalValues( portion.getStartPosition(), portion.getLoopSize(), psi, tmp2, processingData.getWeight(), lambda, sumMax[ portionId ] );
 						return null;
 					}
 				});
 			}
 
-			execTasks( tasks, nThreads, "collect statistics" );
+			execTasks( tasks, nThreads, "compute final values" );
 
 			// accumulate the results from the individual threads
 			double sumChange = 0;
@@ -481,8 +431,13 @@ public class MVDeconvolution
 				maxChange = Math.max( maxChange, sumMax[ i ][ 1 ] );
 			}
 
-			IOFunctions.println( "iteration: " + iteration + " --- sum change: " + sumChange + " --- max change per pixel: " + maxChange );
+			IOFunctions.println( "iteration: " + iteration + ", view: " + view + " --- sum change: " + sumChange + " --- max change per pixel: " + maxChange );
+			
+			new DisplayImage().exportImage( processingData.getWeight(), "weight" );
+			new DisplayImage().exportImage( psi, "psi new" );
 		}
+
+		SimpleMultiThreading.threadHaltUnClean();
 	}
 
 	private static final void execTasks( final ArrayList< Callable< Void > > tasks, final int nThreads, final String jobDescription )
@@ -502,46 +457,6 @@ public class MVDeconvolution
 		}
 
 		taskExecutor.shutdown();
-	}
-
-	/**
-	 * One thread of a method to collect statistics for each iteration of the multiview deconvolution
-	 * 
-	 * @param start
-	 * @param loopSize
-	 * @param psi
-	 * @param lastIteration
-	 * @param sumMax
-	 */
-	private static final void collectStatistics(
-			final long start,
-			final long loopSize,
-			final Img< FloatType > psi,
-			final Img< FloatType > lastIteration,
-			final double[] sumMax )
-	{
-		double sumChange = 0;
-		double maxChange = -1;
-		
-		final Cursor< FloatType > cursorPsi = psi.cursor();
-		final Cursor< FloatType > cursorLast = lastIteration.cursor();
-		
-		cursorPsi.jumpFwd( start );
-		cursorLast.jumpFwd( start );
-		
-		for ( long l = 0; l < loopSize; ++l )
-		{
-			final float last = cursorLast.next().get();
-			final float next = cursorPsi.next().get();
-
-			final float change = Math.abs( next - last );
-
-			sumChange += change;
-			maxChange = Math.max( maxChange, change );
-		}
-
-		sumMax[ 0 ] = sumChange;
-		sumMax[ 1 ] = maxChange;
 	}
 
 	/**
@@ -638,7 +553,7 @@ public class MVDeconvolution
 	 * @param source
 	 * @param target
 	 */
-	private static final void copyImg(
+	public static final void copyImg(
 			final long start,
 			final long loopSize,
 			final RandomAccessibleInterval< FloatType > source,
@@ -691,8 +606,12 @@ public class MVDeconvolution
 			final RandomAccessibleInterval< FloatType > psi,
 			final RandomAccessibleInterval< FloatType > integral,
 			final RandomAccessibleInterval< FloatType > weight,
-			final double lambda )
+			final double lambda,
+			final double[] sumMax )
 	{
+		double sumChange = 0;
+		double maxChange = -1;
+
 		final IterableInterval< FloatType > psiIterable = Views.iterable( psi );
 		final IterableInterval< FloatType > integralIterable = Views.iterable( integral );
 		final IterableInterval< FloatType > weightIterable = Views.iterable( weight );
@@ -715,42 +634,17 @@ public class MVDeconvolution
 				cursorIntegral.fwd();
 				cursorWeight.fwd();
 	
+				// get the final value
 				final float lastPsiValue = cursorPsi.get().get();
-	
-				float value = lastPsiValue * cursorIntegral.get().get();
-	
-				if ( value > 0 )
-				{
-					//
-					// perform Tikhonov regularization if desired
-					//
-					if ( lambda > 0 )
-						value = ( (float)( (Math.sqrt( 1.0 + 2.0*lambda*value ) - 1.0) / lambda ) );
-				}
-				else
-				{
-					value = minValue;
-				}
-	
-				//
-				// get the final value and some statistics
-				//
-				float nextPsiValue;
-	
-				if ( Double.isNaN( value ) )
-					nextPsiValue = (float)minValue;
-				else
-					nextPsiValue = (float)Math.max( minValue, value );
-	
-				// compute the difference between old and new
-				float change = nextPsiValue - lastPsiValue;
-	
-				// apply the appropriate amount
-				change *= cursorWeight.get().get();
-				nextPsiValue = lastPsiValue + change;
-	
+				final float nextPsiValue = computeNextValue( lastPsiValue, cursorIntegral.get().get(), cursorWeight.get().get(), lambda );
+				
 				// store the new value
 				cursorPsi.get().set( (float)nextPsiValue );
+
+				// statistics
+				final float change = change( lastPsiValue, nextPsiValue );
+				sumChange += change;
+				maxChange = Math.max( maxChange, change );
 			}
 		}
 		else
@@ -766,44 +660,77 @@ public class MVDeconvolution
 				cursorPsi.fwd();
 				raIntegral.setPosition( cursorPsi );
 				raWeight.setPosition( cursorPsi );
-	
+
+				// get the final value
 				final float lastPsiValue = cursorPsi.get().get();
-	
-				float value = lastPsiValue * raIntegral.get().get();
-	
-				if ( value > 0 )
-				{
-					//
-					// perform Tikhonov regularization if desired
-					//
-					if ( lambda > 0 )
-						value = ( (float)( (Math.sqrt( 1.0 + 2.0*lambda*value ) - 1.0) / lambda ) );
-				}
-				else
-				{
-					value = minValue;
-				}
-	
-				//
-				// get the final value and some statistics
-				//
-				float nextPsiValue;
-	
-				if ( Double.isNaN( value ) )
-					nextPsiValue = (float)minValue;
-				else
-					nextPsiValue = (float)Math.max( minValue, value );
-	
-				// compute the difference between old and new
-				float change = nextPsiValue - lastPsiValue;
-	
-				// apply the appropriate amount
-				change *= raWeight.get().get();
-				nextPsiValue = lastPsiValue + change;
-	
+				float nextPsiValue = computeNextValue( lastPsiValue, raIntegral.get().get(), raWeight.get().get(), lambda );
+
 				// store the new value
 				cursorPsi.get().set( (float)nextPsiValue );
+
+				// statistics
+				final float change = change( lastPsiValue, nextPsiValue );
+				sumChange += change;
+				maxChange = Math.max( maxChange, change );
 			}
+		}
+
+		sumMax[ 0 ] = sumChange;
+		sumMax[ 1 ] = maxChange;
+	}
+
+	private static final float change( final float lastPsiValue, final float nextPsiValue ) { return Math.abs( ( nextPsiValue - lastPsiValue ) ); }
+
+	/**
+	 * compute the next value for a specific pixel
+	 * 
+	 * @param lastPsiValue - the previous value
+	 * @param integralValue - result from the integral
+	 * @param lambda - if > 0, regularization
+	 * @return
+	 */
+	private static final float computeNextValue( final float lastPsiValue, final float integralValue, final float weight, final double lambda )
+	{
+		final float value = lastPsiValue * integralValue;
+		final float adjustedValue;
+
+		if ( value > 0 )
+		{
+			//
+			// perform Tikhonov regularization if desired
+			//
+			if ( lambda > 0 )
+				adjustedValue = (float)tikhonov( value, lambda );
+			else
+				adjustedValue = value;
+		}
+		else
+		{
+			adjustedValue = minValue;
+		}
+
+		//
+		// get the final value and some statistics
+		//
+		final float nextPsiValue;
+
+		if ( Double.isNaN( adjustedValue ) )
+			nextPsiValue = (float)minValue;
+		else
+			nextPsiValue = (float)Math.max( minValue, adjustedValue );
+
+		// compute the difference between old and new and apply the appropriate amount
+		return lastPsiValue + ( ( nextPsiValue - lastPsiValue ) * weight );
+	}
+
+	private static final double tikhonov( final double value, final double lambda ) { return ( Math.sqrt( 1.0 + 2.0*lambda*value ) - 1.0 ) / lambda; }
+
+	public static void main( String[] args )
+	{
+		for ( double d = 0; d < 10; d = d + 0.1 )
+		{
+			System.out.println( d*10000 + ": " + tikhonov( d*10000, 0.0006 ) );
+			System.out.println( d + ": " + tikhonov( d, 0.0006 ) );
 		}
 	}
 }
