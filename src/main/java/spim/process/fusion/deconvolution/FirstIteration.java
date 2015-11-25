@@ -70,6 +70,10 @@ public class FirstIteration implements Callable< Pair< RealSum, Long > >
 		final int m = iterableImgs.size();
 		long count = 0;
 
+		final float[] max = new float[ imgs.size() ];
+		for ( int i = 0; i < max.length; ++i )
+			max[ i ] = 0;
+
 		if ( compatibleIteration )
 		{
 			final ArrayList< Cursor< FloatType > > cursorImgs = new ArrayList< Cursor< FloatType > >();
@@ -82,7 +86,7 @@ public class FirstIteration implements Callable< Pair< RealSum, Long > >
 			}
 
 			for ( int j = 0; j < portion.getLoopSize(); ++j )
-				if ( compatibleLoop( psiCursor, cursorImgs, realSum, m ) > 0 )
+				if ( compatibleLoop( psiCursor, cursorImgs, max, realSum, m ) > 0 )
 					++count;
 		}
 		else
@@ -93,7 +97,7 @@ public class FirstIteration implements Callable< Pair< RealSum, Long > >
 				randomAccessImgs.add( img.randomAccess() );
 
 			for ( int j = 0; j < portion.getLoopSize(); ++j )
-				if ( incompatibleLoop( psiCursor, randomAccessImgs, realSum, m ) > 0 )
+				if ( incompatibleLoop( psiCursor, randomAccessImgs, max, realSum, m ) > 0 )
 					++count;
 		}
 
@@ -103,6 +107,7 @@ public class FirstIteration implements Callable< Pair< RealSum, Long > >
 	private static final int compatibleLoop(
 			final Cursor< FloatType > psiCursor,
 			final ArrayList< Cursor< FloatType > > cursorImgs,
+			final float[] max,
 			final RealSum realSum,
 			final int m )
 	{
@@ -111,10 +116,11 @@ public class FirstIteration implements Callable< Pair< RealSum, Long > >
 
 		for ( int j = 0; j < m; ++j )
 		{
-			final double i = cursorImgs.get( j ).next().get();
+			final float i = cursorImgs.get( j ).next().get();
 
 			if ( i > 0 )
 			{
+				max[ j ] = Math.max( max[ j ], i );
 				sum += i;
 				++count;
 			}
@@ -137,6 +143,7 @@ public class FirstIteration implements Callable< Pair< RealSum, Long > >
 	private static final int incompatibleLoop(
 			final Cursor< FloatType > psiCursor,
 			final ArrayList< RandomAccess< FloatType > > randomAccessImgs,
+			final float[] max,
 			final RealSum realSum,
 			final int m )
 	{
@@ -149,10 +156,11 @@ public class FirstIteration implements Callable< Pair< RealSum, Long > >
 			final RandomAccess< FloatType > randomAccessImg = randomAccessImgs.get( j );
 			randomAccessImg.setPosition( psiCursor );
 
-			final double i = randomAccessImg.get().get();
+			final float i = randomAccessImg.get().get();
 
 			if ( i > 0 )
 			{
+				max[ j ] = Math.max( max[ j ], i );
 				sum += i;
 				++count;
 			}
