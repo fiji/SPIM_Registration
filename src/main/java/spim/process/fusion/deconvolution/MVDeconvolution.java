@@ -28,7 +28,7 @@ import net.imglib2.util.RealSum;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import spim.Threads;
-import spim.fiji.ImgLib2Temp.Pair;
+import spim.fiji.ImgLib2Temp.Triple;
 import spim.fiji.spimdata.imgloaders.LegacyStackImgLoaderIJ;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
@@ -55,6 +55,9 @@ public class MVDeconvolution
 	CompositeImage ci;
 
 	boolean collectStatistics = true;
+
+	// max intensities for each contributing view
+	final float[] max;
 
 	// current iteration
 	int i = 0;
@@ -86,6 +89,7 @@ public class MVDeconvolution
 		this.numViews = data.size();
 		this.numDimensions = data.get( 0 ).getImage().numDimensions();
 		this.lambda = lambda;
+		this.max = new float[ numViews ];
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Deconvolved & temporary image factory: " + views.imgFactory().getClass().getSimpleName() );
 
@@ -110,7 +114,10 @@ public class MVDeconvolution
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Fusing image for first iteration" );
 
 			this.psi = views.imgFactory().create( data.get( 0 ).getImage(), new FloatType() );
-			double avg = fuseFirstIteration( psi, views.getViews() );
+			double avg = fuseFirstIteration( psi, views.getViews(), max );
+
+			for ( int i = 0; i < max.length; ++i )
+				IOFunctions.println( "Max intensity in overlapping area of view " + i + ": " + max[ i ] );
 
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Average intensity in overlapping area: " + avg );
 
@@ -178,7 +185,7 @@ public class MVDeconvolution
 		}
 
 		IOFunctions.println( "Masking never updated pixels." );
-		fuseFirstIteration( tmp1, views.getViews() );
+		maskNeverUpdatedPixels( tmp1, views.getViews() );
 
 		final Cursor< FloatType > tmp1c = tmp1.cursor();
 
@@ -189,14 +196,19 @@ public class MVDeconvolution
 		IOFunctions.println( "DONE (" + new Date(System.currentTimeMillis()) + ")." );
 	}
 
-	protected static final double fuseFirstIteration( final Img< FloatType > psi, final ArrayList< MVDeconFFT > views )
+	protected static final void maskNeverUpdatedPixels( final Img< FloatType > psi, final ArrayList< MVDeconFFT > views )
+	{
+		fuseFirstIteration( psi, views, null );
+	}
+
+	protected static final double fuseFirstIteration( final Img< FloatType > psi, final ArrayList< MVDeconFFT > views, final float[] max )
 	{
 		final int nThreads = Threads.numThreads();
 		final int nPortions = nThreads * 2;
 
 		// split up into many parts for multithreading
 		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( psi.size(), nPortions );
-		final ArrayList< Callable< Pair< RealSum, Long > > > tasks = new ArrayList< Callable< Pair< RealSum, Long > > >();
+		final ArrayList< Callable< Triple< RealSum, Long, float[] > > > tasks = new ArrayList< Callable< Triple< RealSum, Long, float[] > > >();
 
 		final ExecutorService taskExecutor = Executors.newFixedThreadPool( nThreads );
 
@@ -214,12 +226,16 @@ public class MVDeconvolution
 		try
 		{
 			// invokeAll() returns when all tasks are complete
-			final List< Future< Pair< RealSum, Long > > > imgIntensities = taskExecutor.invokeAll( tasks );
+			final List< Future< Triple< RealSum, Long, float[] > > > imgIntensities = taskExecutor.invokeAll( tasks );
 
-			for ( final Future< Pair< RealSum, Long >  > future : imgIntensities )
+			for ( final Future< Triple< RealSum, Long, float[] >  > future : imgIntensities )
 			{
 				s.add( future.get().getA().getSum() );
 				count += future.get().getB().longValue();
+
+				if ( max != null )
+					for ( int i = 0; i < max.length; ++i )
+						max[ i ] = Math.max( max[ i ], future.get().getC()[ i ] );
 			}
 		}
 		catch ( final Exception e )

@@ -10,8 +10,8 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.RealSum;
 import net.imglib2.view.Views;
-import spim.fiji.ImgLib2Temp.Pair;
-import spim.fiji.ImgLib2Temp.ValuePair;
+import spim.fiji.ImgLib2Temp.Triple;
+import spim.fiji.ImgLib2Temp.ValueTriple;
 import spim.process.fusion.ImagePortion;
 
 /**
@@ -21,7 +21,7 @@ import spim.process.fusion.ImagePortion;
  *
  * @param <T>
  */
-public class FirstIteration implements Callable< Pair< RealSum, Long > >
+public class FirstIteration implements Callable< Triple< RealSum, Long, float[] > >
 {
 	final ImagePortion portion;
 	final RandomAccessibleInterval< FloatType > psi;
@@ -62,7 +62,7 @@ public class FirstIteration implements Callable< Pair< RealSum, Long > >
 	}
 
 	@Override
-	public Pair< RealSum, Long > call() throws Exception 
+	public Triple< RealSum, Long, float[] > call()
 	{
 		final Cursor< FloatType > psiCursor = psiIterable.localizingCursor();
 		psiCursor.jumpFwd( portion.getStartPosition() );
@@ -101,7 +101,7 @@ public class FirstIteration implements Callable< Pair< RealSum, Long > >
 					++count;
 		}
 
-		return new ValuePair< RealSum, Long >( realSum, new Long( count ) );
+		return new ValueTriple< RealSum, Long, float[] >( realSum, new Long( count ), max );
 	}
 
 	private static final int compatibleLoop(
