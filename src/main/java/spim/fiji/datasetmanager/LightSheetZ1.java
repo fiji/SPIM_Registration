@@ -4,7 +4,6 @@ import fiji.util.gui.GenericDialogPlus;
 import ij.gui.GenericDialog;
 
 import java.awt.Font;
-import java.awt.Label;
 import java.io.File;
 import java.util.ArrayList;
 
@@ -245,24 +244,20 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 
 		gd.addMessage( "Calibration", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
 		gd.addCheckbox( "Modify_calibration", defaultModifyCal );
-		gd.addMessage( "Pixel Distances" );
-		( (Label)gd.getMessage() ).setText(
-				"Pixel Distance X: " + meta.calX() + " " + meta.calUnit() + "\n" +
-				"Pixel Distance Y: " + meta.calY() + " " + meta.calUnit() + "\n" +
-				"Pixel Distance Z: " + meta.calZ() + " " + meta.calUnit() + "\n"  );
+		gd.addMessage( "Pixel Distance X: " + meta.calX() + " " + meta.calUnit() );
+		gd.addMessage( "Pixel Distance Y: " + meta.calY() + " " + meta.calUnit() );
+		gd.addMessage( "Pixel Distance Z: " + meta.calZ() + " " + meta.calUnit() );
 
 		gd.addMessage( "Additional Meta Data", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
 		gd.addMessage( "" );
 		gd.addCheckbox( "Modify_rotation_axis", defaultRotAxis );
 		gd.addCheckbox( "Apply_rotation_to_dataset", defaultApplyRotAxis );
 
-		gd.addMessage( "additional", new Font( Font.SANS_SERIF, Font.ITALIC, 11 )  );
-		( (Label)gd.getMessage() ).setText(
-				"Acquisition Objective: " + meta.objective() + "\n" +
-				"Rotation axis: " + meta.rotationAxisName() + " axis\n" + 
-				(meta.lightsheetThickness() < 0 ? "" : "Lighsheet thickness: " + meta.lightsheetThickness() + " um\n") +
-				"Pixel type: " + meta.pixelTypeString() + " (" + meta.bytesPerPixel() + " byte per pixel)" );
-		
+		gd.addMessage( "Acquisition Objective: " + meta.objective(), new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
+		gd.addMessage( "Rotation axis: " + meta.rotationAxisName() + " axis", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
+		gd.addMessage( (meta.lightsheetThickness() < 0 ? "" : "Lighsheet thickness: " + meta.lightsheetThickness() + " um"), new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
+		gd.addMessage( "Pixel type: " + meta.pixelTypeString() + " (" + meta.bytesPerPixel() + " byte per pixel)", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
+
 		IOFunctions.println( "Dataset directory: " + new File( meta.files()[ 0 ] ).getParent() );
 		IOFunctions.println( "Dataset files:" );
 
@@ -276,7 +271,7 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		GUIHelper.addScrollBars( gd );
 
 		gd.showDialog();
-		
+
 		if ( gd.wasCanceled() )
 			return false;
 
