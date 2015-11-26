@@ -343,7 +343,7 @@ public class MVDeconvolution
 
 	public void runIteration()
 	{
-		runIteration( psi, tmp1, tmp2, data, lambda, minValue, collectStatistics, i++ );
+		runIteration( psi, tmp1, tmp2, data, lambda, max, minValue, collectStatistics, i++ );
 	}
 
 	final private static void runIteration(
@@ -352,6 +352,7 @@ public class MVDeconvolution
 			final Img< FloatType > tmp2, // a temporary image using the same ImgFactory as PSI
 			final ArrayList< MVDeconFFT > data,
 			final double lambda,
+			final float[] maxIntensities,
 			final float minValue,
 			final boolean collectStatistic,
 			final int iteration )
@@ -366,8 +367,10 @@ public class MVDeconvolution
 		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( psi.size(), nPortions );
 		final ArrayList< Callable< Void > > tasks = new ArrayList< Callable< Void > >();
 
-		for ( int view = 0; view < numViews; ++view )
+		for ( int v = 0; v < numViews; ++v )
 		{
+			final int view = v;
+
 			final MVDeconFFT processingData = data.get( view );
 
 			//
@@ -429,7 +432,7 @@ public class MVDeconvolution
 					@Override
 					public Void call() throws Exception
 					{
-						computeFinalValues( portion.getStartPosition(), portion.getLoopSize(), psi, tmp2, processingData.getWeight(), lambda, sumMax[ portionId ] );
+						computeFinalValues( portion.getStartPosition(), portion.getLoopSize(), psi, tmp2, processingData.getWeight(), lambda, maxIntensities[ view ], sumMax[ portionId ] );
 						return null;
 					}
 				});
@@ -609,12 +612,6 @@ public class MVDeconvolution
 	/**
 	 * One thread of a method to compute the final values of one iteration of the multiview deconvolution
 	 * 
-	 * @param start
-	 * @param loopSize
-	 * @param psi
-	 * @param integral
-	 * @param weight
-	 * @param lambda
 	 */
 	private static final void computeFinalValues(
 			final long start,
@@ -623,6 +620,7 @@ public class MVDeconvolution
 			final RandomAccessibleInterval< FloatType > integral,
 			final RandomAccessibleInterval< FloatType > weight,
 			final double lambda,
+			final float maxIntensity,
 			final double[] sumMax )
 	{
 		double sumChange = 0;
@@ -652,7 +650,7 @@ public class MVDeconvolution
 	
 				// get the final value
 				final float lastPsiValue = cursorPsi.get().get();
-				final float nextPsiValue = computeNextValue( lastPsiValue, cursorIntegral.get().get(), cursorWeight.get().get(), lambda );
+				final float nextPsiValue = computeNextValue( lastPsiValue, cursorIntegral.get().get(), cursorWeight.get().get(), lambda, maxIntensity );
 				
 				// store the new value
 				cursorPsi.get().set( (float)nextPsiValue );
@@ -679,7 +677,7 @@ public class MVDeconvolution
 
 				// get the final value
 				final float lastPsiValue = cursorPsi.get().get();
-				float nextPsiValue = computeNextValue( lastPsiValue, raIntegral.get().get(), raWeight.get().get(), lambda );
+				float nextPsiValue = computeNextValue( lastPsiValue, raIntegral.get().get(), raWeight.get().get(), lambda, maxIntensity );
 
 				// store the new value
 				cursorPsi.get().set( (float)nextPsiValue );
@@ -703,9 +701,10 @@ public class MVDeconvolution
 	 * @param lastPsiValue - the previous value
 	 * @param integralValue - result from the integral
 	 * @param lambda - if > 0, regularization
+	 * @param maxIntensity - to normalize lambda (works between 0...1)
 	 * @return
 	 */
-	private static final float computeNextValue( final float lastPsiValue, final float integralValue, final float weight, final double lambda )
+	private static final float computeNextValue( final float lastPsiValue, final float integralValue, final float weight, final double lambda, final float maxIntensity )
 	{
 		final float value = lastPsiValue * integralValue;
 		final float adjustedValue;
@@ -716,7 +715,7 @@ public class MVDeconvolution
 			// perform Tikhonov regularization if desired
 			//
 			if ( lambda > 0 )
-				adjustedValue = (float)tikhonov( value, lambda );
+				adjustedValue = (float)tikhonov( value / maxIntensity, lambda ) * maxIntensity;
 			else
 				adjustedValue = value;
 		}
