@@ -96,6 +96,23 @@ public class MVDeconvolution
 		// init all views
 		views.init( iterationType );
 
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Fusing image for first iteration" );
+
+		this.psi = views.imgFactory().create( data.get( 0 ).getImage(), new FloatType() );
+
+		double avg = fuseFirstIteration( psi, views.getViews(), max );
+
+		double avgMax = 0;
+		for ( int i = 0; i < max.length; ++i )
+		{
+			avgMax += max[ i ];
+			IOFunctions.println( "Max intensity in overlapping area of view " + i + ": " + max[ i ] );
+		}
+		avgMax /= (double)max.length;
+
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Average intensity in overlapping area: " + avg );
+
+		
 		if ( initialImage != null )
 		{
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Loading intial image '" + initialImage + "'" );
@@ -108,27 +125,14 @@ public class MVDeconvolution
 		}
 		else
 		{
-			// the real data image psi is initialized with the fused image 
-			// if there was no initial guess loaded
-
-			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Fusing image for first iteration" );
-
-			this.psi = views.imgFactory().create( data.get( 0 ).getImage(), new FloatType() );
-			double avg = fuseFirstIteration( psi, views.getViews(), max );
-
-			for ( int i = 0; i < max.length; ++i )
-				IOFunctions.println( "Max intensity in overlapping area of view " + i + ": " + max[ i ] );
-
-			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Average intensity in overlapping area: " + avg );
-
 			if ( Double.isNaN( avg ) )
 			{
 				avg = 0.5;
 				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): ERROR! Computing average FAILED, is NaN, setting it to: " + avg );
 			}
-
+	
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting image to average intensity: " + avg );
-
+	
 			for ( final FloatType t : psi )
 				t.set( (float)avg );
 		}
@@ -147,7 +151,7 @@ public class MVDeconvolution
 			{
 				// if it is slices, wrap & copy otherwise virtual & copy - never use the actual image
 				// as it is being updated in the process
-				final ImagePlus tmp = DisplayImage.getImagePlusInstance( psi, true, "Psi", 0, 1 ).duplicate();
+				final ImagePlus tmp = DisplayImage.getImagePlusInstance( psi, true, "Psi", 0, avgMax ).duplicate();
 
 				if ( this.stack == null )
 				{
@@ -380,7 +384,7 @@ public class MVDeconvolution
 
 			processingData.convolve1( psi, tmp1 );
 
-			new DisplayImage().exportImage( tmp1, "tmp1" );
+			//new DisplayImage().exportImage( tmp1, "tmp1" );
 
 			//
 			// compute quotient img/psiBlurred
@@ -401,8 +405,8 @@ public class MVDeconvolution
 
 			execTasks( tasks, nThreads, "compute quotient" );
 
-			new DisplayImage().exportImage( processingData.getImage(), "img" );
-			new DisplayImage().exportImage( tmp1, "quotient" );
+			//new DisplayImage().exportImage( processingData.getImage(), "img" );
+			//new DisplayImage().exportImage( tmp1, "quotient" );
 
 			//
 			// blur the residuals image with the kernel
@@ -413,7 +417,7 @@ public class MVDeconvolution
 			//
 			processingData.convolve2( tmp1, tmp2 );
 
-			new DisplayImage().exportImage( tmp2, "quotient blurred" );
+			//new DisplayImage().exportImage( tmp2, "quotient blurred" );
 
 			//
 			// compute final values
@@ -452,11 +456,11 @@ public class MVDeconvolution
 
 			IOFunctions.println( "iteration: " + iteration + ", view: " + view + " --- sum change: " + sumChange + " --- max change per pixel: " + maxChange );
 			
-			new DisplayImage().exportImage( processingData.getWeight(), "weight" );
-			new DisplayImage().exportImage( psi, "psi new" );
+			//new DisplayImage().exportImage( processingData.getWeight(), "weight" );
+			//new DisplayImage().exportImage( psi, "psi new" );
 		}
 
-		SimpleMultiThreading.threadHaltUnClean();
+		//SimpleMultiThreading.threadHaltUnClean();
 	}
 
 	private static final void execTasks( final ArrayList< Callable< Void > > tasks, final int nThreads, final String jobDescription )
