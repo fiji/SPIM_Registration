@@ -4,6 +4,7 @@ import fiji.util.gui.GenericDialogPlus;
 import ij.gui.GenericDialog;
 
 import java.awt.Font;
+import java.awt.Label;
 import java.io.File;
 import java.util.ArrayList;
 
@@ -244,22 +245,23 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 
 		gd.addMessage( "Calibration", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
 		gd.addCheckbox( "Modify_calibration", defaultModifyCal );
-		gd.addMessage(
+		gd.addMessage( "Pixel Distances" );
+		( (Label)gd.getMessage() ).setText(
 				"Pixel Distance X: " + meta.calX() + " " + meta.calUnit() + "\n" +
 				"Pixel Distance Y: " + meta.calY() + " " + meta.calUnit() + "\n" +
-				"Pixel Distance Z: " + meta.calZ() + " " + meta.calUnit() + "\n" );
+				"Pixel Distance Z: " + meta.calZ() + " " + meta.calUnit() + "\n"  );
 
 		gd.addMessage( "Additional Meta Data", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
 		gd.addMessage( "" );
 		gd.addCheckbox( "Modify_rotation_axis", defaultRotAxis );
 		gd.addCheckbox( "Apply_rotation_to_dataset", defaultApplyRotAxis );
 
-		gd.addMessage(
+		gd.addMessage( "additional", new Font( Font.SANS_SERIF, Font.ITALIC, 11 )  );
+		( (Label)gd.getMessage() ).setText(
 				"Acquisition Objective: " + meta.objective() + "\n" +
 				"Rotation axis: " + meta.rotationAxisName() + " axis\n" + 
 				(meta.lightsheetThickness() < 0 ? "" : "Lighsheet thickness: " + meta.lightsheetThickness() + " um\n") +
-				"Pixel type: " + meta.pixelTypeString() + " (" + meta.bytesPerPixel() + " byte per pixel)",
-				new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
+				"Pixel type: " + meta.pixelTypeString() + " (" + meta.bytesPerPixel() + " byte per pixel)" );
 		
 		IOFunctions.println( "Dataset directory: " + new File( meta.files()[ 0 ] ).getParent() );
 		IOFunctions.println( "Dataset files:" );
@@ -269,7 +271,7 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 
 		IOFunctions.println( "Image sizes:" );
 		for ( int a = 0; a < meta.numAngles(); ++a )
-			IOFunctions.println( "Angle " + meta.angles()[ a ] + ": " + Util.printCoordinates( meta.imageSizes().get( a ) ) );
+			IOFunctions.println( "Angle " + meta.angles()[ a ] + ": " + Util.printCoordinates( meta.imageSizes().get( a ) ) + " px." );
 
 		GUIHelper.addScrollBars( gd );
 
@@ -364,7 +366,8 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		//defaultFirstFile = "/Volumes/My Passport/worm7/Track1(3).czi";
 		//defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/130706_Aiptasia8.czi";
 		//defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/abe_Arabidopsis1.czi";
-		defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/multiview.czi";
+		//defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/multiview.czi";
+		defaultFirstFile = "/Users/spreibi/Downloads/007-H2B-GFP-LA-mKate2-220min-E03_E04.czi";
 		//defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/worm7/Track1.czi";
 		new LightSheetZ1().createDataset();
 	}
