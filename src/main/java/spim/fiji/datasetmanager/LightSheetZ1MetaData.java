@@ -145,8 +145,11 @@ public class LightSheetZ1MetaData
 			{
 				r.setSeries( a );
 
-				int w = r.getSizeX();
-				int h = r.getSizeY();
+				final int w = r.getSizeX();
+				final int h = r.getSizeY();
+
+				IOFunctions.println( "Querying information for angle/illumination #" + a );
+
 				double dimZ = getDouble( metaData, "Information|Image|V|View|SizeZ #" + StackList.leadingZeros( Integer.toString( a+1 ), numDigits ) );
 
 				if ( Double.isNaN( dimZ ) )
@@ -158,10 +161,13 @@ public class LightSheetZ1MetaData
 				if ( Double.isNaN( dimZ ) )
 					dimZ = getDouble( metaData, "SizeZ|View|V|Image|Information #" + Integer.toString( a+1 ) );
 
+				if ( numA == 1 && Double.isNaN( dimZ ) )
+					dimZ = getDouble( metaData, "Information|Image|SizeZ #1" );
+
 				if ( Double.isNaN( dimZ ) )
 					throw new RuntimeException( "Could not read stack size for angle " + a + ", stopping." );
 
-				int d = (int)Math.round( dimZ );
+				final int d = (int)Math.round( dimZ );
 
 				imageSizes.put( a, new int[]{ w, h, d } );
 

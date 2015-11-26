@@ -42,7 +42,7 @@ public class GeometricHashingPairwise implements Callable< PairwiseMatch >
 	}
 	
 	@Override
-	public PairwiseMatch call() throws Exception 
+	public PairwiseMatch call()
 	{
 		final GeometricHasher hasher = new GeometricHasher();
 		
