@@ -174,16 +174,90 @@
 		<developer>
 			<id>StephanPreibisch</id>
 			<name>Stephan Preibisch</name>
-			<email>stephan.preibisch@einstein.yu.edu</email>
-			<url>http://www.preibisch.net/</url>
-			<organization>Albert Einstein College of Medicine</organization>
+			<email>stephan.preibisch@gmx.de</email>
+			<url>http://fly.mpi-cbg.de/~preibisch/</url>
+			<organization>MPI-CBG at Dresden</organization>
+			<organizationUrl>http://mpi-cbg.de/</organizationUrl>
 			<roles>
-				<role>architect</role>
+				<role>founder</role>
+				<role>lead</role>
 				<role>developer</role>
+				<role>debugger</role>
+				<role>reviewer</role>
+				<role>support</role>
+				<role>maintainer</role>
 			</roles>
-			<timezone>-5</timezone>
+			<timezone>+1</timezone>
+		</developer>
+		<developer>
+			<id>ctrueden</id>
+			<name>Curtis Rueden</name>
+			<email>ctrueden@wisc.edu</email>
+			<url>http://loci.wisc.edu/people/curtis-rueden</url>
+			<organization>UW-Madison LOCI</organization>
+			<organizationUrl>http://loci.wisc.edu/</organizationUrl>
+			<roles>
+				<role>maintainer</role>
+			</roles>
+			<timezone>-6</timezone>
+		</developer>
+		<developer>
+			<id>hinerm</id>
+			<name>Mark Hiner</name>
+			<email>hiner@wisc.edu</email>
+			<url>http://loci.wisc.edu/people/mark-hiner</url>
+			<organization>UW-Madison LOCI</organization>
+			<organizationUrl>http://loci.wisc.edu/</organizationUrl>
+			<roles>
+				<role>maintainer</role>
+			</roles>
+			<timezone>-6</timezone>
 		</developer>
 	</developers>
+	<contributors>
+		<contributor>
+			<name>Johannes Schindelin</name>
+			<url>http://imagej.net/User:Schindelin</url>
+			<properties><id>dscho</id></properties>
+		</contributor>
+		<contributor>
+			<name>Tobias Pietzsch</name>
+			<url>http://imagej.net/User:Pietzsch</url>
+			<properties><id>tpietzsch</id></properties>
+		</contributor>
+		<contributor>
+			<name>Fernando Amat</name>
+			<properties><id>fernandoamat</id></properties>
+		</contributor>
+		<contributor>
+			<name>Christian Dietz</name>
+			<url>http://imagej.net/User:Dietzc</url>
+			<properties><id>dietzc</id></properties>
+		</contributor>
+		<contributor>
+			<name>Stephan Janosch</name>
+			<url>http://imagej.net/User:StephanJanosch</url>
+			<properties><id>StephanJanosch</id></properties>
+		</contributor>
+		<contributor>
+			<name>Stephan Saalfeld</name>
+			<url>http://imagej.net/User:Saalfeld</url>
+			<properties><id>axtimwalde</id></properties>
+		</contributor>
+		<contributor>
+			<name>Christopher Schmied</name>
+			<properties><id>schmiedc</id></properties>
+		</contributor>
+		<contributor>
+			<name>Peter Steinbach</name>
+			<properties><id>psteinb</id></properties>
+		</contributor>
+		<contributor>
+			<name>Nico Stuurman</name>
+			<url>http://imagej.net/User:Nico</url>
+			<properties><id>nicost</id></properties>
+		</contributor>
+	</contributors>
 
 	<ciManagement>
 		<system>Jenkins</system>
