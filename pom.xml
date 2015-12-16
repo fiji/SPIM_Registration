@@ -111,11 +111,15 @@
 	</contributors>
 
 	<scm>
-		<connection>scm:git:git://github.com/fiji/spimreconstruction</connection>
-		<developerConnection>scm:git:git@github.com:fiji/spimreconstruction</developerConnection>
+		<connection>scm:git:git://github.com/fiji/SPIM_Registration</connection>
+		<developerConnection>scm:git:git@github.com:fiji/SPIM_Registration</developerConnection>
 		<tag>HEAD</tag>
-		<url>https://github.com/fiji/spimreconstruction</url>
+		<url>https://github.com/fiji/SPIM_Registration</url>
 	</scm>
+	<issueManagement>
+		<system>GitHub Issues</system>
+		<url>https://github.com/fiji/SPIM_Registration/issues</url>
+	</issueManagement>
 	<ciManagement>
 		<system>Jenkins</system>
 		<url>http://jenkins.imagej.net/job/SPIM_Registration/</url>
