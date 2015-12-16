@@ -3,7 +3,7 @@ package mpicbg.spim.simulation;
 import java.util.ArrayList;
 import java.util.Random;
 
-import javax.vecmath.Point3f;
+import org.scijava.vecmath.Point3f;
 
 import mpicbg.spim.fusion.SPIMImageFusion;
 import mpicbg.spim.io.IOFunctions;

@@ -1,6 +1,6 @@
 package mpicbg.spim.vis3d;
 
-import com.sun.j3d.utils.geometry.Sphere;
+import org.scijava.java3d.utils.geometry.Sphere;
 
 import ij3d.Content;
 import ij3d.Image3DUniverse;
@@ -11,18 +11,18 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Random;
 
-import javax.media.j3d.Appearance;
-import javax.media.j3d.BranchGroup;
-import javax.media.j3d.ColoringAttributes;
-import javax.media.j3d.LineAttributes;
-import javax.media.j3d.Shape3D;
-import javax.media.j3d.Transform3D;
-import javax.media.j3d.TransformGroup;
-import javax.media.j3d.TransparencyAttributes;
-import javax.vecmath.Color3f;
-import javax.vecmath.Point3d;
-import javax.vecmath.Point3f;
-import javax.vecmath.Vector3f;
+import org.scijava.java3d.Appearance;
+import org.scijava.java3d.BranchGroup;
+import org.scijava.java3d.ColoringAttributes;
+import org.scijava.java3d.LineAttributes;
+import org.scijava.java3d.Shape3D;
+import org.scijava.java3d.Transform3D;
+import org.scijava.java3d.TransformGroup;
+import org.scijava.java3d.TransparencyAttributes;
+import org.scijava.vecmath.Color3f;
+import org.scijava.vecmath.Point3d;
+import org.scijava.vecmath.Point3f;
+import org.scijava.vecmath.Vector3f;
 
 import mpicbg.models.Point;
 import mpicbg.spim.registration.ViewDataBeads;

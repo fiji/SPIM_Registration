@@ -7,11 +7,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import javax.media.j3d.Transform3D;
-import javax.vecmath.AxisAngle4d;
-import javax.vecmath.Matrix4d;
-import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
+import org.scijava.java3d.Transform3D;
+import org.scijava.vecmath.AxisAngle4d;
+import org.scijava.vecmath.Matrix4d;
+import org.scijava.vecmath.Point3d;
+import org.scijava.vecmath.Vector3d;
 
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;

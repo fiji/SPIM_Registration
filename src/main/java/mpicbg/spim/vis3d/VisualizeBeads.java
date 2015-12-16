@@ -9,8 +9,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
-import javax.media.j3d.LineAttributes;
-import javax.vecmath.Color3f;
+import org.scijava.java3d.LineAttributes;
+import org.scijava.vecmath.Color3f;
 
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.models.AffineModel3D;
