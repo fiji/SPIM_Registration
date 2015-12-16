@@ -2,8 +2,8 @@ package mpicbg.pointdescriptor.model;
 
 import java.util.Collection;
 
-import javax.vecmath.Matrix3d;
-import javax.vecmath.Matrix4d;
+import org.scijava.vecmath.Matrix3d;
+import org.scijava.vecmath.Matrix4d;
 
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;

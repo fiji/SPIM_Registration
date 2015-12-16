@@ -4,7 +4,7 @@ import ij.ImagePlus;
 
 import java.util.ArrayList;
 
-import javax.vecmath.Point3f;
+import org.scijava.vecmath.Point3f;
 
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;

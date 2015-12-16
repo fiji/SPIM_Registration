@@ -1,6 +1,6 @@
 package mpicbg.spim.mpicbg;
 
-import javax.vecmath.Point3d;
+import org.scijava.vecmath.Point3d;
 
 import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.NoninvertibleModelException;

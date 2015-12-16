@@ -123,6 +123,7 @@
 
 	<properties>
 		<scijava.jvm.version>1.7</scijava.jvm.version>
+		<ImageJ_3D_Viewer.version>4.0.0</ImageJ_3D_Viewer.version>
 	</properties>
 
 	<repositories>
@@ -261,19 +262,16 @@
 
 		<!-- Java 3D dependencies -->
 		<dependency>
-			<groupId>java3d</groupId>
-			<artifactId>j3d-core</artifactId>
-			<scope>provided</scope>
+			<groupId>org.scijava</groupId>
+			<artifactId>j3dcore</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>java3d</groupId>
-			<artifactId>j3d-core-utils</artifactId>
-			<scope>provided</scope>
+			<groupId>org.scijava</groupId>
+			<artifactId>j3dutils</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>java3d</groupId>
+			<groupId>org.scijava</groupId>
 			<artifactId>vecmath</artifactId>
-			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 </project>

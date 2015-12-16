@@ -7,12 +7,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Random;
 
-import javax.media.j3d.Transform3D;
-import javax.vecmath.Color3f;
-import javax.vecmath.Matrix3f;
-import javax.vecmath.Point3f;
-import javax.vecmath.Quat4f;
-import javax.vecmath.Vector3f;
+import org.scijava.java3d.Transform3D;
+import org.scijava.vecmath.Color3f;
+import org.scijava.vecmath.Matrix3f;
+import org.scijava.vecmath.Point3f;
+import org.scijava.vecmath.Quat4f;
+import org.scijava.vecmath.Vector3f;
 
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.Point;
