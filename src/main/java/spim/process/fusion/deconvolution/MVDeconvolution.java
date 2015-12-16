@@ -361,7 +361,8 @@ public class MVDeconvolution
 
 			processingData.convolve1( psi, tmp1 );
 
-			//new DisplayImage().exportImage( tmp1, "tmp1" );
+			new DisplayImage().exportImage( tmp1, "psi" );
+			new DisplayImage().exportImage( tmp1, "psi blurred" );
 
 			//
 			// compute quotient img/psiBlurred
@@ -382,8 +383,8 @@ public class MVDeconvolution
 
 			execTasks( tasks, nThreads, "compute quotient" );
 
-			//new DisplayImage().exportImage( processingData.getImage(), "img" );
-			//new DisplayImage().exportImage( tmp1, "quotient" );
+			new DisplayImage().exportImage( processingData.getImage(), "img" );
+			new DisplayImage().exportImage( tmp1, "quotient" );
 
 			//
 			// blur the residuals image with the kernel
@@ -394,7 +395,7 @@ public class MVDeconvolution
 			//
 			processingData.convolve2( tmp1, tmp2 );
 
-			//new DisplayImage().exportImage( tmp2, "quotient blurred" );
+			new DisplayImage().exportImage( tmp2, "quotient blurred" );
 
 			//
 			// compute final values
@@ -433,11 +434,12 @@ public class MVDeconvolution
 
 			IOFunctions.println( "iteration: " + iteration + ", view: " + view + " --- sum change: " + sumChange + " --- max change per pixel: " + maxChange );
 			
-			//new DisplayImage().exportImage( processingData.getWeight(), "weight" );
-			//new DisplayImage().exportImage( psi, "psi new" );
+			new DisplayImage().exportImage( processingData.getWeight(), "weight" );
+			new DisplayImage().exportImage( psi, "psi new" );
+			SimpleMultiThreading.threadHaltUnClean();
 		}
 
-		//SimpleMultiThreading.threadHaltUnClean();
+		SimpleMultiThreading.threadHaltUnClean();
 	}
 
 	private static final void execTasks( final ArrayList< Callable< Void > > tasks, final int nThreads, final String jobDescription )

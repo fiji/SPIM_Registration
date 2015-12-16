@@ -148,7 +148,8 @@ public class WeightNormalizer
 				countViews += count;
 				minNumViews = Math.min( minNumViews, count );
 
-				if ( sumW > 1 )
+				// something in between ... I would say, now we have hard edges where the image stacks end
+				//if ( sumW > 1 )
 					apply( cursors, sumW );
 			}
 

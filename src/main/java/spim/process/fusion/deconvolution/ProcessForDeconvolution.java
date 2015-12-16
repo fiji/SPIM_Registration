@@ -28,6 +28,7 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
@@ -294,7 +295,10 @@ public class ProcessForDeconvolution
 		final ArrayList< RandomAccessibleInterval< FloatType > > weightsSorted = new ArrayList< RandomAccessibleInterval< FloatType > >();
 
 		for ( final ViewDescription vd : viewDescriptions )
+		{
 			weightsSorted.add( weights.get( vd ) );
+			new DisplayImage().exportImage(  weights.get( vd ), "w " + vd.getViewSetupId() );
+		}
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Computing weight normalization for deconvolution." );
 
@@ -312,7 +316,10 @@ public class ProcessForDeconvolution
 
 		// put the potentially modified weights back
 		for ( int i = 0; i < viewDescriptions.size(); ++i )
+		{
 			weights.put( viewDescriptions.get( i ), weightsSorted.get( i ) );
+			new DisplayImage().exportImage( weightsSorted.get( i ), "w " + i );
+		}
 
 		if ( wn != null )
 		{
@@ -336,6 +343,8 @@ public class ProcessForDeconvolution
 			adjustForOSEM( weights, weightType, osemspeedup );
 
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Finished precomputations for deconvolution." );
+
+		SimpleMultiThreading.threadHaltUnClean();
 
 		return true;
 	}
