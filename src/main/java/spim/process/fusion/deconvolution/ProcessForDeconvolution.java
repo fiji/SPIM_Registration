@@ -209,7 +209,7 @@ public class ProcessForDeconvolution
 				else
 					inputImg = spimData.getSequenceDescription().getImgLoader().getSetupImgLoader( vd.getViewSetupId() ).getImage( vd.getTimePointId() );
 
-				if ( Img.class.isInstance( inputImg ) )
+				if ( Img.class.isInstance( inputImg ) && ((Img< ? >)inputImg).factory() != null )
 					IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Input image factory: " + ((Img< ? >)inputImg).factory().getClass().getSimpleName() );
 
 				inputImgInterval = new FinalInterval( inputImg );
