@@ -13,6 +13,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import bdv.img.hdf5.Hdf5ImageLoader;
 import bdv.util.ConstantRandomAccessible;
 import ij.ImagePlus;
 import mpicbg.spim.data.sequence.Angle;
@@ -209,8 +210,15 @@ public class ProcessForDeconvolution
 				else
 					inputImg = spimData.getSequenceDescription().getImgLoader().getSetupImgLoader( vd.getViewSetupId() ).getImage( vd.getTimePointId() );
 
-				if ( Img.class.isInstance( inputImg ) && ((Img< ? >)inputImg).factory() != null )
-					IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Input image factory: " + ((Img< ? >)inputImg).factory().getClass().getSimpleName() );
+				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Input image class: " + inputImg.getClass().getSimpleName() );
+				
+				if ( Img.class.isInstance( inputImg ) )
+				{
+					if ( ((Img< ? >)inputImg).factory() == null )
+						IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Input image factory: NULL" );
+					else
+						IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Input image factory: " + ((Img< ? >)inputImg).factory().getClass().getSimpleName() );
+				}
 
 				inputImgInterval = new FinalInterval( inputImg );
 			}
