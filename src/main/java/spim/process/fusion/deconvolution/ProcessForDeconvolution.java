@@ -1,6 +1,7 @@
 package spim.process.fusion.deconvolution;
 
 import static mpicbg.spim.data.generic.sequence.ImgLoaderHints.LOAD_COMPLETELY;
+import ij.ImagePlus;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -13,9 +14,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import bdv.img.hdf5.Hdf5ImageLoader;
-import bdv.util.ConstantRandomAccessible;
-import ij.ImagePlus;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
@@ -30,14 +28,11 @@ import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.converter.RealFloatConverter;
-import net.imglib2.converter.read.ConvertedRandomAccessible;
 import net.imglib2.converter.read.ConvertedRandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.realtransform.AffineTransform3D;
-import net.imglib2.type.Type;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
@@ -56,6 +51,7 @@ import spim.process.fusion.export.DisplayImage;
 import spim.process.fusion.weights.Blending;
 import spim.process.fusion.weights.NormalizingRandomAccessibleInterval;
 import spim.process.fusion.weights.TransformedRealRandomAccessible;
+import bdv.util.ConstantRandomAccessible;
 
 /**
  * Fused individual images for each input stack, uses the exporter directly
