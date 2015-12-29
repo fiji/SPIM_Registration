@@ -109,7 +109,8 @@ public class Data_Explorer implements PlugIn
 	public static void main( String[] args )
 	{
 		new ImageJ();
-		GenericLoadParseQueryXML.defaultXMLfilename = "/Users/spreibi/Documents/Microscopy/SPIM/HisYFP-SPIM//dataset.xml";
+//		GenericLoadParseQueryXML.defaultXMLfilename = "/Users/spreibi/Documents/Microscopy/SPIM/HisYFP-SPIM//dataset.xml";
+		GenericLoadParseQueryXML.defaultXMLfilename = "/Users/moon/Desktop/ome/dataset.xml";
 		new Data_Explorer().run( null );
 	}
 }

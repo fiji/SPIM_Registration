@@ -22,7 +22,10 @@ import loci.formats.meta.MetadataRetrieve;
 import loci.formats.services.OMEXMLService;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
+import mpicbg.spim.data.generic.sequence.BasicViewSetup;
+import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
@@ -318,6 +321,19 @@ public class LegacyStackImgLoaderLOCI extends LegacyStackImgLoader
 		final int planeX = 0;
 		final int planeY = 1;
 
+		// We have to treat the group files differently.
+		if(r.isGroupFiles())
+		{
+			final Angle angle = getAngle( viewDescription );
+			r.setSeries( angle.getId() );
+
+			final TimePoint timePoint = viewDescription.getTimePoint();
+			t = timePoint.getId();
+
+			final Channel channel = getChannel( viewDescription );
+			c = channel.getId();
+		}
+
 		for ( int z = 0; z < depth; ++z )
 		{
 			IJ.showProgress( (double)z / (double)depth );
@@ -529,6 +545,28 @@ public class LegacyStackImgLoaderLOCI extends LegacyStackImgLoader
 			e.printStackTrace();
 			return null;
 		}
+	}
+
+	protected static Angle getAngle( final BasicViewDescription< ? > vd )
+	{
+		final BasicViewSetup vs = vd.getViewSetup();
+		final Angle angle = vs.getAttribute( Angle.class );
+
+		if ( angle == null )
+			throw new RuntimeException( "This XML does not have the 'Angle' attribute for their ViewSetup. Cannot continue." );
+
+		return angle;
+	}
+
+	protected static Channel getChannel( final BasicViewDescription< ? > vd )
+	{
+		final BasicViewSetup vs = vd.getViewSetup();
+		final Channel channel = vs.getAttribute( Channel.class );
+
+		if ( channel == null )
+			throw new RuntimeException( "This XML does not have the 'Channel' attribute for their ViewSetup. Cannot continue." );
+
+		return channel;
 	}
 
 	@Override
