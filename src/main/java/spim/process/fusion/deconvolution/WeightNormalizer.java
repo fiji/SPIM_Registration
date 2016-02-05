@@ -11,8 +11,11 @@ import java.util.concurrent.Future;
 import ij.ImageJ;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
+import net.imglib2.FinalInterval;
+import net.imglib2.Interval;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.RealRandomAccess;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgs;
@@ -234,23 +237,56 @@ public class WeightNormalizer
 	public static void main( String[] args )
 	{
 		new ImageJ();
-		
-		Img< FloatType > img = ArrayImgs.floats( 500, 500 );
-		BlendingRealRandomAccess blend = new BlendingRealRandomAccess(
-				img,
-				new float[]{ 100, 0 },
-				new float[]{ 12, 150 } );
-		
-		Cursor< FloatType > c = img.localizingCursor();
-		
-		while ( c.hasNext() )
+
+		final ArrayList< Img< FloatType > > imgs = new ArrayList<Img< FloatType >>();
+		final ArrayList< Cursor< FloatType > > cursors = new ArrayList<Cursor<FloatType>>();
+		final ArrayList< Interval > intervals = new ArrayList<Interval>();
+		final ArrayList< RealRandomAccess< FloatType > > blends = new ArrayList<RealRandomAccess<FloatType>>();
+
+		final float blending[] = new float[]{ 50, 50 };
+		final float border[] = new float[]{ 0, 0 };
+
+		intervals.add( new FinalInterval( new long[]{ 50, 0 }, new long[]{ 450, 300 } ) );
+		//intervals.add( new FinalInterval( new long[]{ 250, 150 }, new long[]{ 700, 800 } ) );
+
+		for ( int i = 0; i < intervals.size(); ++i )
 		{
-			c.fwd();
-			blend.setPosition( c );
-			c.get().setReal( blend.get().getRealFloat() );
+			imgs.add( ArrayImgs.floats( 1000, 1000 ) );
+			cursors.add( imgs.get( i ).localizingCursor() );
 		}
-		
-		ImageJFunctions.show( img );
+
+		for ( final Interval i : intervals )
+			blends.add( new BlendingRealRandomAccess( i, border, blending ) );
+
+		while ( cursors.get( 0 ).hasNext() )
+		{
+			double sumW = 0;
+			int count = 0;
+
+			for ( int i = 0; i < intervals.size(); ++i )
+			{
+				final Cursor< FloatType > c = cursors.get( i );
+				final RealRandomAccess< FloatType > b = blends.get( i );
+	
+				c.fwd();
+				b.setPosition( c );
+				final float w = b.get().getRealFloat();
+				c.get().set( w );
+
+				if ( w > 0 )
+				{
+					sumW += w;
+					++count;
+				}
+			}
+
+			// something in between ... I would say, now we have hard edges where the image stacks end
+			if ( sumW > 1 )
+				apply( cursors, sumW );
+		}
+
+		for ( final Img< FloatType > img : imgs )
+			ImageJFunctions.show( img );
 	}
 
 }
