@@ -12,18 +12,27 @@ public class NormalizingRandomAccessibleInterval< T extends RealType< T > > impl
 	final RandomAccessibleInterval< T > interval;
 	final RandomAccessibleInterval< T > normalizeInterval;
 	double osemspeedup;
+	final boolean additionalSmoothBlending;
+	final float maxDiffRange;
+	final float scalingRange;
 	final T type;
 
 	public NormalizingRandomAccessibleInterval(
 			final RandomAccessibleInterval< T > interval,
 			final RandomAccessibleInterval< T > normalizeInterval,
 			final double osemspeedup,
+			final boolean additionalSmoothBlending,
+			final float maxDiffRange,
+			final float scalingRange,
 			final T type )
 	{
 		// the assumption is that dimensionality & size matches, we do not test it tough
 		this.interval = interval;
 		this.normalizeInterval = normalizeInterval;
 		this.osemspeedup = osemspeedup;
+		this.additionalSmoothBlending = additionalSmoothBlending;
+		this.maxDiffRange = maxDiffRange;
+		this.scalingRange = scalingRange;
 		this.type = type;
 	}
 
@@ -32,7 +41,7 @@ public class NormalizingRandomAccessibleInterval< T extends RealType< T > > impl
 			final RandomAccessibleInterval< T > normalizeInterval,
 			final T type )
 	{
-		this( interval, normalizeInterval, 1, type );
+		this( interval, normalizeInterval, 1.0, false, 0, 0, type );
 	}
 
 	public void setOSEMspeedup( final double osemspeedup ) { this.osemspeedup = osemspeedup; }
@@ -41,7 +50,7 @@ public class NormalizingRandomAccessibleInterval< T extends RealType< T > > impl
 	@Override
 	public RandomAccess< T > randomAccess()
 	{
-		return new NormalizingRandomAccess< T >( interval, normalizeInterval, osemspeedup, type );
+		return new NormalizingRandomAccess< T >( interval, normalizeInterval, osemspeedup, additionalSmoothBlending, maxDiffRange, scalingRange, type );
 	}
 
 	@Override
