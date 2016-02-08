@@ -13,10 +13,10 @@ import java.awt.Label;
 import java.awt.Panel;
 import java.util.ArrayList;
 
-import javax.media.j3d.Background;
-import javax.media.j3d.LineAttributes;
-import javax.vecmath.Color3f;
-import javax.vecmath.Point3f;
+import org.scijava.java3d.Background;
+import org.scijava.java3d.LineAttributes;
+import org.scijava.vecmath.Color3f;
+import org.scijava.vecmath.Point3f;
 
 public class Viewer3dFunctions
 {

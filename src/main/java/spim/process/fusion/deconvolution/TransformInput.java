@@ -89,7 +89,10 @@ public class TransformInput implements Callable< String >
 		if ( FusionHelper.intersects( t[ 0 ], t[ 1 ], t[ 2 ], imgSizeX, imgSizeY, imgSizeZ ) )
 		{
 			ir.setPosition( t );
-			v.set( ir.get() );
+
+			// do not accept 0 values in the data where image data is present, 0 means no image data is available
+			// (used in MVDeconvolution.computeQuotient)
+			v.set( Math.max( MVDeconvolution.minValue, ir.get().get() ) );
 		}
 	}
 }

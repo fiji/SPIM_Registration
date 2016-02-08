@@ -96,6 +96,9 @@ public class Block
 		return dim;
 	}
 
+	@Override
+	public void finalize() { taskExecutor.shutdown(); }
+
 	/**
 	 * @return - if the blocks that cover an area/volume/... are precise, i.e. if they are identical to performing the convolution on the entire image. Non-precise blocks do not need an outofbounds, they will not query data from outside of the blocked area.
 	 */

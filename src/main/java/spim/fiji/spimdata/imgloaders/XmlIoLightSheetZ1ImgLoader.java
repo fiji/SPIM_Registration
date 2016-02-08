@@ -8,6 +8,7 @@ import java.io.File;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.cell.CellImgFactory;
+import net.imglib2.img.planar.PlanarImgFactory;
 import net.imglib2.type.numeric.real.FloatType;
 
 import org.jdom2.Element;
@@ -66,6 +67,10 @@ public class XmlIoLightSheetZ1ImgLoader implements XmlIoBasicImgLoader< LightShe
 				else if ( container.toLowerCase().contains( "arrayimg" ) )
 				{
 					imgFactory = new ArrayImgFactory< FloatType >();
+				}
+				else if ( container.toLowerCase().contains( "planarimg" ) )
+				{
+					imgFactory = new PlanarImgFactory< FloatType >();
 				}
 				else
 				{

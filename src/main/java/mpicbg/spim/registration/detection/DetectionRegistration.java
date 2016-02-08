@@ -4,9 +4,9 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import javax.vecmath.Matrix4d;
-import javax.vecmath.Quat4d;
-import javax.vecmath.Vector3d;
+import org.scijava.vecmath.Matrix4d;
+import org.scijava.vecmath.Quat4d;
+import org.scijava.vecmath.Vector3d;
 
 import mpicbg.models.Model;
 import mpicbg.models.NotEnoughDataPointsException;

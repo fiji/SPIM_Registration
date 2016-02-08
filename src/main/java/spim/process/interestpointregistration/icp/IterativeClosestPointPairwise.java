@@ -37,7 +37,7 @@ public class IterativeClosestPointPairwise implements Callable< PairwiseMatch >
 	}
 
 	@Override
-	public PairwiseMatch call() throws Exception
+	public PairwiseMatch call()
 	{
 		final ArrayList< Detection > listA = new ArrayList< Detection >();
 		final ArrayList< Detection > listB = new ArrayList< Detection >();
@@ -83,17 +83,17 @@ public class IterativeClosestPointPairwise implements Callable< PairwiseMatch >
 			catch ( NotEnoughDataPointsException e )
 			{
 				failWith( "ICP", "NotEnoughDataPointsException", pair, e );
-				throw new NotEnoughDataPointsException( e );
+				return pair;
 			}
 			catch ( IllDefinedDataPointsException e )
 			{
 				failWith( "ICP", "IllDefinedDataPointsException", pair, e );
-				throw new IllDefinedDataPointsException( e );
+				return pair;
 			}
 			catch ( NoSuitablePointsException e )
 			{
 				failWith( "ICP", "NoSuitablePointsException", pair, e );
-				throw new NoSuitablePointsException( e.toString() );
+				return pair;
 			}
 
 			if ( lastNumCorresponding == icp.getNumPointMatches() && lastAvgError == icp.getAverageError() )

@@ -6,11 +6,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-import javax.media.j3d.Transform3D;
-import javax.vecmath.Matrix4f;
-import javax.vecmath.Quat4f;
-import javax.vecmath.Vector3d;
-import javax.vecmath.Vector3f;
+import org.scijava.java3d.Transform3D;
+import org.scijava.vecmath.Matrix4f;
+import org.scijava.vecmath.Quat4f;
+import org.scijava.vecmath.Vector3d;
+import org.scijava.vecmath.Vector3f;
 
 import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.Affine3D;
@@ -110,9 +110,30 @@ public class GlobalOpt
 			String output = "ViewId=" + viewId.getViewSetupId() + ": " + printAffine3D( (Affine3D<?>)tile.getModel() );
 			
 			if ( (Model)tile.getModel() instanceof RigidModel3D )
-				IOFunctions.println( output + ", " + getRotationAxis( (RigidModel3D)(Model)tile.getModel() ) );
+			{
+				String rotA = "Java3D is MISSING!";
+
+				try
+				{
+					rotA = getRotationAxis( (RigidModel3D)(Model)tile.getModel() );
+				}
+				catch( NoClassDefFoundError e ) {}
+
+				IOFunctions.println( output + ", Rotation Axis=" + rotA );
+				
+			}
 			else
-				IOFunctions.println( output + ", " + getScaling( (Affine3D<?>)tile.getModel() ) );
+			{
+				String scaling = "Java3D is MISSING!";
+
+				try
+				{
+					scaling = getScaling( (Affine3D<?>)tile.getModel() );
+				}
+				catch( NoClassDefFoundError e ) {}
+
+				IOFunctions.println( output + ", Scaling=" + scaling );
+			}
 		}
 		
 		return map;

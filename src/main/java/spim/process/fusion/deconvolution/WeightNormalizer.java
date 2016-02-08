@@ -8,17 +8,21 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import ij.ImageJ;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
+import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import spim.Threads;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
+import spim.process.fusion.weights.BlendingRealRandomAccess;
 import spim.process.fusion.weights.NormalizingRandomAccessibleInterval;
 
 public class WeightNormalizer
@@ -148,7 +152,8 @@ public class WeightNormalizer
 				countViews += count;
 				minNumViews = Math.min( minNumViews, count );
 
-				if ( sumW > 1 )
+				// something in between ... I would say, now we have hard edges where the image stacks end
+				//if ( sumW > 1 )
 					apply( cursors, sumW );
 			}
 
@@ -225,4 +230,27 @@ public class WeightNormalizer
 			return new double[]{ minNumViews, avgNumViews };
 		}
 	}
+
+	public static void main( String[] args )
+	{
+		new ImageJ();
+		
+		Img< FloatType > img = ArrayImgs.floats( 500, 500 );
+		BlendingRealRandomAccess blend = new BlendingRealRandomAccess(
+				img,
+				new float[]{ 100, 0 },
+				new float[]{ 12, 150 } );
+		
+		Cursor< FloatType > c = img.localizingCursor();
+		
+		while ( c.hasNext() )
+		{
+			c.fwd();
+			blend.setPosition( c );
+			c.get().setReal( blend.get().getRealFloat() );
+		}
+		
+		ImageJFunctions.show( img );
+	}
+
 }

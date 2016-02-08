@@ -1,6 +1,6 @@
 package mpicbg.spim.vis3d;
 
-import com.sun.j3d.utils.geometry.Sphere;
+import org.scijava.java3d.utils.geometry.Sphere;
 
 import ij.ImagePlus;
 import ij3d.Content;
@@ -20,18 +20,19 @@ import java.util.Enumeration;
 import java.util.Iterator;
 
 import javax.imageio.ImageIO;
-import javax.media.j3d.Appearance;
-import javax.media.j3d.BranchGroup;
-import javax.media.j3d.ColoringAttributes;
-import javax.media.j3d.Group;
-import javax.media.j3d.LineAttributes;
-import javax.media.j3d.Switch;
-import javax.media.j3d.Transform3D;
-import javax.media.j3d.TransformGroup;
-import javax.media.j3d.TransparencyAttributes;
-import javax.vecmath.Color3f;
-import javax.vecmath.Point3f;
-import javax.vecmath.Vector3f;
+import org.scijava.java3d.Appearance;
+import org.scijava.java3d.BranchGroup;
+import org.scijava.java3d.ColoringAttributes;
+import org.scijava.java3d.Group;
+import org.scijava.java3d.LineAttributes;
+import org.scijava.java3d.Node;
+import org.scijava.java3d.Switch;
+import org.scijava.java3d.Transform3D;
+import org.scijava.java3d.TransformGroup;
+import org.scijava.java3d.TransparencyAttributes;
+import org.scijava.vecmath.Color3f;
+import org.scijava.vecmath.Point3f;
+import org.scijava.vecmath.Vector3f;
 
 import mpicbg.spim.io.ConfigurationParserGeneral;
 import mpicbg.spim.io.IOFunctions;
@@ -135,11 +136,13 @@ public class Motion3D
 	
 	public static void updateTransformBranchGroup( final BranchGroup branchGroup, final Transform3D update )
 	{
-		Enumeration<TransformGroup> en = branchGroup.getAllChildren();
+		Enumeration<Node> en = branchGroup.getAllChildren();
 		
 		while (en.hasMoreElements())
 		{
-			TransformGroup tg = en.nextElement();
+			Node n = en.nextElement();
+			if (!(n instanceof TransformGroup)) continue;
+			TransformGroup tg = (TransformGroup) n;
 			Transform3D tmp = new Transform3D();
 			
 			tg.getTransform( tmp );

@@ -1,5 +1,6 @@
 package spim.process.fusion.weights;
 
+import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
 import net.imglib2.RealInterval;
 import net.imglib2.RealRandomAccess;
@@ -27,7 +28,8 @@ public class Blending implements RealRandomAccessible< FloatType >
 	 */
 	public Blending( final Interval interval, final float[] border, final float[] blending )
 	{
-		this.interval = interval;
+		// in case the interval is actually image data re-instantiate just a simple FinalInterval
+		this.interval = new FinalInterval( interval );
 		this.border = border;
 		this.blending = blending;
 	}

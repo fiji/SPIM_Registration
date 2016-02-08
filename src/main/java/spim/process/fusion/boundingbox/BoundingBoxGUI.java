@@ -273,15 +273,22 @@ public class BoundingBoxGUI extends BoundingBox
 				}
 			}
 
-			// test if the values are valid
-			if ( min[ d ] < rangeMin[ d ] )
-				min[ d ] = rangeMin[ d ];
-
-			if ( max[ d ] > rangeMax[ d ] )
-				max[ d ] = rangeMax[ d ];
-
 			if ( min[ d ] > max[ d ] )
 				min[ d ] = max[ d ];
+
+			if ( min[ d ] < rangeMin[ d ] )
+				rangeMin[ d ] = min[ d ];
+
+			if ( max[ d ] > rangeMax[ d ] )
+				rangeMax[ d ] = max[ d ];
+
+			// test if the values are valid
+			//if ( min[ d ] < rangeMin[ d ] )
+			//	min[ d ] = rangeMin[ d ];
+
+			//if ( max[ d ] > rangeMax[ d ] )
+			//	max[ d ] = rangeMax[ d ];
+
 		}
 	}
 

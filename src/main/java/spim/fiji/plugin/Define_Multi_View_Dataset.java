@@ -2,6 +2,7 @@ package spim.fiji.plugin;
 
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
+import ij.ImageJ;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
@@ -187,7 +188,8 @@ public class Define_Multi_View_Dataset implements PlugIn
 	{
 		StackList.defaultDirectory = "/Users/preibischs/Documents/Microscopy/SPIM/HisYFP-SPIM";
 
-		//new ImageJ();
+		IOFunctions.printIJLog = true;
+		new ImageJ();
 		new Define_Multi_View_Dataset().run( null );
 		
 		//System.exit( 0 );

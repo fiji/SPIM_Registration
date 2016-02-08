@@ -9,7 +9,6 @@ import net.imglib2.RealRandomAccess;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
-import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
 import spim.process.fusion.weights.Blending;
 
@@ -81,13 +80,11 @@ public class TransformWeights implements Callable< String >
 
 			transform.applyInverse( t, s );
 
-			if ( FusionHelper.intersects( t[ 0 ], t[ 1 ], t[ 2 ], imgSizeX, imgSizeY, imgSizeZ ) )
-			{
-				wr.setPosition( t );
+			// compute weights in any part of the image (the border can be negative!)
+			wr.setPosition( t );
 
-				o.set( o.get() + 1 );
-				b.set( wr.get() );
-			}
+			o.set( o.get() + 1 );
+			b.set( wr.get() );
 		}
 
 		return portion + " finished successfully (visualize weights).";

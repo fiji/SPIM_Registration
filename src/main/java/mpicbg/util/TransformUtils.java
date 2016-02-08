@@ -1,8 +1,8 @@
 package mpicbg.util;
 
-import javax.media.j3d.Transform3D;
-import javax.vecmath.Matrix4d;
-import javax.vecmath.Vector3d;
+import org.scijava.java3d.Transform3D;
+import org.scijava.vecmath.Matrix4d;
+import org.scijava.vecmath.Vector3d;
 
 import mpicbg.imglib.util.Util;
 import mpicbg.models.AbstractAffineModel3D;

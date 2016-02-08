@@ -1,9 +1,9 @@
 package mpicbg.spim.vis3d;
 
-import javax.media.j3d.Transform3D;
-import javax.media.j3d.TransformGroup;
-import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
+import org.scijava.java3d.Transform3D;
+import org.scijava.java3d.TransformGroup;
+import org.scijava.vecmath.Point3d;
+import org.scijava.vecmath.Vector3d;
 
 import mpicbg.spim.registration.bead.Bead;
 

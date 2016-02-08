@@ -1,6 +1,6 @@
 package mpicbg.spim.registration.threshold;
 
-import javax.vecmath.Point3d;
+import org.scijava.vecmath.Point3d;
 
 public class ComponentProperties 
 {

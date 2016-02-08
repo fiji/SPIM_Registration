@@ -32,7 +32,7 @@ public class RGLDMPairwise implements Callable< PairwiseMatch >
 	}
 	
 	@Override
-	public PairwiseMatch call() throws Exception
+	public PairwiseMatch call()
 	{
 		final ArrayList< Detection > listA = new ArrayList< Detection >();
 		final ArrayList< Detection > listB = new ArrayList< Detection >();
