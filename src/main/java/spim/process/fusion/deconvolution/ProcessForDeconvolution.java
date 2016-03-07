@@ -297,7 +297,7 @@ public class ProcessForDeconvolution
 		for ( final ViewDescription vd : viewDescriptions )
 		{
 			weightsSorted.add( weights.get( vd ) );
-			new DisplayImage().exportImage(  weights.get( vd ), "w " + vd.getViewSetupId() );
+			//new DisplayImage().exportImage(  weights.get( vd ), "w " + vd.getViewSetupId() );
 		}
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Computing weight normalization for deconvolution." );
@@ -318,7 +318,7 @@ public class ProcessForDeconvolution
 		for ( int i = 0; i < viewDescriptions.size(); ++i )
 		{
 			weights.put( viewDescriptions.get( i ), weightsSorted.get( i ) );
-			new DisplayImage().exportImage( weightsSorted.get( i ), "w " + i );
+			//new DisplayImage().exportImage( weightsSorted.get( i ), "w " + i );
 		}
 
 		if ( wn != null )
@@ -343,8 +343,6 @@ public class ProcessForDeconvolution
 			adjustForOSEM( weights, weightType, osemspeedup );
 
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Finished precomputations for deconvolution." );
-
-		SimpleMultiThreading.threadHaltUnClean();
 
 		return true;
 	}
