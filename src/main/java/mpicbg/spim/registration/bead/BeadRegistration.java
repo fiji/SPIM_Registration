@@ -5,11 +5,11 @@ import java.util.ArrayList;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.media.j3d.Transform3D;
-import javax.vecmath.Matrix4f;
-import javax.vecmath.Quat4f;
-import javax.vecmath.Vector3d;
-import javax.vecmath.Vector3f;
+import org.scijava.java3d.Transform3D;
+import org.scijava.vecmath.Matrix4f;
+import org.scijava.vecmath.Quat4f;
+import org.scijava.vecmath.Vector3d;
+import org.scijava.vecmath.Vector3f;
 
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.models.AbstractAffineModel3D;

@@ -20,7 +20,7 @@ import java.text.DecimalFormat;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import javax.media.j3d.Transform3D;
+import org.scijava.java3d.Transform3D;
 import javax.swing.SwingUtilities;
 
 import net.imglib2.realtransform.AffineTransform3D;

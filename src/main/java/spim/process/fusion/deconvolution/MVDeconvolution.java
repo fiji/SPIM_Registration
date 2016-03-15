@@ -382,9 +382,13 @@ public class MVDeconvolution
 			// [psi >> tmp1]
 			//
 
+			//if ( view == 1 )
+			//	new DisplayImage().exportImage( psi, "psi" );
+
 			processingData.convolve1( psi, tmp1 );
 
-			//new DisplayImage().exportImage( tmp1, "tmp1" );
+			//if ( view == 1 )
+			//	new DisplayImage().exportImage( tmp1, "psi blurred" );
 
 			//
 			// compute quotient img/psiBlurred
@@ -405,7 +409,9 @@ public class MVDeconvolution
 
 			execTasks( tasks, nThreads, "compute quotient" );
 
+			//if ( view == 1 )
 			//new DisplayImage().exportImage( processingData.getImage(), "img" );
+			//if ( view == 1 )
 			//new DisplayImage().exportImage( tmp1, "quotient" );
 
 			//
@@ -417,6 +423,7 @@ public class MVDeconvolution
 			//
 			processingData.convolve2( tmp1, tmp2 );
 
+			//if ( view == 1 )
 			//new DisplayImage().exportImage( tmp2, "quotient blurred" );
 
 			//
@@ -455,9 +462,12 @@ public class MVDeconvolution
 			}
 
 			IOFunctions.println( "iteration: " + iteration + ", view: " + view + " --- sum change: " + sumChange + " --- max change per pixel: " + maxChange );
-			
+
+			//if ( view == 1 )
 			//new DisplayImage().exportImage( processingData.getWeight(), "weight" );
+			//if ( view == 1 )
 			//new DisplayImage().exportImage( psi, "psi new" );
+			//SimpleMultiThreading.threadHaltUnClean();
 		}
 
 		//SimpleMultiThreading.threadHaltUnClean();

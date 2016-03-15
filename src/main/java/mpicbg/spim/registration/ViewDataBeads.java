@@ -10,9 +10,9 @@ import java.util.Date;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.media.j3d.BranchGroup;
-import javax.media.j3d.Transform3D;
-import javax.vecmath.Matrix4d;
+import org.scijava.java3d.BranchGroup;
+import org.scijava.java3d.Transform3D;
+import org.scijava.vecmath.Matrix4d;
 
 import mpicbg.imglib.algorithm.gauss.DownSample;
 import mpicbg.imglib.algorithm.mirror.MirrorImage;

@@ -1,5 +1,6 @@
 package spim.process.fusion.weights;
 
+import spim.process.fusion.deconvolution.WeightNormalizer;
 import net.imglib2.AbstractLocalizableInt;
 import net.imglib2.Localizable;
 import net.imglib2.RandomAccess;
@@ -14,11 +15,17 @@ public class NormalizingRandomAccess< T extends RealType< T > > extends Abstract
 	final RandomAccess< T > normalizeIntervalRandomAccess;
 	final T type;
 	final double osemspeedup;
+	final boolean additionalSmoothBlending;
+	final float maxDiffRange;
+	final float scalingRange;
 
 	public NormalizingRandomAccess(
 			final RandomAccessibleInterval< T > interval,
 			final RandomAccessibleInterval< T > normalizeInterval,
 			final double osemspeedup,
+			final boolean additionalSmoothBlending,
+			final float maxDiffRange,
+			final float scalingRange,
 			final T type )
 	{
 		super( interval.numDimensions() );
@@ -27,6 +34,10 @@ public class NormalizingRandomAccess< T extends RealType< T > > extends Abstract
 		this.normalizeInterval = normalizeInterval;
 		this.type = type.createVariable();
 		this.osemspeedup = osemspeedup;
+
+		this.additionalSmoothBlending = additionalSmoothBlending;
+		this.maxDiffRange = maxDiffRange;
+		this.scalingRange = scalingRange;
 
 		this.intervalRandomAccess = interval.randomAccess();
 		this.normalizeIntervalRandomAccess = normalizeInterval.randomAccess();
@@ -38,7 +49,22 @@ public class NormalizingRandomAccess< T extends RealType< T > > extends Abstract
 		intervalRandomAccess.setPosition( position );
 		normalizeIntervalRandomAccess.setPosition( position );
 
-		final double v = intervalRandomAccess.get().getRealDouble() / normalizeIntervalRandomAccess.get().getRealDouble();
+		final double sumW = normalizeIntervalRandomAccess.get().getRealDouble();
+		final double v;
+
+		if ( additionalSmoothBlending )
+		{
+			v = WeightNormalizer.smoothWeights( intervalRandomAccess.get().getRealFloat(), sumW, maxDiffRange, scalingRange );
+		}
+		else if ( sumW > 1 )
+		{
+			v = intervalRandomAccess.get().getRealDouble() / sumW;
+		}
+		else
+		{
+			v = intervalRandomAccess.get().getRealDouble();
+		}
+
 		type.setReal( Math.min( 1, v * osemspeedup ) ); // individual contribution never higher than 1
 
 		return type;
@@ -105,7 +131,7 @@ public class NormalizingRandomAccess< T extends RealType< T > > extends Abstract
 	public void setPosition( final long position, final int d ) { this.position[ d ] = (int)position; }
 
 	@Override
-	public NormalizingRandomAccess< T > copy() { return new NormalizingRandomAccess< T >( interval, normalizeInterval, osemspeedup, type ); }
+	public NormalizingRandomAccess< T > copy() { return new NormalizingRandomAccess< T >( interval, normalizeInterval, osemspeedup, additionalSmoothBlending, maxDiffRange, scalingRange, type ); }
 
 	@Override
 	public NormalizingRandomAccess<T> copyRandomAccess() { return copy(); }

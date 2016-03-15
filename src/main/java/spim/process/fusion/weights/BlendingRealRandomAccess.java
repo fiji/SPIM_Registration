@@ -19,7 +19,19 @@ public class BlendingRealRandomAccess implements RealRandomAccess< FloatType >
 	final float[] l, border, blending;
 	final int n;
 	final FloatType v;
-	
+
+	// static lookup table for the blending function
+	final static private double[] lookUp;
+	private static final int indexFor( final double d ) { return (int)Math.round( d * 1000.0 ); }
+
+	static
+	{
+		lookUp = new double[ 1001 ];
+
+		for ( double d = 0; d <= 1.0001; d = d + 0.001 )
+			lookUp[ indexFor( d ) ] = ( Math.cos( ( 1 - d ) * Math.PI ) + 1 ) / 2;
+	}
+
 	/**
 	 * RealRandomAccess that computes a blending function for a certain {@link Interval}
 	 * 
@@ -75,20 +87,17 @@ public class BlendingRealRandomAccess implements RealRandomAccess< FloatType >
 			// the distance to the border that is closer
 			final float dist = Math.max( 0, Math.min( l - border[ d ], dimMinus1[ d ] - l - border[ d ] ) );
 
-			minDistance *= Math.min( 1, dist / blending[ d ] );
+			// if this is 0, the total result will be 0, independent of the number of dimensions
+			if ( dist == 0 )
+				return 0;
+
+			final float relDist = dist / blending[ d ];
+
+			if ( relDist < 1 )
+				minDistance *= lookUp[ indexFor( relDist ) ]; //( Math.cos( ( 1 - relDist ) * Math.PI ) + 1 ) / 2;
 		}
 
-		if ( minDistance >= 1 )
-			return 1;
-		else if ( minDistance <= 0)
-			return 0;
-		else
-			return computCosine( minDistance );
-	}
-
-	private static final float computCosine( final float minDistance )
-	{
-		return (float)( Math.cos( (1 - minDistance) * Math.PI ) + 1 ) / 2; //TODO: lookup?
+		return minDistance;
 	}
 
 	@Override
@@ -238,7 +247,7 @@ public class BlendingRealRandomAccess implements RealRandomAccess< FloatType >
 		r.setPosition( this );
 		return r;
 	}
-	
+
 	public static void main( String[] args )
 	{
 		new ImageJ();

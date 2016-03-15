@@ -190,6 +190,7 @@ public class EfficientBayesianBased extends Fusion
 
 			IOFunctions.println( "BlendingBorder: " + blendingBorderX + ", " + blendingBorderY + ", " + blendingBorderZ );
 			IOFunctions.println( "BlendingBorder: " + blendingRangeX + ", " + blendingRangeY + ", " + blendingRangeZ );
+			IOFunctions.println( "Smoother blending: " + WeightNormalizer.additionalSmoothBlending );
 
 			final ProcessForDeconvolution pfd = new ProcessForDeconvolution(
 					spimData,
@@ -658,6 +659,8 @@ public class EfficientBayesianBased extends Fusion
 			gd.addSlider( "Blending_range_Y", 0, 100, defaultBlendingRange[ 1 ] );
 			gd.addSlider( "Blending_range_Z", 0, 100, defaultBlendingRange[ 2 ] );
 			
+			gd.addCheckbox( "Smoother_blending", WeightNormalizer.additionalSmoothBlending );
+			
 			gd.addMessage( "" );
 			gd.addMessage( "Note: both sizes are in local coordinates of the input views. Increase one or both of those values if stripy artifacts\n" +
 						   "are visible in the deconvolution result.\n" +
@@ -678,6 +681,7 @@ public class EfficientBayesianBased extends Fusion
 			blendingRangeX = defaultBlendingRange[ 0 ] = (int)Math.round( gd.getNextNumber() );
 			blendingRangeY = defaultBlendingRange[ 1 ] = (int)Math.round( gd.getNextNumber() );
 			blendingRangeZ = defaultBlendingRange[ 2 ] = (int)Math.round( gd.getNextNumber() );
+			WeightNormalizer.additionalSmoothBlending = gd.getNextBoolean();
 		}
 		else
 		{
