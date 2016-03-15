@@ -177,6 +177,7 @@ public class EfficientBayesianBased extends Fusion
 
 			IOFunctions.println( "BlendingBorder: " + blendingBorderX + ", " + blendingBorderY + ", " + blendingBorderZ );
 			IOFunctions.println( "BlendingBorder: " + blendingRangeX + ", " + blendingRangeY + ", " + blendingRangeZ );
+			IOFunctions.println( "Smoother blending: " + WeightNormalizer.additionalSmoothBlending );
 
 			final ProcessForDeconvolution pfd = new ProcessForDeconvolution(
 					spimData,
