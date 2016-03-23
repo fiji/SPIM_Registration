@@ -7,19 +7,18 @@ import java.util.Map;
 
 import javax.swing.JMenuItem;
 
-import net.imglib2.realtransform.AffineTransform3D;
-import bdv.BigDataViewer;
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.realtransform.AffineTransform3D;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.plugin.apply.ApplyParameters;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
-import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
+import bdv.BigDataViewer;
 
 public class ReorientSamplePopup extends JMenuItem implements ExplorerWindowSetable
 {
@@ -95,7 +94,7 @@ public class ReorientSamplePopup extends JMenuItem implements ExplorerWindowSeta
 					panel.updateContent();
 					
 					// reset current orientation of the BDV so it doesn't jump
-					final BigDataViewer bdv = ViewSetupExplorerPanel.bdvPopup().bdv;
+					final BigDataViewer bdv = panel.bdvPopup().getBDV();
 					
 					if ( bdv != null && bdv.getViewerFrame().isVisible() )
 					{
@@ -105,7 +104,7 @@ public class ReorientSamplePopup extends JMenuItem implements ExplorerWindowSeta
 						transform = transform.concatenate( applied );
 
 						bdv.getViewer().setCurrentViewerTransform( transform );
-						ViewSetupExplorerPanel.bdvPopup().updateBDV();
+						panel.bdvPopup().updateBDV();
 					}
 				}
 			} ).start();

@@ -9,7 +9,6 @@ import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.Interest_Point_Registration;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
-import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 
 public class RegisterInterestPointsPopup extends JMenuItem implements ExplorerWindowSetable
 {
@@ -56,7 +55,7 @@ public class RegisterInterestPointsPopup extends JMenuItem implements ExplorerWi
 					if ( new Interest_Point_Registration().register( (SpimData2)panel.getSpimData(), panel.selectedRowsViewId() ) )
 					{
 						panel.updateContent(); // update interestpoint and registration panel if available
-						ViewSetupExplorerPanel.bdvPopup().updateBDV();
+						panel.bdvPopup().updateBDV();
 					}
 				}
 			} ).start();

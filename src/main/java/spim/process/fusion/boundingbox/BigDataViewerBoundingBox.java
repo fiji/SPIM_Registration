@@ -41,7 +41,7 @@ public class BigDataViewerBoundingBox extends BoundingBoxGUI
 
 	public static Pair< BigDataViewer, Boolean > getBDV( final AbstractSpimData< ? > spimData, final Collection< ViewId > viewIdsToProcess )
 	{
-		final BDVPopup popup = ViewSetupExplorerPanel.bdvPopup();
+		final BDVPopup popup = ViewSetupExplorerPanel.currentInstance == null ? null : ViewSetupExplorerPanel.currentInstance.bdvPopup();
 		BigDataViewer bdv;
 		boolean bdvIsLocal = false;
 

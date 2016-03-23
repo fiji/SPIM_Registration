@@ -9,6 +9,7 @@ import javax.swing.JFrame;
 
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
+import spim.fiji.spimdata.explorer.popup.BasicBDVPopup;
 
 public class ViewSetupExplorer< AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > >
 {
@@ -46,9 +47,16 @@ public class ViewSetupExplorer< AS extends AbstractSpimData< ? >, X extends XmlI
 			l.quit();
 
 		panel.getListeners().clear();
-		
+
 		frame.setVisible( false );
 		frame.dispose();
+
+		BasicBDVPopup bdvPopup = panel.bdvPopup();
+		
+		if ( bdvPopup.bdvRunning() )
+			bdvPopup.closeBDV();
+
+		ViewSetupExplorerPanel.currentInstance = null;
 	}
 	
 	public AS getSpimData() { return panel.getSpimData(); }

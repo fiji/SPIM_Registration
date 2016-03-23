@@ -12,7 +12,6 @@ import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
-import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 
 public class RemoveTransformationPopup extends JMenu implements ExplorerWindowSetable
 {
@@ -79,7 +78,7 @@ public class RemoveTransformationPopup extends JMenu implements ExplorerWindowSe
 			}
 
 			panel.updateContent();
-			ViewSetupExplorerPanel.bdvPopup().updateBDV();
+			panel.bdvPopup().updateBDV();
 		}
 	}
 }

@@ -12,7 +12,6 @@ import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.Define_Bounding_Box;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
-import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 
 public class BoundingBoxPopup extends JMenuItem implements ExplorerWindowSetable
 {
@@ -59,7 +58,7 @@ public class BoundingBoxPopup extends JMenuItem implements ExplorerWindowSetable
 					if ( new Define_Bounding_Box().defineBoundingBox( (SpimData2)panel.getSpimData(), panel.selectedRowsViewId() ) != null )
 					{
 						panel.updateContent(); // update main table and registration panel if available
-						ViewSetupExplorerPanel.bdvPopup().updateBDV();
+						panel.bdvPopup().updateBDV();
 					}
 				}
 			} ).start();

@@ -17,7 +17,6 @@ import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.plugin.apply.ApplyParameters;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
-import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 
 public class ApplyTransformationPopup extends JMenuItem implements ExplorerWindowSetable
 {
@@ -89,7 +88,7 @@ public class ApplyTransformationPopup extends JMenuItem implements ExplorerWindo
 		
 					// update registration panel if available
 					panel.updateContent();
-					ViewSetupExplorerPanel.bdvPopup().updateBDV();
+					panel.bdvPopup().updateBDV();
 				}
 			} ).start();
 		}

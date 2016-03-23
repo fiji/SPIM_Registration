@@ -12,7 +12,6 @@ import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.Image_Fusion;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
-import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 
 public class FusionPopup extends JMenuItem implements ExplorerWindowSetable
 {
@@ -59,7 +58,7 @@ public class FusionPopup extends JMenuItem implements ExplorerWindowSetable
 					{
 						panel.updateContent(); // update main table and registration panel if available
 						panel.saveXML();
-						ViewSetupExplorerPanel.bdvPopup().updateBDV();
+						panel.bdvPopup().updateBDV();
 					}
 				}
 			} ).start();

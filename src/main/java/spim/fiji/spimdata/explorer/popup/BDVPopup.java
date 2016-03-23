@@ -24,7 +24,7 @@ import bdv.viewer.ViewerPanel;
 import bdv.viewer.state.SourceState;
 import bdv.viewer.state.ViewerState;
 
-public class BDVPopup extends JMenuItem implements ExplorerWindowSetable
+public class BDVPopup extends JMenuItem implements ExplorerWindowSetable, BasicBDVPopup
 {
 	private static final long serialVersionUID = 5234649267634013390L;
 
@@ -81,19 +81,83 @@ public class BDVPopup extends JMenuItem implements ExplorerWindowSetable
 					}
 					else
 					{
-						BigDataViewerTransformationWindow.disposeViewerWindow( bdv );
-						bdv = null;
+						closeBDV();
 					}
 				}
 			}).start();
 		}
 	}
 
-	public static boolean bdvRunning()
+	@Override
+	public void closeBDV()
 	{
-		final BDVPopup p = ViewSetupExplorerPanel.bdvPopup();
-		return ( p != null && p.bdv != null && p.bdv.getViewerFrame().isVisible() );
+		if ( bdvRunning() )
+			BigDataViewerTransformationWindow.disposeViewerWindow( bdv );
+
+		bdv = null;
 	}
+
+	@Override
+	public BigDataViewer getBDV() { return bdv; }
+
+	@Override
+	public void updateBDV()
+	{
+		if ( bdv == null )
+			return;
+
+		for ( final ViewRegistration r : panel.getSpimData().getViewRegistrations().getViewRegistrationsOrdered() )
+			r.updateModel();
+
+		final ViewerPanel viewerPanel = bdv.getViewer();
+		final ViewerState viewerState = viewerPanel.getState();
+		final List< SourceState< ? > > sources = viewerState.getSources();
+		
+		for ( final SourceState< ? > state : sources )
+		{
+			Source< ? > source = state.getSpimSource();
+
+			while ( TransformedSource.class.isInstance( source ) )
+			{
+				source = ( ( TransformedSource< ? > ) source ).getWrappedSource();
+			}
+
+			if ( AbstractSpimSource.class.isInstance( source ) )
+			{
+				final AbstractSpimSource< ? > s = ( AbstractSpimSource< ? > ) source;
+
+				final int tpi = getCurrentTimePointIndex( s );
+				callLoadTimePoint( s, tpi );
+			}
+
+			if ( state.asVolatile() != null )
+			{
+				source = state.asVolatile().getSpimSource();
+				while ( TransformedSource.class.isInstance( source ) )
+				{
+					source = ( ( TransformedSource< ? > ) source ).getWrappedSource();
+				}
+
+				if ( AbstractSpimSource.class.isInstance( source ) )
+				{
+					final AbstractSpimSource< ? > s = ( AbstractSpimSource< ? > ) source;
+
+					final int tpi = getCurrentTimePointIndex( s );
+					callLoadTimePoint( s, tpi );
+				}
+			}
+		}
+
+		bdv.getViewer().requestRepaint();
+	}
+
+	@Override
+	public boolean bdvRunning()
+	{
+		final BasicBDVPopup p = panel.bdvPopup();
+		return ( p != null && p.getBDV() != null && p.getBDV().getViewerFrame().isVisible() );
+	}
+
 	public static BigDataViewer createBDV( final ExplorerWindow< ?, ? > panel )
 	{
 		if ( AbstractImgLoader.class.isInstance( panel.getSpimData().getSequenceDescription().getImgLoader() ) )
@@ -145,56 +209,6 @@ public class BDVPopup extends JMenuItem implements ExplorerWindowSetable
 		return bdv;
 	}
 
-	public void updateBDV()
-	{
-		if ( bdv == null )
-			return;
-
-		for ( final ViewRegistration r : panel.getSpimData().getViewRegistrations().getViewRegistrationsOrdered() )
-			r.updateModel();
-
-		final ViewerPanel viewerPanel = bdv.getViewer();
-		final ViewerState viewerState = viewerPanel.getState();
-		final List< SourceState< ? > > sources = viewerState.getSources();
-		
-		for ( final SourceState< ? > state : sources )
-		{
-			Source< ? > source = state.getSpimSource();
-
-			while ( TransformedSource.class.isInstance( source ) )
-			{
-				source = ( ( TransformedSource< ? > ) source ).getWrappedSource();
-			}
-
-			if ( AbstractSpimSource.class.isInstance( source ) )
-			{
-				final AbstractSpimSource< ? > s = ( AbstractSpimSource< ? > ) source;
-
-				final int tpi = getCurrentTimePointIndex( s );
-				callLoadTimePoint( s, tpi );
-			}
-
-			if ( state.asVolatile() != null )
-			{
-				source = state.asVolatile().getSpimSource();
-				while ( TransformedSource.class.isInstance( source ) )
-				{
-					source = ( ( TransformedSource< ? > ) source ).getWrappedSource();
-				}
-
-				if ( AbstractSpimSource.class.isInstance( source ) )
-				{
-					final AbstractSpimSource< ? > s = ( AbstractSpimSource< ? > ) source;
-
-					final int tpi = getCurrentTimePointIndex( s );
-					callLoadTimePoint( s, tpi );
-				}
-			}
-		}
-
-		bdv.getViewer().requestRepaint();
-
-	}
 	private static final void callLoadTimePoint( final AbstractSpimSource< ? > s, final int timePointIndex )
 	{
 		try
@@ -266,5 +280,4 @@ public class BDVPopup extends JMenuItem implements ExplorerWindowSetable
 			return -1;
 		}
 	}
-
 }

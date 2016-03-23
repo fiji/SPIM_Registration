@@ -2,6 +2,7 @@ package spim.fiji.spimdata.explorer;
 
 import java.util.List;
 
+import spim.fiji.spimdata.explorer.popup.BasicBDVPopup;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
@@ -18,6 +19,7 @@ public interface ExplorerWindow< AS extends AbstractSpimData< ? >, X extends Xml
 	public void saveXML();
 
 	// BDV-specific
+	public BasicBDVPopup bdvPopup();
 	public boolean colorMode();
 	public BasicViewDescription< ? extends BasicViewSetup > firstSelectedVD();
 }

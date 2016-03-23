@@ -8,7 +8,6 @@ import java.util.HashSet;
 
 import javax.swing.table.AbstractTableModel;
 
-import bdv.BigDataViewer;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.ViewId;
@@ -16,11 +15,12 @@ import net.imglib2.RealLocalizable;
 import net.imglib2.realtransform.AffineTransform3D;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 import spim.fiji.spimdata.explorer.interestpoint.InterestPointOverlay.InterestPointSource;
-import spim.fiji.spimdata.explorer.popup.BDVPopup;
+import spim.fiji.spimdata.explorer.popup.BasicBDVPopup;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import bdv.BigDataViewer;
 
 public class InterestPointTableModel extends AbstractTableModel implements InterestPointSource
 {
@@ -190,7 +190,9 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 
 	public void setSelected( final int row, final int col )
 	{
-		if ( currentVD != null && BDVPopup.bdvRunning() && row >= 0 && row < getRowCount() && col >= 1 && col <= 2  )
+		final BasicBDVPopup bdvPopup = panel.viewSetupExplorer.getPanel().bdvPopup();
+
+		if ( currentVD != null && bdvPopup.bdvRunning() && row >= 0 && row < getRowCount() && col >= 1 && col <= 2  )
 		{
 			this.selectedRow = row;
 			this.selectedCol = col;
@@ -218,11 +220,11 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 
 			if ( interestPointOverlay == null )
 			{
-				final BigDataViewer bdv = ViewSetupExplorerPanel.bdvPopup().bdv;
+				final BigDataViewer bdv = bdvPopup.getBDV();
 				interestPointOverlay = new InterestPointOverlay( bdv.getViewer(), interestPointSources );
 				bdv.getViewer().addRenderTransformListener( interestPointOverlay );
 				bdv.getViewer().getDisplay().addOverlayRenderer( interestPointOverlay );
-				ViewSetupExplorerPanel.bdvPopup().updateBDV();
+				bdvPopup.updateBDV();
 			}
 		}
 		else
@@ -231,8 +233,8 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 			this.points = new ArrayList< RealLocalizable >();
 		}
 
-		if ( BDVPopup.bdvRunning() )
-			ViewSetupExplorerPanel.bdvPopup().updateBDV();
+		if ( bdvPopup.bdvRunning() )
+			bdvPopup.updateBDV();
 	}
 
 	public int getSelectedRow() { return selectedRow; }

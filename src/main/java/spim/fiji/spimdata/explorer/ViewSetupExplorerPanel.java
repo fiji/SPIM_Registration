@@ -40,6 +40,7 @@ import spim.fiji.spimdata.explorer.popup.BDVPopup;
 import spim.fiji.spimdata.explorer.popup.BoundingBoxPopup;
 import spim.fiji.spimdata.explorer.popup.DetectInterestPointsPopup;
 import spim.fiji.spimdata.explorer.popup.DisplayViewPopup;
+import spim.fiji.spimdata.explorer.popup.ExplorerWindowSetable;
 import spim.fiji.spimdata.explorer.popup.FusionPopup;
 import spim.fiji.spimdata.explorer.popup.InterestPointsExplorerPopup;
 import spim.fiji.spimdata.explorer.popup.LabelPopUp;
@@ -52,7 +53,6 @@ import spim.fiji.spimdata.explorer.popup.ReorientSamplePopup;
 import spim.fiji.spimdata.explorer.popup.ResavePopup;
 import spim.fiji.spimdata.explorer.popup.Separator;
 import spim.fiji.spimdata.explorer.popup.SpecifyCalibrationPopup;
-import spim.fiji.spimdata.explorer.popup.ExplorerWindowSetable;
 import spim.fiji.spimdata.explorer.popup.VisualizeDetectionsPopup;
 import spim.fiji.spimdata.explorer.util.ColorStream;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
@@ -67,40 +67,13 @@ import bdv.viewer.VisibilityAndGrouping;
 
 public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > > extends JPanel implements ExplorerWindow< AS, X >
 {
-	final static ArrayList< ExplorerWindowSetable > staticPopups = new ArrayList< ExplorerWindowSetable >();
+	public static ViewSetupExplorerPanel< ?, ? > currentInstance = null;
+
+	final ArrayList< ExplorerWindowSetable > popups;
 
 	static
 	{
 		IOFunctions.printIJLog = true;
-		staticPopups.add( new LabelPopUp( " Displaying" ) );
-		staticPopups.add( new BDVPopup() );
-		staticPopups.add( new DisplayViewPopup() );
-		staticPopups.add( new MaxProjectPopup() );
-		staticPopups.add( new Separator() );
-
-		staticPopups.add( new LabelPopUp( " Processing" ) );
-		staticPopups.add( new DetectInterestPointsPopup() );
-		staticPopups.add( new RegisterInterestPointsPopup() );
-		staticPopups.add( new BoundingBoxPopup() );
-		staticPopups.add( new FusionPopup() );
-		staticPopups.add( new Separator() );
-
-		staticPopups.add( new LabelPopUp( " Calibration/Transformations" ) );
-		staticPopups.add( new RegistrationExplorerPopup() );
-		staticPopups.add( new SpecifyCalibrationPopup() );
-		staticPopups.add( new ApplyTransformationPopup() );
-		staticPopups.add( new RemoveTransformationPopup() );
-		staticPopups.add( new ReorientSamplePopup() );
-		staticPopups.add( new Separator() );
-
-		staticPopups.add( new LabelPopUp( " Interest Points" ) );
-		staticPopups.add( new InterestPointsExplorerPopup() );
-		staticPopups.add( new VisualizeDetectionsPopup() );
-		staticPopups.add( new RemoveDetectionsPopup() );
-		staticPopups.add( new Separator() );
-
-		staticPopups.add( new LabelPopUp( " Modifications" ) );
-		staticPopups.add( new ResavePopup() );
 	}
 
 	private static final long serialVersionUID = -3767947754096099774L;
@@ -120,6 +93,8 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 
 	public ViewSetupExplorerPanel( final ViewSetupExplorer< AS, X > explorer, final AS data, final String xml, final X io )
 	{
+		popups = initPopups();
+
 		this.explorer = explorer;
 		this.listeners = new ArrayList< SelectedViewDescriptionListener< AS > >();
 		this.data = data;
@@ -145,11 +120,15 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 				setFusedModeSimple( bdvpopup.bdv, data );
 			}
 		}
+
+		// for access to the current BDV
+		currentInstance = this;
 	}
 
-	public static BDVPopup bdvPopup()
+	@Override
+	public BDVPopup bdvPopup()
 	{
-		for ( final ExplorerWindowSetable s : staticPopups )
+		for ( final ExplorerWindowSetable s : popups )
 			if ( BDVPopup.class.isInstance( s ) )
 				return ((BDVPopup)s);
 
@@ -494,7 +473,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 	{
 		final JPopupMenu popupMenu = new JPopupMenu();
 
-		for ( final ExplorerWindowSetable item : staticPopups )
+		for ( final ExplorerWindowSetable item : popups )
 			popupMenu.add( item.setExplorerWindow( this ) );
 
 		table.setComponentPopupMenu( popupMenu );
@@ -526,6 +505,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 			public void keyTyped( final KeyEvent arg0 ) {}
 		} );
 	}
+
 	protected void addAppleA()
 	{
 		table.addKeyListener( new KeyListener()
@@ -553,5 +533,42 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 					appleKeyDown = true;
 			}
 		});
+	}
+
+	public ArrayList< ExplorerWindowSetable > initPopups()
+	{
+		final ArrayList< ExplorerWindowSetable > popups = new ArrayList< ExplorerWindowSetable >();
+
+		popups.add( new LabelPopUp( " Displaying" ) );
+		popups.add( new BDVPopup() );
+		popups.add( new DisplayViewPopup() );
+		popups.add( new MaxProjectPopup() );
+		popups.add( new Separator() );
+
+		popups.add( new LabelPopUp( " Processing" ) );
+		popups.add( new DetectInterestPointsPopup() );
+		popups.add( new RegisterInterestPointsPopup() );
+		popups.add( new BoundingBoxPopup() );
+		popups.add( new FusionPopup() );
+		popups.add( new Separator() );
+
+		popups.add( new LabelPopUp( " Calibration/Transformations" ) );
+		popups.add( new RegistrationExplorerPopup() );
+		popups.add( new SpecifyCalibrationPopup() );
+		popups.add( new ApplyTransformationPopup() );
+		popups.add( new RemoveTransformationPopup() );
+		popups.add( new ReorientSamplePopup() );
+		popups.add( new Separator() );
+
+		popups.add( new LabelPopUp( " Interest Points" ) );
+		popups.add( new InterestPointsExplorerPopup() );
+		popups.add( new VisualizeDetectionsPopup() );
+		popups.add( new RemoveDetectionsPopup() );
+		popups.add( new Separator() );
+
+		popups.add( new LabelPopUp( " Modifications" ) );
+		popups.add( new ResavePopup() );
+
+		return popups;
 	}
 }
