@@ -12,6 +12,7 @@ import javax.swing.JOptionPane;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.apply.BigDataViewerTransformationWindow;
+import spim.fiji.spimdata.explorer.ExplorerWindow;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import bdv.AbstractSpimSource;
@@ -23,11 +24,11 @@ import bdv.viewer.ViewerPanel;
 import bdv.viewer.state.SourceState;
 import bdv.viewer.state.ViewerState;
 
-public class BDVPopup extends JMenuItem implements ViewExplorerSetable
+public class BDVPopup extends JMenuItem implements ExplorerWindowSetable
 {
 	private static final long serialVersionUID = 5234649267634013390L;
 
-	public ViewSetupExplorerPanel< ?, ? > panel;
+	public ExplorerWindow< ?, ? > panel;
 	public BigDataViewer bdv = null;
 
 	public BDVPopup()
@@ -38,7 +39,7 @@ public class BDVPopup extends JMenuItem implements ViewExplorerSetable
 	}
 
 	@Override
-	public JMenuItem setViewExplorer( final ViewSetupExplorerPanel< ?, ? > panel )
+	public JMenuItem setExplorerWindow( final ExplorerWindow< ?, ? > panel )
 	{
 		this.panel = panel;
 		return this;
@@ -93,7 +94,7 @@ public class BDVPopup extends JMenuItem implements ViewExplorerSetable
 		final BDVPopup p = ViewSetupExplorerPanel.bdvPopup();
 		return ( p != null && p.bdv != null && p.bdv.getViewerFrame().isVisible() );
 	}
-	public static BigDataViewer createBDV( final ViewSetupExplorerPanel< ?, ? > panel )
+	public static BigDataViewer createBDV( final ExplorerWindow< ?, ? > panel )
 	{
 		if ( AbstractImgLoader.class.isInstance( panel.getSpimData().getSequenceDescription().getImgLoader() ) )
 		{

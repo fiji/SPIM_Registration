@@ -15,14 +15,14 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.Specify_Calibration;
 import spim.fiji.plugin.Specify_Calibration.Cal;
-import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
+import spim.fiji.spimdata.explorer.ExplorerWindow;
 
-public class SpecifyCalibrationPopup extends JMenuItem implements ViewExplorerSetable
+public class SpecifyCalibrationPopup extends JMenuItem implements ExplorerWindowSetable
 {
 	private static final long serialVersionUID = 5234649267634013390L;
 	public static boolean showWarning = true;
 
-	ViewSetupExplorerPanel< ? extends AbstractSpimData< ? extends AbstractSequenceDescription< ?, ?, ? > >, ? > panel;
+	ExplorerWindow< ? extends AbstractSpimData< ? extends AbstractSequenceDescription< ?, ?, ? > >, ? > panel;
 
 	public SpecifyCalibrationPopup()
 	{
@@ -32,7 +32,7 @@ public class SpecifyCalibrationPopup extends JMenuItem implements ViewExplorerSe
 	}
 
 	@Override
-	public JMenuItem setViewExplorer( final ViewSetupExplorerPanel< ? extends AbstractSpimData< ? extends AbstractSequenceDescription< ?, ?, ? > >, ? > panel )
+	public JMenuItem setExplorerWindow( final ExplorerWindow< ? extends AbstractSpimData< ? extends AbstractSequenceDescription< ?, ?, ? > >, ? > panel )
 	{
 		this.panel = panel;
 		return this;

@@ -25,13 +25,14 @@ import spim.fiji.plugin.resave.Resave_HDF5;
 import spim.fiji.plugin.resave.Resave_TIFF;
 import spim.fiji.plugin.resave.Resave_TIFF.Parameters;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.explorer.ExplorerWindow;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 import spim.fiji.spimdata.imgloaders.AbstractImgFactoryImgLoader;
 import spim.fiji.spimdata.imgloaders.MicroManagerImgLoader;
 import bdv.export.ExportMipmapInfo;
 import bdv.export.ProgressWriter;
 
-public class ResavePopup extends JMenu implements ViewExplorerSetable
+public class ResavePopup extends JMenu implements ExplorerWindowSetable
 {
 	public static final int askWhenMoreThan = 5;
 	private static final long serialVersionUID = 5234649267634013390L;
@@ -61,9 +62,9 @@ public class ResavePopup extends JMenu implements ViewExplorerSetable
 	}
 
 	@Override
-	public JMenuItem setViewExplorer(ViewSetupExplorerPanel<? extends AbstractSpimData<? extends AbstractSequenceDescription<?, ?, ?>>, ?> panel )
+	public JMenuItem setExplorerWindow(ExplorerWindow<? extends AbstractSpimData<? extends AbstractSequenceDescription<?, ?, ?>>, ?> panel )
 	{
-		this.panel = panel;
+		this.panel = (ViewSetupExplorerPanel< ?, ? >)panel;
 		return this;
 	}
 

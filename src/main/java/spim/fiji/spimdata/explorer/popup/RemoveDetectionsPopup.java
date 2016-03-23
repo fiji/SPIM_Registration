@@ -20,17 +20,17 @@ import spim.fiji.plugin.ThinOut_Detections;
 import spim.fiji.plugin.removedetections.InteractiveProjections;
 import spim.fiji.plugin.thinout.ChannelProcessThinOut;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
+import spim.fiji.spimdata.explorer.ExplorerWindow;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
-public class RemoveDetectionsPopup extends JMenu implements ViewExplorerSetable
+public class RemoveDetectionsPopup extends JMenu implements ExplorerWindowSetable
 {
 	private static final long serialVersionUID = 5234649267634013390L;
 
-	ViewSetupExplorerPanel< ?, ? > panel;
+	ExplorerWindow< ?, ? > panel;
 
 	public RemoveDetectionsPopup()
 	{
@@ -53,7 +53,7 @@ public class RemoveDetectionsPopup extends JMenu implements ViewExplorerSetable
 	}
 
 	@Override
-	public JMenuItem setViewExplorer( final ViewSetupExplorerPanel< ?, ? > panel )
+	public JMenuItem setExplorerWindow( final ExplorerWindow< ?, ? > panel )
 	{
 		this.panel = panel;
 		return this;

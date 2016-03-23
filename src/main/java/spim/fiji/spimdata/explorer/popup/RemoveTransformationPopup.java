@@ -11,14 +11,15 @@ import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+import spim.fiji.spimdata.explorer.ExplorerWindow;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 
-public class RemoveTransformationPopup extends JMenu implements ViewExplorerSetable
+public class RemoveTransformationPopup extends JMenu implements ExplorerWindowSetable
 {
 	public static final int askWhenMoreThan = 5;
 	private static final long serialVersionUID = 5234649267634013390L;
 
-	ViewSetupExplorerPanel< ?, ? > panel;
+	ExplorerWindow< ?, ? > panel;
 
 	protected static String[] types = new String[]{ "Latest/Newest Transformation", "First/Oldest Transformation" };
 
@@ -37,7 +38,7 @@ public class RemoveTransformationPopup extends JMenu implements ViewExplorerSeta
 	}
 
 	@Override
-	public JMenuItem setViewExplorer( final ViewSetupExplorerPanel< ?, ? > panel )
+	public JMenuItem setExplorerWindow( final ExplorerWindow< ?, ? > panel )
 	{
 		this.panel = panel;
 		return this;

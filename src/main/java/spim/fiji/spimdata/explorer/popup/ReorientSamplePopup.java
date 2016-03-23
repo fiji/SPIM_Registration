@@ -18,14 +18,15 @@ import mpicbg.spim.io.IOFunctions;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.plugin.apply.ApplyParameters;
+import spim.fiji.spimdata.explorer.ExplorerWindow;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 
-public class ReorientSamplePopup extends JMenuItem implements ViewExplorerSetable
+public class ReorientSamplePopup extends JMenuItem implements ExplorerWindowSetable
 {
 	private static final long serialVersionUID = 5234649267634013390L;
 	public static boolean showWarning = true;
 
-	ViewSetupExplorerPanel< ? extends AbstractSpimData< ? extends AbstractSequenceDescription< ?, ?, ? > >, ? > panel;
+	ExplorerWindow< ? extends AbstractSpimData< ? extends AbstractSequenceDescription< ?, ?, ? > >, ? > panel;
 
 	public ReorientSamplePopup()
 	{
@@ -35,7 +36,7 @@ public class ReorientSamplePopup extends JMenuItem implements ViewExplorerSetabl
 	}
 
 	@Override
-	public JMenuItem setViewExplorer( final ViewSetupExplorerPanel< ? extends AbstractSpimData< ? extends AbstractSequenceDescription< ?, ?, ? > >, ? > panel )
+	public JMenuItem setExplorerWindow( final ExplorerWindow< ? extends AbstractSpimData< ? extends AbstractSequenceDescription< ?, ?, ? > >, ? > panel )
 	{
 		this.panel = panel;
 		return this;

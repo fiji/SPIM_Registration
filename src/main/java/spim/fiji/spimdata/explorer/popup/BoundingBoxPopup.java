@@ -11,13 +11,14 @@ import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.Define_Bounding_Box;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.explorer.ExplorerWindow;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 
-public class BoundingBoxPopup extends JMenuItem implements ViewExplorerSetable
+public class BoundingBoxPopup extends JMenuItem implements ExplorerWindowSetable
 {
 	private static final long serialVersionUID = 5234649267634013390L;
 
-	ViewSetupExplorerPanel< ?, ? > panel;
+	ExplorerWindow< ?, ? > panel;
 
 	public BoundingBoxPopup()
 	{
@@ -27,7 +28,7 @@ public class BoundingBoxPopup extends JMenuItem implements ViewExplorerSetable
 	}
 
 	@Override
-	public JComponent setViewExplorer( ViewSetupExplorerPanel<? extends AbstractSpimData<? extends AbstractSequenceDescription<?, ?, ?>>, ?> panel )
+	public JComponent setExplorerWindow( ExplorerWindow<? extends AbstractSpimData<? extends AbstractSequenceDescription<?, ?, ?>>, ?> panel )
 	{
 		this.panel = panel;
 		return this;

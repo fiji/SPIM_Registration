@@ -52,7 +52,7 @@ import spim.fiji.spimdata.explorer.popup.ReorientSamplePopup;
 import spim.fiji.spimdata.explorer.popup.ResavePopup;
 import spim.fiji.spimdata.explorer.popup.Separator;
 import spim.fiji.spimdata.explorer.popup.SpecifyCalibrationPopup;
-import spim.fiji.spimdata.explorer.popup.ViewExplorerSetable;
+import spim.fiji.spimdata.explorer.popup.ExplorerWindowSetable;
 import spim.fiji.spimdata.explorer.popup.VisualizeDetectionsPopup;
 import spim.fiji.spimdata.explorer.util.ColorStream;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
@@ -65,9 +65,9 @@ import bdv.tools.brightness.ConverterSetup;
 import bdv.viewer.DisplayMode;
 import bdv.viewer.VisibilityAndGrouping;
 
-public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > > extends JPanel
+public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > > extends JPanel implements ExplorerWindow< AS, X >
 {
-	final static ArrayList< ViewExplorerSetable > staticPopups = new ArrayList< ViewExplorerSetable >();
+	final static ArrayList< ExplorerWindowSetable > staticPopups = new ArrayList< ExplorerWindowSetable >();
 
 	static
 	{
@@ -149,17 +149,22 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 
 	public static BDVPopup bdvPopup()
 	{
-		for ( final ViewExplorerSetable s : staticPopups )
+		for ( final ExplorerWindowSetable s : staticPopups )
 			if ( BDVPopup.class.isInstance( s ) )
 				return ((BDVPopup)s);
 
 		return null;
 	}
 
+	@Override
 	public boolean colorMode() { return colorMode; }
+	@Override
 	public BasicViewDescription< ? extends BasicViewSetup > firstSelectedVD() { return firstSelectedVD; }
 	public ViewSetupTableModel< AS > getTableModel() { return tableModel; }
+	
+	@Override
 	public AS getSpimData() { return data; }
+	@Override
 	public String xml() { return xml; }
 	public X io() { return io; }
 	public ViewSetupExplorer< AS, X > explorer() { return explorer; }
@@ -167,6 +172,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 	@SuppressWarnings("unchecked")
 	public void setSpimData( final Object data ) { this.data = (AS)data; }
 
+	@Override
 	public void updateContent()
 	{
 		this.getTableModel().fireTableDataChanged();
@@ -174,6 +180,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 			l.updateContent( this.data );
 	}
 
+	@Override
 	public List< BasicViewDescription< ? extends BasicViewSetup > > selectedRows()
 	{
 		final ArrayList< BasicViewDescription< ? extends BasicViewSetup > > list = new ArrayList< BasicViewDescription< ? extends BasicViewSetup > >();
@@ -182,6 +189,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		return list;
 	}
 
+	@Override
 	public List< ViewId > selectedRowsViewId()
 	{
 		final ArrayList< ViewId > list = new ArrayList< ViewId >();
@@ -440,6 +448,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		new ViewSetupExplorerInfoBox< AS >( data, xml );
 	}
 
+	@Override
 	public void saveXML()
 	{
 		try
@@ -485,8 +494,8 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 	{
 		final JPopupMenu popupMenu = new JPopupMenu();
 
-		for ( final ViewExplorerSetable item : staticPopups )
-			popupMenu.add( item.setViewExplorer( this ) );
+		for ( final ExplorerWindowSetable item : staticPopups )
+			popupMenu.add( item.setExplorerWindow( this ) );
 
 		table.setComponentPopupMenu( popupMenu );
 	}

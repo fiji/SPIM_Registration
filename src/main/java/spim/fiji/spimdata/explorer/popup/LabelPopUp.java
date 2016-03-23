@@ -5,9 +5,9 @@ import java.awt.Font;
 
 import javax.swing.JLabel;
 
-import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
+import spim.fiji.spimdata.explorer.ExplorerWindow;
 
-public class LabelPopUp extends JLabel implements ViewExplorerSetable
+public class LabelPopUp extends JLabel implements ExplorerWindowSetable
 {
 	private static final long serialVersionUID = 5234649267634013390L;
 
@@ -19,7 +19,7 @@ public class LabelPopUp extends JLabel implements ViewExplorerSetable
 	}
 
 	@Override
-	public JLabel setViewExplorer( final ViewSetupExplorerPanel< ?, ? > panel )
+	public JLabel setExplorerWindow( final ExplorerWindow< ?, ? > panel )
 	{
 		return this;
 	}

@@ -8,10 +8,11 @@ import javax.swing.JMenuItem;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.explorer.ExplorerWindow;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 import spim.fiji.spimdata.explorer.interestpoint.InterestPointExplorer;
 
-public class InterestPointsExplorerPopup extends JMenuItem implements ViewExplorerSetable
+public class InterestPointsExplorerPopup extends JMenuItem implements ExplorerWindowSetable
 {
 	private static final long serialVersionUID = 5234649267634013390L;
 
@@ -25,10 +26,11 @@ public class InterestPointsExplorerPopup extends JMenuItem implements ViewExplor
 		this.addActionListener( new MyActionListener() );
 	}
 
+
 	@Override
-	public JMenuItem setViewExplorer( final ViewSetupExplorerPanel< ?, ? > panel )
+	public JMenuItem setExplorerWindow( final ExplorerWindow< ?, ? > panel )
 	{
-		this.panel = panel;
+		this.panel = (ViewSetupExplorerPanel< ?, ? >)panel;
 		return this;
 	}
 

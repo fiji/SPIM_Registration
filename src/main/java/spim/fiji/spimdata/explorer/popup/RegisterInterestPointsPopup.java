@@ -8,13 +8,14 @@ import javax.swing.JMenuItem;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.Interest_Point_Registration;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.explorer.ExplorerWindow;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 
-public class RegisterInterestPointsPopup extends JMenuItem implements ViewExplorerSetable
+public class RegisterInterestPointsPopup extends JMenuItem implements ExplorerWindowSetable
 {
 	private static final long serialVersionUID = 5234649267634013390L;
 
-	ViewSetupExplorerPanel< ?, ? > panel;
+	ExplorerWindow< ?, ? > panel;
 
 	public RegisterInterestPointsPopup()
 	{
@@ -24,7 +25,7 @@ public class RegisterInterestPointsPopup extends JMenuItem implements ViewExplor
 	}
 
 	@Override
-	public JMenuItem setViewExplorer( final ViewSetupExplorerPanel< ?, ? > panel )
+	public JMenuItem setExplorerWindow( final ExplorerWindow< ?, ? > panel )
 	{
 		this.panel = panel;
 		return this;
