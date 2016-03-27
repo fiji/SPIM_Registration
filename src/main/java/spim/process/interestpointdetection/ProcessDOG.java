@@ -53,7 +53,8 @@ public class ProcessDOG
 			final boolean findMin, 
 			final boolean findMax,
 			final double minIntensity,
-			final double maxIntensity )
+			final double maxIntensity,
+			final boolean keepIntensity )
 	{
 		float initialSigma = sigma;
 		
@@ -155,16 +156,16 @@ public class ProcessDOG
 
 		if ( localization == 0 )
 		{
-			finalPeaks = Localization.noLocalization( peaks, findMin, findMax );
+			finalPeaks = Localization.noLocalization( peaks, findMin, findMax, keepIntensity );
 		}
 		else if ( localization == 1 )
 		{
-			finalPeaks = Localization.computeQuadraticLocalization( peaks, dog.getDoGImage(), findMin, findMax, minPeakValue );
+			finalPeaks = Localization.computeQuadraticLocalization( peaks, dog.getDoGImage(), findMin, findMax, minPeakValue, keepIntensity );
 			dog.getDoGImage().close();
 		}
 		else
 		{
-			finalPeaks = Localization.computeGaussLocalization( peaks, null, sigma, findMin, findMax, minPeakValue );
+			finalPeaks = Localization.computeGaussLocalization( peaks, null, sigma, findMin, findMax, minPeakValue, keepIntensity );
 		}
 		
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Found " + finalPeaks.size() + " peaks." );

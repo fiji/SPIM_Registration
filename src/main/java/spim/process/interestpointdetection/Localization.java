@@ -12,10 +12,11 @@ import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.segmentation.SimplePeak;
 import spim.Threads;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.fiji.spimdata.interestpoints.InterestPointValue;
 
 public class Localization
 {
-	public static ArrayList< InterestPoint > noLocalization( final ArrayList< SimplePeak > peaks, final boolean findMin, final boolean findMax )
+	public static ArrayList< InterestPoint > noLocalization( final ArrayList< SimplePeak > peaks, final boolean findMin, final boolean findMax, final boolean keepIntensity )
 	{
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): NO subpixel localization" );
 
@@ -33,14 +34,17 @@ public class Localization
 				for ( int d = 0; d < n; ++d )
 					pos[ d ] = peak.location[ d ];
 				
-				peaks2.add( new InterestPoint( id++, pos ) );
+				if ( keepIntensity )
+					peaks2.add( new InterestPointValue( id++, pos, peak.intensity ) );
+				else
+					peaks2.add( new InterestPoint( id++, pos ) );
 			}
 		}
 		
 		return peaks2;
 	}
 
-	public static ArrayList< InterestPoint > computeQuadraticLocalization( final ArrayList< SimplePeak > peaks, final Image< FloatType > domImg, final boolean findMin, final boolean findMax, final float threshold )
+	public static ArrayList< InterestPoint > computeQuadraticLocalization( final ArrayList< SimplePeak > peaks, final Image< FloatType > domImg, final boolean findMin, final boolean findMax, final float threshold, final boolean keepIntensity )
 	{
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Subpixel localization using quadratic n-dimensional fit");
 
@@ -73,14 +77,17 @@ public class Localization
 				for ( int d = 0; d < n; ++d )
 					tmp[ d ] = detection.getSubPixelPosition( d );
 
-				peaks2.add( new InterestPoint( id++, tmp ) );
+				if ( keepIntensity )
+					peaks2.add( new InterestPointValue( id++, tmp, detection.getValue().get() ) );
+				else
+					peaks2.add( new InterestPoint( id++, tmp ) );
 			}
 		}
 
 		return peaks2;
 	}
 	
-	public static ArrayList< InterestPoint > computeGaussLocalization( final ArrayList< SimplePeak > peaks, final Image< FloatType > domImg, final double sigma, final boolean findMin, final boolean findMax, final float threshold )
+	public static ArrayList< InterestPoint > computeGaussLocalization( final ArrayList< SimplePeak > peaks, final Image< FloatType > domImg, final double sigma, final boolean findMin, final boolean findMax, final float threshold, final boolean keepIntensity )
 	{
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Subpixel localization using Gaussian Mask Localization");					
 

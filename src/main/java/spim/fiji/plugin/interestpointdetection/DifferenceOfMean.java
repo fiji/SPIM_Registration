@@ -3,7 +3,6 @@ package spim.fiji.plugin.interestpointdetection;
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -91,7 +90,7 @@ public class DifferenceOfMean extends DifferenceOf
 				//
 				// compute Difference-of-Mean
 				//
-				final ArrayList< InterestPoint > ips =
+				List< InterestPoint > ips =
 					ProcessDOM.compute(
 						img,
 						(Img<net.imglib2.type.numeric.real.FloatType>)input,
@@ -105,11 +104,15 @@ public class DifferenceOfMean extends DifferenceOf
 						findMin[ c.getId() ],
 						findMax[ c.getId() ],
 						minIntensity,
-						maxIntensity );
+						maxIntensity,
+						limitDetections);
 
 				img.close();
 
 				correctForDownsampling( ips, correctCoordinates );
+
+				if ( limitDetections )
+					ips = limitList( maxDetections, maxDetectionsTypeIndex, ips );
 
 				interestPoints.put( vd, ips );
 
