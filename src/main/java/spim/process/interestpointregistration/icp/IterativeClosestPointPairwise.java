@@ -53,7 +53,9 @@ public class IterativeClosestPointPairwise implements Callable< PairwiseMatch >
 
 		if ( listA.size() < model.getMinNumMatches() || listB.size() < model.getMinNumMatches() )
 		{
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): " + comparison + ": Not enough detections to match" );
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): " + comparison + ": "
+					+ "Not enough detections to match (" + ( model.getMinNumMatches() ) +
+					" required per list, |listA|= " + listA.size() + ", |listB|= " + listB.size() + ")" );
 			pair.setCandidates( new ArrayList< PointMatchGeneric< Detection > >() );
 			pair.setInliers( new ArrayList< PointMatchGeneric< Detection > >(), Double.NaN );
 			return pair;
