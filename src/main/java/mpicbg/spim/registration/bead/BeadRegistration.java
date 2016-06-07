@@ -5,11 +5,11 @@ import java.util.ArrayList;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.scijava.java3d.Transform3D;
-import org.scijava.vecmath.Matrix4f;
-import org.scijava.vecmath.Quat4f;
-import org.scijava.vecmath.Vector3d;
-import org.scijava.vecmath.Vector3f;
+import spim.vecmath.Transform3D;
+import spim.vecmath.Matrix4f;
+import spim.vecmath.Quat4f;
+import spim.vecmath.Vector3d;
+import spim.vecmath.Vector3f;
 
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.models.AbstractAffineModel3D;
@@ -479,12 +479,7 @@ public class BeadRegistration
 					IOFunctions.println( "prealigned all tiles" );
 			}
 			
-			if ( views.get( 0 ).getViewStructure().getSPIMConfiguration().displayRegistration )
-				tc.optimizeWith3DViewer( 10, 10000, 200, views, debugLevel );
-			else
-			{				
-				tc.optimize( 10, 10000, 200, debugLevel );
-			}
+			tc.optimize( 10, 10000, 200, debugLevel );
 			
 			//tc.optimizeWithSketchTikZ( 10, 10000, 200, debugLevel );
 			//tc.optimizeWithSketchTikZNuclei( 10, 10000, 200, debugLevel );

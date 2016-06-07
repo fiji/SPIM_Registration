@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import org.scijava.vecmath.Point3d;
+import spim.vecmath.Point3d;
 
 import mpicbg.imglib.cursor.LocalizableByDimCursor3D;
 import mpicbg.imglib.image.Image;
