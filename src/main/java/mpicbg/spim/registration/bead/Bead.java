@@ -1,6 +1,6 @@
 package mpicbg.spim.registration.bead;
 
-import org.scijava.vecmath.Point3d;
+import spim.vecmath.Point3d;
 
 import net.imglib2.util.Util;
 import mpicbg.spim.registration.ViewDataBeads;

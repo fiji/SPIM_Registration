@@ -7,12 +7,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.scijava.java3d.Transform3D;
-import org.scijava.vecmath.AxisAngle4d;
-import org.scijava.vecmath.Matrix4d;
-import org.scijava.vecmath.Point3d;
-import org.scijava.vecmath.Vector3d;
-
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.registration.ViewTransform;
@@ -35,6 +29,11 @@ import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.process.fusion.export.ImgExport;
 import spim.process.interestpointregistration.ChannelProcess;
+import spim.vecmath.AxisAngle4d;
+import spim.vecmath.Matrix4d;
+import spim.vecmath.Point3d;
+import spim.vecmath.Transform3D;
+import spim.vecmath.Vector3d;
 
 public class AutomaticReorientation extends BoundingBoxGUI
 {

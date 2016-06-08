@@ -20,9 +20,9 @@ import java.text.DecimalFormat;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.scijava.java3d.Transform3D;
 import javax.swing.SwingUtilities;
 
+import spim.vecmath.Transform3D;
 import net.imglib2.realtransform.AffineTransform3D;
 
 public class BigDataViewerTransformationWindow

@@ -1,34 +1,16 @@
 package mpicbg.spim.mpicbg;
 
-import org.scijava.java3d.utils.geometry.Sphere;
-
-import ij3d.Image3DUniverse;
-
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 
-import org.scijava.java3d.Appearance;
-import org.scijava.java3d.BranchGroup;
-import org.scijava.java3d.ColoringAttributes;
-import org.scijava.java3d.LineAttributes;
-import org.scijava.java3d.Transform3D;
-import org.scijava.java3d.TransparencyAttributes;
-import org.scijava.vecmath.Color3f;
-import org.scijava.vecmath.Point3d;
-import org.scijava.vecmath.Point3f;
-import org.scijava.vecmath.Vector3d;
-import org.scijava.vecmath.Vector3f;
-
-import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.ErrorStatistic;
@@ -46,12 +28,10 @@ import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
 import mpicbg.spim.registration.bead.Bead;
 import mpicbg.spim.registration.segmentation.Nucleus;
-import mpicbg.spim.vis3d.BeadTransformGroup;
-import mpicbg.spim.vis3d.Motion3D;
-import mpicbg.spim.vis3d.Viewer3dFunctions;
-import mpicbg.spim.vis3d.VisualizationFunctions;
 import mpicbg.spim.vis3d.VisualizationSketchTikZ;
 import mpicbg.util.TransformUtils;
+import spim.vecmath.Transform3D;
+import spim.vecmath.Vector3d;
 
 public class TileConfigurationSPIM
 {
@@ -667,264 +647,6 @@ public class TileConfigurationSPIM
 	}
 	*/
 	
-	/**
-	 * Minimize the displacement of all correspondence pairs of all tiles.
-	 * 
-	 * @param maxAllowedError do not accept convergence if error is &gt; max_error
-	 * @param maxIterations stop after that many iterations even if there was
-	 *   no minimum found
-	 * @param maxPlateauwidth convergence is reached if the average absolute
-	 *   slope in an interval of this size and half this size is smaller than
-	 *   0.0001 (in double accuracy).  This is assumed to prevent the algorithm
-	 *   from stopping at plateaus smaller than this value.
-	 */
-	public void optimizeWith3DViewer(
-			final double maxAllowedError,
-			int maxIterations,
-			final int maxPlateauwidth,
-			final ArrayList<ViewDataBeads> views,
-			final int debugLevel ) throws NotEnoughDataPointsException, IllDefinedDataPointsException 
-	{
-		final double multiplicator = 0.16;
-		
-		//ImageStack movie = null;
-		final Color3f beadColor = new Color3f( 0.3f, 0.3f, 0.3f );
-		final float beadSize = 7f;		
-		final float transparency = 0.65f;
-		final Color3f boundingBoxColor = new Color3f( 0.7f, 0.7f, 0.85f );
-		final Color3f fixedBoundingBoxColor = new Color3f( 0.85f, 0.7f, 0.7f );
-		final LineAttributes boundingBoxLineAttributes = new LineAttributes();
-		boundingBoxLineAttributes.setLineWidth(2f);
-		
-		Image3DUniverse univ = VisualizationFunctions.initStandardUniverse( 640, 480 );
-		
-		for ( TileSPIM tile : getTiles() )
-		{
-			AbstractAffineModel3D<?> m = (AbstractAffineModel3D<?>)tile.getModel();
-			Transform3D t = TransformUtils.getTransform3D1( m );
-			
-			ViewDataBeads parent = tile.getParent();
-			
-			Color3f col = boundingBoxColor;
-			if ( fixedTiles.contains( tile ) )
-				col = fixedBoundingBoxColor;
-			
-			parent.beadBranchGroups.add
-			( 
-			 	VisualizationFunctions.drawBeads( univ, parent.getBeadStructure().getBeadList(), t, 
-			                                     beadColor, beadSize, transparency, VisualizationFunctions.storeBeadPosition ) 
-			);
-			
-			// the bounding box is not scaled yet, so we have to apply
-			// the correct z stretching
-			Transform3D tmp = new Transform3D();
-			Transform3D tmp2 = new Transform3D(t);
-			tmp.setScale( new Vector3d(1, 1, parent.getZStretching()) );							
-			tmp2.mul( tmp );
-
-			parent.branchGroups.add
-			( 
-			 	VisualizationFunctions.drawView( univ, parent, col, boundingBoxLineAttributes, tmp2 ) 
-			);
-			
-		}
-		
-		ErrorStatistic observer = new ErrorStatistic( 10000 );
-		
-		int start = 5;
-		for (int i = 0; i < start; i++)
-		{
-			Viewer3dFunctions.setStatusBar( univ, "Starting in " + (start-i) + "seconds." );
-			SimpleMultiThreading.threadWait( 1000 );
-		}
-		
-		int i = 0;
-		
-		boolean proceed = i < maxIterations;
-		
-		while ( proceed )  // do not run forever
-		{
-			/*for ( Tile< ? > tile : tiles )
-			{
-				if ( fixedTiles.contains( tile ) ) continue;
-				tile.updateWithBeads();
-				tile.fitModel();
-				tile.updateWithBeads();
-			}
-			update();*/
-			
-			Viewer3dFunctions.setStatusBar( univ, "  Average Displacement: " + decimalFormat.format( error ) + " px ( " + decimalFormat.format( error * multiplicator ) + " um ), Iteration " + i );
-			
-			//if ( i == 0 )
-				//SimpleMultiThreading.threadWait(2000);
-			//else 
-				//SimpleMultiThreading.threadWait(20);
-			
-			/*if ( i < 3000 )
-			{
-				if ( i >= 10 && i % 2 == 0)
-				{
-					ImagePlus screenShot = Motion3D.getScreenShot();
-					if ( movie == null )
-						movie = new ImageStack(screenShot.getWidth(), screenShot.getHeight());
-					movie.addSlice("slice", screenShot.getProcessor() );
-				}
-			}
-			else
-			{
-				break;
-			}*/
-			
-			int tileCount = 0;
-
-			int countTile = 0;
-			
-			for ( TileSPIM tile : tiles )
-			{
-				++ countTile;
-				if ( !fixedTiles.contains( tile ) )
-				{
-					tile.updateWithDections();
-					if ( i > 0 )
-					{
-						tile.fitModel();
-						tile.updateWithDections();                                                                                                                                 
-					}
-				}
-				
-				if ( i < 5 || i % 15 == 0 )
-				{
-					final AbstractAffineModel3D<?> m = (AbstractAffineModel3D<?>)tile.getModel();
-					final Transform3D t = TransformUtils.getTransform3D1( m );
-					final ViewDataBeads parent = tile.getParent();
-					
-					final Transform3D newTransform = new Transform3D();
-					final Vector3f vector = new Vector3f();
-					final Point3d translation = new Point3d();
-					
-					for ( final BranchGroup branchGroup : parent.beadBranchGroups )
-					{
-						final Enumeration<?> en = branchGroup.getAllChildren();
-						
-						while (en.hasMoreElements())
-						{
-							final BeadTransformGroup beadTransformGroup = (BeadTransformGroup)en.nextElement();
-							
-							// get the original position in the view
-							//final Point3f translation = beadTransformGroup.getBeadPositionPoint();
-							beadTransformGroup.getBeadPositionPoint( translation );
-							
-							// transform the bead coordinates into the position of the view
-							t.transform( translation );						
-	
-							// update TransformGroup with the altered coordinates 
-							//final Transform3D newTransform = new Transform3D();
-							vector.set( translation );
-							newTransform.setTranslation( vector );			
-													
-							beadTransformGroup.setTransform( newTransform );
-							
-							final Sphere sphere = (Sphere)beadTransformGroup.getChild(0);
-							final Appearance app = new Appearance();
-							
-							final double distance = beadTransformGroup.getBead().getDistance();
-							
-							if ( distance < 0 )
-							{
-								app.setColoringAttributes( new ColoringAttributes( new Color3f(0,0,0), ColoringAttributes.SHADE_FLAT ) );
-								app.setTransparencyAttributes( new TransparencyAttributes( TransparencyAttributes.FASTEST, 0.95f ) );
-							}
-							else
-							{								
-								final float color = Math.min( 2, (float)Math.log10( distance + 1 ) );
-								
-								// max value == 100
-								//if ( color > 2 )
-									//color = 2;
-								
-								final float red, green;
-								
-								if ( color >= 1 )
-								{
-									red = 1f;
-									green = 2 - color;
-								}
-								else
-								{
-									green = 1f;
-									red = color;
-								}
-						
-								app.setColoringAttributes( new ColoringAttributes( new Color3f( red, green ,0f ), ColoringAttributes.SHADE_FLAT ) );
-								app.setTransparencyAttributes( new TransparencyAttributes( TransparencyAttributes.FASTEST, transparency ) );
-							}
-							
-							sphere.setAppearance(app);
-						}		
-					}
-					
-					// the bounding box is not scaled yet, so we have to apply
-					// the correct z stretching
-					Transform3D tmp = new Transform3D();
-					Transform3D tmp2 = new Transform3D(t);
-					tmp.setScale( new Vector3d(1, 1, parent.getZStretching()) );							
-					tmp2.mul( tmp );
-									
-					for ( BranchGroup branchGroup : parent.branchGroups )
-					{
-						Motion3D.replaceTransformBranchGroup( branchGroup, tmp2 );
-					}
-					
-					//TestBene.setStatusBar( univ, "  i = " + i + " tileCount = " + tileCount );				
-					tileCount++;
-				}
-
-				//SimpleMultiThreading.threadWait( 100 );		
-				/*
-				if ( i <= 70 )
-				{
-					SimpleMultiThreading.threadWait( 200 );
-					
-					ImagePlus screenShot = Motion3D.getScreenShot();
-					if ( movie == null )
-						movie = new ImageStack(screenShot.getWidth(), screenShot.getHeight());
-					movie.addSlice("slice", screenShot.getProcessor() );
-				}
-				*/
-			}
-
-			
-			update();
-			observer.add( error );			
-			
-			if ( i > maxPlateauwidth )
-			{
-				proceed = error > maxAllowedError;
-				
-				int d = maxPlateauwidth;
-				while ( !proceed && d >= 1 )
-				{
-					try
-					{
-						proceed |= Math.abs( observer.getWideSlope( d ) ) > 0.0001;
-					}
-					catch ( Exception e ) { e.printStackTrace(); }
-					d /= 2;
-				}
-			}
-			
-			proceed &= ++i < maxIterations;
-		}
-		
-		
-		//ImagePlus movieImp = new ImagePlus("Movie", movie);
-		//movieImp.show();
-		
-		println( "Successfully optimized configuration of " + tiles.size() + " tiles after " + i + " iterations:" );
-		println( "  average displacement: " + decimalFormat.format( getError() ) + "px" );
-		println( "  minimal displacement: " + decimalFormat.format( getMinError() ) + "px" );
-		println( "  maximal displacement: " + decimalFormat.format( getMaxError() ) + "px" );
-	}
 
 	/**
 	 * Computes a pre-alignemnt of all non-fixed {@link Tile}s by propagating the pairwise
