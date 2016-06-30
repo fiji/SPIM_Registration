@@ -18,6 +18,7 @@ import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.Model;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.RigidModel3D;
+import mpicbg.models.SimilarityModel3D;
 import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
@@ -622,6 +623,17 @@ public class BeadRegistration
 				              0f, 0f, z,  0f );
 				
 				((AffineModel3D)model).concatenate( tmpModel );
+			}
+			else if ( model instanceof SimilarityModel3D )
+			{
+				final SimilarityModel3D tmpModel = new SimilarityModel3D();
+				final float z = (float)zStretching;
+
+				tmpModel.set( 1f, 0f, 0f, 0f, 
+							  0f, 1f, 0f, 0f,
+							  0f, 0f, z,  0f );
+
+				((SimilarityModel3D)model).concatenate( tmpModel );
 			}
 			else if ( model instanceof RigidModel3D )
 			{
