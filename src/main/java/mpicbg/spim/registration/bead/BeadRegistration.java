@@ -624,17 +624,6 @@ public class BeadRegistration
 				
 				((AffineModel3D)model).concatenate( tmpModel );
 			}
-			else if ( model instanceof SimilarityModel3D )
-			{
-				final SimilarityModel3D tmpModel = new SimilarityModel3D();
-				final float z = (float)zStretching;
-
-				tmpModel.set( 1f, 0f, 0f, 0f, 
-							  0f, 1f, 0f, 0f,
-							  0f, 0f, z,  0f );
-
-				((SimilarityModel3D)model).concatenate( tmpModel );
-			}
 			else if ( model instanceof RigidModel3D )
 			{
 				final RigidModel3D tmpModel = new RigidModel3D();
