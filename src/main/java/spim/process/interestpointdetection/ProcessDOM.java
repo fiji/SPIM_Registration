@@ -46,7 +46,8 @@ public class ProcessDOM
 			final boolean findMin, 
 			final boolean findMax,
 			final double minIntensity,
-			final double maxIntensity )
+			final double maxIntensity,
+			final boolean keepIntensity )
 	{
 		final Image< LongType > integralImg = IntegralImage3d.compute( img );
 
@@ -104,11 +105,11 @@ public class ProcessDOM
 		final ArrayList< InterestPoint > finalPeaks;
 		
 		if ( localization == 0 )
-			finalPeaks = Localization.noLocalization( peaks, findMin, findMax );
+			finalPeaks = Localization.noLocalization( peaks, findMin, findMax, keepIntensity );
 		else if ( localization == 1 )
-			finalPeaks = Localization.computeQuadraticLocalization( peaks, domImg, findMin, findMax, threshold );
+			finalPeaks = Localization.computeQuadraticLocalization( peaks, domImg, findMin, findMax, threshold, keepIntensity );
 		else
-			finalPeaks = Localization.computeGaussLocalization( peaks, domImg, ( radius2 + radius1 )/2.0, findMin, findMax, threshold );
+			finalPeaks = Localization.computeGaussLocalization( peaks, domImg, ( radius2 + radius1 )/2.0, findMin, findMax, threshold, keepIntensity );
 
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Found " + finalPeaks.size() + " peaks." );
 		

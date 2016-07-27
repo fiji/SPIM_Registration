@@ -98,7 +98,6 @@ public class SPIMConfiguration
 
     public boolean fuseOnly = false;
     public boolean registerOnly = false;
-    public boolean displayRegistration = false;
     public boolean readSegmentation = false;
     public boolean writeSegmentation = true;
     public boolean readRegistration = false;

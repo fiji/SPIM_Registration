@@ -54,7 +54,8 @@ public abstract class InterestPointDetection
 			final boolean downsample,
 			final boolean defineAnisotropy,
 			final boolean additionalSmoothing,
-			final boolean setMinMax );
+			final boolean setMinMax,
+			final boolean limitDetections );
 	
 	/**
 	 * @param spimData

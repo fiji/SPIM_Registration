@@ -2,12 +2,11 @@ package mpicbg.pointdescriptor.matcher;
 
 import java.util.ArrayList;
 
-import org.scijava.vecmath.Matrix3d;
-import org.scijava.vecmath.Point3d;
-import org.scijava.vecmath.Quat4d;
-import org.scijava.vecmath.Quat4f;
-import org.scijava.vecmath.Vector3f;
-
+import spim.vecmath.Matrix3d;
+import spim.vecmath.Point3d;
+import spim.vecmath.Quat4d;
+import spim.vecmath.Quat4f;
+import spim.vecmath.Vector3f;
 import mpicbg.models.PointMatch;
 import mpicbg.models.RigidModel3D;
 import mpicbg.pointdescriptor.model.TranslationInvariantRigidModel3D;

@@ -9,8 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.scijava.java3d.Transform3D;
-
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
@@ -42,6 +40,7 @@ import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
 import spim.process.fusion.boundingbox.BigDataViewerBoundingBox;
+import spim.vecmath.Transform3D;
 import bdv.BigDataViewer;
 
 public class Apply_Transformation implements PlugIn

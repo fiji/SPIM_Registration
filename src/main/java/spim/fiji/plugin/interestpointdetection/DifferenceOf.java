@@ -4,6 +4,8 @@ import static mpicbg.spim.data.generic.sequence.ImgLoaderHints.LOAD_COMPLETELY;
 import ij.gui.GenericDialog;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -25,6 +27,7 @@ import net.imglib2.view.Views;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.fiji.spimdata.interestpoints.InterestPointValue;
 import spim.process.interestpointdetection.Downsample;
 
 public abstract class DifferenceOf extends InterestPointDetection
@@ -35,7 +38,8 @@ public abstract class DifferenceOf extends InterestPointDetection
 	public static String[] downsampleChoiceZ = { ds[ 0 ] + "x", ds[ 1 ] + "x", ds[ 2 ] + "x", ds[ 3 ] + "x" };
 	public static String[] localizationChoice = { "None", "3-dimensional quadratic fit", "Gaussian mask localization fit" };	
 	public static String[] brightnessChoice = { "Very weak & small (beads)", "Weak & small (beads)", "Comparable to Sample & small (beads)", "Strong & small (beads)", "Advanced ...", "Interactive ..." };
-	
+	public static String[] limitDetectionChoice = { "Brightest", "Around median (of those above threshold)", "Weakest (above threshold)" };	
+
 	public static int defaultDownsampleXYIndex = 4;
 	public static int defaultDownsampleZIndex = 0;
 
@@ -54,10 +58,15 @@ public abstract class DifferenceOf extends InterestPointDetection
 
 	public static double defaultMinIntensity = 0.0;
 	public static double defaultMaxIntensity = 65535.0;
-	
+
+	public static int defaultMaxDetections = 3000;
+	public static int defaultMaxDetectionsTypeIndex = 0;
+
+	protected boolean limitDetections = false;
 	protected double imageSigmaX, imageSigmaY, imageSigmaZ;
 	protected double additionalSigmaX, additionalSigmaY, additionalSigmaZ;
 	protected double minIntensity, maxIntensity;
+	protected int maxDetections, maxDetectionsTypeIndex;
 
 	// downsampleXY == 0 : a bit less then z-resolution
 	// downsampleXY == -1 : a bit more then z-resolution
@@ -79,13 +88,13 @@ public abstract class DifferenceOf extends InterestPointDetection
 	protected abstract boolean queryAdditionalParameters( final GenericDialog gd );
 	
 	@Override
-	public boolean queryParameters( final boolean downsample, final boolean defineAnisotropy, final boolean additionalSmoothing, final boolean setMinMax )
+	public boolean queryParameters( final boolean downsample, final boolean defineAnisotropy, final boolean additionalSmoothing, final boolean setMinMax, final boolean limitDetections )
 	{
 		final List< Channel > channels = spimData.getSequenceDescription().getAllChannelsOrdered();
 
 		// tell the implementing classes the total number of channels
 		init( channels.size() );
-		
+
 		final GenericDialog gd = new GenericDialog( getDescription() );
 		gd.addChoice( "Subpixel_localization", localizationChoice, localizationChoice[ defaultLocalization ] );
 		
@@ -134,6 +143,13 @@ public abstract class DifferenceOf extends InterestPointDetection
 			
 			gd.addMessage( "Please consider that usually the lower resolution in z is compensated by a lower sampling rate in z.\n" +
 					"Only adjust the initial sigma's if this is not the case.", GUIHelper.mediumstatusfont );
+		}
+
+		this.limitDetections = limitDetections;
+		if ( limitDetections )
+		{
+			gd.addNumericField( "Maximum_number of detections (highest n)", defaultMaxDetections, 0 );
+			gd.addChoice( "Type_of_detections_to_use", limitDetectionChoice, limitDetectionChoice[ defaultMaxDetectionsTypeIndex ] );
 		}
 
 		addAddtionalParameters( gd );
@@ -238,6 +254,12 @@ public abstract class DifferenceOf extends InterestPointDetection
 			imageSigmaX = imageSigmaY = imageSigmaZ = 0.5;
 		}
 
+		if ( limitDetections )
+		{
+			maxDetections = defaultMaxDetections = (int)Math.round( gd.getNextNumber() );
+			maxDetectionsTypeIndex = defaultMaxDetectionsTypeIndex = gd.getNextChoiceIndex();
+		}
+
 		if ( !queryAdditionalParameters( gd ) )
 			return false;
 		else
@@ -257,6 +279,73 @@ public abstract class DifferenceOf extends InterestPointDetection
 			{
 				IOFunctions.println( "presmoothing failed: " + e );
 				e.printStackTrace();
+			}
+		}
+	}
+
+	public static List< InterestPoint > limitList( final int maxDetections, final int maxDetectionsTypeIndex, final List< InterestPoint > list )
+	{
+		if ( list.size() <= maxDetections )
+		{
+			return list;
+		}
+		else
+		{
+			if ( !InterestPointValue.class.isInstance( list.get( 0 ) ) )
+			{
+				IOFunctions.println( "ERROR: Cannot limit detections to " + maxDetections + ", wrong instance." );
+				return list;
+			}
+			else
+			{
+				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Limiting detections to " + maxDetections + ", type = " + limitDetectionChoice[ maxDetectionsTypeIndex ] );
+
+				Collections.sort( list, new Comparator< InterestPoint >()
+				{
+
+					@Override
+					public int compare( final InterestPoint o1, final InterestPoint o2 )
+					{
+						final double v1 = Math.abs( ((InterestPointValue)o1).getIntensity() );
+						final double v2 = Math.abs( ((InterestPointValue)o2).getIntensity() );
+
+						if ( v1 < v2 )
+							return 1;
+						else if ( v1 == v2 )
+							return 0;
+						else
+							return -1;
+					}
+				} );
+
+				final ArrayList< InterestPoint > listNew = new ArrayList< InterestPoint >();
+
+				if ( maxDetectionsTypeIndex == 0 )
+				{
+					// max
+					for ( int i = 0; i < maxDetections; ++i )
+						listNew.add( list.get( i ) );
+				}
+				else if ( maxDetectionsTypeIndex == 2 )
+				{
+					// min
+					for ( int i = 0; i < maxDetections; ++i )
+						listNew.add( list.get( list.size() - 1 - i ) );
+				}
+				else
+				{
+					// median
+					final int median = list.size() / 2;
+					
+					IOFunctions.println( "Medium intensity: " + Math.abs( ((InterestPointValue)list.get( median )).getIntensity() ) );
+					
+					final int from = median - maxDetections/2;
+					final int to = median + maxDetections/2;
+
+					for ( int i = from; i <= to; ++i )
+						listNew.add( list.get( list.size() - 1 - i ) );
+				}
+				return listNew;
 			}
 		}
 	}
