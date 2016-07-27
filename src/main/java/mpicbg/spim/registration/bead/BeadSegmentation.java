@@ -8,8 +8,8 @@ import java.util.Iterator;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.scijava.vecmath.Point3d;
-import org.scijava.vecmath.Point3i;
+import spim.vecmath.Point3d;
+import spim.vecmath.Point3i;
 
 import mpicbg.imglib.algorithm.math.LocalizablePoint;
 import mpicbg.imglib.algorithm.peak.GaussianPeakFitterND;

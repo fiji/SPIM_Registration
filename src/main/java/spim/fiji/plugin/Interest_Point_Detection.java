@@ -46,6 +46,7 @@ public class Interest_Point_Detection implements PlugIn
 	public static boolean defaultDefineAnisotropy = false;
 	public static boolean defaultAdditionalSmoothing = false;
 	public static boolean defaultSetMinMax = false;
+	public static boolean defaultLimitDetections = false;
 	public static String defaultLabel = "beads";
 	
 	static
@@ -130,6 +131,7 @@ public class Interest_Point_Detection implements PlugIn
 		gd.addCheckbox( "Define_anisotropy for segmentation", defaultDefineAnisotropy );
 		gd.addCheckbox( "Additional_smoothing", defaultAdditionalSmoothing );
 		gd.addCheckbox( "Set_minimal_and_maximal_intensity", defaultSetMinMax );
+		gd.addCheckbox( "Limit_amount_of_detections" , defaultLimitDetections );
 		
 		gd.addMessage( "" );
 		GUIHelper.addWebsite( gd );
@@ -152,13 +154,14 @@ public class Interest_Point_Detection implements PlugIn
 		final boolean defineAnisotropy = defaultDefineAnisotropy = gd.getNextBoolean();
 		final boolean additionalSmoothing = defaultAdditionalSmoothing = gd.getNextBoolean();
 		final boolean setMinMax = defaultSetMinMax = gd.getNextBoolean();
+		final boolean limitDetections = defaultLimitDetections = gd.getNextBoolean();
 		
 		final InterestPointDetection ipd = staticAlgorithms.get( algorithm ).newInstance(
 				data,
 				viewIds );
 		
 		// the interest point detection should query its parameters
-		if ( !ipd.queryParameters( downsample, defineAnisotropy, additionalSmoothing, setMinMax ) )
+		if ( !ipd.queryParameters( downsample, defineAnisotropy, additionalSmoothing, setMinMax, limitDetections ) )
 			return false;
 		
 		// now extract all the detections

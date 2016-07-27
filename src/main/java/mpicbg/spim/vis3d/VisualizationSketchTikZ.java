@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.scijava.java3d.Transform3D;
-import org.scijava.vecmath.Point3d;
-import org.scijava.vecmath.Point3f;
+import spim.vecmath.Transform3D;
+import spim.vecmath.Point3d;
+import spim.vecmath.Point3f;
 
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.bead.Bead;

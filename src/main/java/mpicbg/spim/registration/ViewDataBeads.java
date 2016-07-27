@@ -10,9 +10,8 @@ import java.util.Date;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.scijava.java3d.BranchGroup;
-import org.scijava.java3d.Transform3D;
-import org.scijava.vecmath.Matrix4d;
+import spim.vecmath.Transform3D;
+import spim.vecmath.Matrix4d;
 
 import mpicbg.imglib.algorithm.gauss.DownSample;
 import mpicbg.imglib.algorithm.mirror.MirrorImage;
@@ -110,11 +109,11 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	/**
 	 * for 3d visualization
 	 */
-	public ArrayList<BranchGroup> branchGroups = new ArrayList<BranchGroup>();
+	//public ArrayList<BranchGroup> branchGroups = new ArrayList<BranchGroup>();
 	/**
 	 * for 3d visualization
 	 */
-	public ArrayList<BranchGroup> beadBranchGroups = new ArrayList<BranchGroup>();
+	//public ArrayList<BranchGroup> beadBranchGroups = new ArrayList<BranchGroup>();
 
 	/**
 	 * the unique(!) identification of the view

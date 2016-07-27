@@ -1,18 +1,18 @@
 package mpicbg.pointdescriptor.test;
 
-import ij3d.Content;
-import ij3d.Image3DUniverse;
+//import ij3d.Content;
+//import ij3d.Image3DUniverse;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Random;
 
-import org.scijava.java3d.Transform3D;
-import org.scijava.vecmath.Color3f;
-import org.scijava.vecmath.Matrix3f;
-import org.scijava.vecmath.Point3f;
-import org.scijava.vecmath.Quat4f;
-import org.scijava.vecmath.Vector3f;
+import spim.vecmath.Transform3D;
+//import spim.vecmath.Color3f;
+import spim.vecmath.Matrix3f;
+import spim.vecmath.Point3f;
+import spim.vecmath.Quat4f;
+import spim.vecmath.Vector3f;
 
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.Point;
@@ -30,7 +30,7 @@ import mpicbg.spim.vis3d.VisualizationFunctions;
 import mpicbg.spim.vis3d.VisualizeBeads;
 import mpicbg.util.TransformUtils;
 import net.imglib2.util.Util;
-import customnode.CustomLineMesh;
+//import customnode.CustomLineMesh;
 import fiji.util.KDTree;
 import fiji.util.NNearestNeighborSearch;
 
@@ -390,6 +390,7 @@ public class TestPointDescriptor
 			points2.add( p2 );
 		}
 		
+		/*
 		if ( showPoints )
 		{
 			Image3DUniverse univ = VisualizeBeads.initUniverse();
@@ -418,7 +419,8 @@ public class TestPointDescriptor
 			//univ.show();
 			return;
 		}
-		
+		*/
+
 		final long time = System.currentTimeMillis();
 		
 		/* create KDTrees */
