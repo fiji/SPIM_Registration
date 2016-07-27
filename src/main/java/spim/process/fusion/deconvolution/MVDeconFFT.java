@@ -489,7 +489,7 @@ public class MVDeconFFT
 				}
 
 				final FFTConvolution< FloatType > fftConv = fftConvolution2;
-				fftConv.setImg( image );
+				fftConv.setImg( Views.extendValue( image, new FloatType( 1.0f ) ), image );  // ratio outside of the deconvolved space (psi) is 1
 				fftConv.setOutput( result );
 				fftConv.convolve();
 

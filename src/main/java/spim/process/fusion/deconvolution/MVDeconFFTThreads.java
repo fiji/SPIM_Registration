@@ -38,9 +38,10 @@ public class MVDeconFFTThreads
 			final Block blockStruct, final Img< FloatType > image, final Img< FloatType > result,
 			final Img< FloatType > block, final FFTConvolution< FloatType > fftConvolution2 )
 	{
-		blockStruct.copyBlock( Views.extendMirrorSingle( image ), block );
+		// ratio outside of the deconvolved space (psi) is 1
+		blockStruct.copyBlock( Views.extendValue( image, new FloatType( 1.0f ) ), block );
 
-		fftConvolution2.setImg( block );
+		fftConvolution2.setImg( block, block );
 		fftConvolution2.setOutput( block );
 		fftConvolution2.convolve();
 		
@@ -77,7 +78,8 @@ public class MVDeconFFTThreads
 			final Block blockStruct, final int deviceId, final Img< FloatType > image,
 			final Img< FloatType > result, final Img< FloatType > block, final Img< FloatType > kernel2 )
 	{
-		blockStruct.copyBlock( Views.extendMirrorSingle( image ), block );
+		// ratio outside of the deconvolved space (psi) is 1
+		blockStruct.copyBlock( Views.extendValue( image, new FloatType( 1.0f ) ), block );
 
 		// convolve block with kernel2 using CUDA
 		final float[] blockF = ((FloatArray)((ArrayImg< net.imglib2.type.numeric.real.FloatType, ? > )block).update( null ) ).getCurrentStorageArray();
