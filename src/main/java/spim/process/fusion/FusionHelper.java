@@ -51,14 +51,6 @@ public class FusionHelper
 		return angleName;
 	}
 
-	public static final boolean intersects( final double x, final double y, final double z, final long sx, final long sy, final long sz )
-	{
-		if ( x >= 0 && y >= 0 && z >= 0 && x < sx && y < sy && z < sz )
-			return true;
-		else
-			return false;
-	}
-
 	public static final ArrayList< ViewDescription > assembleInputData(
 			final SpimData2 spimData,
 			final TimePoint timepoint,

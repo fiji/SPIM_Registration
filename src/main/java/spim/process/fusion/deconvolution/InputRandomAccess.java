@@ -24,7 +24,9 @@ public class InputRandomAccess< T extends RealType< T > > extends AbstractLocali
 	final FloatType v;
 
 	final RealRandomAccess< FloatType > ir;
-	final int offsetX, offsetY, offsetZ, imgSizeX, imgSizeY, imgSizeZ;
+	final int offsetX, offsetY, offsetZ;
+	final int imgMinX, imgMinY, imgMinZ;
+	final int imgMaxX, imgMaxY, imgMaxZ;
 
 	@SuppressWarnings("unchecked")
 	public InputRandomAccess(
@@ -38,9 +40,13 @@ public class InputRandomAccess< T extends RealType< T > > extends AbstractLocali
 		this.offsetY = (int)offset[ 1 ];
 		this.offsetZ = (int)offset[ 2 ];
 
-		this.imgSizeX = (int)img.dimension( 0 );
-		this.imgSizeY = (int)img.dimension( 1 );
-		this.imgSizeZ = (int)img.dimension( 2 );
+		this.imgMinX = (int)img.min( 0 );
+		this.imgMinY = (int)img.min( 1 );
+		this.imgMinZ = (int)img.min( 2 );
+
+		this.imgMaxX = (int)img.max( 0 );
+		this.imgMaxY = (int)img.max( 1 );
+		this.imgMaxZ = (int)img.max( 2 );
 
 		this.img = img;
 		this.transform = transform;
@@ -83,7 +89,7 @@ public class InputRandomAccess< T extends RealType< T > > extends AbstractLocali
 		transform.applyInverse( t, s );
 
 		// check if position t is inside of the input image (pixel coordinates)
-		if ( FusionHelper.intersects( t[ 0 ], t[ 1 ], t[ 2 ], imgSizeX, imgSizeY, imgSizeZ ) )
+		if ( intersectsLinearInterpolation( t[ 0 ], t[ 1 ], t[ 2 ], imgMinX, imgMinY, imgMinZ, imgMaxX, imgMaxY, imgMaxZ ) )
 		{
 			ir.setPosition( t );
 
@@ -100,6 +106,20 @@ public class InputRandomAccess< T extends RealType< T > > extends AbstractLocali
 		return v;
 	}
 
+	private static final boolean intersectsLinearInterpolation(
+			final double x, final double y, final double z,
+			final long minX, final long minY, final long minZ,
+			final long maxX, final long maxY, final long maxZ )
+	{
+		// to avoid interpolation artifacts from the outofboundsstrategy,
+		// the coordinate has to be bigger than min and smaller than max (assuming linear interpolation)
+		if ( x > minX && y > minY && z > minZ && x < maxX && y < maxY && z < maxZ )
+			return true;
+		else
+			return false;
+	}
+
+	
 	@Override
 	public InputRandomAccess< T > copy()
 	{
