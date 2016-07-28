@@ -1,4 +1,4 @@
-package spim.process.fusion.weights;
+package spim.process.fusion.transformed.weights;
 
 import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
@@ -14,7 +14,7 @@ import net.imglib2.type.numeric.real.FloatType;
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
-public class Blending implements RealRandomAccessible< FloatType >
+public class BlendingRealRandomAccessible implements RealRandomAccessible< FloatType >
 {
 	final Interval interval;
 	final float[] border, blending;
@@ -26,12 +26,26 @@ public class Blending implements RealRandomAccessible< FloatType >
 	 * @param border - how many pixels to skip before starting blending (on each side of each dimension)
 	 * @param blending - how many pixels to compute the blending function on (on each side of each dimension)
 	 */
-	public Blending( final Interval interval, final float[] border, final float[] blending )
+	public BlendingRealRandomAccessible( final Interval interval, final float[] border, final float[] blending )
 	{
 		// in case the interval is actually image data re-instantiate just a simple FinalInterval
 		this.interval = new FinalInterval( interval );
 		this.border = border;
 		this.blending = blending;
+	}
+
+	public BlendingRealRandomAccessible( final Interval interval, final int[] border, final int[] blending )
+	{
+		// in case the interval is actually image data re-instantiate just a simple FinalInterval
+		this.interval = new FinalInterval( interval );
+		this.border = new float[ border.length ];
+		this.blending = new float[ blending.length ];
+
+		for ( int d = 0; d < border.length; ++d )
+		{
+			this.blending[ d ] = blending[ d ];
+			this.border[ d ] = border[ d ];
+		}
 	}
 
 	@Override

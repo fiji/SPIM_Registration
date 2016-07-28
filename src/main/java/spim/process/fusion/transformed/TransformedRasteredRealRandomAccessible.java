@@ -1,4 +1,4 @@
-package spim.process.fusion.weights;
+package spim.process.fusion.transformed;
 
 import net.imglib2.Interval;
 import net.imglib2.RandomAccess;
@@ -7,7 +7,7 @@ import net.imglib2.RealRandomAccessible;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.util.Util;
 
-public class TransformedRealRandomAccessible< T > implements RandomAccessible< T >
+public class TransformedRasteredRealRandomAccessible< T > implements RandomAccessible< T >
 {
 	final RealRandomAccessible< T > realRandomAccessible;
 	final T zero;
@@ -19,7 +19,7 @@ public class TransformedRealRandomAccessible< T > implements RandomAccessible< T
 	 * @param transform - the affine transformation
 	 * @param offset - an additional translational offset
 	 */
-	public TransformedRealRandomAccessible(
+	public TransformedRasteredRealRandomAccessible(
 			final RealRandomAccessible< T > realRandomAccessible,
 			final T zero,
 			final AffineTransform3D transform,
@@ -37,7 +37,7 @@ public class TransformedRealRandomAccessible< T > implements RandomAccessible< T
 	@Override
 	public RandomAccess< T > randomAccess()
 	{
-		return new TransformedInterpolatedRealRandomAccess< T >( realRandomAccessible, zero, transform, Util.long2int( offset ) );
+		return new TransformedRasteredRealRandomAccess< T >( realRandomAccessible, zero, transform, Util.long2int( offset ) );
 	}
 
 	@Override

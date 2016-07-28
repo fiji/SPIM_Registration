@@ -45,8 +45,8 @@ import spim.process.cuda.NativeLibraryTools;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.deconvolution.MVDeconFFT.PSFTYPE;
 import spim.process.fusion.deconvolution.ProcessForDeconvolution.ImgType;
-import spim.process.fusion.deconvolution.ProcessForDeconvolution.LoadType;
 import spim.process.fusion.deconvolution.ProcessForDeconvolution.WeightType;
+import spim.process.fusion.deconvolution.normalize.WeightNormalizerPrecomputed;
 import spim.process.fusion.boundingbox.BoundingBoxGUI;
 import spim.process.fusion.boundingbox.BoundingBoxGUI.ManageListeners;
 import spim.process.fusion.export.DisplayImage;
@@ -92,7 +92,6 @@ public class EfficientBayesianBased extends Fusion
 	public static int defaultIterationType = 1;
 	public static int defaultWeightType = 1;
 	public static int defaultImgType = 1;
-	public static int defaultLoadType = 1;
 	public static boolean defaultSaveMemory = false;
 	public static int defaultOSEMspeedupIndex = 0;
 	public static int defaultNumIterations = 10;
@@ -120,7 +119,6 @@ public class EfficientBayesianBased extends Fusion
 	PSFTYPE iterationType;
 	WeightType weightType;
 	ImgType imgType;
-	LoadType loadType;
 	boolean saveMemory;
 	int osemspeedupIndex;
 	int numIterations;
@@ -190,7 +188,7 @@ public class EfficientBayesianBased extends Fusion
 
 			IOFunctions.println( "BlendingBorder: " + blendingBorderX + ", " + blendingBorderY + ", " + blendingBorderZ );
 			IOFunctions.println( "BlendingBorder: " + blendingRangeX + ", " + blendingRangeY + ", " + blendingRangeZ );
-			IOFunctions.println( "Smoother blending: " + WeightNormalizer.additionalSmoothBlending );
+			IOFunctions.println( "Smoother blending: " + WeightNormalizerPrecomputed.additionalSmoothBlending );
 
 			final ProcessForDeconvolution pfd = new ProcessForDeconvolution(
 					spimData,
@@ -219,7 +217,6 @@ public class EfficientBayesianBased extends Fusion
 							osemSpeedUp,
 							weightType,
 							imgType,
-							loadType,
 							extractPSFLabels,
 							new long[]{ psfSizeX, psfSizeY, psfSizeZ },
 							psfFiles,
@@ -360,7 +357,6 @@ public class EfficientBayesianBased extends Fusion
 		it = (Choice)gd.getChoices().lastElement();
 		gd.addChoice( "Image_weights", weightsString, weightsString[ defaultWeightType ] );
 		gd.addChoice( "Transform_images", imgString, imgString[ defaultImgType ] );
-		gd.addChoice( "Load_input_images", loadString, loadString[ defaultLoadType ] );
 		weight = (Choice)gd.getChoices().lastElement();
 		gd.addChoice( "OSEM_acceleration", osemspeedupChoice, osemspeedupChoice[ defaultOSEMspeedupIndex ] );
 		gd.addNumericField( "Number_of_iterations", defaultNumIterations, 0 );
@@ -402,7 +398,6 @@ public class EfficientBayesianBased extends Fusion
 
 		defaultWeightType = gd.getNextChoiceIndex();
 		defaultImgType = gd.getNextChoiceIndex();
-		defaultLoadType = gd.getNextChoiceIndex();
 
 		if ( defaultWeightType == 0 )
 			weightType = WeightType.PRECOMPUTED_WEIGHTS;
@@ -415,11 +410,6 @@ public class EfficientBayesianBased extends Fusion
 			imgType = ImgType.PRECOMPUTED_IMGS;
 		else
 			imgType = ImgType.VIRTUAL_IMGS;
-
-		if ( defaultLoadType == 0 )
-			loadType = LoadType.LOAD_INPUT_COMPLETELY;
-		else
-			loadType = LoadType.LOAD_INPUT_ONDEMAND;
 
 		osemspeedupIndex = defaultOSEMspeedupIndex = gd.getNextChoiceIndex();
 		numIterations = defaultNumIterations = (int)Math.round( gd.getNextNumber() );
@@ -659,7 +649,7 @@ public class EfficientBayesianBased extends Fusion
 			gd.addSlider( "Blending_range_Y", 0, 100, defaultBlendingRange[ 1 ] );
 			gd.addSlider( "Blending_range_Z", 0, 100, defaultBlendingRange[ 2 ] );
 			
-			gd.addCheckbox( "Smoother_blending", WeightNormalizer.additionalSmoothBlending );
+			gd.addCheckbox( "Smoother_blending", WeightNormalizerPrecomputed.additionalSmoothBlending );
 			
 			gd.addMessage( "" );
 			gd.addMessage( "Note: both sizes are in local coordinates of the input views. Increase one or both of those values if stripy artifacts\n" +
@@ -681,7 +671,7 @@ public class EfficientBayesianBased extends Fusion
 			blendingRangeX = defaultBlendingRange[ 0 ] = (int)Math.round( gd.getNextNumber() );
 			blendingRangeY = defaultBlendingRange[ 1 ] = (int)Math.round( gd.getNextNumber() );
 			blendingRangeZ = defaultBlendingRange[ 2 ] = (int)Math.round( gd.getNextNumber() );
-			WeightNormalizer.additionalSmoothBlending = gd.getNextBoolean();
+			WeightNormalizerPrecomputed.additionalSmoothBlending = gd.getNextBoolean();
 		}
 		else
 		{

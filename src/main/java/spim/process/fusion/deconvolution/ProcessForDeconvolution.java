@@ -48,10 +48,15 @@ import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
 import spim.process.fusion.boundingbox.BoundingBoxGUI;
+import spim.process.fusion.deconvolution.normalize.NormalizingPartyVirtualRandomAccessibleInterval;
+import spim.process.fusion.deconvolution.normalize.WeightNormalizer;
+import spim.process.fusion.deconvolution.normalize.WeightNormalizerConstant;
+import spim.process.fusion.deconvolution.normalize.WeightNormalizerPrecomputed;
+import spim.process.fusion.deconvolution.normalize.WeightNormalizerPartlyVirtual;
 import spim.process.fusion.export.DisplayImage;
-import spim.process.fusion.weights.Blending;
-import spim.process.fusion.weights.NormalizingRandomAccessibleInterval;
-import spim.process.fusion.weights.TransformedRealRandomAccessible;
+import spim.process.fusion.transformed.TransformedInputRandomAccessible;
+import spim.process.fusion.transformed.TransformedRasteredRealRandomAccessible;
+import spim.process.fusion.transformed.weights.BlendingRealRandomAccessible;
 import bdv.util.ConstantRandomAccessible;
 
 /**
@@ -64,8 +69,6 @@ public class ProcessForDeconvolution
 {
 	public static enum WeightType { NO_WEIGHTS, VIRTUAL_WEIGHTS, PRECOMPUTED_WEIGHTS, LOAD_WEIGHTS };
 	public static enum ImgType { NO_IMGS, VIRTUAL_IMGS, PRECOMPUTED_IMGS };
-	public static enum LoadType { LOAD_INPUT_COMPLETELY, LOAD_INPUT_ONDEMAND };
-	
 
 	final protected SpimData2 spimData;
 	final protected List< ViewId > viewIdsToProcess;
@@ -118,7 +121,6 @@ public class ProcessForDeconvolution
 			double osemspeedup,
 			WeightType weightType,
 			final ImgType imgType,
-			final LoadType loadType,
 			final HashMap< Channel, ChannelPSF > extractPSFLabels,
 			final long[] psfSize,
 			final HashMap< Channel, ArrayList< Pair< Pair< Angle, Illumination >, String > > > psfFiles,
@@ -193,7 +195,6 @@ public class ProcessForDeconvolution
 			else
 			{
 				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Loading image using " + spimData.getSequenceDescription().getImgLoader().getClass().getSimpleName() );
-				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Load type: " + loadType );
 
 				final Object type = spimData.getSequenceDescription().getImgLoader().getSetupImgLoader( vd.getViewSetupId() ).getImageType();
 				
@@ -202,10 +203,7 @@ public class ProcessForDeconvolution
 				else
 					IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Image Type = " + type.getClass().getSimpleName() );
 
-				if ( loadType == LoadType.LOAD_INPUT_COMPLETELY )
-					inputImg = spimData.getSequenceDescription().getImgLoader().getSetupImgLoader( vd.getViewSetupId() ).getImage( vd.getTimePointId(), LOAD_COMPLETELY );
-				else
-					inputImg = spimData.getSequenceDescription().getImgLoader().getSetupImgLoader( vd.getViewSetupId() ).getImage( vd.getTimePointId() );
+				inputImg = spimData.getSequenceDescription().getImgLoader().getSetupImgLoader( vd.getViewSetupId() ).getImage( vd.getTimePointId() );
 
 				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Input image class: " + inputImg.getClass().getSimpleName() );
 				
@@ -225,13 +223,12 @@ public class ProcessForDeconvolution
 			//
 			// initializing transformed image
 			//
-
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Initializing transformed image: " + imgType.name() );
 
 			if ( imgType == ImgType.VIRTUAL_IMGS || imgType == ImgType.PRECOMPUTED_IMGS )
 			{
 				// the virtual transformed image construct
-				final RandomAccessible< FloatType > virtual = new InputRandomAccessible( inputImg, transform, offset );
+				final RandomAccessible< FloatType > virtual = new TransformedInputRandomAccessible( inputImg, transform, true, MVDeconvolution.minValue, new FloatType( 0 ), offset );
 				final RandomAccessibleInterval< FloatType > virtualInterval = Views.interval( virtual, outputInterval );
 
 				if ( imgType == ImgType.PRECOMPUTED_IMGS )
@@ -241,7 +238,7 @@ public class ProcessForDeconvolution
 
 					// copy the virtual construct into an actual image
 					long t = System.currentTimeMillis();
-					MVDeconvolution.copyImg( virtualInterval, tImg );
+					FusionHelper.copyImg( virtualInterval, tImg );
 					System.out.println( "copy img: " +  ( System.currentTimeMillis() - t ) );
 				}
 				else
@@ -264,8 +261,8 @@ public class ProcessForDeconvolution
 			{
 				// the virtual weight construct
 				final RandomAccessible< FloatType > virtual = 
-						new TransformedRealRandomAccessible< FloatType >(
-							getBlending( inputImgInterval, blendingBorder, blendingRange, vd ),
+						new TransformedRasteredRealRandomAccessible< FloatType >(
+							new BlendingRealRandomAccessible( inputImgInterval, blendingBorder, blendingRange ),
 							new FloatType(),
 							transform,
 							offset );
@@ -278,7 +275,7 @@ public class ProcessForDeconvolution
 
 					// copy the virtual construct into an actual image
 					long t = System.currentTimeMillis();
-					MVDeconvolution.copyImg( virtualInterval, tWeight );
+					FusionHelper.copyImg( virtualInterval, tWeight );
 					System.out.println( "copy weight: " +  ( System.currentTimeMillis() - t ) );
 				}
 				else
@@ -339,16 +336,20 @@ public class ProcessForDeconvolution
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Computing weight normalization for deconvolution." );
 
+		// normalizes the weights (sum == 1) and applies osem-speedup if wanted
+		// replaces the instances in weightsSorted if necessary (e.g. for virtual weights)
 		final WeightNormalizer wn;
 
 		if ( weightType == WeightType.PRECOMPUTED_WEIGHTS || weightType == WeightType.LOAD_WEIGHTS )
-			wn = new WeightNormalizer( weightsSorted );
+			wn = new WeightNormalizerPrecomputed( weightsSorted );
 		else if ( weightType == WeightType.VIRTUAL_WEIGHTS )
-			wn = new WeightNormalizer( weightsSorted, imgFactory );
-		else //if ( processType == ProcessType.NO_WEIGHTS )
-			wn = null;
+			wn = new WeightNormalizerPartlyVirtual( weightsSorted, imgFactory );
+		else if ( weightType == WeightType.NO_WEIGHTS )
+			wn = new WeightNormalizerConstant( weightsSorted );
+		else
+			throw new RuntimeException( "Unknown weight type: " + weightType );
 
-		if ( wn != null && !wn.process() )
+		if ( !wn.process() )
 			return false;
 
 		// put the potentially modified weights back
@@ -358,14 +359,11 @@ public class ProcessForDeconvolution
 			//new DisplayImage().exportImage( weightsSorted.get( i ), "w " + i );
 		}
 
-		if ( wn != null )
-		{
-			this.minOverlappingViews = wn.getMinOverlappingViews();
-			this.avgOverlappingViews = wn.getAvgOverlappingViews();
-	
-			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Minimal number of overlapping views: " + getMinOverlappingViews() + ", using " + ( this.minOverlappingViews = Math.max( 1, this.minOverlappingViews ) ) );
-			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Average number of overlapping views: " + getAvgOverlappingViews() + ", using " + ( this.avgOverlappingViews = Math.max( 1, this.avgOverlappingViews ) ) );
-		}
+		this.minOverlappingViews = wn.getMinOverlappingViews();
+		this.avgOverlappingViews = wn.getAvgOverlappingViews();
+
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Minimal number of overlapping views: " + getMinOverlappingViews() + ", using " + ( this.minOverlappingViews = Math.max( 1, this.minOverlappingViews ) ) );
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Average number of overlapping views: " + getAvgOverlappingViews() + ", using " + ( this.avgOverlappingViews = Math.max( 1, this.avgOverlappingViews ) ) );
 
 		if ( osemIndex == 1 )
 			osemspeedup = getMinOverlappingViews();
@@ -374,7 +372,7 @@ public class ProcessForDeconvolution
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Adjusting for OSEM speedup = " + osemspeedup );
 
-		adjustForOSEM( weights, weightType, osemspeedup );
+		wn.adjustForOSEM( osemspeedup );
 
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Finished precomputations for deconvolution." );
 
@@ -397,40 +395,6 @@ public class ProcessForDeconvolution
 		}
 	}
 
-	private static void adjustForOSEM( final HashMap< ViewId, RandomAccessibleInterval< FloatType > > weights, final WeightType weightType, final double osemspeedup )
-	{
-		if ( osemspeedup == 1.0 )
-			return;
-
-		if ( weightType == WeightType.PRECOMPUTED_WEIGHTS || weightType == WeightType.LOAD_WEIGHTS )
-		{
-			for ( final RandomAccessibleInterval< FloatType > w : weights.values() )
-			{
-				for ( final FloatType f : Views.iterable( w ) )
-					f.set( Math.min( 1, f.get() * (float)osemspeedup ) ); // individual contribution never higher than 1
-			}
-		}
-		else if ( weightType == WeightType.NO_WEIGHTS )
-		{
-			for ( final RandomAccessibleInterval< FloatType > w : weights.values() )
-			{
-				final RandomAccess< FloatType > r = w.randomAccess();
-				final long[] min = new long[ w.numDimensions() ];
-				w.min( min );
-				r.setPosition( min );
-				r.get().set( Math.min( 1, r.get().get() * (float)osemspeedup ) ); // individual contribution never higher than 1
-			}
-		}
-		else if ( weightType == WeightType.VIRTUAL_WEIGHTS )
-		{
-			for ( final RandomAccessibleInterval< FloatType > w : weights.values() )
-				((NormalizingRandomAccessibleInterval< FloatType >) w).setOSEMspeedup( osemspeedup );
-		}
-		else
-		{
-			throw new RuntimeException( "Weight Type: " + weightType.name() + " not supported in ProcessForDeconvolution.adjustForOSEM()" );
-		}
-	}
 
 	private ExtractPSF<FloatType> loadPSFs(
 			final Channel ch,
@@ -589,21 +553,5 @@ public class ProcessForDeconvolution
 
 		d.exportImage( w, bb, "Sum of weights per pixel" );
 		d.exportImage( wosem, bb, "OSEM=" + osemspeedup + ", sum of weights per pixel" );
-	}
-
-	protected Blending getBlending( final Interval interval, final int[] blendingBorder, final int[] blendingRange, final ViewDescription desc )
-	{
-		final float[] blending = new float[ 3 ];
-		final float[] border = new float[ 3 ];
-		
-		blending[ 0 ] = blendingRange[ 0 ];
-		blending[ 1 ] = blendingRange[ 1 ];
-		blending[ 2 ] = blendingRange[ 2 ];
-
-		border[ 0 ] = blendingBorder[ 0 ];
-		border[ 1 ] = blendingBorder[ 1 ];
-		border[ 2 ] = blendingBorder[ 2 ];
-
-		return new Blending( interval, border, blending );
 	}
 }

@@ -27,8 +27,8 @@ import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
 import spim.process.fusion.boundingbox.BoundingBoxGUI;
-import spim.process.fusion.weights.Blending;
-import spim.process.fusion.weights.ContentBased;
+import spim.process.fusion.transformed.weights.BlendingRealRandomAccessible;
+import spim.process.fusion.transformed.weights.ContentBasedRealRandomAccessible;
 
 public abstract class ProcessFusion
 {
@@ -66,7 +66,7 @@ public abstract class ProcessFusion
 			final TimePoint timepoint, 
 			final Channel channel );
 
-	protected Blending getBlending( final Interval interval, final ViewDescription desc, final ImgLoader imgLoader )
+	protected BlendingRealRandomAccessible getBlending( final Interval interval, final ViewDescription desc, final ImgLoader imgLoader )
 	{
 		final float[] blending = ProcessFusion.defaultBlendingRange.clone();
 		final float[] border = ProcessFusion.defaultBlendingBorder.clone();
@@ -83,10 +83,10 @@ public abstract class ProcessFusion
 			}
 		}
 		
-		return new Blending( interval, border, blending );
+		return new BlendingRealRandomAccessible( interval, border, blending );
 	}
 
-	protected < T extends RealType< T > > ContentBased< T > getContentBased( final RandomAccessibleInterval< T > img, final ViewDescription desc, final ImgLoader imgLoader )
+	protected < T extends RealType< T > > ContentBasedRealRandomAccessible< T > getContentBased( final RandomAccessibleInterval< T > img, final ViewDescription desc, final ImgLoader imgLoader )
 	{
 		final double[] sigma1 = ProcessFusion.defaultContentBasedSigma1.clone();
 		final double[] sigma2 = ProcessFusion.defaultContentBasedSigma2.clone();
@@ -103,7 +103,7 @@ public abstract class ProcessFusion
 			}
 		}
 
-		return new ContentBased<T>( img, bb.getImgFactory( new ComplexFloatType() ), sigma1, sigma2);
+		return new ContentBasedRealRandomAccessible<T>( img, bb.getImgFactory( new ComplexFloatType() ), sigma1, sigma2);
 	}
 	
 	protected < T extends RealType< T > > ArrayList< RealRandomAccessible< FloatType > > getAllWeights(

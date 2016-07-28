@@ -407,7 +407,7 @@ public class MVDeconvolution
 				});
 			}
 
-			execTasks( tasks, nThreads, "compute quotient" );
+			FusionHelper.execTasks( tasks, nThreads, "compute quotient" );
 
 			//if ( view == 1 )
 			//new DisplayImage().exportImage( processingData.getImage(), "img" );
@@ -449,7 +449,7 @@ public class MVDeconvolution
 				});
 			}
 
-			execTasks( tasks, nThreads, "compute final values" );
+			FusionHelper.execTasks( tasks, nThreads, "compute final values" );
 
 			// accumulate the results from the individual threads
 			double sumChange = 0;
@@ -471,25 +471,6 @@ public class MVDeconvolution
 		}
 
 		//SimpleMultiThreading.threadHaltUnClean();
-	}
-
-	private static final void execTasks( final ArrayList< Callable< Void > > tasks, final int nThreads, final String jobDescription )
-	{
-		final ExecutorService taskExecutor = Executors.newFixedThreadPool( nThreads );
-
-		try
-		{
-			// invokeAll() returns when all tasks are complete
-			taskExecutor.invokeAll( tasks );
-		}
-		catch ( final InterruptedException e )
-		{
-			IOFunctions.println( "Failed to " + jobDescription + ": " + e );
-			e.printStackTrace();
-			return;
-		}
-
-		taskExecutor.shutdown();
 	}
 
 	/**
@@ -550,75 +531,6 @@ public class MVDeconvolution
 					raPsiBlurred.get().set( imgValue / psiBlurredValue );
 				else
 					raPsiBlurred.get().set( 1 ); // no image data, quotient=1
-			}
-		}
-	}
-
-	public static < T > void copyImg( final RandomAccessibleInterval< FloatType > input, final RandomAccessibleInterval< FloatType > output )
-	{
-		final int nThreads = Threads.numThreads();
-		final int nPortions = nThreads * 2;
-		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( Views.iterable( input ).size(), nPortions );
-		final ArrayList< Callable< Void > > tasks = new ArrayList< Callable< Void > >();
-
-		for ( final ImagePortion portion : portions )
-		{
-			tasks.add( new Callable< Void >()
-			{
-				@Override
-				public Void call() throws Exception
-				{
-					copyImg( portion.getStartPosition(), portion.getLoopSize(), input, output );
-					return null;
-				}
-			});
-		}
-
-		execTasks( tasks, nThreads, "copy image" );
-	}
-
-
-	/**
-	 * One thread of a method to compute the quotient between two images of the multiview deconvolution
-	 * 
-	 * @param start
-	 * @param loopSize
-	 * @param source
-	 * @param target
-	 */
-	public static final void copyImg(
-			final long start,
-			final long loopSize,
-			final RandomAccessibleInterval< FloatType > source,
-			final RandomAccessibleInterval< FloatType > target )
-	{
-		final IterableInterval< FloatType > sourceIterable = Views.iterable( source );
-		final IterableInterval< FloatType > targetIterable = Views.iterable( target );
-
-		if ( sourceIterable.iterationOrder().equals( targetIterable.iterationOrder() ) )
-		{
-			final Cursor< FloatType > cursorSource = sourceIterable.cursor();
-			final Cursor< FloatType > cursorTarget = targetIterable.cursor();
-	
-			cursorSource.jumpFwd( start );
-			cursorTarget.jumpFwd( start );
-	
-			for ( long l = 0; l < loopSize; ++l )
-				cursorTarget.next().set( cursorSource.next() );
-		}
-		else
-		{
-			final RandomAccess< FloatType > raSource = source.randomAccess();
-			final Cursor< FloatType > cursorTarget = targetIterable.localizingCursor();
-
-			cursorTarget.jumpFwd( start );
-
-			for ( long l = 0; l < loopSize; ++l )
-			{
-				cursorTarget.fwd();
-				raSource.setPosition( cursorTarget );
-
-				cursorTarget.get().set( raSource.get() );
 			}
 		}
 	}

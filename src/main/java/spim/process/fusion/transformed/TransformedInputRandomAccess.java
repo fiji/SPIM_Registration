@@ -1,6 +1,5 @@
-package spim.process.fusion.deconvolution;
+package spim.process.fusion.transformed;
 
-import spim.process.fusion.FusionHelper;
 import net.imglib2.AbstractLocalizableInt;
 import net.imglib2.Localizable;
 import net.imglib2.RandomAccess;
@@ -9,15 +8,29 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccess;
 import net.imglib2.converter.RealFloatConverter;
 import net.imglib2.converter.read.ConvertedRandomAccessible;
-import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
+import net.imglib2.interpolation.InterpolatorFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
-public class InputRandomAccess< T extends RealType< T > > extends AbstractLocalizableInt implements RandomAccess< FloatType >
+/**
+ * Virtually transforms any RandomAccessibleInterval<RealType> into a RandomAccess<FloatType> using an AffineTransformation
+ * and Linear Interpolation. It will only interpolate from the actual data (no outofbounds) to avoid artifacts at the edges
+ * and return 0 outside by default (can be changed).
+ * 
+ * @author preibisch
+ *
+ * @param <T>
+ */
+public class TransformedInputRandomAccess< T extends RealType< T > > extends AbstractLocalizableInt implements RandomAccess< FloatType >
 {
+	final boolean hasMinValue;
+	final float minValue;
+	final FloatType outside;
+
 	final RandomAccessibleInterval< T > img;
+	final InterpolatorFactory< FloatType, RandomAccessible< FloatType > > interpolatorFactory;
 	final AffineTransform3D transform;
 	final long[] offset;
 	final float[] s, t;
@@ -29,12 +42,21 @@ public class InputRandomAccess< T extends RealType< T > > extends AbstractLocali
 	final int imgMaxX, imgMaxY, imgMaxZ;
 
 	@SuppressWarnings("unchecked")
-	public InputRandomAccess(
+	public TransformedInputRandomAccess(
 			final RandomAccessibleInterval< T > img, // from ImgLoader
 			final AffineTransform3D transform,
+			final InterpolatorFactory< FloatType, RandomAccessible< FloatType > > interpolatorFactory,
+			final boolean hasMinValue,
+			final float minValue,
+			final FloatType outside,
 			final long[] offset )
 	{
 		super( img.numDimensions() );
+
+		this.outside = outside;
+
+		this.hasMinValue = hasMinValue;
+		this.minValue = minValue;
 
 		this.offsetX = (int)offset[ 0 ];
 		this.offsetY = (int)offset[ 1 ];
@@ -49,6 +71,7 @@ public class InputRandomAccess< T extends RealType< T > > extends AbstractLocali
 		this.imgMaxZ = (int)img.max( 2 );
 
 		this.img = img;
+		this.interpolatorFactory = interpolatorFactory;
 		this.transform = transform;
 		this.offset = offset;
 		this.s = new float[ n ];
@@ -56,25 +79,23 @@ public class InputRandomAccess< T extends RealType< T > > extends AbstractLocali
 		this.v = new FloatType();
 
 		// extend input image and convert to floats
-		final RandomAccessible< T > extendedImg = Views.extendMirrorSingle( img );
 		final RandomAccessible< FloatType > input;
 
-		if ( FloatType.class.isInstance( extendedImg.randomAccess().get() ) )
+		if ( FloatType.class.isInstance( Views.iterable( img ).cursor().next() ) )
 		{
-			input = (RandomAccessible< FloatType >)extendedImg;
+			input = (RandomAccessible< FloatType >)img;
 		}
 		else
 		{
 			input =
 				new ConvertedRandomAccessible< T, FloatType >(
-						extendedImg,
+						img,
 						new RealFloatConverter< T >(),
 						new FloatType() );
 		}
 
 		// make the interpolator
-		final NLinearInterpolatorFactory< FloatType > f = new NLinearInterpolatorFactory< FloatType >();
-		this.ir = Views.interpolate( input, f ).realRandomAccess();
+		this.ir = Views.interpolate( input, interpolatorFactory ).realRandomAccess();
 	}
 
 	@Override
@@ -93,17 +114,29 @@ public class InputRandomAccess< T extends RealType< T > > extends AbstractLocali
 		{
 			ir.setPosition( t );
 
-			// do not accept 0 values in the data where image data is present, 0 means no image data is available
-			// (used in MVDeconvolution.computeQuotient)
-			// here return the minimal value of the lucy-richardson deconvolution = MVDeconvolution.minValue (e.g 0.0001)
-			v.set( Math.max( MVDeconvolution.minValue, ir.get().get() ) );
+			return getInsideValue( v, ir, hasMinValue, minValue );
 		}
 		else
 		{
-			v.set( 0 );
+			return outside;
 		}
+	}
 
-		return v;
+	private static final FloatType getInsideValue( final FloatType v, final RealRandomAccess< FloatType > ir, final boolean hasMinValue, final float minValue )
+	{
+		if ( hasMinValue )
+		{
+			// do not accept 0 values in the data where image data is present, 0 means no image data is available
+			// (used in MVDeconvolution.computeQuotient)
+			// here return the minimal value of the lucy-richardson deconvolution = MVDeconvolution.minValue (e.g 0.0001)
+			v.set( Math.max( minValue, ir.get().get() ) );
+
+			return v;
+		}
+		else
+		{
+			return ir.get();
+		}
 	}
 
 	private static final boolean intersectsLinearInterpolation(
@@ -112,24 +145,23 @@ public class InputRandomAccess< T extends RealType< T > > extends AbstractLocali
 			final long maxX, final long maxY, final long maxZ )
 	{
 		// to avoid interpolation artifacts from the outofboundsstrategy,
-		// the coordinate has to be bigger than min and smaller than max (assuming linear interpolation)
+		// the coordinate has to be bigger than min and smaller than max (assuming linear or NN interpolation)
 		if ( x > minX && y > minY && z > minZ && x < maxX && y < maxY && z < maxZ )
 			return true;
 		else
 			return false;
 	}
 
-	
 	@Override
-	public InputRandomAccess< T > copy()
+	public TransformedInputRandomAccess< T > copy()
 	{
 		return copyRandomAccess();
 	}
 
 	@Override
-	public InputRandomAccess< T > copyRandomAccess()
+	public TransformedInputRandomAccess< T > copyRandomAccess()
 	{
-		final InputRandomAccess< T > r = new InputRandomAccess< T >( img, transform, offset );
+		final TransformedInputRandomAccess< T > r = new TransformedInputRandomAccess< T >( img, transform, interpolatorFactory, hasMinValue, minValue, outside, offset );
 		r.setPosition( this );
 		return r;
 	}

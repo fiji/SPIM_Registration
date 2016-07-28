@@ -1,4 +1,4 @@
-package spim.process.fusion.weights;
+package spim.process.fusion.transformed.weights;
 
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -32,7 +32,7 @@ import spim.process.fusion.FusionHelper;
  *
  * @param <T>
  */
-public class ContentBased< T extends RealType< T > > implements RealRandomAccessible< FloatType >
+public class ContentBasedRealRandomAccessible< T extends RealType< T > > implements RealRandomAccessible< FloatType >
 {
 	/**
 	 * The Img containing the approxmimated content-based weights
@@ -40,7 +40,7 @@ public class ContentBased< T extends RealType< T > > implements RealRandomAccess
 	final Img< FloatType > contentBasedImg;
 	final int n;
 	
-	public ContentBased(
+	public ContentBasedRealRandomAccessible(
 			final RandomAccessibleInterval< T > input,
 			final ImgFactory< ComplexFloatType > imgFactory,
 			final double[] sigma1,
@@ -163,7 +163,7 @@ public class ContentBased< T extends RealType< T > > implements RealRandomAccess
 		final double[] sigma1 = new double[]{ 20, 20 };
 		final double[] sigma2 = new double[]{ 30, 30 };
 		
-		ContentBased< FloatType > cb = new ContentBased<FloatType>( img, img.factory().imgFactory( new ComplexFloatType() ), sigma1, sigma2 );
+		ContentBasedRealRandomAccessible< FloatType > cb = new ContentBasedRealRandomAccessible<FloatType>( img, img.factory().imgFactory( new ComplexFloatType() ), sigma1, sigma2 );
 		
 		ImageJFunctions.show( cb.getContentBasedImg() );
 	}

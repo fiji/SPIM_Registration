@@ -1,13 +1,12 @@
-package spim.process.fusion.weights;
+package spim.process.fusion.deconvolution.normalize;
 
-import spim.process.fusion.deconvolution.WeightNormalizer;
 import net.imglib2.AbstractLocalizableInt;
 import net.imglib2.Localizable;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.numeric.RealType;
 
-public class NormalizingRandomAccess< T extends RealType< T > > extends AbstractLocalizableInt implements RandomAccess< T >
+public class NormalizingPartlyVirtualRandomAccess< T extends RealType< T > > extends AbstractLocalizableInt implements RandomAccess< T >
 {
 	final RandomAccessibleInterval< T > interval;
 	final RandomAccessibleInterval< T > normalizeInterval;
@@ -19,7 +18,7 @@ public class NormalizingRandomAccess< T extends RealType< T > > extends Abstract
 	final float maxDiffRange;
 	final float scalingRange;
 
-	public NormalizingRandomAccess(
+	public NormalizingPartlyVirtualRandomAccess(
 			final RandomAccessibleInterval< T > interval,
 			final RandomAccessibleInterval< T > normalizeInterval,
 			final double osemspeedup,
@@ -58,7 +57,7 @@ public class NormalizingRandomAccess< T extends RealType< T > > extends Abstract
 		}
 		else if ( sumW > 1 )
 		{
-			v = intervalRandomAccess.get().getRealDouble() / sumW;
+			v =  WeightNormalizer.hardWeights( intervalRandomAccess.get().getRealFloat(), sumW );
 		}
 		else
 		{
@@ -131,8 +130,8 @@ public class NormalizingRandomAccess< T extends RealType< T > > extends Abstract
 	public void setPosition( final long position, final int d ) { this.position[ d ] = (int)position; }
 
 	@Override
-	public NormalizingRandomAccess< T > copy() { return new NormalizingRandomAccess< T >( interval, normalizeInterval, osemspeedup, additionalSmoothBlending, maxDiffRange, scalingRange, type ); }
+	public NormalizingPartlyVirtualRandomAccess< T > copy() { return new NormalizingPartlyVirtualRandomAccess< T >( interval, normalizeInterval, osemspeedup, additionalSmoothBlending, maxDiffRange, scalingRange, type ); }
 
 	@Override
-	public NormalizingRandomAccess<T> copyRandomAccess() { return copy(); }
+	public NormalizingPartlyVirtualRandomAccess<T> copyRandomAccess() { return copy(); }
 }
