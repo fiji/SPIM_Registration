@@ -69,13 +69,14 @@ public class EfficientBayesianBased extends Fusion
 		"Independent (slow, very precise)" };
 
 	public static String[] weightsString = new String[]{
-		"Precompute weights for all views (more memory, faster)",
-		"Virtual weights (less memory, slower)",
-		"No weights (produces artifacts on partially overlapping data)" };
+		"Precompute weights for all views (more memory, fast)",
+		"Partly virtual weights (less memory, average)",
+		"Fully virtual weights (almost no memory, slow)",
+		"No weights (produces artifacts on partially overlapping data, fastest)" };
 
 	public static String[] imgString = new String[]{
-			"Precompute images for all views (more memory, faster)",
-			"Virtual images (less memory, slower)" };
+			"Precompute images for all views (more memory, fast)",
+			"Virtual images (less memory, slow)" };
 
 	public static String[] loadString = new String[]{
 			"Load input images entirely (more memory, faster if no small bounding box)",
@@ -90,7 +91,7 @@ public class EfficientBayesianBased extends Fusion
 
 	public static int defaultFFTImgType = 0;
 	public static int defaultIterationType = 1;
-	public static int defaultWeightType = 1;
+	public static int defaultWeightType = 2;
 	public static int defaultImgType = 1;
 	public static boolean defaultSaveMemory = false;
 	public static int defaultOSEMspeedupIndex = 0;
@@ -402,8 +403,10 @@ public class EfficientBayesianBased extends Fusion
 		if ( defaultWeightType == 0 )
 			weightType = WeightType.PRECOMPUTED_WEIGHTS;
 		else if ( defaultWeightType == 1 )
-			weightType = WeightType.VIRTUAL_WEIGHTS;
-		else //if ( defaultWeightType == 2 )
+			weightType = WeightType.PARTLY_VIRTUAL_WEIGHTS;
+		else if ( defaultWeightType == 2 )
+			weightType = WeightType.FULLY_VIRTUAL_WEIGHTS;
+		else //if ( defaultWeightType == 3 )
 			weightType = WeightType.NO_WEIGHTS;
 
 		if ( defaultImgType == 0 )

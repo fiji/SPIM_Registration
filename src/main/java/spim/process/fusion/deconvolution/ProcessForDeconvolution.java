@@ -52,6 +52,7 @@ import spim.process.fusion.deconvolution.normalize.NormalizingPartyVirtualRandom
 import spim.process.fusion.deconvolution.normalize.WeightNormalizer;
 import spim.process.fusion.deconvolution.normalize.WeightNormalizerConstant;
 import spim.process.fusion.deconvolution.normalize.WeightNormalizerPrecomputed;
+import spim.process.fusion.deconvolution.normalize.WeightNormalizerVirtual;
 import spim.process.fusion.deconvolution.normalize.WeightNormalizerPartlyVirtual;
 import spim.process.fusion.export.DisplayImage;
 import spim.process.fusion.transformed.TransformedInputRandomAccessible;
@@ -67,7 +68,7 @@ import bdv.util.ConstantRandomAccessible;
  */
 public class ProcessForDeconvolution
 {
-	public static enum WeightType { NO_WEIGHTS, VIRTUAL_WEIGHTS, PRECOMPUTED_WEIGHTS, LOAD_WEIGHTS };
+	public static enum WeightType { NO_WEIGHTS, PARTLY_VIRTUAL_WEIGHTS, FULLY_VIRTUAL_WEIGHTS, PRECOMPUTED_WEIGHTS, LOAD_WEIGHTS };
 	public static enum ImgType { NO_IMGS, VIRTUAL_IMGS, PRECOMPUTED_IMGS };
 
 	final protected SpimData2 spimData;
@@ -257,7 +258,7 @@ public class ProcessForDeconvolution
 
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Initializing weights: " + weightType.name() );
 
-			if ( weightType == WeightType.VIRTUAL_WEIGHTS || weightType == WeightType.PRECOMPUTED_WEIGHTS )
+			if ( weightType == WeightType.PARTLY_VIRTUAL_WEIGHTS || weightType == WeightType.FULLY_VIRTUAL_WEIGHTS || weightType == WeightType.PRECOMPUTED_WEIGHTS )
 			{
 				// the virtual weight construct
 				final RandomAccessible< FloatType > virtual = 
@@ -342,8 +343,10 @@ public class ProcessForDeconvolution
 
 		if ( weightType == WeightType.PRECOMPUTED_WEIGHTS || weightType == WeightType.LOAD_WEIGHTS )
 			wn = new WeightNormalizerPrecomputed( weightsSorted );
-		else if ( weightType == WeightType.VIRTUAL_WEIGHTS )
+		else if ( weightType == WeightType.PARTLY_VIRTUAL_WEIGHTS )
 			wn = new WeightNormalizerPartlyVirtual( weightsSorted, imgFactory );
+		else if ( weightType == WeightType.FULLY_VIRTUAL_WEIGHTS )
+			wn = new WeightNormalizerVirtual( weightsSorted );
 		else if ( weightType == WeightType.NO_WEIGHTS )
 			wn = new WeightNormalizerConstant( weightsSorted );
 		else
