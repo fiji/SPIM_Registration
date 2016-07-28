@@ -276,10 +276,11 @@ public class ProcessVirtual extends ProcessFusion
 	{
 		final VoxelDimensions size = ViewSetupUtils.getVoxelSize( desc.getViewSetup() );
 
-		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): WARNINIG, could not load voxel size!! Assuming 1,1,1"  );
-
 		if ( size == null )
+		{
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): WARNINIG, could not load voxel size!! Assuming 1,1,1"  );
 			return 1;
+		}
 
 		return Math.min( size.dimension( 0 ), Math.min( size.dimension( 1 ), size.dimension( 2 ) ) );
 	}

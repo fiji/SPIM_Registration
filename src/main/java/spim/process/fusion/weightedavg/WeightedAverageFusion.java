@@ -70,15 +70,15 @@ public class WeightedAverageFusion extends Fusion
 		if ( exporter instanceof ImgExportTitle )
 			( (ImgExportTitle)exporter).setImgTitler( titler );
 
-		final ProcessFusion process;
-		
+		final ProcessFusion process = new ProcessVirtual( spimData, viewIdsToProcess, bb, useBlending, useContentBased );
+		/*
 		if ( getFusionType() == WeightedAvgFusionType.FUSEDATA && numParalellViews == 0 )
 			process = new ProcessParalell( spimData, viewIdsToProcess, bb, useBlending, useContentBased );
 		else if ( getFusionType() == WeightedAvgFusionType.FUSEDATA )
 			process = new ProcessSequential( spimData, viewIdsToProcess, bb, useBlending, useContentBased, numParalellViews );
 		else
 			process = new ProcessIndependent( spimData, viewIdsToProcess, bb, exporter, newViewsetups );
-
+		*/
 
 		for ( final TimePoint t : timepointsToProcess )
 			for ( final Channel c : channelsToProcess )
