@@ -88,7 +88,7 @@ public class ProcessIndependentPortion< T extends RealType< T > > implements Cal
 			
 			transform.applyInverse( t, s );
 			
-			if ( FusionHelper.intersects( t[ 0 ], t[ 1 ], t[ 2 ], imgSize[ 0 ], imgSize[ 1 ], imgSize[ 2 ] ) )
+			if ( ProcessFusion.intersects( t[ 0 ], t[ 1 ], t[ 2 ], imgSize[ 0 ], imgSize[ 1 ], imgSize[ 2 ] ) )
 			{
 				r.setPosition( t );
 				v.setReal( r.get().getRealFloat() );

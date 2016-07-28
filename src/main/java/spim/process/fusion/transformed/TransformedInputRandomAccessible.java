@@ -39,6 +39,14 @@ public class TransformedInputRandomAccessible< T extends RealType< T > > impleme
 		this.outside = outside;
 	}
 
+	public TransformedInputRandomAccessible(
+			final RandomAccessibleInterval< T > img, // from ImgLoader
+			final AffineTransform3D transform,
+			final long[] offset )
+	{
+		this( img, transform, false, 0.0f, new FloatType( 0 ), offset );
+	}
+
 	public void setLinearInterpolation()
 	{
 		this.interpolatorFactory = new NLinearInterpolatorFactory< FloatType >();

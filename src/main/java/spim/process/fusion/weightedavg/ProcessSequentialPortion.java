@@ -95,7 +95,7 @@ public class ProcessSequentialPortion< T extends RealType< T > > extends Process
 			{				
 				transforms[ i ].applyInverse( t, s );
 				
-				if ( FusionHelper.intersects( t[ 0 ], t[ 1 ], t[ 2 ], imgSizes[ i ][ 0 ], imgSizes[ i ][ 1 ], imgSizes[ i ][ 2 ] ) )
+				if ( ProcessFusion.intersects( t[ 0 ], t[ 1 ], t[ 2 ], imgSizes[ i ][ 0 ], imgSizes[ i ][ 1 ], imgSizes[ i ][ 2 ] ) )
 				{
 					final RealRandomAccess< T > r = interpolators.get( i );
 					r.setPosition( t );

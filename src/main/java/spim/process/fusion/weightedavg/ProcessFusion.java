@@ -76,7 +76,7 @@ public abstract class ProcessFusion
 
 		if ( ProcessFusion.defaultAdjustBlendingForAnisotropy )
 		{
-			for ( int d = 0; d < 2; ++d )
+			for ( int d = 0; d < interval.numDimensions(); ++d )
 			{
 				blending[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
 				border[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
@@ -96,7 +96,7 @@ public abstract class ProcessFusion
 
 		if ( ProcessFusion.defaultAdjustContentBasedSigmaForAnisotropy )
 		{
-			for ( int d = 0; d < 2; ++d )
+			for ( int d = 0; d < img.numDimensions(); ++d )
 			{
 				sigma1[ d ] /= voxelSize.dimension( d ) / minRes;
 				sigma2[ d ] /= voxelSize.dimension( d ) / minRes;
@@ -142,6 +142,14 @@ public abstract class ProcessFusion
 			transforms[ i ] = getTransform( inputData.get( i ) );
 		
 		return transforms;
+	}
+
+	public static final boolean intersects( final double x, final double y, final double z, final long sx, final long sy, final long sz )
+	{
+		if ( x >= 0 && y >= 0 && z >= 0 && x < sx && y < sy && z < sz )
+			return true;
+		else
+			return false;
 	}
 
 	public static < T extends RealType< T > > RandomAccessibleInterval< T > getImage( final T type, final SpimData2 spimData, final ViewId view, final boolean normalize )
