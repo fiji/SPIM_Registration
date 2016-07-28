@@ -1,5 +1,6 @@
 package spim.process.fusion.weightedavg;
 
+import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -7,6 +8,7 @@ import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.TimePoint;
@@ -19,11 +21,6 @@ import net.imglib2.Interval;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.interpolation.InterpolatorFactory;
-import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
-import net.imglib2.interpolation.randomaccess.NearestNeighborInterpolatorFactory;
-import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -34,6 +31,7 @@ import net.imglib2.view.Views;
 import spim.Threads;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
+import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
 import spim.process.fusion.boundingbox.BoundingBoxGUI;
@@ -71,7 +69,6 @@ public class ProcessVirtual extends ProcessFusion
 	@Override
 	public < T extends RealType< T > & NativeType< T > > Img< T > fuseStack(
 			final T type,
-			final InterpolatorFactory< T, RandomAccessible< T > > interpolatorFactory,
 			final TimePoint timepoint, 
 			final Channel channel )
 	{
@@ -82,6 +79,28 @@ public class ProcessVirtual extends ProcessFusion
 		// (e.g. fuse timepoint 1 channel 1 and timepoint 2 channel 2)
 		if ( inputData.size() == 0 )
 			return null;
+
+		// update bounding box if necessary for downsampling
+		final BoundingBoxGUI bb;
+		final int downSampling = boundingBox.getDownSampling();
+
+		if ( downSampling == 1 )
+		{
+			bb = boundingBox;
+		}
+		else
+		{
+			final int[] min = boundingBox.getMin().clone();
+			final int[] max = boundingBox.getMax().clone();
+
+			for ( int d = 0; d < min.length; ++ d )
+			{
+				min[ d ] /= boundingBox.getDownSampling();
+				max[ d ] /= boundingBox.getDownSampling();
+			}
+
+			bb = new BoundingBoxGUI( spimData, viewIdsToProcess, new BoundingBox( min, max ) );
+		}
 
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Reserving memory for fused image, size = " + Util.printCoordinates( bb.getDimensions()) );
 
@@ -141,6 +160,15 @@ public class ProcessVirtual extends ProcessFusion
 
 			spimData.getViewRegistrations().getViewRegistration( vd ).updateModel();
 			final AffineTransform3D transform = spimData.getViewRegistrations().getViewRegistration( vd ).getModel();
+
+			if ( downSampling > 1 )
+			{
+				final AffineTransform3D at = new AffineTransform3D();
+				at.scale( 1.0 / downSampling );
+				transform.preConcatenate( at );
+				
+				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Applying downsampling: " + at );
+			}
 
 			// values outside of the image area are -1
 			final TransformedInputRandomAccessible< FloatType > virtual = new TransformedInputRandomAccessible( inputImg, transform, false, 0.0f, new FloatType( -1 ), offset );

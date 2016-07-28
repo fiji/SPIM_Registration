@@ -1,8 +1,5 @@
 package spim.process.fusion.boundingbox.automatic;
 
-import ij.ImageJ;
-import ij.ImagePlus;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -11,6 +8,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import ij.ImageJ;
+import ij.ImagePlus;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
@@ -20,7 +19,6 @@ import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessible;
 import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.interpolation.randomaccess.NearestNeighborInterpolatorFactory;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
@@ -31,8 +29,7 @@ import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
 import spim.process.fusion.boundingbox.BoundingBoxGUI;
 import spim.process.fusion.weightedavg.ProcessFusion;
-import spim.process.fusion.weightedavg.ProcessParalell;
-import spim.process.fusion.weightedavg.ProcessSequential;
+import spim.process.fusion.weightedavg.ProcessVirtual;
 
 public class MinFilterThreshold
 {
@@ -76,14 +73,9 @@ public class MinFilterThreshold
 	public boolean run()
 	{
 		// fuse the dataset
-		final ProcessFusion process;
+		final ProcessFusion process = new ProcessVirtual( spimData, viewIdsToProcess, bb, 0, false, false );
 
-		if ( loadSequentially )
-			process = new ProcessSequential( spimData, viewIdsToProcess, bb, false, false, 1 );
-		else
-			process = new ProcessParalell( spimData, viewIdsToProcess, bb, false, false );
-
-		Img< FloatType > img = process.fuseStack( new FloatType(), new NearestNeighborInterpolatorFactory<FloatType>(), timepoint, channel );
+		Img< FloatType > img = process.fuseStack( new FloatType(), timepoint, channel );
 
 		final float[] minmax = FusionHelper.minMax( img );
 		final int effR = Math.max( radiusMin / bb.getDownSampling(), 1 );

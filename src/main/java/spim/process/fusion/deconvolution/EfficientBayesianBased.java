@@ -450,7 +450,7 @@ public class EfficientBayesianBased extends Fusion
 	public long totalRAM( final long fusedSizeMB, final int bytePerPixel )
 	{
 		if ( weight.getSelectedIndex() == weightsString.length - 1 ) // only illustrate weights
-			return fusedSizeMB * getMaxNumViewsPerTimepoint() + (avgPixels/ ( 1024*1024 )) * bytePerPixel;
+			return fusedSizeMB * getMaxNumViewsPerTimepoint();
 		
 		final int blockChoice = block.getSelectedIndex();
 		

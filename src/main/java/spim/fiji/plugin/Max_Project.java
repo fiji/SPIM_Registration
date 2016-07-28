@@ -5,6 +5,8 @@ import ij.ImageStack;
 import ij.plugin.PlugIn;
 import ij.process.FloatProcessor;
 
+import static mpicbg.spim.data.generic.sequence.ImgLoaderHints.LOAD_COMPLETELY;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -24,6 +26,7 @@ import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.deconvolution.ExtractPSF;
@@ -84,7 +87,7 @@ public class Max_Project implements PlugIn
 					{
 						IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Loading image for timepoint " + t.getId() + " viewsetup " + vd.getViewSetupId() );
 
-						final RandomAccessibleInterval< T > img = ProcessFusion.getImage( type, imgLoader, vd, false );
+						final RandomAccessibleInterval< T > img = getImage( type, imgLoader, vd, false );
 
 						final FloatProcessor fp =
 								toProcessor( ExtractPSF.computeMaxProjection( img, new ArrayImgFactory< T >(), 2 ) );
@@ -114,6 +117,17 @@ public class Max_Project implements PlugIn
 			array[ i ] = c.next().getRealFloat();
 
 		return fp;
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public static < T extends RealType< T > > RandomAccessibleInterval< T > getImage( final T type, ImgLoader imgLoader, final ViewId view, final boolean normalize )
+	{
+		if ( (RealType)type instanceof FloatType )
+			return (RandomAccessibleInterval)imgLoader.getSetupImgLoader( view.getViewSetupId() ).getFloatImage( view.getTimePointId(), normalize, LOAD_COMPLETELY );
+		else if ( (RealType)type instanceof UnsignedShortType )
+			return (RandomAccessibleInterval)imgLoader.getSetupImgLoader( view.getViewSetupId() ).getImage( view.getTimePointId(), LOAD_COMPLETELY );
+		else
+			return null;
 	}
 
 	public static void main( String[] args )
