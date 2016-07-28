@@ -15,6 +15,7 @@ import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
+import mpicbg.spim.io.IOFunctions;
 import net.imglib2.FinalDimensions;
 import net.imglib2.RandomAccessible;
 import net.imglib2.interpolation.InterpolatorFactory;
@@ -61,6 +62,9 @@ public class WeightedAverageFusion extends Fusion
 		else
 			return new NLinearInterpolatorFactory< T >();
 	}
+
+	// spim.process.fusion.weightedavg.WeightedAverageFusion.old = true;
+	public static boolean old = false;
 	
 	@Override
 	public boolean fuseData( final BoundingBoxGUI bb, final ImgExport exporter )
@@ -70,15 +74,26 @@ public class WeightedAverageFusion extends Fusion
 		if ( exporter instanceof ImgExportTitle )
 			( (ImgExportTitle)exporter).setImgTitler( titler );
 
-		final ProcessFusion process = new ProcessVirtual( spimData, viewIdsToProcess, bb, useBlending, useContentBased );
-		/*
-		if ( getFusionType() == WeightedAvgFusionType.FUSEDATA && numParalellViews == 0 )
-			process = new ProcessParalell( spimData, viewIdsToProcess, bb, useBlending, useContentBased );
-		else if ( getFusionType() == WeightedAvgFusionType.FUSEDATA )
-			process = new ProcessSequential( spimData, viewIdsToProcess, bb, useBlending, useContentBased, numParalellViews );
+		final ProcessFusion process;
+
+		if ( old )
+		{
+			IOFunctions.println( "OLD" );
+
+			old = false;
+			if ( getFusionType() == WeightedAvgFusionType.FUSEDATA && numParalellViews == 0 )
+				process = new ProcessParalell( spimData, viewIdsToProcess, bb, useBlending, useContentBased );
+			else if ( getFusionType() == WeightedAvgFusionType.FUSEDATA )
+				process = new ProcessSequential( spimData, viewIdsToProcess, bb, useBlending, useContentBased, numParalellViews );
+			else
+				process = new ProcessIndependent( spimData, viewIdsToProcess, bb, exporter, newViewsetups );
+		}
 		else
-			process = new ProcessIndependent( spimData, viewIdsToProcess, bb, exporter, newViewsetups );
-		*/
+		{
+			IOFunctions.println( "NEW" );
+			old = true;
+			process = new ProcessVirtual( spimData, viewIdsToProcess, bb, getInterpolation(), useBlending, useContentBased );
+		}
 
 		for ( final TimePoint t : timepointsToProcess )
 			for ( final Channel c : channelsToProcess )

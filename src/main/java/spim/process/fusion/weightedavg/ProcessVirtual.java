@@ -19,7 +19,11 @@ import net.imglib2.Interval;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.interpolation.InterpolatorFactory;
+import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
+import net.imglib2.interpolation.randomaccess.NearestNeighborInterpolatorFactory;
+import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -40,15 +44,19 @@ import spim.process.fusion.transformed.weights.ContentBasedRealRandomAccessible;
 
 public class ProcessVirtual extends ProcessFusion
 {
+	final int interpolation;
 
 	public ProcessVirtual(
 			final SpimData2 spimData,
 			final List< ViewId > viewIdsToProcess,
 			final BoundingBoxGUI bb,
+			final int interpolation,
 			final boolean useBlending,
 			final boolean useContentBased )
 	{
 		super( spimData, viewIdsToProcess, bb, useBlending, useContentBased );
+
+		this.interpolation = interpolation;
 	}
 
 	/** 
@@ -135,7 +143,19 @@ public class ProcessVirtual extends ProcessFusion
 			final AffineTransform3D transform = spimData.getViewRegistrations().getViewRegistration( vd ).getModel();
 
 			// values outside of the image area are -1
-			final RandomAccessible< FloatType > virtual = new TransformedInputRandomAccessible( inputImg, transform, false, 0.0f, new FloatType( -1 ), offset );
+			final TransformedInputRandomAccessible< FloatType > virtual = new TransformedInputRandomAccessible( inputImg, transform, false, 0.0f, new FloatType( -1 ), offset );
+
+			if ( interpolation == 0 )
+			{
+				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting nearest-neigbor interpolation" );
+				virtual.setNearestNeighborInterpolation();
+			}
+			else
+			{
+				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting linear interpolation" );
+				virtual.setLinearInterpolation();
+			}
+
 			final RandomAccessibleInterval< FloatType > virtualInterval = Views.interval( virtual, outputInterval );
 
 			transformedImgs.add( virtualInterval );
@@ -174,7 +194,7 @@ public class ProcessVirtual extends ProcessFusion
 							new FloatType(),
 							transform,
 							offset );
-				final RandomAccessibleInterval< FloatType > virtualBlendingInterval = Views.interval( virtual, outputInterval );
+				final RandomAccessibleInterval< FloatType > virtualBlendingInterval = Views.interval( virtualBlending, outputInterval );
 
 				weightsPerView.add( virtualBlendingInterval );
 			}
@@ -206,25 +226,14 @@ public class ProcessVirtual extends ProcessFusion
 							new FloatType(),
 							transform,
 							offset );
-				final RandomAccessibleInterval< FloatType > virtualBlendingInterval = Views.interval( virtual, outputInterval );
+				final RandomAccessibleInterval< FloatType > virtualContentInterval = Views.interval( virtualContent, outputInterval );
 
-				weightsPerView.add( virtualBlendingInterval );
+				weightsPerView.add( virtualContentInterval );
 			}
 
 			transformedWeights.add( weightsPerView );
 		}
 
-		//
-		// get all weighting methods
-		//
-		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting up weights virtually for " + inputData.size() + " input images." );
-
-
-		for ( int i = 0; i < inputData.size(); ++i )
-		{
-		}
-			//weights.add( getAllWeights( originalImgs.get( i ), inputData.get( i ), spimData.getSequenceDescription().getImgLoader() ) );
-		
 		// split up into many parts for multithreading
 		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( fusedImg.size(), Threads.numThreads() * 4 );
 
@@ -253,7 +262,7 @@ public class ProcessVirtual extends ProcessFusion
 				tasks.add( new ProcessVirtualPortionWeight< T >( portion, transformedImgs, singleWeightPerView, fusedImg, bb ) );
 		}
 
-		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Starting fusion process.");
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Starting fusion process." );
 
 		try
 		{

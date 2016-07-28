@@ -50,6 +50,8 @@ public class ProcessVirtualPortionWeights< T extends RealType< T > > extends Pro
 
 			for ( final RandomAccessibleInterval< FloatType > rai : weights.get( i ) )
 				lw.add( rai.randomAccess() );
+
+			weightRAs.add( lw );
 		}
 
 		final Cursor< T > cursor = fusedImg.localizingCursor();

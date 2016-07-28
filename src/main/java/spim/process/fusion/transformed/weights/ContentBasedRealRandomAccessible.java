@@ -52,7 +52,7 @@ public class ContentBasedRealRandomAccessible< T extends RealType< T > > impleme
 				new ConvertedRandomAccessibleInterval< T, FloatType >( input, new RealFloatConverter< T >(),  new FloatType() ),
 				imgFactory,
 				sigma1,
-				sigma2 );		
+				sigma2 );
 	}
 	
 	public Img< FloatType > getContentBasedImg() { return contentBasedImg; }
