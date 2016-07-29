@@ -1,6 +1,5 @@
 package spim.process.fusion.weightedavg;
 
-import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -8,7 +7,6 @@ import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.TimePoint;
@@ -139,9 +137,7 @@ public class ProcessVirtual extends ProcessFusion
 				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Image Type = " + type.getClass().getSimpleName() );
 
 			final Interval inputImgInterval;
-			final RandomAccessibleInterval< ? > inputImg;
-
-			inputImg = spimData.getSequenceDescription().getImgLoader().getSetupImgLoader( vd.getViewSetupId() ).getImage( vd.getTimePointId() );
+			final RandomAccessibleInterval< ? > inputImg = spimData.getSequenceDescription().getImgLoader().getSetupImgLoader( vd.getViewSetupId() ).getImage( vd.getTimePointId() );
 
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Input image class: " + inputImg.getClass().getSimpleName() );
 			
@@ -171,17 +167,17 @@ public class ProcessVirtual extends ProcessFusion
 			}
 
 			// values outside of the image area are -1
-			final TransformedInputRandomAccessible< FloatType > virtual = new TransformedInputRandomAccessible( inputImg, transform, false, 0.0f, new FloatType( -1 ), offset );
+			final RandomAccessible< FloatType > virtual = new TransformedInputRandomAccessible( inputImg, transform, false, 0.0f, new FloatType( -1 ), offset );
 
 			if ( interpolation == 0 )
 			{
 				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting nearest-neigbor interpolation" );
-				virtual.setNearestNeighborInterpolation();
+				((TransformedInputRandomAccessible<?>)virtual).setNearestNeighborInterpolation();
 			}
 			else
 			{
 				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting linear interpolation" );
-				virtual.setLinearInterpolation();
+				((TransformedInputRandomAccessible<?>)virtual).setLinearInterpolation();
 			}
 
 			final RandomAccessibleInterval< FloatType > virtualInterval = Views.interval( virtual, outputInterval );
@@ -309,7 +305,7 @@ public class ProcessVirtual extends ProcessFusion
 		return fusedImg;
 	}
 
-	private static double getMinRes( final ViewDescription desc )
+	public static double getMinRes( final ViewDescription desc )
 	{
 		final VoxelDimensions size = ViewSetupUtils.getVoxelSize( desc.getViewSetup() );
 
