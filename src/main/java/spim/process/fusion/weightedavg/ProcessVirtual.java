@@ -155,7 +155,7 @@ public class ProcessVirtual extends ProcessFusion
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Initializing virtual transformation of image" );
 
 			spimData.getViewRegistrations().getViewRegistration( vd ).updateModel();
-			final AffineTransform3D transform = spimData.getViewRegistrations().getViewRegistration( vd ).getModel();
+			final AffineTransform3D transform = spimData.getViewRegistrations().getViewRegistration( vd ).getModel().copy();
 
 			if ( downSampling > 1 )
 			{
