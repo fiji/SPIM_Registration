@@ -5,6 +5,7 @@ import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.FinalInterval;
+import net.imglib2.Interval;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.interpolation.InterpolatorFactory;
@@ -12,10 +13,40 @@ import net.imglib2.outofbounds.OutOfBoundsFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Pair;
+import net.imglib2.util.ValuePair;
 import net.imglib2.view.Views;
 
 public class TransformView
 {
+	/**
+	 * Scale the affine transform and with it the bounding box so it is the right image, but just smaller
+	 * 
+	 * @param transform
+	 * @param boundingBox
+	 * @param factor
+	 * @return
+	 */
+	public static Pair< AffineTransform3D, Interval > scale( final AffineTransform3D transform, final FinalInterval boundingBox, final double factor )
+	{
+		final int n = boundingBox.numDimensions();
+		final long[] min = new long[ n ];
+		final long[] max = new long[ n ];
+
+		for ( int d = 0; d < min.length; ++ d )
+		{
+			min[ d ] = Math.round( boundingBox.min( d ) * factor );
+			max[ d ] = Math.round( boundingBox.max( d ) * factor );
+		}
+
+		final AffineTransform3D t = transform.copy();
+		final AffineTransform3D at = new AffineTransform3D();
+		at.scale( factor );
+		t.preConcatenate( at );
+
+		return new ValuePair< AffineTransform3D, Interval >( t, new FinalInterval( min, max ) );
+	}
+
 	/**
 	 * Creates a virtual construct that transforms and zero-mins.
 	 * 
