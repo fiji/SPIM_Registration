@@ -1,8 +1,5 @@
 package spim.process.fusion.deconvolution;
 
-import static mpicbg.spim.data.generic.sequence.ImgLoaderHints.LOAD_COMPLETELY;
-import ij.ImagePlus;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
@@ -14,17 +11,21 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import bdv.util.ConstantRandomAccessible;
+import ij.ImagePlus;
+import mpicbg.imglib.util.Util;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
-import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.converter.RealFloatConverter;
@@ -32,7 +33,6 @@ import net.imglib2.converter.read.ConvertedRandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
@@ -48,17 +48,17 @@ import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
 import spim.process.fusion.boundingbox.BoundingBoxGUI;
-import spim.process.fusion.deconvolution.normalize.NormalizingPartyVirtualRandomAccessibleInterval;
 import spim.process.fusion.deconvolution.normalize.WeightNormalizer;
 import spim.process.fusion.deconvolution.normalize.WeightNormalizerConstant;
+import spim.process.fusion.deconvolution.normalize.WeightNormalizerPartlyVirtual;
 import spim.process.fusion.deconvolution.normalize.WeightNormalizerPrecomputed;
 import spim.process.fusion.deconvolution.normalize.WeightNormalizerVirtual;
-import spim.process.fusion.deconvolution.normalize.WeightNormalizerPartlyVirtual;
 import spim.process.fusion.export.DisplayImage;
 import spim.process.fusion.transformed.TransformedInputRandomAccessible;
 import spim.process.fusion.transformed.TransformedRasteredRealRandomAccessible;
 import spim.process.fusion.transformed.weights.BlendingRealRandomAccessible;
-import bdv.util.ConstantRandomAccessible;
+import spim.process.fusion.weightedavg.ProcessFusion;
+import spim.process.fusion.weightedavg.ProcessVirtual;
 
 /**
  * Fused individual images for each input stack, uses the exporter directly
@@ -74,8 +74,8 @@ public class ProcessForDeconvolution
 	final protected SpimData2 spimData;
 	final protected List< ViewId > viewIdsToProcess;
 	final BoundingBoxGUI bb;
-	final int[] blendingBorder;
-	final int[] blendingRange;
+	final float[] blendingBorder;
+	final float[] blendingRange;
 	
 	int minOverlappingViews;
 	double avgOverlappingViews;
@@ -90,8 +90,8 @@ public class ProcessForDeconvolution
 			final SpimData2 spimData,
 			final List< ViewId > viewIdsToProcess,
 			final BoundingBoxGUI bb,
-			final int[] blendingBorder,
-			final int[] blendingRange )
+			final float[] blendingBorder,
+			final float[] blendingRange )
 	{
 		this.spimData = spimData;
 		this.viewIdsToProcess = viewIdsToProcess;
@@ -260,6 +260,23 @@ public class ProcessForDeconvolution
 
 			if ( weightType == WeightType.PARTLY_VIRTUAL_WEIGHTS || weightType == WeightType.FULLY_VIRTUAL_WEIGHTS || weightType == WeightType.PRECOMPUTED_WEIGHTS )
 			{
+				final float minRes = (float)ProcessVirtual.getMinRes( vd );
+				VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSize( vd.getViewSetup() );
+				if ( voxelSize == null )
+					voxelSize = new FinalVoxelDimensions( "px", new double[]{ 1, 1, 1 } );
+
+				if ( ProcessFusion.defaultAdjustBlendingForAnisotropy )
+				{
+					for ( int d = 0; d < inputImg.numDimensions(); ++d )
+					{
+						blendingRange[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
+						blendingBorder[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
+					}
+				}
+
+				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Adjusted blending border (input px coordinates): " + Util.printCoordinates( blendingBorder ) );
+				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Adjusted blending range (input px coordinates): " + Util.printCoordinates( blendingRange ) );
+
 				// the virtual weight construct
 				final RandomAccessible< FloatType > virtual = 
 						new TransformedRasteredRealRandomAccessible< FloatType >(

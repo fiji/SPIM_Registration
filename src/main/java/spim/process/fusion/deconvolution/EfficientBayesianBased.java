@@ -84,8 +84,8 @@ public class EfficientBayesianBased extends Fusion
 
 	public static int defaultBlendingRangeNumber = 12;
 	public static int defaultBlendingBorderNumber = -8;
-	public static int[] defaultBlendingRange = null;
-	public static int[] defaultBlendingBorder = null;
+	public static float[] defaultBlendingRange = null;
+	public static float[] defaultBlendingBorder = null;
 
 	public static boolean makeAllPSFSameSize = false;
 
@@ -149,8 +149,8 @@ public class EfficientBayesianBased extends Fusion
 	boolean transformPSFs;
 	HashMap< Channel, ArrayList< Pair< Pair< Angle, Illumination >, String > > > psfFiles;
 	HashMap< Channel, ChannelPSF > extractPSFLabels; // should be either a String or another Channel object
-	int blendingBorderX, blendingBorderY, blendingBorderZ;
-	int blendingRangeX, blendingRangeY, blendingRangeZ;
+	float blendingBorderX, blendingBorderY, blendingBorderZ;
+	float blendingRangeX, blendingRangeY, blendingRangeZ;
 	int psfSizeX = -1;
 	int psfSizeY = -1;
 	int psfSizeZ = -1;
@@ -195,8 +195,8 @@ public class EfficientBayesianBased extends Fusion
 					spimData,
 					viewIdsToProcess,
 					bb,
-					new int[]{ blendingBorderX, blendingBorderY, blendingBorderZ },
-					new int[]{ blendingRangeX, blendingRangeY, blendingRangeZ } );
+					new float[]{ blendingBorderX, blendingBorderY, blendingBorderZ },
+					new float[]{ blendingRangeX, blendingRangeY, blendingRangeZ } );
 			
 			// set debug mode
 			MVDeconvolution.debug = debugMode;
@@ -640,10 +640,10 @@ public class EfficientBayesianBased extends Fusion
 			final GenericDialog gd = new GenericDialog( "Adjust blending parameters" );
 			
 			if ( defaultBlendingBorder == null || defaultBlendingBorder.length < 3 )
-				defaultBlendingBorder = new int[]{ defaultBlendingBorderNumber, defaultBlendingBorderNumber, Math.round( defaultBlendingBorderNumber/2.5f ) };
+				defaultBlendingBorder = new float[]{ defaultBlendingBorderNumber, defaultBlendingBorderNumber, defaultBlendingBorderNumber };
 			
 			if ( defaultBlendingRange == null || defaultBlendingRange.length < 3 )
-				defaultBlendingRange =  new int[]{ defaultBlendingRangeNumber, defaultBlendingRangeNumber, defaultBlendingRangeNumber };
+				defaultBlendingRange =  new float[]{ defaultBlendingRangeNumber, defaultBlendingRangeNumber, defaultBlendingRangeNumber };
 			
 			gd.addSlider( "Boundary_pixels_X", -50, 50, defaultBlendingBorder[ 0 ] );
 			gd.addSlider( "Boundary_pixels_Y", -50, 50, defaultBlendingBorder[ 1 ] );
@@ -651,7 +651,9 @@ public class EfficientBayesianBased extends Fusion
 			gd.addSlider( "Blending_range_X", 0, 100, defaultBlendingRange[ 0 ] );
 			gd.addSlider( "Blending_range_Y", 0, 100, defaultBlendingRange[ 1 ] );
 			gd.addSlider( "Blending_range_Z", 0, 100, defaultBlendingRange[ 2 ] );
-			
+
+			gd.addMessage( "Please Note: the values will be automatically adjusted for anisotropy in x,y,z!");
+
 			gd.addCheckbox( "Smoother_blending", WeightNormalizerPrecomputed.additionalSmoothBlending );
 			
 			gd.addMessage( "" );
@@ -668,12 +670,12 @@ public class EfficientBayesianBased extends Fusion
 			if ( gd.wasCanceled() )
 				return false;
 			
-			blendingBorderX = defaultBlendingBorder[ 0 ] = (int)Math.round( gd.getNextNumber() );
-			blendingBorderY = defaultBlendingBorder[ 1 ] = (int)Math.round( gd.getNextNumber() );
-			blendingBorderZ = defaultBlendingBorder[ 2 ] = (int)Math.round( gd.getNextNumber() );
-			blendingRangeX = defaultBlendingRange[ 0 ] = (int)Math.round( gd.getNextNumber() );
-			blendingRangeY = defaultBlendingRange[ 1 ] = (int)Math.round( gd.getNextNumber() );
-			blendingRangeZ = defaultBlendingRange[ 2 ] = (int)Math.round( gd.getNextNumber() );
+			blendingBorderX = defaultBlendingBorder[ 0 ] = (float) gd.getNextNumber();
+			blendingBorderY = defaultBlendingBorder[ 1 ] = (float) gd.getNextNumber();
+			blendingBorderZ = defaultBlendingBorder[ 2 ] = (float) gd.getNextNumber();
+			blendingRangeX = defaultBlendingRange[ 0 ] = (float) gd.getNextNumber();
+			blendingRangeY = defaultBlendingRange[ 1 ] = (float) gd.getNextNumber();
+			blendingRangeZ = defaultBlendingRange[ 2 ] = (float) gd.getNextNumber();
 			WeightNormalizerPrecomputed.additionalSmoothBlending = gd.getNextBoolean();
 		}
 		else
@@ -688,9 +690,9 @@ public class EfficientBayesianBased extends Fusion
 			{
 				blendingBorderX = defaultBlendingBorderNumber;
 				blendingBorderY = defaultBlendingBorderNumber;
-				blendingBorderZ = Math.round( defaultBlendingBorderNumber/2.5f );
+				blendingBorderZ = defaultBlendingBorderNumber;
 			}
-			
+
 			if ( defaultBlendingRange != null && defaultBlendingRange.length >= 3 )
 			{
 				blendingRangeX = defaultBlendingRange[ 0 ];
