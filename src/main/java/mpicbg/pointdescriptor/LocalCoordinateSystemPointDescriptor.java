@@ -2,8 +2,8 @@ package mpicbg.pointdescriptor;
 
 import java.util.ArrayList;
 
-import org.scijava.vecmath.Matrix3d;
-import org.scijava.vecmath.Vector3d;
+import spim.vecmath.Matrix3d;
+import spim.vecmath.Vector3d;
 
 import mpicbg.models.Point;
 import mpicbg.models.PointMatch;

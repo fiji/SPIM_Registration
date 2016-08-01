@@ -57,7 +57,8 @@ public class GeometricHashingPairwise implements Callable< PairwiseMatch >
 
 		if ( listA.size() < 4 || listB.size() < 4 )
 		{
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): " + comparison + ": Not enough detections to match" );
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): " + comparison + ": "
+					+ "Not enough detections to match (4 required per list, |listA|= " + listA.size() + ", |listB|= " + listB.size() + ")" );
 			pair.setCandidates( new ArrayList< PointMatchGeneric< Detection > >() );
 			pair.setInliers( new ArrayList<PointMatchGeneric< Detection > >(), Double.NaN );
 			return pair;

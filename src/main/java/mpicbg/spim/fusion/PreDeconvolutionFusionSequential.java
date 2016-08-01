@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.scijava.vecmath.Point3d;
-import org.scijava.vecmath.Point3f;
+import spim.vecmath.Point3d;
+import spim.vecmath.Point3f;
 
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;

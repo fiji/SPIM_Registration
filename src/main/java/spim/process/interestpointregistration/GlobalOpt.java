@@ -6,12 +6,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-import org.scijava.java3d.Transform3D;
-import org.scijava.vecmath.Matrix4f;
-import org.scijava.vecmath.Quat4f;
-import org.scijava.vecmath.Vector3d;
-import org.scijava.vecmath.Vector3f;
-
 import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.Affine3D;
 import mpicbg.models.AffineModel3D;
@@ -27,6 +21,11 @@ import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationSubset;
 import spim.process.interestpointregistration.optimizationtypes.GlobalOptimizationType;
+import spim.vecmath.Matrix4f;
+import spim.vecmath.Quat4f;
+import spim.vecmath.Transform3D;
+import spim.vecmath.Vector3d;
+import spim.vecmath.Vector3f;
 
 /**
  * 
