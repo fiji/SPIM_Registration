@@ -82,8 +82,8 @@ public class InteractiveDoG implements PlugIn
 	float threshold = 0.0001f;
 	
 	// steps per octave
-	public static int standardSenstivity = 4;
-	int sensitivity = standardSenstivity;
+	public static int standardSensitivity = 4;
+	int sensitivity = standardSensitivity;
 	
 	float imageSigma = 0.5f;
 	float sigmaMin = 0.5f;
