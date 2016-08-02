@@ -32,6 +32,8 @@ import net.imglib2.Dimensions;
 import net.imglib2.FinalDimensions;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.cell.CellImgFactory;
+import net.imglib2.img.planar.PlanarImgFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
@@ -52,6 +54,7 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 	public static boolean defaultModifyCal = false;
 	public static boolean defaultRotAxis = false;
 	public static boolean defaultApplyRotAxis = true;
+	public static int defaultCapture = 0;
 
 	@Override
 	public String getTitle() { return "Slidebook6 Dataset"; }
@@ -65,7 +68,7 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 	@Override
 	public SpimData2 createDataset()
 	{
-		final File sldFile = querySldFile();
+		final File sldFile = querySLDFile();
 
 		if ( sldFile == null )
 			return null;
@@ -86,22 +89,21 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 			}
 
 			final String directory = sldFile.getParent();
-			final ImgFactory< ? extends NativeType< ? > > imgFactory = new ArrayImgFactory< FloatType >();
+			final ImgFactory< ? extends NativeType< ? > > imgFactory = selectImgFactory( reader );
 
 			// assemble timepoints, viewsetups, missingviews and the imgloader
 			final TimePoints timepoints = this.createTimePoints( reader );
 			final ArrayList< ViewSetup > setups = this.createViewSetups( reader );
 			final MissingViews missingViews = null;
 
-			// instantiate the sequence descriptions
+			// instantiate the sequencedescription
 			final SequenceDescription sequenceDescription = new SequenceDescription( timepoints, setups, null, missingViews );
 			final ImgLoader imgLoader = new SlideBook6ImgLoader( sldFile, imgFactory, sequenceDescription );
 			sequenceDescription.setImgLoader( imgLoader );
 
 			// get the minimal resolution of all calibrations, TODO: different views can have different calibrations?
-			final int capture = 0;
-			final float zSpacing = SlideBook6.getZSpacing(reader, capture, 0);
-			final double minResolution = Math.min( reader.getVoxelSize(capture), zSpacing );
+			final float zSpacing = SlideBook6.getZSpacing(reader, defaultCapture, 0);
+			final double minResolution = Math.min( reader.getVoxelSize(defaultCapture), zSpacing );
 
 			IOFunctions.println( "Minimal resolution in all dimensions is: " + minResolution );
 			IOFunctions.println( "(The smallest resolution in any dimension; the distance between two pixels in the output image will be that wide)" );
@@ -272,6 +274,27 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 		return new TimePoints( timepoints );
 	}
 
+	protected ImgFactory< ? extends NativeType< ? > > selectImgFactory( final SlideBook6Reader meta )
+	{
+		long maxNumPixels = meta.getNumXColumns(0);
+		maxNumPixels *= meta.getNumYRows(0);
+		maxNumPixels *= meta.getNumZPlanes(0);
+
+		String s = "Maximum number of pixels in any view: n=" + Long.toString(maxNumPixels) +
+				" px ";
+
+		if ( maxNumPixels < Integer.MAX_VALUE )
+		{
+			IOFunctions.println( s + "< " + Integer.MAX_VALUE + ", using ArrayImg." );
+			return new ArrayImgFactory< FloatType >();
+		}
+		else
+		{
+			IOFunctions.println( s + ">= " + Integer.MAX_VALUE + ", using CellImg." );
+			return new CellImgFactory< FloatType >( 256 );
+		}
+	}
+
 	protected boolean showDialogs(final SlideBook6Reader meta)
 	{
 		GenericDialog gd = new GenericDialog( "SlideBook6 diSPIM Properties" );
@@ -282,23 +305,23 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 		gd.addStringField( "Angle_" + 0 + ":", String.valueOf( "0" ) ); // meta.rotationAngle( a )
 		gd.addStringField( "Angle_" + 1 + ":", String.valueOf( "90" ) ); // meta.rotationAngle( a )
 
-		gd.addMessage( "Channels (" + meta.getNumChannels(0) / 2 + " present)", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
+		gd.addMessage( "Channels (" + meta.getNumChannels(defaultCapture) / 2 + " present)", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
 		gd.addMessage( "" );
 
-		for ( int ch = 0; ch < meta.getNumChannels(0)/2; ++ch )
-			gd.addStringField( "Channel_" + (ch+1) + ":", meta.getChannelName(0, ch*2 ) );
+		for ( int ch = 0; ch < meta.getNumChannels(defaultCapture)/2; ++ch )
+			gd.addStringField( "Channel_" + (ch+1) + ":", meta.getChannelName(defaultCapture, ch*2 ) );
 
-		if ( meta.getNumPositions(0) > 1 )
+		if ( meta.getNumPositions(defaultCapture) > 1 )
 		{
 			IOFunctions.println( "WARNING: " + meta.getNumCaptures() + " captures detected. These will be imported as different illumination directions." );
 			gd.addMessage( "" );
 		}
 
-		gd.addMessage( "Timepoints (" + meta.getNumTimepoints(0) + " present)", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
+		gd.addMessage( "Timepoints (" + meta.getNumTimepoints(defaultCapture) + " present)", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
 
 		// TODO: make sure a < getNumCaptures()
 		float voxelSize = meta.getVoxelSize(0);
-		float zSpacing = SlideBook6.getZSpacing(meta, 0, 0);
+		float zSpacing = SlideBook6.getZSpacing(meta, defaultCapture, 0);
 
 		gd.addMessage( "Calibration", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
 		gd.addCheckbox( "Modify_calibration", defaultModifyCal );
@@ -330,7 +353,7 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 		// meta.setAngleNames( angles );
 
 		final ArrayList< String > channels = new ArrayList< String >();
-		for ( int ch = 0; ch < meta.getNumChannels(0) / 2; ++ch )
+		for ( int ch = 0; ch < meta.getNumChannels(defaultCapture) / 2; ++ch )
 			channels.add( gd.getNextString() );
 		// meta.setChannelNames( channels );
 
@@ -387,11 +410,12 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 		return true;
 	}
 
-	protected File querySldFile()
+	protected File querySLDFile()
 	{
 		GenericDialogPlus gd = new GenericDialogPlus( "Define SlideBook6 diSPIM Dataset" );
 
 		gd.addFileField( "SlideBook6 SLD file", defaultFirstFile, 50 );
+		gd.addFileField( "Image Index", "0", 10);
 
 		gd.showDialog();
 
@@ -399,6 +423,7 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 			return null;
 
 		final File firstFile = new File( defaultFirstFile = gd.getNextString() );
+		defaultCapture = Integer.parseInt(gd.getNextString());
 
 		if ( !firstFile.exists() )
 		{

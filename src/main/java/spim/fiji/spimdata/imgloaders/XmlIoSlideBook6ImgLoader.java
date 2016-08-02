@@ -7,6 +7,8 @@ import java.io.File;
 
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.cell.CellImgFactory;
+import net.imglib2.img.planar.PlanarImgFactory;
 import net.imglib2.type.numeric.real.FloatType;
 
 import org.jdom2.Element;
@@ -29,8 +31,8 @@ public class XmlIoSlideBook6ImgLoader implements XmlIoBasicImgLoader< SlideBook6
 		final Element elem = new Element( "ImageLoader" );
 		elem.setAttribute( IMGLOADER_FORMAT_ATTRIBUTE_NAME, this.getClass().getAnnotation( ImgLoaderIo.class ).format() );
 
-		elem.addContent( XmlHelpers.pathElement( DIRECTORY_TAG, imgLoader.getFile().getParentFile(), basePath ) );
-		elem.addContent( XmlHelpers.textElement( MASTER_FILE_TAG, imgLoader.getFile().getName() ) );
+		elem.addContent( XmlHelpers.pathElement( DIRECTORY_TAG, imgLoader.getSLDFile().getParentFile(), basePath ) );
+		elem.addContent( XmlHelpers.textElement( MASTER_FILE_TAG, imgLoader.getSLDFile().getName() ) );
 		elem.addContent( XmlHelpers.textElement( IMGLIB2CONTAINER_PATTERN_TAG, imgLoader.getImgFactory().getClass().getSimpleName() ) );
 		
 		return elem;
@@ -58,10 +60,25 @@ public class XmlIoSlideBook6ImgLoader implements XmlIoBasicImgLoader< SlideBook6
 			}
 			else
 			{
+				if ( container.toLowerCase().contains( "cellimg" ) )
+				{
+					imgFactory = new CellImgFactory< FloatType >( 256 );
+				}
+				else if ( container.toLowerCase().contains( "arrayimg" ) )
+				{
+					imgFactory = new ArrayImgFactory< FloatType >();
+				}
+				else if ( container.toLowerCase().contains( "planarimg" ) )
+				{
+					imgFactory = new PlanarImgFactory< FloatType >();
+				}
+				else
+				{
 				// if factory is unknown we define an ArrayImgFactory
 				imgFactory = new ArrayImgFactory< FloatType >();
 					
-				System.out.println( "WARNING: Unknown implementation defined in XML:'" + container + "', using ArrayImg." );
+					System.out.println( "WARNING: Unknown Img implementation defined in XML:'" + container + "', using ArrayImg." );
+				}
 			}
 
 			return new SlideBook6ImgLoader( new File( path, masterFile ), imgFactory, sequenceDescription );

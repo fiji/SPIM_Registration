@@ -17,17 +17,16 @@ public class SlideBook6ImgLoader extends LegacyImgLoaderWrapper< UnsignedShortTy
 	public SlideBook6ImgLoader(
 			final File sldFile,
 			final ImgFactory< ? extends NativeType< ? > > imgFactory,
-			final AbstractSequenceDescription< ? extends BasicViewSetup, ? extends BasicViewDescription< ? >, ? > sequenceDescription )
+			final AbstractSequenceDescription< ? , ?, ? > sequenceDescription )
 	{
 		super( new LegacySlideBook6ImgLoader( sldFile, imgFactory, sequenceDescription ) );
 	}
 
-	public File getFile() { return legacyImgLoader.getFile(); }
+	public File getSLDFile() { return legacyImgLoader.getSLDFile(); }
 	public ImgFactory< ? extends NativeType< ? > > getImgFactory() { return legacyImgLoader.getImgFactory(); }
 
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		return legacyImgLoader.toString();
 	}
 }
