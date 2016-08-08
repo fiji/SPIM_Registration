@@ -59,7 +59,7 @@ public class BigDataViewerBoundingBox extends BoundingBoxGUI
 					return null;
 			}
 
-			bdv = new BigDataViewer( spimData, "BigDataViewer", null );
+			bdv = new BigDataViewer( spimData, "BigDataViewer", IOFunctions.getProgressWriter() );
 			bdvIsLocal = true;
 
 //			if ( !bdv.tryLoadSettings( panel.xml() ) ) TODO: this should work, but currently tryLoadSettings is protected. fix that.

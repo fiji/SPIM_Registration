@@ -137,7 +137,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 			
 			if ( bdvpopup != null )
 			{
-				bdvpopup.bdv = new BigDataViewer( getSpimData(), xml(), null );
+				bdvpopup.bdv = new BigDataViewer( getSpimData(), xml(), IOFunctions.getProgressWriter() );
 
 //				if ( !bdv.tryLoadSettings( panel.xml() ) ) TODO: this should work, but currently tryLoadSettings is protected. fix that.
 					InitializeViewerState.initBrightness( 0.001, 0.999, bdvpopup.bdv.getViewer(), bdvpopup.bdv.getSetupAssignments() );

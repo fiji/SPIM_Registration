@@ -106,7 +106,7 @@ public class BDVPopup extends JMenuItem implements ViewExplorerSetable
 				return null;
 		}
 
-		BigDataViewer bdv = new BigDataViewer( panel.getSpimData(), panel.xml(), null );
+		BigDataViewer bdv = new BigDataViewer( panel.getSpimData(), panel.xml(), IOFunctions.getProgressWriter() );
 //		if ( !bdv.tryLoadSettings( panel.xml() ) ) TODO: this should work, but currently tryLoadSettings is protected. fix that.
 			InitializeViewerState.initBrightness( 0.001, 0.999, bdv.getViewer(), bdv.getSetupAssignments() );
 		
