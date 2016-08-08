@@ -107,7 +107,7 @@ public class DifferenceOfGaussian extends DifferenceOf implements GenericDialogA
 				//
 				// compute Difference-of-Mean
 				//
-				final ArrayList< InterestPoint > ips = 
+				List< InterestPoint > ips = 
 					ProcessDOG.compute(
 						cuda,
 						deviceList,
@@ -124,11 +124,15 @@ public class DifferenceOfGaussian extends DifferenceOf implements GenericDialogA
 						findMin[ c.getId() ],
 						findMax[ c.getId() ],
 						minIntensity,
-						maxIntensity );
+						maxIntensity,
+						limitDetections );
 
 				img.close();
 
 				correctForDownsampling( ips, correctCoordinates );
+
+				if ( limitDetections )
+					ips = limitList( maxDetections, maxDetectionsTypeIndex, ips );
 
 				interestPoints.put( vd, ips );
 
