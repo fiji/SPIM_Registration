@@ -191,12 +191,11 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 			channels.add( new Channel( c, meta.channels()[ c ] ) );
 		
 		final ArrayList< Tile > tiles = new ArrayList<>();
-		for (int i = 0; i < meta.numTiles(); i++)
+		for ( int i = 0; i < meta.numTiles(); i++ )
 		{
-			Tile t = new Tile( i, meta.tiles()[i], meta.tileLocations().get(i) );
+			Tile t = new Tile( i, meta.tiles()[  i], meta.tileLocations().get( i ) );
 			tiles.add( t );
 		}
-		
 
 		final ArrayList< Illumination > illuminations = new ArrayList< Illumination >();
 		for ( int i = 0; i < meta.numIlluminations(); ++i )
@@ -230,16 +229,15 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		final ArrayList< ViewSetup > viewSetups = new ArrayList< ViewSetup >();
 		for ( final Channel c : channels )
 			for ( final Illumination i : illuminations )
-				for ( int it = 0; it < tiles.size(); ++it )
+				for ( int at = 0; at < tiles.size(); ++at )
 					{
-						final Tile t = tiles.get( it );
+						final Tile t = tiles.get( at );
+						final Angle theAngle = angles.get( meta.getAngleMap().get( at ) );
+
 						final VoxelDimensions voxelSize = new FinalVoxelDimensions( meta.calUnit(), meta.calX(), meta.calY(), meta.calZ() );
 						final Dimensions dim = new FinalDimensions( meta.imageSizes().get( t.getId() ) );
-						final Angle theAngle = angles.get( meta.getAngleMap().get( it ));
 						viewSetups.add( new ViewSetup( viewSetups.size(), null, dim, voxelSize, t, c, theAngle, i ) );
 					}
-	
-				
 
 		return viewSetups;
 	}
@@ -437,6 +435,7 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 	@Override
 	public LightSheetZ1 newInstance() { return new LightSheetZ1(); }
 
+	@SuppressWarnings("deprecation")
 	public static void main( String[] args )
 	{
 		//defaultFirstFile = "/Volumes/My Passport/worm7/Track1(3).czi";

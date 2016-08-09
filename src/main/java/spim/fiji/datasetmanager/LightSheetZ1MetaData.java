@@ -5,11 +5,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import loci.formats.FormatTools;
 import loci.formats.IFormatReader;
@@ -49,9 +47,8 @@ public class LightSheetZ1MetaData
 	public void setCalZ( final double calZ ) { this.calZ = calZ; }
 	public void setCalUnit( final String calUnit ) { this.calUnit = calUnit; }
 
-	
-	public Map<Integer, Integer> getAngleMap() {return anglesMap;}
-	public List<double[]> tileLocations() {return tileLocations;}
+	public Map< Integer, Integer > getAngleMap() { return anglesMap; }
+	public List< double[] > tileLocations() { return tileLocations; }
 	public int numChannels() { return channels.length; }
 	public int numAngles() { return angles.length; }
 	public int numTiles() {return tiles.length;}
@@ -160,52 +157,52 @@ public class LightSheetZ1MetaData
 
 		try
 		{
-			final int numDigits = Integer.toString( numAorT ).length();			
+			final int numDigits = Integer.toString( numAorT ).length();
 
 			boolean allAnglesNegative = true;
-			
-			for ( int a = 0; a < numAorT; ++a )
+
+			// for each angleXtile
+			for ( int at = 0; at < numAorT; ++at )
 			{
-				r.setSeries( a );
+				r.setSeries( at );
 
 				final int w = r.getSizeX();
 				final int h = r.getSizeY();
-				
-				
-				Object tmp = metaData.get( "Information|Image|V|View|Offset #" + ( a+1 ) );
+
+				Object tmp = metaData.get( "Information|Image|V|View|Offset #" + ( at+1 ) );
 				int angleT = (tmp != null) ? (int)Math.round( Double.parseDouble( tmp.toString() ) ) : 0;
-				if (!anglesList.contains( angleT ))
+				if ( !anglesList.contains( angleT ) )
 					anglesList.add( angleT );
-				
-				anglesMap.put( a, anglesList.indexOf( angleT ) );	
-				
+
+				anglesMap.put( at, anglesList.indexOf( angleT ) );
+
 				allAnglesNegative &= angleT < 0;
-				
-				
-				
-				IOFunctions.println( "Querying information for angle/illumination #" + a );
 
-				double dimZ = getDouble( metaData, "Information|Image|V|View|SizeZ #" + StackList.leadingZeros( Integer.toString( a+1 ), numDigits ) );
+				IOFunctions.println( "Querying information for angle/tile #" + at );
 
-				if ( Double.isNaN( dimZ ) )
-					dimZ = getDouble( metaData, "Information|Image|V|View|SizeZ #" + Integer.toString( a+1 ) );
+				// try 4 different combinations of metadata query to get size in z (there is a bug in LOCI returning the maximum size for all angle/tile)
+				double dimZ = getDouble( metaData, "Information|Image|V|View|SizeZ #" + StackList.leadingZeros( Integer.toString( at+1 ), numDigits ) );
 
 				if ( Double.isNaN( dimZ ) )
-					dimZ = getDouble( metaData, "SizeZ|View|V|Image|Information #" + StackList.leadingZeros( Integer.toString( a+1 ), numDigits ) );
+					dimZ = getDouble( metaData, "Information|Image|V|View|SizeZ #" + Integer.toString( at+1 ) );
 
 				if ( Double.isNaN( dimZ ) )
-					dimZ = getDouble( metaData, "SizeZ|View|V|Image|Information #" + Integer.toString( a+1 ) );
+					dimZ = getDouble( metaData, "SizeZ|View|V|Image|Information #" + StackList.leadingZeros( Integer.toString( at+1 ), numDigits ) );
+
+				if ( Double.isNaN( dimZ ) )
+					dimZ = getDouble( metaData, "SizeZ|View|V|Image|Information #" + Integer.toString( at+1 ) );
 
 				if ( numAorT == 1 && Double.isNaN( dimZ ) )
 					dimZ = getDouble( metaData, "Information|Image|SizeZ #1" );
 
 				if ( Double.isNaN( dimZ ) )
-					throw new RuntimeException( "Could not read stack size for angle " + a + ", stopping." );
+					throw new RuntimeException( "Could not read stack size for angle " + at + ", stopping." );
 
 				final int d = (int)Math.round( dimZ );
 
-				imageSizes.put( a, new int[]{ w, h, d } );
+				imageSizes.put( at, new int[]{ w, h, d } );
 
+				// get the number of timepoints for the first at, otherwise check that it is still the same
 				if ( numT >= 0 && numT != r.getSizeT() )
 				{
 					IOFunctions.println( "Number of timepoints inconsistent across angles. Stopping." );
@@ -221,6 +218,9 @@ public class LightSheetZ1MetaData
 				// find the number of illuminations for the current angle:
 				Modulo moduloC = r.getModuloC();
 
+				// TODO: channels & illuminations are mixed up somehow
+
+				// get the number of illuminations for the first at, otherwise check that it is still the same
 				if ( numI >= 0 && numI != moduloC.length() )
 				{
 					IOFunctions.println( "Number of illumination directions inconsistent across angles. Stopping." );
@@ -232,6 +232,7 @@ public class LightSheetZ1MetaData
 					numI = moduloC.length();
 				}
 
+				// get the number of channels for the first at, otherwise check that it is still the same
 				if ( numC >= 0 && numC != r.getSizeC() / moduloC.length() )
 				{
 					IOFunctions.println( "Number of channels directions inconsistent across angles. Stopping." );
@@ -243,20 +244,17 @@ public class LightSheetZ1MetaData
 					numC = r.getSizeC() / moduloC.length();
 				}
 			}
-			
-			
-			if ( allAnglesNegative )
-			for (Integer a : anglesList)
-				a = -a;				
 
 			int numA = anglesList.size();
 			this.angles = new String[ numA ];
 			
 			for ( int a = 0; a < anglesList.size(); ++a )
-				angles[ a ] = String.valueOf( anglesList.get( a ) );
-			
-			
-			
+			{
+				if ( allAnglesNegative )
+					angles[ a ] = String.valueOf( -anglesList.get( a ) );
+				else
+					angles[ a ] = String.valueOf( anglesList.get( a ) );
+			}
 		}
 		catch ( Exception e )
 		{
@@ -271,7 +269,7 @@ public class LightSheetZ1MetaData
 		// query non-essential details
 		//
 		this.channels = new String[ numC ];
-		this.tiles = new String[numTiles];
+		this.tiles = new String[ numTiles ];
 		this.illuminations = new String[ numI ];
 		this.files = r.getSeriesUsedFiles();
 
@@ -314,34 +312,40 @@ public class LightSheetZ1MetaData
 				channels[ c ] = String.valueOf( c );
 		}
 
+		// get the tile locations (every angleXtile has a local location)
 		try
 		{
-			double[] pos = new double[3];		
-			
-			for ( int a = 0; a < numAorT; ++a )
+			final double[] pos = new double[3];
+
+			for ( int at = 0; at < numAorT; ++at )
 			{
-				tmp = metaData.get( "Information|Image|V|View|PositionX #" + ( a+1 ) );
-				pos[0] = (tmp != null) ?  Double.parseDouble( tmp.toString() )  : 0.0;
-				
-				tmp = metaData.get( "Information|Image|V|View|PositionY #" + ( a+1 ) );
-				pos[1] = (tmp != null) ?  Double.parseDouble( tmp.toString() )  : 0.0;
-				
-				tmp = metaData.get( "Information|Image|V|View|PositionZ #" + ( a+1 ) );
-				pos[2] = (tmp != null) ?  Double.parseDouble( tmp.toString() )  : 0.0;
-				
+				tmp = metaData.get( "Information|Image|V|View|PositionX #" + ( at+1 ) );
+				pos[ 0 ] = (tmp != null) ?  Double.parseDouble( tmp.toString() )  : 0.0;
+
+				tmp = metaData.get( "Information|Image|V|View|PositionY #" + ( at+1 ) );
+				pos[ 1 ] = (tmp != null) ?  Double.parseDouble( tmp.toString() )  : 0.0;
+
+				tmp = metaData.get( "Information|Image|V|View|PositionZ #" + ( at+1 ) );
+				pos[ 2 ] = (tmp != null) ?  Double.parseDouble( tmp.toString() )  : 0.0;
+
 				tileLocations.add( pos.clone() );
-				
-				// TODO: more sensible naming?
-				tiles[a] = "Tile" + a;
-			}			
+
+				tiles[ at ] = "Tile" + at;
+			}
 		}
 		catch ( Exception e )
 		{
-			IOFunctions.println( "An error occured parsing the rotation angles: " + e + "\n. Proceeding." );
-			for ( int a = 0; a < numAorT; ++a )
-				angles[ a ] = String.valueOf( a );
+			IOFunctions.println( "An error occured parsing the tile locations: " + e + "\n. Proceeding." );
+			tileLocations.clear();
+
+			for ( int at = 0; at < numAorT; ++at )
+			{
+				tileLocations.add( new double[]{ 0, 0, 0 } );
+				tiles[ at ] = "Tile" + at;
+			}
 		}
 
+		// get the axis of rotation
 		try
 		{
 			tmp = metaData.get( "Information|Image|V|AxisOfRotation #1" );
