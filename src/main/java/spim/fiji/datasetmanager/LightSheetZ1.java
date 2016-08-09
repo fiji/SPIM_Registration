@@ -6,9 +6,15 @@ import ij.gui.GenericDialog;
 import java.awt.Font;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
+import bdv.BigDataViewer;
 import mpicbg.spim.data.SpimData;
+import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
+import mpicbg.spim.data.registration.ViewTransform;
+import mpicbg.spim.data.registration.ViewTransformAffine;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
@@ -16,8 +22,11 @@ import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.MissingViews;
 import mpicbg.spim.data.sequence.SequenceDescription;
+import mpicbg.spim.data.sequence.Tile;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.TimePoints;
+import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
@@ -26,6 +35,7 @@ import net.imglib2.FinalDimensions;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.cell.CellImgFactory;
+import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
@@ -101,7 +111,7 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		IOFunctions.println( "(The smallest resolution in any dimension; the distance between two pixels in the output image will be that wide)" );
 		
 		// create the initial view registrations (they are all the identity transform)
-		final ViewRegistrations viewRegistrations = StackList.createViewRegistrations( sequenceDescription.getViewDescriptions(), minResolution );
+		final ViewRegistrations viewRegistrations = createViewRegistrations( sequenceDescription.getViewDescriptions(), minResolution );
 		
 		// create the initial view interest point object
 		final ViewInterestPoints viewInterestPoints = new ViewInterestPoints();
@@ -114,6 +124,56 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 			Apply_Transformation.applyAxis( spimData );
 
 		return spimData;
+	}
+	
+	/**
+	 * Assembles the {@link ViewRegistration} object consisting of a list of {@link ViewRegistration}s for all {@link ViewDescription}s that are present
+	 * 
+	 * @param viewDescriptionList
+	 * @param minResolution - the smallest resolution in any dimension (distance between two pixels in the output image will be that wide)
+	 * @return
+	 */
+	protected static ViewRegistrations createViewRegistrations( final Map< ViewId, ViewDescription > viewDescriptionList, final double minResolution )
+	{
+		final HashMap< ViewId, ViewRegistration > viewRegistrationList = new HashMap< ViewId, ViewRegistration >();
+		
+		for ( final ViewDescription viewDescription : viewDescriptionList.values() )
+			if ( viewDescription.isPresent() )
+			{
+				final ViewRegistration viewRegistration = new ViewRegistration( viewDescription.getTimePointId(), viewDescription.getViewSetupId() );
+				
+				final VoxelDimensions voxelSize = viewDescription.getViewSetup().getVoxelSize(); 
+
+				final double calX = voxelSize.dimension( 0 ) / minResolution;
+				final double calY = voxelSize.dimension( 1 ) / minResolution;
+				final double calZ = voxelSize.dimension( 2 ) / minResolution;
+				
+				final AffineTransform3D m = new AffineTransform3D();
+				m.set( calX, 0.0f, 0.0f, 0.0f, 
+					   0.0f, calY, 0.0f, 0.0f,
+					   0.0f, 0.0f, calZ, 0.0f );
+				final ViewTransform vt = new ViewTransformAffine( "calibration", m );
+				viewRegistration.preconcatenateTransform( vt );
+				
+				final Tile tile = viewDescription.getViewSetup().getAttribute( Tile.class );
+
+				if (tile.hasLocation()){
+					final double shiftX = tile.getLocation()[0] / voxelSize.dimension( 0 );
+					final double shiftY = tile.getLocation()[1] / voxelSize.dimension( 1 );
+					final double shiftZ = tile.getLocation()[2] / voxelSize.dimension( 2 );
+					
+					final AffineTransform3D m2 = new AffineTransform3D();
+					m2.set( 1.0f, 0.0f, 0.0f, shiftX, 
+						   0.0f, 1.0f, 0.0f, shiftY,
+						   0.0f, 0.0f, 1.0f, shiftZ );
+					final ViewTransform vt2 = new ViewTransformAffine( "Translation", m2 );
+					viewRegistration.concatenateTransform( vt2 );
+				}
+				
+				viewRegistrationList.put( viewRegistration, viewRegistration );
+			}
+		
+		return new ViewRegistrations( viewRegistrationList );
 	}
 
 	/**
@@ -129,6 +189,14 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		final ArrayList< Channel > channels = new ArrayList< Channel >();
 		for ( int c = 0; c < meta.numChannels(); ++c )
 			channels.add( new Channel( c, meta.channels()[ c ] ) );
+		
+		final ArrayList< Tile > tiles = new ArrayList<>();
+		for (int i = 0; i < meta.numTiles(); i++)
+		{
+			Tile t = new Tile( i, meta.tiles()[i], meta.tileLocations().get(i) );
+			tiles.add( t );
+		}
+		
 
 		final ArrayList< Illumination > illuminations = new ArrayList< Illumination >();
 		for ( int i = 0; i < meta.numIlluminations(); ++i )
@@ -162,12 +230,16 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		final ArrayList< ViewSetup > viewSetups = new ArrayList< ViewSetup >();
 		for ( final Channel c : channels )
 			for ( final Illumination i : illuminations )
-				for ( final Angle a : angles )
-				{
-					final VoxelDimensions voxelSize = new FinalVoxelDimensions( meta.calUnit(), meta.calX(), meta.calY(), meta.calZ() );
-					final Dimensions dim = new FinalDimensions( meta.imageSizes().get( a.getId() ) );
-					viewSetups.add( new ViewSetup( viewSetups.size(), null, dim, voxelSize, c, a, i ) );
-				}
+				for ( int it = 0; it < tiles.size(); ++it )
+					{
+						final Tile t = tiles.get( it );
+						final VoxelDimensions voxelSize = new FinalVoxelDimensions( meta.calUnit(), meta.calX(), meta.calY(), meta.calZ() );
+						final Dimensions dim = new FinalDimensions( meta.imageSizes().get( t.getId() ) );
+						final Angle theAngle = angles.get( meta.getAngleMap().get( it ));
+						viewSetups.add( new ViewSetup( viewSetups.size(), null, dim, voxelSize, t, c, theAngle, i ) );
+					}
+	
+				
 
 		return viewSetups;
 	}
@@ -227,6 +299,12 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 
 		for ( int a = 0; a < meta.numAngles(); ++a )
 			gd.addStringField( "Angle_" + (a+1) + ":", meta.angles()[ a ] );
+		
+		gd.addMessage( "Tiles (" + meta.numTiles() + " present)", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
+		gd.addMessage( "" );
+
+		for ( int t = 0; t < meta.numTiles(); ++t )
+			gd.addStringField( "Tile_" + (t+1) + ":", meta.tiles()[ t ] );
 
 		gd.addMessage( "Channels (" + meta.numChannels() + " present)", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
 		gd.addMessage( "" );
@@ -277,6 +355,9 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 
 		for ( int a = 0; a < meta.numAngles(); ++a )
 			meta.angles()[ a ] = gd.getNextString();
+		
+		for ( int t = 0; t < meta.numTiles(); ++t )
+			meta.tiles()[ t ] = gd.getNextString();
 
 		for ( int c = 0; c < meta.numChannels(); ++c )
 			meta.channels()[ c ] = gd.getNextString();
@@ -362,8 +443,10 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		//defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/130706_Aiptasia8.czi";
 		//defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/abe_Arabidopsis1.czi";
 		//defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/multiview.czi";
-		defaultFirstFile = "/Users/spreibi/Downloads/007-H2B-GFP-LA-mKate2-220min-E03_E04.czi";
+		defaultFirstFile = "/Users/david/Desktop/_twotiles.czi";
 		//defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/worm7/Track1.czi";
-		new LightSheetZ1().createDataset();
+		SpimData2 sd = new LightSheetZ1().createDataset();
+		
+		new BigDataViewer( sd, "", null );
 	}
 }

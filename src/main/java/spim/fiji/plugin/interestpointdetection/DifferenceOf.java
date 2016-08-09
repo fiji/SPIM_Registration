@@ -518,10 +518,16 @@ public abstract class DifferenceOf extends InterestPointDetection
 
 		final ImgFactory< net.imglib2.type.numeric.real.FloatType > f = ((Img<net.imglib2.type.numeric.real.FloatType>)input).factory();
 
-		t.set( downsampleXY, 0, 0 );
-		t.set( downsampleXY, 1, 1 );
-		t.set( downsampleZ, 2, 2 );
+		// fix scaling
+		t.set( t.get( 0, 0 ) * dsx, 0, 0 );
+		t.set( t.get( 1, 1 ) * dsy, 1, 1 );
+		t.set( t.get( 2, 2 ) * dsz, 2, 2 );
 
+		// fix translation
+		t.set( t.get( 0, 3 ) * dsx, 0, 3 );
+		t.set( t.get( 1, 3 ) * dsy, 1, 3 );
+		t.set( t.get( 2, 3 ) * dsz, 2, 3 );
+		
 		for ( ;dsx > 1; dsx /= 2 )
 			input = Downsample.simple2x( input, f, new boolean[]{ true, false, false } );
 

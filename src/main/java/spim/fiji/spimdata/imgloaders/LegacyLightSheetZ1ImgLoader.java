@@ -20,6 +20,7 @@ import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
+import mpicbg.spim.data.sequence.Tile;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
@@ -180,6 +181,7 @@ public class LegacyLightSheetZ1ImgLoader extends AbstractImgFactoryImgLoader
 		final Angle a = getAngle( vd );
 		final Channel c = getChannel( vd );
 		final Illumination i = getIllumination( vd );
+		final Tile tile = getTile( vd ); 
 
 		final int[] dim;
 
@@ -230,12 +232,12 @@ public class LegacyLightSheetZ1ImgLoader extends AbstractImgFactoryImgLoader
 					r.setId( cziFile.getAbsolutePath() );
 
 				// set the right angle
-				r.setSeries( a.getId() );
+				r.setSeries( tile.getId() );
 			}
 			catch ( IllegalStateException e )
 			{
 				r.setId( cziFile.getAbsolutePath() );
-				r.setSeries( a.getId() );
+				r.setSeries( tile.getId() );
 			}
 
 			// compute the right channel from channelId & illuminationId
@@ -442,6 +444,17 @@ public class LegacyLightSheetZ1ImgLoader extends AbstractImgFactoryImgLoader
 			throw new RuntimeException( "This XML does not have the 'Illumination' attribute for their ViewSetup. Cannot continue." );
 
 		return illumination;
+	}
+	
+	protected static Tile getTile( final BasicViewDescription< ? > vd )
+	{
+		final BasicViewSetup vs = vd.getViewSetup();
+		final Tile tile = vs.getAttribute( Tile.class );
+
+		if ( tile == null )
+			throw new RuntimeException( "This XML does not have the 'Illumination' attribute for their ViewSetup. Cannot continue." );
+
+		return tile;
 	}
 
 	@Override
