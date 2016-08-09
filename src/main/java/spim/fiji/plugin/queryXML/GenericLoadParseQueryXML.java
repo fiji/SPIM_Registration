@@ -107,8 +107,8 @@ public class GenericLoadParseQueryXML<
 	protected String clusterExt = null;
 
 	// add a button on demand
-	protected String buttonText = null;
-	protected ActionListener listener = null;
+	protected ArrayList< String > buttonText = null;
+	protected ArrayList< ActionListener > listener = null;
 	protected GenericDialog gd = null;
 	protected boolean returnfalse = false;
 
@@ -185,8 +185,13 @@ public class GenericLoadParseQueryXML<
 
 	public void addButton( final String buttonText, final ActionListener listener )
 	{
-		this.buttonText = buttonText;
-		this.listener = listener;
+		if ( this.buttonText == null )
+		{
+			this.buttonText = new ArrayList<>();
+			this.listener = new ArrayList<>();
+		}
+		this.buttonText.add( buttonText );
+		this.listener.add( listener );
 	}
 
 	public GenericDialog getGenericDialog() { return gd; }
@@ -265,11 +270,14 @@ public class GenericLoadParseQueryXML<
 
 		if ( buttonText != null && listener != null )
 		{
-			gd.addMessage( "" );
-			gd.addMessage( "OR" );
-			gd.addMessage( "" );
-			gd.addButton( buttonText, listener );
-			this.gd = gd;
+			for ( int i = 0; i < buttonText.size(); ++i )
+			{
+				gd.addMessage( "" );
+				gd.addMessage( "OR" );
+				gd.addMessage( "" );
+				gd.addButton( buttonText.get( i ), listener.get(  i ) );
+				this.gd = gd;
+			}
 		}
 
 		gd.showDialog();
