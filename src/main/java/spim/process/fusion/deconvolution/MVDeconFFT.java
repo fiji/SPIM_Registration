@@ -359,7 +359,6 @@ public class MVDeconFFT
 	 * convolves the image with kernel1
 	 * 
 	 * @param image - the image to convolve with
-	 * @return
 	 */
 	public void convolve1( final Img< FloatType > image, final Img< FloatType > result )
 	{
@@ -451,7 +450,6 @@ public class MVDeconFFT
 	 * convolves the image with kernel2 (inverted kernel1)
 	 * 
 	 * @param image - the image to convolve with
-	 * @return
 	 */
 	public void convolve2( final Img< FloatType > image, final Img< FloatType > result )
 	{

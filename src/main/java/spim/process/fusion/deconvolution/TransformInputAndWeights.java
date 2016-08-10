@@ -15,10 +15,8 @@ import spim.process.fusion.weights.Blending;
 
 /**
  * Fuse one portion of a paralell fusion, supports no weights
- * 
- * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
- * @param <T>
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  */
 public class TransformInputAndWeights implements Callable< String >
 {
