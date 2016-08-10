@@ -72,13 +72,6 @@ public class LegacyLightSheetZ1ImgLoader extends AbstractImgFactoryImgLoader
 			if ( normalize )
 				normalize( img );
 
-			// update the MetaDataCache of the AbstractImgLoader
-			// this does not update the XML ViewSetup but has to be called explicitly before saving
-			final int[] dim = meta.imageSizes().get( getAngle( sequenceDescription, view ).getId() );
-			updateMetaDataCache(
-					view, dim[ 0 ], dim[ 1 ], dim[ 2 ],
-					meta.calX(), meta.calY(), meta.calZ() );
-
 			return img;
 		}
 		catch ( Exception e )
@@ -97,13 +90,6 @@ public class LegacyLightSheetZ1ImgLoader extends AbstractImgFactoryImgLoader
 			if ( img == null )
 				throw new RuntimeException( "Could not load '" + cziFile + "' viewId=" + view.getViewSetupId() + ", tpId=" + view.getTimePointId() );
 
-			// update the MetaDataCache of the AbstractImgLoader
-			// this does not update the XML ViewSetup but has to be called explicitly before saving
-			final int[] dim = meta.imageSizes().get( getAngle( sequenceDescription, view ).getId() );
-			updateMetaDataCache(
-					view, dim[ 0 ], dim[ 1 ], dim[ 2 ],
-					meta.calX(), meta.calY(), meta.calZ() );
-
 			return img;
 		}
 		catch ( Exception e )
@@ -115,25 +101,7 @@ public class LegacyLightSheetZ1ImgLoader extends AbstractImgFactoryImgLoader
 	@Override
 	protected void loadMetaData( final ViewId view )
 	{
-		if ( meta == null )
-		{
-			meta = new LightSheetZ1MetaData();
-
-			if ( !meta.loadMetaData( cziFile ) )
-			{
-				IOFunctions.println( "Failed to analyze file: '" + cziFile.getAbsolutePath() + "'." );
-				meta = null;
-				return;
-			}
-		}
-
-		// update the MetaDataCache of the AbstractImgLoader
-		// this does not update the XML ViewSetup but has to be called explicitly before saving
-		final int[] dim = meta.imageSizes().get( getAngle( sequenceDescription, view ).getId() );
-
-		updateMetaDataCache(
-				view, dim[ 0 ], dim[ 1 ], dim[ 2 ],
-				meta.calX(), meta.calY(), meta.calZ() );
+		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Loading metadata for Lightsheet Z1 imgloader not necessary." );
 	}
 
 	@Override
@@ -154,10 +122,10 @@ public class LegacyLightSheetZ1ImgLoader extends AbstractImgFactoryImgLoader
 
 	protected < T extends RealType< T > & NativeType< T > > Img< T > openCZI( final T type, final ViewId view ) throws Exception
 	{
-		IOFunctions.println( "Investigating file '" + cziFile.getAbsolutePath() + "'." );
-
 		if ( meta == null )
 		{
+			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Investigating file '" + cziFile.getAbsolutePath() + "' (loading metadata)." );
+
 			meta = new LightSheetZ1MetaData();
 
 			if ( !meta.loadMetaData( cziFile, true ) )
@@ -199,11 +167,6 @@ public class LegacyLightSheetZ1ImgLoader extends AbstractImgFactoryImgLoader
 		if ( img == null )
 			throw new RuntimeException( "Could not instantiate " + getImgFactory().getClass().getSimpleName() + " for '" + cziFile + "' viewId=" + view.getViewSetupId() + ", tpId=" + view.getTimePointId() + ", most likely out of memory." );
 
-		IOFunctions.println(
-				new Date( System.currentTimeMillis() ) + ": Opening '" + cziFile.getName() + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] +
-				" angle=" + a.getName() + " ch=" + c.getName() + " illum=" + i.getName() + " tp=" + t.getName() + " type=" + meta.pixelTypeString() +
-				" img=" + img.getClass().getSimpleName() + "<" + type.getClass().getSimpleName() + ">]" );
-
 		final boolean isLittleEndian = meta.isLittleEndian();
 		final boolean isArray = ArrayImg.class.isInstance( img );
 		final int pixelType = meta.pixelType();
@@ -227,7 +190,10 @@ public class LegacyLightSheetZ1ImgLoader extends AbstractImgFactoryImgLoader
 			try
 			{
 				if ( meta.getReader() == null )
+				{
+					IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Opening '" + cziFile.getName() + "' for reading image data." );
 					r.setId( cziFile.getAbsolutePath() );
+				}
 
 				// set the right angle
 				r.setSeries( a.getId() );
@@ -237,6 +203,11 @@ public class LegacyLightSheetZ1ImgLoader extends AbstractImgFactoryImgLoader
 				r.setId( cziFile.getAbsolutePath() );
 				r.setSeries( a.getId() );
 			}
+
+			IOFunctions.println(
+					new Date( System.currentTimeMillis() ) + ": Reading image data from '" + cziFile.getName() + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] +
+					" angle=" + a.getName() + " ch=" + c.getName() + " illum=" + i.getName() + " tp=" + t.getName() + " type=" + meta.pixelTypeString() +
+					" img=" + img.getClass().getSimpleName() + "<" + type.getClass().getSimpleName() + ">]" );
 
 			// compute the right channel from channelId & illuminationId
 			int ch = c.getId() * meta.numIlluminations() + i.getId();
@@ -302,7 +273,7 @@ public class LegacyLightSheetZ1ImgLoader extends AbstractImgFactoryImgLoader
 		return img;
 	}
 
-	protected static final < T extends RealType< T > > void readBytes( final byte[] b, final Cursor< T > cursor, final int width )
+	public static final < T extends RealType< T > > void readBytes( final byte[] b, final Cursor< T > cursor, final int width )
 	{
 		while( cursor.hasNext() )
 		{
@@ -311,13 +282,13 @@ public class LegacyLightSheetZ1ImgLoader extends AbstractImgFactoryImgLoader
 		}
 	}
 
-	protected static final < T extends RealType< T > > void readBytesArray( final byte[] b, final Cursor< T > cursor, final int numPx )
+	public static final < T extends RealType< T > > void readBytesArray( final byte[] b, final Cursor< T > cursor, final int numPx )
 	{
 		for ( int i = 0; i < numPx; ++i )
 			cursor.next().setReal( b[ i ] & 0xff );
 	}
 
-	protected static final < T extends RealType< T > > void readUnsignedShorts( final byte[] b, final Cursor< T > cursor, final int width, final boolean isLittleEndian )
+	public static final < T extends RealType< T > > void readUnsignedShorts( final byte[] b, final Cursor< T > cursor, final int width, final boolean isLittleEndian )
 	{
 		while( cursor.hasNext() )
 		{
@@ -326,13 +297,13 @@ public class LegacyLightSheetZ1ImgLoader extends AbstractImgFactoryImgLoader
 		}
 	}
 
-	protected static final < T extends RealType< T > > void readUnsignedShortsArray( final byte[] b, final Cursor< T > cursor, final int numPx, final boolean isLittleEndian )
+	public static final < T extends RealType< T > > void readUnsignedShortsArray( final byte[] b, final Cursor< T > cursor, final int numPx, final boolean isLittleEndian )
 	{
 		for ( int i = 0; i < numPx; ++i )
 			cursor.next().setReal( LegacyStackImgLoaderLOCI.getShortValueInt( b, i * 2, isLittleEndian ) );
 	}
 
-	protected static final < T extends RealType< T > > void readSignedShorts( final byte[] b, final Cursor< T > cursor, final int width, final boolean isLittleEndian )
+	public static final < T extends RealType< T > > void readSignedShorts( final byte[] b, final Cursor< T > cursor, final int width, final boolean isLittleEndian )
 	{
 		while( cursor.hasNext() )
 		{
@@ -341,13 +312,13 @@ public class LegacyLightSheetZ1ImgLoader extends AbstractImgFactoryImgLoader
 		}
 	}
 
-	protected static final < T extends RealType< T > > void readSignedShortsArray( final byte[] b, final Cursor< T > cursor, final int numPx, final boolean isLittleEndian )
+	public static final < T extends RealType< T > > void readSignedShortsArray( final byte[] b, final Cursor< T > cursor, final int numPx, final boolean isLittleEndian )
 	{
 		for ( int i = 0; i < numPx; ++i )
 			cursor.next().setReal( LegacyStackImgLoaderLOCI.getShortValue( b, i * 2, isLittleEndian ) );
 	}
 
-	protected static final < T extends RealType< T > > void readUnsignedInts( final byte[] b, final Cursor< T > cursor, final int width, final boolean isLittleEndian )
+	public static final < T extends RealType< T > > void readUnsignedInts( final byte[] b, final Cursor< T > cursor, final int width, final boolean isLittleEndian )
 	{
 		while( cursor.hasNext() )
 		{
@@ -356,13 +327,13 @@ public class LegacyLightSheetZ1ImgLoader extends AbstractImgFactoryImgLoader
 		}
 	}
 
-	protected static final < T extends RealType< T > > void readUnsignedIntsArray( final byte[] b, final Cursor< T > cursor, final int numPx, final boolean isLittleEndian )
+	public static final < T extends RealType< T > > void readUnsignedIntsArray( final byte[] b, final Cursor< T > cursor, final int numPx, final boolean isLittleEndian )
 	{
 		for ( int i = 0; i < numPx; ++i )
 			cursor.next().setReal( LegacyStackImgLoaderLOCI.getIntValue( b, i * 4, isLittleEndian ) );
 	}
 
-	protected static final < T extends RealType< T > > void readFloats( final byte[] b, final Cursor< T > cursor, final int width, final boolean isLittleEndian )
+	public static final < T extends RealType< T > > void readFloats( final byte[] b, final Cursor< T > cursor, final int width, final boolean isLittleEndian )
 	{
 		while( cursor.hasNext() )
 		{
@@ -371,7 +342,7 @@ public class LegacyLightSheetZ1ImgLoader extends AbstractImgFactoryImgLoader
 		}
 	}
 
-	protected static final < T extends RealType< T > > void readFloatsArray( final byte[] b, final Cursor< T > cursor, final int numPx, final boolean isLittleEndian )
+	public static final < T extends RealType< T > > void readFloatsArray( final byte[] b, final Cursor< T > cursor, final int numPx, final boolean isLittleEndian )
 	{
 		for ( int i = 0; i < numPx; ++i )
 			cursor.next().setReal( LegacyStackImgLoaderLOCI.getFloatValue( b, i * 4, isLittleEndian ) );
