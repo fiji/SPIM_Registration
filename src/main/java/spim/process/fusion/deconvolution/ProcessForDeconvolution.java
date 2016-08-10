@@ -74,9 +74,9 @@ public class ProcessForDeconvolution
 	final protected SpimData2 spimData;
 	final protected List< ViewId > viewIdsToProcess;
 	final BoundingBoxGUI bb;
-	final float[] blendingBorder;
-	final float[] blendingRange;
-	
+	final float[] blendingBorderGlobal;
+	final float[] blendingRangeGlobal;
+
 	int minOverlappingViews;
 	double avgOverlappingViews;
 	ArrayList< ViewDescription > viewDescriptions;
@@ -96,8 +96,8 @@ public class ProcessForDeconvolution
 		this.spimData = spimData;
 		this.viewIdsToProcess = viewIdsToProcess;
 		this.bb = bb;
-		this.blendingBorder = blendingBorder;
-		this.blendingRange = blendingRange;
+		this.blendingBorderGlobal = blendingBorder.clone(); //gets modified
+		this.blendingRangeGlobal = blendingRange.clone(); //gets modified
 	}
 	
 	public ExtractPSF< FloatType > getExtractPSF() { return ePSF; }
@@ -265,6 +265,9 @@ public class ProcessForDeconvolution
 				if ( voxelSize == null )
 					voxelSize = new FinalVoxelDimensions( "px", new double[]{ 1, 1, 1 } );
 
+				final float[] blendingBorder = blendingBorderGlobal.clone();
+				final float[] blendingRange = blendingRangeGlobal.clone();
+
 				if ( ProcessFusion.defaultAdjustBlendingForAnisotropy )
 				{
 					for ( int d = 0; d < inputImg.numDimensions(); ++d )
@@ -395,6 +398,22 @@ public class ProcessForDeconvolution
 		wn.adjustForOSEM( osemspeedup );
 
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Finished precomputations for deconvolution." );
+
+		/*
+		for ( final RandomAccessibleInterval< FloatType > w : weightsSorted )
+		{
+			Img< FloatType > i = imgFactory.create( bb.getDimensions(), new FloatType() );
+
+			// copy the virtual construct into an actual image
+			long t = System.currentTimeMillis();
+			FusionHelper.copyImg( w, i );
+			System.out.println( "copy weight: " +  ( System.currentTimeMillis() - t ) );
+
+			ImageJFunctions.show( i );
+		}
+
+		SimpleMultiThreading.threadHaltUnClean();
+		*/
 
 		return true;
 	}
