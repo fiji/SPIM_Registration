@@ -326,7 +326,7 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 				{
 					if ( vs.getAngle().getId() == a.getId() )
 					{
-						vd.getViewSetup().setSize( new FinalDimensions( meta.imageSizes().get( a.getId() ) ) );
+						vs.setSize( new FinalDimensions( meta.imageSizes().get( a.getId() ) ) );
 						IOFunctions.println( "Resetting image size for viewSetup: " + vs.getId() + ", old: " + width + "x" + height + "x" + depth + ", new: " + width + "x" + height + "x" + z );
 					}
 				}
