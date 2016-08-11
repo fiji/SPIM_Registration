@@ -20,6 +20,7 @@ import bdv.BigDataViewer;
 import bdv.tools.InitializeViewerState;
 import bdv.tools.transformation.TransformedSource;
 import bdv.viewer.Source;
+import bdv.viewer.ViewerOptions;
 import bdv.viewer.ViewerPanel;
 import bdv.viewer.state.SourceState;
 import bdv.viewer.state.ViewerState;
@@ -171,7 +172,7 @@ public class BDVPopup extends JMenuItem implements ExplorerWindowSetable, BasicB
 				return null;
 		}
 
-		BigDataViewer bdv = new BigDataViewer( panel.getSpimData(), panel.xml(), null );
+		BigDataViewer bdv = BigDataViewer.open( panel.getSpimData(), panel.xml(), IOFunctions.getProgressWriter(), ViewerOptions.options() );
 //		if ( !bdv.tryLoadSettings( panel.xml() ) ) TODO: this should work, but currently tryLoadSettings is protected. fix that.
 			InitializeViewerState.initBrightness( 0.001, 0.999, bdv.getViewer(), bdv.getSetupAssignments() );
 		

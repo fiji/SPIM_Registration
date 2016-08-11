@@ -34,9 +34,7 @@ public class MVDeconInput
 		
 	/**
 	 * init all views
-	 * 
-	 * @param exponentialKernel - use exponential kernel?
-	 * 
+	 *
 	 * @return the same instance again for convenience
 	 * @throws IncompatibleTypeException 
 	 */

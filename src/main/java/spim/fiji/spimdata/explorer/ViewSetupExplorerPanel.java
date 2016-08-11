@@ -25,6 +25,13 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 
+import bdv.BigDataViewer;
+import bdv.img.hdf5.Hdf5ImageLoader;
+import bdv.tools.InitializeViewerState;
+import bdv.tools.brightness.ConverterSetup;
+import bdv.viewer.DisplayMode;
+import bdv.viewer.ViewerOptions;
+import bdv.viewer.VisibilityAndGrouping;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
@@ -58,12 +65,6 @@ import spim.fiji.spimdata.explorer.util.ColorStream;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
-import bdv.BigDataViewer;
-import bdv.img.hdf5.Hdf5ImageLoader;
-import bdv.tools.InitializeViewerState;
-import bdv.tools.brightness.ConverterSetup;
-import bdv.viewer.DisplayMode;
-import bdv.viewer.VisibilityAndGrouping;
 
 public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > > extends JPanel implements ExplorerWindow< AS, X >
 {
@@ -112,7 +113,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 			
 			if ( bdvpopup != null )
 			{
-				bdvpopup.bdv = new BigDataViewer( getSpimData(), xml(), null );
+				bdvpopup.bdv = BigDataViewer.open( getSpimData(), xml(), IOFunctions.getProgressWriter(), ViewerOptions.options() );
 
 //				if ( !bdv.tryLoadSettings( panel.xml() ) ) TODO: this should work, but currently tryLoadSettings is protected. fix that.
 					InitializeViewerState.initBrightness( 0.001, 0.999, bdvpopup.bdv.getViewer(), bdvpopup.bdv.getSetupAssignments() );

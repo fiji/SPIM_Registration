@@ -85,6 +85,26 @@ public class LightSheetZ1MetaData
 			return "Unknown";
 	}
 
+	public boolean allImageSizesEqual()
+	{
+		int[] size = null;
+		boolean allEqual = true;
+		
+		for ( final int[] sizes : imageSizes().values() )
+		{
+			if ( size == null )
+				size = sizes.clone();
+			else
+			{
+				for ( int d = 0; d < size.length; ++d )
+					if ( size[ d ] != sizes[ d ] )
+						allEqual = false;
+			}
+		}
+
+		return allEqual;
+	}
+
 	public boolean applyAxis() { return this.applyAxis; }
 	public void setApplyAxis( final boolean apply ) { this.applyAxis = apply; }
 

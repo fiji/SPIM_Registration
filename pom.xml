@@ -5,12 +5,12 @@
 	<parent>
 		<groupId>sc.fiji</groupId>
 		<artifactId>pom-fiji</artifactId>
-		<version>18.1.0</version>
+		<version>24.3.0</version>
 		<relativePath />
 	</parent>
 
 	<artifactId>SPIM_Registration</artifactId>
-	<version>5.0.1-SNAPSHOT</version>
+	<version>5.0.2-SNAPSHOT</version>
 
 	<name>SPIM Registration</name>
 	<description>Software for the reconstruction of multi-view microscopic acquisitions like Selective Plane Illumination Microscopy (SPIM) Data.</description>
@@ -44,14 +44,6 @@
 				<role>maintainer</role>
 			</roles>
 		</developer>
-		<developer>
-			<id>hinerm</id>
-			<name>Mark Hiner</name>
-			<url>http://imagej.net/User:Hinerm</url>
-			<roles>
-				<role>maintainer</role>
-			</roles>
-		</developer>
 	</developers>
 	<contributors>
 		<contributor>
@@ -72,6 +64,11 @@
 			<name>Christian Dietz</name>
 			<url>http://imagej.net/User:Dietzc</url>
 			<properties><id>dietzc</id></properties>
+		</contributor>
+		<contributor>
+			<name>Mark Hiner</name>
+			<url>http://imagej.net/User:Hinerm</url>
+			<properties><id>hinerm</id></properties>
 		</contributor>
 		<contributor>
 			<name>Stephan Janosch</name>
@@ -114,8 +111,7 @@
 	</ciManagement>
 
 	<properties>
-		<scijava.jvm.version>1.7</scijava.jvm.version>
-		<ImageJ_3D_Viewer.version>4.0.0</ImageJ_3D_Viewer.version>
+		<scijava.jvm.version>1.8</scijava.jvm.version>
 	</properties>
 
 	<repositories>

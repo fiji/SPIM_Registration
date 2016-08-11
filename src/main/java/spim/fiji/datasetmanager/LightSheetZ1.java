@@ -3,13 +3,20 @@ package spim.fiji.datasetmanager;
 import fiji.util.gui.GenericDialogPlus;
 import ij.gui.GenericDialog;
 
+import java.awt.Color;
 import java.awt.Font;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 import bdv.BigDataViewer;
+import java.util.Date;
+import java.util.HashMap;
+
+import loci.formats.FormatTools;
+import loci.formats.IFormatReader;
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
@@ -30,10 +37,13 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.Cursor;
 import net.imglib2.Dimensions;
 import net.imglib2.FinalDimensions;
+import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
@@ -43,6 +53,7 @@ import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBoxes;
+import spim.fiji.spimdata.imgloaders.LegacyLightSheetZ1ImgLoader;
 import spim.fiji.spimdata.imgloaders.LightSheetZ1ImgLoader;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
@@ -54,6 +65,9 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 	public static boolean defaultModifyCal = false;
 	public static boolean defaultRotAxis = false;
 	public static boolean defaultApplyRotAxis = true;
+	public static boolean defaultFixBioformats = false;
+
+	private boolean fixBioformats = false;
 
 	@Override
 	public String getTitle() { return "Zeiss Lightsheet Z.1 Dataset (LOCI Bioformats)"; }
@@ -122,6 +136,10 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 
 		if ( meta.applyAxis() )
 			Apply_Transformation.applyAxis( spimData );
+
+		// TODO: Remove BIOFORMATS bug workaround
+		if ( fixBioformats )
+			fixBioformats( spimData, cziFile, meta );
 
 		return spimData;
 	}
@@ -287,6 +305,124 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 			return new CellImgFactory< FloatType >( 256 );
 		}
 	}
+
+	protected boolean fixBioformats( final SpimData2 spimData, final File cziFile, final LightSheetZ1MetaData meta )
+	{
+		final IFormatReader r;
+
+		// if we already loaded the metadata in this run, use the opened file
+		if ( meta.getReader() == null )
+			r = LegacyLightSheetZ1ImgLoader.instantiateImageReader();
+		else
+			r = meta.getReader();
+
+		try
+		{
+			final boolean isLittleEndian = meta.isLittleEndian();
+			final int pixelType = meta.pixelType();
+
+			// open the file if not already done
+			try
+			{
+				if ( meta.getReader() == null )
+				{
+					IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Opening '" + cziFile.getName() + "' for reading image data." );
+					r.setId( cziFile.getAbsolutePath() );
+				}
+			}
+			catch ( IllegalStateException e )
+			{
+				r.setId( cziFile.getAbsolutePath() );
+			}
+
+			// collect all Tiles as their id defines the seriesId of Bioformats
+			final HashMap< Tile, ViewDescription > map = new HashMap<>();
+			final SequenceDescription sd = spimData.getSequenceDescription();
+
+			for ( final ViewSetup vs : sd.getViewSetupsOrdered() )
+			{
+				for ( final TimePoint t : sd.getTimePoints().getTimePointsOrdered() )
+				{
+					final ViewDescription vd = sd.getViewDescription( t.getId(), vs.getId() );
+	
+					if ( vd.isPresent() )
+						map.put( vd.getViewSetup().getTile(), vd );
+				}
+			}
+
+			for ( final Tile t : map.keySet() )
+			{
+				final ViewDescription vd = map.get( t );
+				
+				final int width = (int)vd.getViewSetup().getSize().dimension( 0 );
+				final int height = (int)vd.getViewSetup().getSize().dimension( 1 );
+				final int depth = (int)vd.getViewSetup().getSize().dimension( 2 );
+				final int numPx = width * height;
+
+				// set the right tile
+				r.setSeries( t.getId() );
+
+				final byte[] b = new byte[ numPx * meta.bytesPerPixel() ];
+
+				final Img< FloatType > slice = ArrayImgs.floats( width, height );
+
+				int z = depth - 1;
+				for ( z = depth - 1; z >= 0; --z )
+				{
+					final Cursor< FloatType > cursor = slice.localizingCursor();
+
+					r.openBytes( r.getIndex( z, 0, vd.getTimePointId() ), b );
+
+					if ( pixelType == FormatTools.UINT8 )
+						LegacyLightSheetZ1ImgLoader.readBytesArray( b, cursor, numPx );
+					else if ( pixelType == FormatTools.UINT16 )
+						LegacyLightSheetZ1ImgLoader.readUnsignedShortsArray( b, cursor, numPx, isLittleEndian );
+					else if ( pixelType == FormatTools.INT16 )
+						LegacyLightSheetZ1ImgLoader.readSignedShortsArray( b, cursor, numPx, isLittleEndian );
+					else if ( pixelType == FormatTools.UINT32 )
+						LegacyLightSheetZ1ImgLoader.readUnsignedIntsArray( b, cursor, numPx, isLittleEndian );
+					else if ( pixelType == FormatTools.FLOAT )
+						LegacyLightSheetZ1ImgLoader.readFloatsArray( b, cursor, numPx, isLittleEndian );
+
+					if ( !allZero( slice ) )
+						break;
+				}
+
+				// size is one bigger than the last z-slice
+				z++;
+
+				meta.imageSizes().put( t.getId(), new int[]{ width, height, z } );
+				for ( final ViewSetup vs : sd.getViewSetupsOrdered() )
+				{
+					if ( vs.getTile().getId() == t.getId() )
+					{
+						vs.setSize( new FinalDimensions( meta.imageSizes().get( t.getId() ) ) );
+						IOFunctions.println( "Resetting image size for viewSetup: " + vs.getId() + ", old: " + width + "x" + height + "x" + depth + ", new: " + width + "x" + height + "x" + z );
+					}
+				}
+			}
+		}
+		catch ( Exception e )
+		{
+			IOFunctions.println( "File '" + cziFile.getAbsolutePath() + "' could not be opened: " + e );
+			IOFunctions.println( "Stopping" );
+
+			e.printStackTrace();
+			try { r.close(); } catch (IOException e1) { e1.printStackTrace(); }
+			return false;
+		}
+
+		return true;
+	}
+
+	private final static boolean allZero( final Img< FloatType > slice )
+	{
+		for ( final FloatType t : slice )
+			if ( t.get() != 0.0f )
+				return false;
+
+		return true;
+	}
 	
 	protected boolean showDialogs( final LightSheetZ1MetaData meta )
 	{
@@ -329,6 +465,14 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		gd.addCheckbox( "Modify_rotation_axis", defaultRotAxis );
 		gd.addCheckbox( "Apply_rotation_to_dataset", defaultApplyRotAxis );
 
+		// TODO: Remove BIOFORMATS bug workaround
+		if ( meta.allImageSizesEqual() )
+		{
+			gd.addMessage( "WARNING: All image stacks have the same size, this could be the Bioformats bug.", new Font( Font.SANS_SERIF, Font.BOLD, 13 ), Color.red );
+			defaultFixBioformats = true;
+		}
+		gd.addCheckbox( "Fix_Bioformats image stack size bug", defaultFixBioformats );
+
 		gd.addMessage( "Acquisition Objective: " + meta.objective(), new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
 		gd.addMessage( "Rotation axis: " + meta.rotationAxisName() + " axis", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
 		gd.addMessage( (meta.lightsheetThickness() < 0 ? "" : "Lighsheet thickness: " + meta.lightsheetThickness() + " um"), new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
@@ -366,6 +510,9 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		final boolean modifyCal = defaultModifyCal = gd.getNextBoolean();
 		final boolean modifyAxis = defaultRotAxis = gd.getNextBoolean();
 		meta.setApplyAxis( defaultApplyRotAxis = gd.getNextBoolean() );
+
+		// TODO: Remove BIOFORMATS bug workaround
+		fixBioformats = defaultFixBioformats = gd.getNextBoolean();
 
 		if ( modifyAxis || modifyCal )
 		{
