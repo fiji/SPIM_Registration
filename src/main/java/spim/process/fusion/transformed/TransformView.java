@@ -13,46 +13,11 @@ import net.imglib2.outofbounds.OutOfBoundsFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 
 public class TransformView
 {
-	/**
-	 * Scale the affine transform (use with scaleBoundingBox so it is the right image, but just smaller)
-	 * 
-	 * @param transform
-	 * @param factor
-	 * @return
-	 */
-	public static void scaleTransform( final AffineTransform3D t, final double factor )
-	{
-		final AffineTransform3D at = new AffineTransform3D();
-		at.scale( factor );
-		t.preConcatenate( at );
-	}
-
-	/**
-	 * Scale the bounding box (use with scaleTransform so it is the right image, but just smaller)
-	 * 
-	 * @param boundingBox
-	 * @param factor
-	 * @return
-	 */
-	public static Interval scaleBoundingBox( final Interval boundingBox, final double factor )
-	{
-		final int n = boundingBox.numDimensions();
-		final long[] min = new long[ n ];
-		final long[] max = new long[ n ];
-
-		for ( int d = 0; d < min.length; ++ d )
-		{
-			min[ d ] = Math.round( boundingBox.min( d ) * factor );
-			max[ d ] = Math.round( boundingBox.max( d ) * factor );
-		}
-
-		return new FinalInterval( min, max );
-	}
-
 	/**
 	 * Creates a virtual construct that transforms and zero-mins.
 	 * 
@@ -70,7 +35,7 @@ public class TransformView
 	public static < T extends RealType< T > > RandomAccessibleInterval< FloatType > transformView(
 			final RandomAccessibleInterval< T > input,
 			final AffineTransform3D transform,
-			final FinalInterval boundingBox,
+			final Interval boundingBox,
 			final float outsideValue,
 			final int interpolation )
 	{
@@ -97,7 +62,7 @@ public class TransformView
 			final ImgLoader imgloader,
 			final ViewId viewId,
 			final AffineTransform3D transform,
-			final FinalInterval boundingBox,
+			final Interval boundingBox,
 			final float outsideValue,
 			final int interpolation )
 	{
@@ -109,7 +74,7 @@ public class TransformView
 	public static < T extends RealType< T > > RandomAccessibleInterval< FloatType > transformView(
 			final SpimData data,
 			final ViewId viewId,
-			final FinalInterval boundingBox,
+			final Interval boundingBox,
 			final float outsideValue,
 			final int interpolation )
 	{
@@ -133,7 +98,7 @@ public class TransformView
 	public static < T extends RealType< T > > RandomAccessibleInterval< FloatType > transformView(
 			final RandomAccessibleInterval< T > input,
 			final AffineTransform3D transform,
-			final FinalInterval boundingBox,
+			final Interval boundingBox,
 			final OutOfBoundsFactory< T, RandomAccessible< T > > outOfBoundsFactory,
 			final InterpolatorFactory< FloatType, RandomAccessible< FloatType > > interpolatorFactory )
 	{

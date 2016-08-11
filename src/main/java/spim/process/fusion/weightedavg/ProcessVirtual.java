@@ -33,6 +33,7 @@ import spim.fiji.spimdata.ViewSetupUtils;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
 import spim.process.fusion.transformed.TransformView;
+import spim.process.fusion.transformed.TransformVirtual;
 import spim.process.fusion.transformed.TransformedInputRandomAccessible;
 import spim.process.fusion.transformed.TransformedRasteredRealRandomAccessible;
 import spim.process.fusion.transformed.weights.BlendingRealRandomAccessible;
@@ -80,7 +81,7 @@ public class ProcessVirtual extends ProcessFusion
 		if ( downSampling == 1 )
 			bb = boundingBox;
 		else
-			bb = TransformView.scaleBoundingBox( boundingBox, downSampling );
+			bb = TransformVirtual.scaleBoundingBox( boundingBox, downSampling );
 
 		final long[] size = new long[ bb.numDimensions() ];
 		bb.dimensions( size );
@@ -144,7 +145,7 @@ public class ProcessVirtual extends ProcessFusion
 
 			if ( downSampling > 1 )
 			{
-				TransformView.scaleTransform( transform,  1.0 / downSampling );
+				TransformVirtual.scaleTransform( transform,  1.0 / downSampling );
 				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Applying downsampling: " + downSampling );
 			}
 
@@ -179,19 +180,7 @@ public class ProcessVirtual extends ProcessFusion
 				final float[] blending = ProcessFusion.defaultBlendingRange.clone();
 				final float[] border = ProcessFusion.defaultBlendingBorder.clone();
 
-				final float minRes = (float)getMinRes( vd );
-				VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSize( vd.getViewSetup() );
-				if ( voxelSize == null )
-					voxelSize = new FinalVoxelDimensions( "px", new double[]{ 1, 1, 1 } );
-
-				if ( ProcessFusion.defaultAdjustBlendingForAnisotropy )
-				{
-					for ( int d = 0; d < inputImg.numDimensions(); ++d )
-					{
-						blending[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
-						border[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
-					}
-				}
+				adjustBlending( vd, blending, border );
 
 				// the virtual weight construct
 				final RandomAccessible< FloatType > virtualBlending =
@@ -292,6 +281,23 @@ public class ProcessVirtual extends ProcessFusion
 		taskExecutor.shutdown();
 		
 		return fusedImg;
+	}
+
+	public static void adjustBlending( final ViewDescription vd, final float[] blending, final float[] border )
+	{
+		final float minRes = (float)getMinRes( vd );
+		VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSize( vd.getViewSetup() );
+		if ( voxelSize == null )
+			voxelSize = new FinalVoxelDimensions( "px", new double[]{ 1, 1, 1 } );
+
+		if ( ProcessFusion.defaultAdjustBlendingForAnisotropy )
+		{
+			for ( int d = 0; d < blending.length; ++d )
+			{
+				blending[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
+				border[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
+			}
+		}
 	}
 
 	public static double getMinRes( final ViewDescription desc )
