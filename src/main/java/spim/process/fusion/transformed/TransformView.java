@@ -13,21 +13,32 @@ import net.imglib2.outofbounds.OutOfBoundsFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.util.Pair;
-import net.imglib2.util.ValuePair;
 import net.imglib2.view.Views;
 
 public class TransformView
 {
 	/**
-	 * Scale the affine transform and with it the bounding box so it is the right image, but just smaller
+	 * Scale the affine transform (use with scaleBoundingBox so it is the right image, but just smaller)
 	 * 
 	 * @param transform
+	 * @param factor
+	 * @return
+	 */
+	public static void scaleTransform( final AffineTransform3D t, final double factor )
+	{
+		final AffineTransform3D at = new AffineTransform3D();
+		at.scale( factor );
+		t.preConcatenate( at );
+	}
+
+	/**
+	 * Scale the bounding box (use with scaleTransform so it is the right image, but just smaller)
+	 * 
 	 * @param boundingBox
 	 * @param factor
 	 * @return
 	 */
-	public static Pair< AffineTransform3D, Interval > scale( final AffineTransform3D transform, final FinalInterval boundingBox, final double factor )
+	public static Interval scaleBoundingBox( final Interval boundingBox, final double factor )
 	{
 		final int n = boundingBox.numDimensions();
 		final long[] min = new long[ n ];
@@ -39,12 +50,7 @@ public class TransformView
 			max[ d ] = Math.round( boundingBox.max( d ) * factor );
 		}
 
-		final AffineTransform3D t = transform.copy();
-		final AffineTransform3D at = new AffineTransform3D();
-		at.scale( factor );
-		t.preConcatenate( at );
-
-		return new ValuePair< AffineTransform3D, Interval >( t, new FinalInterval( min, max ) );
+		return new FinalInterval( min, max );
 	}
 
 	/**

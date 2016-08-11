@@ -73,9 +73,9 @@ public class MinFilterThreshold
 	public boolean run()
 	{
 		// fuse the dataset
-		final ProcessFusion process = new ProcessVirtual( spimData, viewIdsToProcess, bb, 0, false, false );
+		final ProcessFusion process = new ProcessVirtual( spimData, viewIdsToProcess, bb, bb.getDownSampling(), 0, false, false );
 
-		Img< FloatType > img = process.fuseStack( new FloatType(), timepoint, channel );
+		Img< FloatType > img = process.fuseStack( new FloatType(), timepoint, channel, bb.getImgFactory( new FloatType() ) );
 
 		final float[] minmax = FusionHelper.minMax( img );
 		final int effR = Math.max( radiusMin / bb.getDownSampling(), 1 );

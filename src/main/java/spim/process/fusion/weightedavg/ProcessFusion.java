@@ -5,11 +5,12 @@ import java.util.List;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
+import net.imglib2.Interval;
 import net.imglib2.img.Img;
+import net.imglib2.img.ImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import spim.fiji.spimdata.SpimData2;
-import spim.process.fusion.boundingbox.BoundingBoxGUI;
 
 public abstract class ProcessFusion
 {
@@ -23,20 +24,23 @@ public abstract class ProcessFusion
 	
 	final protected SpimData2 spimData;
 	final List< ViewId > viewIdsToProcess;
-	final BoundingBoxGUI boundingBox;
+	final Interval boundingBox;
+	final int downSampling;
 	final boolean useBlending;
 	final boolean useContentBased;
 	
 	public ProcessFusion(
 			final SpimData2 spimData,
 			final List< ViewId > viewIdsToProcess,
-			final BoundingBoxGUI bb,
+			final Interval bb,
+			final int downSampling,
 			final boolean useBlending,
 			final boolean useContentBased  )
 	{
 		this.spimData = spimData;
 		this.viewIdsToProcess = viewIdsToProcess;
 		this.boundingBox = bb;
+		this.downSampling = downSampling;
 		this.useBlending = useBlending;
 		this.useContentBased = useContentBased;
 	}
@@ -44,5 +48,6 @@ public abstract class ProcessFusion
 	public abstract < T extends RealType< T > & NativeType< T > > Img< T > fuseStack(
 			final T type,
 			final TimePoint timepoint, 
-			final Channel channel );
+			final Channel channel,
+			final ImgFactory< T > imgFactory );
 }

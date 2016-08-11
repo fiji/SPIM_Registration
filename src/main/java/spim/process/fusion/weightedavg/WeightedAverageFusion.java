@@ -42,7 +42,7 @@ public class WeightedAverageFusion extends Fusion
 		if ( exporter instanceof ImgExportTitle )
 			( (ImgExportTitle)exporter).setImgTitler( titler );
 
-		final ProcessFusion process = new ProcessVirtual( spimData, viewIdsToProcess, bb, getInterpolation(), useBlending, useContentBased );
+		final ProcessFusion process = new ProcessVirtual( spimData, viewIdsToProcess, bb, bb.getDownSampling(), getInterpolation(), useBlending, useContentBased );
 
 		for ( final TimePoint t : timepointsToProcess )
 			for ( final Channel c : channelsToProcess )
@@ -54,7 +54,7 @@ public class WeightedAverageFusion extends Fusion
 				if ( bb.getPixelType() == 0 )
 				{
 					exporter.exportImage(
-							process.fuseStack( new FloatType(), t , c ),
+							process.fuseStack( new FloatType() ,t , c, bb.getImgFactory( new FloatType() ) ),
 							bb,
 							t,
 							newViewsetups.get( SpimData2.getViewSetup( spimData.getSequenceDescription().getViewSetupsOrdered(), c, anglesToProcess.get( 0 ), illumsToProcess.get( 0 ) ) ));
@@ -62,7 +62,7 @@ public class WeightedAverageFusion extends Fusion
 				else
 				{
 					exporter.exportImage(
-							process.fuseStack( new UnsignedShortType(), t , c ),
+							process.fuseStack( new UnsignedShortType() ,t , c, bb.getImgFactory( new UnsignedShortType() ) ),
 							bb,
 							t,
 							newViewsetups.get( SpimData2.getViewSetup( spimData.getSequenceDescription().getViewSetupsOrdered(), c, anglesToProcess.get( 0 ), illumsToProcess.get( 0 ) ) ));

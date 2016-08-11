@@ -10,7 +10,6 @@ import net.imglib2.img.Img;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.process.fusion.ImagePortion;
-import spim.process.fusion.boundingbox.BoundingBoxGUI;
 
 /**
  * Fuse one portion of a paralell fusion, supports no weights
@@ -24,18 +23,15 @@ public class ProcessVirtualPortion< T extends RealType< T > > implements Callabl
 	final ImagePortion portion;
 	final ArrayList< RandomAccessibleInterval< FloatType > > imgs;
 	final Img< T > fusedImg;
-	final BoundingBoxGUI bb;
 	
 	public ProcessVirtualPortion(
 			final ImagePortion portion,
 			final ArrayList< RandomAccessibleInterval< FloatType > > imgs,
-			final Img< T > fusedImg,
-			final BoundingBoxGUI bb )
+			final Img< T > fusedImg )
 	{
 		this.portion = portion;
 		this.imgs = imgs;
 		this.fusedImg = fusedImg;
-		this.bb = bb;
 	}
 
 	@Override

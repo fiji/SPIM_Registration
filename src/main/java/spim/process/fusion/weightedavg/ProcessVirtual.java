@@ -19,6 +19,7 @@ import net.imglib2.Interval;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
+import net.imglib2.img.ImgFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -29,10 +30,9 @@ import net.imglib2.view.Views;
 import spim.Threads;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
-import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
-import spim.process.fusion.boundingbox.BoundingBoxGUI;
+import spim.process.fusion.transformed.TransformView;
 import spim.process.fusion.transformed.TransformedInputRandomAccessible;
 import spim.process.fusion.transformed.TransformedRasteredRealRandomAccessible;
 import spim.process.fusion.transformed.weights.BlendingRealRandomAccessible;
@@ -45,29 +45,26 @@ public class ProcessVirtual extends ProcessFusion
 	public ProcessVirtual(
 			final SpimData2 spimData,
 			final List< ViewId > viewIdsToProcess,
-			final BoundingBoxGUI bb,
+			final Interval boundingBox,
+			final int downSampling,
 			final int interpolation,
 			final boolean useBlending,
 			final boolean useContentBased )
 	{
-		super( spimData, viewIdsToProcess, bb, useBlending, useContentBased );
+		super( spimData, viewIdsToProcess, boundingBox, downSampling, useBlending, useContentBased );
 
 		this.interpolation = interpolation;
 	}
 
 	/** 
 	 * Fuses one stack, i.e. all angles/illuminations for one timepoint and channel
-	 * 
-	 * @param type
-	 * @param timepoint
-	 * @param channel
-	 * @return
 	 */
 	@Override
 	public < T extends RealType< T > & NativeType< T > > Img< T > fuseStack(
 			final T type,
-			final TimePoint timepoint, 
-			final Channel channel )
+			final TimePoint timepoint,
+			final Channel channel,
+			final ImgFactory< T > imgFactory )
 	{
 		// get all views that are fused
 		final ArrayList< ViewDescription > inputData = FusionHelper.assembleInputData( spimData, timepoint, channel, viewIdsToProcess );
@@ -78,31 +75,20 @@ public class ProcessVirtual extends ProcessFusion
 			return null;
 
 		// update bounding box if necessary for downsampling
-		final BoundingBoxGUI bb;
-		final int downSampling = boundingBox.getDownSampling();
+		final Interval bb;
 
 		if ( downSampling == 1 )
-		{
 			bb = boundingBox;
-		}
 		else
-		{
-			final int[] min = boundingBox.getMin().clone();
-			final int[] max = boundingBox.getMax().clone();
+			bb = TransformView.scaleBoundingBox( boundingBox, downSampling );
 
-			for ( int d = 0; d < min.length; ++ d )
-			{
-				min[ d ] /= boundingBox.getDownSampling();
-				max[ d ] /= boundingBox.getDownSampling();
-			}
+		final long[] size = new long[ bb.numDimensions() ];
+		bb.dimensions( size );
 
-			bb = new BoundingBoxGUI( spimData, viewIdsToProcess, new BoundingBox( min, max ) );
-		}
-
-		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Reserving memory for fused image, size = " + Util.printCoordinates( bb.getDimensions()) );
+		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Reserving memory for fused image, size = " + Util.printCoordinates( size ) );
 
 		// try creating the output (type needs to be there to define T)
-		final Img< T > fusedImg = bb.getImgFactory( type ).create( bb.getDimensions(), type );
+		final Img< T > fusedImg = imgFactory.create( bb, type );
 
 		if ( fusedImg == null )
 		{
@@ -111,7 +97,7 @@ public class ProcessVirtual extends ProcessFusion
 		}
 
 		// define the output
-		final Interval outputInterval = new FinalInterval( bb.getDimensions() );
+		final Interval outputInterval = new FinalInterval( size );
 		final long[] offset = new long[]{ bb.min( 0 ), bb.min( 1 ), bb.min( 2 ) };
 
 		// list of transformed input images and weights
@@ -158,11 +144,8 @@ public class ProcessVirtual extends ProcessFusion
 
 			if ( downSampling > 1 )
 			{
-				final AffineTransform3D at = new AffineTransform3D();
-				at.scale( 1.0 / downSampling );
-				transform.preConcatenate( at );
-				
-				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Applying downsampling: " + at );
+				TransformView.scaleTransform( transform,  1.0 / downSampling );
+				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Applying downsampling: " + downSampling );
 			}
 
 			// values outside of the image area are -1
@@ -243,15 +226,22 @@ public class ProcessVirtual extends ProcessFusion
 					}
 				}
 
-				final RandomAccessible< FloatType > virtualContent =
-						new TransformedRasteredRealRandomAccessible< FloatType >(
-							new ContentBasedRealRandomAccessible( inputImg, bb.getImgFactory( new ComplexFloatType() ), sigma1, sigma2 ),
-							new FloatType(),
-							transform,
-							offset );
-				final RandomAccessibleInterval< FloatType > virtualContentInterval = Views.interval( virtualContent, outputInterval );
+				try
+				{
+					RandomAccessible< FloatType > virtualContent = new TransformedRasteredRealRandomAccessible< FloatType >(
+						new ContentBasedRealRandomAccessible( inputImg, imgFactory.imgFactory( new ComplexFloatType() ), sigma1, sigma2 ),
+						new FloatType(),
+						transform,
+						offset );
 
-				weightsPerView.add( virtualContentInterval );
+					final RandomAccessibleInterval< FloatType > virtualContentInterval = Views.interval( virtualContent, outputInterval );
+
+					weightsPerView.add( virtualContentInterval );
+				}
+				catch ( Exception e )
+				{
+					IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Cannot compute content-based fusion: " + e );
+				}
 			}
 
 			transformedWeights.add( weightsPerView );
@@ -267,12 +257,12 @@ public class ProcessVirtual extends ProcessFusion
 		if ( transformedWeights.get( 0 ).size() == 0 ) // no weights
 		{		
 			for ( final ImagePortion portion : portions )
-				tasks.add( new ProcessVirtualPortion< T >( portion, transformedImgs, fusedImg, bb ) );
+				tasks.add( new ProcessVirtualPortion< T >( portion, transformedImgs, fusedImg ) );
 		}
 		else if ( transformedWeights.get( 0 ).size() > 1 ) // many weights
 		{
 			for ( final ImagePortion portion : portions )
-				tasks.add( new ProcessVirtualPortionWeights< T >( portion, transformedImgs, transformedWeights, fusedImg, bb ) );
+				tasks.add( new ProcessVirtualPortionWeights< T >( portion, transformedImgs, transformedWeights, fusedImg ) );
 		}
 		else // one weight
 		{
@@ -282,7 +272,7 @@ public class ProcessVirtual extends ProcessFusion
 				singleWeightPerView.add( transformedWeights.get( i ).get( 0 ) );
 			
 			for ( final ImagePortion portion : portions )
-				tasks.add( new ProcessVirtualPortionWeight< T >( portion, transformedImgs, singleWeightPerView, fusedImg, bb ) );
+				tasks.add( new ProcessVirtualPortionWeight< T >( portion, transformedImgs, singleWeightPerView, fusedImg ) );
 		}
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Starting fusion process." );

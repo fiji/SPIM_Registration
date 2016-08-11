@@ -9,7 +9,6 @@ import net.imglib2.img.Img;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.process.fusion.ImagePortion;
-import spim.process.fusion.boundingbox.BoundingBoxGUI;
 
 /**
  * Fuse one portion of a paralell fusion, supports no weights
@@ -26,10 +25,9 @@ public class ProcessVirtualPortionWeights< T extends RealType< T > > extends Pro
 			final ImagePortion portion,
 			final ArrayList< RandomAccessibleInterval< FloatType > > imgs,
 			final ArrayList< ArrayList< RandomAccessibleInterval< FloatType > > > weights,
-			final Img< T > fusedImg,
-			final BoundingBoxGUI bb )
+			final Img< T > fusedImg )
 	{
-		super( portion, imgs, fusedImg, bb );
+		super( portion, imgs, fusedImg );
 
 		this.weights = weights;
 	}
