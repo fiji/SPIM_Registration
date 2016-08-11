@@ -359,7 +359,6 @@ public class MVDeconFFT
 	 * convolves the image with kernel1
 	 * 
 	 * @param image - the image to convolve with
-	 * @return
 	 */
 	public void convolve1( final Img< FloatType > image, final Img< FloatType > result )
 	{
@@ -451,7 +450,6 @@ public class MVDeconFFT
 	 * convolves the image with kernel2 (inverted kernel1)
 	 * 
 	 * @param image - the image to convolve with
-	 * @return
 	 */
 	public void convolve2( final Img< FloatType > image, final Img< FloatType > result )
 	{
@@ -489,7 +487,7 @@ public class MVDeconFFT
 				}
 
 				final FFTConvolution< FloatType > fftConv = fftConvolution2;
-				fftConv.setImg( image );
+				fftConv.setImg( Views.extendValue( image, new FloatType( 1.0f ) ), image );  // ratio outside of the deconvolved space (psi) is 1
 				fftConv.setOutput( result );
 				fftConv.convolve();
 

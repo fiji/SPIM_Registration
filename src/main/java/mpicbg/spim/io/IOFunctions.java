@@ -1,7 +1,5 @@
 package mpicbg.spim.io;
 
-import ij.IJ;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -11,6 +9,9 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 
+import bdv.export.ProgressWriter;
+import bdv.export.ProgressWriterConsole;
+import ij.IJ;
 import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.RigidModel3D;
@@ -23,6 +24,7 @@ import mpicbg.spim.registration.segmentation.NucleiConfiguration;
 import mpicbg.spim.registration.segmentation.Nucleus;
 import mpicbg.spim.registration.segmentation.NucleusIdentification;
 import net.imglib2.util.Util;
+import spim.fiji.plugin.resave.ProgressWriterIJ;
 
 public class IOFunctions
 {
@@ -58,6 +60,16 @@ public class IOFunctions
 			IJ.error( string );
 		else
 			System.err.println( string );
+	}
+
+	private static ProgressWriterIJ progressWriterIJ = new ProgressWriterIJ();
+	private static ProgressWriterConsole progressWriterConsole = new ProgressWriterConsole();
+	public static ProgressWriter getProgressWriter()
+	{
+		if ( printIJLog )
+			return progressWriterIJ;
+		else
+			return progressWriterConsole;
 	}
 
 	public static SPIMConfiguration initSPIMProcessing()

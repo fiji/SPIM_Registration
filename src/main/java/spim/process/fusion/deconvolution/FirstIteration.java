@@ -16,10 +16,8 @@ import spim.process.fusion.ImagePortion;
 
 /**
  * Fuse one portion of a paralell fusion, supports no weights
- * 
- * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
- * @param <T>
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  */
 public class FirstIteration implements Callable< Triple< RealSum, Long, float[] > >
 {
