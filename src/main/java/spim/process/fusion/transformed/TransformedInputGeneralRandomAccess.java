@@ -16,7 +16,7 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
 /**
- * Virtually transforms any RandomAccessibleInterval<RealType> into a RandomAccess<FloatType> using an AffineTransformation
+ * Virtually transforms any RandomAccessibleInterval&lt;RealType&gt; into a RandomAccess&lt;FloatType&gt; using an AffineTransformation
  * 
  * @author preibisch
  *

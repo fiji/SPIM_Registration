@@ -115,7 +115,7 @@ public class TransformView
 	}
 
 	/**
-	 * Creates a virtual construct that transforms and zero-mins using a user-defined outofbounds & interpolation.
+	 * Creates a virtual construct that transforms and zero-mins using a user-defined outofbounds &amp; interpolation.
 	 * 
 	 * @param input - the input image
 	 * @param transform - the affine transformation

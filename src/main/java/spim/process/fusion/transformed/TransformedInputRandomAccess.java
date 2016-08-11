@@ -15,13 +15,11 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
 /**
- * Virtually transforms any RandomAccessibleInterval<RealType> into a RandomAccess<FloatType> using an AffineTransformation
+ * Virtually transforms any RandomAccessibleInterval&lt;RealType&gt; into a RandomAccess&lt;FloatType&gt; using an AffineTransformation
  * and Linear Interpolation. It will only interpolate from the actual data (no outofbounds) to avoid artifacts at the edges
  * and return 0 outside by default (can be changed).
  * 
  * @author preibisch
- *
- * @param <T>
  */
 public class TransformedInputRandomAccess< T extends RealType< T > > extends AbstractLocalizableInt implements RandomAccess< FloatType >
 {
