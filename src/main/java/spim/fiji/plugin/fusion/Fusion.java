@@ -47,8 +47,7 @@ public abstract class Fusion
 
 	final protected SpimData2 spimData;
 	final int maxNumViews;
-	final protected long avgPixels;
-	
+
 	/**
 	 * @param spimData
 	 * @param viewIdsToProcess - which viewIds to fuse
@@ -67,12 +66,10 @@ public abstract class Fusion
 	
 			if ( spimData == null )
 			{
-				avgPixels = 0;
 				maxNumViews = 0;
 			}
 			else
 			{
-				avgPixels = computeAvgImageSize();
 				maxNumViews = computeMaxNumViews();
 			}
 		}
@@ -80,7 +77,6 @@ public abstract class Fusion
 		{
 			this.timepointsToProcess = null;
 			this.channelsToProcess = null;
-			this.avgPixels = 0;
 			this.maxNumViews = 0;
 		}
 	}

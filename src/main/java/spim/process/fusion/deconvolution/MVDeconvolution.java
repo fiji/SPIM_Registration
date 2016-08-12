@@ -28,7 +28,7 @@ import net.imglib2.util.RealSum;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import spim.Threads;
-import spim.fiji.ImgLib2Temp.Pair;
+import spim.fiji.ImgLib2Temp.Triple;
 import spim.fiji.spimdata.imgloaders.LegacyStackImgLoaderIJ;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
@@ -55,6 +55,9 @@ public class MVDeconvolution
 	CompositeImage ci;
 
 	boolean collectStatistics = true;
+
+	// max intensities for each contributing view
+	final float[] max;
 
 	// current iteration
 	int i = 0;
@@ -86,12 +89,33 @@ public class MVDeconvolution
 		this.numViews = data.size();
 		this.numDimensions = data.get( 0 ).getImage().numDimensions();
 		this.lambda = lambda;
+		this.max = new float[ numViews ];
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Deconvolved & temporary image factory: " + views.imgFactory().getClass().getSimpleName() );
+
+		for ( final MVDeconFFT m : data )
+			new DisplayImage().exportImage( m.getImage(), "input" );
 
 		// init all views
 		views.init( iterationType );
 
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Fusing image for first iteration" );
+
+		this.psi = views.imgFactory().create( data.get( 0 ).getImage(), new FloatType() );
+
+		double avg = fuseFirstIteration( psi, views.getViews(), max );
+
+		double avgMax = 0;
+		for ( int i = 0; i < max.length; ++i )
+		{
+			avgMax += max[ i ];
+			IOFunctions.println( "Max intensity in overlapping area of view " + i + ": " + max[ i ] );
+		}
+		avgMax /= (double)max.length;
+
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Average intensity in overlapping area: " + avg );
+
+		
 		if ( initialImage != null )
 		{
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Loading intial image '" + initialImage + "'" );
@@ -104,29 +128,17 @@ public class MVDeconvolution
 		}
 		else
 		{
-			// the real data image psi is initialized with the fused image 
-			// if there was no initial guess loaded
-
-			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Fusing image for first iteration" );
-
-			this.psi = views.imgFactory().create( data.get( 0 ).getImage(), new FloatType() );
-			double avg = fuseFirstIteration( psi, views.getViews() );
-
-			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Average intensity in overlapping area: " + avg );
-
 			if ( Double.isNaN( avg ) )
 			{
 				avg = 0.5;
 				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): ERROR! Computing average FAILED, is NaN, setting it to: " + avg );
 			}
-
+	
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting image to average intensity: " + avg );
-
+	
 			for ( final FloatType t : psi )
 				t.set( (float)avg );
 		}
-
-		//new DisplayImage().exportImage( psi, "psi" );
 
 		// instantiate the temporary images
 		this.tmp1 = views.imgFactory().create( psi, new FloatType() );
@@ -140,7 +152,7 @@ public class MVDeconvolution
 			{
 				// if it is slices, wrap & copy otherwise virtual & copy - never use the actual image
 				// as it is being updated in the process
-				final ImagePlus tmp = DisplayImage.getImagePlusInstance( psi, true, "Psi", 0, 1 ).duplicate();
+				final ImagePlus tmp = DisplayImage.getImagePlusInstance( psi, true, "Psi", 0, avgMax ).duplicate();
 
 				if ( this.stack == null )
 				{
@@ -178,7 +190,7 @@ public class MVDeconvolution
 		}
 
 		IOFunctions.println( "Masking never updated pixels." );
-		fuseFirstIteration( tmp1, views.getViews() );
+		maskNeverUpdatedPixels( tmp1, views.getViews() );
 
 		final Cursor< FloatType > tmp1c = tmp1.cursor();
 
@@ -189,14 +201,19 @@ public class MVDeconvolution
 		IOFunctions.println( "DONE (" + new Date(System.currentTimeMillis()) + ")." );
 	}
 
-	protected static final double fuseFirstIteration( final Img< FloatType > psi, final ArrayList< MVDeconFFT > views )
+	protected static final void maskNeverUpdatedPixels( final Img< FloatType > psi, final ArrayList< MVDeconFFT > views )
+	{
+		fuseFirstIteration( psi, views, null );
+	}
+
+	protected static final double fuseFirstIteration( final Img< FloatType > psi, final ArrayList< MVDeconFFT > views, final float[] max )
 	{
 		final int nThreads = Threads.numThreads();
 		final int nPortions = nThreads * 2;
 
 		// split up into many parts for multithreading
 		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( psi.size(), nPortions );
-		final ArrayList< Callable< Pair< RealSum, Long > > > tasks = new ArrayList< Callable< Pair< RealSum, Long > > >();
+		final ArrayList< Callable< Triple< RealSum, Long, float[] > > > tasks = new ArrayList< Callable< Triple< RealSum, Long, float[] > > >();
 
 		final ExecutorService taskExecutor = Executors.newFixedThreadPool( nThreads );
 
@@ -214,12 +231,16 @@ public class MVDeconvolution
 		try
 		{
 			// invokeAll() returns when all tasks are complete
-			final List< Future< Pair< RealSum, Long > > > imgIntensities = taskExecutor.invokeAll( tasks );
+			final List< Future< Triple< RealSum, Long, float[] > > > imgIntensities = taskExecutor.invokeAll( tasks );
 
-			for ( final Future< Pair< RealSum, Long >  > future : imgIntensities )
+			for ( final Future< Triple< RealSum, Long, float[] >  > future : imgIntensities )
 			{
 				s.add( future.get().getA().getSum() );
 				count += future.get().getB().longValue();
+
+				if ( max != null )
+					for ( int i = 0; i < max.length; ++i )
+						max[ i ] = Math.max( max[ i ], future.get().getC()[ i ] );
 			}
 		}
 		catch ( final Exception e )
@@ -327,7 +348,7 @@ public class MVDeconvolution
 
 	public void runIteration()
 	{
-		runIteration( psi, tmp1, tmp2, data, lambda, minValue, collectStatistics, i++ );
+		runIteration( psi, tmp1, tmp2, data, lambda, max, minValue, collectStatistics, i++ );
 	}
 
 	final private static void runIteration(
@@ -336,6 +357,7 @@ public class MVDeconvolution
 			final Img< FloatType > tmp2, // a temporary image using the same ImgFactory as PSI
 			final ArrayList< MVDeconFFT > data,
 			final double lambda,
+			final float[] maxIntensities,
 			final float minValue,
 			final boolean collectStatistic,
 			final int iteration )
@@ -350,8 +372,10 @@ public class MVDeconvolution
 		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( psi.size(), nPortions );
 		final ArrayList< Callable< Void > > tasks = new ArrayList< Callable< Void > >();
 
-		for ( int view = 0; view < numViews; ++view )
+		for ( int v = 0; v < numViews; ++v )
 		{
+			final int view = v;
+
 			final MVDeconFFT processingData = data.get( view );
 
 			//
@@ -359,10 +383,13 @@ public class MVDeconvolution
 			// [psi >> tmp1]
 			//
 
+			//if ( view == 1 )
+			//	new DisplayImage().exportImage( psi, "psi" );
+
 			processingData.convolve1( psi, tmp1 );
 
-			new DisplayImage().exportImage( tmp1, "psi" );
-			new DisplayImage().exportImage( tmp1, "psi blurred" );
+			//if ( view == 1 )
+			//	new DisplayImage().exportImage( tmp1, "psi blurred" );
 
 			//
 			// compute quotient img/psiBlurred
@@ -381,10 +408,12 @@ public class MVDeconvolution
 				});
 			}
 
-			execTasks( tasks, nThreads, "compute quotient" );
+			FusionHelper.execTasks( tasks, nThreads, "compute quotient" );
 
-			new DisplayImage().exportImage( processingData.getImage(), "img" );
-			new DisplayImage().exportImage( tmp1, "quotient" );
+			//if ( view == 1 )
+			//new DisplayImage().exportImage( processingData.getImage(), "img" );
+			//if ( view == 1 )
+			//new DisplayImage().exportImage( tmp1, "quotient" );
 
 			//
 			// blur the residuals image with the kernel
@@ -395,7 +424,8 @@ public class MVDeconvolution
 			//
 			processingData.convolve2( tmp1, tmp2 );
 
-			new DisplayImage().exportImage( tmp2, "quotient blurred" );
+			//if ( view == 1 )
+			//new DisplayImage().exportImage( tmp2, "quotient blurred" );
 
 			//
 			// compute final values
@@ -414,13 +444,13 @@ public class MVDeconvolution
 					@Override
 					public Void call() throws Exception
 					{
-						computeFinalValues( portion.getStartPosition(), portion.getLoopSize(), psi, tmp2, processingData.getWeight(), lambda, sumMax[ portionId ] );
+						computeFinalValues( portion.getStartPosition(), portion.getLoopSize(), psi, tmp2, processingData.getWeight(), lambda, maxIntensities[ view ], sumMax[ portionId ] );
 						return null;
 					}
 				});
 			}
 
-			execTasks( tasks, nThreads, "compute final values" );
+			FusionHelper.execTasks( tasks, nThreads, "compute final values" );
 
 			// accumulate the results from the individual threads
 			double sumChange = 0;
@@ -433,32 +463,15 @@ public class MVDeconvolution
 			}
 
 			IOFunctions.println( "iteration: " + iteration + ", view: " + view + " --- sum change: " + sumChange + " --- max change per pixel: " + maxChange );
-			
-			new DisplayImage().exportImage( processingData.getWeight(), "weight" );
-			new DisplayImage().exportImage( psi, "psi new" );
-			SimpleMultiThreading.threadHaltUnClean();
+
+			//if ( view == 1 )
+			//new DisplayImage().exportImage( processingData.getWeight(), "weight" );
+			//if ( view == 1 )
+			//new DisplayImage().exportImage( psi, "psi new" );
+			//SimpleMultiThreading.threadHaltUnClean();
 		}
 
-		SimpleMultiThreading.threadHaltUnClean();
-	}
-
-	private static final void execTasks( final ArrayList< Callable< Void > > tasks, final int nThreads, final String jobDescription )
-	{
-		final ExecutorService taskExecutor = Executors.newFixedThreadPool( nThreads );
-
-		try
-		{
-			// invokeAll() returns when all tasks are complete
-			taskExecutor.invokeAll( tasks );
-		}
-		catch ( final InterruptedException e )
-		{
-			IOFunctions.println( "Failed to " + jobDescription + ": " + e );
-			e.printStackTrace();
-			return;
-		}
-
-		taskExecutor.shutdown();
+		//SimpleMultiThreading.threadHaltUnClean();
 	}
 
 	/**
@@ -524,59 +537,8 @@ public class MVDeconvolution
 	}
 
 	/**
-	 * One thread of a method to compute the quotient between two images of the multiview deconvolution
-	 * 
-	 * @param start
-	 * @param loopSize
-	 * @param source
-	 * @param target
-	 */
-	public static final void copyImg(
-			final long start,
-			final long loopSize,
-			final RandomAccessibleInterval< FloatType > source,
-			final RandomAccessibleInterval< FloatType > target )
-	{
-		final IterableInterval< FloatType > sourceIterable = Views.iterable( source );
-		final IterableInterval< FloatType > targetIterable = Views.iterable( target );
-
-		if ( sourceIterable.iterationOrder().equals( sourceIterable.iterationOrder() ) )
-		{
-			final Cursor< FloatType > cursorSource = sourceIterable.cursor();
-			final Cursor< FloatType > cursorTarget = targetIterable.cursor();
-	
-			cursorSource.jumpFwd( start );
-			cursorTarget.jumpFwd( start );
-	
-			for ( long l = 0; l < loopSize; ++l )
-				cursorTarget.next().set( cursorSource.next() );
-		}
-		else
-		{
-			final RandomAccess< FloatType > raSource = source.randomAccess();
-			final Cursor< FloatType > cursorTarget = targetIterable.localizingCursor();
-
-			cursorTarget.jumpFwd( start );
-
-			for ( long l = 0; l < loopSize; ++l )
-			{
-				cursorTarget.fwd();
-				raSource.setPosition( cursorTarget );
-
-				cursorTarget.get().set( raSource.get() );
-			}
-		}
-	}
-
-	/**
 	 * One thread of a method to compute the final values of one iteration of the multiview deconvolution
 	 * 
-	 * @param start
-	 * @param loopSize
-	 * @param psi
-	 * @param integral
-	 * @param weight
-	 * @param lambda
 	 */
 	private static final void computeFinalValues(
 			final long start,
@@ -585,6 +547,7 @@ public class MVDeconvolution
 			final RandomAccessibleInterval< FloatType > integral,
 			final RandomAccessibleInterval< FloatType > weight,
 			final double lambda,
+			final float maxIntensity,
 			final double[] sumMax )
 	{
 		double sumChange = 0;
@@ -614,7 +577,7 @@ public class MVDeconvolution
 	
 				// get the final value
 				final float lastPsiValue = cursorPsi.get().get();
-				final float nextPsiValue = computeNextValue( lastPsiValue, cursorIntegral.get().get(), cursorWeight.get().get(), lambda );
+				final float nextPsiValue = computeNextValue( lastPsiValue, cursorIntegral.get().get(), cursorWeight.get().get(), lambda, maxIntensity );
 				
 				// store the new value
 				cursorPsi.get().set( (float)nextPsiValue );
@@ -641,7 +604,7 @@ public class MVDeconvolution
 
 				// get the final value
 				final float lastPsiValue = cursorPsi.get().get();
-				float nextPsiValue = computeNextValue( lastPsiValue, raIntegral.get().get(), raWeight.get().get(), lambda );
+				float nextPsiValue = computeNextValue( lastPsiValue, raIntegral.get().get(), raWeight.get().get(), lambda, maxIntensity );
 
 				// store the new value
 				cursorPsi.get().set( (float)nextPsiValue );
@@ -665,9 +628,10 @@ public class MVDeconvolution
 	 * @param lastPsiValue - the previous value
 	 * @param integralValue - result from the integral
 	 * @param lambda - if > 0, regularization
+	 * @param maxIntensity - to normalize lambda (works between 0...1)
 	 * @return
 	 */
-	private static final float computeNextValue( final float lastPsiValue, final float integralValue, final float weight, final double lambda )
+	private static final float computeNextValue( final float lastPsiValue, final float integralValue, final float weight, final double lambda, final float maxIntensity )
 	{
 		final float value = lastPsiValue * integralValue;
 		final float adjustedValue;
@@ -678,7 +642,7 @@ public class MVDeconvolution
 			// perform Tikhonov regularization if desired
 			//
 			if ( lambda > 0 )
-				adjustedValue = (float)tikhonov( value, lambda );
+				adjustedValue = (float)tikhonov( value / maxIntensity, lambda ) * maxIntensity;
 			else
 				adjustedValue = value;
 		}

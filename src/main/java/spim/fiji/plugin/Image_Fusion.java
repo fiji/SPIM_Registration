@@ -1,14 +1,14 @@
 package spim.fiji.plugin;
 
-import ij.ImageJ;
-import ij.gui.GenericDialog;
-import ij.plugin.PlugIn;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
+import bdv.img.hdf5.Hdf5ImageLoader;
+import ij.ImageJ;
+import ij.gui.GenericDialog;
+import ij.plugin.PlugIn;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
@@ -30,13 +30,11 @@ import spim.process.fusion.export.ExportSpimData2TIFF;
 import spim.process.fusion.export.ImgExport;
 import spim.process.fusion.export.Save3dTIFF;
 import spim.process.fusion.weightedavg.WeightedAverageFusion;
-import spim.process.fusion.weightedavg.WeightedAverageFusion.WeightedAvgFusionType;
-import bdv.img.hdf5.Hdf5ImageLoader;
 
 public class Image_Fusion implements PlugIn
 {
 	public final static ArrayList< Fusion > staticFusionAlgorithms = new ArrayList< Fusion >();
-	public static int defaultFusionAlgorithm = 1;
+	public static int defaultFusionAlgorithm = 0;
 
 	public final static ArrayList< BoundingBoxGUI > staticBoundingBoxAlgorithms = new ArrayList< BoundingBoxGUI >();
 	public static int defaultBoundingBoxAlgorithm = -1;
@@ -48,8 +46,7 @@ public class Image_Fusion implements PlugIn
 	{
 		IOFunctions.printIJLog = true;
 		staticFusionAlgorithms.add( new EfficientBayesianBased( null, null ) );
-		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, WeightedAvgFusionType.FUSEDATA ) );
-		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null, WeightedAvgFusionType.INDEPENDENT ) );
+		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null ) );
 
 		staticBoundingBoxAlgorithms.add( new BoundingBoxGUI( null, null ) );
 		staticBoundingBoxAlgorithms.add( new BigDataViewerBoundingBox( null, null ) );

@@ -17,6 +17,7 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
+import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
@@ -51,14 +52,6 @@ public class FusionHelper
 		return angleName;
 	}
 
-	public static final boolean intersects( final double x, final double y, final double z, final long sx, final long sy, final long sz )
-	{
-		if ( x >= 0 && y >= 0 && z >= 0 && x < sx && y < sy && z < sz )
-			return true;
-		else
-			return false;
-	}
-
 	public static final ArrayList< ViewDescription > assembleInputData(
 			final SpimData2 spimData,
 			final TimePoint timepoint,
@@ -83,7 +76,95 @@ public class FusionHelper
 
 		return inputData;
 	}
+
+	public static void copyImg( final RandomAccessibleInterval< FloatType > input, final RandomAccessibleInterval< FloatType > output )
+	{
+		final int nThreads = Threads.numThreads();
+		final int nPortions = nThreads * 2;
+		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( Views.iterable( input ).size(), nPortions );
+		final ArrayList< Callable< Void > > tasks = new ArrayList< Callable< Void > >();
+
+		for ( final ImagePortion portion : portions )
+		{
+			tasks.add( new Callable< Void >()
+			{
+				@Override
+				public Void call() throws Exception
+				{
+					copyImg( portion.getStartPosition(), portion.getLoopSize(), input, output );
+					return null;
+				}
+			});
+		}
+
+		execTasks( tasks, nThreads, "copy image" );
+	}
+
+	public static final void execTasks( final ArrayList< Callable< Void > > tasks, final int nThreads, final String jobDescription )
+	{
+		final ExecutorService taskExecutor = Executors.newFixedThreadPool( nThreads );
+
+		try
+		{
+			// invokeAll() returns when all tasks are complete
+			taskExecutor.invokeAll( tasks );
+		}
+		catch ( final InterruptedException e )
+		{
+			IOFunctions.println( "Failed to " + jobDescription + ": " + e );
+			e.printStackTrace();
+			return;
+		}
+
+		taskExecutor.shutdown();
+	}
+
+
+	/**
+	 * One thread of a method to compute the quotient between two images of the multiview deconvolution
+	 * 
+	 * @param start
+	 * @param loopSize
+	 * @param source
+	 * @param target
+	 */
+	public static final void copyImg(
+			final long start,
+			final long loopSize,
+			final RandomAccessibleInterval< FloatType > source,
+			final RandomAccessibleInterval< FloatType > target )
+	{
+		final IterableInterval< FloatType > sourceIterable = Views.iterable( source );
+		final IterableInterval< FloatType > targetIterable = Views.iterable( target );
+
+		if ( sourceIterable.iterationOrder().equals( targetIterable.iterationOrder() ) )
+		{
+			final Cursor< FloatType > cursorSource = sourceIterable.cursor();
+			final Cursor< FloatType > cursorTarget = targetIterable.cursor();
 	
+			cursorSource.jumpFwd( start );
+			cursorTarget.jumpFwd( start );
+	
+			for ( long l = 0; l < loopSize; ++l )
+				cursorTarget.next().set( cursorSource.next() );
+		}
+		else
+		{
+			final RandomAccess< FloatType > raSource = source.randomAccess();
+			final Cursor< FloatType > cursorTarget = targetIterable.localizingCursor();
+
+			cursorTarget.jumpFwd( start );
+
+			for ( long l = 0; l < loopSize; ++l )
+			{
+				cursorTarget.fwd();
+				raSource.setPosition( cursorTarget );
+
+				cursorTarget.get().set( raSource.get() );
+			}
+		}
+	}
+
 	public static < T extends RealType< T > > float[] minMax( final RandomAccessibleInterval< T > img )
 	{
 		final IterableInterval< T > iterable = Views.iterable( img );

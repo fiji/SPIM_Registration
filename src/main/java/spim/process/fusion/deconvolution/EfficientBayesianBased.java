@@ -44,7 +44,9 @@ import spim.process.cuda.CUDATools;
 import spim.process.cuda.NativeLibraryTools;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.deconvolution.MVDeconFFT.PSFTYPE;
+import spim.process.fusion.deconvolution.ProcessForDeconvolution.ImgType;
 import spim.process.fusion.deconvolution.ProcessForDeconvolution.WeightType;
+import spim.process.fusion.deconvolution.normalize.WeightNormalizerPrecomputed;
 import spim.process.fusion.boundingbox.BoundingBoxGUI;
 import spim.process.fusion.boundingbox.BoundingBoxGUI.ManageListeners;
 import spim.process.fusion.export.DisplayImage;
@@ -67,21 +69,30 @@ public class EfficientBayesianBased extends Fusion
 		"Independent (slow, very precise)" };
 
 	public static String[] weightsString = new String[]{
-		"Precompute weights for all views (more memory, faster)",
-		"Virtual weights (less memory, slower)",
-		"No weights (produces artifacts on partially overlapping data)",
-		"Illustrate overlap of views per pixel (do not deconvolve)" };
+		"Precompute weights for all views (more memory, fast)",
+		"Partly virtual weights (less memory, average)",
+		"Fully virtual weights (almost no memory, slow)",
+		"No weights (produces artifacts on partially overlapping data, fastest)" };
+
+	public static String[] imgString = new String[]{
+			"Precompute images for all views (more memory, fast)",
+			"Virtual images (less memory, slow)" };
+
+	public static String[] loadString = new String[]{
+			"Load input images entirely (more memory, faster if no small bounding box)",
+			"Try to load images virtually (not supported by all; less memory, slower)" };
 
 	public static int defaultBlendingRangeNumber = 12;
 	public static int defaultBlendingBorderNumber = -8;
-	public static int[] defaultBlendingRange = null;
-	public static int[] defaultBlendingBorder = null;
+	public static float[] defaultBlendingRange = null;
+	public static float[] defaultBlendingBorder = null;
 
 	public static boolean makeAllPSFSameSize = false;
 
 	public static int defaultFFTImgType = 0;
 	public static int defaultIterationType = 1;
-	public static int defaultWeightType = 1;
+	public static int defaultWeightType = 2;
+	public static int defaultImgType = 1;
 	public static boolean defaultSaveMemory = false;
 	public static int defaultOSEMspeedupIndex = 0;
 	public static int defaultNumIterations = 10;
@@ -108,6 +119,7 @@ public class EfficientBayesianBased extends Fusion
 
 	PSFTYPE iterationType;
 	WeightType weightType;
+	ImgType imgType;
 	boolean saveMemory;
 	int osemspeedupIndex;
 	int numIterations;
@@ -137,8 +149,8 @@ public class EfficientBayesianBased extends Fusion
 	boolean transformPSFs;
 	HashMap< Channel, ArrayList< Pair< Pair< Angle, Illumination >, String > > > psfFiles;
 	HashMap< Channel, ChannelPSF > extractPSFLabels; // should be either a String or another Channel object
-	int blendingBorderX, blendingBorderY, blendingBorderZ;
-	int blendingRangeX, blendingRangeY, blendingRangeZ;
+	float blendingBorderX, blendingBorderY, blendingBorderZ;
+	float blendingRangeX, blendingRangeY, blendingRangeZ;
 	int psfSizeX = -1;
 	int psfSizeY = -1;
 	int psfSizeZ = -1;
@@ -177,13 +189,14 @@ public class EfficientBayesianBased extends Fusion
 
 			IOFunctions.println( "BlendingBorder: " + blendingBorderX + ", " + blendingBorderY + ", " + blendingBorderZ );
 			IOFunctions.println( "BlendingBorder: " + blendingRangeX + ", " + blendingRangeY + ", " + blendingRangeZ );
+			IOFunctions.println( "Smoother blending: " + WeightNormalizerPrecomputed.additionalSmoothBlending );
 
 			final ProcessForDeconvolution pfd = new ProcessForDeconvolution(
 					spimData,
 					viewIdsToProcess,
 					bb,
-					new int[]{ blendingBorderX, blendingBorderY, blendingBorderZ },
-					new int[]{ blendingRangeX, blendingRangeY, blendingRangeZ } );
+					new float[]{ blendingBorderX, blendingBorderY, blendingBorderZ },
+					new float[]{ blendingRangeX, blendingRangeY, blendingRangeZ } );
 			
 			// set debug mode
 			MVDeconvolution.debug = debugMode;
@@ -204,6 +217,7 @@ public class EfficientBayesianBased extends Fusion
 							osemspeedupIndex,
 							osemSpeedUp,
 							weightType,
+							imgType,
 							extractPSFLabels,
 							new long[]{ psfSizeX, psfSizeY, psfSizeZ },
 							psfFiles,
@@ -227,10 +241,7 @@ public class EfficientBayesianBased extends Fusion
 	
 					// setup & run the deconvolution
 					displayParametersAndPSFs( bb, c, extractPSFLabels );
-	
-					if ( weightType == WeightType.WEIGHTS_ONLY )
-						return true;
-	
+
 					final MVDeconInput deconvolutionData = new MVDeconInput( factory );
 	
 					IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Block & FFT image factory: " + computeFactory.getClass().getSimpleName() );
@@ -346,6 +357,7 @@ public class EfficientBayesianBased extends Fusion
 		gd.addChoice( "Type_of_iteration", iterationTypeString, iterationTypeString[ defaultIterationType ] );
 		it = (Choice)gd.getChoices().lastElement();
 		gd.addChoice( "Image_weights", weightsString, weightsString[ defaultWeightType ] );
+		gd.addChoice( "Transform_images", imgString, imgString[ defaultImgType ] );
 		weight = (Choice)gd.getChoices().lastElement();
 		gd.addChoice( "OSEM_acceleration", osemspeedupChoice, osemspeedupChoice[ defaultOSEMspeedupIndex ] );
 		gd.addNumericField( "Number_of_iterations", defaultNumIterations, 0 );
@@ -386,15 +398,21 @@ public class EfficientBayesianBased extends Fusion
 			iterationType = PSFTYPE.INDEPENDENT;
 
 		defaultWeightType = gd.getNextChoiceIndex();
+		defaultImgType = gd.getNextChoiceIndex();
 
 		if ( defaultWeightType == 0 )
 			weightType = WeightType.PRECOMPUTED_WEIGHTS;
 		else if ( defaultWeightType == 1 )
-			weightType = WeightType.VIRTUAL_WEIGHTS;
+			weightType = WeightType.PARTLY_VIRTUAL_WEIGHTS;
 		else if ( defaultWeightType == 2 )
+			weightType = WeightType.FULLY_VIRTUAL_WEIGHTS;
+		else //if ( defaultWeightType == 3 )
 			weightType = WeightType.NO_WEIGHTS;
+
+		if ( defaultImgType == 0 )
+			imgType = ImgType.PRECOMPUTED_IMGS;
 		else
-			weightType = WeightType.WEIGHTS_ONLY;
+			imgType = ImgType.VIRTUAL_IMGS;
 
 		osemspeedupIndex = defaultOSEMspeedupIndex = gd.getNextChoiceIndex();
 		numIterations = defaultNumIterations = (int)Math.round( gd.getNextNumber() );
@@ -432,7 +450,7 @@ public class EfficientBayesianBased extends Fusion
 	public long totalRAM( final long fusedSizeMB, final int bytePerPixel )
 	{
 		if ( weight.getSelectedIndex() == weightsString.length - 1 ) // only illustrate weights
-			return fusedSizeMB * getMaxNumViewsPerTimepoint() + (avgPixels/ ( 1024*1024 )) * bytePerPixel;
+			return fusedSizeMB * getMaxNumViewsPerTimepoint();
 		
 		final int blockChoice = block.getSelectedIndex();
 		
@@ -622,10 +640,10 @@ public class EfficientBayesianBased extends Fusion
 			final GenericDialog gd = new GenericDialog( "Adjust blending parameters" );
 			
 			if ( defaultBlendingBorder == null || defaultBlendingBorder.length < 3 )
-				defaultBlendingBorder = new int[]{ defaultBlendingBorderNumber, defaultBlendingBorderNumber, Math.round( defaultBlendingBorderNumber/2.5f ) };
+				defaultBlendingBorder = new float[]{ defaultBlendingBorderNumber, defaultBlendingBorderNumber, defaultBlendingBorderNumber };
 			
 			if ( defaultBlendingRange == null || defaultBlendingRange.length < 3 )
-				defaultBlendingRange =  new int[]{ defaultBlendingRangeNumber, defaultBlendingRangeNumber, defaultBlendingRangeNumber };
+				defaultBlendingRange =  new float[]{ defaultBlendingRangeNumber, defaultBlendingRangeNumber, defaultBlendingRangeNumber };
 			
 			gd.addSlider( "Boundary_pixels_X", -50, 50, defaultBlendingBorder[ 0 ] );
 			gd.addSlider( "Boundary_pixels_Y", -50, 50, defaultBlendingBorder[ 1 ] );
@@ -633,6 +651,10 @@ public class EfficientBayesianBased extends Fusion
 			gd.addSlider( "Blending_range_X", 0, 100, defaultBlendingRange[ 0 ] );
 			gd.addSlider( "Blending_range_Y", 0, 100, defaultBlendingRange[ 1 ] );
 			gd.addSlider( "Blending_range_Z", 0, 100, defaultBlendingRange[ 2 ] );
+
+			gd.addMessage( "Please Note: the values will be automatically adjusted for anisotropy in x,y,z!");
+
+			gd.addCheckbox( "Smoother_blending", WeightNormalizerPrecomputed.additionalSmoothBlending );
 			
 			gd.addMessage( "" );
 			gd.addMessage( "Note: both sizes are in local coordinates of the input views. Increase one or both of those values if stripy artifacts\n" +
@@ -648,12 +670,13 @@ public class EfficientBayesianBased extends Fusion
 			if ( gd.wasCanceled() )
 				return false;
 			
-			blendingBorderX = defaultBlendingBorder[ 0 ] = (int)Math.round( gd.getNextNumber() );
-			blendingBorderY = defaultBlendingBorder[ 1 ] = (int)Math.round( gd.getNextNumber() );
-			blendingBorderZ = defaultBlendingBorder[ 2 ] = (int)Math.round( gd.getNextNumber() );
-			blendingRangeX = defaultBlendingRange[ 0 ] = (int)Math.round( gd.getNextNumber() );
-			blendingRangeY = defaultBlendingRange[ 1 ] = (int)Math.round( gd.getNextNumber() );
-			blendingRangeZ = defaultBlendingRange[ 2 ] = (int)Math.round( gd.getNextNumber() );
+			blendingBorderX = defaultBlendingBorder[ 0 ] = (float) gd.getNextNumber();
+			blendingBorderY = defaultBlendingBorder[ 1 ] = (float) gd.getNextNumber();
+			blendingBorderZ = defaultBlendingBorder[ 2 ] = (float) gd.getNextNumber();
+			blendingRangeX = defaultBlendingRange[ 0 ] = (float) gd.getNextNumber();
+			blendingRangeY = defaultBlendingRange[ 1 ] = (float) gd.getNextNumber();
+			blendingRangeZ = defaultBlendingRange[ 2 ] = (float) gd.getNextNumber();
+			WeightNormalizerPrecomputed.additionalSmoothBlending = gd.getNextBoolean();
 		}
 		else
 		{
@@ -667,9 +690,9 @@ public class EfficientBayesianBased extends Fusion
 			{
 				blendingBorderX = defaultBlendingBorderNumber;
 				blendingBorderY = defaultBlendingBorderNumber;
-				blendingBorderZ = Math.round( defaultBlendingBorderNumber/2.5f );
+				blendingBorderZ = defaultBlendingBorderNumber;
 			}
-			
+
 			if ( defaultBlendingRange != null && defaultBlendingRange.length >= 3 )
 			{
 				blendingRangeX = defaultBlendingRange[ 0 ];
@@ -1017,9 +1040,6 @@ public class EfficientBayesianBased extends Fusion
 	
 	protected boolean getDebug()
 	{
-		if ( weightType == WeightType.WEIGHTS_ONLY )
-			return true;
-
 		if ( debugMode )
 		{
 			GenericDialog gdDebug = new GenericDialog( "Debug options" );

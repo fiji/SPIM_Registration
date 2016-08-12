@@ -1,4 +1,4 @@
-package spim.process.fusion.weights;
+package spim.process.fusion.transformed.weights;
 
 import ij.ImageJ;
 import net.imglib2.Cursor;

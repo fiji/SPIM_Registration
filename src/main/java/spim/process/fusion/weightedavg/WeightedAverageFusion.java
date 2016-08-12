@@ -1,12 +1,10 @@
 package spim.process.fusion.weightedavg;
 
-import ij.gui.GenericDialog;
-
-import java.awt.Choice;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import ij.gui.GenericDialog;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
@@ -16,11 +14,6 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import net.imglib2.FinalDimensions;
-import net.imglib2.RandomAccessible;
-import net.imglib2.interpolation.InterpolatorFactory;
-import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
-import net.imglib2.interpolation.randomaccess.NearestNeighborInterpolatorFactory;
-import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.Apply_Transformation;
@@ -34,34 +27,13 @@ import spim.process.fusion.export.ImgExportTitle;
 
 public class WeightedAverageFusion extends Fusion
 {
-	public enum WeightedAvgFusionType { FUSEDATA, INDEPENDENT };
-	final WeightedAvgFusionType type;
-	
-	public static int defaultNumParalellViewsIndex = 0;
-	protected int numParalellViews = 1;
-	
-	protected Choice sequentialViews = null;
-
 	public WeightedAverageFusion(
 			final SpimData2 spimData,
-			final List< ViewId > viewIdsToProcess,
-			final WeightedAvgFusionType type )
+			final List< ViewId > viewIdsToProcess )
 	{
 		super( spimData, viewIdsToProcess );
+	}
 
-		this.type = type;
-	}
-	
-	public WeightedAvgFusionType getFusionType() { return type; }
-	
-	public < T extends RealType< T > > InterpolatorFactory< T, RandomAccessible< T > > getInterpolatorFactory( final T type )
-	{
-		if ( getInterpolation() == 0 )
-			return new NearestNeighborInterpolatorFactory<T>();
-		else
-			return new NLinearInterpolatorFactory< T >();
-	}
-	
 	@Override
 	public boolean fuseData( final BoundingBoxGUI bb, final ImgExport exporter )
 	{
@@ -70,15 +42,7 @@ public class WeightedAverageFusion extends Fusion
 		if ( exporter instanceof ImgExportTitle )
 			( (ImgExportTitle)exporter).setImgTitler( titler );
 
-		final ProcessFusion process;
-		
-		if ( getFusionType() == WeightedAvgFusionType.FUSEDATA && numParalellViews == 0 )
-			process = new ProcessParalell( spimData, viewIdsToProcess, bb, useBlending, useContentBased );
-		else if ( getFusionType() == WeightedAvgFusionType.FUSEDATA )
-			process = new ProcessSequential( spimData, viewIdsToProcess, bb, useBlending, useContentBased, numParalellViews );
-		else
-			process = new ProcessIndependent( spimData, viewIdsToProcess, bb, exporter, newViewsetups );
-
+		final ProcessFusion process = new ProcessVirtual( spimData, viewIdsToProcess, bb, bb.getDownSampling(), getInterpolation(), useBlending, useContentBased );
 
 		for ( final TimePoint t : timepointsToProcess )
 			for ( final Channel c : channelsToProcess )
@@ -90,7 +54,7 @@ public class WeightedAverageFusion extends Fusion
 				if ( bb.getPixelType() == 0 )
 				{
 					exporter.exportImage(
-							process.fuseStack( new FloatType(), getInterpolatorFactory( new FloatType() ), t , c ),
+							process.fuseStack( new FloatType() ,t , c, bb.getImgFactory( new FloatType() ) ),
 							bb,
 							t,
 							newViewsetups.get( SpimData2.getViewSetup( spimData.getSequenceDescription().getViewSetupsOrdered(), c, anglesToProcess.get( 0 ), illumsToProcess.get( 0 ) ) ));
@@ -98,7 +62,7 @@ public class WeightedAverageFusion extends Fusion
 				else
 				{
 					exporter.exportImage(
-							process.fuseStack( new UnsignedShortType(), getInterpolatorFactory( new UnsignedShortType() ), t , c ),
+							process.fuseStack( new UnsignedShortType() ,t , c, bb.getImgFactory( new UnsignedShortType() ) ),
 							bb,
 							t,
 							newViewsetups.get( SpimData2.getViewSetup( spimData.getSequenceDescription().getViewSetupsOrdered(), c, anglesToProcess.get( 0 ), illumsToProcess.get( 0 ) ) ));
@@ -117,17 +81,11 @@ public class WeightedAverageFusion extends Fusion
 	@Override
 	public WeightedAverageFusion newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
-		return new WeightedAverageFusion( spimData, viewIdsToProcess, type );
+		return new WeightedAverageFusion( spimData, viewIdsToProcess );
 	}
 
 	@Override
-	public String getDescription()
-	{
-		if ( type == WeightedAvgFusionType.FUSEDATA )
-			return "Weighted-average fusion";
-		else
-			return "No fusion, create individual registered images";
-	}
+	public String getDescription() { return "Weighted-average fusion"; }
 
 	@Override
 	public boolean supports16BitUnsigned() { return true; }
@@ -143,52 +101,17 @@ public class WeightedAverageFusion extends Fusion
 	{
 		if ( Fusion.defaultInterpolation >= Fusion.interpolationTypes.length )
 			Fusion.defaultInterpolation = Fusion.interpolationTypes.length - 1;
-		
-		if ( this.getFusionType() == WeightedAvgFusionType.FUSEDATA )
-		{
-			int maxViews = 0;
-			
-			for ( final TimePoint t : timepointsToProcess )
-				for ( final Channel c : channelsToProcess )
-					maxViews = Math.max( maxViews, FusionHelper.assembleInputData( spimData, t, c, viewIdsToProcess ).size() );
-			
-			// any choice but all views
-			final String[] views = new String[ maxViews ];
-			
-			views[ 0 ] = "All";
-			
-			for ( int i = 1; i < views.length; ++i )
-				views[ i ] = "" + i;
-			
-			if ( defaultNumParalellViewsIndex < 0 || defaultNumParalellViewsIndex >= views.length )
-				defaultNumParalellViewsIndex = 0;
-			
-			gd.addChoice( "Process_views_in_paralell", views, views[ defaultNumParalellViewsIndex ] );
-			this.sequentialViews = (Choice)gd.getChoices().lastElement();
-		}
-		
-		if ( this.getFusionType() == WeightedAvgFusionType.FUSEDATA )
-		{
-			gd.addCheckbox( "Blend images smoothly", Fusion.defaultUseBlending );
-			gd.addCheckbox( "Content-based fusion", Fusion.defaultUseContentBased );
-		}
+
+		gd.addCheckbox( "Blend images smoothly", Fusion.defaultUseBlending );
+		gd.addCheckbox( "Content-based fusion", Fusion.defaultUseContentBased );
 		gd.addChoice( "Interpolation", Fusion.interpolationTypes, Fusion.interpolationTypes[ Fusion.defaultInterpolation ] );
 	}
 
 	@Override
 	public boolean parseAdditionalParameters( final GenericDialog gd )
 	{
-		if ( this.getFusionType() == WeightedAvgFusionType.FUSEDATA )
-		{
-			defaultNumParalellViewsIndex = gd.getNextChoiceIndex();
-			this.numParalellViews = defaultNumParalellViewsIndex;
-			this.useBlending = Fusion.defaultUseBlending = gd.getNextBoolean();
-			this.useContentBased = Fusion.defaultUseContentBased = gd.getNextBoolean();
-		}
-		else
-		{
-			this.useBlending = this.useContentBased = false;
-		}
+		this.useBlending = Fusion.defaultUseBlending = gd.getNextBoolean();
+		this.useContentBased = Fusion.defaultUseContentBased = gd.getNextBoolean();
 		this.interpolation = Fusion.defaultInterpolation = gd.getNextChoiceIndex();
 
 		return true;
@@ -197,34 +120,19 @@ public class WeightedAverageFusion extends Fusion
 	@Override
 	public long totalRAM( final long fusedSizeMB, final int bytePerPixel )
 	{
-		if ( type == WeightedAvgFusionType.FUSEDATA && sequentialViews.getSelectedIndex() == 0 )
-			return fusedSizeMB + (getMaxNumViewsPerTimepoint() * (avgPixels/ ( 1024*1024 )) * bytePerPixel);
-		else if ( type == WeightedAvgFusionType.FUSEDATA )
-			return fusedSizeMB + ((sequentialViews.getSelectedIndex()) * (avgPixels/ ( 1024*1024 )) * bytePerPixel);
-		else
-			return fusedSizeMB + (avgPixels/ ( 1024*1024 )) * bytePerPixel;
+		return fusedSizeMB;
 	
 	}
 
 	@Override
 	protected Map< ViewSetup, ViewSetup > createNewViewSetups( final BoundingBoxGUI bb )
 	{
-		if ( type == WeightedAvgFusionType.FUSEDATA )
-		{
-			return assembleNewViewSetupsFusion(
-					spimData,
-					viewIdsToProcess,
-					bb,
-					"Fused",
-					"Fused" );
-		}
-		else
-		{
-			return assembleNewViewSetupsSequential(
-					spimData,
-					viewIdsToProcess,
-					bb );
-		}
+		return assembleNewViewSetupsFusion(
+				spimData,
+				viewIdsToProcess,
+				bb,
+				"Fused",
+				"Fused" );
 	}
 
 	/**

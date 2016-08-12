@@ -10,8 +10,8 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.RealSum;
 import net.imglib2.view.Views;
-import spim.fiji.ImgLib2Temp.Pair;
-import spim.fiji.ImgLib2Temp.ValuePair;
+import spim.fiji.ImgLib2Temp.Triple;
+import spim.fiji.ImgLib2Temp.ValueTriple;
 import spim.process.fusion.ImagePortion;
 
 /**
@@ -19,7 +19,7 @@ import spim.process.fusion.ImagePortion;
  *
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  */
-public class FirstIteration implements Callable< Pair< RealSum, Long > >
+public class FirstIteration implements Callable< Triple< RealSum, Long, float[] > >
 {
 	final ImagePortion portion;
 	final RandomAccessibleInterval< FloatType > psi;
@@ -60,13 +60,17 @@ public class FirstIteration implements Callable< Pair< RealSum, Long > >
 	}
 
 	@Override
-	public Pair< RealSum, Long > call() throws Exception 
+	public Triple< RealSum, Long, float[] > call()
 	{
 		final Cursor< FloatType > psiCursor = psiIterable.localizingCursor();
 		psiCursor.jumpFwd( portion.getStartPosition() );
 
 		final int m = iterableImgs.size();
 		long count = 0;
+
+		final float[] max = new float[ imgs.size() ];
+		for ( int i = 0; i < max.length; ++i )
+			max[ i ] = 0;
 
 		if ( compatibleIteration )
 		{
@@ -80,7 +84,7 @@ public class FirstIteration implements Callable< Pair< RealSum, Long > >
 			}
 
 			for ( int j = 0; j < portion.getLoopSize(); ++j )
-				if ( compatibleLoop( psiCursor, cursorImgs, realSum, m ) > 0 )
+				if ( compatibleLoop( psiCursor, cursorImgs, max, realSum, m ) > 0 )
 					++count;
 		}
 		else
@@ -91,16 +95,17 @@ public class FirstIteration implements Callable< Pair< RealSum, Long > >
 				randomAccessImgs.add( img.randomAccess() );
 
 			for ( int j = 0; j < portion.getLoopSize(); ++j )
-				if ( incompatibleLoop( psiCursor, randomAccessImgs, realSum, m ) > 0 )
+				if ( incompatibleLoop( psiCursor, randomAccessImgs, max, realSum, m ) > 0 )
 					++count;
 		}
 
-		return new ValuePair< RealSum, Long >( realSum, new Long( count ) );
+		return new ValueTriple< RealSum, Long, float[] >( realSum, new Long( count ), max );
 	}
 
 	private static final int compatibleLoop(
 			final Cursor< FloatType > psiCursor,
 			final ArrayList< Cursor< FloatType > > cursorImgs,
+			final float[] max,
 			final RealSum realSum,
 			final int m )
 	{
@@ -109,10 +114,11 @@ public class FirstIteration implements Callable< Pair< RealSum, Long > >
 
 		for ( int j = 0; j < m; ++j )
 		{
-			final double i = cursorImgs.get( j ).next().get();
+			final float i = cursorImgs.get( j ).next().get();
 
 			if ( i > 0 )
 			{
+				max[ j ] = Math.max( max[ j ], i );
 				sum += i;
 				++count;
 			}
@@ -135,6 +141,7 @@ public class FirstIteration implements Callable< Pair< RealSum, Long > >
 	private static final int incompatibleLoop(
 			final Cursor< FloatType > psiCursor,
 			final ArrayList< RandomAccess< FloatType > > randomAccessImgs,
+			final float[] max,
 			final RealSum realSum,
 			final int m )
 	{
@@ -147,10 +154,11 @@ public class FirstIteration implements Callable< Pair< RealSum, Long > >
 			final RandomAccess< FloatType > randomAccessImg = randomAccessImgs.get( j );
 			randomAccessImg.setPosition( psiCursor );
 
-			final double i = randomAccessImg.get().get();
+			final float i = randomAccessImg.get().get();
 
 			if ( i > 0 )
 			{
+				max[ j ] = Math.max( max[ j ], i );
 				sum += i;
 				++count;
 			}

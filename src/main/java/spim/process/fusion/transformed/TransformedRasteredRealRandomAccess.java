@@ -1,18 +1,16 @@
-package spim.process.fusion.weights;
+package spim.process.fusion.transformed;
 
 import net.imglib2.AbstractLocalizableInt;
-import net.imglib2.Interval;
 import net.imglib2.Localizable;
 import net.imglib2.RandomAccess;
 import net.imglib2.RealRandomAccess;
 import net.imglib2.RealRandomAccessible;
 import net.imglib2.realtransform.AffineTransform3D;
 
-public class TransformedInterpolatedRealRandomAccess< T > extends AbstractLocalizableInt implements RandomAccess< T >
+public class TransformedRasteredRealRandomAccess< T > extends AbstractLocalizableInt implements RandomAccess< T >
 {
 	final RealRandomAccessible< T > realRandomAccessible;
 	final RealRandomAccess< T > realRandomAccess;
-	final Interval transformedInterval;
 	final AffineTransform3D transform;
 	final int[] offset;
 	final T zero;
@@ -24,16 +22,14 @@ public class TransformedInterpolatedRealRandomAccess< T > extends AbstractLocali
 
 	final float[] tmp;
 
-	public TransformedInterpolatedRealRandomAccess(
+	public TransformedRasteredRealRandomAccess(
 			final RealRandomAccessible< T > realRandomAccessible,
 			final T zero,
-			final Interval transformedInterval,
 			final AffineTransform3D transform,
 			final int[] offset )
 	{
 		super( realRandomAccessible.numDimensions() );
 
-		this.transformedInterval = transformedInterval;
 		this.zero = zero;
 		this.realRandomAccessible = realRandomAccessible;
 		this.transform = transform;
@@ -154,8 +150,8 @@ public class TransformedInterpolatedRealRandomAccess< T > extends AbstractLocali
 	public void setPosition( final long position, final int d ) { this.position[ d ] = (int)position; }
 
 	@Override
-	public TransformedInterpolatedRealRandomAccess< T > copy() { return new TransformedInterpolatedRealRandomAccess< T >( realRandomAccessible, zero, transformedInterval, transform, offset ); }
+	public TransformedRasteredRealRandomAccess< T > copy() { return new TransformedRasteredRealRandomAccess< T >( realRandomAccessible, zero, transform, offset ); }
 
 	@Override
-	public TransformedInterpolatedRealRandomAccess<T> copyRandomAccess() { return copy(); }
+	public TransformedRasteredRealRandomAccess<T> copyRandomAccess() { return copy(); }
 }

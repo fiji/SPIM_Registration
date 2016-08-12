@@ -1,4 +1,4 @@
-package spim.process.fusion.weights;
+package spim.process.fusion.deconvolution.normalize;
 
 import net.imglib2.Interval;
 import net.imglib2.Positionable;
@@ -7,7 +7,7 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealPositionable;
 import net.imglib2.type.numeric.RealType;
 
-public class NormalizingRandomAccessibleInterval< T extends RealType< T > > implements RandomAccessibleInterval< T >
+public class NormalizingPartyVirtualRandomAccessibleInterval< T extends RealType< T > > implements RandomAccessibleInterval< T >
 {
 	final RandomAccessibleInterval< T > interval;
 	final RandomAccessibleInterval< T > normalizeInterval;
@@ -17,7 +17,7 @@ public class NormalizingRandomAccessibleInterval< T extends RealType< T > > impl
 	final float scalingRange;
 	final T type;
 
-	public NormalizingRandomAccessibleInterval(
+	public NormalizingPartyVirtualRandomAccessibleInterval(
 			final RandomAccessibleInterval< T > interval,
 			final RandomAccessibleInterval< T > normalizeInterval,
 			final double osemspeedup,
@@ -36,7 +36,7 @@ public class NormalizingRandomAccessibleInterval< T extends RealType< T > > impl
 		this.type = type;
 	}
 
-	public NormalizingRandomAccessibleInterval(
+	public NormalizingPartyVirtualRandomAccessibleInterval(
 			final RandomAccessibleInterval< T > interval,
 			final RandomAccessibleInterval< T > normalizeInterval,
 			final T type )
@@ -50,7 +50,7 @@ public class NormalizingRandomAccessibleInterval< T extends RealType< T > > impl
 	@Override
 	public RandomAccess< T > randomAccess()
 	{
-		return new NormalizingRandomAccess< T >( interval, normalizeInterval, osemspeedup, additionalSmoothBlending, maxDiffRange, scalingRange, type );
+		return new NormalizingPartlyVirtualRandomAccess< T >( interval, normalizeInterval, osemspeedup, additionalSmoothBlending, maxDiffRange, scalingRange, type );
 	}
 
 	@Override
