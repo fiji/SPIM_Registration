@@ -1,8 +1,11 @@
 package spim.fiji.spimdata.explorer.popup;
 
+import static mpicbg.spim.data.generic.sequence.ImgLoaderHints.LOAD_COMPLETELY;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.swing.JMenu;
@@ -12,10 +15,12 @@ import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 
 import ij.gui.GenericDialog;
+import mpicbg.imglib.util.Util;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.ImgLoader;
+import mpicbg.spim.data.sequence.MultiResolutionImgLoader;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
@@ -35,6 +40,9 @@ import spim.process.fusion.transformed.TransformVirtual;
 import spim.process.fusion.transformed.TransformWeight;
 import spim.process.fusion.weightedavg.ProcessFusion;
 import spim.process.fusion.weightedavg.ProcessVirtual;
+import spim.vecmath.Transform3D;
+import spim.vecmath.Vector3d;
+import spim.vecmath.Vector3f;
 
 public class DisplayViewPopup extends JMenu implements ExplorerWindowSetable
 {
@@ -175,7 +183,6 @@ public class DisplayViewPopup extends JMenu implements ExplorerWindowSetable
 					for ( final ViewId viewId : views )
 					{
 						final ImgLoader imgloader = spimData.getSequenceDescription().getImgLoader();
-						final RandomAccessibleInterval inputImg = imgloader.getSetupImgLoader( viewId.getViewSetupId() ).getImage( viewId.getTimePointId() );
 						final ViewRegistration vr = spimData.getViewRegistrations().getViewRegistration( viewId );
 						vr.updateModel();
 						AffineTransform3D model = vr.getModel();
@@ -191,6 +198,11 @@ public class DisplayViewPopup extends JMenu implements ExplorerWindowSetable
 							TransformVirtual.scaleTransform( model, 1.0 / downsampling );
 						}
 
+						// TODO: Find next best fitting precomputed scale and scale the image so it looks the same as the full resolution
+						final RandomAccessibleInterval inputImg = imgloader.getSetupImgLoader( viewId.getViewSetupId() ).getImage( viewId.getTimePointId() );
+
+						//openDownsampled(imgloader, model);
+
 						images.add( TransformView.transformView( inputImg, model, bb, 0, 1 ) );
 						weights.add( TransformWeight.transformBlending( inputImg, border, blending, model, bb ) );
 
@@ -204,6 +216,73 @@ public class DisplayViewPopup extends JMenu implements ExplorerWindowSetable
 		}
 	}
 
+	public static RandomAccessibleInterval openDownsampled( final ImgLoader imgLoader, final AffineTransform3D model )
+	{
+		final float[] i0 = new float[]{ 0, 0, 0 };
+		final float[] j0 = new float[]{ 0, 0, 0 };
+
+		model.applyInverse( i0, j0 );
+
+		for ( int i = 0; i < 3; ++i )
+		{
+			final float[] i1 = new float[]{ 0, 0, 0 };
+			final float[] j1 = new float[]{ 0, 0, 0 };
+
+			j1[ i ] = 1;
+	
+			model.applyInverse( i1, j1 );
+
+			System.out.println( i + ": ");
+
+			for ( int j = 0; j < 3; ++j )
+				System.out.print( i1[ j ] - i0[ j ] + " ");
+
+			System.out.println();
+		}
+
+		System.out.println();
+
+		return null;
+		/*
+		if ( ( dsx > 1 || dsy > 1 || dsz > 1 ) && MultiResolutionImgLoader.class.isInstance( imgLoader ) )
+		{
+			MultiResolutionImgLoader mrImgLoader = ( MultiResolutionImgLoader ) imgLoader;
+
+			double[][] mipmapResolutions = mrImgLoader.getSetupImgLoader( vd.getViewSetupId() ).getMipmapResolutions();
+
+			int bestLevel = 0;
+			for ( int level = 0; level < mipmapResolutions.length; ++level )
+			{
+				double[] factors = mipmapResolutions[ level ];
+				
+				// this fails if factors are not ints
+				final int fx = (int)Math.round( factors[ 0 ] );
+				final int fy = (int)Math.round( factors[ 1 ] );
+				final int fz = (int)Math.round( factors[ 2 ] );
+				
+				if ( fx <= dsx && fy <= dsy && fz <= dsz && contains( fx, ds ) && contains( fy, ds ) && contains( fz, ds ) )
+					bestLevel = level;
+			}
+
+			final int fx = (int)Math.round( mipmapResolutions[ bestLevel ][ 0 ] );
+			final int fy = (int)Math.round( mipmapResolutions[ bestLevel ][ 1 ] );
+			final int fz = (int)Math.round( mipmapResolutions[ bestLevel ][ 2 ] );
+
+			t.set( mrImgLoader.getSetupImgLoader( vd.getViewSetupId() ).getMipmapTransforms()[ bestLevel ] );
+			
+			dsx /= fx;
+			dsy /= fy;
+			dsz /= fz;
+
+			IOFunctions.println(
+					"(" + new Date(System.currentTimeMillis()) + "): " +
+					"Using precomputed Multiresolution Images [" + fx + "x" + fy + "x" + fz + "], " +
+					"Remaining downsampling [" + dsx + "x" + dsy + "x" + dsz + "]" );
+
+			input = (RandomAccessibleInterval< T >) mrImgLoader.getSetupImgLoader( vd.getViewSetupId() ).getFloatImage( vd.getTimePointId(), bestLevel, false, LOAD_COMPLETELY );
+		}*/
+	}
+	
 	public class MyActionListener implements ActionListener
 	{
 		final boolean as16bit;
