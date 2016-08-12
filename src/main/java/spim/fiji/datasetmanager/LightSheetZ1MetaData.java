@@ -175,10 +175,10 @@ public class LightSheetZ1MetaData
 		
 		List<Integer> anglesList = new ArrayList<>();
 
+		final int numDigits = Integer.toString( numAorT ).length();
+
 		try
 		{
-			final int numDigits = Integer.toString( numAorT ).length();
-
 			boolean allAnglesNegative = true;
 
 			// for each angleXtile
@@ -339,13 +339,19 @@ public class LightSheetZ1MetaData
 
 			for ( int at = 0; at < numAorT; ++at )
 			{
-				tmp = metaData.get( "Information|Image|V|View|PositionX #" + ( at+1 ) );
+				tmp = metaData.get( "Information|Image|V|View|PositionX #" + StackList.leadingZeros( Integer.toString( at+1 ), numDigits ) );
+				if ( tmp == null )
+					tmp = metaData.get( "Information|Image|V|View|PositionX #" + ( at+1 ) );
 				pos[ 0 ] = (tmp != null) ?  Double.parseDouble( tmp.toString() )  : 0.0;
 
-				tmp = metaData.get( "Information|Image|V|View|PositionY #" + ( at+1 ) );
+				tmp = metaData.get( "Information|Image|V|View|PositionY #" + StackList.leadingZeros( Integer.toString( at+1 ), numDigits ) );
+				if ( tmp == null )
+					tmp = metaData.get( "Information|Image|V|View|PositionY #"  + ( at+1 ) );
 				pos[ 1 ] = (tmp != null) ?  Double.parseDouble( tmp.toString() )  : 0.0;
 
-				tmp = metaData.get( "Information|Image|V|View|PositionZ #" + ( at+1 ) );
+				tmp = metaData.get( "Information|Image|V|View|PositionZ #" + StackList.leadingZeros( Integer.toString( at+1 ), numDigits ) );
+				if ( tmp == null )
+					tmp = metaData.get( "Information|Image|V|View|PositionZ #" + ( at+1 ) );
 				pos[ 2 ] = (tmp != null) ?  Double.parseDouble( tmp.toString() )  : 0.0;
 
 				tileLocations.add( pos.clone() );
