@@ -2,9 +2,7 @@ package spim.process.fusion.transformed;
 
 import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
-import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.realtransform.AffineTransform3D;
-import net.imglib2.type.numeric.real.FloatType;
 
 public class TransformVirtual
 {

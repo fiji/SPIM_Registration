@@ -11,6 +11,7 @@ import javax.swing.JOptionPane;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 
+import ij.gui.GenericDialog;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.registration.ViewRegistration;
@@ -19,7 +20,9 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.FinalInterval;
+import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.Display_View;
 import spim.fiji.spimdata.SpimData2;
@@ -28,6 +31,7 @@ import spim.fiji.spimdata.explorer.ExplorerWindow;
 import spim.process.fusion.export.DisplayImage;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
 import spim.process.fusion.transformed.TransformView;
+import spim.process.fusion.transformed.TransformVirtual;
 import spim.process.fusion.transformed.TransformWeight;
 import spim.process.fusion.weightedavg.ProcessFusion;
 import spim.process.fusion.weightedavg.ProcessVirtual;
@@ -36,6 +40,9 @@ public class DisplayViewPopup extends JMenu implements ExplorerWindowSetable
 {
 	public static final int askWhenMoreThan = 5;
 	private static final long serialVersionUID = 5234649267634013390L;
+
+	public static double defaultDownsampling = 2.0;
+	public static int defaultBB = 0;
 
 	ExplorerWindow< ?, ? > panel = null;
 	final JMenu boundingBoxes;
@@ -46,10 +53,12 @@ public class DisplayViewPopup extends JMenu implements ExplorerWindowSetable
 
 		final JMenuItem as32bit = new JMenuItem( "As 32-Bit (Input Image as ImageJ Stack)" );
 		final JMenuItem as16bit = new JMenuItem( "As 16-Bit (Input Image as ImageJ Stack)" );
-		boundingBoxes = new JMenu( "Virtually Fused using Bounding Box" );
+		boundingBoxes = new JMenu( "Virtually Fused" );
+		final JMenuItem virtual = new JMenuItem( "Virtually Fused ..." );
 
 		as16bit.addActionListener( new MyActionListener( true ) );
 		as32bit.addActionListener( new MyActionListener( false ) );
+		virtual.addActionListener( new DisplayVirtualFused( null ) );
 
 		// populate with the current available boundingboxes
 		boundingBoxes.addMenuListener( new MenuListener()
@@ -81,6 +90,7 @@ public class DisplayViewPopup extends JMenu implements ExplorerWindowSetable
 		this.add( as16bit );
 		this.add( as32bit );
 		this.add( boundingBoxes );
+		this.add( virtual );
 	}
 
 	@Override
@@ -93,11 +103,12 @@ public class DisplayViewPopup extends JMenu implements ExplorerWindowSetable
 
 	public class DisplayVirtualFused implements ActionListener
 	{
-		final BoundingBox bb;
+		Interval boundingBox;
+		double downsampling = Double.NaN;
 
-		public DisplayVirtualFused( final BoundingBox bb )
+		public DisplayVirtualFused( final Interval bb )
 		{
-			this.bb = bb;
+			this.boundingBox = bb;
 		}
 
 		@Override
@@ -117,6 +128,44 @@ public class DisplayViewPopup extends JMenu implements ExplorerWindowSetable
 					final SpimData2 spimData = (SpimData2)panel.getSpimData();
 					final List< ViewId > views = panel.selectedRowsViewId();
 
+					Interval bb;
+
+					if ( boundingBox == null )
+					{
+						if ( spimData.getBoundingBoxes() == null || spimData.getBoundingBoxes().getBoundingBoxes() == null || spimData.getBoundingBoxes().getBoundingBoxes().size() == 0 )
+						{
+							IOFunctions.println( "No bounding boxes defined, please define one from the menu.");
+							return;
+						}
+
+						String[] choices = new String[ spimData.getBoundingBoxes().getBoundingBoxes().size() ];
+						
+						int i = 0;
+						for ( final BoundingBox b : spimData.getBoundingBoxes().getBoundingBoxes() )
+							choices[ i++ ] = b.getTitle() + " [" + b.dimension( 0 ) + "x" + b.dimension( 1 ) + "x" + b.dimension( 2 ) + "px]";
+
+						if ( defaultBB >= choices.length )
+							defaultBB = 0;
+
+						GenericDialog gd = new GenericDialog( "Virtual Fusion" );
+						gd.addChoice( "Bounding Box", choices, choices[ defaultBB ] );
+						gd.addNumericField( "Downsampling", defaultDownsampling, 0 );
+
+						gd.showDialog();
+
+						if ( gd.wasCanceled() )
+							return;
+
+						bb = spimData.getBoundingBoxes().getBoundingBoxes().get( defaultBB = gd.getNextChoiceIndex() );
+						downsampling = defaultDownsampling = gd.getNextNumber();
+						bb = TransformVirtual.scaleBoundingBox( bb, 1.0 / downsampling );
+					}
+					else
+					{
+						downsampling = Double.NaN;
+						bb = boundingBox;
+					}
+
 					final long[] dim = new long[ bb.numDimensions() ];
 					bb.dimensions( dim );
 
@@ -129,14 +178,21 @@ public class DisplayViewPopup extends JMenu implements ExplorerWindowSetable
 						final RandomAccessibleInterval inputImg = imgloader.getSetupImgLoader( viewId.getViewSetupId() ).getImage( viewId.getTimePointId() );
 						final ViewRegistration vr = spimData.getViewRegistrations().getViewRegistration( viewId );
 						vr.updateModel();
+						AffineTransform3D model = vr.getModel();
 
 						final float[] blending = ProcessFusion.defaultBlendingRange.clone();
 						final float[] border = ProcessFusion.defaultBlendingBorder.clone();
 
 						ProcessVirtual.adjustBlending( spimData.getSequenceDescription().getViewDescription( viewId ), blending, border );
 
-						images.add( TransformView.transformView( inputImg, vr.getModel(), bb, 0, 1 ) );
-						weights.add( TransformWeight.transformBlending( inputImg, border, blending, vr.getModel(), bb ) );
+						if ( !Double.isNaN( downsampling ) )
+						{
+							model = model.copy();
+							TransformVirtual.scaleTransform( model, 1.0 / downsampling );
+						}
+
+						images.add( TransformView.transformView( inputImg, model, bb, 0, 1 ) );
+						weights.add( TransformWeight.transformBlending( inputImg, border, blending, model, bb ) );
 
 						//images.add( TransformWeight.transformBlending( inputImg, border, blending, vr.getModel(), bb ) );
 						//weights.add( Views.interval( new ConstantRandomAccessible< FloatType >( new FloatType( 1 ), 3 ), new FinalInterval( dim ) ) );
