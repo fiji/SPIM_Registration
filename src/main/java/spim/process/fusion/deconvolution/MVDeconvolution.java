@@ -93,6 +93,9 @@ public class MVDeconvolution
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Deconvolved & temporary image factory: " + views.imgFactory().getClass().getSimpleName() );
 
+		for ( final MVDeconFFT m : data )
+			new DisplayImage().exportImage( m.getImage(), "input" );
+
 		// init all views
 		views.init( iterationType );
 
@@ -136,8 +139,6 @@ public class MVDeconvolution
 			for ( final FloatType t : psi )
 				t.set( (float)avg );
 		}
-
-		//new DisplayImage().exportImage( psi, "psi" );
 
 		// instantiate the temporary images
 		this.tmp1 = views.imgFactory().create( psi, new FloatType() );
