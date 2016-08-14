@@ -16,6 +16,7 @@ import javax.swing.event.MenuListener;
 
 import ij.gui.GenericDialog;
 import mpicbg.imglib.util.Util;
+import mpicbg.models.AffineModel3D;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.registration.ViewRegistration;
@@ -216,37 +217,135 @@ public class DisplayViewPopup extends JMenu implements ExplorerWindowSetable
 		}
 	}
 
-	public static RandomAccessibleInterval openDownsampled( final ImgLoader imgLoader, final AffineTransform3D model )
+	private static double length( final float[] a, final float[] b )
 	{
-		final float[] i0 = new float[]{ 0, 0, 0 };
-		final float[] j0 = new float[]{ 0, 0, 0 };
+		double l = 0;
+
+		for ( int j = 0; j < a.length; ++j )
+			l += ( a[ j ] - b[ j ] ) * ( a[ j ] - b[ j ] );
+
+		return Math.sqrt( l );
+	}
+
+	private static double[] stepSize( final AffineTransform3D model )
+	{
+		final float[] i0 = new float[ 3 ];
+		final float[] j0 = new float[ 3 ];
 
 		model.applyInverse( i0, j0 );
 
+		final double[] stepSize = new double[ 3 ];
+
 		for ( int i = 0; i < 3; ++i )
 		{
-			final float[] i1 = new float[]{ 0, 0, 0 };
-			final float[] j1 = new float[]{ 0, 0, 0 };
+			final float[] i1 = new float[ 3 ];
+			final float[] j1 = new float[ 3 ];
 
 			j1[ i ] = 1;
-	
+
 			model.applyInverse( i1, j1 );
 
-			System.out.println( i + ": ");
-
-			double l = 0;
-			for ( int j = 0; j < 3; ++j )
-				l += Math.pow(i1[ j ] - i0[ j ], 2);
-			l = Math.sqrt( l );
-
+			stepSize[ i ] = length( i1, i0 );
+			/*
+			System.out.print( i + ": ");
 			for ( int j = 0; j < 3; ++j )
 				System.out.print( i1[ j ] - i0[ j ] + " ");
-
-			System.out.println( " = " + l );
+			System.out.println( " = " + length( i1, i0 ) );*/
 		}
+
+		return stepSize;
+	}
+
+	private static int findSmallestScale( final int d, final AffineTransform3D m )
+	{
+		int scale = 1;
+
+		boolean allBiggerOne = true;
+
+		do
+		{
+			scale *= 2;
+
+			final AffineTransform3D s = new AffineTransform3D();
+
+			if ( d == 0 )
+				s.set( scale, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 );
+			else if ( d == 1 )
+				s.set( 1.0, 0.0, 0.0, 0.0, 0.0, scale, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 );
+			else if ( d == 2 )
+			{
+				System.out.println(  scale );
+				s.set( 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, scale, 0.0 );
+			}
+
+			final AffineTransform3D model = m.copy();
+			model.concatenate( s );
+
+			allBiggerOne = true;
+
+			System.out.print( scale + ": ");
+			
+			for ( final double step : stepSize( model ) )
+			{
+				System.out.print( step + " ");
+				if ( step < 1.0 )
+					allBiggerOne = false;
+			}
+
+			System.out.println();
+
+		} while ( allBiggerOne );
+
+		return scale/2;
+	}
+
+
+	public static RandomAccessibleInterval openDownsampled( final ImgLoader imgLoader, final AffineTransform3D m )
+	{
+		//for ( int d = 2; d < 3; ++d )
+		//	System.out.print( "\n\n" + findSmallestScale( d, m ) + " " );
 
 		System.out.println();
 
+		
+		for ( int scale = 1; scale <= 4; scale *= 2 )
+		{
+			final AffineTransform3D s = new AffineTransform3D();
+			s.set(
+					1.0, 0.0, 0.0, 0.0,
+					0.0, scale, 0.0, 0.0,
+					0.0, 0.0, 1.0, 0.0 );
+
+			System.out.println( "scale: " + scale );
+
+			AffineTransform3D model = m.copy();
+			model.concatenate( s );
+			
+			final float[] i0 = new float[ 3 ];
+			final float[] j0 = new float[ 3 ];
+	
+			model.applyInverse( i0, j0 );
+	
+			for ( int i = 0; i < 3; ++i )
+			{
+				final float[] i1 = new float[ 3 ];
+				final float[] j1 = new float[ 3 ];
+	
+				j1[ i ] = 1;
+
+				model.applyInverse( i1, j1 );
+	
+				System.out.print( i + ": ");
+	
+				for ( int j = 0; j < 3; ++j )
+					System.out.print( i1[ j ] - i0[ j ] + " ");
+	
+				System.out.println( " = " + length( i1, i0 ) );
+			}
+	
+			System.out.println();
+		}
+		
 		return null;
 		/*
 		if ( ( dsx > 1 || dsy > 1 || dsz > 1 ) && MultiResolutionImgLoader.class.isInstance( imgLoader ) )
