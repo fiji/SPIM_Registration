@@ -272,6 +272,9 @@ public class GenericLoadParseQueryXML<
 			this.gd = gd;
 		}
 
+		gd.addMessage( "" );
+		GUIHelper.addPreibischLabWebsite( gd );
+
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() || returnfalse )
