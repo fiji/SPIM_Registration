@@ -201,7 +201,7 @@ public class DisplayViewPopup extends JMenu implements ExplorerWindowSetable
 						// TODO: Find next best fitting precomputed scale and scale the image so it looks the same as the full resolution
 						final RandomAccessibleInterval inputImg = imgloader.getSetupImgLoader( viewId.getViewSetupId() ).getImage( viewId.getTimePointId() );
 
-						//openDownsampled(imgloader, model);
+						openDownsampled(imgloader, model);
 
 						images.add( TransformView.transformView( inputImg, model, bb, 0, 1 ) );
 						weights.add( TransformWeight.transformBlending( inputImg, border, blending, model, bb ) );
@@ -234,10 +234,15 @@ public class DisplayViewPopup extends JMenu implements ExplorerWindowSetable
 
 			System.out.println( i + ": ");
 
+			double l = 0;
+			for ( int j = 0; j < 3; ++j )
+				l += Math.pow(i1[ j ] - i0[ j ], 2);
+			l = Math.sqrt( l );
+
 			for ( int j = 0; j < 3; ++j )
 				System.out.print( i1[ j ] - i0[ j ] + " ");
 
-			System.out.println();
+			System.out.println( " = " + l );
 		}
 
 		System.out.println();
