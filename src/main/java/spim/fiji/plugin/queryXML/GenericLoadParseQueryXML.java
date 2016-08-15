@@ -17,6 +17,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
+import javax.management.RuntimeErrorException;
+
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.Version;
 import mpicbg.spim.data.XmlKeys;
@@ -32,6 +34,7 @@ import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.Toggle_Cluster_Options;
 import spim.fiji.plugin.util.GUIHelper;
+import spim.fiji.spimdata.EmptyEntity;
 import spim.fiji.spimdata.NamePattern;
 
 /**
@@ -560,8 +563,9 @@ public class GenericLoadParseQueryXML<
 		
 		if ( entitiesToProcess.size() == 0 )
 		{
-			IOFunctions.println( "List of " + attribute + "s is empty. Stopping." );
-			return false;
+			throw new RuntimeException( "List of " + attribute + "s is empty. Stopping." );
+			//IOFunctions.println( "WARNING: List of " + attribute + "s is empty." );
+			//return true;
 		}
 		else
 		{
@@ -677,6 +681,8 @@ public class GenericLoadParseQueryXML<
 				this.attributes = new ArrayList< String >();
 				this.attributes.addAll( this.data.getSequenceDescription().getViewSetupsOrdered().get( 0 ).getAttributes().keySet() );
 				
+				for ( final String att : this.attributes )
+					System.out.println( att );
 				// the attributes are ordered by alphabet (or user defined) so that the details and then queried in the same order
 				if ( comparator == null )
 					Collections.sort( this.attributes );
@@ -706,7 +712,15 @@ public class GenericLoadParseQueryXML<
 						final HashSet< Integer > numEntityIds = numEntitiesPerAttrib.get( attributeIndex );
 
 						// the entity instance (could be Angle, Channel, etc ... )
-						final Entity e = viewSetup.getAttributes().get( attribute );
+						Entity e = viewSetup.getAttributes().get( attribute );
+
+						if ( e == null )
+						{
+							// something new we do not know
+							e = new EmptyEntity( 0, attribute );
+							viewSetup.getAttributes().put( attribute, e );
+						}
+
 						final int id = e.getId();
 						
 						if ( !numEntityIds.contains( id ) )
