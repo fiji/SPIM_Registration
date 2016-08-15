@@ -13,6 +13,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -680,9 +681,7 @@ public class GenericLoadParseQueryXML<
 				// which attributes
 				this.attributes = new ArrayList< String >();
 				this.attributes.addAll( this.data.getSequenceDescription().getViewSetupsOrdered().get( 0 ).getAttributes().keySet() );
-				
-				for ( final String att : this.attributes )
-					System.out.println( att );
+
 				// the attributes are ordered by alphabet (or user defined) so that the details and then queried in the same order
 				if ( comparator == null )
 					Collections.sort( this.attributes );
@@ -717,6 +716,7 @@ public class GenericLoadParseQueryXML<
 						if ( e == null )
 						{
 							// something new we do not know
+							IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Unknown entity '" + attribute + "', adding placeholder entity to support it." );
 							e = new EmptyEntity( 0, attribute );
 							viewSetup.getAttributes().put( attribute, e );
 						}
