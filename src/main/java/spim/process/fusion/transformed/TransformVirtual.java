@@ -9,9 +9,8 @@ public class TransformVirtual
 	/**
 	 * Scale the affine transform (use with scaleBoundingBox so it is the right image, but just smaller)
 	 * 
-	 * @param transform
+	 * @param t
 	 * @param factor
-	 * @return
 	 */
 	public static void scaleTransform( final AffineTransform3D t, final double factor )
 	{
