@@ -50,11 +50,11 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 {
 	public static String[] rotAxes = new String[] { "X-Axis", "Y-Axis", "Z-Axis" };
 
-	public static String defaultFirstFile = "";
+	public static String defaultFilePath = "";
 	public static boolean defaultModifyCal = false;
-	public static boolean defaultRotAxis = false;
-	public static boolean defaultApplyRotAxis = true;
-	public static int defaultCapture = 0;
+	public static int defaultCapture = -1;
+    public static double defaultAngles[] = {0.0f, 90.0f};
+    public static float defaultCalibrations[] = {1.0f, 1.0f, 1.0f};
 
 	@Override
 	public String getTitle() { return "Slidebook6 Dataset"; }
@@ -81,7 +81,9 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 				reader.close();
 				return null;
 			}
-			reader.openFile(sldFile.getPath());
+
+            defaultFilePath = sldFile.getPath();
+			reader.openFile(defaultFilePath);
 
 			if ( !showDialogs(reader) ) {
 				reader.close();
@@ -102,8 +104,8 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 			sequenceDescription.setImgLoader( imgLoader );
 
 			// get the minimal resolution of all calibrations, TODO: different views can have different calibrations?
-			final float zSpacing = SlideBook6.getZSpacing(reader, defaultCapture, 0);
-			final double minResolution = Math.min( reader.getVoxelSize(defaultCapture), zSpacing );
+			final float zSpacing = defaultCalibrations[2];
+			final double minResolution = Math.min( defaultCalibrations[0], zSpacing );
 
 			IOFunctions.println( "Minimal resolution in all dimensions is: " + minResolution );
 			IOFunctions.println( "(The smallest resolution in any dimension; the distance between two pixels in the output image will be that wide)" );
@@ -212,47 +214,53 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 	 *
 	 * @return
 	 */
-	protected ArrayList< ViewSetup > createViewSetups( final SlideBook6Reader meta )
-	{
-		// TODO: query rotation angle of each SlideBook channel
-		final double[] yaxis = new double[]{ 0, 1, 0 }; 
-		final ArrayList< Angle > angles = new ArrayList< Angle >();
-		final Angle angleA= new Angle( 0, "Path A");
-		angleA.setRotation(yaxis, 0);
-		angles.add( angleA );
+	protected ArrayList< ViewSetup > createViewSetups( final SlideBook6Reader meta ) {
+        // TODO: query rotation angle of each SlideBook channel
+        final double[] yaxis = new double[]{0, 1, 0};
+        final ArrayList<Angle> angles = new ArrayList<Angle>();
+        final Angle angleA = new Angle(0, "Path A");
+        angleA.setRotation(yaxis, defaultAngles[0]);
+        angles.add(angleA);
 
-		final Angle angleB = new Angle( 1, "Path B");
-		angleB.setRotation(yaxis, 90);
-		angles.add( angleB );
+        final Angle angleB = new Angle(1, "Path B");
+        angleB.setRotation(yaxis, defaultAngles[1]);
+        angles.add(angleB);
 
-		// define multiple illuminations, one for every two channels per capture in the slide file
-		final int captures = meta.getNumCaptures();
-		final ArrayList< ViewSetup > viewSetups = new ArrayList< ViewSetup >();
-		for ( int c = 0; c < captures; c++)
-		{
-			final int channels = meta.getNumChannels(c); 
-			
-			final String name = meta.getImageName(c);
-			final Illumination i = new Illumination(c * 8, name);
-			
-			for ( int ch = 0; ch < channels/2;  ch ++)
-			{
-				// use name of first channel, SlideBook channels are diSPIM angles and each SlideBook image should have two angles per channel
-				final Channel channel  = new Channel( ch, meta.getChannelName(c, ch * 2) );
+        // define multiple illuminations, one for every capture in the slide file
+        final ArrayList<ViewSetup> viewSetups = new ArrayList<ViewSetup>();
 
-				for ( final Angle a : angles )
-				{
-					// TODO: make sure a < getNumCaptures()
-					float voxelSizeUm = meta.getVoxelSize( c );
-					float zSpacing = SlideBook6.getZSpacing( meta, c, 0);
+        int firstCapture = defaultCapture;
+        int numCaptures = 1;
+        if (defaultCapture == -1) {
+            firstCapture = 0;
+            numCaptures = meta.getNumCaptures();
+        }
 
-					final VoxelDimensions voxelSize = new FinalVoxelDimensions( "um", voxelSizeUm, voxelSizeUm, zSpacing );
-					final Dimensions dim = new FinalDimensions( new long[]{ meta.getNumXColumns( c ), meta.getNumYRows( c ), meta.getNumZPlanes( c ) } );
+        // create one illumination for each capture if defaultCapture == -1, otherwise just one capture
+        for (int capture = firstCapture; capture < numCaptures; capture++) {
+            final int channels = meta.getNumChannels(capture);
 
-					viewSetups.add( new ViewSetup( viewSetups.size(), a.getName(), dim, voxelSize, channel, a, i ) );
-				}
-			}
-		}
+            // multi-angle captures must have pairs of channels
+            if (channels > 1 && channels % 2 == 0) {
+                final String name = meta.getImageName(capture);
+                final Illumination i = new Illumination(capture * 8, name);
+
+                for (int ch = 0; ch < channels / 2; ch++) {
+                    // use name of first channel, SlideBook channels are diSPIM angles and each SlideBook image should have two angles per channel
+                    final Channel channel = new Channel(ch, meta.getChannelName(capture, ch * 2));
+
+                    for (final Angle a : angles) {
+                        float voxelSizeUm = defaultCalibrations[0];
+                        float zSpacing = defaultCalibrations[2];
+
+                        final VoxelDimensions voxelSize = new FinalVoxelDimensions("um", voxelSizeUm, voxelSizeUm, zSpacing);
+                        final Dimensions dim = new FinalDimensions(new long[]{meta.getNumXColumns(capture), meta.getNumYRows(capture), meta.getNumZPlanes(capture)});
+
+                        viewSetups.add(new ViewSetup(viewSetups.size(), a.getName(), dim, voxelSize, channel, a, i));
+                    }
+                }
+            }
+        }
 
 		return viewSetups;
 	}
@@ -264,12 +272,16 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 	{
 		final ArrayList< TimePoint > timepoints = new ArrayList< TimePoint >();
 
+        int firstCapture = defaultCapture;
+        int numCaptures = 1;
+        if (defaultCapture == -1) {
+            firstCapture = 0;
+            numCaptures = meta.getNumCaptures();
+        }
+
 		int t = 0;
-		for ( int c = 0; c < meta.getNumCaptures(); c++)
-		{
-			for (; t < meta.getNumTimepoints(c); ++t )
-				timepoints.add( new TimePoint( t ) );
-		}
+		for (; t < meta.getNumTimepoints(firstCapture); ++t )
+			timepoints.add( new TimePoint( t ) );
 
 		return new TimePoints( timepoints );
 	}
@@ -297,115 +309,114 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 
 	protected boolean showDialogs(final SlideBook6Reader meta)
 	{
-		GenericDialog gd = new GenericDialog( "SlideBook6 diSPIM Properties" );
+        {
+            GenericDialog gd = new GenericDialog("Select SlideBook6 diSPIM Capture");
 
-		gd.addMessage( "Angles (" + 2 + " present)", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
-		gd.addMessage( "" );
+            String[] imageNames = new String[meta.getNumCaptures()+1];
+            imageNames[0] = new String("< All Captures >");
+            for (int c = 0; c < meta.getNumCaptures(); c++) {
+                imageNames[c+1] = meta.getImageName(c);
+            }
 
-		gd.addStringField( "Angle_" + 0 + ":", String.valueOf( "0" ) ); // meta.rotationAngle( a )
-		gd.addStringField( "Angle_" + 1 + ":", String.valueOf( "90" ) ); // meta.rotationAngle( a )
+            // pick which image capture to process
+            gd.addChoice("Capture Name", imageNames, imageNames[0]);
 
-		gd.addMessage( "Channels (" + meta.getNumChannels(defaultCapture) / 2 + " present)", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
-		gd.addMessage( "" );
+            GUIHelper.addScrollBars(gd);
 
-		for ( int ch = 0; ch < meta.getNumChannels(defaultCapture)/2; ++ch )
-			gd.addStringField( "Channel_" + (ch+1) + ":", meta.getChannelName(defaultCapture, ch*2 ) );
+            gd.showDialog();
 
-		if ( meta.getNumPositions(defaultCapture) > 1 )
+            if (gd.wasCanceled())
+                return false;
+
+            defaultCapture = gd.getNextChoiceIndex() - 1;
+        }
+
+        int firstCapture = defaultCapture;
+        int numCaptures = 1;
+        if (defaultCapture == -1) {
+            firstCapture = 0;
+            numCaptures = meta.getNumCaptures();
+        }
+
+        // check for invalid image ( single channel == single angle )
+        int numChannels = meta.getNumChannels(firstCapture);
+        if (numChannels < 2 || numChannels % 2 != 0) {
+            IOFunctions.println( "ERROR: " + meta.getNumChannels(firstCapture) + " angles detected.  No alignment possible." );
+            return false;
+        }
+
+        {
+            GenericDialog gd = new GenericDialog("SlideBook6 diSPIM Properties");
+
+            gd.addMessage("Angles (" + numChannels + " present)", new Font(Font.SANS_SERIF, Font.BOLD, 13));
+            gd.addMessage("");
+
+            for (int ch = 0; ch < numChannels; ch++) {
+                gd.addNumericField("Angle of '" + meta.getChannelName(firstCapture, ch) + "':", (ch % 2) * 90, 1, 5, "degrees");
+            }
+
+            gd.addMessage("Channels (" + meta.getNumChannels(firstCapture) / 2 + " present)", new Font(Font.SANS_SERIF, Font.BOLD, 13));
+            gd.addMessage("");
+
+            for (int ch = 0; ch < meta.getNumChannels(firstCapture) / 2; ++ch) {
+                gd.addMessage("Channel_" + (ch + 1) + ": " + meta.getChannelName(firstCapture, ch * 2));
+            }
+
+            if (meta.getNumPositions(firstCapture) > 1) {
+                IOFunctions.println("WARNING: " + meta.getNumPositions(firstCapture) + " positions detected. These will be imported as different illumination directions.");
+                gd.addMessage("");
+            }
+
+            gd.addMessage("Timepoints (" + meta.getNumTimepoints(firstCapture) + " present)", new Font(Font.SANS_SERIF, Font.BOLD, 13));
+
+            float voxelSize = meta.getVoxelSize(firstCapture);
+            float zSpacing = SlideBook6.getZSpacing(meta, firstCapture, 0);
+            defaultCalibrations[0] = voxelSize;
+            defaultCalibrations[1] = voxelSize;
+            defaultCalibrations[2] = zSpacing;
+
+            gd.addMessage("Calibration", new Font(Font.SANS_SERIF, Font.BOLD, 13));
+            gd.addCheckbox("Modify_calibration", defaultModifyCal);
+            gd.addMessage(
+                    "Pixel Distance X: " + defaultCalibrations[0] + " " + "um" + "\n" +
+                            "Pixel Distance Y: " + defaultCalibrations[1] + " " + "um" + "\n" +
+                            "Pixel Distance Z: " + defaultCalibrations[2] + " " + "um" + "\n");
+
+            gd.addMessage(
+                    "Rotation axis: " + "Y" + " axis\n" +
+                            "Pixel type: " + "UInt16",
+                    new Font(Font.SANS_SERIF, Font.ITALIC, 11));
+
+            gd.showDialog();
+
+            if (gd.wasCanceled())
+                return false;
+
+            // use the user specified angles
+            for (int a = 0; a < meta.getNumChannels(firstCapture); ++a) {
+                defaultAngles[a % 2] = gd.getNextNumber();
+            }
+
+            defaultModifyCal = gd.getNextBoolean();
+        }
+
+		if ( defaultModifyCal )
 		{
-			IOFunctions.println( "WARNING: " + meta.getNumCaptures() + " captures detected. These will be imported as different illumination directions." );
-			gd.addMessage( "" );
-		}
+            GenericDialog gd = new GenericDialog( "Modify Meta Data" );
 
-		gd.addMessage( "Timepoints (" + meta.getNumTimepoints(defaultCapture) + " present)", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
-
-		// TODO: make sure a < getNumCaptures()
-		float voxelSize = meta.getVoxelSize(0);
-		float zSpacing = SlideBook6.getZSpacing(meta, defaultCapture, 0);
-
-		gd.addMessage( "Calibration", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
-		gd.addCheckbox( "Modify_calibration", defaultModifyCal );
-		gd.addMessage(
-				"Pixel Distance X: " + voxelSize + " " + "um" + "\n" +
-						"Pixel Distance Y: " + voxelSize + " " + "um" + "\n" +
-						"Pixel Distance Z: " + zSpacing + " " + "um" + "\n" );
-
-		gd.addMessage( "Additional Meta Data", new Font( Font.SANS_SERIF, Font.BOLD, 13 ) );
-		gd.addMessage( "" );
-		gd.addCheckbox( "Modify_rotation_axis", defaultRotAxis );
-		gd.addCheckbox( "Apply_rotation_to_dataset", defaultApplyRotAxis );
-
-		gd.addMessage(
-				"Rotation axis: " + "Rot0" + " axis\n" +
-						"Pixel type: " + "UInt16",
-						new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
-
-		GUIHelper.addScrollBars( gd );
-
-		gd.showDialog();
-
-		if ( gd.wasCanceled() )
-			return false;
-
-		final ArrayList< String > angles = new ArrayList< String >();
-		for ( int a = 0; a < 2; ++a )
-			angles.add( gd.getNextString() );
-		// meta.setAngleNames( angles );
-
-		final ArrayList< String > channels = new ArrayList< String >();
-		for ( int ch = 0; ch < meta.getNumChannels(defaultCapture) / 2; ++ch )
-			channels.add( gd.getNextString() );
-		// meta.setChannelNames( channels );
-
-		final boolean modifyCal = defaultModifyCal = gd.getNextBoolean();
-		final boolean modifyAxis = defaultRotAxis = gd.getNextBoolean();
-		//meta.setApplyAxis( defaultApplyRotAxis = gd.getNextBoolean() );
-
-		if ( modifyAxis || modifyCal )
-		{
-			gd = new GenericDialog( "Modify Meta Data" );
-
-			if ( modifyCal )
-			{
-				gd.addNumericField( "Pixel_distance_x", voxelSize, 5 );
-				gd.addNumericField( "Pixel_distance_y", voxelSize, 5 );
-				gd.addNumericField( "Pixel_distance_z", zSpacing, 5 );
-				gd.addStringField( "Pixel_unit", "um" );
-			}
-
-			if ( modifyAxis )
-			{
-				//if ( meta.rotationAxisIndex() < 0 )
-				//	gd.addChoice( "Rotation_around", rotAxes, rotAxes[ 0 ] );
-				//else
-				//	gd.addChoice( "Rotation_around", rotAxes, rotAxes[ meta.rotationAxisIndex() ] );
-			}
+			gd.addNumericField( "Pixel_distance_x", defaultCalibrations[0], 5, 5, "um" );
+			gd.addNumericField( "Pixel_distance_y", defaultCalibrations[1], 5, 5, "um" );
+			gd.addNumericField( "Pixel_distance_z", defaultCalibrations[2], 5, 5, "um" );
 
 			gd.showDialog();
 
 			if ( gd.wasCanceled() )
 				return false;
 
-			if ( modifyCal )
-			{
-				//meta.setCalX( gd.getNextNumber() );
-				//meta.setCalY( gd.getNextNumber() );
-				//meta.setCalZ( gd.getNextNumber() );
-				//meta.setCalUnit( gd.getNextString() );
-			}
-
-			if ( modifyAxis )
-			{
-				//int axis = gd.getNextChoiceIndex();
-
-				//if ( axis == 0 )
-				//meta.setRotAxis( new double[]{ 1, 0, 0 } );
-				//else if ( axis == 1 )
-				//meta.setRotAxis( new double[]{ 0, 1, 0 } );
-				//else
-				//meta.setRotAxis( new double[]{ 0, 0, 1 } );
-			}
-		}
+            defaultCalibrations[0] = (float) gd.getNextNumber();
+            defaultCalibrations[1] = (float) gd.getNextNumber();
+            defaultCalibrations[2] = (float) gd.getNextNumber();
+        }
 
 		return true;
 	}
@@ -414,17 +425,13 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 	{
 		GenericDialogPlus gd = new GenericDialogPlus( "Define SlideBook6 diSPIM Dataset" );
 
-		gd.addFileField( "SlideBook6 SLD file", defaultFirstFile, 50 );
-		gd.addFileField( "Image Index", "0", 10);
-
+		gd.addFileField( "SlideBook6 SLD file", defaultFilePath, 50 );
 		gd.showDialog();
 
 		if ( gd.wasCanceled() )
 			return null;
 
-		final File firstFile = new File( defaultFirstFile = gd.getNextString() );
-		defaultCapture = Integer.parseInt(gd.getNextString());
-
+		final File firstFile = new File( defaultFilePath = gd.getNextString() );
 		if ( !firstFile.exists() )
 		{
 			IOFunctions.println( "File '" + firstFile.getAbsolutePath() + "' does not exist. Stopping" );
@@ -448,7 +455,6 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 	
 	public static float getZSpacing(SlideBook6Reader reader, int c, int p)
 	{
-		// TODO: make sure a < getNumCaptures()
 		float zSpacing = 1;
 		if (reader.getNumZPlanes(c) > 1) {
 			zSpacing = (float) Math.abs(reader.getZPosition(c, p, 1) - reader.getZPosition(c, p, 0));
