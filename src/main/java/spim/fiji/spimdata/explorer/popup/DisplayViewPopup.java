@@ -199,10 +199,12 @@ public class DisplayViewPopup extends JMenu implements ExplorerWindowSetable
 							TransformVirtual.scaleTransform( model, 1.0 / downsampling );
 						}
 
-						// TODO: Find next best fitting precomputed scale and scale the image so it looks the same as the full resolution
-						final RandomAccessibleInterval inputImg = imgloader.getSetupImgLoader( viewId.getViewSetupId() ).getImage( viewId.getTimePointId() );
-
-						openDownsampled( imgloader, viewId, model );
+						final RandomAccessibleInterval inputImg;
+						
+						if ( count %2 == 0 )
+							inputImg = TransformView.openDownsampled( imgloader, viewId, model );
+						else
+							inputImg = imgloader.getSetupImgLoader( viewId.getViewSetupId() ).getImage( viewId.getTimePointId() );
 
 						images.add( TransformView.transformView( inputImg, model, bb, 0, 1 ) );
 						weights.add( TransformWeight.transformBlending( inputImg, border, blending, model, bb ) );
@@ -212,111 +214,15 @@ public class DisplayViewPopup extends JMenu implements ExplorerWindowSetable
 					}
 
 					DisplayImage.getImagePlusInstance( new FusedRandomAccessibleInterval( new FinalInterval( dim ), images, weights ), true, "Fused, Virtual", 0, 255 ).show();
+					++count;
+
 				}
 			} ).start();
 		}
 	}
 
-	private static double length( final double[] a, final double[] b )
-	{
-		double l = 0;
-
-		for ( int j = 0; j < a.length; ++j )
-			l += ( a[ j ] - b[ j ] ) * ( a[ j ] - b[ j ] );
-
-		return Math.sqrt( l );
-	}
-
-	private static float[] getStepSize( final AffineTransform3D model )
-	{
-		final float[] size = new float[ 3 ];
-
-		final double[] tmp = new double[ 3 ];
-		final double[] o0 = new double[ 3 ];
-
-		model.apply( tmp, o0 );
-
-		for ( int d = 0; d < 3; ++d )
-		{
-			final double[] o1 = new double[ 3 ];
-
-			for ( int i = 0; i < tmp.length; ++i )
-				tmp[ i ] = 0;
-
-			tmp[ d ] = 1;
-
-			model.apply( tmp, o1 );
-			
-			size[ d ] = (float)length( o1, o0 );
-		}
-
-		return size;
-	}
-
-	public static RandomAccessibleInterval openDownsampled( final ImgLoader imgLoader, final ViewId viewId, final AffineTransform3D m )
-	{
-		// have to go from input to output
-		// https://github.com/bigdataviewer/bigdataviewer-core/blob/master/src/main/java/bdv/util/MipmapTransforms.java
-
-		if ( MultiResolutionImgLoader.class.isInstance( imgLoader ) )
-		{
-			final MultiResolutionImgLoader mrImgLoader = ( MultiResolutionImgLoader )imgLoader;
-			final double[][] mipmapResolutions = mrImgLoader.getSetupImgLoader( viewId.getViewSetupId() ).getMipmapResolutions();
-
-			// best possible step size in the output image when using original data
-			final float[] sizeMaxResolution = getStepSize( m );
-
-			float acceptedError = 0.02f;
-
-			// assuming that this is the best one
-			int bestLevel = 0;
-			double bestScaling = 0;
-
-			// find the best level
-			for ( int level = 0; level < mipmapResolutions.length; ++level )
-			{
-				final double[] factors = mipmapResolutions[ level ];
-
-				final AffineTransform3D s = new AffineTransform3D();
-				s.set(
-					factors[ 0 ], 0.0, 0.0, 0.0,
-					0.0, factors[ 1 ], 0.0, 0.0,
-					0.0, 0.0, factors[ 2 ], 0.0 );
+	static int count = 0;
 	
-				System.out.println( "testing scale: " + s );
-	
-				AffineTransform3D model = m.copy();
-				model.concatenate( s );
-
-				final float[] size = getStepSize( model );
-
-				boolean isValid = true;
-				
-				for ( int d = 0; d < 3; ++d )
-					if ( !( size[ d ] < 1.0 + acceptedError || Util.isApproxEqual( size[ d ], sizeMaxResolution[ d ], acceptedError ) ) )
-						isValid = false;
-
-				if ( isValid )
-				{
-					final double totalScale = factors[ 0 ] * factors[ 1 ] * factors[ 2 ];
-					
-					if ( totalScale > bestScaling )
-					{
-						bestScaling = totalScale;
-						bestLevel = level;
-					}
-				}
-				System.out.println( Util.printCoordinates( size ) + " valid: " + isValid + " bestScaling: " + bestScaling  );
-			}
-
-			System.out.println( "Choosing: " + mipmapResolutions[ bestLevel ][ 0 ] + " x " + mipmapResolutions[ bestLevel ][ 1 ] + " x " + mipmapResolutions[ bestLevel ][ 2 ] );
-			return null;
-		}
-		else
-		{
-			return imgLoader.getSetupImgLoader( viewId.getViewSetupId() ).getImage( viewId.getTimePointId() );
-		}
-	}
 
 	public class MyActionListener implements ActionListener
 	{
