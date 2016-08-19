@@ -202,7 +202,7 @@ public class DisplayViewPopup extends JMenu implements ExplorerWindowSetable
 						// TODO: Find next best fitting precomputed scale and scale the image so it looks the same as the full resolution
 						final RandomAccessibleInterval inputImg = imgloader.getSetupImgLoader( viewId.getViewSetupId() ).getImage( viewId.getTimePointId() );
 
-						openDownsampled(imgloader, model);
+						openDownsampled( imgloader, viewId, model );
 
 						images.add( TransformView.transformView( inputImg, model, bb, 0, 1 ) );
 						weights.add( TransformWeight.transformBlending( inputImg, border, blending, model, bb ) );
@@ -217,7 +217,7 @@ public class DisplayViewPopup extends JMenu implements ExplorerWindowSetable
 		}
 	}
 
-	private static double length( final float[] a, final float[] b )
+	private static double length( final double[] a, final double[] b )
 	{
 		double l = 0;
 
@@ -227,168 +227,97 @@ public class DisplayViewPopup extends JMenu implements ExplorerWindowSetable
 		return Math.sqrt( l );
 	}
 
-	private static double[] stepSize( final AffineTransform3D model )
+	private static float[] getStepSize( final AffineTransform3D model )
+	{
+		final float[] size = new float[ 3 ];
+
+		final double[] tmp = new double[ 3 ];
+		final double[] o0 = new double[ 3 ];
+
+		model.apply( tmp, o0 );
+
+		for ( int d = 0; d < 3; ++d )
+		{
+			final double[] o1 = new double[ 3 ];
+
+			for ( int i = 0; i < tmp.length; ++i )
+				tmp[ i ] = 0;
+
+			tmp[ d ] = 1;
+
+			model.apply( tmp, o1 );
+			
+			size[ d ] = (float)length( o1, o0 );
+		}
+
+		return size;
+	}
+
+	public static RandomAccessibleInterval openDownsampled( final ImgLoader imgLoader, final ViewId viewId, final AffineTransform3D m )
 	{
 		// have to go from input to output
 		// https://github.com/bigdataviewer/bigdataviewer-core/blob/master/src/main/java/bdv/util/MipmapTransforms.java
-		final float[] i0 = new float[ 3 ];
-		final float[] j0 = new float[ 3 ];
 
-		model.applyInverse( i0, j0 );
-
-		final double[] stepSize = new double[ 3 ];
-
-		for ( int i = 0; i < 3; ++i )
+		if ( MultiResolutionImgLoader.class.isInstance( imgLoader ) )
 		{
-			final float[] i1 = new float[ 3 ];
-			final float[] j1 = new float[ 3 ];
+			final MultiResolutionImgLoader mrImgLoader = ( MultiResolutionImgLoader )imgLoader;
+			final double[][] mipmapResolutions = mrImgLoader.getSetupImgLoader( viewId.getViewSetupId() ).getMipmapResolutions();
 
-			j1[ i ] = 1;
+			// best possible step size in the output image when using original data
+			final float[] sizeMaxResolution = getStepSize( m );
 
-			model.applyInverse( i1, j1 );
+			float acceptedError = 0.02f;
 
-			stepSize[ i ] = length( i1, i0 );
-			/*
-			System.out.print( i + ": ");
-			for ( int j = 0; j < 3; ++j )
-				System.out.print( i1[ j ] - i0[ j ] + " ");
-			System.out.println( " = " + length( i1, i0 ) );*/
-		}
-
-		return stepSize;
-	}
-
-	private static int findSmallestScale( final int d, final AffineTransform3D m )
-	{
-		int scale = 1;
-
-		boolean allBiggerOne = true;
-
-		do
-		{
-			scale *= 2;
-
-			final AffineTransform3D s = new AffineTransform3D();
-
-			if ( d == 0 )
-				s.set( scale, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 );
-			else if ( d == 1 )
-				s.set( 1.0, 0.0, 0.0, 0.0, 0.0, scale, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 );
-			else if ( d == 2 )
-			{
-				System.out.println(  scale );
-				s.set( 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, scale, 0.0 );
-			}
-
-			final AffineTransform3D model = m.copy();
-			model.concatenate( s );
-
-			allBiggerOne = true;
-
-			System.out.print( scale + ": ");
-			
-			for ( final double step : stepSize( model ) )
-			{
-				System.out.print( step + " ");
-				if ( step < 1.0 )
-					allBiggerOne = false;
-			}
-
-			System.out.println();
-
-		} while ( allBiggerOne );
-
-		return scale/2;
-	}
-
-
-	public static RandomAccessibleInterval openDownsampled( final ImgLoader imgLoader, final AffineTransform3D m )
-	{
-		//for ( int d = 2; d < 3; ++d )
-		//	System.out.print( "\n\n" + findSmallestScale( d, m ) + " " );
-
-		System.out.println();
-
-		
-		for ( int scale = 1; scale <= 4; scale *= 2 )
-		{
-			final AffineTransform3D s = new AffineTransform3D();
-			s.set(
-					1.0, 0.0, 0.0, 0.0,
-					0.0, scale, 0.0, 0.0,
-					0.0, 0.0, 1.0, 0.0 );
-
-			System.out.println( "scale: " + scale );
-
-			AffineTransform3D model = m.copy();
-			model.concatenate( s );
-			
-			final float[] i0 = new float[ 3 ];
-			final float[] j0 = new float[ 3 ];
-	
-			model.applyInverse( i0, j0 );
-	
-			for ( int i = 0; i < 3; ++i )
-			{
-				final float[] i1 = new float[ 3 ];
-				final float[] j1 = new float[ 3 ];
-	
-				j1[ i ] = 1;
-
-				model.applyInverse( i1, j1 );
-	
-				System.out.print( i + ": ");
-	
-				for ( int j = 0; j < 3; ++j )
-					System.out.print( i1[ j ] - i0[ j ] + " ");
-	
-				System.out.println( " = " + length( i1, i0 ) );
-			}
-	
-			System.out.println();
-		}
-		
-		return null;
-		/*
-		if ( ( dsx > 1 || dsy > 1 || dsz > 1 ) && MultiResolutionImgLoader.class.isInstance( imgLoader ) )
-		{
-			MultiResolutionImgLoader mrImgLoader = ( MultiResolutionImgLoader ) imgLoader;
-
-			double[][] mipmapResolutions = mrImgLoader.getSetupImgLoader( vd.getViewSetupId() ).getMipmapResolutions();
-
+			// assuming that this is the best one
 			int bestLevel = 0;
+			double bestScaling = 0;
+
+			// find the best level
 			for ( int level = 0; level < mipmapResolutions.length; ++level )
 			{
-				double[] factors = mipmapResolutions[ level ];
+				final double[] factors = mipmapResolutions[ level ];
+
+				final AffineTransform3D s = new AffineTransform3D();
+				s.set(
+					factors[ 0 ], 0.0, 0.0, 0.0,
+					0.0, factors[ 1 ], 0.0, 0.0,
+					0.0, 0.0, factors[ 2 ], 0.0 );
+	
+				System.out.println( "testing scale: " + s );
+	
+				AffineTransform3D model = m.copy();
+				model.concatenate( s );
+
+				final float[] size = getStepSize( model );
+
+				boolean isValid = true;
 				
-				// this fails if factors are not ints
-				final int fx = (int)Math.round( factors[ 0 ] );
-				final int fy = (int)Math.round( factors[ 1 ] );
-				final int fz = (int)Math.round( factors[ 2 ] );
-				
-				if ( fx <= dsx && fy <= dsy && fz <= dsz && contains( fx, ds ) && contains( fy, ds ) && contains( fz, ds ) )
-					bestLevel = level;
+				for ( int d = 0; d < 3; ++d )
+					if ( !( size[ d ] < 1.0 + acceptedError || Util.isApproxEqual( size[ d ], sizeMaxResolution[ d ], acceptedError ) ) )
+						isValid = false;
+
+				if ( isValid )
+				{
+					final double totalScale = factors[ 0 ] * factors[ 1 ] * factors[ 2 ];
+					
+					if ( totalScale > bestScaling )
+					{
+						bestScaling = totalScale;
+						bestLevel = level;
+					}
+				}
+				System.out.println( Util.printCoordinates( size ) + " valid: " + isValid + " bestScaling: " + bestScaling  );
 			}
 
-			final int fx = (int)Math.round( mipmapResolutions[ bestLevel ][ 0 ] );
-			final int fy = (int)Math.round( mipmapResolutions[ bestLevel ][ 1 ] );
-			final int fz = (int)Math.round( mipmapResolutions[ bestLevel ][ 2 ] );
-
-			t.set( mrImgLoader.getSetupImgLoader( vd.getViewSetupId() ).getMipmapTransforms()[ bestLevel ] );
-			
-			dsx /= fx;
-			dsy /= fy;
-			dsz /= fz;
-
-			IOFunctions.println(
-					"(" + new Date(System.currentTimeMillis()) + "): " +
-					"Using precomputed Multiresolution Images [" + fx + "x" + fy + "x" + fz + "], " +
-					"Remaining downsampling [" + dsx + "x" + dsy + "x" + dsz + "]" );
-
-			input = (RandomAccessibleInterval< T >) mrImgLoader.getSetupImgLoader( vd.getViewSetupId() ).getFloatImage( vd.getTimePointId(), bestLevel, false, LOAD_COMPLETELY );
-		}*/
+			System.out.println( "Choosing: " + mipmapResolutions[ bestLevel ][ 0 ] + " x " + mipmapResolutions[ bestLevel ][ 1 ] + " x " + mipmapResolutions[ bestLevel ][ 2 ] );
+			return null;
+		}
+		else
+		{
+			return imgLoader.getSetupImgLoader( viewId.getViewSetupId() ).getImage( viewId.getTimePointId() );
+		}
 	}
-	
+
 	public class MyActionListener implements ActionListener
 	{
 		final boolean as16bit;
