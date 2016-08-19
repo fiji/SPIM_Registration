@@ -105,7 +105,7 @@ public class DifferenceOfGaussian extends DifferenceOf implements GenericDialogA
 				final Image< FloatType > img = ImgLib2.wrapFloatToImgLib1( (Img<net.imglib2.type.numeric.real.FloatType>)input );
 
 				//
-				// compute Difference-of-Mean
+				// compute Difference-of-Gaussian
 				//
 				List< InterestPoint > ips = 
 					ProcessDOG.compute(
