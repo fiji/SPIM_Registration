@@ -212,7 +212,7 @@ public class LegacySlideBook6ImgLoader extends AbstractImgFactoryImgLoader
 						" angle=" + a.getName() + " ch=" + ch.getName() + " illum=" + i.getName() + " tp=" + t.getName() + " type=" + FormatTools.getPixelTypeString(pixelType) +
 						" img=" + img.getClass().getSimpleName() + "<" + type.getClass().getSimpleName() + ">]" );
 
-		final boolean isLittleEndian = false;
+		final boolean isLittleEndian = true;
 		final boolean isArray = ArrayImg.class.isInstance(img);
 
 		final byte[] b = new byte[ numPx * FormatTools.getBytesPerPixel(pixelType) ];
