@@ -229,6 +229,8 @@ public class DisplayViewPopup extends JMenu implements ExplorerWindowSetable
 
 	private static double[] stepSize( final AffineTransform3D model )
 	{
+		// have to go from input to output
+		// https://github.com/bigdataviewer/bigdataviewer-core/blob/master/src/main/java/bdv/util/MipmapTransforms.java
 		final float[] i0 = new float[ 3 ];
 		final float[] j0 = new float[ 3 ];
 
