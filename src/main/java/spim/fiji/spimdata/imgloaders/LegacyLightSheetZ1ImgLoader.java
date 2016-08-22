@@ -211,8 +211,10 @@ public class LegacyLightSheetZ1ImgLoader extends AbstractImgFactoryImgLoader
 					" angle=" + a.getName() + " ch=" + c.getName() + " illum=" + i.getName() + " tp=" + t.getName() + " type=" + meta.pixelTypeString() +
 					" img=" + img.getClass().getSimpleName() + "<" + type.getClass().getSimpleName() + ">]" );
 
+			// TODO: fix the channel/illum assignments, I think the lower one is correct but need example dataset
 			// compute the right channel from channelId & illuminationId
-			int ch = c.getId() * meta.numIlluminations() + i.getId();
+			int ch = c.getId() * meta.numIlluminations() + i.getId(); // c0( i0, i1 ), c1( i0, i1 ), c2( i0, i1 )
+			//int ch = i.getId() * meta.numChannels() + c.getId(); // i0( c0, c1, c2 ), i1( c0, c1, c2 )
 
 			for ( int z = 0; z < depth; ++z )
 			{

@@ -413,6 +413,7 @@ public class MVDeconvolution
 			//if ( view == 1 )
 			//new DisplayImage().exportImage( processingData.getImage(), "img" );
 			//if ( view == 1 )
+
 			//new DisplayImage().exportImage( tmp1, "quotient" );
 
 			//

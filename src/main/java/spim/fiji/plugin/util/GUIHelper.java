@@ -68,6 +68,13 @@ public class GUIHelper
 		GUIHelper.addHyperLinkListener( text, url );
 	}
 
+	public static final void addPreibischLabWebsite( final GenericDialog gd )
+	{
+		gd.addMessage( "This software is developed by the Preibisch Lab in collaboration with the ImgLib2 and Fiji team\nhttp://preibischlab.mdc-berlin.de/", new Font( Font.SANS_SERIF, Font.BOLD, 12 ) );
+		MultiLineLabel text =  (MultiLineLabel) gd.getMessage();
+		GUIHelper.addHyperLinkListener( text, "http://preibischlab.github.io/preibisch-labsite" );
+	}
+
 	public static void displayRegistrationNames( final GenericDialog gd, final HashMap< String, Integer > names )
 	{
 		if ( names.keySet().size() == 0 )
