@@ -14,6 +14,7 @@ import javax.swing.JOptionPane;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 
+import bdv.img.cache.VolatileImgCells.CellCache;
 import ij.gui.GenericDialog;
 import mpicbg.imglib.util.Util;
 import mpicbg.models.AffineModel3D;
@@ -199,12 +200,7 @@ public class DisplayViewPopup extends JMenu implements ExplorerWindowSetable
 							TransformVirtual.scaleTransform( model, 1.0 / downsampling );
 						}
 
-						final RandomAccessibleInterval inputImg;
-						
-						if ( count %2 == 0 )
-							inputImg = TransformView.openDownsampled( imgloader, viewId, model );
-						else
-							inputImg = imgloader.getSetupImgLoader( viewId.getViewSetupId() ).getImage( viewId.getTimePointId() );
+						final RandomAccessibleInterval inputImg = TransformView.openDownsampled( imgloader, viewId, model );
 
 						images.add( TransformView.transformView( inputImg, model, bb, 0, 1 ) );
 						weights.add( TransformWeight.transformBlending( inputImg, border, blending, model, bb ) );
@@ -214,15 +210,10 @@ public class DisplayViewPopup extends JMenu implements ExplorerWindowSetable
 					}
 
 					DisplayImage.getImagePlusInstance( new FusedRandomAccessibleInterval( new FinalInterval( dim ), images, weights ), true, "Fused, Virtual", 0, 255 ).show();
-					++count;
-
 				}
 			} ).start();
 		}
 	}
-
-	static int count = 0;
-	
 
 	public class MyActionListener implements ActionListener
 	{
