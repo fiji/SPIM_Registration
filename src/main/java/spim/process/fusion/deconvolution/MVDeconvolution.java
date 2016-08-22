@@ -46,7 +46,10 @@ public class MVDeconvolution
 	public static boolean debug = true;
 	public static int debugInterval = 1;
 	public static boolean setBackgroundToAvg = true;//false;
-	final static float minValue = 0.0001f;
+	final static float minValueImg = 1f; // mininal value for the input image (as it is not normalized)
+	final static private float minValue = 0.0001f; // minimal value for the deconvolved image
+
+	final static private boolean debugHeavy = false;
 
 	final int numViews, numDimensions;
 	final double lambda;
@@ -93,8 +96,8 @@ public class MVDeconvolution
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Deconvolved & temporary image factory: " + views.imgFactory().getClass().getSimpleName() );
 
-		for ( final MVDeconFFT m : data )
-			new DisplayImage().exportImage( m.getImage(), "input" );
+		//for ( final MVDeconFFT m : data )
+		//	new DisplayImage().exportImage( m.getImage(), "input" );
 
 		// init all views
 		views.init( iterationType );
@@ -383,13 +386,16 @@ public class MVDeconvolution
 			// [psi >> tmp1]
 			//
 
-			//if ( view == 1 )
-			//	new DisplayImage().exportImage( psi, "psi" );
+			if ( debugHeavy && view == 1 )
+				new DisplayImage().exportImage( processingData.getImage(), "input" );
+
+			if ( debugHeavy && view == 1 )
+				new DisplayImage().exportImage( psi, "psi" );
 
 			processingData.convolve1( psi, tmp1 );
 
-			//if ( view == 1 )
-			//	new DisplayImage().exportImage( tmp1, "psi blurred" );
+			if ( debugHeavy && view == 1 )
+				new DisplayImage().exportImage( tmp1, "psi blurred" );
 
 			//
 			// compute quotient img/psiBlurred
@@ -410,11 +416,8 @@ public class MVDeconvolution
 
 			FusionHelper.execTasks( tasks, nThreads, "compute quotient" );
 
-			//if ( view == 1 )
-			//new DisplayImage().exportImage( processingData.getImage(), "img" );
-			//if ( view == 1 )
-
-			//new DisplayImage().exportImage( tmp1, "quotient" );
+			if ( debugHeavy && view == 1 )
+				new DisplayImage().exportImage( tmp1, "quotient" );
 
 			//
 			// blur the residuals image with the kernel
@@ -425,8 +428,8 @@ public class MVDeconvolution
 			//
 			processingData.convolve2( tmp1, tmp2 );
 
-			//if ( view == 1 )
-			//new DisplayImage().exportImage( tmp2, "quotient blurred" );
+			if ( debugHeavy && view == 1 )
+				new DisplayImage().exportImage( tmp2, "quotient blurred" );
 
 			//
 			// compute final values
@@ -445,7 +448,7 @@ public class MVDeconvolution
 					@Override
 					public Void call() throws Exception
 					{
-						computeFinalValues( portion.getStartPosition(), portion.getLoopSize(), psi, tmp2, processingData.getWeight(), lambda, maxIntensities[ view ], sumMax[ portionId ] );
+						computeFinalValues( portion.getStartPosition(), portion.getLoopSize(), psi, tmp2, processingData.getWeight(), lambda, minValue, maxIntensities[ view ], sumMax[ portionId ] );
 						return null;
 					}
 				});
@@ -465,14 +468,14 @@ public class MVDeconvolution
 
 			IOFunctions.println( "iteration: " + iteration + ", view: " + view + " --- sum change: " + sumChange + " --- max change per pixel: " + maxChange );
 
-			//if ( view == 1 )
-			//new DisplayImage().exportImage( processingData.getWeight(), "weight" );
-			//if ( view == 1 )
-			//new DisplayImage().exportImage( psi, "psi new" );
-			//SimpleMultiThreading.threadHaltUnClean();
+			if ( debugHeavy && view == 1 )
+				new DisplayImage().exportImage( processingData.getWeight(), "weight" );
+			if ( debugHeavy && view == 1 )
+				new DisplayImage().exportImage( psi, "psi new" );
 		}
 
-		//SimpleMultiThreading.threadHaltUnClean();
+		if ( debugHeavy )
+			SimpleMultiThreading.threadHaltUnClean();
 	}
 
 	/**
@@ -548,6 +551,7 @@ public class MVDeconvolution
 			final RandomAccessibleInterval< FloatType > integral,
 			final RandomAccessibleInterval< FloatType > weight,
 			final double lambda,
+			final float minIntensity,
 			final float maxIntensity,
 			final double[] sumMax )
 	{
@@ -578,7 +582,7 @@ public class MVDeconvolution
 	
 				// get the final value
 				final float lastPsiValue = cursorPsi.get().get();
-				final float nextPsiValue = computeNextValue( lastPsiValue, cursorIntegral.get().get(), cursorWeight.get().get(), lambda, maxIntensity );
+				final float nextPsiValue = computeNextValue( lastPsiValue, cursorIntegral.get().get(), cursorWeight.get().get(), lambda, minIntensity, maxIntensity );
 				
 				// store the new value
 				cursorPsi.get().set( (float)nextPsiValue );
@@ -605,7 +609,7 @@ public class MVDeconvolution
 
 				// get the final value
 				final float lastPsiValue = cursorPsi.get().get();
-				float nextPsiValue = computeNextValue( lastPsiValue, raIntegral.get().get(), raWeight.get().get(), lambda, maxIntensity );
+				float nextPsiValue = computeNextValue( lastPsiValue, raIntegral.get().get(), raWeight.get().get(), lambda, minIntensity, maxIntensity );
 
 				// store the new value
 				cursorPsi.get().set( (float)nextPsiValue );
@@ -629,10 +633,17 @@ public class MVDeconvolution
 	 * @param lastPsiValue - the previous value
 	 * @param integralValue - result from the integral
 	 * @param lambda - if > 0, regularization
+	 * @param minIntensity - the lowest allowed value
 	 * @param maxIntensity - to normalize lambda (works between 0...1)
 	 * @return
 	 */
-	private static final float computeNextValue( final float lastPsiValue, final float integralValue, final float weight, final double lambda, final float maxIntensity )
+	private static final float computeNextValue(
+			final float lastPsiValue,
+			final float integralValue,
+			final float weight,
+			final double lambda,
+			final float minIntensity,
+			final float maxIntensity )
 	{
 		final float value = lastPsiValue * integralValue;
 		final float adjustedValue;
@@ -649,7 +660,7 @@ public class MVDeconvolution
 		}
 		else
 		{
-			adjustedValue = minValue;
+			adjustedValue = minIntensity;
 		}
 
 		//
@@ -658,9 +669,9 @@ public class MVDeconvolution
 		final float nextPsiValue;
 
 		if ( Double.isNaN( adjustedValue ) )
-			nextPsiValue = (float)minValue;
+			nextPsiValue = (float)minIntensity;
 		else
-			nextPsiValue = (float)Math.max( minValue, adjustedValue );
+			nextPsiValue = (float)Math.max( minIntensity, adjustedValue );
 
 		// compute the difference between old and new and apply the appropriate amount
 		return lastPsiValue + ( ( nextPsiValue - lastPsiValue ) * weight );

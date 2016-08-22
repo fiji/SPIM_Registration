@@ -229,7 +229,7 @@ public class ProcessForDeconvolution
 			if ( imgType == ImgType.VIRTUAL_IMGS || imgType == ImgType.PRECOMPUTED_IMGS )
 			{
 				// the virtual transformed image construct
-				final RandomAccessible< FloatType > virtual = new TransformedInputRandomAccessible( inputImg, transform, true, MVDeconvolution.minValue, new FloatType( 0 ), offset );
+				final RandomAccessible< FloatType > virtual = new TransformedInputRandomAccessible( inputImg, transform, true, MVDeconvolution.minValueImg, new FloatType( 0 ), offset );
 				final RandomAccessibleInterval< FloatType > virtualInterval = Views.interval( virtual, outputInterval );
 
 				if ( imgType == ImgType.PRECOMPUTED_IMGS )
