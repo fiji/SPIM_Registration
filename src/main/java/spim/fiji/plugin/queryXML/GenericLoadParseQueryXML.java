@@ -31,6 +31,9 @@ import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.generic.sequence.BasicImgLoader;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
+import mpicbg.spim.data.sequence.Angle;
+import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.Toggle_Cluster_Options;
@@ -715,10 +718,31 @@ public class GenericLoadParseQueryXML<
 
 						if ( e == null )
 						{
-							// something new we do not know
-							IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Unknown entity '" + attribute + "', adding placeholder entity to support it." );
-							e = new EmptyEntity( 0, attribute );
-							viewSetup.getAttributes().put( attribute, e );
+							if ( attribute.equals( "angle" ) )
+							{
+								IOFunctions.println( new Date( System.currentTimeMillis() ) + ": 'angle' attribute undefined, using Angle 0 to support it." );
+								e = new Angle( 0 );
+								viewSetup.setAttribute( e );
+							}
+							else if ( attribute.equals( "channel" ) )
+							{
+								IOFunctions.println( new Date( System.currentTimeMillis() ) + ": 'channel' attribute undefined, using Channel 0 to support it." );
+								e = new Channel( 0 );
+								viewSetup.setAttribute( e );
+							}
+							else if ( attribute.equals( "illumination" ) )
+							{
+								IOFunctions.println( new Date( System.currentTimeMillis() ) + ": 'illumination' attribute undefined, using Illumination 0 to support it." );
+								e = new Illumination( 0 );
+								viewSetup.setAttribute( e );
+							}
+							else
+							{
+								// something new we do not know
+								IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Unknown entity '" + attribute + "', adding placeholder entity to support it." );
+								e = new EmptyEntity( 0, attribute );
+								viewSetup.getAttributes().put( attribute, e );
+							}
 						}
 
 						final int id = e.getId();
