@@ -8,8 +8,6 @@ import java.awt.Font;
 import java.io.File;
 import java.util.ArrayList;
 
-import javax.media.j3d.Transform3D;
-
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
@@ -33,12 +31,9 @@ import net.imglib2.FinalDimensions;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.cell.CellImgFactory;
-import net.imglib2.img.planar.PlanarImgFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
-import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
@@ -156,33 +151,33 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 					final double calY = voxelSize.dimension( 1 ) / minResolution;
 					final double calZ = voxelSize.dimension( 2 ) / minResolution;
 
-					AffineTransform3D model = new AffineTransform3D();
-					model.set(
+					AffineTransform3D calModel = new AffineTransform3D();
+                    calModel.set(
 							1, 0, 0, -dim.dimension( 0 )/2 * calX,
 							0, 1, 0, -dim.dimension( 1 )/2 * calY,
 							0, 0, 1, -dim.dimension( 2 )/2 * calZ);
-					ViewTransform vt = new ViewTransformAffine( "Center view", model );
+					ViewTransform vt = new ViewTransformAffine( "Center view", calModel );
 					vr.preconcatenateTransform( vt );
 
 					final double[] tmp = new double[ 16 ];
 					final double[] axis = a.getRotationAxis();
 					final double degrees = a.getRotationAngleDegrees();
-					final Transform3D t = new Transform3D();
+					final AffineTransform3D rotModel = new AffineTransform3D();
 					final String d;
 
 					if ( axis[ 0 ] == 1 && axis[ 1 ] == 0 && axis[ 2 ] == 0 )
 					{
-						t.rotX( Math.toRadians( degrees ) );
+						rotModel.rotate(0, Math.toRadians( degrees ) );
 						d = "Rotation around x-axis by " + degrees + " degrees";
 					}
 					else if ( axis[ 0 ] == 0 && axis[ 1 ] == 1 && axis[ 2 ] == 0 )
 					{
-						t.rotY( Math.toRadians( degrees ) );
+                        rotModel.rotate(1, Math.toRadians( degrees ) );
 						d = "Rotation around y-axis by " + degrees + " degrees";
 					}
 					else if ( axis[ 0 ] == 0 && axis[ 0 ] == 0 && axis[ 2 ] == 1 )
 					{
-						t.rotZ( Math.toRadians( degrees ) );
+                        rotModel.rotate(2, Math.toRadians( degrees ) );
 						d = "Rotation around z-axis by " + degrees + " degrees";
 					}
 					else
@@ -191,14 +186,7 @@ public class SlideBook6 implements MultiViewDatasetDefinition
 						continue;
 					}
 
-					t.get( tmp );
-
-					model = new AffineTransform3D();
-					model.set( tmp[ 0 ], tmp[ 1 ], tmp[ 2 ], tmp[ 3 ],
-							tmp[ 4 ], tmp[ 5 ], tmp[ 6 ], tmp[ 7 ],
-							tmp[ 8 ], tmp[ 9 ], tmp[ 10 ], tmp[ 11 ] );
-
-					vt = new ViewTransformAffine( d, model );
+					vt = new ViewTransformAffine( d, rotModel );
 					vr.preconcatenateTransform( vt );
 					vr.updateModel();
 				}
