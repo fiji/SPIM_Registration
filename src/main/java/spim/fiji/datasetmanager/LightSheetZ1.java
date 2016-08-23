@@ -110,7 +110,8 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		// finally create the SpimData itself based on the sequence description and the view registration
 		final SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints, new BoundingBoxes() );
 
-		Apply_Transformation.applyAxis( spimData );
+		if ( meta.applyAxis() )
+			Apply_Transformation.applyAxis( spimData );
 
 		return spimData;
 	}
@@ -285,6 +286,7 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 
 		final boolean modifyCal = defaultModifyCal = gd.getNextBoolean();
 		final boolean modifyAxis = defaultRotAxis = gd.getNextBoolean();
+		meta.setApplyAxis( defaultApplyRotAxis = gd.getNextBoolean() );
 
 		if ( modifyAxis || modifyCal )
 		{
