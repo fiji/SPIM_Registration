@@ -11,6 +11,10 @@ import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 
+import bdv.BigDataViewer;
+import bdv.tools.InitializeViewerState;
+import bdv.tools.boundingbox.BoundingBoxDialog;
+import bdv.viewer.ViewerOptions;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
@@ -27,9 +31,6 @@ import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 import spim.fiji.spimdata.explorer.popup.BDVPopup;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import spim.process.fusion.export.ImgExport;
-import bdv.BigDataViewer;
-import bdv.tools.InitializeViewerState;
-import bdv.tools.boundingbox.BoundingBoxDialog;
 
 public class BigDataViewerBoundingBox extends BoundingBoxGUI
 {
@@ -59,7 +60,7 @@ public class BigDataViewerBoundingBox extends BoundingBoxGUI
 					return null;
 			}
 
-			bdv = new BigDataViewer( spimData, "BigDataViewer", null );
+			bdv = BigDataViewer.open( spimData, "BigDataViewer", IOFunctions.getProgressWriter(), ViewerOptions.options() );
 			bdvIsLocal = true;
 
 //			if ( !bdv.tryLoadSettings( panel.xml() ) ) TODO: this should work, but currently tryLoadSettings is protected. fix that.

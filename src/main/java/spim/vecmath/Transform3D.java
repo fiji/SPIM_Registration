@@ -49,54 +49,45 @@ package spim.vecmath;
  * <P>
  * <UL>
  * <LI>ZERO - zero matrix. All of the elements in the matrix have the value 0.</LI>
- * <P>
  * <LI>IDENTITY - identity matrix. A matrix with ones on its main diagonal and
  * zeros every where else.</LI>
- * <P>
  * <LI>SCALE - the matrix is a uniform scale matrix - there are no rotational or
  * translation components.</LI>
- * <P>
  * <LI>ORTHOGONAL - the four row vectors that make up an orthogonal matrix form
  * a basis, meaning that they are mutually orthogonal. The scale is unity and
  * there are no translation components.</LI>
- * <P>
  * <LI>RIGID - the upper 3 X 3 of the matrix is orthogonal, and there is a
  * translation component-the scale is unity.</LI>
- * <P>
  * <LI>CONGRUENT - this is an angle- and length-preserving matrix, meaning that
  * it can translate, rotate, and reflect about an axis, and scale by an amount
  * that is uniform in all directions. These operations preserve the distance
  * between any two points, and the angle between any two intersecting lines.</LI>
- * <P>
  * <LI>AFFINE - an affine matrix can translate, rotate, reflect, scale
  * anisotropically, and shear. Lines remain straight, and parallel lines remain
  * parallel, but the angle between intersecting lines can change.</LI>
- * <P>
  * </UL>
  * A matrix is also classified by the sign of its determinant:
  * <P>
  * <UL>
- * NEGATIVE_DETERMINANT - this matrix has a negative determinant. An orthogonal
+ * <LI>NEGATIVE_DETERMINANT - this matrix has a negative determinant. An orthogonal
  * matrix with a positive determinant is a rotation matrix. An orthogonal matrix
- * with a negative determinant is a reflection and rotation matrix.
- * <P>
+ * with a negative determinant is a reflection and rotation matrix.</LI>
  * </UL>
  * The Java 3D model for 4 X 4 transformations is:
- * <P>
  * <UL>
- * 
+ * <LI>
  * <pre>
  * [ m00 m01 m02 m03 ]   [ x ]   [ x' ]
  * [ m10 m11 m12 m13 ] . [ y ] = [ y' ]
  * [ m20 m21 m22 m23 ]   [ z ]   [ z' ]
  * [ m30 m31 m32 m33 ]   [ w ]   [ w' ]
- * 
+ *
  * x' = m00 . x+m01 . y+m02 . z+m03 . w
  * y' = m10 . x+m11 . y+m12 . z+m13 . w
  * z' = m20 . x+m21 . y+m22 . z+m23 . w
  * w' = m30 . x+m31 . y+m32 . z+m33 . w
  * </pre>
- * 
+ * </LI>
  * </ul>
  * <P>
  * Note: When transforming a Point3f or a Point3d, the input w is set to 1. When

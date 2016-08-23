@@ -16,8 +16,6 @@ import spim.process.fusion.ImagePortion;
  * Fuse one portion of a paralell fusion, supports no weights
  * 
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
- *
- * @param <T>
  */
 public class TransformInput implements Callable< String >
 {

@@ -52,10 +52,6 @@ public class DHMMetaData
 		this.compareAllSizes = compareAllSizes;
 	}
 
-	/**
-	 * @param compareAllSizes - open all 2d-planes and make sure the dimensions match?
-	 * @return
-	 */
 	public boolean loadMetaData()
 	{
 		if ( !checkIntegrity( directory ) )
@@ -106,6 +102,7 @@ public class DHMMetaData
 
 	/**
 	 * Go through the directories and make sure all timestamps are present for all ampliude/phase-stacks
+	 * @param compareAllSizes - open all 2d-planes and make sure the dimensions match?
 	 * @return
 	 */
 	public boolean getTimestampsAndZPlanes( final boolean compareAllSizes )
