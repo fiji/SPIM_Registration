@@ -50,8 +50,8 @@ public class MVDeconvolution
 	final static private float minValue = 0.0001f; // minimal value for the deconvolved image
 
 	final static private boolean debugHeavy = true;
-	final static private int debugHeavyView = 0;
-	final static private int debugHeavyIteration = 3;
+	final static private int debugHeavyView = -1;
+	final static private int debugHeavyIteration = 0;
 
 	final int numViews, numDimensions;
 	final double lambda;
@@ -388,16 +388,16 @@ public class MVDeconvolution
 			// [psi >> tmp1]
 			//
 
-			if ( debugHeavy && view == debugHeavyView && iteration == debugHeavyIteration)
-				new DisplayImage().exportImage( processingData.getImage(), "input" );
+			if ( debugHeavy && ( view == debugHeavyView || debugHeavyView < 0 ) && iteration == debugHeavyIteration)
+				new DisplayImage().exportImage( processingData.getImage(), "input " + view );
 
-			if ( debugHeavy && view == debugHeavyView && iteration == debugHeavyIteration)
-				new DisplayImage().exportImage( psi, "psi" );
+			if ( debugHeavy && ( view == debugHeavyView || debugHeavyView < 0 ) && iteration == debugHeavyIteration)
+				new DisplayImage().exportImage( psi, "psi " + view );
 
 			processingData.convolve1( psi, tmp1 );
 
-			if ( debugHeavy && view == debugHeavyView && iteration == debugHeavyIteration)
-				new DisplayImage().exportImage( tmp1, "psi blurred" );
+			if ( debugHeavy && ( view == debugHeavyView || debugHeavyView < 0 ) && iteration == debugHeavyIteration)
+				new DisplayImage().exportImage( tmp1, "psi blurred " + view );
 
 			//
 			// compute quotient img/psiBlurred
@@ -418,8 +418,8 @@ public class MVDeconvolution
 
 			FusionHelper.execTasks( tasks, nThreads, "compute quotient" );
 
-			if ( debugHeavy && view == debugHeavyView && iteration == debugHeavyIteration)
-				new DisplayImage().exportImage( tmp1, "quotient" );
+			if ( debugHeavy && ( view == debugHeavyView || debugHeavyView < 0 ) && iteration == debugHeavyIteration)
+				new DisplayImage().exportImage( tmp1, "quotient " + view );
 
 			//
 			// blur the residuals image with the kernel
@@ -430,8 +430,8 @@ public class MVDeconvolution
 			//
 			processingData.convolve2( tmp1, tmp2 );
 
-			if ( debugHeavy && view == debugHeavyView && iteration == debugHeavyIteration)
-				new DisplayImage().exportImage( tmp2, "quotient blurred" );
+			if ( debugHeavy && ( view == debugHeavyView || debugHeavyView < 0 ) && iteration == debugHeavyIteration)
+				new DisplayImage().exportImage( tmp2, "quotient blurred " + view );
 
 			//
 			// compute final values
@@ -456,7 +456,7 @@ public class MVDeconvolution
 				});
 			}
 
-			FusionHelper.execTasks( tasks, nThreads, "compute final values" );
+			FusionHelper.execTasks( tasks, nThreads, "compute final values " + view );
 
 			// accumulate the results from the individual threads
 			double sumChange = 0;
@@ -470,10 +470,10 @@ public class MVDeconvolution
 
 			IOFunctions.println( "iteration: " + iteration + ", view: " + view + " --- sum change: " + sumChange + " --- max change per pixel: " + maxChange );
 
-			if ( debugHeavy && view == debugHeavyView && iteration == debugHeavyIteration)
-				new DisplayImage().exportImage( processingData.getWeight(), "weight" );
-			if ( debugHeavy && view == debugHeavyView && iteration == debugHeavyIteration)
-				new DisplayImage().exportImage( psi, "psi new" );
+			if ( debugHeavy && ( view == debugHeavyView || debugHeavyView < 0 ) && iteration == debugHeavyIteration)
+				new DisplayImage().exportImage( processingData.getWeight(), "weight " + view );
+			if ( debugHeavy && ( view == debugHeavyView || debugHeavyView < 0 ) && iteration == debugHeavyIteration)
+				new DisplayImage().exportImage( psi, "psi new " + view );
 		}
 
 		if ( debugHeavy && iteration == debugHeavyIteration )
