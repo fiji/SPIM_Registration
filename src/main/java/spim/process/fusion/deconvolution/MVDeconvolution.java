@@ -403,6 +403,7 @@ public class MVDeconvolution
 			// compute quotient img/psiBlurred
 			// [tmp1, img >> tmp1]
 			//
+			tasks.clear();
 			for ( final ImagePortion portion : portions )
 			{
 				tasks.add( new Callable< Void >()
