@@ -49,7 +49,9 @@ public class MVDeconvolution
 	final static float minValueImg = 1f; // mininal value for the input image (as it is not normalized)
 	final static private float minValue = 0.0001f; // minimal value for the deconvolved image
 
-	final static private boolean debugHeavy = false;
+	final static private boolean debugHeavy = true;
+	final static private int debugHeavyView = 0;
+	final static private int debugHeavyIteration = 3;
 
 	final int numViews, numDimensions;
 	final double lambda;
@@ -386,15 +388,15 @@ public class MVDeconvolution
 			// [psi >> tmp1]
 			//
 
-			if ( debugHeavy && view == 1 )
+			if ( debugHeavy && view == debugHeavyView && iteration == debugHeavyIteration)
 				new DisplayImage().exportImage( processingData.getImage(), "input" );
 
-			if ( debugHeavy && view == 1 )
+			if ( debugHeavy && view == debugHeavyView && iteration == debugHeavyIteration)
 				new DisplayImage().exportImage( psi, "psi" );
 
 			processingData.convolve1( psi, tmp1 );
 
-			if ( debugHeavy && view == 1 )
+			if ( debugHeavy && view == debugHeavyView && iteration == debugHeavyIteration)
 				new DisplayImage().exportImage( tmp1, "psi blurred" );
 
 			//
@@ -416,7 +418,7 @@ public class MVDeconvolution
 
 			FusionHelper.execTasks( tasks, nThreads, "compute quotient" );
 
-			if ( debugHeavy && view == 1 )
+			if ( debugHeavy && view == debugHeavyView && iteration == debugHeavyIteration)
 				new DisplayImage().exportImage( tmp1, "quotient" );
 
 			//
@@ -428,7 +430,7 @@ public class MVDeconvolution
 			//
 			processingData.convolve2( tmp1, tmp2 );
 
-			if ( debugHeavy && view == 1 )
+			if ( debugHeavy && view == debugHeavyView && iteration == debugHeavyIteration)
 				new DisplayImage().exportImage( tmp2, "quotient blurred" );
 
 			//
@@ -468,13 +470,13 @@ public class MVDeconvolution
 
 			IOFunctions.println( "iteration: " + iteration + ", view: " + view + " --- sum change: " + sumChange + " --- max change per pixel: " + maxChange );
 
-			if ( debugHeavy && view == 1 )
+			if ( debugHeavy && view == debugHeavyView && iteration == debugHeavyIteration)
 				new DisplayImage().exportImage( processingData.getWeight(), "weight" );
-			if ( debugHeavy && view == 1 )
+			if ( debugHeavy && view == debugHeavyView && iteration == debugHeavyIteration)
 				new DisplayImage().exportImage( psi, "psi new" );
 		}
 
-		if ( debugHeavy )
+		if ( debugHeavy && iteration == debugHeavyIteration )
 			SimpleMultiThreading.threadHaltUnClean();
 	}
 
