@@ -35,7 +35,7 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import spim.fiji.datasetmanager.LightSheetZ1;
-import spim.fiji.datasetmanager.LightSheetZ1MetaData;
+import spim.headless.definedataset.LightSheetZ1MetaData;
 
 public class LegacyLightSheetZ1ImgLoader extends AbstractImgFactoryImgLoader
 {
