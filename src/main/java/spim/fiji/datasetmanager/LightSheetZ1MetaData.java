@@ -134,7 +134,7 @@ public class LightSheetZ1MetaData
 				return false;
 			}
 
-			printMetaData( r );
+			//printMetaData( r );
 		}
 		catch ( Exception e )
 		{
@@ -233,6 +233,7 @@ public class LightSheetZ1MetaData
 		{
 			IOFunctions.println( "An error occured parsing the main meta data: " + e + ". Stopping." );
 			e.printStackTrace();
+			printMetaData( r );
 			try { r.close(); } catch (IOException e1) { e1.printStackTrace(); }
 			return false;
 		}
@@ -245,6 +246,9 @@ public class LightSheetZ1MetaData
 		this.illuminations = new String[ numI ];
 		this.files = r.getSeriesUsedFiles();
 
+		// only one debug ouput
+		boolean printMetadata = false;
+
 		for ( int i = 0; i < numI; ++i )
 			illuminations[ i ] = String.valueOf( i );
 
@@ -254,7 +258,16 @@ public class LightSheetZ1MetaData
 		{
 			tmp = metaData.get( "Experiment|AcquisitionBlock|AcquisitionModeSetup|Objective #1" );
 			objective = (tmp != null) ? tmp.toString() : "Unknown Objective";
+		}
+		catch ( Exception e )
+		{
+			IOFunctions.println( "An error occured parsing the objective used: " + e + "\n. Proceeding." );
+			objective = "Unknown Objective";
+			printMetaData( r );
+		}
 
+		try
+		{
 			for ( int c = 0; c < numC; ++c )
 			{
 				tmp = metaData.get( "Information|Image|Channel|IlluminationWavelength|SinglePeak #" + ( c+1 ) );
@@ -286,9 +299,10 @@ public class LightSheetZ1MetaData
 		}
 		catch ( Exception e )
 		{
-			IOFunctions.println( "An error occured parsing the objective used: " + e + "\n. Proceeding." );
+			IOFunctions.println( "An error occured parsing the channels: " + e + "\n. Proceeding." );
 			for ( int c = 0; c < numC; ++c )
 				channels[ c ] = String.valueOf( c );
+			printMetadata = true;
 		}
 
 		try
@@ -317,29 +331,40 @@ public class LightSheetZ1MetaData
 			IOFunctions.println( "An error occured parsing the rotation angles: " + e + "\n. Proceeding." );
 			for ( int a = 0; a < numA; ++a )
 				angles[ a ] = String.valueOf( a );
+			printMetadata = true;
 		}
 
 		try
 		{
 			tmp = metaData.get( "Information|Image|V|AxisOfRotation #1" );
-			if ( tmp != null && tmp.toString().trim().length() == 5 )
+			if ( tmp != null && tmp.toString().trim().length() >= 5 )
 			{
+				IOFunctions.println( "Rotation axis: " + tmp );
 				final String[] axes = tmp.toString().split( " " );
-				
-				if ( Integer.parseInt( axes[ 0 ] ) == 1 )
+
+				if ( Double.parseDouble( axes[ 0 ] ) == 1.0 )
 					rotationAxis = 0;
-				else if ( Integer.parseInt( axes[ 1 ] ) == 1 )
+				else if ( Double.parseDouble( axes[ 1 ] ) == 1.0 )
 					rotationAxis = 1;
-				else if ( Integer.parseInt( axes[ 2 ] ) == 1 )
+				else if ( Double.parseDouble( axes[ 2 ] ) == 1.0 )
 					rotationAxis = 2;
 				else
+				{
 					rotationAxis = -1;
+					printMetadata = true;
+				}
+			}
+			else
+			{
+				rotationAxis = -1;
+				printMetadata = true;
 			}
 		}
 		catch ( Exception e )
 		{
 			IOFunctions.println( "An error occured parsing the rotation axis: " + e + "\n. Proceeding." );
 			rotationAxis = -1;
+			printMetadata = true;
 		}
 
 		try
@@ -362,6 +387,7 @@ public class LightSheetZ1MetaData
 		{
 			IOFunctions.println( "An error occured parsing the lightsheet thickness: " + e + "\n. Proceeding." );
 			lightsheetThickness = -1;
+			printMetadata = true;
 		}
 
 		try
@@ -407,7 +433,11 @@ public class LightSheetZ1MetaData
 		{
 			IOFunctions.println( "An error occured parsing the calibration: " + e + "\n. Proceeding." );
 			calX = calY = calZ = 1;
+			printMetadata = true;
 		}
+
+		if ( printMetadata )
+			printMetaData( r );
 
 		if ( !keepFileOpen )
 			try { r.close(); } catch (IOException e) { e.printStackTrace(); }
@@ -429,7 +459,7 @@ public class LightSheetZ1MetaData
 			final StringBuilder builder = new StringBuilder();
 			for ( final String candidate : metadata.keySet() )
 				builder.append( "\n" + candidate );
-			System.out.println( "Available keys:" + builder );
+			//System.out.println( "Available keys:" + builder );
 
 			IOFunctions.println( "Missing key " + key + " in LZ1 metadata" );
 			return Double.NaN;
