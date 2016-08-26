@@ -134,7 +134,7 @@ public class LightSheetZ1MetaData
 				return false;
 			}
 
-			//printMetaData( r );
+			printMetaData( r );
 		}
 		catch ( Exception e )
 		{
@@ -257,8 +257,9 @@ public class LightSheetZ1MetaData
 
 			for ( int c = 0; c < numC; ++c )
 			{
+				tmp = metaData.get( "Information|Image|Channel|IlluminationWavelength|SinglePeak #" + ( c+1 ) );
 				//tmp = metaData.get( "Information|Image|Channel|Wavelength #" + ( c+1 ) );
-				tmp = metaData.get( "Experiment|AcquisitionBlock|MultiTrackSetup|TrackSetup|Attenuator|Laser #" + ( c+1 ) );
+				//tmp = metaData.get( "Experiment|AcquisitionBlock|MultiTrackSetup|TrackSetup|Attenuator|Laser #" + ( c+1 ) );
 
 				channels[ c ] = (tmp != null) ? tmp.toString() : String.valueOf( c );
 
@@ -275,6 +276,12 @@ public class LightSheetZ1MetaData
 
 				if ( channels[ c ].length() == 0 )
 					channels[ c ] = String.valueOf( c );
+
+				try
+				{
+					channels[ c ] = Integer.toString( (int)Double.parseDouble( channels[ c ] ) );
+				}
+				catch ( NumberFormatException e ) {}
 			}
 		}
 		catch ( Exception e )
