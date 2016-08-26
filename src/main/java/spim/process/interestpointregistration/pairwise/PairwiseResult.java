@@ -27,8 +27,8 @@ public class PairwiseResult
 	public ViewId getViewIdB() { return viewIdB; }
 	public ArrayList< PointMatchGeneric< Detection > > getCandidates() { return candidates; }
 	public ArrayList< PointMatchGeneric< Detection > > getInliers() { return inliers; }
-	public String getResultMessage() { return result; }
-	public void setResultMessage( final String result ) { this.result = result; }
+	public String getDescription() { return desc; }
+	public void setDescription( final String desc ) { this.desc = desc; }
 	public double getError() { return error; }
 	public void setCandidates( final ArrayList< PointMatchGeneric< Detection > > candidates ) { this.candidates = candidates; }
 	public void setInliers( final ArrayList< PointMatchGeneric< Detection > > inliers, final double error )

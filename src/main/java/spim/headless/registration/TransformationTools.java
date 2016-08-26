@@ -280,7 +280,7 @@ public class TransformationTools
 		final GeometricHashingParameters gp = new GeometricHashingParameters( new AffineModel3D() );
 		final List< Pair< Pair< ViewId, ViewId >, PairwiseResult > > result =
 				MatcherPairwiseTools.computePairs( pairs, interestpoints, new GeometricHashingPairwise( rp, gp ) );
-		MatcherPairwiseTools.assignViewIdsAndErrorMessages( result, spimData.getSequenceDescription() );
+		MatcherPairwiseTools.assignLoggingViewIdsAndDescriptions( result, spimData.getSequenceDescription() );
 
 		// save the corresponding detections and output result
 		for ( final Pair< Pair< ViewId, ViewId >, PairwiseResult > p : result )

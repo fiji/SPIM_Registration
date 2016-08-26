@@ -27,7 +27,7 @@ public class MatcherPairwiseTools
 		return computePairs( pairs, interestpoints, matcher, null );
 	}
 
-	public static void assignViewIdsAndErrorMessages(
+	public static void assignLoggingViewIdsAndDescriptions(
 			final Collection< ? extends Pair< ? extends Pair< ? extends ViewId, ? extends ViewId >, ? extends PairwiseResult > > r,
 			final SequenceDescription sd )
 	{
@@ -41,13 +41,13 @@ public class MatcherPairwiseTools
 			pwr.setViewIdA( viewA );
 			pwr.setViewIdB( viewB );
 
-			final String description = "[TP=" + viewA.getTimePoint().getName() + 
-					" angle=" + viewA.getViewSetup().getAngle().getName() + ", ch=" + viewA.getViewSetup().getChannel().getName() +
-					", illum=" + viewA.getViewSetup().getIllumination().getName() + " >>> TP=" + viewB.getTimePoint().getName() +
-					" angle=" + viewB.getViewSetup().getAngle().getName() + ", ch=" + viewB.getViewSetup().getChannel().getName() +
-					", illum=" + viewB.getViewSetup().getIllumination().getName() + "]";
+			final String description =
+					"[TP=" + viewA.getTimePoint().getName() +
+					" ViewId=" + viewA.getViewSetup().getId() +
+					" >>> TP=" + viewB.getTimePoint().getName() +
+					" ViewId=" + viewB.getViewSetup().getId() + "]";
 
-			pwr.setResultMessage( description );
+			pwr.setDescription( description );
 		}
 	}
 
