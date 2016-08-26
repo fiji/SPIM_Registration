@@ -909,8 +909,8 @@ public class InteractiveDoG implements PlugIn
 			}
 			
 			label.setText( "Sigma 1 = " + sigma );
-			
-			if ( !event.getValueIsAdjusting() )
+
+			//if ( !event.getValueIsAdjusting() )
 			{
 				while ( isComputing )
 				{
@@ -985,7 +985,7 @@ public class InteractiveDoG implements PlugIn
 	{
 		new ImageJ();
 		
-		ImagePlus imp = new Opener().openImage( "/home/preibisch/Documents/Microscopy/SPIM/Harvard/f11e6/exp3/img_Ch0_Angle0.tif.zip" );
+		ImagePlus imp = new Opener().openImage( "/Users/spreibi/Documents/Microscopy/SPIM/HisYFP-SPIM/spim_TL18_Angle0.tif" );
 		//ImagePlus imp = new Opener().openImage( "D:/Documents and Settings/Stephan/My Documents/Downloads/1-315--0.08-isotropic-subvolume/1-315--0.08-isotropic-subvolume.tif" );
 		imp.show();
 		
