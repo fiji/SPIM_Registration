@@ -49,7 +49,7 @@ public class ExportSpimData2TIFF implements ImgExport
 
 	public static class FileNamePattern
 	{
-		public int layoutTP = 0, layoutChannels = 0, layoutIllum = 0, layoutAngles = 0;
+		public int layoutTP = 0, layoutChannels = 0, layoutIllum = 0, layoutAngles = 0, layoutTiles = 0;
 		public String fileNamePattern;
 	}
 
@@ -161,7 +161,7 @@ public class ExportSpimData2TIFF implements ImgExport
 		final StackImgLoaderIJ imgLoader = new StackImgLoaderIJ(
 				new File( params.getXMLFile() ).getParentFile(),
 				fnp.fileNamePattern, params.getImgFactory(),
-				fnp.layoutTP, fnp.layoutChannels, fnp.layoutIllum, fnp.layoutAngles, null );
+				fnp.layoutTP, fnp.layoutChannels, fnp.layoutIllum, fnp.layoutAngles, fnp.layoutTiles, null );
 		newSpimData.getSequenceDescription().setImgLoader( imgLoader );
 
 		return newSpimData;
@@ -177,6 +177,7 @@ public class ExportSpimData2TIFF implements ImgExport
 		fnp.layoutChannels = 0;
 		fnp.layoutIllum = 0;
 		fnp.layoutAngles = 0;
+		fnp.layoutTiles = 0;
 		fnp.fileNamePattern = "img";
 
 		if ( timepoints.size() > 1 )
@@ -201,6 +202,12 @@ public class ExportSpimData2TIFF implements ImgExport
 		{
 			fnp.fileNamePattern += "_Angle{a}";
 			fnp.layoutAngles = 1;
+		}
+		
+		if ( XMLTIFFImgTitler.getAllTiles( viewSetups ).size() > 1 )
+		{
+			fnp.fileNamePattern += "_Tile{x}";
+			fnp.layoutTiles = 1;
 		}
 
 		fnp.fileNamePattern += ".tif";

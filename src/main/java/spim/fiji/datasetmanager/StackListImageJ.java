@@ -18,6 +18,7 @@ public class StackListImageJ extends StackList
 	public static int defaultTimePointChoice = 1;
 	public static int defaultChannelleChoice = 0;
 	public static int defaultIlluminationChoice = 0;
+	public static int defaultTileChoice = 0;
 
 	@Override
 	public String getTitle() 
@@ -87,14 +88,20 @@ public class StackListImageJ extends StackList
 	}
 
 	@Override
+	protected double[] loadTileLocationFromMetaData(File file, int seriesOffset) { return null; }
+	
+	@Override
 	protected StackImgLoader createAndInitImgLoader( final String path, final File basePath, final ImgFactory< ? extends NativeType< ? > > imgFactory, SequenceDescription sequenceDescription )
 	{
 		return new StackImgLoaderIJ(
 				new File( basePath.getAbsolutePath(), path ),
 				fileNamePattern, imgFactory,
-				hasMultipleTimePoints, hasMultipleChannels, hasMultipleIlluminations, hasMultipleAngles,
+				hasMultipleTimePoints, hasMultipleChannels, hasMultipleIlluminations, hasMultipleAngles, hasMultipleTiles,
 				sequenceDescription );
 	}
+	
+	@Override
+	protected boolean canLoadTileLocationFromMeta() { return false; }
 
 	@Override
 	protected boolean supportsMultipleTimepointsPerFile() { return false; }
@@ -107,6 +114,9 @@ public class StackListImageJ extends StackList
 
 	@Override
 	protected boolean supportsMultipleIlluminationsPerFile() { return false; }
+	
+	@Override
+	protected boolean supportsMultipleTilesPerFile() { return false; }
 
 	@Override
 	protected int getDefaultMultipleAngles() { return defaultAngleChoice; }
@@ -119,6 +129,9 @@ public class StackListImageJ extends StackList
 
 	@Override
 	protected int getDefaultMultipleIlluminations() { return defaultIlluminationChoice; }
+	
+	@Override
+	protected int getDefaultMultipleTiles() { return defaultTileChoice; }
 
 	@Override
 	protected void setDefaultMultipleAngles( final int a ) { defaultAngleChoice = a; }
@@ -131,6 +144,9 @@ public class StackListImageJ extends StackList
 
 	@Override
 	protected void setDefaultMultipleIlluminations( final int i ) { defaultIlluminationChoice = i; }
+	
+	@Override
+	protected void setDefaultMultipleTiles( final int ti ) { defaultTileChoice = ti; }
 
 	@Override
 	public StackListImageJ newInstance() { return new StackListImageJ(); }

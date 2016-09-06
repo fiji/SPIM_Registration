@@ -8,6 +8,7 @@ import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.IntegerPattern;
+import mpicbg.spim.data.sequence.Tile;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
@@ -23,9 +24,9 @@ public abstract class LegacyStackImgLoader extends AbstractImgFactoryImgLoader
 	protected File path = null;
 	protected String fileNamePattern = null;
 	
-	protected String replaceTimepoints, replaceChannels, replaceIlluminations, replaceAngles;
-	protected int numDigitsTimepoints, numDigitsChannels, numDigitsIlluminations, numDigitsAngles;
-	protected int layoutTP, layoutChannels, layoutIllum, layoutAngles; // 0 == one, 1 == one per file, 2 == all in one file
+	protected String replaceTimepoints, replaceChannels, replaceIlluminations, replaceAngles, replaceTiles;
+	protected int numDigitsTimepoints, numDigitsChannels, numDigitsIlluminations, numDigitsAngles, numDigitsTiles;
+	protected int layoutTP, layoutChannels, layoutIllum, layoutAngles, layoutTiles; // 0 == one, 1 == one per file, 2 == all in one file
 		
 	protected AbstractSequenceDescription< ?, ?, ? > sequenceDescription;
 
@@ -35,6 +36,7 @@ public abstract class LegacyStackImgLoader extends AbstractImgFactoryImgLoader
 	public int getLayoutChannels() { return layoutChannels; }
 	public int getLayoutIlluminations() { return layoutIllum; }
 	public int getLayoutAngles() { return layoutAngles; }
+	public int getLayoutTiles() { return layoutTiles; }
 	
 	protected < T extends NativeType< T > > Img< T > instantiateImg( final long[] dim, final T type )
 	{
@@ -68,10 +70,11 @@ public abstract class LegacyStackImgLoader extends AbstractImgFactoryImgLoader
 		final String angle = vs.getAttribute( Angle.class ).getName();
 		final String channel = vs.getAttribute( Channel.class ).getName();
 		final String illum = vs.getAttribute( Illumination.class ).getName();
+		final String tile = vs.getAttribute( Tile.class ).getName();
 
 		final String[] fileName = StackList.getFileNamesFor( fileNamePattern, replaceTimepoints, replaceChannels,
-				replaceIlluminations, replaceAngles, timepoint, channel, illum, angle,
-				numDigitsTimepoints, numDigitsChannels, numDigitsIlluminations, numDigitsAngles );
+				replaceIlluminations, replaceAngles, replaceTiles, timepoint, channel, illum, angle, tile,
+				numDigitsTimepoints, numDigitsChannels, numDigitsIlluminations, numDigitsAngles, numDigitsTiles );
 
 		// check which of them exists and return it
 		for ( final String fn : fileName )
@@ -84,7 +87,8 @@ public abstract class LegacyStackImgLoader extends AbstractImgFactoryImgLoader
 				IOFunctions.println( "File '" + f.getAbsolutePath() + "' does not exist." );
 		}
 
-		IOFunctions.println( "Could not find file for tp=" + timepoint + ", angle=" + angle + ", channel=" + channel + ", ill=" + illum );
+		IOFunctions.println( "Could not find file for tp=" + timepoint + ", angle=" + angle + ", channel=" +
+							channel + ", ill=" + illum + ", tile=" + tile );
 
 		return null;
 	}
@@ -99,10 +103,11 @@ public abstract class LegacyStackImgLoader extends AbstractImgFactoryImgLoader
 	 * @param layoutChannels - 0 == one, 1 == one per file, 2 == all in one file
 	 * @param layoutIllum - 0 == one, 1 == one per file, 2 == all in one file
 	 * @param layoutAngles - 0 == one, 1 == one per file, 2 == all in one file
+	 * @param layoutTiles - 0 == one, 1 == one per file, 2 == all in one file
 	 */
 	public LegacyStackImgLoader(
 			final File path, final String fileNamePattern, final ImgFactory< ? extends NativeType< ? > > imgFactory,
-			final int layoutTP, final int layoutChannels, final int layoutIllum, final int layoutAngles,
+			final int layoutTP, final int layoutChannels, final int layoutIllum, final int layoutAngles, final int layoutTiles,
 			final AbstractSequenceDescription< ?, ?, ? > sequenceDescription )
 	{
 		super();
@@ -112,6 +117,7 @@ public abstract class LegacyStackImgLoader extends AbstractImgFactoryImgLoader
 		this.layoutChannels = layoutChannels;
 		this.layoutIllum = layoutIllum;
 		this.layoutAngles = layoutAngles;
+		this.layoutTiles = layoutTiles;
 		this.sequenceDescription = sequenceDescription;
 		
 		this.init( imgFactory );
@@ -121,13 +127,15 @@ public abstract class LegacyStackImgLoader extends AbstractImgFactoryImgLoader
 	{
 		setImgFactory( imgFactory );
 		
-		replaceTimepoints = replaceChannels = replaceIlluminations = replaceAngles = null;
-		numDigitsTimepoints = numDigitsChannels = numDigitsIlluminations = numDigitsAngles = -1;
+		replaceTimepoints = replaceChannels = replaceIlluminations = replaceAngles = replaceTiles = null;
+		numDigitsTimepoints = numDigitsChannels = numDigitsIlluminations = numDigitsAngles = numDigitsTiles = -1;
 		
 		replaceTimepoints = IntegerPattern.getReplaceString( fileNamePattern, StackList.TIMEPOINT_PATTERN );
 		replaceChannels = IntegerPattern.getReplaceString( fileNamePattern, StackList.CHANNEL_PATTERN );
 		replaceIlluminations = IntegerPattern.getReplaceString( fileNamePattern, StackList.ILLUMINATION_PATTERN );
 		replaceAngles = IntegerPattern.getReplaceString( fileNamePattern, StackList.ANGLE_PATTERN );
+		replaceTiles = IntegerPattern.getReplaceString( fileNamePattern, StackList.TILE_PATTERN );
+		
 
 		if ( replaceTimepoints != null )
 			numDigitsTimepoints = replaceTimepoints.length() - 2;
@@ -140,6 +148,9 @@ public abstract class LegacyStackImgLoader extends AbstractImgFactoryImgLoader
 		
 		if ( replaceAngles != null )
 			numDigitsAngles = replaceAngles.length() - 2;
+		
+		if ( replaceTiles != null )
+			numDigitsTiles = replaceTiles.length() - 2;
 		/*
 		IOFunctions.println( replaceTimepoints );
 		IOFunctions.println( replaceChannels );

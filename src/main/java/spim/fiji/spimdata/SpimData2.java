@@ -15,6 +15,7 @@ import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.SequenceDescription;
+import mpicbg.spim.data.sequence.Tile;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
@@ -170,6 +171,26 @@ public class SpimData2 extends SpimData
 		Collections.sort( angles );
 
 		return angles;
+	}
+	
+	
+	public static ArrayList< Tile > getAllTilesSorted( final SpimData data, final Collection< ? extends ViewId > viewIds )
+	{
+		final HashSet< Tile > tileSet = new HashSet<>();
+
+		for ( final ViewId v : viewIds )
+		{
+			final ViewDescription vd = data.getSequenceDescription().getViewDescription( v );
+			
+			if ( vd.isPresent() )
+				tileSet.add( vd.getViewSetup().getTile() );
+		}
+
+		final ArrayList< Tile > tiles = new ArrayList<>();
+		tiles.addAll( tileSet );
+		Collections.sort( tiles );
+
+		return tiles;
 	}
 
 	public static ArrayList< Illumination > getAllIlluminationsForChannelTimepointSorted( final SpimData data, final Collection< ? extends ViewId > viewIds, final Channel c, final TimePoint t )

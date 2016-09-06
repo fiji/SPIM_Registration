@@ -210,6 +210,7 @@ public class Resave_TIFF implements PlugIn
 		final int numChannels = SpimData2.getAllChannelsSorted( spimData, viewIds ).size();
 		final int numIlluminations = SpimData2.getAllIlluminationsSorted( spimData, viewIds ).size();
 		final int numTimepoints =  SpimData2.getAllTimePointsSorted( spimData, viewIds ).size();
+		final int numTiles =  SpimData2.getAllTilesSorted( spimData, viewIds ).size();
 
 		int i = 0;
 
@@ -238,6 +239,9 @@ public class Resave_TIFF implements PlugIn
 
 			if ( numAngles > 1 )
 				filename += "_Angle" + viewDescription.getViewSetup().getAngle().getName();
+			
+			if ( numTiles > 1 )
+				filename += "_Tile" + viewDescription.getViewSetup().getTile().getName();
 
 			save.exportImage( img, filename );
 
@@ -248,13 +252,14 @@ public class Resave_TIFF implements PlugIn
 
 	public static Pair< SpimData2, List< String > > createXMLObject( final SpimData2 spimData, final List< ViewId > viewIds, final Parameters params )
 	{
-		int layoutTP = 0, layoutChannels = 0, layoutIllum = 0, layoutAngles = 0;
+		int layoutTP = 0, layoutChannels = 0, layoutIllum = 0, layoutAngles = 0, layoutTiles = 0;
 		String filename = "img";
 
 		final int numAngles = SpimData2.getAllAnglesSorted( spimData, viewIds ).size();
 		final int numChannels = SpimData2.getAllChannelsSorted( spimData, viewIds ).size();
 		final int numIlluminations = SpimData2.getAllIlluminationsSorted( spimData, viewIds ).size();
 		final int numTimepoints =  SpimData2.getAllTimePointsSorted( spimData, viewIds ).size();
+		final int numTiles =  SpimData2.getAllTilesSorted( spimData, viewIds ).size();
 
 		if ( numTimepoints > 1 )
 		{
@@ -279,6 +284,12 @@ public class Resave_TIFF implements PlugIn
 			filename += "_Angle{a}";
 			layoutAngles = 1;
 		}
+		
+		if ( numTiles > 1 )
+		{
+			filename += "_Tile{x}";
+			layoutTiles = 1;
+		}
 
 		filename += ".tif";
 
@@ -292,7 +303,7 @@ public class Resave_TIFF implements PlugIn
 		final StackImgLoaderIJ imgLoader = new StackImgLoaderIJ(
 				new File( params.xmlFile ).getParentFile(),
 				filename, params.imgFactory,
-				layoutTP, layoutChannels, layoutIllum, layoutAngles, newSpimData.getSequenceDescription() );
+				layoutTP, layoutChannels, layoutIllum, layoutAngles, layoutTiles, newSpimData.getSequenceDescription() );
 		newSpimData.getSequenceDescription().setImgLoader( imgLoader );
 
 		return new ValuePair< SpimData2, List< String > >( newSpimData, filesToCopy );

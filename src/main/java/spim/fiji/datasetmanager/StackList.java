@@ -26,6 +26,7 @@ import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.IntegerPattern;
 import mpicbg.spim.data.sequence.MissingViews;
 import mpicbg.spim.data.sequence.SequenceDescription;
+import mpicbg.spim.data.sequence.Tile;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.TimePoints;
 import mpicbg.spim.data.sequence.TimePointsPattern;
@@ -34,6 +35,7 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.Dimensions;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.cell.CellImgFactory;
@@ -54,6 +56,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	final public static char CHANNEL_PATTERN = 'c';
 	final public static char ILLUMINATION_PATTERN = 'i';
 	final public static char ANGLE_PATTERN = 'a';
+	final public static char TILE_PATTERN = 'x';
 	
 	protected String[] dimensionChoiceTimePointsTrue = new String[] { "NO (one time-point)", "YES (one file per time-point)", "YES (all time-points in one file)" }; 
 	protected String[] dimensionChoiceTimePointsFalse = new String[] { dimensionChoiceTimePointsTrue[ 0 ], dimensionChoiceTimePointsTrue[ 1 ] }; 
@@ -66,17 +69,23 @@ public abstract class StackList implements MultiViewDatasetDefinition
 
 	protected String[] dimensionChoiceAnglesTrue = new String[] { "NO (one angle)", "YES (one file per angle)", "YES (all angles in one file)" }; 
 	protected String[] dimensionChoiceAnglesFalse = new String[] { dimensionChoiceAnglesTrue[ 0 ], dimensionChoiceAnglesTrue[ 1 ] }; 
+	
+	protected String[] dimensionChoiceTilesTrue = new String[] { "NO (one tile)", "YES (one file per tile)", "YES (all tiles in one file)" }; 
+	protected String[] dimensionChoiceTilesFalse = new String[] { dimensionChoiceTilesTrue[ 0 ], dimensionChoiceTilesTrue[ 1 ] }; 
 
 	protected abstract int getDefaultMultipleAngles();
 	protected abstract int getDefaultMultipleTimepoints();
 	protected abstract int getDefaultMultipleChannels();
 	protected abstract int getDefaultMultipleIlluminations();
+	protected abstract int getDefaultMultipleTiles();
+	
 	protected abstract void setDefaultMultipleAngles( int defaultAngleChoice );
 	protected abstract void setDefaultMultipleTimepoints( int defaultTimepointChoice );
 	protected abstract void setDefaultMultipleChannels( int defaultChannelChoice );
 	protected abstract void setDefaultMultipleIlluminations( int defaultIlluminationChoice );
+	protected abstract void setDefaultMultipleTiles( int defaultTileChoice );
 		
-	protected int hasMultipleAngles, hasMultipleTimePoints, hasMultipleChannels, hasMultipleIlluminations;
+	protected int hasMultipleAngles, hasMultipleTimePoints, hasMultipleChannels, hasMultipleIlluminations, hasMultipleTiles;
 	
 	public static boolean showDebugFileNames = true;
 	
@@ -84,11 +93,12 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	public static String defaultChannels = "1,2";
 	public static String defaultIlluminations = "0,1";
 	public static String defaultAngles = "0-315:45";
+	public static String defaultTiles = "1,2";
 
-	protected String timepoints, channels, illuminations, angles;
-	protected ArrayList< String > timepointNameList, channelNameList, illuminationsNameList, angleNameList;
-	protected String replaceTimepoints, replaceChannels, replaceIlluminations, replaceAngles;
-	protected int numDigitsTimepoints, numDigitsChannels, numDigitsIlluminations, numDigitsAngles;
+	protected String timepoints, channels, illuminations, angles, tiles;
+	protected ArrayList< String > timepointNameList, channelNameList, illuminationsNameList, angleNameList, tileNameList;
+	protected String replaceTimepoints, replaceChannels, replaceIlluminations, replaceAngles, replaceTiles;
+	protected int numDigitsTimepoints, numDigitsChannels, numDigitsIlluminations, numDigitsAngles, numDigitsTiles;
 	
 	/* new int[]{ t, c, i, a } - indices */
 	protected ArrayList< int[] > exceptionIds;
@@ -109,6 +119,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	public int calibration1, calibration2;
 	
 	protected HashMap< ViewSetupPrecursor, Calibration > calibrations = new HashMap< ViewSetupPrecursor, Calibration >();
+	protected HashMap< ViewSetupPrecursor, double[]> locations = new HashMap<>();
 	
 	public static String defaultDirectory = "";
 	public static String defaultFileNamePattern = null;
@@ -119,6 +130,47 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	protected abstract boolean supportsMultipleChannelsPerFile();
 	protected abstract boolean supportsMultipleAnglesPerFile();
 	protected abstract boolean supportsMultipleIlluminationsPerFile();
+	protected abstract boolean supportsMultipleTilesPerFile();
+	
+	protected abstract boolean canLoadTileLocationFromMeta();
+	protected abstract double[] loadTileLocationFromMetaData(File file, int seriesOffset);
+	
+	protected boolean loadAllTileLocations()
+	{
+		
+		for ( int t = 0; t < timepointNameList.size(); ++t )
+			for ( int c = 0; c < channelNameList.size(); ++c )
+				for ( int i = 0; i < illuminationsNameList.size(); ++i )
+					for ( int a = 0; a < angleNameList.size(); ++a )
+						for ( int ti = 0; ti < tileNameList.size(); ++ti )
+						{
+							
+							// multiple tiles per file --> read series corresponding to tile else: first series
+							final int seriesOffset = hasMultipleTiles == 2 ? ti : 0;
+							
+							// FIXME: see above
+							if ( exceptionIds.size() > 0 && 
+								 exceptionIds.get( 0 )[ 0 ] == t && exceptionIds.get( 0 )[ 1 ] == c && 
+								 exceptionIds.get( 0 )[ 2 ] == t && exceptionIds.get( 0 )[ 3 ] == a )
+							{
+								continue;
+							}
+							else
+							{
+								final ViewSetupPrecursor vsp = new ViewSetupPrecursor( c, i, a, ti );
+								
+								if ( locations.get( vsp ) == null )
+								{
+									final double[] loc = loadTileLocationFromMetaData( new File( directory, getFileNameFor( t, c, i, a, ti ) ), seriesOffset );
+									
+									if ( loc != null )
+										locations.put( vsp, loc );
+								}
+							}
+						}
+		
+		return true;
+	}
 	
 	protected class Calibration
 	{
@@ -145,32 +197,38 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	
 	protected class ViewSetupPrecursor
 	{
-		final public int c, i, a;
+		final public int c, i, a, t;
 		
-		public ViewSetupPrecursor( final int c, final int i, final int a )
+		public ViewSetupPrecursor( final int c, final int i, final int a, final int t )
 		{
 			this.c = c;
 			this.i = i;
 			this.a = a;
+			this.t = t;
 		}
 		
 		@Override
 		public int hashCode()
 		{
-			return c * illuminationsNameList.size() * angleNameList.size() + i * angleNameList.size() + a;
+			return t * tileNameList.size() * illuminationsNameList.size() * angleNameList.size() +
+					c * illuminationsNameList.size() * angleNameList.size() + i * angleNameList.size() + a;
 		}
 		
 		@Override
 		public boolean equals( final Object o )
 		{
 			if ( o instanceof ViewSetupPrecursor )
-				return c == ((ViewSetupPrecursor)o).c && i == ((ViewSetupPrecursor)o).i && a == ((ViewSetupPrecursor)o).a;
+				return c == ((ViewSetupPrecursor)o).c && i == ((ViewSetupPrecursor)o).i && a == ((ViewSetupPrecursor)o).a && t == ((ViewSetupPrecursor)o).t;
 			else
 				return false;
 		}
 		
 		@Override
-		public String toString() { return "channel=" + channelNameList.get( c ) + ", ill.dir.=" + illuminationsNameList.get( i ) + ", angle=" + angleNameList.get( a ); }
+		public String toString() 
+		{
+			return "channel=" + channelNameList.get( c ) + ", ill.dir.=" + illuminationsNameList.get( i ) + 
+					", angle=" + angleNameList.get( a ) + ", tile=" + tileNameList.get( t ); 
+		}
 	}
 	
 	protected boolean queryInformation()
@@ -221,6 +279,11 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		if ( !queryInformation() )
 			return null;
 		
+		// load locations if we can
+		if (canLoadTileLocationFromMeta())
+			if( !loadAllTileLocations() )
+				return null;
+		
 		// assemble timepints, viewsetups, missingviews and the imgloader
 		final TimePoints timepoints = this.createTimePoints();
 		final ArrayList< ViewSetup > setups = this.createViewSetups();
@@ -230,6 +293,14 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		final SequenceDescription sequenceDescription = new SequenceDescription( timepoints, setups, null, missingViews );
 		final ImgLoader imgLoader = createAndInitImgLoader( ".", new File( directory ), imgFactory, sequenceDescription );
 		sequenceDescription.setImgLoader( imgLoader );
+		
+		// FIXME: this is probably very inefficenient
+		for (TimePoint tp : timepoints.getTimePointsOrdered())
+			for (ViewSetup setup : setups)
+			{
+				Dimensions siz = imgLoader.getSetupImgLoader( setup.getId() ).getImageSize( tp.getId() );
+				setup.setSize( siz );
+			}
 
 		// get the minimal resolution of all calibrations
 		final double minResolution = Apply_Transformation.assembleAllMetaData(
@@ -279,7 +350,22 @@ public abstract class StackList implements MultiViewDatasetDefinition
 					   0.0f, calY, 0.0f, 0.0f,
 					   0.0f, 0.0f, calZ, 0.0f );
 				final ViewTransform vt = new ViewTransformAffine( "calibration", m );
-				viewRegistration.preconcatenateTransform( vt );
+				viewRegistration.preconcatenateTransform( vt );	
+				
+				final Tile tile = viewDescription.getViewSetup().getAttribute( Tile.class );
+
+				if (tile.hasLocation()){
+					final double shiftX = tile.getLocation()[0] / voxelSize.dimension( 0 );
+					final double shiftY = tile.getLocation()[1] / voxelSize.dimension( 1 );
+					final double shiftZ = tile.getLocation()[2] / voxelSize.dimension( 2 );
+					
+					final AffineTransform3D m2 = new AffineTransform3D();
+					m2.set( 1.0f, 0.0f, 0.0f, shiftX, 
+						   0.0f, 1.0f, 0.0f, shiftY,
+						   0.0f, 0.0f, 1.0f, shiftZ );
+					final ViewTransform vt2 = new ViewTransformAffine( "Translation", m2 );
+					viewRegistration.concatenateTransform( vt2 );
+				}
 				
 				viewRegistrationList.put( viewRegistration, viewRegistration );
 			}
@@ -295,6 +381,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	 */
 	protected MissingViews createMissingViews()
 	{
+		// TODO + FIXME: handle tiles here!
 		if ( exceptionIds.size() == 0 )
 			return null;
 
@@ -353,16 +440,26 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		final ArrayList< Angle > angles = new ArrayList< Angle >();
 		for ( int a = 0; a < angleNameList.size(); ++a )
 			angles.add( new Angle( a, angleNameList.get( a ) ) );
+		
+		final ArrayList< Tile > tiles = new ArrayList<>();
+		for ( int t = 0; t < tileNameList.size(); ++t )
+			tiles.add( new Tile( t, tileNameList.get( t ) ) );
 
 		final ArrayList< ViewSetup > viewSetups = new ArrayList< ViewSetup >();
 		for ( final Channel c : channels )
 			for ( final Illumination i : illuminations )
 				for ( final Angle a : angles )
-				{
-					final Calibration cal = calibrations.get( new ViewSetupPrecursor( c.getId(), i.getId(), a.getId() ) );
-					final VoxelDimensions voxelSize = new FinalVoxelDimensions( cal.calUnit, cal.calX, cal.calY, cal.calZ );
-					viewSetups.add( new ViewSetup( viewSetups.size(), null, null, voxelSize, c, a, i ) );
-				}
+					for ( final Tile t : tiles)
+					{						
+						// set location if we can
+						if (canLoadTileLocationFromMeta())
+							t.setLocation( locations.get( new ViewSetupPrecursor( c.getId(), i.getId(), a.getId(), t.getId() ) ) );
+						
+						final Calibration cal = calibrations.get( new ViewSetupPrecursor( c.getId(), i.getId(), a.getId(), t.getId() ) );
+						final VoxelDimensions voxelSize = new FinalVoxelDimensions( cal.calUnit, cal.calX, cal.calY, cal.calZ );
+						// TODO: Dimensions should not be null
+						viewSetups.add( new ViewSetup( viewSetups.size(), Integer.toString( viewSetups.size() ), null, voxelSize, t, c, a, i ) );
+					}
 
 		return viewSetups;
 	}
@@ -434,7 +531,8 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			for ( int c = 0; c < channelNameList.size(); ++c )
 				for ( int i = 0; i < illuminationsNameList.size(); ++i )
 					for ( int a = 0; a < angleNameList.size(); ++a )
-						calibrations.put( new ViewSetupPrecursor( c, i, a ),  cal );
+						for ( int t = 0; t < tileNameList.size(); ++t )
+							calibrations.put( new ViewSetupPrecursor( c, i, a, t ),  cal );
 		}
 		else // different voxel-size for all views
 		{
@@ -449,38 +547,39 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			for ( int c = 0; c < channelNameList.size(); ++c )
 				for ( int i = 0; i < illuminationsNameList.size(); ++i )
 					for ( int a = 0; a < angleNameList.size(); ++a )
-					{
-						ViewSetupPrecursor vsp = new ViewSetupPrecursor( c, i, a );
-						Calibration cal = calibrations.get( vsp );
-
-						if ( cal == null )
+						for ( int t = 0; t < tileNameList.size(); ++t )
 						{
-							if ( calibration2 < 2 ) // load from file
-							{
-								IOFunctions.println( "Could not read calibration for view: " + vsp );
-								IOFunctions.println( "Replacing with uniform calibration." );
-							}
-						
-							cal = new Calibration();
-							calibrations.put( vsp, cal );
-						}
-
-						if ( calibration2 > 0 ) // user define or verify the values
-						{
-							gd.addMessage( "View [" + vsp + "]" );
-
-							gd.addNumericField( "Pixel_distance_x", cal.calX, 5 );
-							gd.addNumericField( "Pixel_distance_y", cal.calY, 5 );
-							gd.addNumericField( "Pixel_distance_z", cal.calZ, 5 );
-							gd.addStringField( "Pixel_unit", cal.calUnit );
+							ViewSetupPrecursor vsp = new ViewSetupPrecursor( c, i, a, t );
+							Calibration cal = calibrations.get( vsp );
 	
-							gd.addMessage( "" );
+							if ( cal == null )
+							{
+								if ( calibration2 < 2 ) // load from file
+								{
+									IOFunctions.println( "Could not read calibration for view: " + vsp );
+									IOFunctions.println( "Replacing with uniform calibration." );
+								}
+							
+								cal = new Calibration();
+								calibrations.put( vsp, cal );
+							}
+	
+							if ( calibration2 > 0 ) // user define or verify the values
+							{
+								gd.addMessage( "View [" + vsp + "]" );
+	
+								gd.addNumericField( "Pixel_distance_x", cal.calX, 5 );
+								gd.addNumericField( "Pixel_distance_y", cal.calY, 5 );
+								gd.addNumericField( "Pixel_distance_z", cal.calZ, 5 );
+								gd.addStringField( "Pixel_unit", cal.calUnit );
+		
+								gd.addMessage( "" );
+							}
+							else
+							{
+								IOFunctions.println( "Calibration (voxel-size) read from file x:" + cal.calX + " y:" + cal.calY + " z:" + cal.calZ + " " + cal.calUnit + " for view " + vsp );
+							}
 						}
-						else
-						{
-							IOFunctions.println( "Calibration (voxel-size) read from file x:" + cal.calX + " y:" + cal.calY + " z:" + cal.calZ + " " + cal.calUnit + " for view " + vsp );
-						}
-					}
 
 			if ( calibration2 > 0 ) // user define or verify the values
 			{
@@ -494,16 +593,17 @@ public abstract class StackList implements MultiViewDatasetDefinition
 				for ( int c = 0; c < channelNameList.size(); ++c )
 					for ( int i = 0; i < illuminationsNameList.size(); ++i )
 						for ( int a = 0; a < angleNameList.size(); ++a )
-						{
-							final ViewSetupPrecursor vsp = new ViewSetupPrecursor( c, i, a );
-							final Calibration cal = calibrations.get( vsp );
-							
-							cal.calX = gd.getNextNumber();
-							cal.calY = gd.getNextNumber();
-							cal.calZ = gd.getNextNumber();
-							
-							cal.calUnit = gd.getNextString();
-						}
+							for ( int t = 0; t < tileNameList.size(); ++t )
+							{
+								final ViewSetupPrecursor vsp = new ViewSetupPrecursor( c, i, a, t );
+								final Calibration cal = calibrations.get( vsp );
+								
+								cal.calX = gd.getNextNumber();
+								cal.calY = gd.getNextNumber();
+								cal.calZ = gd.getNextNumber();
+								
+								cal.calUnit = gd.getNextString();
+							}
 			}
 		}
 		
@@ -522,57 +622,65 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			for ( int c = 0; c < channelNameList.size(); ++c )
 				for ( int i = 0; i < illuminationsNameList.size(); ++i )
 					for ( int a = 0; a < angleNameList.size(); ++a )
-					{
-						String fileName = getFileNameFor( t, c, i, a );
-						
-						final boolean fileExisits = new File( directory, fileName ).exists();
-						
-						String ext = "";
-						
-						if ( hasMultipleChannels > 0 && numDigitsChannels == 0 )
-							ext +=  "c = " + channelNameList.get( c );
-
-						if ( hasMultipleTimePoints > 0 && numDigitsTimepoints == 0 )
-							if ( ext.length() > 0 )
-								ext += ", t = " + timepointNameList.get( t );
-							else
-								ext += "t = " + timepointNameList.get( t );
-
-						if ( hasMultipleIlluminations > 0 && numDigitsIlluminations == 0 )
-							if ( ext.length() > 0 )
-								ext += ", i = " + illuminationsNameList.get( i );
-							else
-								ext += "i = " + illuminationsNameList.get( i );
-
-						if ( hasMultipleAngles > 0 && numDigitsAngles == 0 )
-							if ( ext.length() > 0 )
-								ext += ", a = " + angleNameList.get( a );
-							else
-								ext += "a = " + angleNameList.get( a );
-
-						if ( ext.length() > 1 )
-							fileName += "   >> [" + ext + "]";
-
-						final boolean select;
-
-						if ( fileExisits )
+						for ( int ti = 0; ti < tileNameList.size(); ++ti )
 						{
-							fileName += " (file found)";
-							select = true;
+							String fileName = getFileNameFor( t, c, i, a, ti );
+							
+							final boolean fileExisits = new File( directory, fileName ).exists();
+							
+							String ext = "";
+							
+							if ( hasMultipleChannels > 0 && numDigitsChannels == 0 )
+								ext +=  "c = " + channelNameList.get( c );
+	
+							if ( hasMultipleTimePoints > 0 && numDigitsTimepoints == 0 )
+								if ( ext.length() > 0 )
+									ext += ", t = " + timepointNameList.get( t );
+								else
+									ext += "t = " + timepointNameList.get( t );
+	
+							if ( hasMultipleIlluminations > 0 && numDigitsIlluminations == 0 )
+								if ( ext.length() > 0 )
+									ext += ", i = " + illuminationsNameList.get( i );
+								else
+									ext += "i = " + illuminationsNameList.get( i );
+	
+							if ( hasMultipleAngles > 0 && numDigitsAngles == 0 )
+								if ( ext.length() > 0 )
+									ext += ", a = " + angleNameList.get( a );
+								else
+									ext += "a = " + angleNameList.get( a );
+							
+							
+							if ( hasMultipleTiles > 0 && numDigitsTiles == 0 )
+								if ( ext.length() > 0 )
+									ext += ", x = " + tileNameList.get( ti );
+								else
+									ext += "x = " + tileNameList.get( ti );
+	
+							if ( ext.length() > 1 )
+								fileName += "   >> [" + ext + "]";
+	
+							final boolean select;
+	
+							if ( fileExisits )
+							{
+								fileName += " (file found)";
+								select = true;
+							}
+							else
+							{
+								select = false;
+								fileName += " (file NOT found)";
+							}
+							
+							gd.addCheckbox( fileName, select );
+							
+							// otherwise underscores are gone ...
+							((Checkbox)gd.getCheckboxes().lastElement()).setLabel( fileName );
+							if ( !fileExisits )
+								((Checkbox)gd.getCheckboxes().lastElement()).setBackground( GUIHelper.error );
 						}
-						else
-						{
-							select = false;
-							fileName += " (file NOT found)";
-						}
-						
-						gd.addCheckbox( fileName, select );
-						
-						// otherwise underscores are gone ...
-						((Checkbox)gd.getCheckboxes().lastElement()).setLabel( fileName );
-						if ( !fileExisits )
-							((Checkbox)gd.getCheckboxes().lastElement()).setBackground( GUIHelper.error );
-					}
 				
 		GUIHelper.addScrollBars( gd );
 
@@ -588,11 +696,13 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			for ( int c = 0; c < channelNameList.size(); ++c )
 				for ( int i = 0; i < illuminationsNameList.size(); ++i )
 					for ( int a = 0; a < angleNameList.size(); ++a )
-						if ( gd.getNextBoolean() == false )
-						{
-							exceptionIds.add( new int[]{ t, c, i, a } );
-							System.out.println( "adding missing views t:" + t + " c:" + c + " i:" + i + " a:" + a );
-						}
+						for ( int ti = 0; ti < tileNameList.size(); ++ti )
+							if ( gd.getNextBoolean() == false )
+							{
+								// FIXME: handle Tiles here
+								exceptionIds.add( new int[]{ t, c, i, a } );
+								System.out.println( "adding missing views t:" + t + " c:" + c + " i:" + i + " a:" + a );
+							}
 
 		return true;
 	}
@@ -615,6 +725,9 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		
 		if ( hasMultipleAngles > 0 )
 			gd.addStringField( "Acquisition_angles_", defaultAngles, 15 );
+		
+		if ( hasMultipleTiles > 0 )
+			gd.addStringField( "Tiles_", defaultTiles, 15 );
 
 		gd.addChoice( "Calibration_Type", calibrationChoice1, calibrationChoice1[ defaultCalibration1 ] );
 		gd.addChoice( "Calibration_Definition", calibrationChoice2, calibrationChoice2[ defaultCalibration2 ] );
@@ -637,8 +750,8 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		defaultDirectory = directory = gd.getNextString();
 		defaultFileNamePattern = fileNamePattern = gd.getNextString();
 
-		timepoints = channels = illuminations = angles = null;
-		replaceTimepoints = replaceChannels = replaceIlluminations = replaceAngles = null;
+		timepoints = channels = illuminations = angles = tiles = null;
+		replaceTimepoints = replaceChannels = replaceIlluminations = replaceAngles = replaceTiles = null;
 		
 		// get the String patterns and verify that the corresponding pattern, 
 		// e.g. {t} or {tt} exists in the pattern
@@ -724,12 +837,34 @@ public abstract class StackList implements MultiViewDatasetDefinition
 				numDigitsAngles = 0;
 			}
 		}
+		
+		if ( hasMultipleTiles > 0 )
+		{
+			defaultTiles = tiles = gd.getNextString();
+			
+			if ( hasMultipleTiles == 1 )
+			{
+				replaceTiles = IntegerPattern.getReplaceString( fileNamePattern, TILE_PATTERN );
+
+				if ( replaceTiles == null )
+					throw new ParseException( "Pattern {" + TILE_PATTERN + "} not present in " + fileNamePattern + 
+						" although you indicated there would be several tiles.", 0 );
+				else
+					numDigitsTiles = replaceTiles.length() - 2;
+			}
+			else
+			{
+				replaceTiles = null;
+				numDigitsTiles = 0;
+			}
+		}
 
 		// get the list of integers
 		timepointNameList = ( NamePattern.parseNameString( timepoints, false ) );
 		channelNameList = ( NamePattern.parseNameString( channels, true ) );
 		illuminationsNameList = ( NamePattern.parseNameString( illuminations, true ) );
 		angleNameList = ( NamePattern.parseNameString( angles, true ) );
+		tileNameList = ( NamePattern.parseNameString( tiles, true ) );
 
 		exceptionIds = new ArrayList< int[] >();
 
@@ -759,7 +894,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	}
 	
 	/**
-	 * Assemble the filename for the corresponding file based on the indices for time, channel, illumination and angle
+	 * Assemble the filename for the corresponding file based on the indices for time, channel, illumination, angle and tile
 	 * 
 	 * If the fileNamePattern is separated by ';', it will return multiple solutions for each filenamepattern
 	 * 
@@ -767,17 +902,18 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	 * @param chID
 	 * @param illID
 	 * @param angleID
+	 * @param tileID
 	 * @return
 	 */
-	protected String getFileNameFor( final int tpID, final int chID, final int illID, final int angleID )
+	protected String getFileNameFor( final int tpID, final int chID, final int illID, final int angleID, final int tileID )
 	{
-		return getFileNamesFor( fileNamePattern, replaceTimepoints, replaceChannels, replaceIlluminations, replaceAngles, 
-				timepointNameList.get( tpID ), channelNameList.get( chID ), illuminationsNameList.get( illID ), angleNameList.get( angleID ),
-				numDigitsTimepoints, numDigitsChannels, numDigitsIlluminations, numDigitsAngles )[ 0 ];
+		return getFileNamesFor( fileNamePattern, replaceTimepoints, replaceChannels, replaceIlluminations, replaceAngles, replaceTiles,
+				timepointNameList.get( tpID ), channelNameList.get( chID ), illuminationsNameList.get( illID ), angleNameList.get( angleID ), tileNameList.get( tileID ),
+				numDigitsTimepoints, numDigitsChannels, numDigitsIlluminations, numDigitsAngles, numDigitsTiles )[ 0 ];
 	}
 
 	/**
-	 * Assemble the filename for the corresponding file based on the indices for time, channel, illumination and angle
+	 * Assemble the filename for the corresponding file based on the indices for time, channel, illumination and angle and tile
 	 * 
 	 * If the fileNamePattern is separated by ';', it will return multiple solutions for each filenamepattern
 	 * 
@@ -786,21 +922,24 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	 * @param replaceChannels
 	 * @param replaceIlluminations
 	 * @param replaceAngles
+	 * @param replaceTiles
 	 * @param tpName
 	 * @param chName
 	 * @param illName
 	 * @param angleName
+	 * @param tileName
 	 * @param numDigitsTP
 	 * @param numDigitsCh
 	 * @param numDigitsIll
 	 * @param numDigitsAngle
+	 * @param numDigitsTile
 	 * @return
 	 */
 	public static String[] getFileNamesFor( String fileNames, 
 			final String replaceTimepoints, final String replaceChannels, 
-			final String replaceIlluminations, final String replaceAngles, 
-			final String tpName, final String chName, final String illName, final String angleName,
-			final int numDigitsTP, final int numDigitsCh, final int numDigitsIll, final int numDigitsAngle )
+			final String replaceIlluminations, final String replaceAngles, final String replaceTiles,
+			final String tpName, final String chName, final String illName, final String angleName, final String tileName,
+			final int numDigitsTP, final int numDigitsCh, final int numDigitsIll, final int numDigitsAngle, final int numDigitsTile )
 	{
 		String[] fileName = fileNames.split( ";" );
 		
@@ -817,6 +956,9 @@ public abstract class StackList implements MultiViewDatasetDefinition
 	
 			if ( replaceAngles != null )
 				fileName[ i ] = fileName[ i ].replace( replaceAngles, leadingZeros( angleName, numDigitsAngle ) );
+			
+			if ( replaceTiles != null )
+				fileName[ i ] = fileName[ i ].replace( replaceTiles, leadingZeros( tileName, numDigitsTile ) );
 		}
 		return fileName;
 	}
@@ -840,28 +982,30 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			for ( int c = 0; c < channelNameList.size(); ++c )
 				for ( int i = 0; i < illuminationsNameList.size(); ++i )
 					for ( int a = 0; a < angleNameList.size(); ++a )
-					{
-						if ( exceptionIds.size() > 0 && 
-							 exceptionIds.get( 0 )[ 0 ] == t && exceptionIds.get( 0 )[ 1 ] == c && 
-							 exceptionIds.get( 0 )[ 2 ] == t && exceptionIds.get( 0 )[ 3 ] == a )
-						{
-							continue;
-						}
-						else
-						{
-							final Calibration cal = loadCalibration( new File( directory, getFileNameFor( t, c, i, a ) ) );
-							
-							if ( cal == null )
+						for ( int ti = 0; ti < tileNameList.size(); ++ti )
+						{						
+							// FIXME: tiles in Exceptions
+							if ( exceptionIds.size() > 0 && 
+								 exceptionIds.get( 0 )[ 0 ] == t && exceptionIds.get( 0 )[ 1 ] == c && 
+								 exceptionIds.get( 0 )[ 2 ] == t && exceptionIds.get( 0 )[ 3 ] == a )
 							{
-								return false;
+								continue;
 							}
 							else
 							{
-								calibrations.put( new ViewSetupPrecursor( c, i, a ), cal );
-								return true;
+								final Calibration cal = loadCalibration( new File( directory, getFileNameFor( t, c, i, a, ti ) ) );
+								
+								if ( cal == null )
+								{
+									return false;
+								}
+								else
+								{
+									calibrations.put( new ViewSetupPrecursor( c, i, a, ti ), cal );
+									return true;
+								}
 							}
 						}
-					}
 		
 		return false;
 	}
@@ -877,26 +1021,28 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			for ( int c = 0; c < channelNameList.size(); ++c )
 				for ( int i = 0; i < illuminationsNameList.size(); ++i )
 					for ( int a = 0; a < angleNameList.size(); ++a )
-					{
-						if ( exceptionIds.size() > 0 && 
-							 exceptionIds.get( 0 )[ 0 ] == t && exceptionIds.get( 0 )[ 1 ] == c && 
-							 exceptionIds.get( 0 )[ 2 ] == t && exceptionIds.get( 0 )[ 3 ] == a )
+						for ( int ti = 0; ti < tileNameList.size(); ++ti )
 						{
-							continue;
-						}
-						else
-						{
-							final ViewSetupPrecursor vsp = new ViewSetupPrecursor( c, i, a );
-							
-							if ( calibrations.get( vsp ) == null )
+							// FIXME: see above
+							if ( exceptionIds.size() > 0 && 
+								 exceptionIds.get( 0 )[ 0 ] == t && exceptionIds.get( 0 )[ 1 ] == c && 
+								 exceptionIds.get( 0 )[ 2 ] == t && exceptionIds.get( 0 )[ 3 ] == a )
 							{
-								final Calibration cal = loadCalibration( new File( directory, getFileNameFor( t, c, i, a ) ) );
+								continue;
+							}
+							else
+							{
+								final ViewSetupPrecursor vsp = new ViewSetupPrecursor( c, i, a, ti );
 								
-								if ( cal != null )
-									calibrations.put( vsp, cal );
+								if ( calibrations.get( vsp ) == null )
+								{
+									final Calibration cal = loadCalibration( new File( directory, getFileNameFor( t, c, i, a, ti ) ) );
+									
+									if ( cal != null )
+										calibrations.put( vsp, cal );
+								}
 							}
 						}
-					}
 		
 		return true;
 	}
@@ -924,6 +1070,9 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		
 		if ( hasMultipleAngles == 1 )
 			pattern += "_Angle{a}";
+		
+		if ( hasMultipleTiles == 1 )
+			pattern += "_Tile{x}";
 		
 		return pattern + ".tif";
 	}
@@ -1012,6 +1161,26 @@ public abstract class StackList implements MultiViewDatasetDefinition
 			gd.addMessage( "NO support for multiple angles per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), red );
 			gd.addChoice( "Multiple_angles", dimensionChoiceAnglesFalse, dimensionChoiceAnglesFalse[ getDefaultMultipleAngles() ] );
 		}
+		
+		
+		gd.addMessage( "" );
+
+		if ( supportsMultipleTilesPerFile() )
+		{
+			if ( getDefaultMultipleTiles() >= dimensionChoiceTilesTrue.length )
+				setDefaultMultipleTiles( 0 );
+
+			gd.addMessage( "Supports multiple tiles per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), green );
+			gd.addChoice( "Multiple_tiles", dimensionChoiceTilesTrue, dimensionChoiceTilesTrue[ getDefaultMultipleTiles() ] );
+		}
+		else
+		{
+			if ( getDefaultMultipleTiles() >= dimensionChoiceTilesFalse.length )
+				setDefaultMultipleTiles( 0 );
+
+			gd.addMessage( "NO support for multiple tiles per file", new Font( Font.SANS_SERIF, Font.ITALIC, 11 ), red );
+			gd.addChoice( "Multiple_tiles", dimensionChoiceTilesFalse, dimensionChoiceTilesFalse[ getDefaultMultipleTiles() ] );
+		}
 
 		gd.showDialog();
 		
@@ -1022,11 +1191,13 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		hasMultipleChannels = gd.getNextChoiceIndex();
 		hasMultipleIlluminations = gd.getNextChoiceIndex();
 		hasMultipleAngles = gd.getNextChoiceIndex();
+		hasMultipleTiles = gd.getNextChoiceIndex();
 
 		setDefaultMultipleTimepoints( hasMultipleTimePoints );
 		setDefaultMultipleChannels( hasMultipleChannels );
 		setDefaultMultipleIlluminations( hasMultipleIlluminations );
 		setDefaultMultipleAngles( hasMultipleAngles );
+		setDefaultMultipleTiles( hasMultipleTiles );
 
 		return true;
 	}	

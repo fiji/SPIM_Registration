@@ -157,6 +157,7 @@ public class AppendSpimData2 implements ImgExport
 				Math.max( loader.getLayoutChannels(), fnp.layoutChannels ),
 				Math.max( loader.getLayoutIlluminations(), fnp.layoutIllum ),
 				Math.max( loader.getLayoutAngles(), fnp.layoutAngles ),
+				Math.max( loader.getLayoutTiles(), fnp.layoutTiles ),
 				this.spimData.getSequenceDescription() );
 
 		this.spimData.getSequenceDescription().setImgLoader( newLoader );

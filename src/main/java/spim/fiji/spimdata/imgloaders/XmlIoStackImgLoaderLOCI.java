@@ -11,8 +11,10 @@ import net.imglib2.type.NativeType;
 public class XmlIoStackImgLoaderLOCI extends XmlIoStackImgLoader< StackImgLoaderLOCI >
 {
 	@Override
-	protected StackImgLoaderLOCI createImgLoader( File path, String fileNamePattern, ImgFactory< ? extends NativeType< ? >> imgFactory, int layoutTP, int layoutChannels, int layoutIllum, int layoutAngles, AbstractSequenceDescription< ?, ?, ? > sequenceDescription )
+	protected StackImgLoaderLOCI createImgLoader( File path, String fileNamePattern, ImgFactory< ? extends NativeType< ? >> imgFactory, 
+			int layoutTP, int layoutChannels, int layoutIllum, int layoutAngles, int layoutTiles,
+			AbstractSequenceDescription< ?, ?, ? > sequenceDescription )
 	{
-		return new StackImgLoaderLOCI( path, fileNamePattern, imgFactory, layoutTP, layoutChannels, layoutIllum, layoutAngles, sequenceDescription );
+		return new StackImgLoaderLOCI( path, fileNamePattern, imgFactory, layoutTP, layoutChannels, layoutIllum, layoutAngles, layoutTiles, sequenceDescription );
 	}
 }

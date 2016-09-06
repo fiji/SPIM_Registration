@@ -7,6 +7,7 @@ import java.util.Set;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
+import mpicbg.spim.data.sequence.Tile;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewSetup;
 
@@ -49,6 +50,16 @@ public class XMLTIFFImgTitler implements ImgTitler
 			angles.add( v.getAngle() );
 		
 		return angles;
+	}
+	
+	public static Set< Tile > getAllTiles( final List< ViewSetup > viewSetups )
+	{
+		final HashSet< Tile > tiles = new HashSet<>();
+		
+		for ( final ViewSetup v : viewSetups )
+			tiles.add( v.getTile() );
+		
+		return tiles;
 	}
 
 	public static Set< Channel > getAllChannels( final List< ViewSetup > viewSetups )

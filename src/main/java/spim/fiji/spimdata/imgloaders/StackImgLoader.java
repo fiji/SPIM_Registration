@@ -20,6 +20,7 @@ public abstract class StackImgLoader< I extends LegacyStackImgLoader > extends L
 	public int getLayoutChannels() { return legacyImgLoader.layoutChannels; }
 	public int getLayoutIlluminations() { return legacyImgLoader.layoutIllum; }
 	public int getLayoutAngles() { return legacyImgLoader.layoutAngles; }
+	public int getLayoutTiles() { return legacyImgLoader.layoutTiles; }
 	public ImgFactory< ? extends NativeType< ? > > getImgFactory() { return legacyImgLoader.getImgFactory(); }
 
 	@Override

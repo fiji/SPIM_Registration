@@ -28,6 +28,7 @@ public abstract class XmlIoStackImgLoader< T extends StackImgLoader< ? > > imple
 	public static final String LAYOUT_CHANNEL_TAG = "layoutChannels";
 	public static final String LAYOUT_ILLUMINATION_TAG = "layoutIlluminations";
 	public static final String LAYOUT_ANGLE_TAG = "layoutAngles";
+	public static final String LAYOUT_TILE_TAG = "layoutTiles";
 
 	@Override
 	public Element toXml( final T imgLoader, final File basePath )
@@ -41,6 +42,7 @@ public abstract class XmlIoStackImgLoader< T extends StackImgLoader< ? > > imple
 		elem.addContent( XmlHelpers.intElement( LAYOUT_CHANNEL_TAG, imgLoader.getLayoutChannels() ) );
 		elem.addContent( XmlHelpers.intElement( LAYOUT_ILLUMINATION_TAG, imgLoader.getLayoutIlluminations() ) );
 		elem.addContent( XmlHelpers.intElement( LAYOUT_ANGLE_TAG, imgLoader.getLayoutAngles() ) );
+		elem.addContent( XmlHelpers.intElement( LAYOUT_TILE_TAG, imgLoader.getLayoutTiles() ) );
 		elem.addContent( XmlHelpers.textElement( IMGLIB2CONTAINER_PATTERN_TAG, imgLoader.getImgFactory().getClass().getSimpleName() ) );
 		
 		return elem;
@@ -58,6 +60,7 @@ public abstract class XmlIoStackImgLoader< T extends StackImgLoader< ? > > imple
 			int layoutChannels = XmlHelpers.getInt( elem, LAYOUT_CHANNEL_TAG );
 			int layoutIllum = XmlHelpers.getInt( elem, LAYOUT_ILLUMINATION_TAG );
 			int layoutAngles = XmlHelpers.getInt( elem, LAYOUT_ANGLE_TAG );
+			int layoutTiles = XmlHelpers.getInt( elem, LAYOUT_TILE_TAG );
 
 			final String container = XmlHelpers.getText( elem, IMGLIB2CONTAINER_PATTERN_TAG );
 			ImgFactory< FloatType > imgFactory;
@@ -91,7 +94,7 @@ public abstract class XmlIoStackImgLoader< T extends StackImgLoader< ? > > imple
 				}
 			}
 			
-			return createImgLoader( path, fileNamePattern, imgFactory, layoutTP, layoutChannels, layoutIllum, layoutAngles, sequenceDescription );
+			return createImgLoader( path, fileNamePattern, imgFactory, layoutTP, layoutChannels, layoutIllum, layoutAngles, layoutTiles, sequenceDescription );
 		}
 		catch ( final Exception e )
 		{
@@ -101,7 +104,7 @@ public abstract class XmlIoStackImgLoader< T extends StackImgLoader< ? > > imple
 	
 	protected abstract T createImgLoader(
 			final File path, final String fileNamePattern, final ImgFactory< ? extends NativeType< ? > > imgFactory,
-			final int layoutTP, final int layoutChannels, final int layoutIllum, final int layoutAngles,
+			final int layoutTP, final int layoutChannels, final int layoutIllum, final int layoutAngles, final int layoutTiles,
 			final AbstractSequenceDescription< ?, ?, ? > sequenceDescription );
 
 }

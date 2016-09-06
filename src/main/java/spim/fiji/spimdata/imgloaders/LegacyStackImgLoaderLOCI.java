@@ -23,6 +23,7 @@ import loci.formats.services.OMEXMLService;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.Tile;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
@@ -41,10 +42,10 @@ public class LegacyStackImgLoaderLOCI extends LegacyStackImgLoader
 {
 	public LegacyStackImgLoaderLOCI(
 			final File path, final String fileNamePattern, final ImgFactory< ? extends NativeType< ? > > imgFactory,
-			final int layoutTP, final int layoutChannels, final int layoutIllum, final int layoutAngles,
+			final int layoutTP, final int layoutChannels, final int layoutIllum, final int layoutAngles, final int layoutTiles,
 			final AbstractSequenceDescription< ?, ?, ? > sequenceDescription )
 	{
-		super( path, fileNamePattern, imgFactory, layoutTP, layoutChannels, layoutIllum, layoutAngles, sequenceDescription );
+		super( path, fileNamePattern, imgFactory, layoutTP, layoutChannels, layoutIllum, layoutAngles, layoutTiles, sequenceDescription );
 	}
 
 	/**
@@ -225,6 +226,7 @@ public class LegacyStackImgLoaderLOCI extends LegacyStackImgLoader
 		final int depth = r.getSizeZ();
 		int timepoints = r.getSizeT();
 		int channels = r.getSizeC();
+		final int tiles = r.getSeriesCount();
 		final int pixelType = r.getPixelType();
 		final int bytesPerPixel = FormatTools.getBytesPerPixel( pixelType );
 		final String pixelTypeString = FormatTools.getPixelTypeString( pixelType );
@@ -265,9 +267,10 @@ public class LegacyStackImgLoaderLOCI extends LegacyStackImgLoader
 			calX = calY = calZ = 1;
 		}
 
-		// which channel and timepoint to load from this file
+		// which channel and timepoint and tile to load from this file
 		int t = 0;
 		int c = 0;
+		int ti = 0;
 
 		if ( layoutTP == 2 )
 		{
@@ -288,6 +291,17 @@ public class LegacyStackImgLoaderLOCI extends LegacyStackImgLoader
 			{
 				r.close();
 				throw new RuntimeException( "File '" + path + "' has only channels [0 ... " + (channels-1) + "], but you want to open channel " + c + ". Stopping.");
+			}
+		}
+		
+		if ( layoutTiles == 2 )
+		{
+			ti = Integer.parseInt( viewDescription.getViewSetup().getAttribute( Tile.class ).getName() );
+
+			if ( ti >= tiles )
+			{
+				r.close();
+				throw new RuntimeException( "File '" + path + "' has only tiles [0 ... " + (tiles-1) + "], but you want to open tile " + ti + ". Stopping.");
 			}
 		}
 
@@ -311,13 +325,18 @@ public class LegacyStackImgLoaderLOCI extends LegacyStackImgLoader
 			throw new RuntimeException( "Could not instantiate " + getImgFactory().getClass().getSimpleName() + " for '" + path + "', most likely out of memory." );
 		}
 		else
-			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Opening '" + path + "' [" + width + "x" + height + "x" + depth + " ch=" + c + " tp=" + t + " type=" + pixelTypeString + " image=" + img.getClass().getSimpleName() + "<" + type.getClass().getSimpleName() + ">]" );
+			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Opening '" + path + "' [" + width + "x" + height + "x" + depth +
+					" ch=" + c + " tp=" + t + " tile=" + ti + " type=" + pixelTypeString + " image=" + img.getClass().getSimpleName() + "<" + type.getClass().getSimpleName() + ">]" );
 
 		final byte[] b = new byte[width * height * bytesPerPixel];
 
 		final int planeX = 0;
 		final int planeY = 1;
 
+		// Tiles are series in the File, move to the corresponding series
+		if (layoutTiles == 2)
+			r.setSeries( ti );
+		
 		for ( int z = 0; z < depth; ++z )
 		{
 			IJ.showProgress( (double)z / (double)depth );
@@ -456,6 +475,58 @@ public class LegacyStackImgLoaderLOCI extends LegacyStackImgLoader
 		}
 	}
 
+	
+	public static double[] loadTileLocation( final File file, final int seriesOffset )
+	{
+		final IFormatReader r = new ChannelSeparator();
+
+		if ( !LegacyStackImgLoaderLOCI.createOMEXMLMetadata( r ) )
+		{
+			try
+			{
+				r.close();
+			}
+			catch (IOException e)
+			{
+				e.printStackTrace();
+			}
+			return null;
+		}
+		
+
+		try
+		{
+			r.setId( file.getAbsolutePath() );
+
+			final MetadataRetrieve retrieve = (MetadataRetrieve)r.getMetadataStore();
+			double[] loc = new double[3];
+						
+			Length f = retrieve.getPlanePositionX( seriesOffset, 0 );
+			if ( f != null )
+				loc[0] = f.value().doubleValue();
+			
+			// TODO: y-axis is inverted in ND2-images? is there a way to find out if this is the case in any format?
+			f = retrieve.getPlanePositionY( seriesOffset, 0 );
+			if ( f != null )
+				loc[1] = - f.value().doubleValue();
+			
+			f = retrieve.getPlanePositionZ( seriesOffset, 0 );
+			if ( f != null )
+				loc[2] = f.value().doubleValue();
+			
+			
+			r.close();
+			return loc;
+			
+		}
+		catch ( Exception e)
+		{
+			IOFunctions.println( "Could not open file: '" + file.getAbsolutePath() + "'" );
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
 	public static Calibration loadMetaData( final File file )
 	{
 		final IFormatReader r = new ChannelSeparator();
@@ -472,7 +543,7 @@ public class LegacyStackImgLoaderLOCI extends LegacyStackImgLoader
 			}
 			return null;
 		}
-
+		
 
 		try
 		{
