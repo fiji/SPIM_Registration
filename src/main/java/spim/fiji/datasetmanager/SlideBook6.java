@@ -225,7 +225,7 @@ public class SlideBook6 implements MultiViewDatasetDefinition
         }
 
         // create one illumination for each capture if defaultCapture == -1, otherwise just one capture
-        for (int capture = firstCapture; capture < numCaptures; capture++) {
+        for (int capture = firstCapture; capture < firstCapture + numCaptures; capture++) {
             final int channels = meta.getNumChannels(capture);
 
             // multi-angle captures must have pairs of channels
