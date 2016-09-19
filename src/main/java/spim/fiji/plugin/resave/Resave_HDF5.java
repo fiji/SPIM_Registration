@@ -236,7 +236,8 @@ public class Resave_HDF5 implements PlugIn
 				sequenceDescription,
 				viewRegistrations,
 				viewsInterestPoints,
-				oldSpimData.getBoundingBoxes() );
+				oldSpimData.getBoundingBoxes(),
+				oldSpimData.getStitchingResults());
 
 		return newSpimData;
 	}

@@ -36,6 +36,7 @@ import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.imgloaders.StackImgLoaderIJ;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.fiji.spimdata.stitchingresults.StitchingResults;
 import spim.process.fusion.boundingbox.BoundingBoxGUI;
 
 public class ExportSpimData2TIFF implements ImgExport
@@ -267,7 +268,8 @@ public class ExportSpimData2TIFF implements ImgExport
 				sequenceDescription,
 				viewRegistrations,
 				viewsInterestPoints,
-				new BoundingBoxes() );
+				new BoundingBoxes(),
+				new StitchingResults());
 
 		return newSpimData;
 	}

@@ -23,6 +23,7 @@ import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.fiji.spimdata.stitchingresults.StitchingResults;
 
 /**
  * Extends the {@link SpimData} class; has additonally detections
@@ -33,18 +34,21 @@ public class SpimData2 extends SpimData
 {
 	private ViewInterestPoints viewsInterestPoints;
 	private BoundingBoxes boundingBoxes;
+	private StitchingResults stitchingResults;
 	
 	public SpimData2(
 			final File basePath,
 			final SequenceDescription sequenceDescription,
 			final ViewRegistrations viewRegistrations,
 			final ViewInterestPoints viewsInterestPoints,
-			final BoundingBoxes boundingBoxes )
+			final BoundingBoxes boundingBoxes,
+			final StitchingResults stitchingResults)
 	{
 		super( basePath, sequenceDescription, viewRegistrations );
 
 		this.viewsInterestPoints = viewsInterestPoints;
 		this.boundingBoxes = boundingBoxes;
+		this.stitchingResults = stitchingResults;
 	}
 
 	protected SpimData2()
@@ -52,6 +56,7 @@ public class SpimData2 extends SpimData
 
 	public ViewInterestPoints getViewInterestPoints() { return viewsInterestPoints; }
 	public BoundingBoxes getBoundingBoxes() { return boundingBoxes; }
+	public StitchingResults getStitchingResults() { return stitchingResults; }
 
 	protected void setViewsInterestPoints( final ViewInterestPoints viewsInterestPoints )
 	{
@@ -61,6 +66,11 @@ public class SpimData2 extends SpimData
 	protected void setBoundingBoxes( final BoundingBoxes boundingBoxes )
 	{
 		this.boundingBoxes = boundingBoxes;
+	}
+	
+	protected void setStitchingResults( final StitchingResults sr )
+	{
+		this.stitchingResults = sr;
 	}
 
 	/**

@@ -503,7 +503,7 @@ public class LegacyStackImgLoaderLOCI extends LegacyStackImgLoader
 						
 			Length f = retrieve.getPlanePositionX( seriesOffset, 0 );
 			if ( f != null )
-				loc[0] = f.value().doubleValue();
+				loc[0] = - f.value().doubleValue();
 			
 			// TODO: y-axis is inverted in ND2-images? is there a way to find out if this is the case in any format?
 			f = retrieve.getPlanePositionY( seriesOffset, 0 );

@@ -20,11 +20,14 @@ import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.boundingbox.XmlIoBoundingBoxes;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.fiji.spimdata.interestpoints.XmlIoViewInterestPoints;
+import spim.fiji.spimdata.stitchingresults.StitchingResults;
+import spim.fiji.spimdata.stitchingresults.XmlIoStitchingResults;
 
 public class XmlIoSpimData2 extends XmlIoAbstractSpimData< SequenceDescription, SpimData2 >
 {
 	final XmlIoViewInterestPoints xmlViewsInterestPoints;
 	final XmlIoBoundingBoxes xmlBoundingBoxes;
+	final XmlIoStitchingResults xmlStitchingResults;
 
 	String clusterExt, lastFileName;
 	public static int numBackups = 5;
@@ -38,6 +41,9 @@ public class XmlIoSpimData2 extends XmlIoAbstractSpimData< SequenceDescription, 
 
 		this.xmlBoundingBoxes = new XmlIoBoundingBoxes();
 		this.handledTags.add( xmlBoundingBoxes.getTag() );
+		
+		this.xmlStitchingResults = new XmlIoStitchingResults();
+		this.handledTags.add( xmlStitchingResults.getTag() );
 
 		this.clusterExt = clusterExt;
 	}
@@ -144,6 +150,15 @@ public class XmlIoSpimData2 extends XmlIoAbstractSpimData< SequenceDescription, 
 		else
 			boundingBoxes = xmlBoundingBoxes.fromXml( elem );
 		spimData.setBoundingBoxes( boundingBoxes );
+		
+		
+		final StitchingResults stitchingResults;
+		elem = root.getChild( xmlStitchingResults.getTag() );
+		if ( elem == null )
+			stitchingResults = new StitchingResults();
+		else
+			stitchingResults = xmlStitchingResults.fromXml( elem );
+		spimData.setStitchingResults(  stitchingResults );
 
 		return spimData;
 	}
@@ -155,6 +170,7 @@ public class XmlIoSpimData2 extends XmlIoAbstractSpimData< SequenceDescription, 
 
 		root.addContent( xmlViewsInterestPoints.toXml( spimData.getViewInterestPoints() ) );
 		root.addContent( xmlBoundingBoxes.toXml( spimData.getBoundingBoxes() ) );
+		root.addContent( xmlStitchingResults.toXml( spimData.getStitchingResults() ) );
 
 		return root;
 	}

@@ -444,7 +444,8 @@ public class Resave_TIFF implements PlugIn
 				sequenceDescription,
 				viewRegistrations,
 				viewsInterestPoints,
-				spimData.getBoundingBoxes() );
+				spimData.getBoundingBoxes(),
+				spimData.getStitchingResults());
 
 		return newSpimData;
 	}
