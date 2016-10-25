@@ -27,7 +27,7 @@ import mpicbg.models.TileConfiguration;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
-import spim.fiji.ImgLib2Temp.Pair;
+import net.imglib2.util.Pair;
 import spim.process.interestpointregistration.pairwise.PairwiseResult;
 
 /**

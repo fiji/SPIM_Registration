@@ -1,6 +1,9 @@
 package spim.fiji.plugin.interestpointregistration.pairwise;
 
+import java.util.List;
+
 import ij.gui.GenericDialog;
+import mpicbg.spim.data.sequence.ViewId;
 import spim.process.interestpointregistration.pairwise.MatcherPairwise;
 
 public interface PairwiseGUI

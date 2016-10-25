@@ -2,15 +2,19 @@ package spim.process.interestpointregistration.pairwise;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
-import spim.fiji.ImgLib2Temp.Pair;
-import spim.fiji.ImgLib2Temp.ValuePair;
-import spim.process.interestpointregistration.pairwise.range.AllInRange;
-import spim.process.interestpointregistration.pairwise.range.RangeComparator;
+import mpicbg.spim.data.sequence.ViewId;
+import net.imglib2.util.Pair;
+import net.imglib2.util.ValuePair;
+import spim.process.interestpointregistration.pairwise.constellation.range.AllInRange;
+import spim.process.interestpointregistration.pairwise.constellation.range.RangeComparator;
 
 public class PairwiseStrategyTools
 {
+	
+
 	public static < V > List< Pair< V, V > > allToAllRange(
 			final List< ? extends V > views,
 			final Collection< V > fixed,
@@ -63,5 +67,20 @@ public class PairwiseStrategyTools
 				return true;
 
 		return false;
+	}
+
+	public static void main( String[] args )
+	{
+		final ArrayList< ViewId > views = new ArrayList<>();
+
+		for ( int tp = 0; tp < 10; ++tp )
+			for ( int viewSetupId = 0; viewSetupId < 6; ++viewSetupId )
+				views.add( new ViewId( tp, viewSetupId ) );
+
+		final ArrayList< Pair< ViewId, ViewId > > pairs = new ArrayList<>();
+
+		for ( int tp = 0; tp < 10; ++tp )
+		{
+		}
 	}
 }

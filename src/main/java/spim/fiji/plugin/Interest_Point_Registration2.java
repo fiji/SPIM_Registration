@@ -2,6 +2,7 @@ package spim.fiji.plugin;
 
 import java.awt.Font;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -149,6 +150,10 @@ public class Interest_Point_Registration2 implements PlugIn
 			final String xmlFileName,
 			final boolean saveXML )
 	{
+		// filter not present ViewIds
+		final List< ViewId > removed = SpimData2.filterMissingViews( data, viewIds );
+		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Removed " +  removed.size() + " views because they are not present." );
+
 		// which timepoints are part of the 
 		final List< TimePoint > timepointToProcess = SpimData2.getAllTimePointsSorted( data, viewIds );
 		final int nAllTimepoints = data.getSequenceDescription().getTimePoints().size();
@@ -519,12 +524,12 @@ public class Interest_Point_Registration2 implements PlugIn
 
 		if ( brp.registrationType != RegistrationType.TO_REFERENCE_TIMEPOINT )
 		{
-			arp.fixViews = defaultFixViews = gd.getNextChoiceIndex();
-			arp.mapBack = defaultMapBack = gd.getNextChoiceIndex();
+			arp.fixViewsIndex = defaultFixViews = gd.getNextChoiceIndex();
+			arp.mapBackIndex = defaultMapBack = gd.getNextChoiceIndex();
 		}
 		else
 		{
-			arp.fixViews = arp.mapBack = -1;
+			arp.fixViewsIndex = arp.mapBackIndex = -1;
 		}
 
 		if ( !brp.pwr.parseDialog( gd ) )
@@ -563,14 +568,7 @@ public class Interest_Point_Registration2 implements PlugIn
 		if ( timepointToProcess.size() > 1 )
 			choicesGlobal = registrationTypes.clone();
 		else
-		{
-			// suggest a registration to a reference timepoint (that we do not process here)
-			// if there the entire dataset description has more than one timepoint
-			if ( nAllTimepoints > 1 )
-				choicesGlobal = new String[]{ registrationTypes[ 0 ], registrationTypes[ 1 ] };
-			else
-				choicesGlobal = new String[]{ registrationTypes[ 0 ] };
-		}
+			choicesGlobal = new String[]{ registrationTypes[ 0 ] };
 
 		if ( defaultRegistrationType >= choicesGlobal.length )
 			defaultRegistrationType = 0;

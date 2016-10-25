@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.pairwise.range;
+package spim.process.interestpointregistration.pairwise.constellation.range;
 
 public interface RangeComparator< V >
 {

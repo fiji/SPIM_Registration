@@ -12,9 +12,9 @@ import java.util.concurrent.Future;
 import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
+import net.imglib2.util.Pair;
+import net.imglib2.util.ValuePair;
 import spim.Threads;
-import spim.fiji.ImgLib2Temp.Pair;
-import spim.fiji.ImgLib2Temp.ValuePair;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 
 public class MatcherPairwiseTools

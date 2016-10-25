@@ -94,6 +94,10 @@ public class Interest_Point_Detection implements PlugIn
 			final String xmlFileName,
 			final boolean saveXML )
 	{
+		// filter not present ViewIds
+		final List< ViewId > removed = SpimData2.filterMissingViews( data, viewIds );
+		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Removed " +  removed.size() + " views because they are not present." );
+
 		// the GenericDialog needs a list[] of String
 		final String[] descriptions = new String[ staticAlgorithms.size() ];
 		

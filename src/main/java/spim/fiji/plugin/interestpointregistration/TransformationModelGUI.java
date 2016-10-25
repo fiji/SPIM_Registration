@@ -75,8 +75,8 @@ public class TransformationModelGUI
 			return false;
 		}
 
-		this.regularizedModelIndex = gd.getNextChoiceIndex();
-		this.lambda = gd.getNextNumber();
+		this.regularizedModelIndex = defaultRegularizationModelIndex = gd.getNextChoiceIndex();
+		this.lambda = defaultLambda = gd.getNextNumber();
 		this.regularize = true;
 
 		return true;
