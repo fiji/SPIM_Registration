@@ -104,9 +104,9 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	 */
 	public void fixViews( final List< V > fixedViews )
 	{
-		for ( final V view : fixedViews )
+		for ( fi nal V view : fixedViews )
 		{
-			
+		
 		}
 	}
 

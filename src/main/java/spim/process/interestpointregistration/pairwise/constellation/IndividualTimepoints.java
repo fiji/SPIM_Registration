@@ -1,12 +1,17 @@
 package spim.process.interestpointregistration.pairwise.constellation;
 
+import java.util.Collection;
+import java.util.List;
+
 import mpicbg.spim.data.sequence.ViewId;
 import spim.process.interestpointregistration.pairwise.constellation.range.TimepointRange;
 
-public class IndividualTimepoints< V extends ViewId > extends AllToAllRange< V >
+public class IndividualTimepoints extends AllToAllRange< ViewId >
 {
-	public IndividualTimepoints()
+	public IndividualTimepoints(
+			final List< ViewId > views,
+			final Collection< Collection< ViewId > > groups )
 	{
-		super( new TimepointRange< V >( 0 ) );
+		super( views, groups, new TimepointRange< ViewId >( 0 ) );
 	}
 }
