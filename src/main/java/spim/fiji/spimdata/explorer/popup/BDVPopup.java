@@ -13,6 +13,7 @@ import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.apply.BigDataViewerTransformationWindow;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
+import spim.fiji.spimdata.explorer.GroupedRowWindow;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import bdv.AbstractSpimSource;
@@ -24,6 +25,7 @@ import bdv.viewer.ViewerOptions;
 import bdv.viewer.ViewerPanel;
 import bdv.viewer.state.SourceState;
 import bdv.viewer.state.ViewerState;
+
 
 public class BDVPopup extends JMenuItem implements ExplorerWindowSetable, BasicBDVPopup
 {
@@ -176,7 +178,7 @@ public class BDVPopup extends JMenuItem implements ExplorerWindowSetable, BasicB
 //		if ( !bdv.tryLoadSettings( panel.xml() ) ) TODO: this should work, but currently tryLoadSettings is protected. fix that.
 			InitializeViewerState.initBrightness( 0.001, 0.999, bdv.getViewer(), bdv.getSetupAssignments() );
 		
-		ViewSetupExplorerPanel.updateBDV( bdv, panel.colorMode(), panel.getSpimData(), panel.firstSelectedVD(), panel.selectedRows() );
+		ViewSetupExplorerPanel.updateBDV( bdv, panel.colorMode(), panel.getSpimData(), panel.firstSelectedVD(), ((GroupedRowWindow)panel).selectedRowsGroups() );
 
 //		final ArrayList< InterestPointSource > interestPointSources = new ArrayList< InterestPointSource >();
 //		interestPointSources.add( new InterestPointSource()

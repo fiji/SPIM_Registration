@@ -60,7 +60,7 @@ public class ViewSetupExplorer< AS extends AbstractSpimData< ? >, X extends XmlI
 	}
 	
 	public AS getSpimData() { return panel.getSpimData(); }
-	public ViewSetupExplorerPanel< AS, X > getPanel() { return panel; }
+	public FilteredAndGroupedExplorerPanel< AS, X > getPanel() { return panel; }
 	public JFrame getFrame() { return frame; }
 	public void addListener( final SelectedViewDescriptionListener< AS > listener ) { panel.addListener( listener ); }
 	public ArrayList< SelectedViewDescriptionListener< AS > > getListeners() { return panel.getListeners(); }

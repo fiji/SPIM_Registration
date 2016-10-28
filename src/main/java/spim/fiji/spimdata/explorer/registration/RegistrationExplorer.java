@@ -54,6 +54,7 @@ public class RegistrationExplorer< AS extends AbstractSpimData< ? >, X extends X
 	public void seletedViewDescription( final BasicViewDescription<? extends BasicViewSetup> viewDescription )
 	{
 		panel.updateViewDescription( viewDescription );
+		System.out.println( viewDescription );
 	}
 
 	@Override

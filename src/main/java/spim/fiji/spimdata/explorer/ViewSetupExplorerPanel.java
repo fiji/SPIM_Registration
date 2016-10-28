@@ -37,6 +37,9 @@ import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
+import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.Illumination;
+import mpicbg.spim.data.sequence.Tile;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
@@ -67,45 +70,21 @@ import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
-public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > > extends JPanel implements ExplorerWindow< AS, X >
+public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > > extends FilteredAndGroupedExplorerPanel< AS, X > implements ExplorerWindow< AS, X >
 {
-	public static ViewSetupExplorerPanel< ?, ? > currentInstance = null;
-
-	final ArrayList< ExplorerWindowSetable > popups;
+	
 
 	static
 	{
 		IOFunctions.printIJLog = true;
 	}
 
-	private static final long serialVersionUID = -3767947754096099774L;
 	
-	protected JTable table;
-	protected ViewSetupTableModel< AS > tableModel;
-	protected ArrayList< SelectedViewDescriptionListener< AS > > listeners;
-	protected AS data;
-	protected ViewSetupExplorer< AS, X > explorer;
-	final String xml;
-	final X io;
-	final boolean isMac;
-	protected boolean colorMode = true;
-
-	final protected HashSet< BasicViewDescription< ? extends BasicViewSetup > > selectedRows;
-	protected BasicViewDescription< ? extends BasicViewSetup > firstSelectedVD;
-
 	public ViewSetupExplorerPanel( final ViewSetupExplorer< AS, X > explorer, final AS data, final String xml, final X io )
 	{
+		super( explorer, data, xml, io );
+
 		popups = initPopups();
-
-		this.explorer = explorer;
-		this.listeners = new ArrayList< SelectedViewDescriptionListener< AS > >();
-		this.data = data;
-		this.xml = xml == null ? "" : xml.replace( "\\", "/" ).replace( "//", "/" ).replace( "/./", "/" );
-		this.io = io;
-		this.isMac = System.getProperty( "os.name" ).toLowerCase().contains( "mac" );
-		this.selectedRows = new HashSet< BasicViewDescription< ? extends BasicViewSetup > >();
-		this.firstSelectedVD = null;
-
 		initComponent();
 
 		if ( Hdf5ImageLoader.class.isInstance( data.getSequenceDescription().getImgLoader() ) )
@@ -127,72 +106,15 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		currentInstance = this;
 	}
 
-	@Override
-	public BDVPopup bdvPopup()
-	{
-		for ( final ExplorerWindowSetable s : popups )
-			if ( BDVPopup.class.isInstance( s ) )
-				return ((BDVPopup)s);
-
-		return null;
-	}
-
-	@Override
-	public boolean colorMode() { return colorMode; }
-	@Override
-	public BasicViewDescription< ? extends BasicViewSetup > firstSelectedVD() { return firstSelectedVD; }
-	public ViewSetupTableModel< AS > getTableModel() { return tableModel; }
 	
-	@Override
-	public AS getSpimData() { return data; }
-	@Override
-	public String xml() { return xml; }
-	public X io() { return io; }
-	public ViewSetupExplorer< AS, X > explorer() { return explorer; }
-
-	@SuppressWarnings("unchecked")
-	public void setSpimData( final Object data ) { this.data = (AS)data; }
-
-	@Override
-	public void updateContent()
-	{
-		this.getTableModel().fireTableDataChanged();
-		for ( final SelectedViewDescriptionListener< AS > l : listeners )
-			l.updateContent( this.data );
-	}
-
-	@Override
-	public List< BasicViewDescription< ? extends BasicViewSetup > > selectedRows()
-	{
-		final ArrayList< BasicViewDescription< ? extends BasicViewSetup > > list = new ArrayList< BasicViewDescription< ? extends BasicViewSetup > >();
-		list.addAll( selectedRows );
-		Collections.sort( list );
-		return list;
-	}
-
-	@Override
-	public List< ViewId > selectedRowsViewId()
-	{
-		final ArrayList< ViewId > list = new ArrayList< ViewId >();
-		list.addAll( selectedRows );
-		Collections.sort( list );
-		return list;
-	}
-
-	public void addListener( final SelectedViewDescriptionListener< AS > listener )
-	{
-		this.listeners.add( listener );
-		
-		// update it with the currently selected row
-		if ( table.getSelectedRow() != -1 )
-			listener.seletedViewDescription( tableModel.getElements().get( table.getSelectedRow() ) );
-	}
-
-	public ArrayList< SelectedViewDescriptionListener< AS > > getListeners() { return listeners; }
-
 	public void initComponent()
 	{
-		tableModel = new ViewSetupTableModel< AS >( this );
+		tableModel = new FilteredAndGroupedTableModel< AS >( this );
+		tableModel = new MultiViewTableModelDecorator<>( tableModel );
+		tableModel.setColumnClasses( FilteredAndGroupedTableModel.defaultColumnClassesMV() );
+
+		tableModel.addGroupingFactor( Tile.class );
+		//tableModel.addGroupingFactor( Illumination.class );
 
 		table = new JTable();
 		table.setModel( tableModel );
@@ -234,10 +156,10 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		table.setPreferredScrollableViewportSize( new Dimension( 750, 300 ) );
 		table.getColumnModel().getColumn( 0 ).setPreferredWidth( 20 );
 		table.getColumnModel().getColumn( 1 ).setPreferredWidth( 15 );
-		table.getColumnModel().getColumn( tableModel.registrationColumn() ).setPreferredWidth( 25 );
+		table.getColumnModel().getColumn( tableModel.getSpecialColumn( ISpimDataTableModel.SpecialColumnType.VIEW_REGISTRATION_COLUMN) ).setPreferredWidth( 25 );
 
-		if ( tableModel.interestPointsColumn() >= 0 )
-			table.getColumnModel().getColumn( tableModel.interestPointsColumn() ).setPreferredWidth( 30 );
+		if ( tableModel.getSpecialColumn( ISpimDataTableModel.SpecialColumnType.INTEREST_POINT_COLUMN) >= 0 )
+			table.getColumnModel().getColumn( tableModel.getSpecialColumn( ISpimDataTableModel.SpecialColumnType.INTEREST_POINT_COLUMN) ).setPreferredWidth( 30 );
 
 		this.setLayout( new BorderLayout() );
 
@@ -278,6 +200,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		addPopupMenu( table );
 	}
 
+	@Override
 	protected ListSelectionListener getSelectionListener()
 	{
 		return new ListSelectionListener()
@@ -285,7 +208,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 			int lastRow = -1;
 
 			@Override
-			public void valueChanged( final ListSelectionEvent arg0 )
+			public void valueChanged(final ListSelectionEvent arg0)
 			{
 				BDVPopup b = bdvPopup();
 
@@ -302,7 +225,9 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 					for ( final int row : table.getSelectedRows() )
 					{
 						if ( firstSelectedVD == null )
-							firstSelectedVD = tableModel.getElements().get( row );
+							// TODO: is this okay? only adding first vd of
+							// potentially multiple per row
+							firstSelectedVD = tableModel.getElements().get( row ).get( 0 );
 
 						selectedRows.add( tableModel.getElements().get( row ) );
 					}
@@ -316,30 +241,38 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 					{
 						lastRow = row;
 
-						// not using an iterator allows that listeners can close the frame and remove all listeners while they are called
-						final BasicViewDescription< ? extends BasicViewSetup > vd = tableModel.getElements().get( row );
+						// not using an iterator allows that listeners can close
+						// the frame and remove all listeners while they are
+						// called
+						final List< BasicViewDescription< ? extends BasicViewSetup > > vds = tableModel.getElements()
+								.get( row );
+
 						for ( int i = 0; i < listeners.size(); ++i )
-							listeners.get( i ).seletedViewDescription( vd );
+							listeners.get( i ).seletedViewDescription( vds.iterator().next() );
 
 						selectedRows.clear();
-						selectedRows.add( vd );
+						selectedRows.add( vds );
 
-						firstSelectedVD = vd;
+						firstSelectedVD = vds.get( 0 );
 					}
 				}
 
 				if ( b != null && b.bdv != null )
-					updateBDV( b.bdv, colorMode, data, firstSelectedVD, selectedRows );
+				{	
+					updateBDV( b.bdv, colorMode, data, firstSelectedVD, selectedRows);
+					
+				}
+					
+				
 			}
+
+			
 		};
 	}
-
-	public static void updateBDV(
-			final BigDataViewer bdv,
-			final boolean colorMode,
-			final AbstractSpimData< ? > data,
+	
+	public static void updateBDV(final BigDataViewer bdv, final boolean colorMode, final AbstractSpimData< ? > data,
 			BasicViewDescription< ? extends BasicViewSetup > firstVD,
-			final Collection< ? extends BasicViewDescription< ? extends BasicViewSetup > > selectedRows )
+			final Collection< List< BasicViewDescription< ? extends BasicViewSetup >> > selectedRows)
 	{
 		// we always set the fused mode
 		setFusedModeSimple( bdv, data );
@@ -348,7 +281,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 			return;
 
 		if ( firstVD == null )
-			firstVD = selectedRows.iterator().next();
+			firstVD = selectedRows.iterator().next().iterator().next();
 
 		// always use the first timepoint
 		final TimePoint firstTP = firstVD.getTimePoint();
@@ -356,9 +289,10 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 
 		final boolean[] active = new boolean[ data.getSequenceDescription().getViewSetupsOrdered().size() ];
 
-		for ( final BasicViewDescription< ? > vd : selectedRows )
-			if ( vd.getTimePointId() == firstTP.getId() )
-				active[ getBDVSourceIndex( vd.getViewSetup(), data ) ] = true;
+		for ( final List<BasicViewDescription< ? >> vds : selectedRows )
+			for (BasicViewDescription< ? > vd : vds)
+				if ( vd.getTimePointId() == firstTP.getId() )
+					active[ getBDVSourceIndex( vd.getViewSetup(), data ) ] = true;
 
 		if ( selectedRows.size() > 1 && colorMode )
 			colorSources( bdv.getSetupAssignments().getConverterSetups(), 0 );
@@ -422,7 +356,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		return 0;
 	}
 
-	public HashSet< BasicViewDescription< ? extends BasicViewSetup > > getSelectedRows() { return selectedRows; }
+
 
 	public void showInfoBox()
 	{
