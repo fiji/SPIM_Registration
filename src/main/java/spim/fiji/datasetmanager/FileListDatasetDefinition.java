@@ -148,7 +148,14 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 				@Override
 				public void textValueChanged(TextEvent e)
 				{
-					lab.setText( previewFiles( getFilesFromPattern( ((TextField)pan.getComponent( 0 )).getText(), Long.parseLong( num.getText() ) * KB_FACTOR)));
+					String path = ((TextField)pan.getComponent( 0 )).getText();
+					if (path.endsWith( File.separator ))
+						path = path.substring( 0, path.length() - File.separator.length() );
+					
+					if(new File(path).isDirectory())
+						path = String.join( File.separator, path, "*" );
+					
+					lab.setText( previewFiles( getFilesFromPattern(path , Long.parseLong( num.getText() ) * KB_FACTOR)));
 					lab.setSize( lab.getPreferredSize() );
 					gdp.setSize( gdp.getPreferredSize() );
 					gdp.validate();
@@ -161,7 +168,14 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 				@Override
 				public void textValueChanged(TextEvent e)
 				{
-					lab.setText( previewFiles( getFilesFromPattern( ((TextField)pan.getComponent( 0 )).getText(), Long.parseLong( num.getText() ) * KB_FACTOR)));
+					String path = ((TextField)pan.getComponent( 0 )).getText();
+					if (path.endsWith( File.separator ))
+						path = path.substring( 0, path.length() - File.separator.length() );
+					
+					if(new File(path).isDirectory())
+						path = String.join( File.separator, path, "*" );
+					
+					lab.setText( previewFiles( getFilesFromPattern(path , Long.parseLong( num.getText() ) * KB_FACTOR)));
 					lab.setSize( lab.getPreferredSize() );
 					gdp.setSize( gdp.getPreferredSize() );
 					gdp.validate();
@@ -179,8 +193,11 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			
 			String fileInput = gdp.getNextString();
 			
-			if (new File(fileInput).isDirectory())
-				fileInput = String.join( File.separator, fileInput, "*");
+			if (fileInput.endsWith( File.separator ))
+				fileInput = fileInput.substring( 0, fileInput.length() - File.separator.length() );
+			
+			if(new File(fileInput).isDirectory())
+				fileInput = String.join( File.separator, fileInput, "*" );
 			
 			List<File> files = getFilesFromPattern( fileInput, (long) gdp.getNextNumber() * KB_FACTOR );
 			
