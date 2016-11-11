@@ -166,7 +166,8 @@ public class AppendSpimData2HDF5 implements ImgExport
 		final boolean writeMipmapInfo = true; // TODO: remember whether we already wrote it and write only once
 		final boolean deflate = params.getDeflate();
 		final ProgressWriter progressWriter = new SubTaskProgressWriter( this.progressWriter, 0.0, 1.0 ); // TODO
-		WriteSequenceToHdf5.writeViewToHdf5PartitionFile( ushortimg, partition, tp.getId(), vs.getId(), mipmapInfo, writeMipmapInfo, deflate, null, null, Threads.numThreads(), progressWriter );
+		final int numThreads = Math.max( 1, Threads.numThreads() - 2 );
+		WriteSequenceToHdf5.writeViewToHdf5PartitionFile( ushortimg, partition, tp.getId(), vs.getId(), mipmapInfo, writeMipmapInfo, deflate, null, null, numThreads, progressWriter );
 
 		// update the registrations
 		final ViewRegistration vr = spimData.getViewRegistrations().getViewRegistration( new ViewId( tp.getId(), vs.getId() ) );

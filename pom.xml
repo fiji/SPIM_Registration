@@ -112,6 +112,7 @@
 
 	<properties>
 		<scijava.jvm.version>1.8</scijava.jvm.version>
+		<pom-bigdataviewer.version>4.0.1</pom-bigdataviewer.version>
 	</properties>
 
 	<repositories>
