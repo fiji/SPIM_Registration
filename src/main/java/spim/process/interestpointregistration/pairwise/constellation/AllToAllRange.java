@@ -3,6 +3,7 @@ package spim.process.interestpointregistration.pairwise.constellation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
@@ -14,7 +15,7 @@ public class AllToAllRange< V extends Comparable< V > > extends PairwiseSetup< V
 
 	public AllToAllRange(
 			final List< V > views,
-			final Collection< Collection< V > > groups,
+			final Set< Set< V > > groups,
 			final RangeComparator< V > rangeComparator )
 	{
 		super( views, groups );
