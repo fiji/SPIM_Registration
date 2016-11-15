@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -83,7 +82,7 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	/**
 	 * Given a list of pairs of views that need to be compared, find subsets that are not overlapping
 	 */
-	public void detectSubsets() { this.subsets = detectSubsets( pairs, groups ); }
+	public void detectSubsets() { this.subsets = detectSubsets( views, pairs, groups ); }
 
 	/**
 	 * Get a list of fixed views necessary for the specific strategy to work
@@ -210,16 +209,36 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 			}
 		}
 
+		// find individual views that are not part of a subset
+		for ( final V v : views )
+		{
+			boolean isPresent = false;
+
+			for ( final HashSet< V > groupedViews : vSets )
+				if ( groupedViews.contains( v ) )
+					isPresent = true;
+
+			// add a new subset that only contains a single view, no pairs
+			if ( !isPresent )
+			{
+				final ArrayList< Pair< V, V > > pairSet = new ArrayList<>();
+				final HashSet< V > vSet = new HashSet<>();
+
+				vSet.add( v );
+
+				vSets.add( vSet );
+				pairSets.add( pairSet );
+			}
+		}
+
 		// now check if some of the sets are linked by grouping
 		for ( final Set< V > group : groups )
-		{
-			containedInSets( group, vSets );
-		}
+			mergeSets( vSets, pairSets, containedInSets( group, vSets ) );
 
 		return pairSets;
 	}
 
-	public static < V > Pair< Integer, Integer > containedInSets( final Set< V > group, final List< ? extends Set< V > > vSets )
+	public static < V > HashSet< Integer > containedInSets( final Set< V > group, final List< ? extends Set< V > > vSets )
 	{
 		final HashSet< Integer > contained = new HashSet<>();
 
@@ -232,46 +251,51 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 				if ( vSets.get( j ).contains( view ) )
 				{
 					contained.add( j );
-
-					// any views from this group is present in two different subsets, we need to unite them
-					if ( contained.size() == 2 )
-					{
-						final Iterator< Integer > it = contained.iterator();
-						return new ValuePair< Integer, Integer >( it.next(), it.next() );
-					}
 				}
 			}
 		}
 
-		return null;
+		return contained;
 	}
 
 	public static < V > void mergeSets(
 			final ArrayList< HashSet< V > > vSets,
 			final ArrayList< ArrayList< Pair< V, V > > > pairSets,
-			int i1,
-			int i2 )
+			final int i1, final int i2 )
 	{
+		final ArrayList< Integer > mergeIndicies = new ArrayList<>();
+		mergeIndicies.add( i1 );
+		mergeIndicies.add( i2 );
+		mergeSets( vSets, pairSets, mergeIndicies );
+	}
+
+	public static < V > void mergeSets(
+			final ArrayList< HashSet< V > > vSets,
+			final ArrayList< ArrayList< Pair< V, V > > > pairSets,
+			final Collection< Integer > mergeIndicies )
+	{
+		if ( mergeIndicies.size() <= 1 )
+			return;
+
+		final ArrayList< Integer > list = new ArrayList<>();
+		list.addAll( mergeIndicies );
+		Collections.sort( list ); // sort indicies from small to large
+
 		final ArrayList< Pair< V, V > > pairSet = new ArrayList<>();
 		final HashSet< V > vSet = new HashSet<>();
 
-		pairSet.addAll( pairSets.get( i1 ) );
-		pairSet.addAll( pairSets.get( i2 ) );
-		vSet.addAll( vSets.get( i1 ) );
-		vSet.addAll( vSets.get( i2 ) );
-
-		// change the indicies so the bigger one is last
-		if ( i1 > i2 )
+		for ( int i = 0; i < list.size(); ++i )
 		{
-			final int tmp = i2;
-			i2 = i1;
-			i1 = tmp;
+			pairSet.addAll( pairSets.get( list.get( i ) ) );
+			vSet.addAll( vSets.get( list.get( i ) ) );
 		}
 
-		pairSets.remove( i2 );
-		pairSets.remove( i1 );
-		vSets.remove( i2 );
-		vSets.remove( i1 );
+		// remove indicies from large down to small
+		for ( int i = list.size() - 1; i >= 0; --i )
+		{
+			pairSets.remove( list.get( i ) );
+			vSets.remove( list.get( i ) );
+		}
 
 		pairSets.add( pairSet );
 		vSets.add( vSet );
@@ -312,5 +336,18 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 		};
 
 		Collections.sort( sets, listComparator );
+	}
+
+	public static void main( String[] args )
+	{
+		ArrayList< Integer > list = new ArrayList<>();
+		list.add( 2 );
+		list.add( 10 );
+		list.add( 5 );
+
+		Collections.sort( list );
+
+		for ( int i = 0; i < list.size(); ++i )
+			System.out.println( list.get( i ) );
 	}
 }
