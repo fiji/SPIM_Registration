@@ -4,6 +4,7 @@ import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.event.TableModelListener;
 
@@ -75,8 +76,10 @@ public class MultiViewTableModelDecorator < AS extends AbstractSpimData< ? > > i
 
 	@Override
 	public Class<?> getColumnClass(int columnIndex) {
-		// TODO Auto-generated method stub
-		return String.class;
+		if (columnIndex < decorated.getColumnCount())
+			return decorated.getColumnClass(columnIndex);
+		else
+			return String.class;
 	}
 
 	@Override
@@ -94,13 +97,15 @@ public class MultiViewTableModelDecorator < AS extends AbstractSpimData< ? > > i
 		
 		final BasicViewDescription< ? extends BasicViewSetup > vd = getElements().get( rowIndex ).iterator().next();
 		
-		if ( columnIndex == registrationColumn )
-			return this.viewRegistrations.getViewRegistration( vd ).getTransformList().size();
-		else if ( columnIndex == interestPointsColumn && viewInterestPoints != null )
-			return viewInterestPoints.getViewInterestPointLists( vd ).getHashMap().keySet().size();
-				
-		// should never be reached
-		return null;
+		if (vd.isPresent())
+		{
+			if ( columnIndex == registrationColumn )			
+					return this.viewRegistrations.getViewRegistration( vd ).getTransformList().size();
+			else if ( columnIndex == interestPointsColumn && viewInterestPoints != null )
+				return viewInterestPoints.getViewInterestPointLists( vd ).getHashMap().keySet().size();
+		}
+		// TODO: handle this nicely for grouped views
+		return "missing";
 		
 	}
 
@@ -163,6 +168,9 @@ public class MultiViewTableModelDecorator < AS extends AbstractSpimData< ? > > i
 		decorated.setColumnClasses( columnClasses );
 		
 	}
+
+	@Override
+	public Set< Class< ? extends Entity > > getGroupingFactors(){return decorated.getGroupingFactors();}
 
 
 }
