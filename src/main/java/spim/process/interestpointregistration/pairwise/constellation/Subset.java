@@ -21,4 +21,16 @@ public class Subset< V >
 	 * all groups that are part of this subset
 	 */
 	Set< Set< V > > groups;
+
+	public Subset(
+			final Set< V > containedViews,
+			final List< Pair< V, V > > pairs,
+			final Set< Set< V > > groups )
+	{
+		this.containedViews = containedViews;
+		this.pairs = pairs;
+		this.groups = groups;
+	}
+
+	public List< Pair< V, V > > getPairs() { return pairs; }
 }

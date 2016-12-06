@@ -10,23 +10,25 @@ import java.util.Set;
 
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
+import spim.process.interestpointregistration.pairwise.constellation.overlap.OverlapDetection;
 
 public abstract class PairwiseSetup< V extends Comparable< V > >
 {
 	protected List< V > views;
 	protected Set< Set< V > > groups;
 	protected List< Pair< V, V > > pairs;
-	protected ArrayList< ArrayList< Pair< V, V > > > subsets;
+	protected ArrayList< Subset< V > > subsets;
 
 	/**
 	 * Sets up all pairwise comparisons
 	 * 
 	 * 1) definePairs()
-	 * 2) reorderPairs() - if wanted
-	 * 3) detectSubsets()
-	 * 4) sortSubsets() - if wanted
-	 * 5) fixViews( getDefaultFixedViews() )
-	 * 6) fixViews() - fixed some of the views necessary for the strategy to work
+	 * 2) removeNonOverlappingPairs() - if wanted
+	 * 3) reorderPairs() - if wanted
+	 * 4) detectSubsets()
+	 * 5) sortSubsets() - if wanted
+	 * 6) fixViews( getDefaultFixedViews() )
+	 * 7) fixViews() - fixed some of the views necessary for the strategy to work
 	 * 
 	 * @param views
 	 * @param groups
@@ -48,8 +50,8 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	public List< Pair< V, V > > getPairs() { return pairs; }
 	public void setPairs( final List< Pair< V, V > > pairs ) { this.pairs = pairs; }
 
-	public ArrayList< ArrayList< Pair< V, V > > > getSubsets() { return subsets; }
-	public void setSubsets( final ArrayList< ArrayList< Pair< V, V > > > subsets ) { this.subsets = subsets; }
+	public ArrayList< Subset< V > > getSubsets() { return subsets; }
+	public void setSubsets( final ArrayList< Subset< V > > subsets ) { this.subsets = subsets; }
 
 	/**
 	 * Given a list of views and their grouping, identify all pairs that need to be compared
@@ -64,6 +66,30 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	 * Reorder the pairs so that the "smaller" view comes first
 	 */
 	public void reorderPairs() { reorderPairs( pairs ); }
+
+	/**
+	 * Remove pairs that are not overlapping
+	 * 
+	 * @param ovlp
+	 * @return a list of removed pairs
+	 */
+	public ArrayList< Pair< V, V > > removeNonOverlappingPairs( final OverlapDetection< V > ovlp )
+	{
+		final ArrayList< Pair< V, V > > removed = new ArrayList<>();
+
+		for ( int i = pairs.size() - 1; i >= 0; --i )
+		{
+			final Pair< V, V > pair = pairs.get( i );
+
+			if ( !ovlp.overlaps( pair.getA(), pair.getB() ) )
+			{
+				pairs.remove( i );
+				removed.add( pair );
+			}
+		}
+
+		return removed;
+	}
 
 	/**
 	 * Sorts each subset by comparing the first view of each pair, and then all subsets according to their first pair
@@ -148,7 +174,7 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	/**
 	 * Given a list of pairs of views that need to be compared, find subsets that are not overlapping
 	 */
-	public static < V > ArrayList< ArrayList< Pair< V, V > > > detectSubsets(
+	public static < V > ArrayList< Subset< V > > detectSubsets(
 			final List< V > views,
 			final List< Pair< V, V > > pairs,
 			final Set< Set< V > > groups )
@@ -235,7 +261,36 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 		for ( final Set< V > group : groups )
 			mergeSets( vSets, pairSets, containedInSets( group, vSets ) );
 
-		return pairSets;
+		final ArrayList< Subset< V > > subsets = new ArrayList<>();
+
+		for ( int i = 0; i < vSets.size(); ++i )
+		{
+			final ArrayList< Pair< V, V > > setPairs = pairSets.get( i );
+			final HashSet< V > setsViews = vSets.get( i );
+
+			subsets.add( new Subset<>( setsViews, setPairs, findAssociatedGroups( setsViews, groups ) ) );
+		}
+
+		return subsets;
+	}
+
+	public static < V > HashSet< Set< V > > findAssociatedGroups( final HashSet< V > setsViews, final Set< Set< V > > groups )
+	{
+		final HashSet< Set< V > > associated = new HashSet<>();
+
+		for ( final V view : setsViews )
+		{
+			for ( final Set< V > group : groups )
+			{
+				if ( group.contains( view ) )
+				{
+					associated.add( group );
+					break;
+				}
+			}
+		}
+
+		return associated;
 	}
 
 	public static < V > HashSet< Integer > containedInSets( final Set< V > group, final List< ? extends Set< V > > vSets )
@@ -317,25 +372,25 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	}
 
 	/**
-	 * Sorts each list using a given comparator, and then the list according to their first element
+	 * Sorts each list using a given comparator, and then the lists according to their first element
 	 *
 	 * @param sets
 	 */
-	public static < V > void sortSets( final ArrayList< ArrayList< Pair< V, V > > > sets, final Comparator< Pair< V, V > > comp )
+	public static < V > void sortSets( final ArrayList< Subset< V > > subsets, final Comparator< Pair< V, V > > comp )
 	{
-		for ( final ArrayList< Pair< V, V > > list : sets )
-			Collections.sort( list, comp );
+		for ( final Subset< V > set : subsets )
+			Collections.sort( set.getPairs(), comp );
 
-		final Comparator< ArrayList< Pair< V, V > > > listComparator = new Comparator< ArrayList<Pair<V,V>> >()
+		final Comparator< Subset< V > > listComparator = new Comparator< Subset< V > >()
 		{
 			@Override
-			public int compare( final ArrayList< Pair< V, V > > o1, final ArrayList< Pair< V, V > > o2 )
+			public int compare( final Subset< V > o1, final Subset< V > o2 )
 			{
-				return comp.compare( o1.get( 0 ), o2.get( 0 ) );
+				return comp.compare( o1.getPairs().get( 0 ), o2.getPairs().get( 0 ) );
 			}
 		};
 
-		Collections.sort( sets, listComparator );
+		Collections.sort( subsets, listComparator );
 	}
 
 	public static void main( String[] args )
