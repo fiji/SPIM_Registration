@@ -302,12 +302,18 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		List<ViewId> missingViewIds = new ArrayList<>();
 		List<TimePoint> timePoints = new ArrayList<>();
 		
+		
+		
+		
 		HashMap<Pair<Integer, Integer>, Pair<File, Pair<Integer, Integer>>> ViewIDfileMap = new HashMap<>();
 		Integer viewSetupId = 0;
 		for (Integer c = 0; c < nChannels; c++)
 			for (Integer i = 0; i < nIlluminations; i++)
 				for (Integer ti = 0; ti < nTiles; ti++)
 					for (Integer a = 0; a < nAngles; a++)
+					{
+						// remember if we already added a vs in the tp loop
+						boolean addedViewSetup = false;
 						for (Integer tp = 0; tp < nTimepoints; tp++)
 						{
 														
@@ -334,7 +340,9 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 							if (viewList.size() < 1)
 							{
 								System.out.println( "Missing View: ch" + c +" a"+ a + " ti" + ti + " tp"+ tp + " i" + i );
-								missingViewIds.add( new ViewId( tpId, viewSetupId ) );
+								int missingSetup = addedViewSetup ? viewSetupId - 1 : viewSetupId;
+								missingViewIds.add( new ViewId( tpId, missingSetup ) );
+								
 							}
 							else if (viewList.size() > 1)
 								System.out.println( "Error: more than one View: ch" + c +" a"+ a + " ti" + ti + " tp"+ tp + " i" + i );
@@ -346,14 +354,14 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 								if (!timePoints.contains( tpI ))
 									timePoints.add( tpI );
 								
-								if (tp == 0)
+								if (!addedViewSetup)
 									ViewIDfileMap.put( new ValuePair< Integer, Integer >( tpId, viewSetupId ), viewList.get( 0 ) );
 								else
 									ViewIDfileMap.put( new ValuePair< Integer, Integer >( tpId, viewSetupId - 1 ), viewList.get( 0 ) );
 								
 								
 								// we have not visited this combination before
-								if (tp == 0)
+								if (!addedViewSetup)
 								{
 									Illumination illumI = new Illumination( illuminationId, illuminationId.toString() );
 									
@@ -400,11 +408,13 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 									
 									viewSetups.add( vs );
 									viewSetupId++;
+									addedViewSetup = true;
 								
 								}
 								
 							}
 						}
+					}
 		
 		
 		
@@ -416,7 +426,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			System.out.println( k.getA() + " " + k.getB() );
 			ViewDescription vdI = sd.getViewDescription( k.getA(), k.getB() );
 			System.out.println( vdI );
-			if (vdI.isPresent()){
+			if (vdI != null && vdI.isPresent()){
 				fileMap.put( vdI, ViewIDfileMap.get( k ) );
 			}			
 		}
