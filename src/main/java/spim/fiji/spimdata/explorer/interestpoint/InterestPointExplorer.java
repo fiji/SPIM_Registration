@@ -6,6 +6,7 @@ import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.util.List;
 
 import javax.swing.JFrame;
 
@@ -67,9 +68,13 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 	public JFrame frame() { return frame; }
 
 	@Override
-	public void seletedViewDescription( final BasicViewDescription<? extends BasicViewSetup> viewDescription )
+	public void selectedViewDescriptions( final List<List< BasicViewDescription< ? extends BasicViewSetup >> > viewDescriptions )
 	{
-		panel.updateViewDescription( viewDescription, false );
+		// TODO: display multiple selected
+		if (viewDescriptions.size() != 1)
+			panel.updateViewDescription( null, false );
+		
+		panel.updateViewDescription( viewDescriptions.iterator().next().iterator().next(), false );
 	}
 
 	@Override
