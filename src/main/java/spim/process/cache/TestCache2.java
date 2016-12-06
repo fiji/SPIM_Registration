@@ -1,19 +1,11 @@
 package spim.process.cache;
 
-import bdv.cache.CacheHints;
-import bdv.cache.LoadingStrategy;
-import bdv.img.cache.CacheArrayLoader;
-import bdv.img.cache.CachedCellImg;
-import bdv.img.cache.VolatileCell;
-import bdv.img.cache.VolatileGlobalCellCache;
-import bdv.img.cache.VolatileImgCells;
-import bdv.img.cache.VolatileImgCells.CellCache;
 import ij.ImageJ;
 import ij.ImagePlus;
 import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.img.basictypeaccess.volatiles.array.VolatileFloatArray;
+import net.imglib2.img.basictypeaccess.array.FloatArray;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
@@ -22,10 +14,11 @@ import net.imglib2.util.Fraction;
 import net.imglib2.util.Intervals;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
+import spim.process.cache.LocalCachedImgCells.CellCache;
 import spim.process.fusion.weights.Blending;
 import spim.process.fusion.weights.TransformedRealRandomAccessibleInterval;
 
-public class TestCache
+public class TestCache2
 {
 
 	public static void main( String[] args )
@@ -48,43 +41,53 @@ public class TestCache
 				new AffineTransform3D(),
 				new long[]{ 0, 0, 0 } );
 
-		BenchmarkHelper.benchmarkAndPrint( 10, true, () -> tranverse( imgIn ) );
+		//BenchmarkHelper.benchmarkAndPrint( 10, true, () -> tranverse( imgIn ) );
 		
 		final long[] minNeg = new long[ min.length ];
 		
 		for ( int d = 0; d < min.length; ++d )
 			minNeg[ d ] = -min[ d ];
-		final RandomAccessibleInterval< FloatType  > img = Views.translate( imgIn, minNeg );
+		final RandomAccessibleInterval< FloatType  > img = imgIn;//Views.translate( imgIn, minNeg );
 		
 		// maybe try to reimplement and simplify that one
-		VolatileGlobalCellCache globalCache = new VolatileGlobalCellCache( 1, 0 );
-		CacheHints cacheHints = new CacheHints( LoadingStrategy.BLOCKING, 0, false );
+		LocalCellCache globalCache = new LocalCellCache();
 		FloatCacheArrayLoader loader = new FloatCacheArrayLoader( img );
-		final CellCache< VolatileFloatArray > c = globalCache.new VolatileCellCache< VolatileFloatArray >( 0, 0, 0, cacheHints, loader );
+		final CellCache< FloatArray > c = globalCache.new CellCacheImpl< FloatArray >( loader );
 		final long[] dimensions = Intervals.dimensionsAsLongArray( img );
 		final int[] cellDimensions = Util.getArrayFromValue( 32, img.numDimensions() );
 		cellDimensions[ 0 ] = ( int ) dimensions[ 0 ];
 		cellDimensions[ 1 ] = ( int ) dimensions[ 1 ];
 		cellDimensions[ cellDimensions.length - 1 ] = 1;
 		
-		final VolatileImgCells< VolatileFloatArray > cells = new VolatileImgCells<>( c, new Fraction(), dimensions, cellDimensions );
-		final CachedCellImg< FloatType, VolatileFloatArray > img2 = new CachedCellImg<>( cells );
+		final LocalCachedImgCells< FloatArray > cells = new LocalCachedImgCells<>( c, new Fraction(), dimensions, cellDimensions );
+		final LocalCachedCellImg< FloatType, FloatArray > img2 = new LocalCachedCellImg<>( cells );
 		final FloatType linkedType = new FloatType( img2 );
 		img2.setLinkedType( linkedType );
 
 		final RandomAccessibleInterval< FloatType > img3 = Views.translate( img2, min );
 
-		BenchmarkHelper.benchmarkAndPrint( 10, true, () -> tranverse( img2 ) );
-		BenchmarkHelper.benchmarkAndPrint( 10, true, () -> tranverse( img3 ) );
+		//BenchmarkHelper.benchmarkAndPrint( 10, true, () -> tranverse( img2 ) );
+		//BenchmarkHelper.benchmarkAndPrint( 10, true, () -> tranverse( img3 ) );
+
+		ImagePlus imp = ImageJFunctions.show( img3 );
+		imp.setDisplayRange( 0, 1 );
+		imp.updateAndDraw();
+		System.out.println( Util.printInterval( img3 ) );
 
 		ImagePlus impIn = ImageJFunctions.show( imgIn );
 		impIn.setTitle( "original" );
 		impIn.setDisplayRange( 0, 1 );
 		impIn.updateAndDraw();
+		System.out.println( Util.printInterval( imgIn ) );
+		
 
-		ImagePlus imp = ImageJFunctions.show( img3 );
-		imp.setDisplayRange( 0, 1 );
-		imp.updateAndDraw();
+		ImagePlus impRaw = ImageJFunctions.show( img2 );
+		impRaw.setTitle( "untranslated" );
+		impRaw.setDisplayRange( 0, 1 );
+		impRaw.updateAndDraw();
+		System.out.println( Util.printInterval( img2 ) );
+		
+
 	}
 
 	public static void tranverse( final RandomAccessibleInterval< FloatType > img )
@@ -93,28 +96,27 @@ public class TestCache
 			t.get();
 	}
 	
-	static class FloatCacheArrayLoader implements CacheArrayLoader< VolatileFloatArray >
+	static class FloatCacheArrayLoader implements CacheArrayLoader< FloatArray >
 	{
 		private RandomAccessible< FloatType > generator;
 
-		private VolatileFloatArray theEmptyArray;
-		
+		private FloatArray theEmptyArray;
+
 		public FloatCacheArrayLoader( RandomAccessible< FloatType > generator )
 		{
 			this.generator = generator;
-			theEmptyArray = new VolatileFloatArray( 1, false );
+			this.theEmptyArray = new FloatArray( 1 );
 		}
 
 		@Override
-		public VolatileFloatArray emptyArray( int[] dimensions )
+		public FloatArray emptyArray( int[] dimensions )
 		{
-			return null;
-//			int numEntities = 1;
-//			for ( int i = 0; i < dimensions.length; ++i )
-//				numEntities *= dimensions[ i ];
-//			if ( theEmptyArray.getCurrentStorageArray().length < numEntities )
-//				theEmptyArray = new VolatileFloatArray( numEntities, false );
-//			return theEmptyArray;
+			int numEntities = 1;
+			for ( int i = 0; i < dimensions.length; ++i )
+				numEntities *= dimensions[ i ];
+			if ( theEmptyArray.getCurrentStorageArray().length < numEntities )
+				theEmptyArray = new FloatArray( numEntities );
+			return theEmptyArray;
 		}
 
 		@Override
@@ -124,7 +126,7 @@ public class TestCache
 		}
 
 		@Override
-		public VolatileFloatArray loadArray( final int timepoint, final int setup, final int level, int[] dimensions, long[] min ) throws InterruptedException
+		public FloatArray loadArray( int[] dimensions, long[] min ) throws InterruptedException
 		{
 			int numEntities = ( int ) Intervals.numElements( dimensions );
 			float[] data = new float[ numEntities ];
@@ -134,7 +136,7 @@ public class TestCache
 			int i = 0;
 			for ( FloatType t : Views.flatIterable( Views.interval( generator, new FinalInterval( min, max ) ) ) )
 				data[ i++ ] = t.get();
-			return new VolatileFloatArray( data, true );
+			return new FloatArray( data );
 		}
 	}
 }
