@@ -7,6 +7,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
@@ -18,12 +22,35 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableCellRenderer;
 
+import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
+import javafx.embed.swing.JFXPanel;
+import javafx.event.EventHandler;
+import javafx.scene.Group;
+import javafx.scene.Scene;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeTableCell;
+import javafx.scene.control.TreeTableColumn;
+import javafx.scene.control.TreeTableView;
+import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.control.TreeTableColumn.CellDataFeatures;
+import javafx.scene.control.TreeTableColumn.CellEditEvent;
+import javafx.util.Callback;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.registration.ViewTransform;
 import mpicbg.spim.data.registration.ViewTransformAffine;
+import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.realtransform.AffineTransform3D;
+import net.imglib2.util.Pair;
+
+
 
 public class RegistrationExplorerPanel extends JPanel
 {
@@ -34,6 +61,10 @@ public class RegistrationExplorerPanel extends JPanel
 	protected JTable table;
 	protected RegistrationTableModel tableModel;
 	protected JLabel label;
+	protected TreeTableView< RegistrationExplorerRow > treeTable;
+	protected JFXPanel jfx;
+	protected ViewRegistrations viewRegistrations;
+	protected List<BasicViewDescription<?>> lastSelectedVDs;
 	
 	protected ArrayList< ViewTransform > cache;
 	
@@ -42,30 +73,159 @@ public class RegistrationExplorerPanel extends JPanel
 		this.cache = new ArrayList< ViewTransform >();
 		this.explorer = explorer;
 
+		this.viewRegistrations = viewRegistrations;
 		initComponent( viewRegistrations );
 	}
 
 	public RegistrationTableModel getTableModel() { return tableModel; }
 	public JTable getTable() { return table; }
 	
-	public void updateViewDescription( final BasicViewDescription< ? > vd )
+	public void updateViewDescriptions( final List<BasicViewDescription<?>> vds )
 	{
-		if ( vd != null && label != null )
-			this.label.setText( "View Description --- Timepoint: " + vd.getTimePointId() + ", View Setup Id: " + vd.getViewSetupId() );
+		/*
+		if ( vds != null && label != null )
+			this.label.setText( "View Description --- Timepoint: " + vds.getTimePointId() + ", View Setup Id: " + vds.getViewSetupId() );
 
-		if ( vd == null )
+		if ( vds == null )
 			this.label.setText( "No or multiple View Descriptions selected");
 
-		tableModel.updateViewDescription( vd );
+		tableModel.updateViewDescription( vds );
 		
 		if ( table.getSelectedRowCount() == 0 )
 			table.getSelectionModel().setSelectionInterval( 0, 0 );
+		*/
+		
+		this.lastSelectedVDs = vds;
+		
+		updateTree();
+		
+	
+		
 	}
 
+	protected void updateTree()
+	{
+		final TreeItem< RegistrationExplorerRow > root = new TreeItem<>(new RegistrationExplorerRow( 
+																		RegistrationExplorerRowType.ROOT, null, 0 ));
+		
+		root.setExpanded( true );
+		
+		
+		for (final BasicViewDescription<?> vd : lastSelectedVDs )
+		{
+			final TreeItem< RegistrationExplorerRow > groupTI = new TreeItem<>(new RegistrationExplorerRow( 
+					RegistrationExplorerRowType.GROUP, vd, 0 ));
+			groupTI.setExpanded( true );
+			
+			ViewRegistration vr = viewRegistrations.getViewRegistration( vd );
+			for (int i = 0; i < vr.getTransformList().size(); i++)
+			{
+				final TreeItem< RegistrationExplorerRow > transformTI = new TreeItem<>(new RegistrationExplorerRow( 
+						RegistrationExplorerRowType.REGISTRATION, vd, i ));
+				groupTI.getChildren().add( transformTI );
+			}
+			
+			root.getChildren().add( groupTI );
+		}
+		
+		Platform.runLater( new Runnable()
+		{
+			
+			@Override
+			public void run()
+			{
+				treeTable.setRoot( root );
+				
+			}
+		} );
+	}
+	
+	private enum RegistrationExplorerRowType
+	{
+		ROOT, GROUP, REGISTRATION
+	}
+	
+	private class RegistrationExplorerRow
+	{
+		RegistrationExplorerRowType rowType;
+		final BasicViewDescription< ? > vd;
+		int transformIndex;
+		
+		public RegistrationExplorerRow(RegistrationExplorerRowType rowType, final BasicViewDescription< ? > vd,
+				int transformIndex)
+		{
+			this.rowType = rowType;
+			this.vd = vd;
+			this.transformIndex = transformIndex;
+		}
+		
+	}
+
+	private class NameCallback implements Callback< TreeTableColumn.CellDataFeatures<RegistrationExplorerRow, String>, ObservableValue<String> >
+	{		
+		@Override
+		public ObservableValue< String > call(CellDataFeatures< RegistrationExplorerRow, String > param)
+		{
+			RegistrationExplorerRow row = param.getValue().getValue();
+			
+			// group row -> return description
+			if (row.rowType == RegistrationExplorerRowType.GROUP)
+				return new ReadOnlyStringWrapper("ViewSetup: " + row.vd.getViewSetupId() + ", TP: " + row.vd.getTimePointId());
+			
+			// single transform -> return name
+			else if (row.rowType == RegistrationExplorerRowType.REGISTRATION)
+				return new ReadOnlyStringWrapper(viewRegistrations.getViewRegistration( row.vd).getTransformList().get( row.transformIndex ).getName());
+			
+			// else return empty String
+			else
+				return new ReadOnlyStringWrapper();			
+		}
+	};
+	
+	private class MatrixCallback implements Callback< TreeTableColumn.CellDataFeatures<RegistrationExplorerRow, String>, ObservableValue<String> >
+	{
+
+		private int matRow;
+		private int matColumn;
+		
+		public MatrixCallback(int row, int column)
+		{
+			this.matRow = row;
+			this.matColumn = column;
+		}
+		
+		@Override
+		public ObservableValue< String > call(CellDataFeatures< RegistrationExplorerRow, String > param)
+		{
+			RegistrationExplorerRow row = param.getValue().getValue();
+			
+			// single transform -> return matrix element
+			if (row.rowType == RegistrationExplorerRowType.REGISTRATION)
+				return new ReadOnlyStringWrapper(Double.toString( viewRegistrations.getViewRegistration( row.vd).getTransformList().get( row.transformIndex ).asAffine3D().get( matRow, matColumn )));
+			// else return empty String
+			else
+				return new ReadOnlyStringWrapper();
+		}
+		
+	}
+	
+	
+	
 	public void initComponent( final ViewRegistrations viewRegistrations )
 	{
+		
+		jfx = new JFXPanel();
+		initFX();
+		
+		this.add(jfx);
+		
+		
+		
+		/*
 		tableModel = new RegistrationTableModel( viewRegistrations, this );
 
+		
+		
 		table = new JTable();
 		table.setModel( tableModel );
 		table.setSurrendersFocusOnKeystroke( true );
@@ -90,21 +250,163 @@ public class RegistrationExplorerPanel extends JPanel
 		this.label = new JLabel( "View Description --- " );
 		this.add( label, BorderLayout.NORTH );
 		this.add( new JScrollPane( table ), BorderLayout.CENTER );
+		*/
 		
-		addPopupMenu( table );
+		
+		addPopupMenu( jfx );
+	}
+
+	class EditingCell extends TreeTableCell<RegistrationExplorerRow, String> {
+		 
+        private TextField textField; 
+        public EditingCell() {
+        }
+ 
+        @Override
+        public void startEdit() {
+            if (!isEmpty()) {
+                super.startEdit();
+                createTextField();
+                setText(null);
+                setGraphic(textField);
+                textField.selectAll();
+            }
+        }
+ 
+        @Override
+        public void cancelEdit() {
+            super.cancelEdit();
+ 
+            setText((String) getItem());
+            setGraphic(null);
+        }
+ 
+        @Override
+        public void updateItem(String item, boolean empty) {
+            super.updateItem(item, empty);
+ 
+            if (empty) {
+                setText(null);
+                setGraphic(null);
+            } else {
+                if (isEditing()) {
+                    if (textField != null) {
+                        textField.setText(getString());
+                    }
+                    setText(null);
+                    setGraphic(textField);
+                } else {
+                    setText(getString());
+                    setGraphic(null);
+                }
+            }
+        }
+ 
+        private void createTextField() {
+            textField = new TextField(getString());
+            textField.setMinWidth(this.getWidth() - this.getGraphicTextGap()* 2);
+            textField.focusedProperty().addListener(
+                (ObservableValue<? extends Boolean> arg0, 
+                Boolean arg1, Boolean arg2) -> {
+                    if (!arg2) {
+                        commitEdit(textField.getText());
+                    }
+            });
+        }
+ 
+        private String getString() {
+            return getItem() == null ? "" : getItem().toString();
+        }
+    }
+	
+	class MatrixEditEventHandler implements EventHandler< TreeTableColumn.CellEditEvent<RegistrationExplorerRow,String> >
+	{
+		private int matRow;
+		private int matColumn;
+				
+		public MatrixEditEventHandler(int row, int column)
+		{
+			this.matRow = row;
+			this.matColumn = column;
+		}
+		
+		@Override
+		public void handle(CellEditEvent< RegistrationExplorerRow, String > event)
+		{
+			RegistrationExplorerRow row = event.getRowValue().getValue();
+			
+			if (row.rowType != RegistrationExplorerRowType.REGISTRATION)
+				return;
+			
+			ViewTransform vtOld = viewRegistrations.getViewRegistration( row.vd ).getTransformList().get( row.transformIndex );
+			AffineTransform3D newT = new AffineTransform3D();
+			newT.concatenate( vtOld.asAffine3D() );
+			newT.set( Double.parseDouble( event.getNewValue() ), matRow, matColumn );
+			ViewTransform vtNew = new ViewTransformAffine( vtOld.getName(), newT );
+			
+			viewRegistrations.getViewRegistration( row.vd ).getTransformList().remove( row.transformIndex );
+			viewRegistrations.getViewRegistration( row.vd ).getTransformList().add( row.transformIndex, vtNew );
+			viewRegistrations.getViewRegistration( row.vd ).updateModel();
+			
+			explorer.viewSetupExplorer.getPanel().bdvPopup().updateBDV();
+			updateTree();
+		}
+		
+	} 
+	
+	public void initFX()
+	{
+		treeTable = new TreeTableView<>();
+		treeTable.setEditable( true );
+		List<TreeTableColumn< RegistrationExplorerRow , String >> columns = new ArrayList<>();
+		
+		Callback< TreeTableColumn< RegistrationExplorerRow, String >, TreeTableCell< RegistrationExplorerRow, String > > cellFactory
+            = (TreeTableColumn<RegistrationExplorerRow, String> p) -> new EditingCell();
+		
+		TreeTableColumn< RegistrationExplorerRow , String > nameColumn = new TreeTableColumn<>("Name");
+		nameColumn.setCellValueFactory( new NameCallback());
+		nameColumn.setPrefWidth( 150 );
+		columns.add( nameColumn );
+		
+		
+		
+		for (int i = 0; i < 3; i++)
+			for (int j = 0; j < 4; j++)
+			{
+				TreeTableColumn< RegistrationExplorerRow , String > matColumn = new TreeTableColumn<>("m"+i+j);
+				matColumn.setCellValueFactory( new MatrixCallback( i, j ) );
+				matColumn.setCellFactory( cellFactory );
+				
+				matColumn.setOnEditCommit( new MatrixEditEventHandler( i, j ));				
+				
+				columns.add( matColumn );
+			}
+		
+		treeTable.getColumns().addAll( columns );
+		treeTable.setShowRoot( false );
+		Group root = new Group();
+		Scene scene = new Scene(root);
+		root.getChildren().add( treeTable );
+		jfx.setScene( scene );
+		
 	}
 
 	protected void copySelection()
 	{
 		cache.clear();
 		
-		if ( table.getSelectedRowCount() == 0 )
+		ObservableList< TreeItem< RegistrationExplorerRow > > selectedItems = treeTable.getSelectionModel().getSelectedItems();
+		
+		if ( selectedItems.size() == 0 )
 		{
 			JOptionPane.showMessageDialog( table, "Nothing selected");
 			return;
 		}
 		else
 		{
+			// TODO: what to do if we selected multiple vds
+			
+			/*
 			final BasicViewDescription< ? > vd = tableModel.getCurrentViewDescription();
 			
 			if ( vd == null )
@@ -115,10 +417,14 @@ public class RegistrationExplorerPanel extends JPanel
 			
 			final ViewRegistration vr = tableModel.getViewRegistrations().getViewRegistration( vd );
 			
-			for ( int row : table.getSelectedRows() )
+			*/
+			for ( TreeItem< RegistrationExplorerRow > ti : selectedItems )
 			{
-				cache.add( duplicate( vr.getTransformList().get( row ) ) );
-				System.out.println( "Copied row " + vr.getTransformList().get( row ).getName() );
+				if (ti.getValue().rowType != RegistrationExplorerRowType.REGISTRATION)
+					continue;
+				
+				cache.add( duplicate( viewRegistrations.getViewRegistration( ti.getValue().vd ).getTransformList().get( ti.getValue().transformIndex )) );
+				System.out.println( "Copied row " + viewRegistrations.getViewRegistration( ti.getValue().vd ).getTransformList().get( ti.getValue().transformIndex ).getName() );
 			}
 		}
 	}
@@ -129,19 +435,25 @@ public class RegistrationExplorerPanel extends JPanel
 	 */
 	protected void pasteSelection( final int type )
 	{
+		
+		ObservableList< TreeItem< RegistrationExplorerRow > > selectedItems = treeTable.getSelectionModel().getSelectedItems();
+		
+		final Map<ViewId, List<Integer>> toInsert = new HashMap<>();
+		
 		if ( cache.size() == 0 )
 		{
 			JOptionPane.showMessageDialog( table, "Nothing copied so far." );
 			return;
 		}
 		
-		if ( table.getSelectedRowCount() == 0 )
+		if ( selectedItems.size() == 0 )
 		{
 			JOptionPane.showMessageDialog( table, "Nothing selected." );
 			return;
 		}
 
-		final BasicViewDescription< ? > vd = tableModel.getCurrentViewDescription();
+		/*
+		final BasicViewDescription< ? > vd = selectedItems.iterator().next().getValue().vd;
 		
 		if ( vd == null )
 		{
@@ -149,8 +461,48 @@ public class RegistrationExplorerPanel extends JPanel
 			return;
 		}
 
-		final ViewRegistration vr = tableModel.getViewRegistrations().getViewRegistration( vd );
+		final ViewRegistration vr = viewRegistrations.getViewRegistration( vd );
 
+		 */
+		
+		
+		for (TreeItem< RegistrationExplorerRow > ti : selectedItems)
+		{
+			if (ti.getValue().rowType != RegistrationExplorerRowType.REGISTRATION)
+				continue;
+			
+			if (!toInsert.containsKey( ti.getValue().vd ))
+				toInsert.put( ti.getValue().vd, new ArrayList<>() );
+			toInsert.get( ti.getValue().vd ).add( ti.getValue().transformIndex );
+		}
+		
+		for (ViewId vd : toInsert.keySet())
+		{
+			List< Integer > idxes = toInsert.get( vd );
+			Collections.sort( idxes );
+			
+			// remove if we want that
+			if (type == 1)
+				for (int i = 0 ; i < idxes.size(); i++)
+					viewRegistrations.getViewRegistration( vd ).getTransformList().remove( idxes.get( i ) - i );
+			
+			for (int i = 0 ; i < idxes.size(); i++)
+				for (int j = 0; j < cache.size(); j++)
+				{
+					int idxToAddAt = (type == 2) ? idxes.get( i ) + j + i * cache.size() + 1 : idxes.get( i ) + j + i * cache.size();
+					viewRegistrations.getViewRegistration( vd ).getTransformList().add( idxToAddAt, duplicate( cache.get( j ) ) );
+				}
+			
+			/*
+			if  (viewRegistrations.getViewRegistration( vd ).getTransformList().isEmpty() )
+				viewRegistrations.getViewRegistration( vd ).getTransformList().add( new ViewTransformAffine( null, new AffineTransform3D() ) );
+			
+			*/
+			viewRegistrations.getViewRegistration( vd ).updateModel();
+		}
+		
+		
+		/*
 		// check out where to start inserting
 		final int[] selectedRows = table.getSelectedRows();
 		Arrays.sort( selectedRows );
@@ -194,6 +546,11 @@ public class RegistrationExplorerPanel extends JPanel
 
 		// update everything
 		tableModel.fireTableDataChanged();
+		*/
+		
+		explorer.viewSetupExplorer.getPanel().bdvPopup().updateBDV();
+		updateTree();
+		
 	}
 	
 	protected static ViewTransform duplicate( final ViewTransform vt )
@@ -224,12 +581,17 @@ public class RegistrationExplorerPanel extends JPanel
 
 	protected void delete()
 	{
-		if ( table.getSelectedRowCount() == 0 )
+		ObservableList< TreeItem< RegistrationExplorerRow > > selectedItems = treeTable.getSelectionModel().getSelectedItems();
+		
+		final Map<ViewId, List<Integer>> toDelete = new HashMap<>();
+		
+		if ( selectedItems.size() == 0 )
 		{
 			JOptionPane.showMessageDialog( table, "Nothing selected." );
 			return;
 		}
 
+		/*
 		final BasicViewDescription< ? > vd = tableModel.getCurrentViewDescription();
 
 		if ( vd == null )
@@ -240,7 +602,32 @@ public class RegistrationExplorerPanel extends JPanel
 
 		final int[] selectedRows = table.getSelectedRows();
 		Arrays.sort( selectedRows );
+		*/
+		
+		for (TreeItem< RegistrationExplorerRow > ti : selectedItems)
+		{
+			if (ti.getValue().rowType != RegistrationExplorerRowType.REGISTRATION)
+				continue;
+			
+			if (!toDelete.containsKey( ti.getValue().vd ))
+				toDelete.put( ti.getValue().vd, new ArrayList<>() );
+			toDelete.get( ti.getValue().vd ).add( ti.getValue().transformIndex );
+		}
+		
+		for (ViewId vd : toDelete.keySet())
+		{
+			List< Integer > idxes = toDelete.get( vd );
+			Collections.sort( idxes );
+			for (int i = 0 ; i < idxes.size(); i++)
+				viewRegistrations.getViewRegistration( vd ).getTransformList().remove( idxes.get( i ) - i );
+			
+			if  (viewRegistrations.getViewRegistration( vd ).getTransformList().isEmpty() )
+				viewRegistrations.getViewRegistration( vd ).getTransformList().add( new ViewTransformAffine( null, new AffineTransform3D() ) );
+			
+			viewRegistrations.getViewRegistration( vd ).updateModel();
+		}
 
+		/*
 		final ViewRegistration vr = tableModel.getViewRegistrations().getViewRegistration( vd );
 
 		for ( int i = selectedRows[ selectedRows.length - 1 ]; i >= selectedRows[ 0 ]; --i )
@@ -253,9 +640,14 @@ public class RegistrationExplorerPanel extends JPanel
 
 		// update everything
 		tableModel.fireTableDataChanged();
+		*/
+		
+		explorer.viewSetupExplorer.getPanel().bdvPopup().updateBDV();
+		updateTree();	
+		
 	}
 	
-	protected void addPopupMenu( final JTable table )
+	protected void addPopupMenu( final JFXPanel table )
 	{
 		final JPopupMenu popupMenu = new JPopupMenu();
 		

@@ -3,6 +3,8 @@ package spim.fiji.spimdata.explorer.registration;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Toolkit;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JFrame;
 
@@ -51,10 +53,13 @@ public class RegistrationExplorer< AS extends AbstractSpimData< ? >, X extends X
 	public void save() {}
 
 	@Override
-	public void seletedViewDescription( final BasicViewDescription<? extends BasicViewSetup> viewDescription )
+	public void selectedViewDescriptions( final List<List< BasicViewDescription< ? extends BasicViewSetup > >> viewDescriptions )
 	{
-		panel.updateViewDescription( viewDescription );
-		System.out.println( viewDescription );
+		List<BasicViewDescription< ? extends BasicViewSetup >> vdsFlat = new ArrayList<>();
+		for (List<BasicViewDescription< ? extends BasicViewSetup >> vdsI : viewDescriptions)
+			vdsFlat.addAll( vdsI );
+		panel.updateViewDescriptions( vdsFlat );
+		System.out.println( viewDescriptions );
 	}
 
 	@Override
@@ -69,7 +74,8 @@ public class RegistrationExplorer< AS extends AbstractSpimData< ? >, X extends X
 	@Override
 	public void updateContent( final AS data )
 	{
-		panel.getTableModel().update( data.getViewRegistrations() );
-		panel.getTableModel().fireTableDataChanged();
+		//panel.getTableModel().update( data.getViewRegistrations() );
+		//panel.getTableModel().fireTableDataChanged();
 	}
+
 }
