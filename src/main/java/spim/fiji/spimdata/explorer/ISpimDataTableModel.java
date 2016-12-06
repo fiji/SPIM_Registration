@@ -1,6 +1,7 @@
 package spim.fiji.spimdata.explorer;
 
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.table.TableModel;
 
@@ -19,6 +20,8 @@ public interface ISpimDataTableModel<AS extends AbstractSpimData<?>> extends Tab
 	public int getSpecialColumn(SpecialColumnType type);
 	
 	public ExplorerWindow< AS, ? > getPanel();
+	
+	public Set<Class<? extends Entity>> getGroupingFactors();
 	
 	public void clearSortingFactors();
 

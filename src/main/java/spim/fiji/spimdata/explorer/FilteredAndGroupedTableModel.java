@@ -26,6 +26,7 @@ import mpicbg.spim.data.sequence.ViewSetup;
 import spim.fiji.spimdata.SpimDataTools;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
 
+
 public class FilteredAndGroupedTableModel < AS extends AbstractSpimData< ? > > extends AbstractTableModel implements ISpimDataTableModel<AS>
 {
 	
@@ -83,6 +84,7 @@ public class FilteredAndGroupedTableModel < AS extends AbstractSpimData< ? > > e
 	@Override
 	public void addGroupingFactor(Class<? extends Entity> factor ) {
 		groupingFactors.add(factor);
+		fireTableDataChanged();
 	}
 	
 	/* (non-Javadoc)
@@ -261,5 +263,12 @@ public class FilteredAndGroupedTableModel < AS extends AbstractSpimData< ? > > e
 	public int getSpecialColumn(ISpimDataTableModel.SpecialColumnType type)
 	{
 		return -1;
+	}
+
+
+	@Override
+	public Set< Class< ? extends Entity > > getGroupingFactors()
+	{
+		return groupingFactors;
 	}
 }
