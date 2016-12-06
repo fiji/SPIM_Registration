@@ -111,6 +111,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 	{
 		tableModel = new FilteredAndGroupedTableModel< AS >( this );
 		tableModel = new MultiViewTableModelDecorator<>( tableModel );
+		tableModel = new MissingViewsTableModelDecorator<>( tableModel );
 		tableModel.setColumnClasses( FilteredAndGroupedTableModel.defaultColumnClassesMV() );
 
 		tableModel.addGroupingFactor( Tile.class );
@@ -205,11 +206,32 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 	{
 		return new ListSelectionListener()
 		{
-			int lastRow = -1;
+			//int lastRow = -1;
 
 			@Override
 			public void valueChanged(final ListSelectionEvent arg0)
 			{
+				
+				BDVPopup b = bdvPopup();
+
+				selectedRows.clear();
+				firstSelectedVD = null;
+				for ( final int row : table.getSelectedRows() )
+				{
+					if ( firstSelectedVD == null )
+						firstSelectedVD = tableModel.getElements().get( row ).get( 0 );
+
+					selectedRows.add( tableModel.getElements().get( row ) );
+				}
+				
+				List<List<BasicViewDescription< ? extends BasicViewSetup >>> selectedList = new ArrayList<>();
+				for (List<BasicViewDescription< ? extends BasicViewSetup >> selectedI : selectedRows)
+					selectedList.add( selectedI );
+								
+				for ( int i = 0; i < listeners.size(); ++i )
+					listeners.get( i ).selectedViewDescriptions( selectedList );
+				
+				/*
 				BDVPopup b = bdvPopup();
 
 				if ( table.getSelectedRowCount() != 1 )
@@ -217,7 +239,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 					lastRow = -1;
 
 					for ( int i = 0; i < listeners.size(); ++i )
-						listeners.get( i ).seletedViewDescription( null );
+						listeners.get( i ).firstSelectedViewDescriptions( null );
 
 					selectedRows.clear();
 
@@ -248,7 +270,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 								.get( row );
 
 						for ( int i = 0; i < listeners.size(); ++i )
-							listeners.get( i ).seletedViewDescription( vds.iterator().next() );
+							listeners.get( i ).firstSelectedViewDescriptions( vds );
 
 						selectedRows.clear();
 						selectedRows.add( vds );
@@ -256,6 +278,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 						firstSelectedVD = vds.get( 0 );
 					}
 				}
+				*/
 
 				if ( b != null && b.bdv != null )
 				{	

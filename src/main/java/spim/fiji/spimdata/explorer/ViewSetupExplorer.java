@@ -3,7 +3,6 @@ package spim.fiji.spimdata.explorer;
 import java.awt.BorderLayout;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.ArrayList;
 
 import javax.swing.JFrame;
 
@@ -11,11 +10,8 @@ import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
 import spim.fiji.spimdata.explorer.popup.BasicBDVPopup;
 
-public class ViewSetupExplorer< AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > >
+public class ViewSetupExplorer< AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > > extends FilteredAndGroupedExplorer< AS, X >
 {
-	final JFrame frame;
-	ViewSetupExplorerPanel< AS, X > panel;
-	
 	public ViewSetupExplorer( final AS data, final String xml, final X io )
 	{
 		frame = new JFrame( "ViewSetup Explorer" );
@@ -58,10 +54,4 @@ public class ViewSetupExplorer< AS extends AbstractSpimData< ? >, X extends XmlI
 
 		ViewSetupExplorerPanel.currentInstance = null;
 	}
-	
-	public AS getSpimData() { return panel.getSpimData(); }
-	public FilteredAndGroupedExplorerPanel< AS, X > getPanel() { return panel; }
-	public JFrame getFrame() { return frame; }
-	public void addListener( final SelectedViewDescriptionListener< AS > listener ) { panel.addListener( listener ); }
-	public ArrayList< SelectedViewDescriptionListener< AS > > getListeners() { return panel.getListeners(); }
 }

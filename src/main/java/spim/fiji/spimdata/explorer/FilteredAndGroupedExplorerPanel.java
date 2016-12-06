@@ -65,7 +65,7 @@ public abstract class FilteredAndGroupedExplorerPanel<AS extends AbstractSpimDat
 	protected ISpimDataTableModel< AS > tableModel;
 	protected ArrayList< SelectedViewDescriptionListener< AS > > listeners;
 	protected AS data;
-	protected ViewSetupExplorer< AS, X > explorer;
+	protected FilteredAndGroupedExplorer< AS, X > explorer;
 	protected final String xml;
 	protected final X io;
 	protected final boolean isMac;
@@ -75,7 +75,7 @@ public abstract class FilteredAndGroupedExplorerPanel<AS extends AbstractSpimDat
 	final protected HashSet< List<BasicViewDescription< ? extends BasicViewSetup >> > selectedRows;
 	protected BasicViewDescription< ? extends BasicViewSetup > firstSelectedVD;
 
-	public FilteredAndGroupedExplorerPanel(final ViewSetupExplorer< AS, X > explorer, final AS data,
+	public FilteredAndGroupedExplorerPanel(final FilteredAndGroupedExplorer< AS, X > explorer, final AS data,
 			final String xml, final X io)
 	{
 		
@@ -141,7 +141,7 @@ public abstract class FilteredAndGroupedExplorerPanel<AS extends AbstractSpimDat
 		return io;
 	}
 
-	public ViewSetupExplorer< AS, X > explorer()
+	public FilteredAndGroupedExplorer< AS, X > explorer()
 	{
 		return explorer;
 	}
@@ -193,10 +193,11 @@ public abstract class FilteredAndGroupedExplorerPanel<AS extends AbstractSpimDat
 	{
 		this.listeners.add( listener );
 
-		// TODO: does this break anything?
-		// update it with the first view currently selected row
-		if ( table.getSelectedRow() != -1 )
-			listener.seletedViewDescription( tableModel.getElements().get( table.getSelectedRow() ).iterator().next() );
+		List<List<BasicViewDescription< ? extends BasicViewSetup >>> selectedList = new ArrayList<>();
+		for (List<BasicViewDescription< ? extends BasicViewSetup >> selectedI : selectedRows)
+			selectedList.add( selectedI );
+		
+		listener.selectedViewDescriptions( selectedList );
 	}
 
 	public ArrayList< SelectedViewDescriptionListener< AS > > getListeners()
@@ -237,22 +238,39 @@ public abstract class FilteredAndGroupedExplorerPanel<AS extends AbstractSpimDat
 	{
 		return new ListSelectionListener()
 		{
-			int lastRow = -1;
+			//int lastRow = -1;
 
 			@Override
 			public void valueChanged(final ListSelectionEvent arg0)
 			{
 				BDVPopup b = bdvPopup();
 
+				selectedRows.clear();
+				firstSelectedVD = null;
+				for ( final int row : table.getSelectedRows() )
+				{
+					if ( firstSelectedVD == null )
+						firstSelectedVD = tableModel.getElements().get( row ).get( 0 );
+
+					selectedRows.add( tableModel.getElements().get( row ) );
+				}
+				
+				List<List<BasicViewDescription< ? extends BasicViewSetup >>> selectedList = new ArrayList<>();
+				for (List<BasicViewDescription< ? extends BasicViewSetup >> selectedI : selectedRows)
+					selectedList.add( selectedI );
+								
+				for ( int i = 0; i < listeners.size(); ++i )
+					listeners.get( i ).selectedViewDescriptions( selectedList );
+				
+				/*
 				if ( table.getSelectedRowCount() != 1 )
 				{
 					lastRow = -1;
 
 					for ( int i = 0; i < listeners.size(); ++i )
-						listeners.get( i ).seletedViewDescription( null );
+						listeners.get( i ).firstSelectedViewDescriptions( null );
 
 					selectedRows.clear();
-
 					firstSelectedVD = null;
 					for ( final int row : table.getSelectedRows() )
 					{
@@ -280,7 +298,7 @@ public abstract class FilteredAndGroupedExplorerPanel<AS extends AbstractSpimDat
 								.get( row );
 
 						for ( int i = 0; i < listeners.size(); ++i )
-							listeners.get( i ).seletedViewDescription( vds.iterator().next() );
+							listeners.get( i ).firstSelectedViewDescriptions( vds );
 
 						selectedRows.clear();
 						selectedRows.add( vds );
@@ -288,6 +306,7 @@ public abstract class FilteredAndGroupedExplorerPanel<AS extends AbstractSpimDat
 						firstSelectedVD = vds.get( 0 );
 					}
 				}
+				*/
 
 				if ( b != null && b.bdv != null )
 				{	
