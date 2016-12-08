@@ -334,6 +334,7 @@ public abstract class FilteredAndGroupedExplorerPanel<AS extends AbstractSpimDat
 		{
 			SourceState<?> s = bdv.getViewer().getVisibilityAndGrouping().getSources().get( sourceIdx );
 			((TransformedSource< ? >)s.getSpimSource()).setFixedTransform( new AffineTransform3D() );
+			((TransformedSource< ? >)s.getSpimSource()).setIncrementalTransform( new AffineTransform3D() );
 		}
 	}
 	
