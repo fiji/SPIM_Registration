@@ -71,7 +71,9 @@ public class BigDataViewerBoundingBox extends BoundingBoxGUI
 			for ( final ViewId viewId : viewIdsToProcess )
 				vds.add( spimData.getSequenceDescription().getViewDescriptions().get( viewId ) );
 
-			ViewSetupExplorerPanel.updateBDV( bdv, true, spimData, null, vds );
+			final List<List< BasicViewDescription< ? > >> vdsWrapped = new ArrayList<>();
+			vdsWrapped.add( vds );
+			ViewSetupExplorerPanel.updateBDV( bdv, true, spimData, null, vdsWrapped );
 		}
 		else if ( popup.bdv == null )
 		{

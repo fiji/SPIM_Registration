@@ -9,6 +9,7 @@ import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
+import spim.fiji.spimdata.explorer.FilteredAndGroupedExplorerPanel;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 import spim.fiji.spimdata.explorer.interestpoint.InterestPointExplorer;
 
@@ -73,7 +74,7 @@ public class InterestPointsExplorerPopup extends JMenuItem implements ExplorerWi
 		}
 	}
 
-	private static final < AS extends SpimData2, X extends XmlIoAbstractSpimData< ?, AS > > InterestPointExplorer< AS, X > instanceFor( final ViewSetupExplorerPanel< AS, X > panel )
+	private static final < AS extends SpimData2, X extends XmlIoAbstractSpimData< ?, AS > > InterestPointExplorer< AS, X > instanceFor( final FilteredAndGroupedExplorerPanel< AS, X > panel )
 	{
 		return new InterestPointExplorer< AS, X >( panel.xml(), panel.io(), panel.explorer() );
 	}

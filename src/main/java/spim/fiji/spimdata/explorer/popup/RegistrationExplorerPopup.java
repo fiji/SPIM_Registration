@@ -9,6 +9,8 @@ import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
+import spim.fiji.spimdata.explorer.FilteredAndGroupedExplorer;
+import spim.fiji.spimdata.explorer.FilteredAndGroupedExplorerPanel;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 import spim.fiji.spimdata.explorer.registration.RegistrationExplorer;
 
@@ -16,7 +18,7 @@ public class RegistrationExplorerPopup extends JMenuItem implements ExplorerWind
 {
 	private static final long serialVersionUID = 5234649267634013390L;
 
-	ViewSetupExplorerPanel< ?, ? > panel;
+	FilteredAndGroupedExplorerPanel< ?, ? > panel;
 	RegistrationExplorer< ?, ? > re = null;
 
 	public RegistrationExplorerPopup()
@@ -29,7 +31,7 @@ public class RegistrationExplorerPopup extends JMenuItem implements ExplorerWind
 	@Override
 	public JMenuItem setExplorerWindow( final ExplorerWindow< ?, ? > panel )
 	{
-		this.panel = (ViewSetupExplorerPanel< ?, ? >)panel;
+		this.panel = (FilteredAndGroupedExplorerPanel< ?, ? >)panel;
 		return this;
 	}
 
@@ -51,7 +53,7 @@ public class RegistrationExplorerPopup extends JMenuItem implements ExplorerWind
 				{
 					if ( re == null || !re.frame().isVisible() )
 					{
-						re = instanceFor( (ViewSetupExplorerPanel)panel );
+						re = instanceFor( (FilteredAndGroupedExplorerPanel)panel );
 					}
 					else
 					{
@@ -63,7 +65,7 @@ public class RegistrationExplorerPopup extends JMenuItem implements ExplorerWind
 		}
 	}
 
-	private static final < AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > > RegistrationExplorer< AS, X > instanceFor( final ViewSetupExplorerPanel< AS, X > panel )
+	private static final < AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > > RegistrationExplorer< AS, X > instanceFor( final FilteredAndGroupedExplorerPanel< AS, X > panel )
 	{
 		return new RegistrationExplorer< AS, X >( panel.xml(), panel.io(), panel.explorer() );
 	}

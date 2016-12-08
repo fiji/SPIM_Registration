@@ -17,6 +17,7 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.explorer.FilteredAndGroupedExplorer;
 import spim.fiji.spimdata.explorer.SelectedViewDescriptionListener;
 import spim.fiji.spimdata.explorer.ViewSetupExplorer;
 import spim.fiji.spimdata.explorer.popup.BasicBDVPopup;
@@ -29,9 +30,9 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 	final String xml;
 	final JFrame frame;
 	final InterestPointExplorerPanel panel;
-	final ViewSetupExplorer< AS, X > viewSetupExplorer;
+	final FilteredAndGroupedExplorer< AS, X > viewSetupExplorer;
 
-	public InterestPointExplorer( final String xml, final X io, final ViewSetupExplorer< AS, X > viewSetupExplorer )
+	public InterestPointExplorer( final String xml, final X io, final FilteredAndGroupedExplorer< AS, X > viewSetupExplorer )
 	{
 		this.xml = xml;
 		this.viewSetupExplorer = viewSetupExplorer;

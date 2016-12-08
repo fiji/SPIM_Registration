@@ -12,6 +12,8 @@ import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
+import spim.fiji.spimdata.explorer.FilteredAndGroupedExplorer;
+import spim.fiji.spimdata.explorer.FilteredAndGroupedExplorerPanel;
 import spim.fiji.spimdata.explorer.SelectedViewDescriptionListener;
 import spim.fiji.spimdata.explorer.ViewSetupExplorer;
 
@@ -21,9 +23,9 @@ public class RegistrationExplorer< AS extends AbstractSpimData< ? >, X extends X
 	final String xml;
 	final JFrame frame;
 	final RegistrationExplorerPanel panel;
-	final ViewSetupExplorer< AS, X > viewSetupExplorer;
+	final FilteredAndGroupedExplorer< AS, X > viewSetupExplorer;
 	
-	public RegistrationExplorer( final String xml, final X io, final ViewSetupExplorer< AS, X > viewSetupExplorer )
+	public RegistrationExplorer( final String xml, final X io, final FilteredAndGroupedExplorer< AS, X > viewSetupExplorer )
 	{
 		this.xml = xml;
 		this.viewSetupExplorer = viewSetupExplorer;
