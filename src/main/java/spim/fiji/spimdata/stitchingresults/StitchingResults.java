@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import mpicbg.spim.data.sequence.ViewId;
+import net.imglib2.realtransform.AffineGet;
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
 
@@ -13,7 +14,7 @@ import net.imglib2.util.ValuePair;
 public class StitchingResults
 {
 	Map<Pair<ViewId, ViewId>, PairwiseStitchingResult<ViewId>> pairwiseResults;
-	Map<ViewId, double[]> globalShifts;
+	Map<ViewId, AffineGet> globalShifts;
 	
 	public StitchingResults()
 	{
@@ -23,7 +24,7 @@ public class StitchingResults
 
 	public Map< Pair< ViewId, ViewId >, PairwiseStitchingResult<ViewId> > getPairwiseResults() { return pairwiseResults; }
 	
-	public Map< ViewId, double[] > getGlobalShifts() { return globalShifts;	}
+	public Map< ViewId, AffineGet > getGlobalShifts() { return globalShifts;	}
 	
 	/**
 	 * save the PairwiseStitchingResult for a pair of ViewIds, using the sorted ViewIds as a key
@@ -69,8 +70,14 @@ public class StitchingResults
 		{
 			if (globalShifts.containsKey( psr.pair().getA()) && globalShifts.containsKey( psr.pair().getB() ))
 			{
-				double[] relativeGlobal = VectorUtil.getVectorDiff( globalShifts.get( psr.pair().getA() ), globalShifts.get( psr.pair().getB() ) );
-				res.add( new Double(VectorUtil.getVectorLength(  VectorUtil.getVectorDiff( relativeGlobal, psr.relativeVector() ) )) );
+				double[] vGlobal1 = new double[3];
+				double[] vGLobal2 = new double[3];
+				double[] vPairwise = new double[3];
+				globalShifts.get( psr.pair().getA() ).apply( vGlobal1, vGlobal1 );
+				globalShifts.get( psr.pair().getB() ).apply( vGLobal2, vGLobal2 );
+				psr.getTransform().apply( vPairwise, vPairwise );
+				double[] relativeGlobal = VectorUtil.getVectorDiff( vGlobal1, vGLobal2 );
+				res.add( new Double(VectorUtil.getVectorLength(  VectorUtil.getVectorDiff( relativeGlobal, vPairwise ) )) );
 			}
 				
 		}

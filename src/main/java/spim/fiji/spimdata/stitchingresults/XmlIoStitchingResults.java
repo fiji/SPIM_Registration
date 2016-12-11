@@ -16,6 +16,7 @@ import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.XmlHelpers;
 import mpicbg.spim.data.generic.base.XmlIoSingleton;
 import mpicbg.spim.data.sequence.ViewId;
+import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.util.ValuePair;
 
 
@@ -52,12 +53,20 @@ public class XmlIoStitchingResults extends XmlIoSingleton<StitchingResults>
 
 			final double[] shift = XmlHelpers.getDoubleArray( pairwiseResultsElement, STICHING_SHIFT_TAG );
 			final double corr = XmlHelpers.getDouble( pairwiseResultsElement, STICHING_CORRELATION_TAG );
+			
+			AffineTransform3D transform = new AffineTransform3D();
+			// backwards-compatibility with just translation
+			if (shift.length == 3)
+				transform.setTranslation( shift );
+			// tag contains row-packed copy of transformation matrix
+			else
+				transform.set( shift );
 
 			final ViewId vidA = new ViewId( tpA, vsA );
 			final ViewId vidB = new ViewId( tpB, vsB );
 			final ValuePair< ViewId, ViewId > pair = new ValuePair< ViewId, ViewId >( vidA, vidB );
 			
-			final PairwiseStitchingResult< ViewId > pairwiseStitchingResult = new PairwiseStitchingResult<>(pair, shift, corr );
+			final PairwiseStitchingResult< ViewId > pairwiseStitchingResult = new PairwiseStitchingResult<>(pair, transform, corr );
 			stitchingResults.setPairwiseResultForPair( pair, pairwiseStitchingResult );
 		}
 
@@ -73,7 +82,7 @@ public class XmlIoStitchingResults extends XmlIoSingleton<StitchingResults>
 		elem.setAttribute( STITCHING_TP_A_TAG, Integer.toString( sr.pair().getA().getTimePointId()));
 		elem.setAttribute( STITCHING_TP_B_TAG, Integer.toString( sr.pair().getB().getTimePointId()));
 		
-		elem.addContent( XmlHelpers.doubleArrayElement( STICHING_SHIFT_TAG, sr.relativeVector() ) );
+		elem.addContent( XmlHelpers.doubleArrayElement( STICHING_SHIFT_TAG, sr.getTransform().getRowPackedCopy() ) );
 		elem.addContent( XmlHelpers.doubleElement(  STICHING_CORRELATION_TAG, sr.r() ) );
 		
 		return elem;
