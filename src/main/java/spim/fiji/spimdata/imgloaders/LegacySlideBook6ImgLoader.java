@@ -225,10 +225,13 @@ public class LegacySlideBook6ImgLoader extends AbstractImgFactoryImgLoader
 
 				final Cursor< T > cursor = Views.iterable( Views.hyperSlice( img, 2, z ) ).localizingCursor();
 
+				IOFunctions.println("reader.readImagePlaneBuf z = " + z + ", capture = " + c + ", angle = " + a.getId() +
+				", channel = " + (ch.getId()*2 + a.getId()) + ", channels = " + channels + ", timepoint = " + t.getId());
+
 				// SlideBook6Reader.dll
 				// i = illumination id (SPIMdata) = capture index * 8 (SlideBook)
 				// a = angle id (SPIMdata) = channel index  (SlideBook)
-				reader.readImagePlaneBuf(b, c, 0, t.getId(), z, (ch.getId()*channels) + a.getId());
+				reader.readImagePlaneBuf(b, c, 0, t.getId(), z, (ch.getId()*2) + a.getId());
 
 				///r.openBytes( r.getIndex( z, ch, t.getId() ), b );
 
