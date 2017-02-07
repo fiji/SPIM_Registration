@@ -161,6 +161,17 @@ public class BDVPopup extends JMenuItem implements ExplorerWindowSetable, BasicB
 		return ( p != null && p.getBDV() != null && p.getBDV().getViewerFrame().isVisible() );
 	}
 
+	
+	public void setBDV(BigDataViewer bdv)
+	{
+		// close existing bdv if necessary
+		if (bdvRunning())
+			new Thread(() -> {closeBDV();}).start();
+		
+		this.bdv = bdv;
+		ViewSetupExplorerPanel.updateBDV( this.bdv, panel.colorMode(), panel.getSpimData(), panel.firstSelectedVD(), ((GroupedRowWindow)panel).selectedRowsGroups() );
+	}
+	
 	public static BigDataViewer createBDV( final ExplorerWindow< ?, ? > panel )
 	{
 		if ( AbstractImgLoader.class.isInstance( panel.getSpimData().getSequenceDescription().getImgLoader() ) )
