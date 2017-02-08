@@ -20,7 +20,13 @@ import loci.formats.in.ND2Reader;
 import loci.formats.in.ZeissCZIReader;
 import loci.formats.meta.MetadataRetrieve;
 import loci.formats.ome.OMEXMLMetadataImpl;
+import mpicbg.spim.data.generic.base.Entity;
+import mpicbg.spim.data.sequence.Angle;
+import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
+import mpicbg.spim.data.sequence.Illumination;
+import mpicbg.spim.data.sequence.Tile;
+import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Dimensions;
@@ -484,184 +490,205 @@ public class FileListDatasetDefinitionUtil
 	}
 	
 	
-	public static List<CheckResult> resolveAmbiguity(List<CheckResult> checkResults,
+	public static void resolveAmbiguity(Map<Class<? extends Entity>, CheckResult> checkResults,
 													boolean channelIllumAmbiguous,
 													boolean preferChannel,
 													boolean angleTileAmbiguous,
 													boolean preferTile)
 	{
-		List<CheckResult> res = new ArrayList<>( checkResults );
 		if (channelIllumAmbiguous){
 			if (preferChannel)
-				res.set( 1, CheckResult.MULTIPLE_INDEXED );
+				checkResults.put( Channel.class, CheckResult.MULTIPLE_INDEXED );
 			else
-				res.set( 2, CheckResult.MULTIPLE_INDEXED );				
+				checkResults.put( Illumination.class, CheckResult.MULTIPLE_INDEXED );			
 		}
 		
 		if (angleTileAmbiguous){
 			if (preferTile)
-				res.set( 3, CheckResult.MULTIPLE_INDEXED );
+				checkResults.put( Tile.class, CheckResult.MULTIPLE_INDEXED );
 			else
-				res.set( 4, CheckResult.MULTIPLE_INDEXED );
+				checkResults.put( Angle.class, CheckResult.MULTIPLE_INDEXED );
 		}
-		return res;
 	}
 	
 	public static void expandAccumulatedViewInfos
 	(
-			final List<CheckResult> multiplicityMap,
-			final List<Integer> fileVariableToUse,
+			final Map<Class<? extends Entity>, Integer> fileVariableToUse,
 			final FilenamePatternDetector patternDetector,
-			final Map<Integer, List<Pair<File, Pair< Integer, Integer >>>> accumulateTPMap,
-			final Map<FileListDatasetDefinitionUtil.ChannelInfo, List<Pair<File, Pair<Integer, Integer>>>> accumulateChannelMap,
-			final Map<Integer, List<Pair<File, Pair<Integer, Integer>>>> accumulateIllumMap,
-			final Map<FileListDatasetDefinitionUtil.TileInfo, List<Pair<File, Pair< Integer, Integer >>>> accumulateTileMap,
-			final Map<FileListDatasetDefinitionUtil.AngleInfo, List<Pair<File, Pair< Integer, Integer >>>> accumulateAngleMap,
-			Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > tpIdxMap,
-			Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > channelIdxMap,
-			Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > illumIdxMap,
-			Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > tileIdxMap,
-			Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > angleIdxMap,
-			Map< Integer, ChannelInfo > channelDetailMap,
-			Map< Integer, TileInfo > tileDetailMap,
-			Map< Integer, AngleInfo > angleDetailMap
-			
+			FileListViewDetectionState state			
 	)
 	{
-		// DO TIMEPOINTS
-
-		tpIdxMap.clear();
-		Boolean singleTPperFile = multiplicityMap.get( 0 ) == CheckResult.SINGLE;
-
-		if ( singleTPperFile && fileVariableToUse.get( 0 ) != null )
-		{
-			Pair< Map< Integer, Integer >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > expandTPMap = expandMapSingleFromFile(
-					accumulateTPMap, patternDetector, fileVariableToUse.get( 0 ) );
-			tpIdxMap.putAll( expandTPMap.getB() );
-		}
-		else if ( singleTPperFile )
-		{
-			tpIdxMap.put( 0, accumulateTPMap.values().iterator().next() );
-		}
-		else if ( multiplicityMap.get( 0 ) == CheckResult.MULTIPLE_INDEXED )
-		{
-			tpIdxMap.putAll( expandTimePointMapIndexed( accumulateTPMap ) );
-		}
 				
-		// DO CHANNELS
-		channelIdxMap.clear();
-		channelDetailMap.clear();
-		Boolean singleChannelperFile = multiplicityMap.get( 1 ) == CheckResult.SINGLE;
-
-		if ( singleChannelperFile && fileVariableToUse.get( 1 ) != null )
+		
+		for (Class<? extends Entity> cl: state.getIdMap().keySet())
 		{
-			Pair< Map< Integer, ChannelInfo >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > expandChannelMap = expandMapSingleFromFile(
-					accumulateChannelMap, patternDetector, fileVariableToUse.get( 1 ) );
-			channelIdxMap.putAll( expandChannelMap.getB() );
-			channelDetailMap.putAll( expandChannelMap.getA() );
+			state.getIdMap().get( cl ).clear();
+			state.getDetailMap().get( cl ).clear();
+			Boolean singleEntityPerFile = state.getMultiplicityMap().get( cl ) == CheckResult.SINGLE;
+			
+			if ( singleEntityPerFile && fileVariableToUse.get( cl ) != null )
+			{
+				Pair< Map< Integer, Object >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > expandChannelMap = expandMapSingleFromFile(
+						state.getAccumulateMap( cl ), patternDetector, fileVariableToUse.get( cl ) );
+				state.getIdMap().get( cl ).putAll( expandChannelMap.getB() );
+				state.getDetailMap().get( cl ).putAll( expandChannelMap.getA() );
+			}
+			
+			else if ( singleEntityPerFile )
+			{
+				state.getIdMap().get( cl ).put( 0, state.getAccumulateMap( cl ).values().iterator().next() );
+			}
+			else if ( state.getMultiplicityMap().get( cl ) == CheckResult.MULTIPLE_INDEXED )
+			{
+				if (cl.equals( TimePoint.class ))
+					state.getIdMap().get( cl ).putAll( expandTimePointMapIndexed( state.getAccumulateMap( cl )) );
+				else
+					state.getIdMap().get( cl ).putAll( expandMapIndexed( state.getAccumulateMap( cl ), cl.equals( Angle.class ) || cl.equals( Tile.class) ) );
+			}
+			else if ( state.getMultiplicityMap().get( cl ) == CheckResult.MUlTIPLE_NAMED )
+			{
+				Pair< Map< Integer, Object >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > resortMapNamed = resortMapNamed(
+						state.getAccumulateMap( cl ) );
+				state.getDetailMap().get( cl ).putAll( resortMapNamed.getA() );
+				state.getIdMap().get( cl ).putAll( resortMapNamed.getB() );
+			}
+			
 		}
-		else if ( singleChannelperFile )
-		{
-
-			channelIdxMap.put( 0, accumulateChannelMap.values().iterator().next() );
-		}
-		else if ( multiplicityMap.get( 1 ) == CheckResult.MULTIPLE_INDEXED )
-		{
-			channelIdxMap.putAll( expandMapIndexed( accumulateChannelMap, false ) );
-		}
-		else if ( multiplicityMap.get( 1 ) == CheckResult.MUlTIPLE_NAMED )
-		{
-			Pair< Map< Integer, ChannelInfo >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > resortMapNamed = resortMapNamed(
-					accumulateChannelMap );
-			channelDetailMap.putAll( resortMapNamed.getA() );
-			channelIdxMap.putAll( resortMapNamed.getB() );
-		}
-				
-		// DO ILLUMINATIONS
-
-		illumIdxMap.clear();
-		Boolean singleIllumperFile = multiplicityMap.get( 2 ) == CheckResult.SINGLE;
-
-		if ( singleIllumperFile && fileVariableToUse.get( 2 ) != null )
-		{
-			Pair< Map< Integer, Integer >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > expandIllumMap = expandMapSingleFromFile(
-					accumulateIllumMap, patternDetector, fileVariableToUse.get( 2 ) );
-			illumIdxMap.putAll( expandIllumMap.getB() );
-		}
-		else if ( singleIllumperFile )
-		{
-			illumIdxMap.put( 0, accumulateIllumMap.values().iterator().next() );
-		}
-		else if ( multiplicityMap.get( 2 ) == CheckResult.MULTIPLE_INDEXED )
-		{
-			illumIdxMap.putAll( expandMapIndexed( accumulateIllumMap, false ) );
-		}
-		else if ( multiplicityMap.get( 2 ) == CheckResult.MUlTIPLE_NAMED )
-		{
-			Pair< Map< Integer, Integer >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > resortMapNamed = resortMapNamed(
-					accumulateIllumMap );
-			illumIdxMap.putAll( resortMapNamed.getB() );
-
-		}
-				
-		// DO TILES
-
-		tileIdxMap.clear();
-		tileDetailMap.clear();
-		Boolean singleTileperFile = multiplicityMap.get( 3 ) == CheckResult.SINGLE;
-
-		if ( singleTileperFile && fileVariableToUse.get( 3 ) != null )
-		{
-			Pair< Map< Integer, TileInfo >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > expandTileMap = expandMapSingleFromFile(
-					accumulateTileMap, patternDetector, fileVariableToUse.get( 3 ) );
-			tileIdxMap.putAll( expandTileMap.getB() );
-			tileDetailMap.putAll( expandTileMap.getA() );
-		}
-		else if ( singleTileperFile )
-		{
-			tileIdxMap.put( 0, accumulateTileMap.values().iterator().next() );
-		}
-		else if ( multiplicityMap.get( 3 ) == CheckResult.MULTIPLE_INDEXED )
-		{
-			tileIdxMap.putAll( expandMapIndexed( accumulateTileMap, true ) );
-		}
-		else if ( multiplicityMap.get( 3 ) == CheckResult.MUlTIPLE_NAMED )
-		{
-			Pair< Map< Integer, TileInfo >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > resortMapNamed = resortMapNamed(
-					accumulateTileMap );
-			tileDetailMap.putAll( resortMapNamed.getA() );
-			tileIdxMap.putAll( resortMapNamed.getB() );
-		}
-				
-				
-		// DO ANGLES
-
-		angleIdxMap.clear();
-		angleDetailMap.clear();
-		Boolean singleAngleperFile = multiplicityMap.get( 4 ) == CheckResult.SINGLE;
-
-		if ( singleAngleperFile && fileVariableToUse.get( 4 ) != null )
-		{
-			Pair< Map< Integer, AngleInfo >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > expandAngleMap = expandMapSingleFromFile(
-					accumulateAngleMap, patternDetector, fileVariableToUse.get( 4 ) );
-			angleIdxMap.putAll( expandAngleMap.getB() );
-			angleDetailMap.putAll( expandAngleMap.getA() );
-		}
-		else if ( singleAngleperFile )
-		{
-			angleIdxMap.put( 0, accumulateAngleMap.values().iterator().next() );
-		}
-		else if ( multiplicityMap.get( 4 ) == CheckResult.MULTIPLE_INDEXED )
-		{
-			angleIdxMap.putAll( expandMapIndexed( accumulateAngleMap, true ) );
-		}
-		else if ( multiplicityMap.get( 4 ) == CheckResult.MUlTIPLE_NAMED )
-		{
-			Pair< Map< Integer, AngleInfo >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > resortMapNamed = resortMapNamed(
-					accumulateAngleMap );
-			angleDetailMap.putAll( resortMapNamed.getA() );
-			angleIdxMap.putAll( resortMapNamed.getB() );
-		}
+		
+//		// DO TIMEPOINTS
+//
+//		tpIdxMap.clear();
+//		Boolean singleTPperFile = multiplicityMap.get( 0 ) == CheckResult.SINGLE;
+//
+//		if ( singleTPperFile && fileVariableToUse.get( 0 ) != null )
+//		{
+//			Pair< Map< Integer, Integer >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > expandTPMap = expandMapSingleFromFile(
+//					accumulateTPMap, patternDetector, fileVariableToUse.get( 0 ) );
+//			tpIdxMap.putAll( expandTPMap.getB() );
+//		}
+//		else if ( singleTPperFile )
+//		{
+//			tpIdxMap.put( 0, accumulateTPMap.values().iterator().next() );
+//		}
+//		else if ( multiplicityMap.get( 0 ) == CheckResult.MULTIPLE_INDEXED )
+//		{
+//			tpIdxMap.putAll( expandTimePointMapIndexed( accumulateTPMap ) );
+//		}
+//				
+//		// DO CHANNELS
+//		channelIdxMap.clear();
+//		channelDetailMap.clear();
+//		Boolean singleChannelperFile = multiplicityMap.get( 1 ) == CheckResult.SINGLE;
+//
+//		if ( singleChannelperFile && fileVariableToUse.get( 1 ) != null )
+//		{
+//			Pair< Map< Integer, ChannelInfo >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > expandChannelMap = expandMapSingleFromFile(
+//					accumulateChannelMap, patternDetector, fileVariableToUse.get( 1 ) );
+//			channelIdxMap.putAll( expandChannelMap.getB() );
+//			channelDetailMap.putAll( expandChannelMap.getA() );
+//		}
+//		else if ( singleChannelperFile )
+//		{
+//
+//			channelIdxMap.put( 0, accumulateChannelMap.values().iterator().next() );
+//		}
+//		else if ( multiplicityMap.get( 1 ) == CheckResult.MULTIPLE_INDEXED )
+//		{
+//			channelIdxMap.putAll( expandMapIndexed( accumulateChannelMap, false ) );
+//		}
+//		else if ( multiplicityMap.get( 1 ) == CheckResult.MUlTIPLE_NAMED )
+//		{
+//			Pair< Map< Integer, ChannelInfo >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > resortMapNamed = resortMapNamed(
+//					accumulateChannelMap );
+//			channelDetailMap.putAll( resortMapNamed.getA() );
+//			channelIdxMap.putAll( resortMapNamed.getB() );
+//		}
+//				
+//		// DO ILLUMINATIONS
+//
+//		illumIdxMap.clear();
+//		Boolean singleIllumperFile = multiplicityMap.get( 2 ) == CheckResult.SINGLE;
+//
+//		if ( singleIllumperFile && fileVariableToUse.get( 2 ) != null )
+//		{
+//			Pair< Map< Integer, Integer >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > expandIllumMap = expandMapSingleFromFile(
+//					accumulateIllumMap, patternDetector, fileVariableToUse.get( 2 ) );
+//			illumIdxMap.putAll( expandIllumMap.getB() );
+//		}
+//		else if ( singleIllumperFile )
+//		{
+//			illumIdxMap.put( 0, accumulateIllumMap.values().iterator().next() );
+//		}
+//		else if ( multiplicityMap.get( 2 ) == CheckResult.MULTIPLE_INDEXED )
+//		{
+//			illumIdxMap.putAll( expandMapIndexed( accumulateIllumMap, false ) );
+//		}
+//		else if ( multiplicityMap.get( 2 ) == CheckResult.MUlTIPLE_NAMED )
+//		{
+//			Pair< Map< Integer, Integer >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > resortMapNamed = resortMapNamed(
+//					accumulateIllumMap );
+//			illumIdxMap.putAll( resortMapNamed.getB() );
+//
+//		}
+//				
+//		// DO TILES
+//
+//		tileIdxMap.clear();
+//		tileDetailMap.clear();
+//		Boolean singleTileperFile = multiplicityMap.get( 3 ) == CheckResult.SINGLE;
+//
+//		if ( singleTileperFile && fileVariableToUse.get( 3 ) != null )
+//		{
+//			Pair< Map< Integer, TileInfo >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > expandTileMap = expandMapSingleFromFile(
+//					accumulateTileMap, patternDetector, fileVariableToUse.get( 3 ) );
+//			tileIdxMap.putAll( expandTileMap.getB() );
+//			tileDetailMap.putAll( expandTileMap.getA() );
+//		}
+//		else if ( singleTileperFile )
+//		{
+//			tileIdxMap.put( 0, accumulateTileMap.values().iterator().next() );
+//		}
+//		else if ( multiplicityMap.get( 3 ) == CheckResult.MULTIPLE_INDEXED )
+//		{
+//			tileIdxMap.putAll( expandMapIndexed( accumulateTileMap, true ) );
+//		}
+//		else if ( multiplicityMap.get( 3 ) == CheckResult.MUlTIPLE_NAMED )
+//		{
+//			Pair< Map< Integer, TileInfo >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > resortMapNamed = resortMapNamed(
+//					accumulateTileMap );
+//			tileDetailMap.putAll( resortMapNamed.getA() );
+//			tileIdxMap.putAll( resortMapNamed.getB() );
+//		}
+//				
+//				
+//		// DO ANGLES
+//
+//		angleIdxMap.clear();
+//		angleDetailMap.clear();
+//		Boolean singleAngleperFile = multiplicityMap.get( 4 ) == CheckResult.SINGLE;
+//
+//		if ( singleAngleperFile && fileVariableToUse.get( 4 ) != null )
+//		{
+//			Pair< Map< Integer, AngleInfo >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > expandAngleMap = expandMapSingleFromFile(
+//					accumulateAngleMap, patternDetector, fileVariableToUse.get( 4 ) );
+//			angleIdxMap.putAll( expandAngleMap.getB() );
+//			angleDetailMap.putAll( expandAngleMap.getA() );
+//		}
+//		else if ( singleAngleperFile )
+//		{
+//			angleIdxMap.put( 0, accumulateAngleMap.values().iterator().next() );
+//		}
+//		else if ( multiplicityMap.get( 4 ) == CheckResult.MULTIPLE_INDEXED )
+//		{
+//			angleIdxMap.putAll( expandMapIndexed( accumulateAngleMap, true ) );
+//		}
+//		else if ( multiplicityMap.get( 4 ) == CheckResult.MUlTIPLE_NAMED )
+//		{
+//			Pair< Map< Integer, AngleInfo >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > resortMapNamed = resortMapNamed(
+//					accumulateAngleMap );
+//			angleDetailMap.putAll( resortMapNamed.getA() );
+//			angleIdxMap.putAll( resortMapNamed.getB() );
+//		}
 	}
 	
 	public static <T> Pair<Map<Integer, T>, Map<Integer, List<Pair<File, Pair< Integer, Integer >>>>> expandMapSingleFromFile(Map<T, List<Pair<File, Pair< Integer, Integer >>>> map, FilenamePatternDetector det, int patternIdx)
@@ -735,13 +762,14 @@ public class FileListDatasetDefinitionUtil
 		return res;
 	}
 	
-	public static Map<Integer, List<Pair<File, Pair< Integer, Integer >>>> expandTimePointMapIndexed(Map<Integer, List<Pair<File, Pair< Integer, Integer >>>> map)
+	public static <T> Map<Integer, List<Pair<File, Pair< Integer, Integer >>>> expandTimePointMapIndexed(Map<T, List<Pair<File, Pair< Integer, Integer >>>> map)
 	{
 		Map<Integer, List<Pair<File, Pair< Integer, Integer >>>> res = new HashMap<>();
-		SortedMap< Pair< File, Pair< Integer, Integer > >, Integer > invertedMap = invertMapSortValue( map );
+		SortedMap< Pair< File, Pair< Integer, Integer > >, T > invertedMap = invertMapSortValue( map );
 		for (Pair< File, Pair< Integer, Integer > > fileInfo : invertedMap.keySet())
 		{
-			Integer numTP = invertedMap.get( fileInfo );
+			// TODO: can we get around this dirty cast?
+			Integer numTP = (Integer) invertedMap.get( fileInfo );
 			for (int i = 0; i < numTP; i++)
 			{
 				if (!res.containsKey( i ))
@@ -837,8 +865,10 @@ public class FileListDatasetDefinitionUtil
 			int dimY = reader.getSizeY();
 			int dimZ = reader.getSizeZ();
 			
+			// get pixel units from size			
+			String unit = pszX != null ? pszX.unit().getSymbol() : "pixels";
 			
-			FinalVoxelDimensions finalVoxelDimensions = new FinalVoxelDimensions( "units", sizeX, sizeY, sizeZ );
+			FinalVoxelDimensions finalVoxelDimensions = new FinalVoxelDimensions( unit, sizeX, sizeY, sizeZ );
 			FinalDimensions finalDimensions = new FinalDimensions( dimX, dimY, dimZ );
 			
 			for (int j = 0; j < reader.getSizeC(); j++)
@@ -860,17 +890,9 @@ public class FileListDatasetDefinitionUtil
 	}
 	
 	public static void detectViewsInFiles(List<File> files,
-										 List<CheckResult> multiplicityMap,
-										 Map<Integer, List<Pair<File, Pair< Integer, Integer >>>> accumulateTPMap,
-										 Map<ChannelInfo, List<Pair<File, Pair<Integer, Integer>>>> accumulateChannelMap,
-										 Map<Integer, List<Pair<File, Pair<Integer, Integer>>>> accumulateIllumMap,
-										 Map<TileInfo, List<Pair<File, Pair< Integer, Integer >>>> accumulateTileMap,
-										 Map<AngleInfo, List<Pair<File, Pair< Integer, Integer >>>> accumulateAngleMap,
-										 Boolean ambiguousAngleTile,
-										 Boolean ambiguousIllumChannel,
-										 Map<Pair<File, Pair< Integer, Integer >>, Pair<Dimensions, VoxelDimensions>> dimensionMaps)
+										 FileListViewDetectionState state)
 	{
-		Map<File, List<CheckResult>> multiplicityMapInner = new HashMap<>();
+		Map<File, Map<Class<? extends Entity>, CheckResult>> multiplicityMapInner = new HashMap<>();
 		List<String> usedFiles = new ArrayList<>();
 		
 		
@@ -879,27 +901,21 @@ public class FileListDatasetDefinitionUtil
 			{
 				detectViewsInFile( 	file,
 									multiplicityMapInner,
-									accumulateTPMap,
-									accumulateChannelMap,
-									accumulateIllumMap,
-									accumulateTileMap, 
-									accumulateAngleMap, 
-									ambiguousAngleTile,
-									ambiguousIllumChannel,
+									state,
 									usedFiles);
 				
-				detectDimensionsInFile (file, dimensionMaps);
+				detectDimensionsInFile (file, state.getDimensionMap());
 			}
 		
 		
-		for (List<CheckResult> cr : multiplicityMapInner.values())
+		for (Map<Class<? extends Entity>, CheckResult> cr : multiplicityMapInner.values())
 		{
-			for (int i = 0; i < multiplicityMap.size(); i++)
+			for (Class<? extends Entity> cl : cr.keySet() )
 			{
-				if (multiplicityMap.get( i ) == CheckResult.SINGLE && cr.get( i ) == CheckResult.MULTIPLE_INDEXED)
-					multiplicityMap.set( i, CheckResult.MULTIPLE_INDEXED );
-				else if (multiplicityMap.get( i ) == CheckResult.SINGLE && cr.get( i ) == CheckResult.MUlTIPLE_NAMED)
-					multiplicityMap.set( i, CheckResult.MUlTIPLE_NAMED );
+				if (state.getMultiplicityMap().get( cl ) == CheckResult.SINGLE && cr.get( cl ) == CheckResult.MULTIPLE_INDEXED)
+					state.getMultiplicityMap().put( cl, CheckResult.MULTIPLE_INDEXED );
+				else if (state.getMultiplicityMap().get( cl ) == CheckResult.SINGLE && cr.get( cl ) == CheckResult.MUlTIPLE_NAMED)
+					state.getMultiplicityMap().put( cl, CheckResult.MUlTIPLE_NAMED );
 				// TODO: Error here if we have mixed indexed and named
 			}
 		}
@@ -907,18 +923,14 @@ public class FileListDatasetDefinitionUtil
 	}
 	
 	
+	
+	
 	public static void detectViewsInFile(final File file,
-										 Map<File, List<CheckResult>> multiplicityMap,
-										 Map<Integer, List<Pair<File, Pair< Integer, Integer >>>> accumulateTPMap,
-										 Map<ChannelInfo, List<Pair<File, Pair<Integer, Integer>>>> accumulateChannelMap,
-										 Map<Integer, List<Pair<File, Pair<Integer, Integer>>>> accumulateIllumMap,
-										 Map<TileInfo, List<Pair<File, Pair< Integer, Integer >>>> accumulateTileMap,
-										 Map<AngleInfo, List<Pair<File, Pair< Integer, Integer >>>> accumulateAngleMap,
-										 Boolean ambiguousAngleTile,
-										 Boolean ambiguousIllumChannel,
+										 Map<File, Map<Class<? extends Entity>, CheckResult>> multiplicityMap,
+										 FileListViewDetectionState state,
 										 List<String> usedFiles)
 	{
-		ImageReader reader = new ImageReader();
+		IFormatReader reader = new ImageReader();
 		reader.setMetadataStore( new OMEXMLMetadataImpl());
 		System.out.println( "Investigating file: " + file.getAbsolutePath() );
 		
@@ -928,52 +940,62 @@ public class FileListDatasetDefinitionUtil
 			
 			usedFiles.addAll( Arrays.asList( reader.getUsedFiles() ));
 			
+			// for each entity class, create a map from identifying object to series
+			Map<Class<? extends Entity>, Map< ? extends Object, List< Pair< Integer, Integer > > >> infoMap = new HashMap<>();
+			
 			// predict tiles and angles, refine info with format specific refiner
 			List< TileOrAngleInfo > predictTilesAndAngles = predictTilesAndAngles( reader);			
 			TileOrAngleRefiner refiner = tileOrAngleRefiners.get( ((ImageReader)reader).getReader().getClass() );
 			if (refiner != null)
 				refiner.refineTileOrAngleInfo( reader, predictTilesAndAngles );
-			
+						
 			// map to tileMap and angleMap
 			Pair< Map< TileInfo, List< Pair< Integer, Integer > > >, Map< AngleInfo, List< Pair< Integer, Integer > > > > mapTilesAngles = mapTilesAndAnglesToSeries( predictTilesAndAngles );
-			Map< TileInfo, List< Pair< Integer, Integer > > > tileMap = mapTilesAngles.getA();
-			Map< AngleInfo, List< Pair< Integer, Integer > > > angleMap = mapTilesAngles.getB();
+			infoMap.put( Tile.class, mapTilesAngles.getA());
+			infoMap.put( Angle.class, mapTilesAngles.getB());
 			
 			// predict and map timepoints, channels, illuminations
 			List< Pair< Integer, List< ChannelOrIlluminationInfo > > > predictTPChannelsIllum = predictTimepointsChannelsAndIllums( reader );
 			Pair< Map< Integer, List< Pair< Integer, Integer > > >, Pair< Map< ChannelInfo, List< Pair< Integer, Integer > > >, Map< Integer, List< Pair< Integer, Integer > > > > > mapTimepointsChannelsIlluminations = mapTimepointsChannelsAndIlluminations(predictTPChannelsIllum);
-			Map< Integer, List< Pair< Integer, Integer > > > timepointMap = mapTimepointsChannelsIlluminations.getA();
-			Map< ChannelInfo, List< Pair< Integer, Integer > > > channelMap = mapTimepointsChannelsIlluminations.getB().getA();
-			Map< Integer, List< Pair< Integer, Integer > > > illumMap = mapTimepointsChannelsIlluminations.getB().getB();
+			infoMap.put(TimePoint.class, mapTimepointsChannelsIlluminations.getA());
+			infoMap.put(Channel.class, mapTimepointsChannelsIlluminations.getB().getA());
+			infoMap.put(Illumination.class, mapTimepointsChannelsIlluminations.getB().getB());
 			
-			// check multiplicity of maps
-			CheckResult timepointMultiplicity = checkMultipleTimepoints( timepointMap );
-			CheckResult channelMultiplicity = checkMultiplicity( channelMap );
-			CheckResult illuminationMultiplicity = checkMultiplicity( illumMap );
-			CheckResult angleMultiplicity = checkMultiplicity( angleMap );
-			CheckResult tileMultiplicity = checkMultiplicity( tileMap );
+			// check multiplicity of maps			
+			Map<Class<? extends Entity>, CheckResult> multiplicity = new HashMap<>();
+			
+
+			multiplicity.put( TimePoint.class, checkMultipleTimepoints( (Map< Integer, List< Pair< Integer, Integer > > >) infoMap.get( TimePoint.class ) ));			
+			multiplicity.put( Channel.class, checkMultiplicity( infoMap.get( Channel.class ) ));
+			multiplicity.put( Illumination.class, checkMultiplicity( infoMap.get( Illumination.class ) ));
+			multiplicity.put( Angle.class, checkMultiplicity( infoMap.get( Angle.class ) ));
+			multiplicity.put( Tile.class, checkMultiplicity( infoMap.get( Tile.class ) ));
 			
 			boolean channelIllumAmbiguous = false;
-			if (channelMultiplicity == CheckResult.MULTIPLE_INDEXED && illuminationMultiplicity == CheckResult.MUlTIPLE_NAMED)
-				channelMultiplicity = CheckResult.SINGLE;
-			else if (channelMultiplicity == CheckResult.MUlTIPLE_NAMED && illuminationMultiplicity == CheckResult.MULTIPLE_INDEXED)
-				illuminationMultiplicity = CheckResult.SINGLE;
-			else if (channelMultiplicity == CheckResult.MULTIPLE_INDEXED && illuminationMultiplicity == CheckResult.MULTIPLE_INDEXED)
+			// we found multiple illums/channels with metadata for illums -> consider only illums
+			if (multiplicity.get( Channel.class ) == CheckResult.MULTIPLE_INDEXED && multiplicity.get( Illumination.class ) == CheckResult.MUlTIPLE_NAMED)
+				multiplicity.put( Channel.class, CheckResult.SINGLE );
+			// we found multiple illums/channels with metadata for channels -> consider only channels
+			else if (multiplicity.get( Channel.class ) == CheckResult.MUlTIPLE_NAMED && multiplicity.get( Illumination.class ) == CheckResult.MULTIPLE_INDEXED)
+				multiplicity.put( Illumination.class, CheckResult.SINGLE);
+			// we found multiple illums/channels, but no metadata -> ask user to resolve ambiguity later
+			else if (multiplicity.get( Channel.class ) == CheckResult.MULTIPLE_INDEXED && multiplicity.get( Illumination.class ) == CheckResult.MULTIPLE_INDEXED)
 			{
-				channelMultiplicity = CheckResult.SINGLE;
-				illuminationMultiplicity = CheckResult.SINGLE;
+				multiplicity.put( Channel.class, CheckResult.SINGLE);
+				multiplicity.put( Illumination.class, CheckResult.SINGLE);
 				channelIllumAmbiguous = true;
 			}
 			
+			// same as above, but for tiles/angles
 			boolean angleTileAmbiguous = false;
-			if (tileMultiplicity == CheckResult.MULTIPLE_INDEXED && angleMultiplicity == CheckResult.MUlTIPLE_NAMED)
-				tileMultiplicity = CheckResult.SINGLE;
-			else if (tileMultiplicity == CheckResult.MUlTIPLE_NAMED && angleMultiplicity == CheckResult.MULTIPLE_INDEXED)
-				angleMultiplicity = CheckResult.SINGLE;
-			else if (tileMultiplicity == CheckResult.MULTIPLE_INDEXED && angleMultiplicity == CheckResult.MULTIPLE_INDEXED)
+			if (multiplicity.get( Tile.class ) == CheckResult.MULTIPLE_INDEXED && multiplicity.get( Angle.class ) == CheckResult.MUlTIPLE_NAMED)
+				multiplicity.put( Tile.class, CheckResult.SINGLE);
+			else if (multiplicity.get( Tile.class ) == CheckResult.MUlTIPLE_NAMED && multiplicity.get( Angle.class ) == CheckResult.MULTIPLE_INDEXED)
+				multiplicity.put( Angle.class, CheckResult.SINGLE);
+			else if (multiplicity.get( Tile.class ) == CheckResult.MULTIPLE_INDEXED && multiplicity.get( Angle.class ) == CheckResult.MULTIPLE_INDEXED)
 			{
-				tileMultiplicity = CheckResult.SINGLE;
-				angleMultiplicity = CheckResult.SINGLE;
+				multiplicity.put( Tile.class, CheckResult.SINGLE);
+				multiplicity.put( Angle.class, CheckResult.SINGLE);
 				angleTileAmbiguous = true;				
 			}
 			
@@ -984,56 +1006,65 @@ public class FileListDatasetDefinitionUtil
 				tileMultiplicity = CheckResult.SINGLE;
 			*/
 			
-			List<CheckResult> checkResults = Arrays.asList( new CheckResult[] 
-					{timepointMultiplicity, channelMultiplicity, illuminationMultiplicity, tileMultiplicity, angleMultiplicity} );
+			// multiplicity of the different entities					
+			multiplicityMap.put( file, multiplicity );
 			
-			multiplicityMap.put( file, checkResults );
 			
-			for (Integer tp : timepointMap.keySet())
+			for (Class<? extends Entity> cl : infoMap.keySet())
 			{
-				if (!accumulateTPMap.containsKey( tp ))
-					accumulateTPMap.put( tp, new ArrayList<>() );
-				timepointMap.get( tp ).forEach( series -> accumulateTPMap.get( tp ).add( new ValuePair< File, Pair< Integer, Integer > >( file, series ) ) );
-			}
-			
-			for (ChannelInfo ch : channelMap.keySet())
-			{
-				//System.out.println( "DEBUG: Processing channel " + ch );
-				//System.out.println( "DEBUG: in file " + file.getAbsolutePath() );
-				if (!accumulateChannelMap.containsKey( ch ))
+				for (Object id : infoMap.get( cl ).keySet())
 				{
-					//System.out.println( "DEBUG: did not find channel, adding new" );
-					accumulateChannelMap.put( ch, new ArrayList<>() );
+					if (!state.getAccumulateMap(cl).containsKey( id ))
+						state.getAccumulateMap(cl).put( id, new ArrayList<>() );
+					infoMap.get( cl ).get( id ).forEach( series -> state.getAccumulateMap(cl).get( id ).add( new ValuePair< File, Pair< Integer, Integer > >( file, series ) ) );
 				}
-				channelMap.get( ch ).forEach( seriesAndIdx -> accumulateChannelMap.get( ch ).add( new ValuePair< File, Pair<Integer,Integer> >( file, seriesAndIdx) ) );
 			}
 			
-			for (Integer il : illumMap.keySet())
-			{
-				if (!accumulateIllumMap.containsKey( il ))
-					accumulateIllumMap.put( il, new ArrayList<>() );
-				illumMap.get( il ).forEach( seriesAndIdx -> accumulateIllumMap.get( il ).add( new ValuePair< File, Pair<Integer,Integer> >( file, seriesAndIdx) ));
-			}
+//			for (Integer tp : timepointMap.keySet())
+//			{
+//				if (!state.getAccumulateMap(TimePoint.class).containsKey( tp ))
+//					state.getAccumulateMap(TimePoint.class).put( tp, new ArrayList<>() );
+//				timepointMap.get( tp ).forEach( series -> state.getAccumulateTPMap().get( tp ).add( new ValuePair< File, Pair< Integer, Integer > >( file, series ) ) );
+//			}
+//			
+//			for (ChannelInfo ch : channelMap.keySet())
+//			{
+//				//System.out.println( "DEBUG: Processing channel " + ch );
+//				//System.out.println( "DEBUG: in file " + file.getAbsolutePath() );
+//				if (!state.getAccumulateChannelMap().containsKey( ch ))
+//				{
+//					//System.out.println( "DEBUG: did not find channel, adding new" );
+//					state.getAccumulateChannelMap().put( ch, new ArrayList<>() );
+//				}
+//				channelMap.get( ch ).forEach( seriesAndIdx -> state.getAccumulateChannelMap().get( ch ).add( new ValuePair< File, Pair<Integer,Integer> >( file, seriesAndIdx) ) );
+//			}
+//			
+//			for (Integer il : illumMap.keySet())
+//			{
+//				if (!state.getAccumulateIllumMap().containsKey( il ))
+//					state.getAccumulateIllumMap().put( il, new ArrayList<>() );
+//				illumMap.get( il ).forEach( seriesAndIdx -> state.getAccumulateIllumMap().get( il ).add( new ValuePair< File, Pair<Integer,Integer> >( file, seriesAndIdx) ));
+//			}
+//			
+//			for (TileInfo t : tileMap.keySet())
+//			{
+//				if(!state.getAccumulateTileMap().containsKey( t ))
+//					state.getAccumulateTileMap().put( t, new ArrayList<>() );
+//				tileMap.get( t ).forEach( seriesAndIdx -> state.getAccumulateTileMap().get( t ).add( new ValuePair< File, Pair<Integer,Integer> >( file, seriesAndIdx) ) );
+//			}
+//			
+//			for (AngleInfo a : angleMap.keySet())
+//			{
+//				if(!state.getAccumulateAngleMap().containsKey( a ))
+//					state.getAccumulateAngleMap().put( a, new ArrayList<>() );
+//				angleMap.get( a ).forEach( seriesAndIdx -> state.getAccumulateAngleMap().get( a ).add( new ValuePair< File, Pair<Integer,Integer> >( file, seriesAndIdx) ) );
+//			}
 			
-			for (TileInfo t : tileMap.keySet())
-			{
-				if(!accumulateTileMap.containsKey( t ))
-					accumulateTileMap.put( t, new ArrayList<>() );
-				tileMap.get( t ).forEach( seriesAndIdx -> accumulateTileMap.get( t ).add( new ValuePair< File, Pair<Integer,Integer> >( file, seriesAndIdx) ) );
-			}
+			if (!state.getAmbiguousAngleTile() && angleTileAmbiguous)
+				state.setAmbiguousAngleTile(true);
 			
-			for (AngleInfo a : angleMap.keySet())
-			{
-				if(!accumulateAngleMap.containsKey( a ))
-					accumulateAngleMap.put( a, new ArrayList<>() );
-				angleMap.get( a ).forEach( seriesAndIdx -> accumulateAngleMap.get( a ).add( new ValuePair< File, Pair<Integer,Integer> >( file, seriesAndIdx) ) );
-			}
-			
-			if (!ambiguousAngleTile && angleTileAmbiguous)
-				ambiguousAngleTile = true;
-			
-			if(!ambiguousIllumChannel && channelIllumAmbiguous)
-				ambiguousIllumChannel = true;
+			if(!state.getAmbiguousIllumChannel() && channelIllumAmbiguous)
+				state.setAmbiguousIllumChannel(true);
 			
 			reader.close();
 
