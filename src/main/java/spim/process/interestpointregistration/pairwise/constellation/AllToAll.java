@@ -7,7 +7,7 @@ import java.util.Set;
 import net.imglib2.util.Pair;
 import spim.process.interestpointregistration.pairwise.constellation.range.AllInRange;
 
-public class AllToAll< V extends Comparable< V > > extends AllToAllRange< V >
+public class AllToAll< V extends Comparable< V > > extends AllToAllRange< V, AllInRange< V > >
 {
 	public AllToAll(
 			final List< V > views,

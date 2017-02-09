@@ -25,4 +25,6 @@ public class ReferenceTimepointRange< V extends ViewId > implements RangeCompara
 		else
 			return false;
 	}
+
+	public int getReferenceTimepointId() { return referenceTimepoint; }
 }

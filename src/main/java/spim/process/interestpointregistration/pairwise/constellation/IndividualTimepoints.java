@@ -8,7 +8,7 @@ import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.util.Pair;
 import spim.process.interestpointregistration.pairwise.constellation.range.TimepointRange;
 
-public class IndividualTimepoints extends AllToAllRange< ViewId >
+public class IndividualTimepoints extends AllToAllRange< ViewId, TimepointRange< ViewId > >
 {
 	public IndividualTimepoints(
 			final List< ViewId > views,

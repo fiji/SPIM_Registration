@@ -9,14 +9,14 @@ import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
 import spim.process.interestpointregistration.pairwise.constellation.range.RangeComparator;
 
-public class AllToAllRange< V extends Comparable< V > > extends PairwiseSetup< V >
+public class AllToAllRange< V extends Comparable< V >, R extends RangeComparator< V > > extends PairwiseSetup< V >
 {
-	final RangeComparator< V > rangeComparator;
+	final R rangeComparator;
 
 	public AllToAllRange(
 			final List< V > views,
 			final Set< Set< V > > groups,
-			final RangeComparator< V > rangeComparator )
+			final R rangeComparator )
 	{
 		super( views, groups );
 		this.rangeComparator = rangeComparator;
