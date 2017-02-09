@@ -22,6 +22,11 @@ public class Subset< V >
 	 */
 	Set< Set< V > > groups;
 
+	/**
+	 * all views in this subset that are fixed
+	 */
+	Set< V > fixedViews;
+	
 	public Subset(
 			final Set< V > containedViews,
 			final List< Pair< V, V > > pairs,
@@ -32,5 +37,10 @@ public class Subset< V >
 		this.groups = groups;
 	}
 
+	public void setFixedViews( final Set< V > fixedViews ) { this.fixedViews = fixedViews; }
+
 	public List< Pair< V, V > > getPairs() { return pairs; }
+	public Set< V > getContainedViews() { return containedViews; }
+	public Set< Set< V > > getGroups() { return groups; }
+	public Set< V > getFixedViews() { return fixedViews; }
 }

@@ -60,18 +60,18 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	 * @param groups
 	 * @return
 	 */
-	public abstract void definePairs();
+	public void definePairs() { this.pairs = definePairsAbstract(); }
 
 	/**
-	 * Reorder the pairs so that the "smaller" view comes first
+	 * abstract method called by the public definePairs method
 	 */
-	public void reorderPairs() { reorderPairs( pairs ); }
+	protected abstract List< Pair< V, V > > definePairsAbstract();
 
 	/**
 	 * Remove pairs that are not overlapping
 	 * 
-	 * @param ovlp
-	 * @return a list of removed pairs
+	 * @param ovlp - implementation of {@link OverlapDetection}
+	 * @return a list of pairs that were removed (not stored in this object)
 	 */
 	public ArrayList< Pair< V, V > > removeNonOverlappingPairs( final OverlapDetection< V > ovlp )
 	{
@@ -92,6 +92,16 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	}
 
 	/**
+	 * Reorder the pairs so that the "smaller" view comes first
+	 */
+	public void reorderPairs() { reorderPairs( pairs ); }
+
+	/**
+	 * Given a list of pairs of views that need to be compared, find subsets that are not overlapping
+	 */
+	public void detectSubsets() { this.subsets = detectSubsets( views, pairs, groups ); }
+
+	/**
 	 * Sorts each subset by comparing the first view of each pair, and then all subsets according to their first pair
 	 *
 	 * @param sets
@@ -106,11 +116,6 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	}
 
 	/**
-	 * Given a list of pairs of views that need to be compared, find subsets that are not overlapping
-	 */
-	public void detectSubsets() { this.subsets = detectSubsets( views, pairs, groups ); }
-
-	/**
 	 * Get a list of fixed views necessary for the specific strategy to work
 	 */
 	public abstract List< V > getDefaultFixedViews();
@@ -120,36 +125,96 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	 * 
 	 * @param fixedViews
 	 */
-	public void fixViews( final List< V > fixedViews )
+	public ArrayList< Pair< V, V > > fixViews( final List< V > fixedViews )
 	{
 		/*
 			protected List< V > views;
-			protected Collection< Collection< V > > groups;
+			protected Set< Set< V > > groups;
 			protected List< Pair< V, V > > pairs;
-			protected ArrayList< ArrayList< Pair< V, V > > > subsets;
+			protected ArrayList< Subset< V > > subsets;
 		 */
 
-		final HashSet< V > viewsSet = new HashSet<>();
-		viewsSet.addAll( views );
+		final ArrayList< Pair< V, V > > removed = new ArrayList<>();
 
-		for ( final V fixedView : fixedViews )
+		final HashSet< V > fixedSet = new HashSet<>();
+		fixedSet.addAll( fixedViews );
+
+		for ( final Subset< V > subset : subsets )
 		{
-			if ( viewsSet.contains( fixedView  ) )
+			// which of the fixed views are present in this subset?
+			final HashSet< V > fixedSubsetViews = new HashSet<>();
+
+			for ( final V fixedView : fixedSet )
 			{
-				fixedViews.add( fixedView );
+				if ( subset.getContainedViews().contains( fixedView ) )
+					fixedSubsetViews.add( fixedView );
+			}
 
-				// remove all pairs where a fixed view is part of it
-				for ( int i = pairs.size() - 1; i >= 0; --i )
+			// add those that might be there already
+			fixedSubsetViews.addAll( subset.getFixedViews() );
+			subset.setFixedViews( fixedSubsetViews );
+
+			// remove pairwise comparisons between two fixed views
+			for ( int i = subset.getPairs().size() - 1; i >= 0; --i )
+			{
+				final Pair< V, V > pair = subset.getPairs().get( i );
+
+				// remove a pair if both views are fixed
+				if ( fixedSubsetViews.contains( pair.getA() ) && fixedSubsetViews.contains( pair.getB() ) )
 				{
-					final Pair< V, V > pair = pairs.get( i );
-
-					if ( pair.getA().equals( fixedView ) || pair.getB().equals( fixedView ) )
-						pairs.remove( i );
+					subset.getPairs().remove( i );
+					removed.add( pair );
 				}
+			}
 
-				// remove all pairs where a fixed view is part of a subset
+			// now check if any of the fixed views is part of a group
+			// if so, no checks between groups where each contains at 
+			// least one fixed tile are necessary
+			final ArrayList< Set< V > > groupsWithFixedViews = new ArrayList<>();
+
+			for ( final Set< V > group : subset.getGroups() )
+			{
+				for ( final V fixedView : fixedSubsetViews )
+					if ( group.contains( fixedView ) )
+					{
+						groupsWithFixedViews.add( group );
+						break;
+					}
+			}
+
+			// if there is more than one group containing fixed views,
+			// we need to remove all pairs between them
+			if ( groupsWithFixedViews.size() > 1 )
+			{
+				for ( int i = subset.getPairs().size() - 1; i >= 0; --i )
+				{
+					final Pair< V, V > pair = subset.getPairs().get( i );
+
+					final V a = pair.getA();
+					final V b = pair.getB();
+
+					// if a and b are present in any combination of fixed groups
+					// they do not need to be compared
+					boolean aPresent = false;
+					boolean bPresent = false;
+
+					for ( final Set< V > fixedGroup : groupsWithFixedViews )
+					{
+						aPresent |= fixedGroup.contains( a );
+						bPresent |= fixedGroup.contains( b );
+
+						if ( aPresent && bPresent )
+						{
+							subset.getPairs().remove( i );
+							removed.add( pair );
+							break;
+						}
+					}
+				}
 			}
 		}
+
+		return removed;
 	}
 
 	/**
@@ -172,15 +237,22 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	}
 
 	/**
-	 * Given a list of pairs of views that need to be compared, find subsets that are not overlapping
+	 * Given a list of views, pairs of views that need to be compared, and groups - find subsets that are not overlapping
+	 * 
+	 * @param views - all views involved
+	 * @param pairs - all pairs that need to be compared
+	 * @param groups - all groups of views (transformed together)
 	 */
 	public static < V > ArrayList< Subset< V > > detectSubsets(
 			final List< V > views,
 			final List< Pair< V, V > > pairs,
 			final Set< Set< V > > groups )
 	{
-		final ArrayList< ArrayList< Pair< V, V > > > pairSets = new ArrayList<>();
+		// list of subset-precursors
 		final ArrayList< HashSet< V > > vSets = new ArrayList<>();
+
+		// list of pairs within subset-precursors (1st ArrayList-index is the same as in vSets)
+		final ArrayList< ArrayList< Pair< V, V > > > pairSets = new ArrayList<>();
 
 		// group all views by which will be compared
 		for ( final Pair< V, V > pair : pairs )
@@ -191,6 +263,7 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 			int i1 = -1;
 			int i2 = -1;
 
+			// does any of the subset-precursor HashSets already contain v1 or v2
 			for ( int i = 0; i < vSets.size(); ++i )
 			{
 				if ( vSets.get( i ).contains( v1 ) )
@@ -200,11 +273,12 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 					i2 = i;
 			}
 
-			// both are not contained in any set
+			// both are not contained in any subset-precursor HashSet
 			if ( i1 == -1 && i2 == -1 )
 			{
-				final ArrayList< Pair< V, V > > pairSet = new ArrayList<>();
+				// make a new subset-precursor HashSet and List of view-pairs
 				final HashSet< V > vSet = new HashSet<>();
+				final ArrayList< Pair< V, V > > pairSet = new ArrayList<>();
 
 				pairSet.add( pair );
 				vSet.add( v1 );
@@ -215,18 +289,19 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 			}
 			else if ( i1 == -1 && i2 >= 0 ) // the first view is not present anywhere, but the second is
 			{
+				// add the first view to the second subset-precursor HashSet and to the list of view-pairs
 				vSets.get( i2 ).add( v1 );
 				pairSets.get( i2 ).add( pair );
 			}
 			else if ( i1 >= 0 && i2 == -1 ) // the second view is not present anywhere, but the first is
 			{
+				// add the second view to the first subset-precursor HashSet and to the list of view-pairs
 				vSets.get( i1 ).add( v2 );
 				pairSets.get( i1 ).add( pair );
 			}
 			else if ( i1 == i2 ) // both are already present in the same set
 			{
-				vSets.get( i1 ).add( v1 );
-				vSets.get( i1 ).add( v2 );
+				// add the new pair to the subset-precursor
 				pairSets.get( i1 ).add( pair );
 			}
 			else // both are present in different sets, the sets need to be merged
@@ -235,20 +310,20 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 			}
 		}
 
-		// find individual views that are not part of a subset
+		// find individual views that are not part of a subset-precursor
 		for ( final V v : views )
 		{
 			boolean isPresent = false;
 
-			for ( final HashSet< V > groupedViews : vSets )
-				if ( groupedViews.contains( v ) )
+			for ( final HashSet< V > subsetPrecursor : vSets )
+				if ( subsetPrecursor.contains( v ) )
 					isPresent = true;
 
-			// add a new subset that only contains a single view, no pairs
+			// add a new subset-precursor that only contains a single view, no pairs
 			if ( !isPresent )
 			{
-				final ArrayList< Pair< V, V > > pairSet = new ArrayList<>();
 				final HashSet< V > vSet = new HashSet<>();
+				final ArrayList< Pair< V, V > > pairSet = new ArrayList<>();
 
 				vSet.add( v );
 
@@ -261,6 +336,7 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 		for ( final Set< V > group : groups )
 			mergeSets( vSets, pairSets, containedInSets( group, vSets ) );
 
+		// make the final subsets containing the list of views, list of pairs, and list of groups contained in this subset
 		final ArrayList< Subset< V > > subsets = new ArrayList<>();
 
 		for ( int i = 0; i < vSets.size(); ++i )
