@@ -60,7 +60,11 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	 * @param groups
 	 * @return
 	 */
-	public void definePairs() { this.pairs = definePairsAbstract(); }
+	public void definePairs()
+	{
+		pairs = definePairsAbstract();
+		removeRedundantPairs( pairs, groups );
+	}
 
 	/**
 	 * abstract method called by the public definePairs method
@@ -210,6 +214,43 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 							break;
 						}
 					}
+				}
+			}
+		}
+
+		return removed;
+	}
+
+	/**
+	 * Checks all pairs if both views are contained in the same group,
+	 * and if so removes the pair from the list
+	 * 
+	 * @param pairs
+	 * @param groups
+	 * @return
+	 */
+	public static < V extends Comparable< V > > ArrayList< Pair< V, V > > removeRedundantPairs(
+			final List< Pair< V, V > > pairs,
+			final Set< Set< V > > groups )
+	{
+		final ArrayList< Pair< V, V > > removed = new ArrayList<>();
+
+		for ( int i = pairs.size() - 1; i >= 0; --i )
+		{
+			final Pair< V, V > pair = pairs.get( i );
+
+			final V a = pair.getA();
+			final V b = pair.getB();
+
+			// if both views of a pair are contained in the same group
+			// we can safely remove this pair
+			for ( final Set< V > group : groups )
+			{
+				if ( group.contains( a ) && group.contains( b ) )
+				{
+					pairs.remove( i );
+					removed.add( pair );
+					break;
 				}
 			}
 		}
