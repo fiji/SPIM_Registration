@@ -349,6 +349,20 @@ public class SpimData2 extends SpimData
 		return timepoints;
 	}
 
+	public static ArrayList< Integer > getAllTimePointsSortedWithoutPresenceCheck( final Collection< ? extends ViewId > vds )
+	{
+		final HashSet< Integer > timepointSet = new HashSet< Integer >();
+
+		for ( final ViewId vd : vds )
+			timepointSet.add( vd.getTimePointId() );
+
+		final ArrayList< Integer > timepoints = new ArrayList< Integer >();
+		timepoints.addAll( timepointSet );
+		Collections.sort( timepoints );
+
+		return timepoints;
+	}
+
 	public static String saveXML( final SpimData2 data, final String xmlFileName, final String clusterExtension  )
 	{
 		// save the xml

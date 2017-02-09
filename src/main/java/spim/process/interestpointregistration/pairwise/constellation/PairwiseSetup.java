@@ -36,7 +36,7 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	public PairwiseSetup( final List< V > views, final Set< Set< V > > groups )
 	{
 		this.views = views;
-		this.groups = groups;
+		this.groups = removeNonExistentViewsInGroups( views, groups );
 	}
 
 	public PairwiseSetup( final List< V > views ) { this( views, null ); }
@@ -222,6 +222,44 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	}
 
 	/**
+	 * Remove all views in groups that do not exist in the views list
+	 * 
+	 * @param views
+	 * @param groups
+	 * @return
+	 */
+	public static < V > Set< Set< V > > removeNonExistentViewsInGroups(
+			final List< V > views,
+			final Set< Set< V > > groups )
+	{
+		if ( groups.size() == 0 )
+			return groups;
+
+		final HashSet< V > viewsSet = new HashSet<>();
+		viewsSet.addAll( views );
+
+		final HashSet< Set< V > > newGroups = new HashSet<>();
+
+		for ( final Set< V > group : groups )
+		{
+			final ArrayList< V > removeGroup = new ArrayList<>();
+
+			for ( final V view : group )
+			{
+				if ( !viewsSet.contains( view ) )
+					removeGroup.add( view );
+			}
+
+			group.removeAll( removeGroup );
+
+			if ( group.size() > 0 )
+				newGroups.add( group );
+		}
+
+		return newGroups;
+	}
+
+	/**
 	 * Checks all pairs if both views are contained in the same group,
 	 * and if so removes the pair from the list
 	 * 
@@ -229,7 +267,7 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	 * @param groups
 	 * @return
 	 */
-	public static < V extends Comparable< V > > ArrayList< Pair< V, V > > removeRedundantPairs(
+	public static < V > ArrayList< Pair< V, V > > removeRedundantPairs(
 			final List< Pair< V, V > > pairs,
 			final Set< Set< V > > groups )
 	{
