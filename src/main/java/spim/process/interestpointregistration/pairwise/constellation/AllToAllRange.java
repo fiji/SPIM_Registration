@@ -25,10 +25,10 @@ public class AllToAllRange< V extends Comparable< V > > extends PairwiseSetup< V
 	@Override
 	protected List< Pair< V, V > > definePairsAbstract()
 	{
-		return allToAllRange( views, groups, rangeComparator );
+		return allPairs( views, groups, rangeComparator );
 	}
 
-	public static < V > List< Pair< V, V > > allToAllRange(
+	public static < V > List< Pair< V, V > > allPairs(
 			final List< ? extends V > views,
 			final Collection< ? extends Collection< V > > groups,
 			final RangeComparator< V > rangeComparator )

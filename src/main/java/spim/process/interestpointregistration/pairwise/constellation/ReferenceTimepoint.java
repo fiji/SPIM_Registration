@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
@@ -14,7 +15,7 @@ public class ReferenceTimepoint extends AllToAllRange< ViewId >
 {
 	public ReferenceTimepoint(
 			final List< ViewId > views,
-			final Collection< Collection< ViewId > > groups,
+			final Set< Set< ViewId > > groups,
 			final int referenceTimepoint )
 	{
 		super( views, groups, new ReferenceTimepointRange<>( referenceTimepoint ) );
@@ -22,7 +23,7 @@ public class ReferenceTimepoint extends AllToAllRange< ViewId >
 
 	public ReferenceTimepoint(
 			final List< ViewId > views,
-			final Collection< Collection< ViewId > > groups,
+			final Set< Set< ViewId > > groups,
 			final TimePoint referenceTimepoint )
 	{
 		this( views, groups, referenceTimepoint.getId() );
