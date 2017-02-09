@@ -28,6 +28,9 @@ public class AllToAllRange< V extends Comparable< V > > extends PairwiseSetup< V
 		return allPairs( views, groups, rangeComparator );
 	}
 
+	@Override
+	public List< V > getDefaultFixedViews() { return new ArrayList<>(); }
+
 	public static < V > List< Pair< V, V > > allPairs(
 			final List< ? extends V > views,
 			final Collection< ? extends Collection< V > > groups,
@@ -50,7 +53,4 @@ public class AllToAllRange< V extends Comparable< V > > extends PairwiseSetup< V
 
 		return viewPairs;
 	}
-
-	@Override
-	public List< V > getDefaultFixedViews() { return new ArrayList<>(); }
 }
