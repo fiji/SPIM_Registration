@@ -23,9 +23,9 @@ public class AllToAllRange< V extends Comparable< V > > extends PairwiseSetup< V
 	}
 
 	@Override
-	public void definePairs()
+	protected List< Pair< V, V > > definePairsAbstract()
 	{
-		this.pairs = allToAllRange( views, groups, rangeComparator );
+		return allToAllRange( views, groups, rangeComparator );
 	}
 
 	public static < V > List< Pair< V, V > > allToAllRange(
