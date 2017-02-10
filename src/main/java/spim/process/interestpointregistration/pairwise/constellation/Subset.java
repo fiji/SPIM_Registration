@@ -12,7 +12,7 @@ public class Subset< V >
 	/**
 	 *  all views contained in this subset
 	 */
-	Set< V > containedViews;
+	Set< V > views;
 
 	/**
 	 * all pairs that need to be compared in that group
@@ -30,55 +30,82 @@ public class Subset< V >
 	Set< V > fixedViews;
 	
 	public Subset(
-			final Set< V > containedViews,
+			final Set< V > views,
 			final List< Pair< V, V > > pairs,
 			final Set< Set< V > > groups )
 	{
-		this.containedViews = containedViews;
+		this.views = views;
 		this.pairs = pairs;
 		this.groups = groups;
 	}
 
 	public List< Pair< V, V > > getPairs() { return pairs; }
-	public Set< V > getContainedViews() { return containedViews; }
+	public Set< V > getViews() { return views; }
 	public Set< Set< V > > getGroups() { return groups; }
 	public Set< V > getFixedViews() { return fixedViews; }
 
-	public ArrayList< Pair< V, V > > fixViews( final List< V > fixedViews ) { return fixViews( this, fixedViews ); }
+	/**
+	 * Fix an additional list of views (removes pairs from subsets and sets list of fixed views)
+	 * 
+	 * @param fixedViews
+	 * @return
+	 */
+	public ArrayList< Pair< V, V > > fixViews( final List< V > fixedViews )
+	{
+		// which fixed views are actually present in this subset?
+		final HashSet< V > fixedSubsetViews = filterPresentViews( views, fixedViews );
+
+		// add the currently fixed ones
+		fixedSubsetViews.addAll( getFixedViews() );
+
+		// store the currently fixed views
+		setFixedViews( fixedSubsetViews );
+
+		return fixViews( fixedSubsetViews, pairs, groups );
+	}
 
 	protected void setFixedViews( final Set< V > fixedViews ) { this.fixedViews = fixedViews; }
 
 	/**
-	 * Fix an additional list of views (removes them from pairs and subsets)
+	 * Checks which fixed views are present in the views list and puts them into a HashMap
 	 * 
+	 * @param views
 	 * @param fixedViews
+	 * @return
 	 */
-	public static < V > ArrayList< Pair< V, V > > fixViews(
-			final Subset< V > subset,
-			final List< V > fixedViews )
+	public static < V > HashSet< V > filterPresentViews( final Set< V > views, final List< V > fixedViews )
 	{
-		final ArrayList< Pair< V, V > > removed = new ArrayList<>();
-
 		// which of the fixed views are present in this subset?
 		final HashSet< V > fixedSubsetViews = new HashSet<>();
 
 		for ( final V fixedView : fixedViews )
-			if ( subset.getContainedViews().contains( fixedView ) )
 				fixedSubsetViews.add( fixedView );
 
-		// add those that might be there already
-		fixedSubsetViews.addAll( subset.getFixedViews() );
-		subset.setFixedViews( fixedSubsetViews );
+		return fixedSubsetViews;
+	}
+
+	/**
+	 * Fix an additional list of views (removes pairs from subsets and sets list of fixed views)
+	 * 
+	 * @param subset
+	 * @param fixedViews
+	 */
+	public static < V > ArrayList< Pair< V, V > > fixViews(
+			final HashSet< V > fixedSubsetViews,
+			final List< Pair< V, V > > pairs,
+			final Set< Set< V > > groups )
+	{
+		final ArrayList< Pair< V, V > > removed = new ArrayList<>();
 
 		// remove pairwise comparisons between two fixed views
-		for ( int i = subset.getPairs().size() - 1; i >= 0; --i )
+		for ( int i = pairs.size() - 1; i >= 0; --i )
 		{
-			final Pair< V, V > pair = subset.getPairs().get( i );
+			final Pair< V, V > pair = pairs.get( i );
 
 			// remove a pair if both views are fixed
 			if ( fixedSubsetViews.contains( pair.getA() ) && fixedSubsetViews.contains( pair.getB() ) )
 			{
-				subset.getPairs().remove( i );
+				pairs.remove( i );
 				removed.add( pair );
 			}
 		}
@@ -88,7 +115,7 @@ public class Subset< V >
 		// least one fixed tile are necessary
 		final ArrayList< Set< V > > groupsWithFixedViews = new ArrayList<>();
 
-		for ( final Set< V > group : subset.getGroups() )
+		for ( final Set< V > group : groups )
 		{
 			for ( final V fixedView : fixedSubsetViews )
 				if ( group.contains( fixedView ) )
@@ -102,9 +129,9 @@ public class Subset< V >
 		// we need to remove all pairs between them
 		if ( groupsWithFixedViews.size() > 1 )
 		{
-			for ( int i = subset.getPairs().size() - 1; i >= 0; --i )
+			for ( int i = pairs.size() - 1; i >= 0; --i )
 			{
-				final Pair< V, V > pair = subset.getPairs().get( i );
+				final Pair< V, V > pair = pairs.get( i );
 
 				final V a = pair.getA();
 				final V b = pair.getB();
@@ -121,7 +148,7 @@ public class Subset< V >
 
 					if ( aPresent && bPresent )
 					{
-						subset.getPairs().remove( i );
+						pairs.remove( i );
 						removed.add( pair );
 						break;
 					}
