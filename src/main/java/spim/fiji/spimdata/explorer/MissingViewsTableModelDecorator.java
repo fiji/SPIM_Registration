@@ -2,6 +2,7 @@ package spim.fiji.spimdata.explorer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.swing.event.TableModelListener;
@@ -128,5 +129,11 @@ public class MissingViewsTableModelDecorator < AS extends AbstractSpimData< ? > 
 
 	@Override
 	public Set< Class< ? extends Entity > > getGroupingFactors(){return decorated.getGroupingFactors();}
+
+	@Override
+	public Map< Class< ? extends Entity >, List< ? extends Entity > > getFilters()
+	{
+		return decorated.getFilters();
+	}
 
 }

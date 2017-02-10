@@ -271,4 +271,11 @@ public class FilteredAndGroupedTableModel < AS extends AbstractSpimData< ? > > e
 	{
 		return groupingFactors;
 	}
+
+
+	@Override
+	public Map< Class< ? extends Entity >, List< ? extends Entity > > getFilters()
+	{
+		return filters;
+	}
 }

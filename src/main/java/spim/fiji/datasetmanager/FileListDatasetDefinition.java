@@ -40,6 +40,7 @@ import ij.gui.GenericDialog;
 import loci.formats.IFormatReader;
 import loci.formats.in.ZeissCZIReader;
 import mdbtools.dbengine.sql.Join;
+import mpicbg.spim.data.generic.base.Entity;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
@@ -73,6 +74,7 @@ import spim.fiji.datasetmanager.FileListDatasetDefinitionUtil.CheckResult;
 import spim.fiji.datasetmanager.FileListDatasetDefinitionUtil.TileInfo;
 import spim.fiji.datasetmanager.patterndetector.FilenamePatternDetector;
 import spim.fiji.datasetmanager.patterndetector.NumericalFilenamePatternDetector;
+import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.plugin.resave.Generic_Resave_HDF5;
 import spim.fiji.plugin.resave.ProgressWriterIJ;
 import spim.fiji.plugin.resave.Resave_HDF5;
@@ -263,21 +265,18 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		return paths;
 	}
 	
-	private static SpimData2 buildSpimData(
-			Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > tpIdxMap,
-			Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > channelIdxMap,
-			Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > illumIdxMap,
-			Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > tileIdxMap,
-			Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > angleIdxMap,
-			Map< Integer, ChannelInfo > channelDetailMap,
-			Map< Integer, TileInfo > tileDetailMap,
-			Map< Integer, AngleInfo > angleDetailMap,
-			Map<Pair<File, Pair< Integer, Integer >>, Pair<Dimensions, VoxelDimensions>> dimensionMap)
+	private static SpimData2 buildSpimData( FileListViewDetectionState state )
 	{
 		
 		//final Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > fm = tileIdxMap;
 		//fm.forEach( (k,v ) -> {System.out.println( k ); v.forEach( p -> {System.out.print(p.getA() + ""); System.out.print(p.getB().getA().toString() + " "); System.out.println(p.getB().getB().toString());} );});
 		
+		
+		Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > tpIdxMap = state.getIdMap().get( TimePoint.class );
+		Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > channelIdxMap = state.getIdMap().get( Channel.class );
+		Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > illumIdxMap = state.getIdMap().get( Illumination.class );
+		Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > tileIdxMap = state.getIdMap().get( Tile.class );
+		Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > angleIdxMap = state.getIdMap().get( Angle.class );
 		
 		
 		List<Integer> timepointIndexList = new ArrayList<>(tpIdxMap.keySet());
@@ -367,9 +366,9 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 									
 									Channel chI = new Channel( channelId, channelId.toString() );
 									
-									if (channelDetailMap != null && channelDetailMap.containsKey( channelId))
+									if (state.getDetailMap().get( Channel.class ) != null && state.getDetailMap().get( Channel.class ).containsKey( channelId))
 									{
-										ChannelInfo chInfoI = channelDetailMap.get( channelId );
+										ChannelInfo chInfoI = (ChannelInfo) state.getDetailMap().get( Channel.class ).get( channelId );
 										if (chInfoI.wavelength != null)
 											chI.setName( Integer.toString( (int)Math.round( chInfoI.wavelength )));
 										if (chInfoI.fluorophore != null)
@@ -381,29 +380,42 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 									
 									Angle aI = new Angle( angleId, angleId.toString() );
 									
-									if (angleDetailMap != null && angleDetailMap.containsKey( angleId ))
+									if (state.getDetailMap().get( Angle.class ) != null && state.getDetailMap().get( Angle.class ).containsKey( angleId ))
 									{
-										AngleInfo aInfoI = angleDetailMap.get( angleId );
+										AngleInfo aInfoI = (AngleInfo) state.getDetailMap().get( Angle.class ).get( angleId );
 										
 										if (aInfoI.angle != null && aInfoI.axis != null)
 										{
-											// TODO: set rotation here
+											try
+											{
+												double[] axis = null;
+												if ( aInfoI.axis == 0 )
+													axis = new double[]{ 1, 0, 0 };
+												else if ( aInfoI.axis == 1 )
+													axis = new double[]{ 0, 1, 0 };
+												else if ( aInfoI.axis == 2 )
+													axis = new double[]{ 0, 0, 1 };
+
+												if ( axis != null && !Double.isNaN( aInfoI.angle ) &&  !Double.isInfinite( aInfoI.angle ) )
+													aI.setRotation( axis, aInfoI.angle );
+											}
+											catch ( Exception e ) {};
 										}
 									}
 									
 									Tile tI = new Tile( tileId, tileId.toString() );
 									
-									if (tileDetailMap != null && tileDetailMap.containsKey( tileId ))
+									if (state.getDetailMap().get( Tile.class ) != null && state.getDetailMap().get( Tile.class ).containsKey( tileId ))
 									{
-										TileInfo tInfoI = tileDetailMap.get( tileId );
+										TileInfo tInfoI = (TileInfo) state.getDetailMap().get( Tile.class ).get( tileId );
 										if (tInfoI.locationX != null) // TODO: clean check here
 											tI.setLocation( new double[] {tInfoI.locationX, tInfoI.locationY, tInfoI.locationZ} );
 									}
 																		
 									ViewSetup vs = new ViewSetup( viewSetupId, 
 													viewSetupId.toString(), 
-													dimensionMap.get( (viewList.get( 0 ))).getA(),
-													dimensionMap.get( (viewList.get( 0 ))).getB(),
+													state.getDimensionMap().get( (viewList.get( 0 ))).getA(),
+													state.getDimensionMap().get( (viewList.get( 0 ))).getB(),
 													tI, chI, aI, illumI );
 									
 									viewSetups.add( vs );
@@ -431,11 +443,11 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			}			
 		}
 		
-		ImgLoader imgLoader = new FileMapImgLoaderLOCI( fileMap, FileListDatasetDefinitionUtil.selectImgFactory(dimensionMap), sd );
+		ImgLoader imgLoader = new FileMapImgLoaderLOCI( fileMap, FileListDatasetDefinitionUtil.selectImgFactory(state.getDimensionMap()), sd );
 		sd.setImgLoader( imgLoader );
 		
 		double minResolution = Double.MAX_VALUE;
-		for ( VoxelDimensions d : dimensionMap.values().stream().map( p -> p.getB() ).collect( Collectors.toList() ) )
+		for ( VoxelDimensions d : state.getDimensionMap().values().stream().map( p -> p.getB() ).collect( Collectors.toList() ) )
 		{
 			for (int di = 0; di < d.numDimensions(); di++)
 				minResolution = Math.min( minResolution, d.dimension( di ) );
@@ -484,16 +496,16 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 				final Tile tile = viewDescription.getViewSetup().getAttribute( Tile.class );
 
 				if (tile.hasLocation()){
-					final double shiftX = tile.getLocation()[0] / voxelSize.dimension( 0 );
-					final double shiftY = tile.getLocation()[1] / voxelSize.dimension( 1 );
-					final double shiftZ = tile.getLocation()[2] / voxelSize.dimension( 2 );
+					final double shiftX = tile.getLocation()[0] * calX;
+					final double shiftY = tile.getLocation()[1] * calY;
+					final double shiftZ = tile.getLocation()[2] * calZ;
 					
 					final AffineTransform3D m2 = new AffineTransform3D();
 					m2.set( 1.0f, 0.0f, 0.0f, shiftX, 
 						   0.0f, 1.0f, 0.0f, shiftY,
 						   0.0f, 0.0f, 1.0f, shiftZ );
 					final ViewTransform vt2 = new ViewTransformAffine( "Translation", m2 );
-					viewRegistration.concatenateTransform( vt2 );
+					viewRegistration.preconcatenateTransform( vt2 );
 				}
 				
 				viewRegistrationList.put( viewRegistration, viewRegistration );
@@ -522,32 +534,15 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		
 		List<File> files = fileListChoosers.get( gd1.getNextChoiceIndex() ).getFileList();			
 		
-		List<FileListDatasetDefinitionUtil.CheckResult> multiplicityMap = Arrays.asList( new FileListDatasetDefinitionUtil.CheckResult[] {FileListDatasetDefinitionUtil.CheckResult.SINGLE, FileListDatasetDefinitionUtil.CheckResult.SINGLE, FileListDatasetDefinitionUtil.CheckResult.SINGLE, FileListDatasetDefinitionUtil.CheckResult.SINGLE, FileListDatasetDefinitionUtil.CheckResult.SINGLE} );
-		Map<Integer, List<Pair<File, Pair< Integer, Integer >>>> accumulateTPMap = new HashMap<>();
-		Map<FileListDatasetDefinitionUtil.ChannelInfo, List<Pair<File, Pair<Integer, Integer>>>> accumulateChannelMap = new HashMap<>();
-		Map<Integer, List<Pair<File, Pair<Integer, Integer>>>> accumulateIllumMap = new HashMap<>();
-		Map<FileListDatasetDefinitionUtil.TileInfo, List<Pair<File, Pair< Integer, Integer >>>> accumulateTileMap = new HashMap<>();
-		Map<FileListDatasetDefinitionUtil.AngleInfo, List<Pair<File, Pair< Integer, Integer >>>> accumulateAngleMap = new HashMap<>();
-		Boolean ambiguousAngleTile = false;
-		Boolean ambiguousIllumChannel = false;
-		Map<Pair<File, Pair< Integer, Integer >>, Pair<Dimensions, VoxelDimensions>> dimensionMap = new HashMap<>();
 		
-		FileListDatasetDefinitionUtil.detectViewsInFiles( files,
-							multiplicityMap,
-							accumulateTPMap,
-							accumulateChannelMap,
-							accumulateIllumMap,
-							accumulateTileMap,
-							accumulateAngleMap,
-							ambiguousAngleTile,
-							ambiguousIllumChannel,
-							dimensionMap);
+		FileListViewDetectionState state = new FileListViewDetectionState();		
+		FileListDatasetDefinitionUtil.detectViewsInFiles( files, state);
 		
 		
 		
 		
 		
-		List<Integer> fileVariableToUse = Arrays.asList( new Integer[] {null, null, null, null, null} );
+		Map<Class<? extends Entity>, Integer> fileVariableToUse = new HashMap<>();
 		List<String> choices = new ArrayList<>();
 		
 		FilenamePatternDetector patternDetector = new NumericalFilenamePatternDetector();
@@ -560,88 +555,88 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		inFileSummarySB.append( "<html> <h2> Views detected in files </h2>" );
 		
 		// summary timepoints
-		if (multiplicityMap.get( 0 ) == CheckResult.SINGLE)
+		if (state.getMultiplicityMap().get( TimePoint.class ) == CheckResult.SINGLE)
 		{
 			inFileSummarySB.append( "<p> No timepoints detected within files </p>" );
 			choices.add( "TimePoints" );
 		}
-		else if (multiplicityMap.get( 0 ) == CheckResult.MULTIPLE_INDEXED)
+		else if (state.getMultiplicityMap().get( TimePoint.class ) == CheckResult.MULTIPLE_INDEXED)
 		{
-			int numTPs = accumulateTPMap.keySet().stream().reduce(0, Math::max );
+			int numTPs = (Integer) state.getAccumulateMap( TimePoint.class ).keySet().stream().reduce(0, (x,y) -> Math.max( (Integer) x, (Integer) y) );
 			inFileSummarySB.append( "<p style=\"color:green\">" + numTPs+ " timepoints detected within files </p>" );
-			if (accumulateTPMap.size() > 1)
+			if (state.getAccumulateMap( TimePoint.class ).size() > 1)
 				inFileSummarySB.append( "<p style=\"color:orange\">WARNING: Number of timepoints is not the same for all views </p>" );
 		}
 		
 		inFileSummarySB.append( "<br />" );
 		
 		// summary channel
-		if (multiplicityMap.get( 1 ) == CheckResult.SINGLE)
+		if (state.getMultiplicityMap().get( Channel.class ) == CheckResult.SINGLE)
 		{
 			inFileSummarySB.append( "<p> No channels detected within files </p>" );
 			choices.add( "Channels" );
 		}
-		else if (multiplicityMap.get( 1 ) == CheckResult.MULTIPLE_INDEXED)
+		else if (state.getMultiplicityMap().get( Channel.class ) == CheckResult.MULTIPLE_INDEXED)
 		{
 			// TODO: find out number here
 			inFileSummarySB.append( "<p > Multiple channels detected within files </p>" );
 			inFileSummarySB.append( "<p style=\"color:orange\">WARNING: no metadata was found for channels </p>" );
-			if (multiplicityMap.get( 2 ) == CheckResult.MULTIPLE_INDEXED)
+			if (state.getMultiplicityMap().get( Illumination.class ) == CheckResult.MULTIPLE_INDEXED)
 			{
 				choices.add( "Channels" );
 				inFileSummarySB.append( "<p style=\"color:orange\">WARNING: no matadata for Illuminations found either, cannot distinguish </p>" );
 				inFileSummarySB.append( "<p style=\"color:orange\">WARNING: choose manually wether files contain channels or illuminations below </p>" );
 			}
-		} else if (multiplicityMap.get( 1 ) == CheckResult.MUlTIPLE_NAMED)
+		} else if (state.getMultiplicityMap().get( Channel.class ) == CheckResult.MUlTIPLE_NAMED)
 		{
-			int numChannels = accumulateChannelMap.size();
+			int numChannels = state.getAccumulateMap( Channel.class ).size();
 			inFileSummarySB.append( "<p style=\"color:green\">" + numChannels + " Channels found within files </p>" );
 		}
 		
 		inFileSummarySB.append( "<br />" );
 		
 		// summary illum
-		if ( multiplicityMap.get( 2 ) == CheckResult.SINGLE )
+		if ( state.getMultiplicityMap().get( Illumination.class ) == CheckResult.SINGLE )
 		{
 			inFileSummarySB.append( "<p> No illuminations detected within files </p>" );
 			choices.add( "Illuminations" );
 		}
-		else if ( multiplicityMap.get( 2 ) == CheckResult.MULTIPLE_INDEXED )
+		else if ( state.getMultiplicityMap().get( Illumination.class ) == CheckResult.MULTIPLE_INDEXED )
 		{
 			// TODO: find out number here
 			inFileSummarySB.append( "<p > Multiple illuminations detected within files </p>" );
-			if (multiplicityMap.get( 1 ).equals( CheckResult.MULTIPLE_INDEXED ))
+			if (state.getMultiplicityMap().get( Channel.class ).equals( CheckResult.MULTIPLE_INDEXED ))
 				choices.add( "Illuminations" );
 		}
-		else if ( multiplicityMap.get( 2 ) == CheckResult.MUlTIPLE_NAMED )
+		else if ( state.getMultiplicityMap().get( Illumination.class ) == CheckResult.MUlTIPLE_NAMED )
 		{
-			int numIllum = accumulateIllumMap.size();
+			int numIllum = state.getAccumulateMap( Illumination.class ).size();
 			inFileSummarySB.append( "<p style=\"color:green\">" + numIllum + " Illuminations found within files </p>" );
 		}
 		
 		inFileSummarySB.append( "<br />" );
 		
 		// summary tile
-		if ( multiplicityMap.get( 3 ) == CheckResult.SINGLE )
+		if ( state.getMultiplicityMap().get( Tile.class ) == CheckResult.SINGLE )
 		{
 			inFileSummarySB.append( "<p> No tiles detected within files </p>" );
 			choices.add( "Tiles" );
 		}
-		else if ( multiplicityMap.get( 3 ) == CheckResult.MULTIPLE_INDEXED )
+		else if ( state.getMultiplicityMap().get( Tile.class ) == CheckResult.MULTIPLE_INDEXED )
 		{
 			// TODO: find out number here
 			inFileSummarySB.append( "<p > Multiple Tiles detected within files </p>" );
 			inFileSummarySB.append( "<p style=\"color:orange\">WARNING: no metadata was found for Tiles </p>" );
-			if (multiplicityMap.get( 4 ) == CheckResult.MULTIPLE_INDEXED)
+			if (state.getMultiplicityMap().get( Angle.class ) == CheckResult.MULTIPLE_INDEXED)
 			{
 				choices.add( "Tiles" );
 				inFileSummarySB.append( "<p style=\"color:orange\">WARNING: no matadata for Angles found either, cannot distinguish </p>" );
 				inFileSummarySB.append( "<p style=\"color:orange\">WARNING: choose manually wether files contain Tiles or Angles below </p>" );
 			}
 		}
-		else if ( multiplicityMap.get( 3 ) == CheckResult.MUlTIPLE_NAMED )
+		else if ( state.getMultiplicityMap().get( Tile.class ) == CheckResult.MUlTIPLE_NAMED )
 		{
-			int numTile = accumulateTileMap.size();
+			int numTile = state.getAccumulateMap( Tile.class ).size();
 			inFileSummarySB.append( "<p style=\"color:green\">" + numTile + " Tiles found within files </p>" );
 			
 		}
@@ -649,21 +644,21 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		inFileSummarySB.append( "<br />" );
 		
 		// summary angle
-		if ( multiplicityMap.get( 4 ) == CheckResult.SINGLE )
+		if ( state.getMultiplicityMap().get( Angle.class ) == CheckResult.SINGLE )
 		{
 			inFileSummarySB.append( "<p> No angles detected within files </p>" );
 			choices.add( "Angles" );
 		}
-		else if ( multiplicityMap.get( 4 ) == CheckResult.MULTIPLE_INDEXED )
+		else if ( state.getMultiplicityMap().get( Angle.class ) == CheckResult.MULTIPLE_INDEXED )
 		{
 			// TODO: find out number here
 			inFileSummarySB.append( "<p > Multiple Angles detected within files </p>" );
-			if (multiplicityMap.get( 3 ) == CheckResult.MULTIPLE_INDEXED)
+			if (state.getMultiplicityMap().get( Tile.class ) == CheckResult.MULTIPLE_INDEXED)
 				choices.add( "Angles" );
 		}
-		else if ( multiplicityMap.get( 4 ) == CheckResult.MUlTIPLE_NAMED )
+		else if ( state.getMultiplicityMap().get( Angle.class ) == CheckResult.MUlTIPLE_NAMED )
 		{
-			int numAngle = accumulateAngleMap.size();
+			int numAngle = state.getAccumulateMap( Angle.class ).size();
 			inFileSummarySB.append( "<p style=\"color:green\">" + numAngle + " Angles found within files </p>" );
 		}
 		
@@ -680,9 +675,9 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 				
 		
 		
-		if (ambiguousAngleTile)
+		if (state.getAmbiguousAngleTile())
 			gd.addChoice( "map series to", choicesAngleTile, choicesAngleTile[0] );
-		if (ambiguousIllumChannel)
+		if (state.getAmbiguousIllumChannel())
 			gd.addChoice( "map channels to", choicesChannelIllum, choicesChannelIllum[0] );
 			
 		
@@ -713,66 +708,39 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		
 		boolean preferAnglesOverTiles = true;
 		boolean preferChannelsOverIlluminations = true;
-		if (ambiguousAngleTile)
+		if (state.getAmbiguousAngleTile())
 			preferAnglesOverTiles = gd.getNextChoiceIndex() == 0;
-		if (ambiguousIllumChannel)
+		if (state.getAmbiguousIllumChannel())
 			preferChannelsOverIlluminations = gd.getNextChoiceIndex() == 0;
 		
 		for (int i = 0; i < numVariables; i++)
 		{
 			String choice = gd.getNextChoice();
 			if (choice.equals( "TimePoints" ))
-				fileVariableToUse.set( 0 , i);
+				fileVariableToUse.put( TimePoint.class , i);
 			else if (choice.equals( "Channels" ))
-				fileVariableToUse.set( 1 , i);
+				fileVariableToUse.put( Channel.class , i);
 			else if (choice.equals( "Illuminations" ))
-				fileVariableToUse.set( 2 , i);
+				fileVariableToUse.put( Illumination.class , i);
 			else if (choice.equals( "Tiles" ))
-				fileVariableToUse.set( 3 , i);
+				fileVariableToUse.put( Tile.class , i);
 			else if (choice.equals( "Angles" ))
-				fileVariableToUse.set( 4 , i);
+				fileVariableToUse.put( Angle.class , i);
 		}
 		
 				
-		multiplicityMap = FileListDatasetDefinitionUtil.resolveAmbiguity( multiplicityMap, ambiguousIllumChannel, preferChannelsOverIlluminations, ambiguousAngleTile, !preferAnglesOverTiles );
+		FileListDatasetDefinitionUtil.resolveAmbiguity( state.getMultiplicityMap(), state.getAmbiguousIllumChannel(), preferChannelsOverIlluminations, state.getAmbiguousAngleTile(), !preferAnglesOverTiles );
 				
-		Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > tpIdxMap = new HashMap< >();
-		Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > channelIdxMap = new HashMap< >();
-		Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > illumIdxMap = new HashMap< >();
-		Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > tileIdxMap = new HashMap< >();
-		Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > angleIdxMap = new HashMap< >();
-		Map< Integer, ChannelInfo > channelDetailMap = new HashMap< >();
-		Map< Integer, TileInfo > tileDetailMap = new HashMap< >();
-		Map< Integer, AngleInfo > angleDetailMap = new HashMap< >();
 		
 		FileListDatasetDefinitionUtil.expandAccumulatedViewInfos(
-				multiplicityMap,
 				fileVariableToUse, 
 				patternDetector,
-				accumulateTPMap,
-				accumulateChannelMap,
-				accumulateIllumMap,
-				accumulateTileMap,
-				accumulateAngleMap,
-				tpIdxMap, 
-				channelIdxMap,
-				illumIdxMap,
-				tileIdxMap,
-				angleIdxMap,
-				channelDetailMap,
-				tileDetailMap,
-				angleDetailMap );
+				state);
 		
-		SpimData2 data = buildSpimData( 
-				tpIdxMap,
-				channelIdxMap,
-				illumIdxMap,
-				tileIdxMap,
-				angleIdxMap,
-				channelDetailMap,
-				tileDetailMap,
-				angleDetailMap,
-				dimensionMap );
+		SpimData2 data = buildSpimData( state );
+		
+		//TODO: with translated tiles, we also have to take the center of rotation into account
+		//Apply_Transformation.applyAxis( data );
 		
 		
 		GenericDialogPlus gdSave = new GenericDialogPlus( "Save dataset definition" );

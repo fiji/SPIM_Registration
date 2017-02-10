@@ -4,6 +4,7 @@ import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.swing.event.TableModelListener;
@@ -171,6 +172,12 @@ public class MultiViewTableModelDecorator < AS extends AbstractSpimData< ? > > i
 
 	@Override
 	public Set< Class< ? extends Entity > > getGroupingFactors(){return decorated.getGroupingFactors();}
+
+	@Override
+	public Map< Class< ? extends Entity >, List< ? extends Entity > > getFilters()
+	{
+		return decorated.getFilters();
+	}
 
 
 }
