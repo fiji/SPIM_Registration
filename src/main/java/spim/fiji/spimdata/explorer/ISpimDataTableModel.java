@@ -1,6 +1,7 @@
 package spim.fiji.spimdata.explorer;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.swing.table.TableModel;
@@ -34,6 +35,8 @@ public interface ISpimDataTableModel<AS extends AbstractSpimData<?>> extends Tab
 	public void clearFilters();
 
 	public void addFilter(Class<? extends Entity> cl, List<? extends Entity> instances);
+	
+	public Map<Class<? extends Entity> , List<? extends Entity>> getFilters();
 	
 	public List<List< BasicViewDescription< ?  >> > getElements();
 	
