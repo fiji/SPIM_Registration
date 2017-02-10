@@ -39,14 +39,14 @@ public class Subset< V >
 		this.groups = groups;
 	}
 
-	public void setFixedViews( final Set< V > fixedViews ) { this.fixedViews = fixedViews; }
-
 	public List< Pair< V, V > > getPairs() { return pairs; }
 	public Set< V > getContainedViews() { return containedViews; }
 	public Set< Set< V > > getGroups() { return groups; }
 	public Set< V > getFixedViews() { return fixedViews; }
 
 	public ArrayList< Pair< V, V > > fixViews( final List< V > fixedViews ) { return fixViews( this, fixedViews ); }
+
+	protected void setFixedViews( final Set< V > fixedViews ) { this.fixedViews = fixedViews; }
 
 	/**
 	 * Fix an additional list of views (removes them from pairs and subsets)
