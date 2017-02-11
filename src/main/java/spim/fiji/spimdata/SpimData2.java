@@ -10,6 +10,8 @@ import java.util.HashSet;
 import java.util.List;
 
 import mpicbg.spim.data.SpimData;
+import mpicbg.spim.data.generic.AbstractSpimData;
+import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
@@ -377,5 +379,38 @@ public class SpimData2 extends SpimData
 			e.printStackTrace();
 			return null;
 		}
+	}
+
+	public static SpimData2 convert( final SpimData data1 )
+	{
+		final SequenceDescription s = data1.getSequenceDescription();
+		final ViewRegistrations vr = data1.getViewRegistrations();
+		final ViewInterestPoints vipl = new ViewInterestPoints();
+		vipl.createViewInterestPoints( data1.getSequenceDescription().getViewDescriptions() );
+		final BoundingBoxes bb = new BoundingBoxes();
+		final StitchingResults sr = new StitchingResults();
+
+		return new SpimData2( data1.getBasePath(), s, vr, vipl, bb, sr);
+	}
+
+	public static List< ViewId > filterMissingViews( final AbstractSpimData< ? > data, final List< ViewId > viewIds )
+	{
+		final ArrayList< ViewId > removed = new ArrayList<>();
+		final ArrayList< ViewId > present = new ArrayList<>();
+
+		for ( final ViewId viewId : viewIds )
+		{
+			final BasicViewDescription< ? > vd = data.getSequenceDescription().getViewDescriptions().get( viewId );
+			
+			if ( vd.isPresent() )
+				present.add( viewId );
+			else
+				removed.add( viewId );
+		}
+
+		viewIds.clear();
+		viewIds.addAll( present );
+
+		return removed;
 	}
 }
