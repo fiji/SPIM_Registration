@@ -138,6 +138,7 @@ public class Subset< V >
 		final HashSet< V > fixedSubsetViews = new HashSet<>();
 
 		for ( final V fixedView : fixedViews )
+			if ( views.contains( fixedView ) )
 				fixedSubsetViews.add( fixedView );
 
 		return fixedSubsetViews;
