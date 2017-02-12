@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import net.imglib2.util.Pair;
+import spim.process.interestpointregistration.pairwise.constellation.group.Group;
 
 public class Subset< V >
 {
@@ -22,7 +23,7 @@ public class Subset< V >
 	/**
 	 * all groups that are part of this subset
 	 */
-	Set< Set< V > > groups;
+	Set< Group< V > > groups;
 
 	/**
 	 * all views in this subset that are fixed
@@ -32,7 +33,7 @@ public class Subset< V >
 	public Subset(
 			final Set< V > views,
 			final List< Pair< V, V > > pairs,
-			final Set< Set< V > > groups )
+			final Set< Group< V > > groups )
 	{
 		this.views = views;
 		this.pairs = pairs;
@@ -41,7 +42,7 @@ public class Subset< V >
 
 	public List< Pair< V, V > > getPairs() { return pairs; }
 	public Set< V > getViews() { return views; }
-	public Set< Set< V > > getGroups() { return groups; }
+	public Set< Group< V > > getGroups() { return groups; }
 	public Set< V > getFixedViews() { return fixedViews; }
 	protected void setFixedViews( final Set< V > fixedViews ) { this.fixedViews = fixedViews; }
 
@@ -74,8 +75,16 @@ public class Subset< V >
 	public List< Pair< Set< V >, Set< V > > > getGroupedPairs()
 	{
 		// all views contained in groups
-		final Set< Set< V > > groups = createGroupsForAllViews( views, this.groups );
+		final Set< Group< V > > groups = createGroupsForAllViews( views, this.groups );
 
+		// stupid, crazy example:
+		// group 0: v00, v01, v02, v03, v04
+		// group 1: v00, v10, v20, v30, v40
+		
+		// what happens to v01 <> v22 and v10 <> v22, assuming these are pairs
+		// a) group0+1 vs v22?
+		// b) group0 vs v22 + group1 vs v22?
+		
 		for ( final Pair< V, V > pair : pairs )
 		{
 			
@@ -91,11 +100,11 @@ public class Subset< V >
 	 * @param groups
 	 * @return
 	 */
-	public static < V > Set< Set< V > > createGroupsForAllViews(
+	public static < V > Set< Group< V > > createGroupsForAllViews(
 			final Set< V > views,
-			final Set< Set< V > > groups )
+			final Set< Group< V > > groups )
 	{
-		final Set< Set< V > > groupsFull = new HashSet<>();
+		final Set< Group< V > > groupsFull = new HashSet<>();
 
 		groupsFull.addAll( groups );
 
@@ -104,7 +113,7 @@ public class Subset< V >
 			// check if the view is contained in any of the groups
 			boolean contains = false;
 
-			for ( final Set< V > group : groups )
+			for ( final Group< V > group : groups )
 			{
 				if ( group.contains( view ) )
 				{
@@ -116,8 +125,7 @@ public class Subset< V >
 			// if the view is not contained in any group, make a new one
 			if ( !contains )
 			{
-				final HashSet< V > group = new HashSet<>();
-				group.add( view );
+				final Group< V > group = new Group<>( view );
 				groupsFull.add( group );
 			}
 		}
@@ -153,7 +161,7 @@ public class Subset< V >
 	public static < V > ArrayList< Pair< V, V > > fixViews(
 			final HashSet< V > fixedSubsetViews,
 			final List< Pair< V, V > > pairs,
-			final Set< Set< V > > groups )
+			final Set< Group< V > > groups )
 	{
 		final ArrayList< Pair< V, V > > removed = new ArrayList<>();
 
@@ -173,9 +181,9 @@ public class Subset< V >
 		// now check if any of the fixed views is part of a group
 		// if so, no checks between groups where each contains at 
 		// least one fixed tile are necessary
-		final ArrayList< Set< V > > groupsWithFixedViews = new ArrayList<>();
+		final ArrayList< Group< V > > groupsWithFixedViews = new ArrayList<>();
 
-		for ( final Set< V > group : groups )
+		for ( final Group< V > group : groups )
 		{
 			for ( final V fixedView : fixedSubsetViews )
 				if ( group.contains( fixedView ) )
@@ -201,7 +209,7 @@ public class Subset< V >
 				boolean aPresent = false;
 				boolean bPresent = false;
 
-				for ( final Set< V > fixedGroup : groupsWithFixedViews )
+				for ( final Group< V > fixedGroup : groupsWithFixedViews )
 				{
 					aPresent |= fixedGroup.contains( a );
 					bPresent |= fixedGroup.contains( b );

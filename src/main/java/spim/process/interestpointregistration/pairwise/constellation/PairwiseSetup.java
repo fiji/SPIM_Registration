@@ -10,12 +10,13 @@ import java.util.Set;
 
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
+import spim.process.interestpointregistration.pairwise.constellation.group.Group;
 import spim.process.interestpointregistration.pairwise.constellation.overlap.OverlapDetection;
 
 public abstract class PairwiseSetup< V extends Comparable< V > >
 {
 	protected List< V > views;
-	protected Set< Set< V > > groups;
+	protected Set< Group< V > > groups;
 	protected List< Pair< V, V > > pairs;
 	protected ArrayList< Subset< V > > subsets;
 
@@ -37,7 +38,7 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	 * @param views
 	 * @param groups
 	 */
-	public PairwiseSetup( final List< V > views, final Set< Set< V > > groups )
+	public PairwiseSetup( final List< V > views, final Set< Group< V > > groups )
 	{
 		this.views = views;
 		this.groups = removeNonExistentViewsInGroups( views, groups );
@@ -46,16 +47,9 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	public PairwiseSetup( final List< V > views ) { this( views, null ); }
 
 	public List< V > getViews() { return views; }
-	public void setViews( final List< V > views ) { this.views = views; }
-
-	public Set< Set< V > > getGroups() { return groups; }
-	public void setGroups( final Set< Set< V > > groups ) { this.groups = groups; }
-
+	public Set< Group< V > > getGroups() { return groups; }
 	public List< Pair< V, V > > getPairs() { return pairs; }
-	public void setPairs( final List< Pair< V, V > > pairs ) { this.pairs = pairs; }
-
 	public ArrayList< Subset< V > > getSubsets() { return subsets; }
-	public void setSubsets( final ArrayList< Subset< V > > subsets ) { this.subsets = subsets; }
 
 	/**
 	 * Given a list of views and their grouping, identify all pairs that need to be compared
@@ -137,9 +131,9 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	 * @param groups
 	 * @return
 	 */
-	public static < V > Set< Set< V > > removeNonExistentViewsInGroups(
+	public static < V > Set< Group< V > > removeNonExistentViewsInGroups(
 			final List< V > views,
-			final Set< Set< V > > groups )
+			final Set< Group< V > > groups )
 	{
 		if ( groups.size() == 0 )
 			return groups;
@@ -147,9 +141,9 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 		final HashSet< V > viewsSet = new HashSet<>();
 		viewsSet.addAll( views );
 
-		final HashSet< Set< V > > newGroups = new HashSet<>();
+		final HashSet< Group< V > > newGroups = new HashSet<>();
 
-		for ( final Set< V > group : groups )
+		for ( final Group< V > group : groups )
 		{
 			final ArrayList< V > removeGroup = new ArrayList<>();
 
@@ -159,7 +153,7 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 					removeGroup.add( view );
 			}
 
-			group.removeAll( removeGroup );
+			group.getViews().removeAll( removeGroup );
 
 			if ( group.size() > 0 )
 				newGroups.add( group );
@@ -178,7 +172,7 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	 */
 	public static < V > ArrayList< Pair< V, V > > removeRedundantPairs(
 			final List< Pair< V, V > > pairs,
-			final Set< Set< V > > groups )
+			final Set< Group< V > > groups )
 	{
 		final ArrayList< Pair< V, V > > removed = new ArrayList<>();
 
@@ -191,7 +185,7 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 
 			// if both views of a pair are contained in the same group
 			// we can safely remove this pair
-			for ( final Set< V > group : groups )
+			for ( final Group< V > group : groups )
 			{
 				if ( group.contains( a ) && group.contains( b ) )
 				{
@@ -260,7 +254,7 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	public static < V > ArrayList< Subset< V > > detectSubsets(
 			final List< V > views,
 			final List< Pair< V, V > > pairs,
-			final Set< Set< V > > groups )
+			final Set< Group< V > > groups )
 	{
 		// list of subset-precursors
 		final ArrayList< HashSet< V > > vSets = new ArrayList<>();
@@ -347,8 +341,8 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 		}
 
 		// now check if some of the sets are linked by grouping
-		for ( final Set< V > group : groups )
-			mergeSets( vSets, pairSets, containedInSets( group, vSets ) );
+		for ( final Group< V > group : groups )
+			mergeSets( vSets, pairSets, subsetsLinkedByGroup( vSets, group ) );
 
 		// make the final subsets containing the list of views, list of pairs, and list of groups contained in this subset
 		final ArrayList< Subset< V > > subsets = new ArrayList<>();
@@ -358,19 +352,19 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 			final ArrayList< Pair< V, V > > setPairs = pairSets.get( i );
 			final HashSet< V > setsViews = vSets.get( i );
 
-			subsets.add( new Subset<>( setsViews, setPairs, findAssociatedGroups( setsViews, groups ) ) );
+			subsets.add( new Subset<>( setsViews, setPairs, findGroupsAssociatedWithSubset( setsViews, groups ) ) );
 		}
 
 		return subsets;
 	}
 
-	public static < V > HashSet< Set< V > > findAssociatedGroups( final HashSet< V > setsViews, final Set< Set< V > > groups )
+	public static < V > HashSet< Group< V > > findGroupsAssociatedWithSubset( final HashSet< V > setsViews, final Set< Group< V > > groups )
 	{
-		final HashSet< Set< V > > associated = new HashSet<>();
+		final HashSet< Group< V > > associated = new HashSet<>();
 
 		for ( final V view : setsViews )
 		{
-			for ( final Set< V > group : groups )
+			for ( final Group< V > group : groups )
 			{
 				if ( group.contains( view ) )
 				{
@@ -390,7 +384,7 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	 * @param vSets
 	 * @return
 	 */
-	public static < V > HashSet< Integer > containedInSets( final Set< V > group, final List< ? extends Set< V > > vSets )
+	public static < V > HashSet< Integer > subsetsLinkedByGroup( final List< ? extends Set< V > > vSets, final Group< V > group )
 	{
 		final HashSet< Integer > contained = new HashSet<>();
 
@@ -402,6 +396,7 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 			{
 				if ( vSets.get( j ).contains( view ) )
 				{
+					// if so, remember this set-id for merging
 					contained.add( j );
 				}
 			}
@@ -456,12 +451,12 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	public static < V > boolean oneSetContainsBoth(
 			final V viewIdA,
 			final V viewIdB,
-			final Collection< ? extends Collection< V >> sets )
+			final Collection< ? extends Group< V >> sets )
 	{
 		if ( sets == null )
 			return false;
 
-		for ( final Collection< V > set : sets )
+		for ( final Group< V > set : sets )
 			if ( set.contains( viewIdA ) && set.contains( viewIdB ) )
 				return true;
 

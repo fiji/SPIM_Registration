@@ -7,6 +7,7 @@ import java.util.Set;
 
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
+import spim.process.interestpointregistration.pairwise.constellation.group.Group;
 import spim.process.interestpointregistration.pairwise.constellation.range.RangeComparator;
 
 public class AllToAllRange< V extends Comparable< V >, R extends RangeComparator< V > > extends PairwiseSetup< V >
@@ -15,7 +16,7 @@ public class AllToAllRange< V extends Comparable< V >, R extends RangeComparator
 
 	public AllToAllRange(
 			final List< V > views,
-			final Set< Set< V > > groups,
+			final Set< Group< V > > groups,
 			final R rangeComparator )
 	{
 		super( views, groups );
@@ -33,7 +34,7 @@ public class AllToAllRange< V extends Comparable< V >, R extends RangeComparator
 
 	public static < V > List< Pair< V, V > > allPairs(
 			final List< ? extends V > views,
-			final Collection< ? extends Collection< V > > groups,
+			final Collection< ? extends Group< V > > groups,
 			final RangeComparator< V > rangeComparator )
 	{
 		// all pairs that need to be compared

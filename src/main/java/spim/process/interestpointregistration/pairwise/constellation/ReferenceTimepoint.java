@@ -9,13 +9,14 @@ import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.util.Pair;
 import spim.fiji.spimdata.SpimData2;
+import spim.process.interestpointregistration.pairwise.constellation.group.Group;
 import spim.process.interestpointregistration.pairwise.constellation.range.ReferenceTimepointRange;
 
 public class ReferenceTimepoint extends AllToAllRange< ViewId, ReferenceTimepointRange< ViewId > >
 {
 	public ReferenceTimepoint(
 			final List< ViewId > views,
-			final Set< Set< ViewId > > groups,
+			final Set< Group< ViewId > > groups,
 			final int referenceTimepointId )
 	{
 		super( views, groups, new ReferenceTimepointRange<>( referenceTimepointId ) );
@@ -23,7 +24,7 @@ public class ReferenceTimepoint extends AllToAllRange< ViewId, ReferenceTimepoin
 
 	public ReferenceTimepoint(
 			final List< ViewId > views,
-			final Set< Set< ViewId > > groups,
+			final Set< Group< ViewId > > groups,
 			final TimePoint referenceTimepoint )
 	{
 		this( views, groups, referenceTimepoint.getId() );
@@ -58,7 +59,7 @@ public class ReferenceTimepoint extends AllToAllRange< ViewId, ReferenceTimepoin
 					// make local list of views, pairs, and groups
 					final List< ViewId > viewsL = new ArrayList<>();
 					final List< Pair< ViewId, ViewId > > pairsL = new ArrayList<>();
-					final Set< Set< ViewId > > groupsL = new HashSet<>();
+					final Set< Group< ViewId > > groupsL = new HashSet<>();
 
 					for ( final ViewId viewId : this.views )
 						if ( viewId.getTimePointId() == tpId || viewId.getTimePointId() == referenceTimepointId )
@@ -70,7 +71,7 @@ public class ReferenceTimepoint extends AllToAllRange< ViewId, ReferenceTimepoin
 							pairsL.add( pair );
 
 					// we made sure the groups do not span across timepoints
-					for ( final Set< ViewId > group : this.groups )
+					for ( final Group< ViewId > group : this.groups )
 						if ( group.iterator().next().getTimePointId() == tpId )
 							groupsL.add( group );
 
@@ -122,9 +123,9 @@ public class ReferenceTimepoint extends AllToAllRange< ViewId, ReferenceTimepoin
 	 * @param groups
 	 * @return
 	 */
-	public static < V extends ViewId > boolean groupsSpanTimepoints( final Set< Set< V > > groups )
+	public static < V extends ViewId > boolean groupsSpanTimepoints( final Set< Group< V > > groups )
 	{
-		for ( final Set< V > group : groups )
+		for ( final Group< V > group : groups )
 		{
 			final int timepointId = group.iterator().next().getTimePointId();
 
