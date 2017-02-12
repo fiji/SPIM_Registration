@@ -92,9 +92,8 @@ public class Subset< V >
 		// so what happens for the pair: v01 <> v10?
 		// group0 vs group1
 		//
-		// NOTE: these comparisons would be for nothing since the groups overlap (which is not tested)
-		//       those unnecessary pairs would be ignored by the global optimization (or it crashes, not sure)
-
+		// NOTE: these comparisons will be removed below since the groups overlap and hence
+		//       it makes no sense to compare them
 		final HashSet< Pair< Integer, Integer > > groupPairs = new HashSet<>();
 
 		for ( final Pair< V, V > pair : pairs )
@@ -113,12 +112,27 @@ public class Subset< V >
 				}
 		}
 
+		// test if groups overlap, if so remove the pairs
 		final List< Pair< Group< V >, Group< V > > > result = new ArrayList<>();
 		for ( final Pair< Integer, Integer > groupPair : groupPairs )
-			result.add( new ValuePair< Group< V >, Group< V > >(
-							groups.get( groupPair.getA() ), groups.get( groupPair.getB() ) ) );
+		{
+			final Group< V > groupA = groups.get( groupPair.getA() );
+			final Group< V > groupB = groups.get( groupPair.getB() );
+
+			if ( !overlaps( groupA, groupB ) )
+				result.add( new ValuePair< Group< V >, Group< V > >( groupA, groupB ) );
+		}
 
 		return result;
+	}
+
+	public static < V > boolean overlaps( final Group< V > groupA, final Group< V > groupB )
+	{
+		for ( final V viewA : groupA )
+			if ( groupB.contains( viewA ) )
+				return true;
+
+		return false;
 	}
 
 	/**
