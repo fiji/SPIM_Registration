@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import net.imglib2.util.Pair;
+import net.imglib2.util.ValuePair;
 import spim.process.interestpointregistration.pairwise.constellation.group.Group;
 
 public class Subset< V >
@@ -72,25 +73,52 @@ public class Subset< V >
 	 * pairwise comparisons, the algorithm groups views (e.g. all interestpoints) before
 	 * running the actual algorithm.
 	 */
-	public List< Pair< Set< V >, Set< V > > > getGroupedPairs()
+	public List< Pair< Group< V >, Group< V > > > getGroupedPairs()
 	{
-		// all views contained in groups
-		final Set< Group< V > > groups = createGroupsForAllViews( views, this.groups );
+		// all views contained in groups (those that existed + new ones with cardinality==1)
+		final ArrayList< Group< V > > groups = createGroupsForAllViews( views, this.groups );
 
 		// stupid, crazy example:
-		// group 0: v00, v01, v02, v03, v04
-		// group 1: v00, v10, v20, v30, v40
-		
-		// what happens to v01 <> v22 and v10 <> v22, assuming these are pairs
-		// a) group0+1 vs v22?
-		// b) group0 vs v22 + group1 vs v22?
-		
+		// group0: v00, v01, v02, v03, v04
+		// group1: v00, v10, v20, v30, v40
+		//
+		// group2: v22, v10
+		//
+		// pairs: v00 <> v22; v01 <> v10
+		//
+		// so what happens for the pair: v00 <> v22?
+		// group0 vs group2 + group1 vs group2? <<< this one, you can merge later if you want
+		//
+		// so what happens for the pair: v01 <> v10?
+		// group0 vs group1
+		//
+		// NOTE: these comparisons would be for nothing since the groups overlap (which is not tested)
+		//       those unnecessary pairs would be ignored by the global optimization (or it crashes, not sure)
+
+		final HashSet< Pair< Integer, Integer > > groupPairs = new HashSet<>();
+
 		for ( final Pair< V, V > pair : pairs )
 		{
-			
+			final V a = pair.getA();
+			final V b = pair.getB();
+
+			for ( int i = 0; i < groups.size(); ++i )
+				for ( int j = 0; j < groups.size(); ++j )
+				{
+					final Group< V > groupA = groups.get( i );
+					final Group< V > groupB = groups.get( j );
+
+					if ( groupA.contains( a ) && groupB.contains( b ) )
+						groupPairs.add( new ValuePair< Integer, Integer >( i, j ) );
+				}
 		}
 
-		return null;
+		final List< Pair< Group< V >, Group< V > > > result = new ArrayList<>();
+		for ( final Pair< Integer, Integer > groupPair : groupPairs )
+			result.add( new ValuePair< Group< V >, Group< V > >(
+							groups.get( groupPair.getA() ), groups.get( groupPair.getB() ) ) );
+
+		return result;
 	}
 
 	/**
@@ -100,11 +128,11 @@ public class Subset< V >
 	 * @param groups
 	 * @return
 	 */
-	public static < V > Set< Group< V > > createGroupsForAllViews(
+	public static < V > ArrayList< Group< V > > createGroupsForAllViews(
 			final Set< V > views,
 			final Set< Group< V > > groups )
 	{
-		final Set< Group< V > > groupsFull = new HashSet<>();
+		final ArrayList< Group< V > > groupsFull = new ArrayList<>();
 
 		groupsFull.addAll( groups );
 
