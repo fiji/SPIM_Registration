@@ -180,25 +180,62 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 		{
 			final Pair< V, V > pair = pairs.get( i );
 
-			final V a = pair.getA();
-			final V b = pair.getB();
+			final V viewA = pair.getA();
+			final V viewB = pair.getB();
 
 			// if both views of a pair are contained in the same group
 			// we can safely remove this pair
 			for ( final Group< V > group : groups )
 			{
-				if ( group.contains( a ) && group.contains( b ) )
+				if ( group.contains( viewA ) && group.contains( viewB ) )
 				{
 					pairs.remove( i );
 					removed.add( pair );
 					break;
 				}
 			}
+
+			// now test if the groups that both views belong to overlap,
+			// because if they do, there is no point in comparing this pair
+			final ArrayList< Group< V > > memberA = memberOf( viewA, groups );
+			final ArrayList< Group< V > > memberB = memberOf( viewB, groups );
+
+			boolean removedPair = false;
+			for ( int a = 0; a < memberA.size() && !removedPair; ++a )
+				for ( int b = 0; b < memberB.size() && !removedPair; ++b )
+				{
+					if ( overlaps( memberA.get( a ), memberB.get( b ) ) )
+					{
+						pairs.remove( i );
+						removed.add( pair );
+						removedPair = true;
+					}
+				}
 		}
 
 		return removed;
 	}
 
+	public static < V > boolean overlaps( final Group< V > groupA, final Group< V > groupB )
+	{
+		for ( final V viewA : groupA )
+			if ( groupB.contains( viewA ) )
+				return true;
+
+		return false;
+	}
+
+	public static < V > ArrayList< Group< V > > memberOf( final V view, final Set< Group< V > > groups )
+	{
+		final ArrayList< Group< V > > memberOf = new ArrayList<>();
+
+		for ( final Group< V > group : groups )
+			if ( group.getViews().contains( view ) )
+				memberOf.add( group );
+
+		return memberOf;
+	}
+	
 	/**
 	 * Remove pairs that are not overlapping
 	 * 
