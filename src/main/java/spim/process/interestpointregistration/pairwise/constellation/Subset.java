@@ -205,13 +205,14 @@ public class Subset< V >
 				{
 					aPresent |= fixedGroup.contains( a );
 					bPresent |= fixedGroup.contains( b );
-
 					if ( aPresent && bPresent )
-					{
-						pairs.remove( i );
-						removed.add( pair );
 						break;
-					}
+				}
+
+				if ( aPresent && bPresent )
+				{
+					pairs.remove( i );
+					removed.add( pair );
 				}
 			}
 		}
