@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.pairwise.constellation.group;
+package spim.process.interestpointregistration.pairwise.constellation.grouping;
 
 import java.util.Collection;
 import java.util.HashSet;

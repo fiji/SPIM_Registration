@@ -7,7 +7,7 @@ import java.util.Set;
 
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
-import spim.process.interestpointregistration.pairwise.constellation.group.Group;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class Subset< V >
 {
@@ -39,6 +39,7 @@ public class Subset< V >
 		this.views = views;
 		this.pairs = pairs;
 		this.groups = groups;
+		this.fixedViews = new HashSet<>();
 	}
 
 	public List< Pair< V, V > > getPairs() { return pairs; }

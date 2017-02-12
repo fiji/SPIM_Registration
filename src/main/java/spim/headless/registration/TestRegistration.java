@@ -29,7 +29,7 @@ import spim.process.interestpointregistration.pairwise.PairwiseStrategyTools;
 import spim.process.interestpointregistration.pairwise.constellation.AllToAll;
 import spim.process.interestpointregistration.pairwise.constellation.PairwiseSetup;
 import spim.process.interestpointregistration.pairwise.constellation.Subset;
-import spim.process.interestpointregistration.pairwise.constellation.group.Group;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 import spim.process.interestpointregistration.pairwise.constellation.overlap.SimpleBoundingBoxOverlap;
 
 public class TestRegistration
@@ -39,7 +39,12 @@ public class TestRegistration
 		// generate 4 views with 1000 corresponding beads, single timepoint
 		SpimData2 spimData = SpimData2.convert( SimulatedBeadsImgLoader.spimdataExample( new int[]{ 0, 90, 135 } ) );
 
-		testRegistration(spimData );
+		System.out.println( "Views present:" );
+
+		for ( final ViewId viewId : spimData.getSequenceDescription().getViewDescriptions().values() )
+			System.out.println( pvid( viewId ) );
+
+		testRegistration( spimData );
 	}
 
 	public static void testRegistration( final SpimData2 spimData )
@@ -85,31 +90,60 @@ public class TestRegistration
 			final ViewId fixedView = subset.getViews().iterator().next();
 			fixedViews.add( fixedView );
 
-			System.out.println( "Removed " + subset.fixViews( fixedViews ).size() + " views due to fixing view " + fixedView );
+			System.out.println( "Removed " + subset.fixViews( fixedViews ).size() + " views due to fixing view tpId=" + fixedView.getTimePointId() + " setupId=" + fixedView.getViewSetupId() );
+
+			// get all pairs
+			final List< Pair< ViewId, ViewId > > pairs = subset.getPairs();
+
+			for ( final Pair< ViewId, ViewId > pair : pairs )
+				System.out.println( pvid( pair.getA() ) + " <=> " + pvid( pair.getB() ) );
+
+			// get all grouped pairs
+			for ( final Pair< Group< ViewId >, Group< ViewId > > pair : subset.getGroupedPairs() )
+			{
+				String groupA = "", groupB = "";
+
+				for ( final ViewId a : pair.getA() )
+					groupA += pvids( a ) + " ";
+
+				for ( final ViewId b : pair.getB() )
+					groupB += pvids( b ) + " ";
+
+				System.out.println( "[ " + groupA + "] <=> [ " + groupB + "] " );
+			}
+
+			// compute all pairwise matchings
+			final RANSACParameters rp = new RANSACParameters();
+			final GeometricHashingParameters gp = new GeometricHashingParameters( new AffineModel3D() );
+			final List< Pair< Pair< ViewId, ViewId >, PairwiseResult > > result =
+					MatcherPairwiseTools.computePairs( pairs, interestpoints, new GeometricHashingPairwise( rp, gp ) );
+			MatcherPairwiseTools.assignLoggingViewIdsAndDescriptions( result, spimData.getSequenceDescription() );
+
+			// save the corresponding detections and output result
+			for ( final Pair< Pair< ViewId, ViewId >, PairwiseResult > p : result )
+			{
+				final InterestPointList listA = spimData.getViewInterestPoints().getViewInterestPointLists( p.getA().getA() ).getInterestPointList( "beads" );
+				final InterestPointList listB = spimData.getViewInterestPoints().getViewInterestPointLists( p.getA().getB() ).getInterestPointList( "beads" );
+				TransformationTools.setCorrespondences( p.getB().getInliers(), p.getA().getA(), p.getA().getB(), "beads", "beads", listA, listB );
+
+				System.out.println( p.getB().getFullDesc() );
+			}
+			
+			/*
+			final HashMap< ViewId, Tile< AffineModel3D > > models =
+					GlobalOpt.compute( new AffineModel3D(), result, fixedViews, groupedViews );
+
+			// map-back model (useless as we fix the first one)
+			final AffineTransform3D mapBack = computeMapBackModel(
+					spimData.getSequenceDescription().getViewDescription( viewIds.get( 0 ) ).getViewSetup().getSize(),
+					transformations.get( viewIds.get( 0 ) ).getModel(),
+					models.get( viewIds.get( 0 ) ).getModel(),
+					new RigidModel3D() ); */
+
 		}
-		
-		System.exit( 0 );
-
-		// 
-		// subset.fixViews() - fixed some of the views necessary for the strategy to work
-
-		// define fixed tiles
-		final ArrayList< ViewId > fixedViews = new ArrayList< ViewId >();
-		fixedViews.add( viewIds.get( 0 ) );
-
-		// define groups
-		final ArrayList< ArrayList< ViewId > > groupedViews = new ArrayList< ArrayList< ViewId > >();
-
-		// define all pairs
-		final List< Pair< ViewId, ViewId > > pairs = PairwiseStrategyTools.allToAll( viewIds, fixedViews, groupedViews );
-
-		// compute all pairwise matchings
-		final RANSACParameters rp = new RANSACParameters();
-		final GeometricHashingParameters gp = new GeometricHashingParameters( new AffineModel3D() );
-		final List< Pair< Pair< ViewId, ViewId >, PairwiseResult > > result =
-				MatcherPairwiseTools.computePairs( pairs, interestpoints, new GeometricHashingPairwise( rp, gp ) );
-		MatcherPairwiseTools.assignLoggingViewIdsAndDescriptions( result, spimData.getSequenceDescription() );
-
 	}
 
+	public static String pvid( final ViewId viewId ) { return "tpId=" + viewId.getTimePointId() + " setupId=" + viewId.getViewSetupId(); }
+	public static String pvids( final ViewId viewId ) { return "t(" + viewId.getTimePointId() + ") s(" + viewId.getViewSetupId() + ")"; }
+	
 }

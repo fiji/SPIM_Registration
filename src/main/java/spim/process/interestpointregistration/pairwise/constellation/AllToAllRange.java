@@ -7,7 +7,7 @@ import java.util.Set;
 
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
-import spim.process.interestpointregistration.pairwise.constellation.group.Group;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 import spim.process.interestpointregistration.pairwise.constellation.range.RangeComparator;
 
 public class AllToAllRange< V extends Comparable< V >, R extends RangeComparator< V > > extends PairwiseSetup< V >

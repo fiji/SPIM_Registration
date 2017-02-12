@@ -6,7 +6,7 @@ import java.util.Set;
 
 import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.util.Pair;
-import spim.process.interestpointregistration.pairwise.constellation.group.Group;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 import spim.process.interestpointregistration.pairwise.constellation.range.TimepointRange;
 
 public class IndividualTimepoints extends AllToAllRange< ViewId, TimepointRange< ViewId > >
