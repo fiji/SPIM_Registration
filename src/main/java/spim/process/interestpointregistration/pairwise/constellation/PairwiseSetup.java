@@ -31,8 +31,8 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	 * 
 	 * within each subset
 	 * 
-	 * 7) fixViews( getDefaultFixedViews() )
-	 * 8) fixViews() - fixed some of the views necessary for the strategy to work
+	 * 7) subset.fixViews( this.getDefaultFixedViews() )
+	 * 8) subset.fixViews() - fixed some of the views necessary for the strategy to work
 	 * 
 	 * @param views
 	 * @param groups
