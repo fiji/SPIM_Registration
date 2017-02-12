@@ -75,6 +75,11 @@ public class Subset< V >
 	{
 		final Set< Set< V > > groups = createGroupsForAllViews( views, this.groups );
 
+		for ( final Pair< V, V > pair : pairs )
+		{
+			
+		}
+
 		return null;
 	}
 
