@@ -61,7 +61,7 @@ public class ReferenceTimepoint extends AllToAllRange< ViewId, ReferenceTimepoin
 					final Set< Set< ViewId > > groupsL = new HashSet<>();
 
 					for ( final ViewId viewId : this.views )
-						if ( viewId.getTimePointId() == tpId )
+						if ( viewId.getTimePointId() == tpId || viewId.getTimePointId() == referenceTimepointId )
 							viewsL.add( viewId );
 
 					// we made sure the pairs do not span across timepoints except reference

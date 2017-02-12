@@ -73,6 +73,7 @@ public class Subset< V >
 	 */
 	public List< Pair< Set< V >, Set< V > > > getGroupedPairs()
 	{
+		// all views contained in groups
 		final Set< Set< V > > groups = createGroupsForAllViews( views, this.groups );
 
 		for ( final Pair< V, V > pair : pairs )

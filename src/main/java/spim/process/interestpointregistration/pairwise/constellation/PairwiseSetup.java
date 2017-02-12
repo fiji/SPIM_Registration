@@ -27,9 +27,12 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	 * 3) reorderPairs() - if wanted
 	 * 4) detectSubsets()
 	 * 5) sortSubsets() - if wanted
-	 * 6) fixViews( getDefaultFixedViews() )
-	 * 7) fixViews() - fixed some of the views necessary for the strategy to work
-	 * 8) getSubsets()
+	 * 6) getSubsets()
+	 * 
+	 * within each subset
+	 * 
+	 * 7) fixViews( getDefaultFixedViews() )
+	 * 8) fixViews() - fixed some of the views necessary for the strategy to work
 	 * 
 	 * @param views
 	 * @param groups
@@ -380,6 +383,13 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 		return associated;
 	}
 
+	/** 
+	 * which subsets are part of a group
+	 * 
+	 * @param group
+	 * @param vSets
+	 * @return
+	 */
 	public static < V > HashSet< Integer > containedInSets( final Set< V > group, final List< ? extends Set< V > > vSets )
 	{
 		final HashSet< Integer > contained = new HashSet<>();
