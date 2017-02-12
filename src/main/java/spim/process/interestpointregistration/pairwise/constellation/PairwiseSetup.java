@@ -56,12 +56,12 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	 * 
 	 * @param views
 	 * @param groups
-	 * @return
+	 * @return - redundant pairs that were removed
 	 */
-	public void definePairs()
+	public ArrayList< Pair< V, V > > definePairs()
 	{
 		pairs = definePairsAbstract();
-		removeRedundantPairs( pairs, groups );
+		return removeRedundantPairs( pairs, groups );
 	}
 
 	/**
@@ -95,7 +95,7 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	 *
 	 * @param sets
 	 */
-	public void sortSets()
+	public void sortSubsets()
 	{
 		sortSets( subsets, new Comparator< Pair< V, V > >()
 		{
