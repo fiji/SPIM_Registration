@@ -1,17 +1,26 @@
 package spim.process.interestpointregistration.pairwise.constellation.grouping;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 
-public abstract class InterestPointGrouping< V extends ViewId >
+public abstract class InterestPointGrouping< V extends ViewId > implements Grouping< V, List< GroupedInterestPoint< V > > >
 {
-	public void group( final Group< V > group, final Map< V, List< InterestPoint > > interestpoints )
+	// all interestpoints
+	final Map< V, List< InterestPoint > > interestpoints;
+
+	public InterestPointGrouping( final Map< V, List< InterestPoint > > interestpoints )
 	{
-		final ArrayList< List< InterestPoint > > toMerge = new ArrayList<>();
+		this.interestpoints = interestpoints;
+	}
+
+	@Override
+	public List< GroupedInterestPoint< V > > group( final Group< V > group )
+	{
+		final Map< V, List< InterestPoint > > toMerge = new HashMap<>();
 
 		for ( final V view : group )
 		{
@@ -20,9 +29,11 @@ public abstract class InterestPointGrouping< V extends ViewId >
 			if ( points == null )
 				throw new RuntimeException( "no interestpoints available" );
 
-			toMerge.add( points );
+			toMerge.put( view, points );
 		}
+
+		return merge( toMerge );
 	}
 
-	public abstract void merge( ArrayList< List< InterestPoint > > toMerge );
+	protected abstract List< GroupedInterestPoint< V > > merge( Map< V, List< InterestPoint > > toMerge );
 }
