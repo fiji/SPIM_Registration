@@ -277,12 +277,12 @@ public class TransformationTools
 		// compute all pairwise matchings
 		final RANSACParameters rp = new RANSACParameters();
 		final GeometricHashingParameters gp = new GeometricHashingParameters( new AffineModel3D() );
-		final List< Pair< Pair< ViewId, ViewId >, PairwiseResult > > result =
-				MatcherPairwiseTools.computePairs( pairs, interestpoints, new GeometricHashingPairwise( rp, gp ) );
+		final List< Pair< Pair< ViewId, ViewId >, PairwiseResult< InterestPoint > > > result =
+				MatcherPairwiseTools.computePairs( pairs, interestpoints, new GeometricHashingPairwise< InterestPoint >( rp, gp ) );
 		MatcherPairwiseTools.assignLoggingViewIdsAndDescriptions( result, spimData.getSequenceDescription() );
 
 		// save the corresponding detections and output result
-		for ( final Pair< Pair< ViewId, ViewId >, PairwiseResult > p : result )
+		for ( final Pair< Pair< ViewId, ViewId >, PairwiseResult< InterestPoint > > p : result )
 		{
 			final InterestPointList listA = spimData.getViewInterestPoints().getViewInterestPointLists( p.getA().getA() ).getInterestPointList( "beads" );
 			final InterestPointList listB = spimData.getViewInterestPoints().getViewInterestPointLists( p.getA().getB() ).getInterestPointList( "beads" );
