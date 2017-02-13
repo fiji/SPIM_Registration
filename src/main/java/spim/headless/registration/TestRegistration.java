@@ -106,12 +106,12 @@ public class TestRegistration
 				System.out.println( pvid( pair.getA() ) + " <=> " + pvid( pair.getB() ) );
 
 			// compute all pairwise matchings
-			final List< Pair< Pair< ViewId, ViewId >, PairwiseResult > > result =
+			//final List< Pair< Pair< ViewId, ViewId >, PairwiseResult< InterestPoint > > > result =
 					MatcherPairwiseTools.computePairs( pairs, interestpoints, new GeometricHashingPairwise( rp, gp ) );
 			MatcherPairwiseTools.assignLoggingViewIdsAndDescriptions( result, spimData.getSequenceDescription() );
 
 			// save the corresponding detections and output result
-			for ( final Pair< Pair< ViewId, ViewId >, PairwiseResult > p : result )
+			for ( final Pair< Pair< ViewId, ViewId >, PairwiseResult< InterestPoint > > p : result )
 			{
 				final InterestPointList listA = spimData.getViewInterestPoints().getViewInterestPointLists( p.getA().getA() ).getInterestPointList( "beads" );
 				final InterestPointList listB = spimData.getViewInterestPoints().getViewInterestPointLists( p.getA().getB() ).getInterestPointList( "beads" );
@@ -121,11 +121,11 @@ public class TestRegistration
 			}
 
 			// get all grouped pairs
+			final List< Pair< Group< ViewId >, Group< ViewId > > > groupedPairs = subset.getGroupedPairs();
 			final Map< Group< ViewId >, List< GroupedInterestPoint< ViewId > > > groupedInterestpoints = new HashMap<>();
-
 			final InterestPointGrouping< ViewId > grouping = new InterestPointGroupingAll<>( interestpoints );
 
-			for ( final Pair< Group< ViewId >, Group< ViewId > > pair : subset.getGroupedPairs() )
+			for ( final Pair< Group< ViewId >, Group< ViewId > > pair : groupedPairs )
 			{
 				String groupA = "", groupB = "";
 
@@ -156,9 +156,10 @@ public class TestRegistration
 				System.out.println();
 			}
 
-			
-			
-			
+			final List< Pair< Pair< Group< ViewId >, Group< ViewId > >, PairwiseResult< GroupedInterestPoint< ViewId > > > > resultGroup =
+					MatcherPairwiseTools.computePairs( groupedPairs, groupedInterestpoints, new GeometricHashingPairwise( rp, gp ) );
+
+			//MatcherPairwiseTools.assignGroupedLoggingViewIdsAndDescriptions( resultGroup, spimData.getSequenceDescription() );
 
 			/*
 			final HashMap< ViewId, Tile< AffineModel3D > > models =
