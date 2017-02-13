@@ -28,6 +28,7 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 import net.imglib2.util.Pair;
+import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.interestpointregistration.pairwise.PairwiseResult;
 
 /**
@@ -46,13 +47,13 @@ public class GlobalOpt
 	 */
 	public static < M extends Model< M > > HashMap< ViewId, Tile< M > > compute(
 			final M model,
-			final List< Pair< Pair< ViewId, ViewId >, PairwiseResult< ? > > > pairs,
+			final List< ? extends Pair< ? extends Pair< ViewId, ViewId >, ? extends PairwiseResult< ? > > > pairs,
 			final Collection< ViewId > fixedViews,
 			final List< ? extends List< ViewId > > groups )
 	{
 		// assemble all views and corresponding points
 		final HashSet< ViewId > tmpSet = new HashSet<ViewId>();
-		for ( Pair< Pair< ViewId, ViewId >, PairwiseResult< ? > > pair : pairs )
+		for ( Pair< ? extends Pair< ViewId, ViewId >, ? extends PairwiseResult< ? > > pair : pairs )
 		{
 			tmpSet.add( pair.getA().getA() );
 			tmpSet.add( pair.getA().getB() );
@@ -66,7 +67,7 @@ public class GlobalOpt
 		final HashMap< ViewId, Tile< M > > map = assignViewsToTiles( model, views, groups );
 
 		// assign the pointmatches to all the tiles
-		for ( Pair< Pair< ViewId, ViewId >, PairwiseResult< ? > > pair : pairs )
+		for ( Pair< ? extends Pair< ViewId, ViewId >, ? extends PairwiseResult< ? > > pair : pairs )
 			GlobalOpt.addPointMatches( pair.getB().getInliers(), map.get( pair.getA().getA() ), map.get( pair.getA().getB() ) );
 
 		// add and fix tiles as defined in the GlobalOptimizationType
