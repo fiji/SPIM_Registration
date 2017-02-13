@@ -22,13 +22,13 @@ import spim.fiji.ImgLib2Temp.ValuePair;
 import spim.fiji.plugin.Interest_Point_Registration;
 import spim.fiji.plugin.Visualize_Detections;
 import spim.fiji.plugin.fusion.Fusion;
+import spim.fiji.plugin.interestpointregistration.ChannelProcessGUI;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.process.fusion.export.ImgExport;
-import spim.process.interestpointregistration.ChannelProcess;
 import spim.vecmath.AxisAngle4d;
 import spim.vecmath.Matrix4d;
 import spim.vecmath.Point3d;
@@ -179,7 +179,7 @@ public class AutomaticReorientation extends BoundingBoxGUI
 		this.reorientate = defaultReorientate = gd.getNextChoiceIndex();
 
 		// assemble which channels have been selected with with label
-		final ArrayList< ChannelProcess > channelsToUse = new ArrayList< ChannelProcess >();
+		final ArrayList< ChannelProcessGUI > channelsToUse = new ArrayList< ChannelProcessGUI >();
 		j = 0;
 
 		for ( final Channel channel : channels )
@@ -193,7 +193,7 @@ public class AutomaticReorientation extends BoundingBoxGUI
 				if ( label.contains( Interest_Point_Registration.warningLabel ) )
 					label = label.substring( 0, label.indexOf( Interest_Point_Registration.warningLabel ) );
 				
-				channelsToUse.add( new ChannelProcess( channel, label ) );
+				channelsToUse.add( new ChannelProcessGUI( channel, label ) );
 			}
 
 			++j;
@@ -208,7 +208,7 @@ public class AutomaticReorientation extends BoundingBoxGUI
 		final int detections = defaultDetections = gd.getNextChoiceIndex();
 		final double percent = defaultPercent = gd.getNextNumber();
 
-		for ( final ChannelProcess c : channelsToUse )
+		for ( final ChannelProcessGUI c : channelsToUse )
 			IOFunctions.println( "using from channel: " + c.getChannel().getId()  + " label: '" + c.getLabel() + "', " + (detections == 0 ? "all detections." : "only corresponding detections.") );
 
 		// to be filled
@@ -303,7 +303,7 @@ public class AutomaticReorientation extends BoundingBoxGUI
 	 * @param detections
 	 * @return - the transformation and minX, minY, minZ, maxX, maxY, maxZ as Pair
 	 */
-	protected Pair< AffineTransform3D, double[] > determineOptimalBoundingBox( final ArrayList< ChannelProcess > channelsToUse, final int detections )
+	protected Pair< AffineTransform3D, double[] > determineOptimalBoundingBox( final ArrayList< ChannelProcessGUI > channelsToUse, final int detections )
 	{
 		final List< double[] > points = getAllDetectionsInGlobalCoordinates( channelsToUse, detections );
 
@@ -485,7 +485,7 @@ public class AutomaticReorientation extends BoundingBoxGUI
 		return dx*dx + dy*dy + dz*dz;
 	}
 
-	protected Pair< double[], double[] > determineSizeSimple( final ArrayList< ChannelProcess > channelsToUse, final int detections )
+	protected Pair< double[], double[] > determineSizeSimple( final ArrayList< ChannelProcessGUI > channelsToUse, final int detections )
 	{
 		final List< double[] > points = getAllDetectionsInGlobalCoordinates( channelsToUse, detections );
 
@@ -511,11 +511,11 @@ public class AutomaticReorientation extends BoundingBoxGUI
 		return new ValuePair< double[], double[] >( min, max );
 	}
 
-	protected List< double[] > getAllDetectionsInGlobalCoordinates( final ArrayList< ChannelProcess > channelsToUse, final int detections )
+	protected List< double[] > getAllDetectionsInGlobalCoordinates( final ArrayList< ChannelProcessGUI > channelsToUse, final int detections )
 	{
 		final ArrayList< double[] > ipList = new ArrayList< double[] >();
 
-		for ( final ChannelProcess c : channelsToUse )
+		for ( final ChannelProcessGUI c : channelsToUse )
 			for ( final ViewDescription vd : SpimData2.getAllViewIdsForChannelSorted( spimData, viewIdsToProcess, c.getChannel() ) )
 			{
 				if ( !vd.isPresent() )
@@ -530,10 +530,10 @@ public class AutomaticReorientation extends BoundingBoxGUI
 				final ViewInterestPointLists vipl = spimData.getViewInterestPoints().getViewInterestPointLists( vd );
 				final InterestPointList ipl = vipl.getInterestPointList( c.getLabel() );
 
-				if ( ipl.getInterestPoints() == null )
+				if ( !ipl.hasInterestPoints() )
 					ipl.loadInterestPoints();
 
-				final List< InterestPoint > list = ipl.getInterestPoints();
+				final List< InterestPoint > list = ipl.getInterestPointsCopy();
 
 				// use all detections
 				if ( detections == 0 )
@@ -548,7 +548,7 @@ public class AutomaticReorientation extends BoundingBoxGUI
 				}
 				else // use only those who have correspondences
 				{
-					if ( ipl.getCorrespondingInterestPoints() == null )
+					if ( !ipl.hasCorrespondingInterestPoints() )
 						ipl.loadCorrespondingInterestPoints();
 
 					final HashMap< Integer, InterestPoint > map = new HashMap< Integer, InterestPoint >();
@@ -556,7 +556,7 @@ public class AutomaticReorientation extends BoundingBoxGUI
 					for ( final InterestPoint ip : list )
 						map.put( ip.getId(), ip );
 
-					final List< CorrespondingInterestPoints > list2 = ipl.getCorrespondingInterestPoints();
+					final List< CorrespondingInterestPoints > list2 = ipl.getCorrespondingInterestPointsCopy();
 
 					for ( final CorrespondingInterestPoints cp : list2 )
 					{

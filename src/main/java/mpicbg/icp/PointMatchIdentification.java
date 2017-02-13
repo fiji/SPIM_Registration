@@ -1,15 +1,14 @@
 package mpicbg.icp;
 
 
-import fiji.util.node.Leaf;
-
 import java.util.List;
 
 import mpicbg.models.Point;
-import mpicbg.models.PointMatch;
 import mpicbg.pointdescriptor.exception.NoSuitablePointsException;
+import mpicbg.spim.mpicbg.PointMatchGeneric;
+import net.imglib2.RealLocalizable;
 
-public interface PointMatchIdentification < P extends Point & Leaf<P> >
+public interface PointMatchIdentification < P extends Point & RealLocalizable >
 {
-	public List<PointMatch> assignPointMatches( final List<P> target, final List<P> reference ) throws NoSuitablePointsException;
+	public List< PointMatchGeneric< P > > assignPointMatches( final List< P > target, final List< P > reference ) throws NoSuitablePointsException;
 }

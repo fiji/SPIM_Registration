@@ -25,6 +25,7 @@ import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.process.removeDetection.DetectionRemoval;
 
 public class RemoveDetectionsPopup extends JMenu implements ExplorerWindowSetable
 {
@@ -100,7 +101,7 @@ public class RemoveDetectionsPopup extends JMenu implements ExplorerWindowSetabl
 					return;
 
 				// thin out detections and save the new interestpoint files
-				if ( !ThinOut_Detections.thinOut( data, viewIds, channels, false ) )
+				if ( !DetectionRemoval.thinOut( data, viewIds, channels ) )
 					return;
 
 				panel.updateContent(); // update interestpoint panel if available

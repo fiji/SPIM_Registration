@@ -24,6 +24,8 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.spimdata.boundingbox.BoundingBoxes;
+import spim.fiji.spimdata.interestpoints.InterestPointList;
+import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.fiji.spimdata.stitchingresults.StitchingResults;
 
@@ -145,6 +147,23 @@ public class SpimData2 extends SpimData
 		Collections.sort( viewIds );
 
 		return viewIds;
+	}
+
+	public static ArrayList< ViewDescription > getAllViewDescriptionsSorted( final SpimData data, final List< ? extends ViewId > viewIds )
+	{
+		final ArrayList< ViewDescription > vds = new ArrayList< ViewDescription >();
+
+		for ( final ViewId v : viewIds )
+		{
+			final ViewDescription vd = data.getSequenceDescription().getViewDescription( v );
+
+			if ( vd.isPresent() )
+				vds.add( vd );
+		}
+
+		Collections.sort( vds );
+
+		return vds;
 	}
 
 	public static ArrayList< Angle > getAllAnglesForChannelTimepointSorted( final SpimData data, final Collection< ? extends ViewId > viewIds, final Channel c, final TimePoint t )
@@ -361,14 +380,41 @@ public class SpimData2 extends SpimData
 		return timepoints;
 	}
 
+	public static ArrayList< Integer > getAllTimePointsSortedWithoutPresenceCheck( final Collection< ? extends ViewId > vds )
+	{
+		final HashSet< Integer > timepointSet = new HashSet< Integer >();
+
+		for ( final ViewId vd : vds )
+			timepointSet.add( vd.getTimePointId() );
+
+		final ArrayList< Integer > timepoints = new ArrayList< Integer >();
+		timepoints.addAll( timepointSet );
+		Collections.sort( timepoints );
+
+		return timepoints;
+	}
+
 	public static String saveXML( final SpimData2 data, final String xmlFileName, final String clusterExtension  )
 	{
 		// save the xml
 		final XmlIoSpimData2 io = new XmlIoSpimData2( clusterExtension );
 		
 		final String xml = new File( data.getBasePath(), new File( xmlFileName ).getName() ).getAbsolutePath();
-		try 
+		try
 		{
+			for ( final ViewId viewId : data.getViewInterestPoints().getViewInterestPoints().keySet() )
+			{
+				final ViewInterestPointLists vipl = data.getViewInterestPoints().getViewInterestPoints().get( viewId );
+				for ( final String label : vipl.getHashMap().keySet() )
+				{
+					final InterestPointList ipl = vipl.getHashMap().get( label );
+
+					// save if interestpoints were loaded or created, potentially modified
+					ipl.saveInterestPoints( false );
+					ipl.saveCorrespondingInterestPoints( false );
+				}
+			}
+
 			io.save( data, xml );
 			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + io.lastFileName() + "'." );
 			return xml;

@@ -4,6 +4,7 @@ import fiji.util.KDTree;
 import fiji.util.node.Leaf;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -13,6 +14,8 @@ import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
 import mpicbg.pointdescriptor.exception.NoSuitablePointsException;
+import mpicbg.spim.mpicbg.PointMatchGeneric;
+import net.imglib2.RealLocalizable;
 
 /**
  * Implementation of the ICP 
@@ -21,11 +24,11 @@ import mpicbg.pointdescriptor.exception.NoSuitablePointsException;
  *
  * @param <P>
  */
-public class ICP < P extends Point & Leaf<P> >
+public class ICP < P extends Point & RealLocalizable >
 {
 	final List< P > reference, target;
-	
-	List<PointMatch> pointMatches;
+
+	List< PointMatchGeneric< P > > pointMatches;
 	ArrayList<PointMatch> ambigousMatches;
 	PointMatchIdentification< P > pointMatchIdentifier;	
 	
@@ -95,7 +98,7 @@ public class ICP < P extends Point & Leaf<P> >
 			point.apply( lastModel );
 		
 		/* get corresponding points for ICP */
-		final List<PointMatch> matches = pointMatchIdentifier.assignPointMatches( target, reference );
+		final List< PointMatchGeneric< P > > matches = pointMatchIdentifier.assignPointMatches( target, reference );
 		
 		/* remove ambigous correspondences */
 		ambigousMatches = removeAmbigousMatches( matches );
@@ -108,8 +111,8 @@ public class ICP < P extends Point & Leaf<P> >
 			point.apply( newModel );
 
 		/* compute the output */
-		avgError = PointMatch.meanDistance( matches );
-		maxError = PointMatch.maxDistance( matches );
+		avgError = meanDistance( matches );
+		maxError = maxDistance( matches );
 		numMatches = matches.size();
 		pointMatches = matches;
 	}
@@ -122,7 +125,7 @@ public class ICP < P extends Point & Leaf<P> >
 	 * @throws NotEnoughDataPointsException
 	 * @throws IllDefinedDataPointsException
 	 */
-	public void estimateIntialModel( final List<PointMatch> matches, final Model<?> model ) throws NotEnoughDataPointsException, IllDefinedDataPointsException
+	public void estimateIntialModel( final List< PointMatchGeneric< P > > matches, final Model<?> model ) throws NotEnoughDataPointsException, IllDefinedDataPointsException
 	{
 		/* remove ambigous correspondences */
 		ambigousMatches = removeAmbigousMatches( matches );
@@ -135,10 +138,10 @@ public class ICP < P extends Point & Leaf<P> >
 			point.apply( model );
 
 		/* compute the output */
-		avgError = PointMatch.meanDistance( matches );
-		maxError = PointMatch.maxDistance( matches );
+		avgError = meanDistance( matches );
+		maxError = maxDistance( matches );
 		numMatches = matches.size();
-		pointMatches = matches;		
+		pointMatches = matches;
 	}
 	
 	/**
@@ -159,7 +162,7 @@ public class ICP < P extends Point & Leaf<P> >
 	 * Return the {@link List} of {@link PointMatch}es (target, reference) of the last {@link ICP} iteration
 	 * @return - {@link List} of {@link PointMatch}es
 	 */
-	public List<PointMatch> getPointMatches() { return pointMatches; }
+	public List< PointMatchGeneric< P > > getPointMatches() { return pointMatches; }
 	
 	/**
 	 * Returns the average error of the last ICP iteration, or -1 if no iteration has been computed yet.
@@ -205,7 +208,7 @@ public class ICP < P extends Point & Leaf<P> >
 	 * @param matches - the {@link List} of {@link PointMatch}es
 	 * @return - the {@link ArrayList} containing the removed ambigous or duplicate {@link PointMatch}es 
 	 */
-	public static ArrayList<PointMatch> removeAmbigousMatches( final List<PointMatch> matches )
+	public static < P extends Point & RealLocalizable > ArrayList<PointMatch> removeAmbigousMatches( final List<PointMatchGeneric< P > > matches )
 	{
 		final ArrayList<Integer> inconsistentCorrespondences = new ArrayList<Integer>();
 		final ArrayList<PointMatch> ambigousMatches = new ArrayList<PointMatch>();
@@ -219,25 +222,25 @@ public class ICP < P extends Point & Leaf<P> >
 			
 			if ( inconsistent.size() > 0 )
 				for ( int index : inconsistent )
-					if ( !inconsistentCorrespondences.contains( index ) )						
+					if ( !inconsistentCorrespondences.contains( index ) )
 						inconsistentCorrespondences.add( index );
 		}
 	
 		if ( inconsistentCorrespondences.size() > 0 )
 		{
 			Collections.sort( inconsistentCorrespondences );
-						
+
 			for ( int i = inconsistentCorrespondences.size() - 1; i >= 0; i-- )
 			{
 				// save the ambigous match
-				final PointMatch pm = matches.get( (int)inconsistentCorrespondences.get(i) );				
+				final PointMatch pm = matches.get( (int)inconsistentCorrespondences.get(i) );
 				ambigousMatches.add( pm );
-				
+
 				// the cast to (int) is essential as otherwise he is looking to remove the Integer object that does not exist in the list 
 				matches.remove( (int)inconsistentCorrespondences.get(i) );
 			}
-		}	
-		
+		}
+
 		return ambigousMatches;
 	}
 	
@@ -249,7 +252,7 @@ public class ICP < P extends Point & Leaf<P> >
 	 * @param list - the {@link List} of {@link PointMatch}es (target, reference)
 	 * @return - an {@link ArrayList} of indices which should be removed due to duplicate or ambigous occurence
 	 */
-	protected static ArrayList<Integer> getOccurences( final Point pointTarget, final Point pointReference, List<PointMatch> list )
+	protected static < P extends Point & RealLocalizable > ArrayList<Integer> getOccurences( final Point pointTarget, final Point pointReference, List< PointMatchGeneric< P > > list )
 	{
 		final ArrayList<Integer> occurences = new ArrayList<Integer>();
 		
@@ -315,5 +318,24 @@ public class ICP < P extends Point & Leaf<P> >
 		
 		return occurences;
 	}
-	
+
+	static public double meanDistance( final Collection< ? extends PointMatch > matches )
+	{
+		double d = 0.0;
+		for ( final PointMatch match : matches )
+			d += match.getDistance();
+		return d / matches.size();
+	}
+
+	static public double maxDistance( final Collection< ? extends PointMatch > matches )
+	{
+		double max = -Double.MAX_VALUE;
+		for ( final PointMatch match : matches )
+		{
+			final double d = match.getDistance();
+			if ( d > max ) max = d;
+		}
+		return max;
+	}
+
 }

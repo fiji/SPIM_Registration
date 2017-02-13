@@ -121,14 +121,14 @@ public class ProcessDOG
 		else
 			dog.setKeepDoGImage( false );
 
-		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): computing difference-of-gausian (sigma=" + initialSigma + ", " +
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): computing difference-of-gaussian (sigma=" + initialSigma + ", " +
 				"threshold=" + minPeakValue + ", sigma1=" + Util.printCoordinates( sigma1 ) + ", sigma2=" + Util.printCoordinates( sigma2 ) + ")" );
 
 		if ( deviceList == null )
-			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Computing DoG image (CPU)." );
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Computing DoG image (CPU)." );
 		else
-			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Computing DoG image (GPU)." );
-		
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Computing DoG image (GPU)." );
+
 		dog.process();
 
 		final ArrayList< SimplePeak > peaks = dog.getSimplePeaks();

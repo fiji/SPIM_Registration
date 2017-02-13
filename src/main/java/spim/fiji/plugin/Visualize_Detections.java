@@ -21,6 +21,7 @@ import net.imglib2.img.Img;
 import net.imglib2.img.imageplus.ImagePlusImgFactory;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.view.Views;
+import spim.fiji.plugin.interestpointregistration.ChannelProcessGUI;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
@@ -28,7 +29,6 @@ import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.process.fusion.export.DisplayImage;
-import spim.process.interestpointregistration.ChannelProcess;
 
 public class Visualize_Detections implements PlugIn
 {
@@ -39,12 +39,12 @@ public class Visualize_Detections implements PlugIn
 
 	public static class Params
 	{
-		final public ArrayList< ChannelProcess > channelsToProcess;
+		final public ArrayList< ChannelProcessGUI > channelsToProcess;
 		final public int detections;
 		final public double downsample;
 		final public boolean displayInput;
 
-		public Params( final ArrayList< ChannelProcess > channelsToProcess, final int detections, final double downsample, final boolean displayInput )
+		public Params( final ArrayList< ChannelProcessGUI > channelsToProcess, final int detections, final double downsample, final boolean displayInput )
 		{
 			this.channelsToProcess = channelsToProcess;
 			this.detections = detections;
@@ -110,7 +110,7 @@ public class Visualize_Detections implements PlugIn
 			return null;
 		
 		// assemble which channels have been selected with with label
-		final ArrayList< ChannelProcess > channelsToProcess = new ArrayList< ChannelProcess >();
+		final ArrayList< ChannelProcessGUI > channelsToProcess = new ArrayList< ChannelProcessGUI >();
 		j = 0;
 		
 		for ( final Channel channel : channels )
@@ -124,7 +124,7 @@ public class Visualize_Detections implements PlugIn
 				if ( label.contains( Interest_Point_Registration.warningLabel ) )
 					label = label.substring( 0, label.indexOf( Interest_Point_Registration.warningLabel ) );
 				
-				channelsToProcess.add( new ChannelProcess( channel, label ) );
+				channelsToProcess.add( new ChannelProcessGUI( channel, label ) );
 			}
 
 			++j;
@@ -136,7 +136,7 @@ public class Visualize_Detections implements PlugIn
 			return null;
 		}
 		
-		for ( final ChannelProcess c : channelsToProcess )
+		for ( final ChannelProcessGUI c : channelsToProcess )
 			IOFunctions.println( "displaying channel: " + c.getChannel().getId()  + " label: '" + c.getLabel() + "'" );
 		
 		final int detections = defaultDetections = gd.getNextChoiceIndex();
@@ -149,7 +149,7 @@ public class Visualize_Detections implements PlugIn
 	public static void visualize(
 			final SpimData2 spimData,
 			final List< ViewId > viewIds,
-			final ArrayList< ChannelProcess > channelsToProcess,
+			final ArrayList< ChannelProcessGUI > channelsToProcess,
 			final int detections,
 			final double downsample,
 			final boolean displayInput )
@@ -160,7 +160,7 @@ public class Visualize_Detections implements PlugIn
 		final DisplayImage di = new DisplayImage();
 
 		for ( final ViewId viewId : viewIds )
-			for ( final ChannelProcess c : channelsToProcess )
+			for ( final ChannelProcessGUI c : channelsToProcess )
 			{
 				// get the viewdescription
 				final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( viewId.getTimePointId(), viewId.getViewSetupId() );
@@ -204,26 +204,28 @@ public class Visualize_Detections implements PlugIn
 			final int detections,
 			Interval interval,
 			final double downsample )
-	{		
+	{
 		final InterestPointList ipl = data.getViewInterestPoints().getViewInterestPointLists( viewId ).getInterestPointList( label );
-		
-		if ( ipl.getInterestPoints() == null )
+
+		if ( !ipl.hasInterestPoints() )
 			ipl.loadInterestPoints();
-			
+
+		final List< InterestPoint > list = ipl.getInterestPointsCopy();
+
 		if ( interval == null )
 		{
-			final int n = ipl.getInterestPoints().get( 0 ).getL().length;
-			
+			final int n = list.get( 0 ).getL().length;
+
 			final long[] min = new long[ n ];
 			final long[] max = new long[ n ];
 
 			for ( int d = 0; d < n; ++d )
 			{
-				min[ d ] = Math.round( ipl.getInterestPoints().get( 0 ).getL()[ d ] ) - 1;
-				max[ d ] = Math.round( ipl.getInterestPoints().get( 0 ).getL()[ d ] ) + 1;
+				min[ d ] = Math.round( list.get( 0 ).getL()[ d ] ) - 1;
+				max[ d ] = Math.round( list.get( 0 ).getL()[ d ] ) + 1;
 			}
-			
-			for ( final InterestPoint ip : ipl.getInterestPoints() )
+
+			for ( final InterestPoint ip : list )
 			{
 				for ( int d = 0; d < n; ++d )
 				{
@@ -255,9 +257,9 @@ public class Visualize_Detections implements PlugIn
 		
 		if ( detections == 0 )
 		{
-			IOFunctions.println( "Visualizing " + ipl.getInterestPoints().size() + " detections." );
+			IOFunctions.println( "Visualizing " + list.size() + " detections." );
 			
-			for ( final InterestPoint ip : ipl.getInterestPoints() )
+			for ( final InterestPoint ip : list )
 			{
 				for ( int d = 0; d < n; ++d )
 					tmp[ d ] = Math.round( ip.getL()[ d ] / downsample );
@@ -270,10 +272,10 @@ public class Visualize_Detections implements PlugIn
 		{
 			final HashMap< Integer, InterestPoint > map = new HashMap< Integer, InterestPoint >();
 			
-			for ( final InterestPoint ip : ipl.getInterestPoints() )
+			for ( final InterestPoint ip : list )
 				map.put( ip.getId(), ip );
 			
-			if ( ipl.getCorrespondingInterestPoints() == null )
+			if ( !ipl.hasCorrespondingInterestPoints() )
 			{
 				if ( !ipl.loadCorrespondingInterestPoints() )
 				{
@@ -282,9 +284,11 @@ public class Visualize_Detections implements PlugIn
 				}
 			}
 
-			IOFunctions.println( "Visualizing " + ipl.getCorrespondingInterestPoints().size() + " corresponding detections." );
-			
-			for ( final CorrespondingInterestPoints ip : ipl.getCorrespondingInterestPoints() )
+			final List< CorrespondingInterestPoints > cList = ipl.getCorrespondingInterestPointsCopy();
+
+			IOFunctions.println( "Visualizing " + cList.size() + " corresponding detections." );
+
+			for ( final CorrespondingInterestPoints ip : cList )
 			{	
 				for ( int d = 0; d < n; ++d )
 					tmp[ d ] = Math.round( map.get( ip.getDetectionId() ).getL()[ d ] / downsample );

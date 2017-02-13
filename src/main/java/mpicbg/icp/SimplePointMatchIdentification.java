@@ -1,17 +1,15 @@
 package mpicbg.icp;
 
-
-import fiji.util.KDTree;
-import fiji.util.NearestNeighborSearch;
-import fiji.util.node.Leaf;
-
 import java.util.ArrayList;
 import java.util.List;
 
 import mpicbg.models.Point;
-import mpicbg.models.PointMatch;
+import mpicbg.spim.mpicbg.PointMatchGeneric;
+import net.imglib2.KDTree;
+import net.imglib2.RealLocalizable;
+import net.imglib2.neighborsearch.NearestNeighborSearchOnKDTree;
 
-public class SimplePointMatchIdentification < P extends Point & Leaf<P> > implements PointMatchIdentification<P>
+public class SimplePointMatchIdentification < P extends Point & RealLocalizable > implements PointMatchIdentification< P >
 {
 	double distanceThresold;
 
@@ -29,19 +27,21 @@ public class SimplePointMatchIdentification < P extends Point & Leaf<P> > implem
 	public double getDistanceThreshold() { return this.distanceThresold; }
 
 	@Override
-	public ArrayList<PointMatch> assignPointMatches( final List<P> target, final List<P> reference )
+	public ArrayList< PointMatchGeneric< P > > assignPointMatches( final List< P > target, final List< P > reference )
 	{
-		final ArrayList<PointMatch> pointMatches = new ArrayList<PointMatch>();
+		final ArrayList< PointMatchGeneric< P > > pointMatches = new ArrayList<>();
 
-		final KDTree<P> kdTreeTarget = new KDTree<P>( target );
-		final NearestNeighborSearch<P> nnSearchTarget = new NearestNeighborSearch<P>( kdTreeTarget );
+		final KDTree< P > kdTreeTarget = new KDTree< P >( target, target );
+		final NearestNeighborSearchOnKDTree< P > nnSearchTarget = new NearestNeighborSearchOnKDTree<>( kdTreeTarget );
 
 		for ( final P point : reference )
 		{
-			final P correspondingPoint = nnSearchTarget.findNearestNeighbor( point );
+			nnSearchTarget.search( point );
+			final P correspondingPoint = nnSearchTarget.getSampler().get();
 
-			if ( correspondingPoint.distanceTo( point ) <= distanceThresold )
-				pointMatches.add( new PointMatch ( correspondingPoint, point ) );
+			// world coordinates of point
+			if ( Point.distance( correspondingPoint, point ) <= distanceThresold )
+				pointMatches.add( new PointMatchGeneric< P >( correspondingPoint, point ) );
 		}
 
 		return pointMatches;

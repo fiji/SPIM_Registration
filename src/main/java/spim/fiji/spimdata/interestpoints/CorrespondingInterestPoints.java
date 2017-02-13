@@ -29,6 +29,11 @@ public class CorrespondingInterestPoints implements Comparable< CorrespondingInt
 	 */
 	final int correspondingDetectionId;
 
+	public CorrespondingInterestPoints( final CorrespondingInterestPoints c )
+	{
+		this( c.detectionId, c.correspondingViewId, c.correspondingLabel, c.correspondingDetectionId );
+	}
+
 	public CorrespondingInterestPoints( final int detectionId, final ViewId correspondingViewId, final String correspondingLabel, final int correspondingDetectionId )
 	{
 		this.detectionId = detectionId;

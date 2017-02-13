@@ -45,4 +45,6 @@ public class InterestPoint extends Point implements RealLocalizable
 
 	@Override
 	public double getDoublePosition( final int d ) { return l[ d ]; }
+
+	public InterestPoint newInstance( final int id, final double[] l ) { return new InterestPoint( id, l ); }
 }

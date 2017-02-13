@@ -3,6 +3,8 @@ package spim.process.interestpointdetection;
 import ij.ImageJ;
 
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -18,10 +20,12 @@ import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.iterator.IntervalIterator;
 import net.imglib2.iterator.ZeroMinIntervalIterator;
+import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import spim.Threads;
+import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
 
