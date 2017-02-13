@@ -10,6 +10,7 @@ import java.util.Set;
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.RigidModel3D;
 import mpicbg.models.Tile;
+import mpicbg.pointdescriptor.LinkedPoint;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.realtransform.AffineTransform3D;
@@ -156,6 +157,7 @@ public class TestRegistration
 				System.out.println();
 			}
 
+			// TODO: DUPLICATE position arrays?
 			final List< Pair< Pair< Group< ViewId >, Group< ViewId > >, PairwiseResult< GroupedInterestPoint< ViewId > > > > resultGroup =
 					MatcherPairwiseTools.computePairs( groupedPairs, groupedInterestpoints, new GeometricHashingPairwise< GroupedInterestPoint< ViewId > >( rp, gp ) );
 

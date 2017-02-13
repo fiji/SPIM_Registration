@@ -1,13 +1,12 @@
 package mpicbg.icp;
 
-import fiji.util.KDTree;
-import fiji.util.node.Leaf;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import fiji.util.KDTree;
+import fiji.util.node.Leaf;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.Model;
 import mpicbg.models.NotEnoughDataPointsException;
@@ -18,8 +17,8 @@ import mpicbg.spim.mpicbg.PointMatchGeneric;
 import net.imglib2.RealLocalizable;
 
 /**
- * Implementation of the ICP 
- * 
+ * Implementation of the ICP
+ *
  * @author Stephan Preibisch
  *
  * @param <P>
@@ -30,7 +29,7 @@ public class ICP < P extends Point & RealLocalizable >
 
 	List< PointMatchGeneric< P > > pointMatches;
 	ArrayList<PointMatch> ambigousMatches;
-	PointMatchIdentification< P > pointMatchIdentifier;	
+	PointMatchIdentification< P > pointMatchIdentifier;
 	
 	double avgError, maxError;
 	int numMatches;
