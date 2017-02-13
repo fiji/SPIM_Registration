@@ -30,6 +30,10 @@ import spim.process.interestpointregistration.pairwise.constellation.AllToAll;
 import spim.process.interestpointregistration.pairwise.constellation.PairwiseSetup;
 import spim.process.interestpointregistration.pairwise.constellation.Subset;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.GroupedInterestPoint;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Grouping;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.InterestPointGrouping;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.InterestPointGroupingAll;
 import spim.process.interestpointregistration.pairwise.constellation.overlap.SimpleBoundingBoxOverlap;
 
 public class TestRegistration
@@ -86,6 +90,9 @@ public class TestRegistration
 
 		for ( final Subset< ViewId > subset : subsets )
 		{
+			final RANSACParameters rp = new RANSACParameters();
+			final GeometricHashingParameters gp = new GeometricHashingParameters( new AffineModel3D() );
+
 			final List< ViewId > fixedViews = setup.getDefaultFixedViews();
 			final ViewId fixedView = subset.getViews().iterator().next();
 			fixedViews.add( fixedView );
@@ -99,8 +106,6 @@ public class TestRegistration
 				System.out.println( pvid( pair.getA() ) + " <=> " + pvid( pair.getB() ) );
 
 			// compute all pairwise matchings
-			final RANSACParameters rp = new RANSACParameters();
-			final GeometricHashingParameters gp = new GeometricHashingParameters( new AffineModel3D() );
 			final List< Pair< Pair< ViewId, ViewId >, PairwiseResult > > result =
 					MatcherPairwiseTools.computePairs( pairs, interestpoints, new GeometricHashingPairwise( rp, gp ) );
 			MatcherPairwiseTools.assignLoggingViewIdsAndDescriptions( result, spimData.getSequenceDescription() );
@@ -116,6 +121,10 @@ public class TestRegistration
 			}
 
 			// get all grouped pairs
+			final Map< Group< ViewId >, List< GroupedInterestPoint< ViewId > > > groupedInterestpoints = new HashMap<>();
+
+			final InterestPointGrouping< ViewId > grouping = new InterestPointGroupingAll<>( interestpoints );
+
 			for ( final Pair< Group< ViewId >, Group< ViewId > > pair : subset.getGroupedPairs() )
 			{
 				String groupA = "", groupB = "";
@@ -126,8 +135,30 @@ public class TestRegistration
 				for ( final ViewId b : pair.getB() )
 					groupB += pvids( b ) + " ";
 
-				System.out.println( "[ " + groupA + "] <=> [ " + groupB + "] " );
+				System.out.print( "[ " + groupA + "] <=> [ " + groupB + "]" );
+
+				if ( !groupedInterestpoints.containsKey( pair.getA() ) )
+				{
+					System.out.print( ", grouping interestpoints for " + groupA );
+
+					final List< GroupedInterestPoint< ViewId > > groupedA = grouping.group( pair.getA() );
+					groupedInterestpoints.put( pair.getA(), groupedA );
+				}
+
+				if ( !groupedInterestpoints.containsKey( pair.getB() ) )
+				{
+					System.out.print( ", grouping interestpoints for " + groupB );
+
+					final List< GroupedInterestPoint< ViewId > > groupedB = grouping.group( pair.getB() );
+					groupedInterestpoints.put( pair.getB(), groupedB );
+				}
+
+				System.out.println();
 			}
+
+			
+			
+			
 
 			/*
 			final HashMap< ViewId, Tile< AffineModel3D > > models =
@@ -144,6 +175,6 @@ public class TestRegistration
 	}
 
 	public static String pvid( final ViewId viewId ) { return "tpId=" + viewId.getTimePointId() + " setupId=" + viewId.getViewSetupId(); }
-	public static String pvids( final ViewId viewId ) { return "t(" + viewId.getTimePointId() + ") s(" + viewId.getViewSetupId() + ")"; }
+	public static String pvids( final ViewId viewId ) { return "t(" + viewId.getTimePointId() + ")-s(" + viewId.getViewSetupId() + ")"; }
 	
 }
