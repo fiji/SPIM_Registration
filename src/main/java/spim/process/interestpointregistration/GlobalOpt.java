@@ -46,13 +46,13 @@ public class GlobalOpt
 	 */
 	public static < M extends Model< M > > HashMap< ViewId, Tile< M > > compute(
 			final M model,
-			final List< Pair< Pair< ViewId, ViewId >, PairwiseResult > > pairs,
+			final List< Pair< Pair< ViewId, ViewId >, PairwiseResult< ? > > > pairs,
 			final Collection< ViewId > fixedViews,
 			final List< ? extends List< ViewId > > groups )
 	{
 		// assemble all views and corresponding points
 		final HashSet< ViewId > tmpSet = new HashSet<ViewId>();
-		for ( Pair< Pair< ViewId, ViewId >, PairwiseResult > pair : pairs )
+		for ( Pair< Pair< ViewId, ViewId >, PairwiseResult< ? > > pair : pairs )
 		{
 			tmpSet.add( pair.getA().getA() );
 			tmpSet.add( pair.getA().getB() );
@@ -66,7 +66,7 @@ public class GlobalOpt
 		final HashMap< ViewId, Tile< M > > map = assignViewsToTiles( model, views, groups );
 
 		// assign the pointmatches to all the tiles
-		for ( Pair< Pair< ViewId, ViewId >, PairwiseResult > pair : pairs )
+		for ( Pair< Pair< ViewId, ViewId >, PairwiseResult< ? > > pair : pairs )
 			GlobalOpt.addPointMatches( pair.getB().getInliers(), map.get( pair.getA().getA() ), map.get( pair.getA().getB() ) );
 
 		// add and fix tiles as defined in the GlobalOptimizationType
@@ -309,14 +309,14 @@ public class GlobalOpt
 		return map;
 	}
 
-	protected static void addPointMatches( final ArrayList< PointMatchGeneric< Detection > > correspondences, final Tile<?> tileA, final Tile<?> tileB )
+	protected static void addPointMatches( final List< ? extends PointMatchGeneric< ? > > correspondences, final Tile<?> tileA, final Tile<?> tileB )
 	{
-		final ArrayList<PointMatch> pm = new ArrayList<PointMatch>();
+		final ArrayList< PointMatch > pm = new ArrayList<>();
 		pm.addAll( correspondences );
-	
+
 		if ( correspondences.size() > 0 )
 		{
-			tileA.addMatches( pm );							
+			tileA.addMatches( pm );
 			tileB.addMatches( PointMatch.flip( pm ) );
 			tileA.addConnectedTile( tileB );
 			tileB.addConnectedTile( tileA );

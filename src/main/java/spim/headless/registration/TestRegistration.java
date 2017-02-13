@@ -106,8 +106,8 @@ public class TestRegistration
 				System.out.println( pvid( pair.getA() ) + " <=> " + pvid( pair.getB() ) );
 
 			// compute all pairwise matchings
-			//final List< Pair< Pair< ViewId, ViewId >, PairwiseResult< InterestPoint > > > result =
-					MatcherPairwiseTools.computePairs( pairs, interestpoints, new GeometricHashingPairwise( rp, gp ) );
+			final List< Pair< Pair< ViewId, ViewId >, PairwiseResult< InterestPoint > > > result =
+					MatcherPairwiseTools.computePairs( pairs, interestpoints, new GeometricHashingPairwise< InterestPoint >( rp, gp ) );
 			MatcherPairwiseTools.assignLoggingViewIdsAndDescriptions( result, spimData.getSequenceDescription() );
 
 			// save the corresponding detections and output result
@@ -157,7 +157,7 @@ public class TestRegistration
 			}
 
 			final List< Pair< Pair< Group< ViewId >, Group< ViewId > >, PairwiseResult< GroupedInterestPoint< ViewId > > > > resultGroup =
-					MatcherPairwiseTools.computePairs( groupedPairs, groupedInterestpoints, new GeometricHashingPairwise( rp, gp ) );
+					MatcherPairwiseTools.computePairs( groupedPairs, groupedInterestpoints, new GeometricHashingPairwise< GroupedInterestPoint< ViewId > >( rp, gp ) );
 
 			//MatcherPairwiseTools.assignGroupedLoggingViewIdsAndDescriptions( resultGroup, spimData.getSequenceDescription() );
 

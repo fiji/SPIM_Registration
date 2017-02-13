@@ -1,8 +1,5 @@
 package spim.process.interestpointregistration.pairwise;
 
-import fiji.util.KDTree;
-import fiji.util.NNearestNeighborSearch;
-
 import java.util.ArrayList;
 
 import mpicbg.pointdescriptor.AbstractPointDescriptor;
@@ -13,21 +10,23 @@ import mpicbg.pointdescriptor.matcher.SubsetMatcher;
 import mpicbg.pointdescriptor.similarity.SimilarityMeasure;
 import mpicbg.pointdescriptor.similarity.SquareDistance;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
-import spim.process.interestpointregistration.Detection;
+import net.imglib2.KDTree;
+import net.imglib2.neighborsearch.KNearestNeighborSearchOnKDTree;
+import spim.fiji.spimdata.interestpoints.InterestPoint;
 
-public class RGLDMMatcher
+public class RGLDMMatcher< I extends InterestPoint >
 {
-	public ArrayList< PointMatchGeneric< Detection > > extractCorrespondenceCandidates( 
-			final ArrayList< Detection > nodeListA, 
-			final ArrayList< Detection > nodeListB, 
+	public ArrayList< PointMatchGeneric< I > > extractCorrespondenceCandidates( 
+			final ArrayList< I > nodeListA,
+			final ArrayList< I > nodeListB,
 			final int numNeighbors,
 			final int redundancy,
 			final double ratioOfDistance,
 			final double differenceThreshold ) 
 	{
 		/* create KDTrees */	
-		final KDTree< Detection > treeA = new KDTree< Detection >( nodeListA );
-		final KDTree< Detection > treeB = new KDTree< Detection >( nodeListB );
+		final KDTree< I > treeA = new KDTree< I >( nodeListA, nodeListA );
+		final KDTree< I > treeB = new KDTree< I >( nodeListB, nodeListB );
 		
 		/* extract point descriptors */
 		final Matcher matcher = new SubsetMatcher( numNeighbors, numNeighbors + redundancy );
@@ -35,25 +34,25 @@ public class RGLDMMatcher
 		
 		final SimilarityMeasure similarityMeasure = new SquareDistance();
 		
-		final ArrayList< SimplePointDescriptor<Detection> > descriptorsA = createSimplePointDescriptors( treeA, nodeListA, numRequiredNeighbors, matcher, similarityMeasure );
-		final ArrayList< SimplePointDescriptor<Detection> > descriptorsB = createSimplePointDescriptors( treeB, nodeListB, numRequiredNeighbors, matcher, similarityMeasure );
+		final ArrayList< SimplePointDescriptor< I > > descriptorsA = createSimplePointDescriptors( treeA, nodeListA, numRequiredNeighbors, matcher, similarityMeasure );
+		final ArrayList< SimplePointDescriptor< I > > descriptorsB = createSimplePointDescriptors( treeB, nodeListB, numRequiredNeighbors, matcher, similarityMeasure );
 
 		return findCorrespondingDescriptors( descriptorsA, descriptorsB, ratioOfDistance, differenceThreshold );
 	}
 	
-	protected static final <D extends AbstractPointDescriptor<Detection, D>> ArrayList<PointMatchGeneric< Detection >> findCorrespondingDescriptors(
-			final ArrayList<D> descriptorsA,
-			final ArrayList<D> descriptorsB,
+	protected static final < I extends InterestPoint, D extends AbstractPointDescriptor< I , D > > ArrayList< PointMatchGeneric< I > > findCorrespondingDescriptors(
+			final ArrayList< D > descriptorsA,
+			final ArrayList< D > descriptorsB,
 			final double nTimesBetter,
 			final double differenceThreshold )
 	{
-		final ArrayList<PointMatchGeneric< Detection >> correspondenceCandidates = new ArrayList<PointMatchGeneric< Detection >>();
+		final ArrayList< PointMatchGeneric< I > > correspondenceCandidates = new ArrayList<>();
 		
 		for ( final D descriptorA : descriptorsA )
 		{
-			double bestDifference = Double.MAX_VALUE;			
+			double bestDifference = Double.MAX_VALUE;
 			double secondBestDifference = Double.MAX_VALUE;
-			
+
 			D bestMatch = null;
 			D secondBestMatch = null;
 
@@ -62,7 +61,7 @@ public class RGLDMMatcher
 				final double difference = descriptorA.descriptorDistance( descriptorB );
 
 				if ( difference < secondBestDifference )
-				{					
+				{
 					secondBestDifference = difference;
 					secondBestMatch = descriptorB;
 					
@@ -83,42 +82,46 @@ public class RGLDMMatcher
 			if ( bestDifference < differenceThreshold && bestDifference * nTimesBetter < secondBestDifference )
 			{	
 				// add correspondence for the two basis points of the descriptor
-				Detection detectionA = descriptorA.getBasisPoint();
-				Detection detectionB = bestMatch.getBasisPoint();
+				I detectionA = descriptorA.getBasisPoint();
+				I detectionB = bestMatch.getBasisPoint();
 				
 				// for RANSAC
-				correspondenceCandidates.add( new PointMatchGeneric<Detection>( detectionA, detectionB ) );				
+				correspondenceCandidates.add( new PointMatchGeneric< I >( detectionA, detectionB ) );
 			}
 		}
-		
+
 		return correspondenceCandidates;
 	}
 
-	protected static ArrayList< SimplePointDescriptor<Detection> > createSimplePointDescriptors( final KDTree< Detection > tree, final ArrayList< Detection > basisPoints, 
-			final int numNeighbors, final Matcher matcher, final SimilarityMeasure similarityMeasure )
+	protected static < I extends InterestPoint > ArrayList< SimplePointDescriptor< I > > createSimplePointDescriptors(
+			final KDTree< I > tree,
+			final ArrayList< I > basisPoints,
+			final int numNeighbors,
+			final Matcher matcher,
+			final SimilarityMeasure similarityMeasure )
 	{
-		final NNearestNeighborSearch< Detection > nnsearch = new NNearestNeighborSearch< Detection >( tree );
-		final ArrayList< SimplePointDescriptor<Detection> > descriptors = new ArrayList< SimplePointDescriptor<Detection> > ( );
-		
-		for ( final Detection p : basisPoints )
+		final KNearestNeighborSearchOnKDTree< I > nnsearch = new KNearestNeighborSearchOnKDTree<>( tree, numNeighbors + 1 );
+		final ArrayList< SimplePointDescriptor< I > > descriptors = new ArrayList<> ( );
+
+		for ( final I p : basisPoints )
 		{
-			final ArrayList< Detection > neighbors = new ArrayList< Detection >();
-			final Detection neighborList[] = nnsearch.findNNearestNeighbors( p, numNeighbors + 1 );
-			
+			final ArrayList< I > neighbors = new ArrayList<>();
+			nnsearch.search( p );
+
 			// the first hit is always the point itself
-			for ( int n = 1; n < neighborList.length; ++n )
-				neighbors.add( neighborList[ n ] );
-			
+			for ( int n = 1; n < numNeighbors + 1; ++n )
+				neighbors.add( nnsearch.getSampler( n ).get() );
+
 			try
 			{
-				descriptors.add( new SimplePointDescriptor<Detection>( p, neighbors, similarityMeasure, matcher ) );
+				descriptors.add( new SimplePointDescriptor< I >( p, neighbors, similarityMeasure, matcher ) );
 			}
 			catch ( NoSuitablePointsException e )
 			{
 				e.printStackTrace();
 			}
 		}
-		
+
 		return descriptors;
 	}
 

@@ -4,7 +4,7 @@ import java.util.List;
 
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 
-public interface MatcherPairwise
+public interface MatcherPairwise< I extends InterestPoint >
 {
-	public PairwiseResult match( final List< ? extends InterestPoint > listAIn, final List< ? extends InterestPoint > listBIn );
+	public PairwiseResult< I > match( final List< I > listAIn, final List< I > listBIn );
 }

@@ -8,10 +8,9 @@ import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.headless.registration.RANSACParameters;
 import spim.headless.registration.geometrichashing.GeometricHashingParameters;
-import spim.process.interestpointregistration.Detection;
 import spim.process.interestpointregistration.RANSAC;
 
-public class GeometricHashingPairwise implements MatcherPairwise
+public class GeometricHashingPairwise< I extends InterestPoint > implements MatcherPairwise< I >
 {
 	final RANSACParameters rp;
 	final GeometricHashingParameters gp;
@@ -25,29 +24,29 @@ public class GeometricHashingPairwise implements MatcherPairwise
 	}
 
 	@Override
-	public PairwiseResult match( final List< ? extends InterestPoint > listAIn, final List< ? extends InterestPoint > listBIn )
+	public PairwiseResult< I > match( final List< I > listAIn, final List< I > listBIn )
 	{
-		final PairwiseResult result = new PairwiseResult();
-		final GeometricHasher hasher = new GeometricHasher();
+		final PairwiseResult< I > result = new PairwiseResult<>();
+		final GeometricHasher< I > hasher = new GeometricHasher<>();
 		
-		final ArrayList< Detection > listA = new ArrayList< Detection >();
-		final ArrayList< Detection > listB = new ArrayList< Detection >();
+		final ArrayList< I > listA = new ArrayList<>();
+		final ArrayList< I > listB = new ArrayList<>();
 
-		for ( final InterestPoint i : listAIn )
-			listA.add( new Detection( i.getId(), i.getL() ) );
+		for ( final I i : listAIn )
+			listA.add( i );
 
-		for ( final InterestPoint i : listBIn )
-			listB.add( new Detection( i.getId(), i.getL() ) );
+		for ( final I i : listBIn )
+			listB.add( i );
 
 		if ( listA.size() < 4 || listB.size() < 4 )
 		{
 			result.setResult( System.currentTimeMillis(), "Not enough detections to match" );
-			result.setCandidates( new ArrayList< PointMatchGeneric< Detection > >() );
-			result.setInliers( new ArrayList<PointMatchGeneric< Detection > >(), Double.NaN );
+			result.setCandidates( new ArrayList< PointMatchGeneric< I > >() );
+			result.setInliers( new ArrayList< PointMatchGeneric< I > >(), Double.NaN );
 			return result;
 		}
 
-		final ArrayList< PointMatchGeneric< Detection > > candidates = hasher.extractCorrespondenceCandidates( 
+		final ArrayList< PointMatchGeneric< I > > candidates = hasher.extractCorrespondenceCandidates( 
 				listA,
 				listB,
 				gp.getDifferenceThreshold(), 
@@ -57,7 +56,7 @@ public class GeometricHashingPairwise implements MatcherPairwise
 		result.setCandidates( candidates );
 
 		// compute ransac and remove inconsistent candidates
-		final ArrayList< PointMatchGeneric< Detection > > inliers = new ArrayList< PointMatchGeneric< Detection > >();
+		final ArrayList< PointMatchGeneric< I > > inliers = new ArrayList<>();
 
 		final Pair< String, Double > ransacResult = RANSAC.computeRANSAC( candidates, inliers, gp.getModel(), rp.getMaxEpsilon(), rp.getMinInlierRatio(), rp.getMinInlierFactor(), rp.getNumIterations() );
 

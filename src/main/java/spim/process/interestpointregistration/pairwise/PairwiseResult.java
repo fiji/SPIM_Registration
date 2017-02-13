@@ -1,15 +1,15 @@
 package spim.process.interestpointregistration.pairwise;
 
-import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
-import spim.process.interestpointregistration.Detection;
+import spim.fiji.spimdata.interestpoints.InterestPoint;
 
-public class PairwiseResult
+public class PairwiseResult< I extends InterestPoint >
 {
-	private ArrayList< PointMatchGeneric< Detection > > candidates, inliers;
+	private List< PointMatchGeneric< I > > candidates, inliers;
 	private double error = Double.NaN;
 	private long time = 0;
 	private String result = "", desc = "";
@@ -25,13 +25,13 @@ public class PairwiseResult
 	public void setViewIdB( final ViewId viewIdB ) { this.viewIdB = viewIdB; }
 	public ViewId getViewIdA() { return viewIdA; }
 	public ViewId getViewIdB() { return viewIdB; }
-	public ArrayList< PointMatchGeneric< Detection > > getCandidates() { return candidates; }
-	public ArrayList< PointMatchGeneric< Detection > > getInliers() { return inliers; }
+	public List< PointMatchGeneric< I > > getCandidates() { return candidates; }
+	public List< PointMatchGeneric< I > > getInliers() { return inliers; }
 	public String getDescription() { return desc; }
 	public void setDescription( final String desc ) { this.desc = desc; }
 	public double getError() { return error; }
-	public void setCandidates( final ArrayList< PointMatchGeneric< Detection > > candidates ) { this.candidates = candidates; }
-	public void setInliers( final ArrayList< PointMatchGeneric< Detection > > inliers, final double error )
+	public void setCandidates( final List< PointMatchGeneric< I > > candidates ) { this.candidates = candidates; }
+	public void setInliers( final List< PointMatchGeneric< I > > inliers, final double error )
 	{
 		this.inliers = inliers;
 		this.error = error;

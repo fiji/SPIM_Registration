@@ -2,7 +2,6 @@ package spim.process.interestpointregistration.pairwise;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 
 import mpicbg.spim.data.sequence.ViewId;
@@ -13,8 +12,6 @@ import spim.process.interestpointregistration.pairwise.constellation.range.Range
 
 public class PairwiseStrategyTools
 {
-	
-
 	public static < V > List< Pair< V, V > > allToAllRange(
 			final List< ? extends V > views,
 			final Collection< V > fixed,

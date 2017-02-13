@@ -8,9 +8,8 @@ import net.imglib2.util.RealSum;
 import net.imglib2.util.Util;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.headless.registration.centerofmass.CenterOfMassParameters;
-import spim.process.interestpointregistration.Detection;
 
-public class CenterOfMassPairwise implements MatcherPairwise
+public class CenterOfMassPairwise< I extends InterestPoint > implements MatcherPairwise< I >
 {
 	final CenterOfMassParameters params;
 
@@ -20,14 +19,14 @@ public class CenterOfMassPairwise implements MatcherPairwise
 	}
 
 	@Override
-	public PairwiseResult match( final List< ? extends InterestPoint > listAIn, final List< ? extends InterestPoint > listBIn )
+	public PairwiseResult< I > match( final List< I > listAIn, final List< I > listBIn )
 	{
-		final PairwiseResult result = new PairwiseResult();
+		final PairwiseResult< I > result = new PairwiseResult< I >();
 
 		if ( listAIn == null || listBIn == null || listAIn.size() < 1 || listBIn.size() < 1 )
 		{
-			result.setCandidates( new ArrayList< PointMatchGeneric< Detection > >() );
-			result.setInliers( new ArrayList< PointMatchGeneric< Detection > >(), Double.NaN );
+			result.setCandidates( new ArrayList< PointMatchGeneric< I > >() );
+			result.setInliers( new ArrayList< PointMatchGeneric< I > >(), Double.NaN );
 
 			result.setResult(
 				System.currentTimeMillis(),
@@ -48,9 +47,10 @@ public class CenterOfMassPairwise implements MatcherPairwise
 			centerB = median( listBIn );
 		}
 
-		final ArrayList< PointMatchGeneric< Detection > > inliers = new ArrayList< PointMatchGeneric< Detection > >();
+		final ArrayList< PointMatchGeneric< I > > inliers = new ArrayList< PointMatchGeneric< I > >();
 
-		inliers.add( new PointMatchGeneric< Detection >( new Detection( 0, centerA ), new Detection( 0, centerB ) ) );
+		// TODO: is this good?
+		inliers.add( new PointMatchGeneric< I >( (I)listAIn.get( 0 ).newInstance( 0, centerA ), (I)listAIn.get( 0 ).newInstance( 0, centerB ) ) );
 
 		result.setCandidates( inliers );
 		result.setInliers( inliers, 0 );

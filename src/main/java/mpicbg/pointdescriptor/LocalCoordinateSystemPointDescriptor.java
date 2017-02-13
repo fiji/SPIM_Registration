@@ -2,16 +2,15 @@ package mpicbg.pointdescriptor;
 
 import java.util.ArrayList;
 
-import spim.vecmath.Matrix3d;
-import spim.vecmath.Vector3d;
-
 import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
 import mpicbg.pointdescriptor.exception.NoSuitablePointsException;
-import fiji.util.node.Leaf;
+import net.imglib2.RealLocalizable;
+import spim.vecmath.Matrix3d;
+import spim.vecmath.Vector3d;
 
-public class LocalCoordinateSystemPointDescriptor < P extends Point > extends AbstractPointDescriptor< P, LocalCoordinateSystemPointDescriptor<P> > 
-		implements Leaf< LocalCoordinateSystemPointDescriptor<P> >
+public class LocalCoordinateSystemPointDescriptor < P extends Point > extends AbstractPointDescriptor< P, LocalCoordinateSystemPointDescriptor<P> >
+		implements RealLocalizable
 {
 	final protected boolean normalize;
 	public float ax = 1, bx, by, cx, cy, cz;
@@ -161,54 +160,8 @@ public class LocalCoordinateSystemPointDescriptor < P extends Point > extends Ab
 //		System.exit( 0 );
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public LocalCoordinateSystemPointDescriptor<P>[] createArray( final int n ) 
-	{
-		return new LocalCoordinateSystemPointDescriptor[ n ];
-	}
-
-	@Override
-	public float distanceTo( final LocalCoordinateSystemPointDescriptor<P> other ) 
-	{		
-		return (float) Math.sqrt( descriptorDistance( other ) );
-	}
-
-	@Override
-	public float get( final int k ) 
-	{
-		if ( normalize )
-		{
-			if ( k == 0 )
-				return bx;
-			else if ( k == 1 )
-				return by;
-			else if ( k == 2 )
-				return cx;
-			else if ( k == 3 )
-				return cy;
-			else
-				return cz;
-		}
-		else
-		{
-			if ( k == 0 )
-				return ax;
-			else if ( k == 1 )
-				return bx;
-			else if ( k == 2 )
-				return by;
-			else if ( k == 3 )
-				return cx;
-			else if ( k == 4 )
-				return cy;
-			else
-				return cz;			
-		}
-	}
-
-	@Override
-	public int getNumDimensions() 
+	public int numDimensions()
 	{
 		if ( normalize )
 			return 5;
@@ -217,11 +170,88 @@ public class LocalCoordinateSystemPointDescriptor < P extends Point > extends Ab
 	}
 
 	@Override
-	public boolean isLeaf() { return true; }
-
-	@Override
 	public boolean resetWorldCoordinatesAfterMatching() { return true; }
 
 	@Override
 	public boolean useWorldCoordinatesForDescriptorBuildUp() { return false; }
+
+	@Override
+	public void localize( final float[] position )
+	{
+		if ( normalize )
+		{
+			position[ 0 ] = bx;
+			position[ 1 ] = by;
+			position[ 2 ] = cx;
+			position[ 3 ] = cy;
+			position[ 4 ] = cz;
+		}
+		else
+		{
+			position[ 0 ] = ax;
+			position[ 1 ] = bx;
+			position[ 2 ] = by;
+			position[ 3 ] = cx;
+			position[ 4 ] = cy;
+			position[ 5 ] = cz;
+		}
+	}
+
+	@Override
+	public void localize( final double[] position )
+	{
+		if ( normalize )
+		{
+			position[ 0 ] = bx;
+			position[ 1 ] = by;
+			position[ 2 ] = cx;
+			position[ 3 ] = cy;
+			position[ 4 ] = cz;
+		}
+		else
+		{
+			position[ 0 ] = ax;
+			position[ 1 ] = bx;
+			position[ 2 ] = by;
+			position[ 3 ] = cx;
+			position[ 4 ] = cy;
+			position[ 5 ] = cz;
+		}
+	}
+
+	@Override
+	public float getFloatPosition( final int d )
+	{
+		if ( normalize )
+		{
+			if ( d == 0 )
+				return bx;
+			else if ( d == 1 )
+				return by;
+			else if ( d == 2 )
+				return cx;
+			else if ( d == 3 )
+				return cy;
+			else
+				return cz;
+		}
+		else
+		{
+			if ( d == 0 )
+				return ax;
+			else if ( d == 1 )
+				return bx;
+			else if ( d == 2 )
+				return by;
+			else if ( d == 3 )
+				return cx;
+			else if ( d == 4 )
+				return cy;
+			else
+				return cz;
+		}
+	}
+
+	@Override
+	public double getDoublePosition( final int d ) { return getFloatPosition( d ); }
 }

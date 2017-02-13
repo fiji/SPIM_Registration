@@ -21,4 +21,10 @@ public class GroupedInterestPoint< V > extends InterestPoint
 	}
 
 	public V getV() { return view; }
+
+	@Override
+	public GroupedInterestPoint< V > clone() { return new GroupedInterestPoint< V >( view, id, l.clone() ); }
+
+	@Override
+	public GroupedInterestPoint< V >  newInstance( final int id, final double[] l ) { return new GroupedInterestPoint< V > ( null, id, l ); }
 }

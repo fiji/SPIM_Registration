@@ -31,7 +31,6 @@ import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.headless.interestpointdetection.DoGParameters;
 import spim.headless.registration.geometrichashing.GeometricHashingParameters;
-import spim.process.interestpointregistration.Detection;
 import spim.process.interestpointregistration.GlobalOpt;
 import spim.process.interestpointregistration.pairwise.GeometricHashingPairwise;
 import spim.process.interestpointregistration.pairwise.MatcherPairwiseTools;
@@ -43,8 +42,8 @@ public class TransformationTools
 	/**
 	 * Replace all correspondences in the interestpointlists
 	 */
-	public static void setCorrespondences(
-			final List< PointMatchGeneric< Detection > > correspondences,
+	public static < I extends InterestPoint > void setCorrespondences(
+			final List< PointMatchGeneric< I > > correspondences,
 			final ViewId viewIdA,
 			final ViewId viewIdB,
 			final String labelA,
@@ -55,10 +54,10 @@ public class TransformationTools
 		final ArrayList< CorrespondingInterestPoints > corrListA = new ArrayList< CorrespondingInterestPoints >();
 		final ArrayList< CorrespondingInterestPoints > corrListB = new ArrayList< CorrespondingInterestPoints >();
 
-		for ( final PointMatchGeneric< Detection > d : correspondences )
+		for ( final PointMatchGeneric< I > d : correspondences )
 		{
-			final Detection dA = d.getPoint1();
-			final Detection dB = d.getPoint2();
+			final I dA = d.getPoint1();
+			final I dB = d.getPoint2();
 			
 			final CorrespondingInterestPoints correspondingToA = new CorrespondingInterestPoints( dA.getId(), viewIdB, labelB, dB.getId() );
 			final CorrespondingInterestPoints correspondingToB = new CorrespondingInterestPoints( dB.getId(), viewIdA, labelA, dA.getId() );
