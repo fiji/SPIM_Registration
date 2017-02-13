@@ -98,20 +98,6 @@ public class TestRegistration
 			for ( final Pair< ViewId, ViewId > pair : pairs )
 				System.out.println( pvid( pair.getA() ) + " <=> " + pvid( pair.getB() ) );
 
-			// get all grouped pairs
-			for ( final Pair< Group< ViewId >, Group< ViewId > > pair : subset.getGroupedPairs() )
-			{
-				String groupA = "", groupB = "";
-
-				for ( final ViewId a : pair.getA() )
-					groupA += pvids( a ) + " ";
-
-				for ( final ViewId b : pair.getB() )
-					groupB += pvids( b ) + " ";
-
-				System.out.println( "[ " + groupA + "] <=> [ " + groupB + "] " );
-			}
-
 			// compute all pairwise matchings
 			final RANSACParameters rp = new RANSACParameters();
 			final GeometricHashingParameters gp = new GeometricHashingParameters( new AffineModel3D() );
@@ -128,7 +114,21 @@ public class TestRegistration
 
 				System.out.println( p.getB().getFullDesc() );
 			}
-			
+
+			// get all grouped pairs
+			for ( final Pair< Group< ViewId >, Group< ViewId > > pair : subset.getGroupedPairs() )
+			{
+				String groupA = "", groupB = "";
+
+				for ( final ViewId a : pair.getA() )
+					groupA += pvids( a ) + " ";
+
+				for ( final ViewId b : pair.getB() )
+					groupB += pvids( b ) + " ";
+
+				System.out.println( "[ " + groupA + "] <=> [ " + groupB + "] " );
+			}
+
 			/*
 			final HashMap< ViewId, Tile< AffineModel3D > > models =
 					GlobalOpt.compute( new AffineModel3D(), result, fixedViews, groupedViews );
