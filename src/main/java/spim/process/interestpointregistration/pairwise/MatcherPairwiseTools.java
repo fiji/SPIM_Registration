@@ -21,7 +21,7 @@ public class MatcherPairwiseTools
 {
 	public static <V> List< Pair< Pair< V, V >, PairwiseResult > > computePairs(
 			final List< Pair< V, V > > pairs,
-			final Map< V, List< InterestPoint > > interestpoints,
+			final Map< V, ? extends List< ? extends InterestPoint > > interestpoints,
 			final MatcherPairwise matcher )
 	{
 		return computePairs( pairs, interestpoints, matcher, null );
@@ -53,7 +53,7 @@ public class MatcherPairwiseTools
 
 	public static < V > List< Pair< Pair< V, V >, PairwiseResult > > computePairs(
 			final List< Pair< V, V > > pairs,
-			final Map< V, List< InterestPoint > > interestpoints,
+			final Map< V, ? extends List< ? extends InterestPoint > > interestpoints,
 			final MatcherPairwise matcher,
 			final ExecutorService exec )
 	{
@@ -68,8 +68,8 @@ public class MatcherPairwiseTools
 
 		for ( final Pair< V, V > pair : pairs )
 		{
-			final List< InterestPoint > listA = interestpoints.get( pair.getA() );
-			final List< InterestPoint > listB = interestpoints.get( pair.getB() );
+			final List< ? extends InterestPoint > listA = interestpoints.get( pair.getA() );
+			final List< ? extends InterestPoint > listB = interestpoints.get( pair.getB() );
 
 			tasks.add( new Callable< PairwiseResult >()
 			{

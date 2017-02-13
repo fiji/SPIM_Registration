@@ -25,7 +25,7 @@ public class GeometricHashingPairwise implements MatcherPairwise
 	}
 
 	@Override
-	public PairwiseResult match( final List< InterestPoint > listAIn, final List< InterestPoint > listBIn )
+	public PairwiseResult match( final List< ? extends InterestPoint > listAIn, final List< ? extends InterestPoint > listBIn )
 	{
 		final PairwiseResult result = new PairwiseResult();
 		final GeometricHasher hasher = new GeometricHasher();

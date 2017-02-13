@@ -20,7 +20,7 @@ public class CenterOfMassPairwise implements MatcherPairwise
 	}
 
 	@Override
-	public PairwiseResult match( final List< InterestPoint > listAIn, final List< InterestPoint > listBIn )
+	public PairwiseResult match( final List< ? extends InterestPoint > listAIn, final List< ? extends InterestPoint > listBIn )
 	{
 		final PairwiseResult result = new PairwiseResult();
 
@@ -62,7 +62,7 @@ public class CenterOfMassPairwise implements MatcherPairwise
 		return result;
 	}
 
-	private static final double[] average( final List< InterestPoint > list )
+	private static final double[] average( final List< ? extends InterestPoint > list )
 	{
 		final int n = list.get( 0 ).getL().length;
 		final RealSum[] sum = new RealSum[ n ];
@@ -86,7 +86,7 @@ public class CenterOfMassPairwise implements MatcherPairwise
 		return center;
 	}
 
-	private static final double[] median( final List< InterestPoint > list )
+	private static final double[] median( final List< ? extends InterestPoint > list )
 	{
 		final int n = list.get( 0 ).getL().length;
 		final double[][] values = new double[ n ][ list.size() ];
