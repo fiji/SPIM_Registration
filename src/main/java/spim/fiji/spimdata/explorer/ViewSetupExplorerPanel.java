@@ -405,16 +405,9 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 					for ( final String label : vipl.getHashMap().keySet() )
 					{
 						final InterestPointList ipl = vipl.getInterestPointList( label );
-	
-						if ( ipl.getInterestPoints() == null )
-							ipl.loadInterestPoints();
-						
-						ipl.saveInterestPoints();
-	
-						if ( ipl.getCorrespondingInterestPoints() == null )
-							ipl.loadCorrespondingInterestPoints();
-	
-						ipl.saveCorrespondingInterestPoints();
+
+						ipl.saveInterestPoints( false );
+						ipl.saveCorrespondingInterestPoints( false );
 					}
 				}
 			}

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
+import spim.fiji.spimdata.interestpoints.InterestPoint;
 import mpicbg.models.Model;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.PointMatch;
@@ -18,9 +19,9 @@ import mpicbg.spim.mpicbg.PointMatchGeneric;
  */
 public class RANSAC
 {
-	public static Pair< String, Double > computeRANSAC( 
-			final ArrayList< PointMatchGeneric < Detection > > correspondenceCandidates, 
-			final ArrayList< PointMatchGeneric < Detection > > inlierList, 
+	public static < I extends InterestPoint > Pair< String, Double > computeRANSAC( 
+			final ArrayList< PointMatchGeneric < I > > correspondenceCandidates, 
+			final ArrayList< PointMatchGeneric < I > > inlierList, 
 			final Model<?> model, 
 			final double maxEpsilon, 
 			final double minInlierRatio, 
@@ -49,16 +50,16 @@ public class RANSAC
 		final ArrayList< PointMatch > inliers = new ArrayList< PointMatch >();
 		
 		// clone the beads for the RANSAC as we are working multithreaded and they will be modified
-		for ( final PointMatchGeneric< Detection > correspondence : correspondenceCandidates )
+		for ( final PointMatchGeneric< I > correspondence : correspondenceCandidates )
 		{
-			final Detection detectionA = correspondence.getPoint1();
-			final Detection detectionB = correspondence.getPoint2();
+			final I detectionA = correspondence.getPoint1();
+			final I detectionB = correspondence.getPoint2();
 			
-			final LinkedPoint< Detection > pA = new LinkedPoint< Detection >( detectionA.getL(), detectionA.getW(), detectionA );
-			final LinkedPoint< Detection > pB = new LinkedPoint< Detection >( detectionB.getL(), detectionB.getW(), detectionB );
+			final LinkedPoint< I > pA = new LinkedPoint< I >( detectionA.getL(), detectionA.getW(), detectionA );
+			final LinkedPoint< I > pB = new LinkedPoint< I >( detectionB.getL(), detectionB.getW(), detectionB );
 			final double weight = correspondence.getWeight(); 
 
-			candidates.add( new PointMatchGeneric< LinkedPoint< Detection > >( pA, pB, weight ) );
+			candidates.add( new PointMatchGeneric< LinkedPoint< I > >( pA, pB, weight ) );
 		}
 		
 		boolean modelFound = false;
@@ -90,12 +91,12 @@ public class RANSAC
 			for ( final PointMatch pointMatch : inliers )
 			{
 				@SuppressWarnings("unchecked")
-				final PointMatchGeneric<LinkedPoint< Detection > > pm = (PointMatchGeneric< LinkedPoint< Detection > >) pointMatch;
+				final PointMatchGeneric<LinkedPoint< I > > pm = (PointMatchGeneric< LinkedPoint< I > >) pointMatch;
 				
-				final Detection detectionA = pm.getPoint1().getLinkedObject();
-				final Detection detectionB = pm.getPoint2().getLinkedObject();
+				final I detectionA = pm.getPoint1().getLinkedObject();
+				final I detectionB = pm.getPoint2().getLinkedObject();
 				
-				inlierList.add( new PointMatchGeneric< Detection >( detectionA, detectionB ) );
+				inlierList.add( new PointMatchGeneric< I >( detectionA, detectionB ) );
 			}
 
 			return new ValuePair< String, Double >( "Remaining inliers after RANSAC: " + inliers.size() + " of " + candidates.size() + " (" + nf.format(ratio) + ") with average error " + model.getCost(), model.getCost() );

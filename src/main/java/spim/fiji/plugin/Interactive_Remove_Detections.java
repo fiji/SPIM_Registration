@@ -210,7 +210,6 @@ public class Interactive_Remove_Detections implements PlugIn
 
 		newIpl.setInterestPoints( ipList );
 		newIpl.setParameters( "manually removed detections from '" +label + "'" );
-		newIpl.saveInterestPoints();
 
 		lists.addInterestPointList( newLabel, newIpl );
 

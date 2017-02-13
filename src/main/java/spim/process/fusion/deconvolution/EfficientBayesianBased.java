@@ -35,6 +35,7 @@ import spim.fiji.ImgLib2Temp.ValuePair;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
@@ -1181,13 +1182,14 @@ public class EfficientBayesianBased extends Fusion
 									label + " --- channel: " + c.getName() + " angle: " + vd.getViewSetup().getAngle().getName() +
 									" illum: " + vd.getViewSetup().getIllumination().getName() + " timepoint: " + t.getName() + ": ";
 
-							if ( ipl.getInterestPoints() == null )
+							if ( !ipl.hasInterestPoints() )
 								ipl.loadInterestPoints();
 							
-							if ( ipl.getCorrespondingInterestPoints() == null )
+							if ( !ipl.hasCorrespondingInterestPoints() )
 								ipl.loadCorrespondingInterestPoints();
-							
-							if ( ipl.getCorrespondingInterestPoints().size() > 0 )
+
+							final int numCorrespondingPoints = ipl.getNumCorrespondingInterestPoints();
+							if ( numCorrespondingPoints > 0 )
 							{
 								Correspondence corrTmp = new Correspondence( label );
 								boolean foundEntry = false;
@@ -1205,7 +1207,7 @@ public class EfficientBayesianBased extends Fusion
 								if ( !foundEntry )
 									corrList.add( corrTmp );
 								
-								IOFunctions.println( name + ipl.getCorrespondingInterestPoints().size() + " correspondences." );
+								IOFunctions.println( name + numCorrespondingPoints + " correspondences." );
 							}
 							else
 							{
