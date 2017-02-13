@@ -29,7 +29,6 @@ public class InterestPointGroupingAll< V extends ViewId > extends InterestPointG
 			}
 		}
 
-		return null;
+		return grouped;
 	}
-
 }
