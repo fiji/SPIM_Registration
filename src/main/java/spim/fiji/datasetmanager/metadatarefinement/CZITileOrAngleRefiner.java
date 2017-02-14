@@ -20,7 +20,7 @@ public class CZITileOrAngleRefiner implements TileOrAngleRefiner
 			
 			Object tmp = r.getMetadataValue("Information|Image|V|View|Offset #" + ( i+1 ));
 			if (tmp == null)
-				r.getMetadataValue("Information|Image|V|View|SizeZ #" + StackList.leadingZeros( Integer.toString( i + 1 ), numDigits ) );
+				tmp = r.getMetadataValue("Information|Image|V|View|Offset #" + StackList.leadingZeros( Integer.toString( i + 1 ), numDigits ) );
 			
 			double angleT = (tmp != null) ?  Double.parseDouble( tmp.toString() ) : 0;			
 			infoT.angle = angleT;

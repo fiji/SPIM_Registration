@@ -820,8 +820,10 @@ public class FileListDatasetDefinitionUtil
 		System.out.println( file );
 		
 		if (reader == null)
+		{
 			reader = new ImageReader();
-		reader.setMetadataStore( new OMEXMLMetadataImpl());
+			reader.setMetadataStore( new OMEXMLMetadataImpl());
+		}
 		try
 		{
 			if (reader.getCurrentFile() != file.getAbsolutePath())
@@ -842,9 +844,10 @@ public class FileListDatasetDefinitionUtil
 				pszX = meta.getPixelsPhysicalSizeX( i );
 			}
 			catch (IndexOutOfBoundsException e)
-			{				
+			{
 			}
-			sizeX = pszX != null ? pszX.value().doubleValue() : null ;
+			//System.out.println( pszX );
+			sizeX = pszX != null ? pszX.value().doubleValue() : 1 ;
 			
 			Length pszY = null;
 			try {
@@ -853,7 +856,7 @@ public class FileListDatasetDefinitionUtil
 			catch (IndexOutOfBoundsException e)
 			{				
 			}
-			sizeY = pszY != null ? pszY.value().doubleValue() : null ;
+			sizeY = pszY != null ? pszY.value().doubleValue() : 1 ;
 			
 			Length pszZ = null;
 			try {
@@ -862,7 +865,7 @@ public class FileListDatasetDefinitionUtil
 			catch (IndexOutOfBoundsException e)
 			{				
 			}
-			sizeZ = pszZ != null ? pszZ.value().doubleValue() : null ;
+			sizeZ = pszZ != null ? pszZ.value().doubleValue() : 1 ;
 			
 			int dimX = reader.getSizeX();
 			int dimY = reader.getSizeY();
@@ -903,6 +906,7 @@ public class FileListDatasetDefinitionUtil
 			if (!usedFiles.contains( file.getAbsolutePath() ))
 			{
 				ImageReader reader = new ImageReader();
+				reader.setMetadataStore( new OMEXMLMetadataImpl() );
 				detectViewsInFile( 	file,
 									multiplicityMapInner,
 									state,
@@ -910,6 +914,16 @@ public class FileListDatasetDefinitionUtil
 									reader);
 				
 				detectDimensionsInFile (file, state.getDimensionMap(), reader);
+				
+				try
+				{
+					reader.close();
+				}
+				catch ( IOException e )
+				{
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		
 		
@@ -938,8 +952,10 @@ public class FileListDatasetDefinitionUtil
 	{
 		
 		if (reader == null)
+		{
 			reader = new ImageReader();
-		reader.setMetadataStore( new OMEXMLMetadataImpl());
+			reader.setMetadataStore( new OMEXMLMetadataImpl());
+		}
 		System.out.println( "Investigating file: " + file.getAbsolutePath() );
 		
 		

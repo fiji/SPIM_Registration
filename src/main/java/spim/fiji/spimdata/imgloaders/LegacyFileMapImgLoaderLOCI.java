@@ -119,10 +119,12 @@ public class LegacyFileMapImgLoaderLOCI extends AbstractImgFactoryImgLoader
 			if ( img == null )
 				throw new RuntimeException( "Could not load '" + fileMap.get( sd.getViewDescriptions( ).get( view ) ).getA() + "' viewId=" + view.getViewSetupId() + ", tpId=" + view.getTimePointId() );
 
+			
 			return img;
 		}
 		catch ( Exception e )
 		{
+			e.printStackTrace();
 			throw new RuntimeException( "Could not load '" + fileMap.get( sd.getViewDescriptions( ).get( view ) ).getA() + "' viewId=" + view.getViewSetupId() + ", tpId=" + view.getTimePointId() + ": " + e );
 		}
 	}
@@ -133,7 +135,9 @@ public class LegacyFileMapImgLoaderLOCI extends AbstractImgFactoryImgLoader
 		BasicViewDescription< ? > vd = sd.getViewDescriptions().get( view );
 		try
 		{
-			reader.setId( fileMap.get( vd ).getA().getAbsolutePath() );
+//			System.out.println( fileMap.get( vd ).getA().getAbsolutePath() );
+			if (reader.getCurrentFile() == null || !reader.getCurrentFile().equals( fileMap.get( vd ).getA().getAbsolutePath()))
+				reader.setId( fileMap.get( vd ).getA().getAbsolutePath() );
 		}
 		catch ( FormatException | IOException e )
 		{
