@@ -4,6 +4,13 @@ import static spim.fiji.spimdata.stitchingresults.XmlKeysStitchingResults.STICHI
 import static spim.fiji.spimdata.stitchingresults.XmlKeysStitchingResults.STICHING_SHIFT_TAG;
 import static spim.fiji.spimdata.stitchingresults.XmlKeysStitchingResults.STITCHING_VS_A_TAG;
 import static spim.fiji.spimdata.stitchingresults.XmlKeysStitchingResults.STITCHING_VS_B_TAG;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import static spim.fiji.spimdata.stitchingresults.XmlKeysStitchingResults.STITCHING_TP_A_TAG;
 import static spim.fiji.spimdata.stitchingresults.XmlKeysStitchingResults.STITCHING_TP_B_TAG;
 
@@ -46,10 +53,12 @@ public class XmlIoStitchingResults extends XmlIoSingleton<StitchingResults>
 
 		for ( final Element pairwiseResultsElement : allStitchingResults.getChildren( STITCHINGRESULT_PW_TAG ) )
 		{
-			final int vsA = Integer.parseInt( pairwiseResultsElement.getAttributeValue( STITCHING_VS_A_TAG ));
-			final int vsB = Integer.parseInt( pairwiseResultsElement.getAttributeValue( STITCHING_VS_B_TAG ));
-			final int tpA = Integer.parseInt( pairwiseResultsElement.getAttributeValue( STITCHING_TP_A_TAG ));
-			final int tpB = Integer.parseInt( pairwiseResultsElement.getAttributeValue( STITCHING_TP_B_TAG ));
+			
+			
+			List< Integer > vsA = Arrays.asList( pairwiseResultsElement.getAttributeValue( STITCHING_VS_A_TAG ).split( "," )).stream().map( s -> Integer.parseInt( s ) ).collect( Collectors.toList() );
+			List< Integer > vsB = Arrays.asList( pairwiseResultsElement.getAttributeValue( STITCHING_VS_B_TAG ).split( "," )).stream().map( s -> Integer.parseInt( s ) ).collect( Collectors.toList() );
+			List< Integer > tpA = Arrays.asList( pairwiseResultsElement.getAttributeValue( STITCHING_TP_A_TAG ).split( "," )).stream().map( s -> Integer.parseInt( s ) ).collect( Collectors.toList() );
+			List< Integer > tpB = Arrays.asList( pairwiseResultsElement.getAttributeValue( STITCHING_TP_B_TAG ).split( "," )).stream().map( s -> Integer.parseInt( s ) ).collect( Collectors.toList() );
 
 			final double[] shift = XmlHelpers.getDoubleArray( pairwiseResultsElement, STICHING_SHIFT_TAG );
 			final double corr = XmlHelpers.getDouble( pairwiseResultsElement, STICHING_CORRELATION_TAG );
@@ -62,9 +71,15 @@ public class XmlIoStitchingResults extends XmlIoSingleton<StitchingResults>
 			else
 				transform.set( shift );
 
-			final ViewId vidA = new ViewId( tpA, vsA );
-			final ViewId vidB = new ViewId( tpB, vsB );
-			final ValuePair< ViewId, ViewId > pair = new ValuePair< ViewId, ViewId >( vidA, vidB );
+			Set<ViewId> vidsA = new HashSet<>();
+			for (int i = 0; i < vsA.size(); i++)
+				vidsA.add( new ViewId( tpA.get( i ), vsA.get( i ) ) );
+
+			Set<ViewId> vidsB = new HashSet<>();
+			for (int i = 0; i < vsB.size(); i++)
+				vidsB.add( new ViewId( tpB.get( i ), vsB.get( i ) ) );
+			
+			final ValuePair< Set<ViewId>, Set<ViewId> > pair = new ValuePair<>( vidsA, vidsB );
 			
 			final PairwiseStitchingResult< ViewId > pairwiseStitchingResult = new PairwiseStitchingResult<>(pair, transform, corr );
 			stitchingResults.setPairwiseResultForPair( pair, pairwiseStitchingResult );
@@ -77,10 +92,10 @@ public class XmlIoStitchingResults extends XmlIoSingleton<StitchingResults>
 	{
 		final Element elem = new Element( STITCHINGRESULT_PW_TAG );
 
-		elem.setAttribute( STITCHING_VS_A_TAG, Integer.toString( sr.pair().getA().getViewSetupId()));
-		elem.setAttribute( STITCHING_VS_B_TAG, Integer.toString( sr.pair().getB().getViewSetupId()));
-		elem.setAttribute( STITCHING_TP_A_TAG, Integer.toString( sr.pair().getA().getTimePointId()));
-		elem.setAttribute( STITCHING_TP_B_TAG, Integer.toString( sr.pair().getB().getTimePointId()));
+		elem.setAttribute( STITCHING_VS_A_TAG, String.join( ",", sr.pair().getA().stream().map( vi ->  Integer.toString( vi.getViewSetupId() ) ).collect( Collectors.toList() ) ) );
+		elem.setAttribute( STITCHING_VS_B_TAG, String.join( ",", sr.pair().getB().stream().map( vi ->  Integer.toString( vi.getViewSetupId() ) ).collect( Collectors.toList() ) ) );
+		elem.setAttribute( STITCHING_TP_A_TAG, String.join( ",", sr.pair().getA().stream().map( vi ->  Integer.toString( vi.getTimePointId() ) ).collect( Collectors.toList() ) ) );
+		elem.setAttribute( STITCHING_TP_B_TAG, String.join( ",", sr.pair().getB().stream().map( vi ->  Integer.toString( vi.getTimePointId() ) ).collect( Collectors.toList() ) ) );
 		
 		elem.addContent( XmlHelpers.doubleArrayElement( STICHING_SHIFT_TAG, sr.getTransform().getRowPackedCopy() ) );
 		elem.addContent( XmlHelpers.doubleElement(  STICHING_CORRELATION_TAG, sr.r() ) );
