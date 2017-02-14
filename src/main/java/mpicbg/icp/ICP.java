@@ -49,16 +49,18 @@ public class ICP < P extends RealLocalizable >
 		this.reference = new ArrayList<>();
 		this.target = new ArrayList<>();
 
+		final double[] l = new double[ reference.get( 0 ).numDimensions() ];
+
+		// the LinkedInterestPoint always clones the location array
 		for ( final P p : reference )
 		{
-			final double[] l = new double[ p.numDimensions() ];
 			p.localize( l );
 			this.reference.add( new LinkedInterestPoint< P >( -1, l, p ) );
 		}
 
+		// the LinkedInterestPoint always clones the location array
 		for ( final P p : target )
 		{
-			final double[] l = new double[ p.numDimensions() ];
 			p.localize( l );
 			this.target.add( new LinkedInterestPoint< P >( -1, l, p ) );
 		}

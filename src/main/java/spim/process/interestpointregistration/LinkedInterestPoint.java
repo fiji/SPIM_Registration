@@ -11,14 +11,14 @@ public class LinkedInterestPoint< P > extends InterestPoint
 
 	public LinkedInterestPoint( final int id, final double[] l, final boolean useW, final P link )
 	{
-		super( id, l, useW );
+		super( id, l.clone(), useW );
 
 		this.link = link;
 	}
 
 	public LinkedInterestPoint( final int id, final double[] l, final P link )
 	{
-		this( id, l, true, link );
+		this( id, l.clone(), true, link );
 	}
 
 	public P getLinkedObject() { return link; }

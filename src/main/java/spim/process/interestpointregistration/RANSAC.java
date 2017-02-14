@@ -54,7 +54,8 @@ public class RANSAC
 		{
 			final I detectionA = correspondence.getPoint1();
 			final I detectionB = correspondence.getPoint2();
-			
+
+			// the LinkedPoint always clones the location array
 			final LinkedPoint< I > pA = new LinkedPoint< I >( detectionA.getL(), detectionA.getW(), detectionA );
 			final LinkedPoint< I > pB = new LinkedPoint< I >( detectionB.getL(), detectionB.getW(), detectionB );
 			final double weight = correspondence.getWeight(); 

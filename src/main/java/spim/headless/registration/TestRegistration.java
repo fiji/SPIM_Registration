@@ -152,7 +152,6 @@ public class TestRegistration
 				System.out.println();
 			}
 
-			// TODO: DUPLICATE position arrays?
 			final List< Pair< Pair< Group< ViewId >, Group< ViewId > >, PairwiseResult< GroupedInterestPoint< ViewId > > > > resultGroup =
 					MatcherPairwiseTools.computePairs( groupedPairs, groupedInterestpoints, new GeometricHashingPairwise< GroupedInterestPoint< ViewId > >( rp, gp ) );
 
