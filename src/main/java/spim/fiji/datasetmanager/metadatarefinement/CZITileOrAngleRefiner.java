@@ -17,7 +17,11 @@ public class CZITileOrAngleRefiner implements TileOrAngleRefiner
 		for (int i = 0; i < infos.size(); i++)
 		{	
 			FileListDatasetDefinitionUtil.TileOrAngleInfo infoT = infos.get( i );
+			
 			Object tmp = r.getMetadataValue("Information|Image|V|View|Offset #" + ( i+1 ));
+			if (tmp == null)
+				r.getMetadataValue("Information|Image|V|View|SizeZ #" + StackList.leadingZeros( Integer.toString( i + 1 ), numDigits ) );
+			
 			double angleT = (tmp != null) ?  Double.parseDouble( tmp.toString() ) : 0;			
 			infoT.angle = angleT;
 			
