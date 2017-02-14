@@ -1,7 +1,6 @@
 package spim.process.interestpointregistration.pairwise;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -9,8 +8,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import mpicbg.spim.data.sequence.SequenceDescription;
-import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
@@ -28,42 +25,26 @@ public class MatcherPairwiseTools
 		return computePairs( pairs, interestpoints, matcher, null );
 	}
 
-	public static void assignLoggingViewIdsAndDescriptions(
-			final Collection< ? extends Pair< ? extends Pair< ? extends ViewId, ? extends ViewId >, ? extends PairwiseResult< ? > > > r,
-			final SequenceDescription sd )
+	public static void assignLoggingDescriptions(
+			final Pair< ?, ? > p, PairwiseResult< ? > pwr )
 	{
-		for ( final Pair< ? extends Pair< ? extends ViewId, ? extends ViewId >, ? extends PairwiseResult< ? > > p : r )
+		if ( ViewId.class.isInstance( p.getA() ) && ViewId.class.isInstance( p.getB() ) )
 		{
-			// just for logging the names and results of pairwise comparison
-			final ViewDescription viewA = sd.getViewDescription( p.getA().getA() );
-			final ViewDescription viewB = sd.getViewDescription( p.getA().getB() );
-			final PairwiseResult< ? > pwr = p.getB();
-
-			//pwr.setViewIdA( viewA );
-			//pwr.setViewIdB( viewB );
-
 			final String description =
-					"[TP=" + viewA.getTimePoint().getName() +
-					" ViewId=" + viewA.getViewSetup().getId() +
-					" >>> TP=" + viewB.getTimePoint().getName() +
-					" ViewId=" + viewB.getViewSetup().getId() + "]";
+					"[TP=" + ((ViewId)p.getA()).getTimePointId() +
+					" ViewId=" + ((ViewId)p.getA()).getViewSetupId() +
+					" >>> TP=" + ((ViewId)p.getB()).getTimePointId() +
+					" ViewId=" + ((ViewId)p.getB()).getViewSetupId() + "]";
 
 			pwr.setDescription( description );
 		}
-	}
-
-	public static void assignGroupedLoggingViewIdsAndDescriptions(
-			final Collection< ? extends Pair< ? extends Pair< ? extends Group< ? extends ViewId >, ? extends Group< ? extends ViewId > >, ? extends PairwiseResult< ? > > > r,
-			final SequenceDescription sd )
-	{
-		for ( final Pair< ? extends Pair< ? extends Group< ? extends ViewId >, ? extends Group< ? extends ViewId > >, ? extends PairwiseResult< ? > > p : r )
+		else if ( Group.class.isInstance( p.getA() ) && Group.class.isInstance( p.getB() ) )
 		{
-			// get the groups
-			final Group< ? extends ViewId > groupA = p.getA().getA();
-			final Group< ? extends ViewId > groupB = p.getA().getB();
-			final PairwiseResult< ? > pwr = p.getB();
-
-			pwr.setDescription( "[Group {" + groupA + "} >>> Group {" + groupB + "}" );
+			pwr.setDescription( "[Group {" + p.getA() + "} >>> Group {" + p.getB() + "}]" );
+		}
+		else
+		{
+			pwr.setDescription( "[" + p.getA() + " >>> " + p.getB() + "]" );
 		}
 	}
 
@@ -92,7 +73,9 @@ public class MatcherPairwiseTools
 				@Override
 				public PairwiseResult< I > call() throws Exception
 				{
-					return matcher.match( listA, listB );
+					final PairwiseResult< I > pwr = matcher.match( listA, listB );
+					assignLoggingDescriptions( pair, pwr );
+					return pwr;
 				}
 			});
 		}
