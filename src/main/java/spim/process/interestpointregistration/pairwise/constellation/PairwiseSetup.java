@@ -195,15 +195,21 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 
 			// if both views of a pair are contained in the same group
 			// we can safely remove this pair
+			boolean didRemove = false;
 			for ( final Group< V > group : groups )
 			{
 				if ( group.contains( viewA ) && group.contains( viewB ) )
 				{
 					pairs.remove( i );
 					removed.add( pair );
+					didRemove = true;
 					break;
 				}
 			}
+			
+			// we removed pair on first test, nothing more to be done
+			if (didRemove)
+				continue;
 
 			// now test if the groups that both views belong to overlap,
 			// because if they do, there is no point in comparing this pair
