@@ -815,14 +815,17 @@ public class FileListDatasetDefinitionUtil
 		return res;		 
 	}
 	
-	public static void detectDimensionsInFile(File file, Map<Pair<File, Pair< Integer, Integer >>, Pair<Dimensions, VoxelDimensions>> dimensionMaps)
+	public static void detectDimensionsInFile(File file, Map<Pair<File, Pair< Integer, Integer >>, Pair<Dimensions, VoxelDimensions>> dimensionMaps, ImageReader reader)
 	{
 		System.out.println( file );
-		IFormatReader reader = new ImageReader();
+		
+		if (reader == null)
+			reader = new ImageReader();
 		reader.setMetadataStore( new OMEXMLMetadataImpl());
 		try
 		{
-			reader.setId( file.getAbsolutePath() );
+			if (reader.getCurrentFile() != file.getAbsolutePath())
+				reader.setId( file.getAbsolutePath() );
 		
 		
 		for (int i = 0 ; i < reader.getSeriesCount(); i++)
@@ -899,12 +902,14 @@ public class FileListDatasetDefinitionUtil
 		for (File file : files)
 			if (!usedFiles.contains( file.getAbsolutePath() ))
 			{
+				ImageReader reader = new ImageReader();
 				detectViewsInFile( 	file,
 									multiplicityMapInner,
 									state,
-									usedFiles);
+									usedFiles,
+									reader);
 				
-				detectDimensionsInFile (file, state.getDimensionMap());
+				detectDimensionsInFile (file, state.getDimensionMap(), reader);
 			}
 		
 		
@@ -928,15 +933,20 @@ public class FileListDatasetDefinitionUtil
 	public static void detectViewsInFile(final File file,
 										 Map<File, Map<Class<? extends Entity>, CheckResult>> multiplicityMap,
 										 FileListViewDetectionState state,
-										 List<String> usedFiles)
+										 List<String> usedFiles,
+										 ImageReader reader)
 	{
-		IFormatReader reader = new ImageReader();
+		
+		if (reader == null)
+			reader = new ImageReader();
 		reader.setMetadataStore( new OMEXMLMetadataImpl());
 		System.out.println( "Investigating file: " + file.getAbsolutePath() );
 		
+		
 		try
 		{
-			reader.setId( file.getAbsolutePath() );
+			if (reader.getCurrentFile() != file.getAbsolutePath())
+				reader.setId( file.getAbsolutePath() );
 			
 			usedFiles.addAll( Arrays.asList( reader.getUsedFiles() ));
 			
@@ -1066,7 +1076,7 @@ public class FileListDatasetDefinitionUtil
 			if(!state.getAmbiguousIllumChannel() && channelIllumAmbiguous)
 				state.setAmbiguousIllumChannel(true);
 			
-			reader.close();
+			//reader.close();
 
 		}
 		catch ( FormatException e )
