@@ -15,13 +15,19 @@ public class InterestPoint extends Point implements RealLocalizable
 
 	protected final int id;
 
-	/** Use world coordinates instead of local coordinates to localize */
+	/** Report world coordinates or local coordinates to RealLocalizable */
 	protected boolean useW;
 
 	public InterestPoint( final int id, final double[] l )
 	{
+		this( id, l, true );
+	}
+
+	public InterestPoint( final int id, final double[] l, final boolean useW )
+	{
 		super( l );
 		this.id = id;
+		this.useW = true;
 	}
 
 	public int getId() { return id; }
