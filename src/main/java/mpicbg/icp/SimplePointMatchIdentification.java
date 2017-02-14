@@ -8,8 +8,9 @@ import mpicbg.spim.mpicbg.PointMatchGeneric;
 import net.imglib2.KDTree;
 import net.imglib2.RealLocalizable;
 import net.imglib2.neighborsearch.NearestNeighborSearchOnKDTree;
+import spim.process.interestpointregistration.LinkedInterestPoint;
 
-public class SimplePointMatchIdentification < P extends Point & RealLocalizable > implements PointMatchIdentification< P >
+public class SimplePointMatchIdentification < P extends RealLocalizable > implements PointMatchIdentification< P >
 {
 	double distanceThresold;
 
@@ -27,21 +28,21 @@ public class SimplePointMatchIdentification < P extends Point & RealLocalizable 
 	public double getDistanceThreshold() { return this.distanceThresold; }
 
 	@Override
-	public ArrayList< PointMatchGeneric< P > > assignPointMatches( final List< P > target, final List< P > reference )
+	public ArrayList< PointMatchGeneric< LinkedInterestPoint< P > > > assignPointMatches( final List< LinkedInterestPoint< P > > target, final List< LinkedInterestPoint< P > > reference )
 	{
-		final ArrayList< PointMatchGeneric< P > > pointMatches = new ArrayList<>();
+		final ArrayList< PointMatchGeneric< LinkedInterestPoint< P > > > pointMatches = new ArrayList<>();
 
-		final KDTree< P > kdTreeTarget = new KDTree< P >( target, target );
-		final NearestNeighborSearchOnKDTree< P > nnSearchTarget = new NearestNeighborSearchOnKDTree<>( kdTreeTarget );
+		final KDTree< LinkedInterestPoint< P > > kdTreeTarget = new KDTree<>( target, target );
+		final NearestNeighborSearchOnKDTree< LinkedInterestPoint< P > > nnSearchTarget = new NearestNeighborSearchOnKDTree<>( kdTreeTarget );
 
-		for ( final P point : reference )
+		for ( final LinkedInterestPoint< P > point : reference )
 		{
 			nnSearchTarget.search( point );
-			final P correspondingPoint = nnSearchTarget.getSampler().get();
+			final LinkedInterestPoint< P > correspondingPoint = nnSearchTarget.getSampler().get();
 
 			// world coordinates of point
 			if ( Point.distance( correspondingPoint, point ) <= distanceThresold )
-				pointMatches.add( new PointMatchGeneric< P >( correspondingPoint, point ) );
+				pointMatches.add( new PointMatchGeneric< LinkedInterestPoint< P > >( correspondingPoint, point ) );
 		}
 
 		return pointMatches;

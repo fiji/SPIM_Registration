@@ -3,12 +3,12 @@ package mpicbg.icp;
 
 import java.util.List;
 
-import mpicbg.models.Point;
 import mpicbg.pointdescriptor.exception.NoSuitablePointsException;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 import net.imglib2.RealLocalizable;
+import spim.process.interestpointregistration.LinkedInterestPoint;
 
-public interface PointMatchIdentification < P extends Point & RealLocalizable >
+public interface PointMatchIdentification < P extends RealLocalizable >
 {
-	public List< PointMatchGeneric< P > > assignPointMatches( final List< P > target, final List< P > reference ) throws NoSuitablePointsException;
+	public List< PointMatchGeneric< LinkedInterestPoint< P > > > assignPointMatches( final List< LinkedInterestPoint< P > > target, final List< LinkedInterestPoint< P > > reference ) throws NoSuitablePointsException;
 }

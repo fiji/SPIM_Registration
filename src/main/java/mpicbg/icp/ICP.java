@@ -15,20 +15,21 @@ import mpicbg.models.PointMatch;
 import mpicbg.pointdescriptor.exception.NoSuitablePointsException;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 import net.imglib2.RealLocalizable;
+import spim.process.interestpointregistration.LinkedInterestPoint;
 
 /**
- * Implementation of the ICP
+ * Implementation of the ICP, takes anything RealLocalizable and internally uses LinkedInterestPoint to compute the ICP
  *
  * @author Stephan Preibisch
  *
  * @param <P>
  */
-public class ICP < P extends Point & RealLocalizable >
+public class ICP < P extends RealLocalizable >
 {
-	final List< P > reference, target;
+	final List< LinkedInterestPoint< P > > reference, target;
 
-	List< PointMatchGeneric< P > > pointMatches;
-	ArrayList<PointMatch> ambigousMatches;
+	List< PointMatchGeneric< LinkedInterestPoint< P > > > pointMatches;
+	ArrayList< PointMatch > ambigousMatches;
 	PointMatchIdentification< P > pointMatchIdentifier;
 	
 	double avgError, maxError;
@@ -43,15 +44,30 @@ public class ICP < P extends Point & RealLocalizable >
 	 * @param reference - the {@link List} of reference points
 	 * @param pointMatchIdentifier - the {@link PointMatchIdentification} which defines how correspondences are established
 	 */
-	public ICP( final List<P> target, final List<P> reference, final PointMatchIdentification<P> pointMatchIdentifier )
+	public ICP( final List< P > target, final List< P > reference, final PointMatchIdentification< P > pointMatchIdentifier )
 	{
-		this.reference = reference;
-		this.target = target;
+		this.reference = new ArrayList<>();
+		this.target = new ArrayList<>();
+
+		for ( final P p : reference )
+		{
+			final double[] l = new double[ p.numDimensions() ];
+			p.localize( l );
+			this.reference.add( new LinkedInterestPoint< P >( -1, l, p ) );
+		}
+
+		for ( final P p : target )
+		{
+			final double[] l = new double[ p.numDimensions() ];
+			p.localize( l );
+			this.target.add( new LinkedInterestPoint< P >( -1, l, p ) );
+		}
+
 		this.ambigousMatches = null;
 		this.pointMatches = null;
-		
+
 		this.pointMatchIdentifier = pointMatchIdentifier;
-		
+
 		this.avgError = -1;
 		this.maxError = -1;
 		this.numMatches = -1;
@@ -64,9 +80,9 @@ public class ICP < P extends Point & RealLocalizable >
 	 * @param reference - the {@link List} of reference points
 	 * @param distanceThreshold - the maximal distance of {@link SimplePointMatchIdentification}, so that the nearest neighbor of a point is still counted as a corresponding point
 	 */
-	public ICP( final List<P> target, final List<P> reference, final double distanceThreshold )
+	public ICP( final List< P > target, final List< P > reference, final double distanceThreshold )
 	{
-		this( target, reference, new SimplePointMatchIdentification<P>( distanceThreshold ) );
+		this( target, reference, new SimplePointMatchIdentification< P >( distanceThreshold ) );
 	}
 
 	/**
@@ -75,7 +91,7 @@ public class ICP < P extends Point & RealLocalizable >
 	 * @param target - the {@link List} of target points
 	 * @param reference - the {@link List} of reference points
 	 */
-	public ICP( final List<P> target, final List<P> reference )
+	public ICP( final List< P > target, final List< P > reference )
 	{
 		this( target, reference, new SimplePointMatchIdentification<P>() );
 	}
@@ -93,11 +109,11 @@ public class ICP < P extends Point & RealLocalizable >
 	public void runICPIteration( final Model<?> lastModel, final Model<?> newModel ) throws NotEnoughDataPointsException, IllDefinedDataPointsException, NoSuitablePointsException
 	{
 		/* apply initial model of the target (from last iteration) */
-		for ( final P point : target )
+		for ( final LinkedInterestPoint< P > point : target )
 			point.apply( lastModel );
 		
 		/* get corresponding points for ICP */
-		final List< PointMatchGeneric< P > > matches = pointMatchIdentifier.assignPointMatches( target, reference );
+		final List< PointMatchGeneric< LinkedInterestPoint< P > > > matches = pointMatchIdentifier.assignPointMatches( target, reference );
 		
 		/* remove ambigous correspondences */
 		ambigousMatches = removeAmbigousMatches( matches );
@@ -106,7 +122,7 @@ public class ICP < P extends Point & RealLocalizable >
 		newModel.fit( matches );
 
 		/* apply the new model of the target to determine the error */
-		for ( final P point : target )
+		for ( final LinkedInterestPoint< P > point : target )
 			point.apply( newModel );
 
 		/* compute the output */
@@ -124,7 +140,7 @@ public class ICP < P extends Point & RealLocalizable >
 	 * @throws NotEnoughDataPointsException
 	 * @throws IllDefinedDataPointsException
 	 */
-	public void estimateIntialModel( final List< PointMatchGeneric< P > > matches, final Model<?> model ) throws NotEnoughDataPointsException, IllDefinedDataPointsException
+	public void estimateIntialModel( final List< PointMatchGeneric< LinkedInterestPoint< P > > > matches, final Model<?> model ) throws NotEnoughDataPointsException, IllDefinedDataPointsException
 	{
 		/* remove ambigous correspondences */
 		ambigousMatches = removeAmbigousMatches( matches );
@@ -133,7 +149,7 @@ public class ICP < P extends Point & RealLocalizable >
 		model.fit( matches );
 
 		/* apply the new model of the target to determine the error */
-		for ( final P point : target )
+		for ( final LinkedInterestPoint< P > point : target )
 			point.apply( model );
 
 		/* compute the output */
@@ -142,7 +158,26 @@ public class ICP < P extends Point & RealLocalizable >
 		numMatches = matches.size();
 		pointMatches = matches;
 	}
-	
+
+	/**
+	 * Return the {@link List} of {@link PointMatch}es (target, reference) of the last {@link ICP} iteration
+	 * @return - {@link List} of {@link PointMatch}es
+	 */
+	public static < P extends Point > List< PointMatchGeneric< P > > unwrapPointMatches( final List< ? extends PointMatchGeneric< ? extends LinkedInterestPoint< P > > > pointMatches )
+	{
+		final ArrayList< PointMatchGeneric< P > > unwrapped = new ArrayList<>();
+
+		for ( final PointMatchGeneric< ? extends LinkedInterestPoint< P > > pm : pointMatches )
+		{
+			final LinkedInterestPoint< P > p1 = pm.getPoint1();
+			final LinkedInterestPoint< P > p2 = pm.getPoint2();
+
+			unwrapped.add( new PointMatchGeneric< P >( p1.getLinkedObject(), p2.getLinkedObject(), pm.getWeight() ) );
+		}
+
+		return unwrapped;
+	}
+
 	/**
 	 * Sets the {@link PointMatchIdentification} that defines how {@link PointMatch}es between reference and target are identified.
 	 * The simplest way to do it is the {@link SimplePointMatchIdentification} class which takes the nearest neighbor with a minimal distance threshold. 
@@ -161,7 +196,7 @@ public class ICP < P extends Point & RealLocalizable >
 	 * Return the {@link List} of {@link PointMatch}es (target, reference) of the last {@link ICP} iteration
 	 * @return - {@link List} of {@link PointMatch}es
 	 */
-	public List< PointMatchGeneric< P > > getPointMatches() { return pointMatches; }
+	public List< PointMatchGeneric< LinkedInterestPoint< P > > > getPointMatches() { return pointMatches; }
 	
 	/**
 	 * Returns the average error of the last ICP iteration, or -1 if no iteration has been computed yet.
@@ -199,8 +234,8 @@ public class ICP < P extends Point & RealLocalizable >
 	 */
 	public ArrayList<PointMatch> getAmbigousMatches() { return this.ambigousMatches; }
 
-	public List<P> getTargetPoints() { return target; }
-	public List<P> getReferencePoints() { return reference; }
+	public List< LinkedInterestPoint< P > > getWrappedTargetPoints() { return target; }
+	public List< LinkedInterestPoint< P > > getWrappedReferencePoints() { return reference; }
 	
 	/**
 	 * Detects ambigous (and duplicate) {@link PointMatch}es, i.e. if a {@link Point} corresponds with more than one other {@link Point}
