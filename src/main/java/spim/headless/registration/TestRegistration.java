@@ -91,16 +91,19 @@ public class TestRegistration
 
 		for ( final Subset< ViewId > subset : subsets )
 		{
+			// parameters
 			final RANSACParameters rp = new RANSACParameters();
 			final GeometricHashingParameters gp = new GeometricHashingParameters( new AffineModel3D() );
 
+			// fix view(s)
 			final List< ViewId > fixedViews = setup.getDefaultFixedViews();
 			final ViewId fixedView = subset.getViews().iterator().next();
 			fixedViews.add( fixedView );
-
 			System.out.println( "Removed " + subset.fixViews( fixedViews ).size() + " views due to fixing view tpId=" + fixedView.getTimePointId() + " setupId=" + fixedView.getViewSetupId() );
 
-			// get all pairs
+			//
+			// get all pairs to be compared (either that XOR grouped pairs)
+			//
 			final List< Pair< ViewId, ViewId > > pairs = subset.getPairs();
 
 			for ( final Pair< ViewId, ViewId > pair : pairs )
@@ -121,37 +124,29 @@ public class TestRegistration
 				System.out.println( p.getB().getFullDesc() );
 			}
 
+			//
 			// get all grouped pairs
+			//
 			final List< Pair< Group< ViewId >, Group< ViewId > > > groupedPairs = subset.getGroupedPairs();
 			final Map< Group< ViewId >, List< GroupedInterestPoint< ViewId > > > groupedInterestpoints = new HashMap<>();
-			final InterestPointGrouping< ViewId > grouping = new InterestPointGroupingAll<>( interestpoints );
+			final InterestPointGrouping< ViewId > ipGrouping = new InterestPointGroupingAll<>( interestpoints );
 
 			for ( final Pair< Group< ViewId >, Group< ViewId > > pair : groupedPairs )
 			{
-				String groupA = "", groupB = "";
-
-				for ( final ViewId a : pair.getA() )
-					groupA += pvids( a ) + " ";
-
-				for ( final ViewId b : pair.getB() )
-					groupB += pvids( b ) + " ";
-
-				System.out.print( "[ " + groupA + "] <=> [ " + groupB + "]" );
+				System.out.print( "[ " + gvids( pair.getA() ) + "] <=> [ " + gvids( pair.getB() ) + "]" );
 
 				if ( !groupedInterestpoints.containsKey( pair.getA() ) )
 				{
-					System.out.print( ", grouping interestpoints for " + groupA );
+					System.out.print( ", grouping interestpoints for " + gvids( pair.getA() ) );
 
-					final List< GroupedInterestPoint< ViewId > > groupedA = grouping.group( pair.getA() );
-					groupedInterestpoints.put( pair.getA(), groupedA );
+					groupedInterestpoints.put( pair.getA(), ipGrouping.group( pair.getA() ) );
 				}
 
 				if ( !groupedInterestpoints.containsKey( pair.getB() ) )
 				{
-					System.out.print( ", grouping interestpoints for " + groupB );
+					System.out.print( ", grouping interestpoints for " + gvids( pair.getB() ) );
 
-					final List< GroupedInterestPoint< ViewId > > groupedB = grouping.group( pair.getB() );
-					groupedInterestpoints.put( pair.getB(), groupedB );
+					groupedInterestpoints.put( pair.getB(), ipGrouping.group( pair.getB() ) );
 				}
 
 				System.out.println();
@@ -179,5 +174,13 @@ public class TestRegistration
 
 	public static String pvid( final ViewId viewId ) { return "tpId=" + viewId.getTimePointId() + " setupId=" + viewId.getViewSetupId(); }
 	public static String pvids( final ViewId viewId ) { return "t(" + viewId.getTimePointId() + ")-s(" + viewId.getViewSetupId() + ")"; }
-	
+	public static String gvids( final Group< ViewId > group )
+	{
+		String groupS = "";
+
+		for ( final ViewId a : group.getViews() )
+			groupS += pvids( a ) + " ";
+
+		return groupS.trim();
+	}
 }
