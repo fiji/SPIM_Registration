@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import mpicbg.spim.data.sequence.ViewId;
+
 public class Group< V > implements Iterable< V >
 {
 	private HashSet< V > views;
@@ -61,4 +63,23 @@ public class Group< V > implements Iterable< V >
 		return true;
 	}
 
+	@Override
+	public String toString() { return gvids( this ); }
+	
+	public static String pvid( final ViewId viewId ) { return "tpId=" + viewId.getTimePointId() + " setupId=" + viewId.getViewSetupId(); }
+	public static String pvids( final ViewId viewId ) { return "t(" + viewId.getTimePointId() + ")-s(" + viewId.getViewSetupId() + ")"; }
+	public static String gvids( final Group< ? > group )
+	{
+		String groupS = "";
+
+		for ( final Object a : group.getViews() )
+		{
+			if ( ViewId.class.isInstance( a ) )
+				groupS += pvids( (ViewId)a ) + " ";
+			else
+				groupS += "? ";
+		}
+
+		return groupS.trim();
+	}
 }

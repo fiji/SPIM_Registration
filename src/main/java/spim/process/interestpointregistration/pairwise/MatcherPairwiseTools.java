@@ -16,6 +16,7 @@ import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
 import spim.Threads;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class MatcherPairwiseTools
 {
@@ -38,8 +39,8 @@ public class MatcherPairwiseTools
 			final ViewDescription viewB = sd.getViewDescription( p.getA().getB() );
 			final PairwiseResult< ? > pwr = p.getB();
 
-			pwr.setViewIdA( viewA );
-			pwr.setViewIdB( viewB );
+			//pwr.setViewIdA( viewA );
+			//pwr.setViewIdB( viewB );
 
 			final String description =
 					"[TP=" + viewA.getTimePoint().getName() +
@@ -50,31 +51,22 @@ public class MatcherPairwiseTools
 			pwr.setDescription( description );
 		}
 	}
-	/*
+
 	public static void assignGroupedLoggingViewIdsAndDescriptions(
-			final Collection< ? extends Pair< ? extends Pair< ? extends Group< ? extends ViewId >, ? extends Group< ? extends ViewId > >, ? extends PairwiseResult > > r,
+			final Collection< ? extends Pair< ? extends Pair< ? extends Group< ? extends ViewId >, ? extends Group< ? extends ViewId > >, ? extends PairwiseResult< ? > > > r,
 			final SequenceDescription sd )
 	{
-		for ( final Pair< ? extends Pair< ? extends Group< ? extends ViewId >, ? extends Group< ? extends ViewId > >, ? extends PairwiseResult > p : r )
+		for ( final Pair< ? extends Pair< ? extends Group< ? extends ViewId >, ? extends Group< ? extends ViewId > >, ? extends PairwiseResult< ? > > p : r )
 		{
-			// just for logging the names and results of pairwise comparison
-			final ViewDescription viewA = sd.getViewDescription( p.getA().getA() );
-			final ViewDescription viewB = sd.getViewDescription( p.getA().getB() );
-			final PairwiseResult pwr = p.getB();
+			// get the groups
+			final Group< ? extends ViewId > groupA = p.getA().getA();
+			final Group< ? extends ViewId > groupB = p.getA().getB();
+			final PairwiseResult< ? > pwr = p.getB();
 
-			pwr.setViewIdA( viewA );
-			pwr.setViewIdB( viewB );
-
-			final String description =
-					"[TP=" + viewA.getTimePoint().getName() +
-					" ViewId=" + viewA.getViewSetup().getId() +
-					" >>> TP=" + viewB.getTimePoint().getName() +
-					" ViewId=" + viewB.getViewSetup().getId() + "]";
-
-			pwr.setDescription( description );
+			pwr.setDescription( "[Group {" + groupA + "} >>> Group {" + groupB + "}" );
 		}
 	}
-	*/
+
 	public static < V, I extends InterestPoint > List< Pair< Pair< V, V >, PairwiseResult< I > > > computePairs(
 			final List< Pair< V, V > > pairs,
 			final Map< V, ? extends List< I > > interestpoints,
