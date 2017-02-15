@@ -9,12 +9,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import spim.vecmath.Transform3D;
-import spim.vecmath.Matrix4f;
-import spim.vecmath.Quat4f;
-import spim.vecmath.Vector3d;
-import spim.vecmath.Vector3f;
-
 import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.Affine3D;
 import mpicbg.models.AffineModel3D;
@@ -29,10 +23,13 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 import net.imglib2.util.Pair;
-import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.interestpointregistration.pairwise.PairwiseResult;
-import spim.process.interestpointregistration.pairwise.constellation.PairwiseSetup;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
+import spim.vecmath.Matrix4f;
+import spim.vecmath.Quat4f;
+import spim.vecmath.Transform3D;
+import spim.vecmath.Vector3d;
+import spim.vecmath.Vector3f;
 
 /**
  * 
@@ -233,7 +230,7 @@ public class GlobalOpt
 			final List< ViewId > views,
 			final HashMap< ViewId, Tile< M > > map,
 			final Collection< ViewId > fixedViews,
-			final List< ? extends List< ViewId > > groups )
+			final List< ? extends Group < ViewId > > groups )
 	{
 		// create a new tileconfiguration organizing the global optimization
 		final TileConfiguration tc = new TileConfiguration();
@@ -248,10 +245,11 @@ public class GlobalOpt
 			// if one of the views that maps to this tile is fixed, fix this tile if it is not already fixed
 			if ( fixedViews.contains( viewId ) && !tc.getFixedTiles().contains( tile ) )
 			{
-				if ( groups != null && groups.size() > 0 )
-					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Fixing timepoint-tile (timepointId = " + viewId.getTimePointId() + ")" );
+				final Group< ViewId > fixedGroup = Group.isContained( viewId, groups );
+				if ( fixedGroup != null )
+					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Fixing group-tile [" + fixedGroup + "]" );
 				else
-					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Fixing view-tile (viewSetupId = " + viewId.getViewSetupId() + ")" );
+					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Fixing view-tile [viewSetupId = " + viewId.getViewSetupId() + "]" );
 				tc.fixTile( tile );
 			}
 
