@@ -11,29 +11,16 @@ import mpicbg.models.AffineModel3D;
 import mpicbg.models.Model;
 import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
-import mpicbg.models.RigidModel3D;
 import mpicbg.models.Tile;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewTransform;
 import mpicbg.spim.data.registration.ViewTransformAffine;
-import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Dimensions;
 import net.imglib2.realtransform.AffineGet;
 import net.imglib2.realtransform.AffineTransform3D;
-import net.imglib2.util.Pair;
-import simulation.imgloader.SimulatedBeadsImgLoader;
-import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
-import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
-import spim.headless.interestpointdetection.DoGParameters;
-import spim.headless.registration.geometrichashing.GeometricHashingParameters;
-import spim.process.interestpointregistration.GlobalOpt;
-import spim.process.interestpointregistration.pairwise.GeometricHashingPairwise;
-import spim.process.interestpointregistration.pairwise.MatcherPairwiseTools;
-import spim.process.interestpointregistration.pairwise.PairwiseResult;
-import spim.process.interestpointregistration.pairwise.PairwiseStrategyTools;
 
 public class TransformationTools
 {
@@ -194,88 +181,5 @@ public class TransformationTools
 		final ViewTransform vt = new ViewTransformAffine( modelDescription, t );
 		vr.preconcatenateTransform( vt );
 		vr.updateModel();
-	}
-
-	public static void main( String[] args )
-	{
-		// generate 4 views with 1000 corresponding beads, single timepoint
-		SpimData2 spimData = SpimData2.convert( SimulatedBeadsImgLoader.spimdataExample( new int[]{ 0, 90, 135 } ) );
-
-		testRegistration(spimData);
-
-	}
-
-	// TODO: move into test package
-	public static void testRegistration( final SpimData2 spimData )
-	{
-		// run DoG
-		DoGParameters.testDoG( spimData );
-
-		// select views to process
-		final List< ViewId > viewIds = new ArrayList< ViewId >();
-		viewIds.addAll( spimData.getSequenceDescription().getViewDescriptions().values() );
-
-		// collect corresponding current transformations
-		final Map< ViewId, ViewRegistration > transformations = spimData.getViewRegistrations().getViewRegistrations();
-
-		// get interest point lists for "beads"
-		final Map< ViewId, ViewInterestPointLists > vipl = spimData.getViewInterestPoints().getViewInterestPoints();
-		final Map< ViewId, InterestPointList > interestpointLists = new HashMap< ViewId, InterestPointList >();
-
-		for ( final ViewId viewId : viewIds )
-			interestpointLists.put( viewId, vipl.get( viewId ).getInterestPointList( "beads" ) );
-
-		// load & transform all interest points
-		final Map< ViewId, List< InterestPoint > > interestpoints = getAllTransformedInterestPoints(
-				viewIds,
-				transformations,
-				interestpointLists );
-
-		// define fixed tiles
-		final ArrayList< ViewId > fixedViews = new ArrayList< ViewId >();
-		fixedViews.add( viewIds.get( 0 ) );
-
-		// define groups
-		final ArrayList< ArrayList< ViewId > > groupedViews = new ArrayList< ArrayList< ViewId > >();
-
-		// define all pairs
-		final List< Pair< ViewId, ViewId > > pairs = PairwiseStrategyTools.allToAll( viewIds, fixedViews, groupedViews );
-
-		// compute all pairwise matchings
-		final RANSACParameters rp = new RANSACParameters();
-		final GeometricHashingParameters gp = new GeometricHashingParameters( new AffineModel3D() );
-		final List< Pair< Pair< ViewId, ViewId >, PairwiseResult< InterestPoint > > > result =
-				MatcherPairwiseTools.computePairs( pairs, interestpoints, new GeometricHashingPairwise< InterestPoint >( rp, gp ) );
-
-		// save the corresponding detections and output result
-		for ( final Pair< Pair< ViewId, ViewId >, PairwiseResult< InterestPoint > > p : result )
-		{
-			final InterestPointList listA = spimData.getViewInterestPoints().getViewInterestPointLists( p.getA().getA() ).getInterestPointList( "beads" );
-			final InterestPointList listB = spimData.getViewInterestPoints().getViewInterestPointLists( p.getA().getB() ).getInterestPointList( "beads" );
-			MatcherPairwiseTools.addCorrespondences( p.getB().getInliers(), p.getA().getA(), p.getA().getB(), "beads", "beads", listA, listB );
-
-			System.out.println( p.getB().getFullDesc() );
-		}
-		
-		final HashMap< ViewId, Tile< AffineModel3D > > models =
-				GlobalOpt.compute( new AffineModel3D(), result, fixedViews, groupedViews );
-
-		// map-back model (useless as we fix the first one)
-		final AffineTransform3D mapBack = computeMapBackModel(
-				spimData.getSequenceDescription().getViewDescription( viewIds.get( 0 ) ).getViewSetup().getSize(),
-				transformations.get( viewIds.get( 0 ) ).getModel(),
-				models.get( viewIds.get( 0 ) ).getModel(),
-				new RigidModel3D() );
-
-		// pre-concatenate models to spimdata2 viewregistrations (from SpimData(2))
-		for ( final ViewId viewId : viewIds )
-		{
-			final Tile< AffineModel3D > tile = models.get( viewId );
-			final ViewRegistration vr = transformations.get( viewId );
-
-			storeTransformation( vr, viewId, tile, mapBack, "AffineModel3D" );
-		}
-
-		// save XML?
 	}
 }

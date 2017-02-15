@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import spim.vecmath.Transform3D;
 import spim.vecmath.Matrix4f;
@@ -30,6 +31,8 @@ import mpicbg.spim.mpicbg.PointMatchGeneric;
 import net.imglib2.util.Pair;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.interestpointregistration.pairwise.PairwiseResult;
+import spim.process.interestpointregistration.pairwise.constellation.PairwiseSetup;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 /**
  * 
@@ -49,7 +52,7 @@ public class GlobalOpt
 			final M model,
 			final List< ? extends Pair< ? extends Pair< ViewId, ViewId >, ? extends PairwiseResult< ? > > > pairs,
 			final Collection< ViewId > fixedViews,
-			final List< ? extends List< ViewId > > groups )
+			final Set< Group< ViewId > > groups )
 	{
 		// assemble all views and corresponding points
 		final HashSet< ViewId > tmpSet = new HashSet<ViewId>();
@@ -62,6 +65,8 @@ public class GlobalOpt
 		final List< ViewId > views = new ArrayList< ViewId >();
 		views.addAll( tmpSet );
 		Collections.sort( views );
+
+		// TODO: merge overlapping groups if necessary
 
 		// assign ViewIds to the individual Tiles (either one tile per view or one tile per timepoint)
 		final HashMap< ViewId, Tile< M > > map = assignViewsToTiles( model, views, groups );
@@ -261,7 +266,7 @@ public class GlobalOpt
 	protected static < M extends Model< M > > HashMap< ViewId, Tile< M > > assignViewsToTiles(
 			final M model,
 			final List< ViewId > views,
-			final List< ? extends List< ViewId > > groups )
+			final Set< Group< ViewId > > groups )
 	{
 		final HashMap< ViewId, Tile< M > > map = new HashMap< ViewId, Tile< M > >();
 
@@ -276,7 +281,7 @@ public class GlobalOpt
 			remainingViews.addAll( views );
 
 			// for all groups find the viewIds that belong to this timepoint
-			for ( final List< ViewId > viewIds : groups )
+			for ( final Group< ViewId > viewIds : groups )
 			{
 				// one tile per timepoint
 				final Tile< M > tileGroup = new Tile< M >( model.copy() );
