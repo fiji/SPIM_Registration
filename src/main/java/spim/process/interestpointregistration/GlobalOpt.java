@@ -72,7 +72,7 @@ public class GlobalOpt
 		// remove empty groups
 		Group.removeEmptyGroups( groups );
 
-		// assign ViewIds to the individual Tiles (either one tile per view or one tile per timepoint)
+		// assign ViewIds to the individual Tiles (either one tile per view or one tile per group)
 		final HashMap< ViewId, Tile< M > > map = assignViewsToTiles( model, views, groups );
 
 		// assign the pointmatches to all the tiles
@@ -287,7 +287,7 @@ public class GlobalOpt
 			// for all groups find the viewIds that belong to this timepoint
 			for ( final Group< ViewId > viewIds : groups )
 			{
-				// one tile per timepoint
+				// one tile per group
 				final Tile< M > tileGroup = new Tile< M >( model.copy() );
 
 				// all viewIds of one group map to the same tile (see main method for test, that works)
@@ -295,11 +295,11 @@ public class GlobalOpt
 				{
 					map.put( viewId, tileGroup );
 
-					// TODO: merge groups that share tiles
+					// just to make sure that there are no views part of two groups or present twice
 					if ( !remainingViews.contains( viewId ) )
 						throw new RuntimeException(
 								"ViewSetupID:" + viewId.getViewSetupId() + ", timepointId: " + viewId.getTimePointId() +
-								" not part of two sets of groups, this is not supported." ); 
+								" is part of two groups, this is a bug since those should have been merged." ); 
 
 					remainingViews.remove( viewId );
 				}
