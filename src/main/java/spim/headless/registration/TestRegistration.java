@@ -8,31 +8,23 @@ import java.util.Map;
 import java.util.Set;
 
 import mpicbg.models.AffineModel3D;
-import mpicbg.models.RigidModel3D;
-import mpicbg.models.Tile;
-import mpicbg.pointdescriptor.LinkedPoint;
-import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.ViewId;
-import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.util.Pair;
 import simulation.imgloader.SimulatedBeadsImgLoader;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
-import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.headless.interestpointdetection.DoGParameters;
 import spim.headless.registration.geometrichashing.GeometricHashingParameters;
-import spim.process.interestpointregistration.GlobalOpt;
 import spim.process.interestpointregistration.pairwise.GeometricHashingPairwise;
 import spim.process.interestpointregistration.pairwise.MatcherPairwiseTools;
 import spim.process.interestpointregistration.pairwise.PairwiseResult;
-import spim.process.interestpointregistration.pairwise.PairwiseStrategyTools;
 import spim.process.interestpointregistration.pairwise.constellation.AllToAll;
 import spim.process.interestpointregistration.pairwise.constellation.PairwiseSetup;
 import spim.process.interestpointregistration.pairwise.constellation.Subset;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.GroupedInterestPoint;
-import spim.process.interestpointregistration.pairwise.constellation.grouping.Grouping;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.InterestPointGrouping;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.InterestPointGroupingAll;
 import spim.process.interestpointregistration.pairwise.constellation.overlap.SimpleBoundingBoxOverlap;
@@ -61,21 +53,25 @@ public class TestRegistration
 		final List< ViewId > viewIds = new ArrayList< ViewId >();
 		viewIds.addAll( spimData.getSequenceDescription().getViewDescriptions().values() );
 
-		// collect corresponding current transformations
-		final Map< ViewId, ViewRegistration > transformations = spimData.getViewRegistrations().getViewRegistrations();
+		//
+		// get interest point lists for "beads" and store a map ViewId >> InterestPointLabel
+		//
+		final String label = "beads"; // this could be different for each ViewId
 
-		// get interest point lists for "beads"
-		final Map< ViewId, ViewInterestPointLists > vipl = spimData.getViewInterestPoints().getViewInterestPoints();
-		final Map< ViewId, InterestPointList > interestpointLists = new HashMap< ViewId, InterestPointList >();
+		final Map< ViewId, InterestPointList > iplMap = new HashMap<>();
+		final Map< ViewId, String > labelMap = new HashMap<>();
 
 		for ( final ViewId viewId : viewIds )
-			interestpointLists.put( viewId, vipl.get( viewId ).getInterestPointList( "beads" ) );
+		{
+			iplMap.put( viewId, spimData.getViewInterestPoints().getViewInterestPoints().get( viewId ).getInterestPointList( label ) );
+			labelMap.put( viewId, label );
+		}
 
 		// load & transform all interest points
 		final Map< ViewId, List< InterestPoint > > interestpoints = TransformationTools.getAllTransformedInterestPoints(
 				viewIds,
-				transformations,
-				interestpointLists );
+				spimData.getViewRegistrations().getViewRegistrations(),
+				iplMap );
 
 		// setup pairwise registration
 		final Set< Group< ViewId > > groups = new HashSet<>();
@@ -113,12 +109,19 @@ public class TestRegistration
 			final List< Pair< Pair< ViewId, ViewId >, PairwiseResult< InterestPoint > > > result =
 					MatcherPairwiseTools.computePairs( pairs, interestpoints, new GeometricHashingPairwise< InterestPoint >( rp, gp ) );
 
-			// save the corresponding detections and output result
+			// clear correspondences
+			MatcherPairwiseTools.clearCorrespondences( iplMap );
+
+			// add the corresponding detections and output result
 			for ( final Pair< Pair< ViewId, ViewId >, PairwiseResult< InterestPoint > > p : result )
 			{
-				final InterestPointList listA = spimData.getViewInterestPoints().getViewInterestPointLists( p.getA().getA() ).getInterestPointList( "beads" );
-				final InterestPointList listB = spimData.getViewInterestPoints().getViewInterestPointLists( p.getA().getB() ).getInterestPointList( "beads" );
-				TransformationTools.setCorrespondences( p.getB().getInliers(), p.getA().getA(), p.getA().getB(), "beads", "beads", listA, listB );
+				final ViewId vA = p.getA().getA();
+				final ViewId vB = p.getA().getB();
+
+				final InterestPointList listA = iplMap.get( p.getA().getA() );
+				final InterestPointList listB = iplMap.get( p.getA().getB() );
+
+				MatcherPairwiseTools.addCorrespondences( p.getB().getInliers(), vA, vB, labelMap.get( vA ), labelMap.get( vB ), listA, listB );
 
 				System.out.println( p.getB().getFullDesc() );
 			}
@@ -152,17 +155,13 @@ public class TestRegistration
 			}
 
 			final List< Pair< Pair< Group< ViewId >, Group< ViewId > >, PairwiseResult< GroupedInterestPoint< ViewId > > > > resultGroup =
-					MatcherPairwiseTools.computePairs( groupedPairs, groupedInterestpoints, new GeometricHashingPairwise< GroupedInterestPoint< ViewId > >( rp, gp ) );
+					MatcherPairwiseTools.computePairs( groupedPairs, groupedInterestpoints, new GeometricHashingPairwise<>( rp, gp ) );
 
-			// save the corresponding detections and output result
-			for ( final Pair< Pair< Group< ViewId >, Group< ViewId > >, PairwiseResult< GroupedInterestPoint< ViewId > > > p : resultGroup )
-			{
-				//final InterestPointList listA = spimData.getViewInterestPoints().getViewInterestPointLists( p.getA().getA() ).getInterestPointList( "beads" );
-				//final InterestPointList listB = spimData.getViewInterestPoints().getViewInterestPointLists( p.getA().getB() ).getInterestPointList( "beads" );
-				//TransformationTools.setCorrespondences( p.getB().getInliers(), p.getA().getA(), p.getA().getB(), "beads", "beads", listA, listB );
+			// clear correspondences and get a map linking ViewIds to the correspondence lists
+			final Map< ViewId, List< CorrespondingInterestPoints > > cMap = MatcherPairwiseTools.clearCorrespondences( iplMap );
 
-				System.out.println( p.getB().getFullDesc() );
-			}
+			// add the corresponding detections and output result
+			MatcherPairwiseTools.addCorrespondencesFromGroups( resultGroup, iplMap, labelMap, cMap );
 
 			/*
 			final HashMap< ViewId, Tile< AffineModel3D > > models =
