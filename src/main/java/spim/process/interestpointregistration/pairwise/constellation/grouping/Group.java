@@ -215,6 +215,13 @@ public class Group< V > implements Iterable< V >
 		return new Group<>( list );
 	}
 
+	public static < V > void removeEmptyGroups( final List< Group < V > > groups )
+	{
+		for ( int i = groups.size() - 1; i >= 0; --i )
+			if ( groups.get( i ).size() == 0 )
+				groups.remove( i );
+	}
+
 	public static String pvid( final ViewId viewId ) { return "tpId=" + viewId.getTimePointId() + " setupId=" + viewId.getViewSetupId(); }
 	public static String pvids( final ViewId viewId ) { return "t(" + viewId.getTimePointId() + ")-s(" + viewId.getViewSetupId() + ")"; }
 	public static String gvids( final Group< ? > group )

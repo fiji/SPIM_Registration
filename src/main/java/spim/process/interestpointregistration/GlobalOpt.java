@@ -52,7 +52,7 @@ public class GlobalOpt
 			final M model,
 			final List< ? extends Pair< ? extends Pair< ViewId, ViewId >, ? extends PairwiseResult< ? > > > pairs,
 			final Collection< ViewId > fixedViews,
-			final Set< Group< ViewId > > groups )
+			final Set< Group< ViewId > > groupsIn )
 	{
 		// assemble all views and corresponding points
 		final HashSet< ViewId > tmpSet = new HashSet<ViewId>();
@@ -66,7 +66,11 @@ public class GlobalOpt
 		views.addAll( tmpSet );
 		Collections.sort( views );
 
-		// TODO: merge overlapping groups if necessary
+		// merge overlapping groups if necessary
+		final ArrayList< Group< ViewId > > groups = Group.mergeAllOverlappingGroups( groupsIn );
+
+		// remove empty groups
+		Group.removeEmptyGroups( groups );
 
 		// assign ViewIds to the individual Tiles (either one tile per view or one tile per timepoint)
 		final HashMap< ViewId, Tile< M > > map = assignViewsToTiles( model, views, groups );
@@ -266,14 +270,14 @@ public class GlobalOpt
 	protected static < M extends Model< M > > HashMap< ViewId, Tile< M > > assignViewsToTiles(
 			final M model,
 			final List< ViewId > views,
-			final Set< Group< ViewId > > groups )
+			final List< Group< ViewId > > groups )
 	{
 		final HashMap< ViewId, Tile< M > > map = new HashMap< ViewId, Tile< M > >();
 
 		if ( groups != null && groups.size() > 0 )
 		{
 			//
-			// there is one tile per group only
+			// we make only mpicbg-Tile per group since all views are transformed together
 			//
 
 			// remember those who are not part of a group
