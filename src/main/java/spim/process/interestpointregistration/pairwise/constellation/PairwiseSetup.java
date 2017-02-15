@@ -465,21 +465,6 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 		vSets.add( vSet );
 	}
 
-	public static < V > boolean oneSetContainsBoth(
-			final V viewIdA,
-			final V viewIdB,
-			final Collection< ? extends Group< V >> sets )
-	{
-		if ( sets == null )
-			return false;
-
-		for ( final Group< V > set : sets )
-			if ( set.contains( viewIdA ) && set.contains( viewIdB ) )
-				return true;
-
-		return false;
-	}
-
 	/**
 	 * Sorts each list using a given comparator, and then the lists according to their first element
 	 *

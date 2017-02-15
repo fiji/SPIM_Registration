@@ -78,6 +78,35 @@ public class Group< V > implements Iterable< V >
 	@Override
 	public String toString() { return gvids( this ); }
 
+	public static < V > boolean containsBoth(
+			final V viewIdA,
+			final V viewIdB,
+			final Collection< ? extends Group< V > > groupCollection )
+	{
+		if ( groupCollection == null )
+			return false;
+
+		for ( final Group< V > group : groupCollection )
+			if ( group.contains( viewIdA ) && group.contains( viewIdB ) )
+				return true;
+
+		return false;
+	}
+
+	public static < V > Group< V > isContained(
+			final V view,
+			final Collection< ? extends Group< V > > groupCollection )
+	{
+		if ( groupCollection == null )
+			return null;
+
+		for ( final Group< V > group : groupCollection )
+			if ( group.contains( view ) )
+				return group;
+
+		return null;
+	}
+
 	/**
 	 * Test if there is any overlap between two groups (at least one view part of both)
 	 *
