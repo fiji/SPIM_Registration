@@ -2,6 +2,7 @@ package spim.fiji.spimdata.explorer.popup;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JMenu;
@@ -12,6 +13,7 @@ import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
+import spim.fiji.spimdata.explorer.GroupedRowWindow;
 
 public class RemoveTransformationPopup extends JMenu implements ExplorerWindowSetable
 {
@@ -61,21 +63,36 @@ public class RemoveTransformationPopup extends JMenu implements ExplorerWindowSe
 				return;
 			}
 
+			final List<List< ViewId >> viewIds = new ArrayList<>();
+			
 			//final AbstractSpimData< ? > data = (AbstractSpimData< ? >)panel.getSpimData();
-			final List< ViewId > viewIds = panel.selectedRowsViewId();
+			if (panel instanceof GroupedRowWindow)
+			{
+				viewIds.addAll( ((GroupedRowWindow)panel).selectedRowsViewIdGroups() );
+			}
+			else
+			{
+				for (ViewId vid : panel.selectedRowsViewId())
+				{
+					ArrayList<ViewId> singleVidList = new ArrayList<>();
+					singleVidList.add( vid );
+					viewIds.add( singleVidList );
+				}
+			}
 
 			final ViewRegistrations vr = panel.getSpimData().getViewRegistrations();
-			for ( final ViewId viewId : viewIds )
-			{
-				final ViewRegistration v = vr.getViewRegistrations().get( viewId );
-				
-				if ( index == 0 )
-					v.getTransformList().remove( 0 );
-				else
-					v.getTransformList().remove( v.getTransformList().size() - 1 );
-
-				v.updateModel();
-			}
+			for ( final List<ViewId> viewIdListI : viewIds )
+				for ( final ViewId viewId : viewIdListI )
+				{
+					final ViewRegistration v = vr.getViewRegistrations().get( viewId );
+					
+					if ( index == 0 )
+						v.getTransformList().remove( 0 );
+					else
+						v.getTransformList().remove( v.getTransformList().size() - 1 );
+	
+					v.updateModel();
+				}
 
 			panel.updateContent();
 			panel.bdvPopup().updateBDV();
