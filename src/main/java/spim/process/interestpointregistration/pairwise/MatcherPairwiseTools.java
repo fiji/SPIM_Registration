@@ -56,14 +56,16 @@ public class MatcherPairwiseTools
 		return cMap;
 	}
 
-	public static < V extends ViewId, P extends PairwiseResult< GroupedInterestPoint< V > > > List< Pair< Pair< V, V >, P > > addCorrespondencesFromGroups(
+	public static < V extends ViewId, P extends PairwiseResult< GroupedInterestPoint< V > > >
+		List< Pair< Pair< V, V >, PairwiseResult< GroupedInterestPoint< V > > > >
+			addCorrespondencesFromGroups(
 			final Collection< ? extends Pair< ?, P > > resultGroup,
 			final Map< V, ? extends InterestPointList > iplMap,
 			final Map< V, String > labelMap,
 			final Map< V, ? extends List< CorrespondingInterestPoints > > cMap
 			)
 	{
-		final HashMap< Pair< V, V >, P > transformedMap = new HashMap<>();
+		final HashMap< Pair< V, V >, PairwiseResult< GroupedInterestPoint< V > > > transformedMap = new HashMap<>();
 
 		for ( final Pair< ?, P > p : resultGroup )
 		{
@@ -86,20 +88,18 @@ public class MatcherPairwiseTools
 				cMap.get( viewIdB ).add( correspondingToB );
 
 				// update transformedMap
-				final Pair< V, V > pairX = new ValuePair<>( viewIdA, viewIdB );
-				final Pair< V, V > pairY = new ValuePair<>( viewIdB, viewIdA );
+				final Pair< V, V > pair = new ValuePair<>( viewIdA, viewIdB );
 
 				final PairwiseResult< GroupedInterestPoint< V > > pwr;
 
-				if ( transformedMap.containsKey( pairX ) )
-					pwr = transformedMap.get( pairX );
-				else if ( transformedMap.containsKey( pairY ) )
-					pwr = transformedMap.get( pairY );
+				if ( transformedMap.containsKey( pair ) )
+					pwr = transformedMap.get( pair );
 				else
 				{
 					pwr = new PairwiseResult<>();
 					pwr.setInliers( new ArrayList<>(), p.getB().getError() );
 					pwr.setCandidates( new ArrayList<>() );
+					transformedMap.put( pair, pwr );
 				}
 
 				pwr.getInliers().add( pm );
@@ -111,7 +111,7 @@ public class MatcherPairwiseTools
 		for ( final V viewId : cMap.keySet() )
 			iplMap.get( viewId ).setCorrespondingInterestPoints( cMap.get( viewId ) );
 
-		final ArrayList< Pair< Pair< V, V >, P > > transformedList = new ArrayList<>();
+		final ArrayList< Pair< Pair< V, V >, PairwiseResult< GroupedInterestPoint< V > > > > transformedList = new ArrayList<>();
 
 		for ( final Pair< V, V > pair : transformedMap.keySet() )
 			transformedList.add( new ValuePair<>( pair, transformedMap.get( pair ) ) );
