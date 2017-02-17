@@ -41,9 +41,6 @@ public class GlobalOpt
 	/**
 	 * Computes a global optimization based on the corresponding points
 	 * 
-	 * @param registrationType - to determine which tiles are fixed
-	 * @param subset - to get the correspondences
-	 * @return - list of Tiles containing the final transformation models
 	 */
 	public static < M extends Model< M > > HashMap< ViewId, Tile< M > > compute(
 			final M model,
@@ -51,23 +48,27 @@ public class GlobalOpt
 			final Collection< ViewId > fixedViews,
 			final Set< Group< ViewId > > groupsIn )
 	{
-		// assemble all views and corresponding points
-		final HashSet< ViewId > tmpSet = new HashSet<ViewId>();
+		// merge overlapping groups if necessary
+		final ArrayList< Group< ViewId > > groups = Group.mergeAllOverlappingGroups( groupsIn );
+
+		// remove empty groups
+		Group.removeEmptyGroups( groups );
+
+		// assemble all views
+		final HashSet< ViewId > tmpSet = new HashSet<>();
 		for ( Pair< ? extends Pair< ViewId, ViewId >, ? extends PairwiseResult< ? > > pair : pairs )
 		{
 			tmpSet.add( pair.getA().getA() );
 			tmpSet.add( pair.getA().getB() );
 		}
 
+		// views that are part of a group but not of a pair and will thus be transformed as well
+		for ( final Group< ViewId > group : groups )
+				tmpSet.addAll( group.getViews() );
+
 		final List< ViewId > views = new ArrayList< ViewId >();
 		views.addAll( tmpSet );
 		Collections.sort( views );
-
-		// merge overlapping groups if necessary
-		final ArrayList< Group< ViewId > > groups = Group.mergeAllOverlappingGroups( groupsIn );
-
-		// remove empty groups
-		Group.removeEmptyGroups( groups );
 
 		// assign ViewIds to the individual Tiles (either one tile per view or one tile per group)
 		final HashMap< ViewId, Tile< M > > map = assignViewsToTiles( model, views, groups );
@@ -317,7 +318,7 @@ public class GlobalOpt
 		return map;
 	}
 
-	protected static void addPointMatches( final List< ? extends PointMatchGeneric< ? > > correspondences, final Tile<?> tileA, final Tile<?> tileB )
+	protected static void addPointMatches( final List< ? extends PointMatchGeneric< ? > > correspondences, final Tile< ? > tileA, final Tile< ? > tileB )
 	{
 		final ArrayList< PointMatch > pm = new ArrayList<>();
 		pm.addAll( correspondences );
