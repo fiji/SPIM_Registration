@@ -56,22 +56,25 @@ public class MatcherPairwiseTools
 		return cMap;
 	}
 
-	public static void addCorrespondencesFromGroups(
-			final Collection< ? extends Pair< ?, ? extends PairwiseResult< GroupedInterestPoint< ViewId > > > > resultGroup,
-			final Map< ViewId, ? extends InterestPointList > iplMap,
-			final Map< ViewId, String > labelMap,
-			final Map< ViewId, ? extends List< CorrespondingInterestPoints > > cMap
+	public static < V extends ViewId, P extends PairwiseResult< GroupedInterestPoint< V > > > List< Pair< Pair< V, V >, P > > addCorrespondencesFromGroups(
+			final Collection< ? extends Pair< ?, P > > resultGroup,
+			final Map< V, ? extends InterestPointList > iplMap,
+			final Map< V, String > labelMap,
+			final Map< V, ? extends List< CorrespondingInterestPoints > > cMap
 			)
 	{
-		for ( final Pair< ?, ? extends PairwiseResult< GroupedInterestPoint< ViewId > > > p : resultGroup )
-		{
-			for ( final PointMatchGeneric< GroupedInterestPoint< ViewId > > pm : p.getB().getInliers() )
-			{
-				final GroupedInterestPoint< ViewId > gpA = pm.getPoint1();
-				final GroupedInterestPoint< ViewId > gpB = pm.getPoint2();
+		final HashMap< Pair< V, V >, P > transformedMap = new HashMap<>();
 
-				final ViewId viewIdA = gpA.getV();
-				final ViewId viewIdB = gpB.getV();
+		for ( final Pair< ?, P > p : resultGroup )
+		{
+			for ( final PointMatchGeneric< GroupedInterestPoint< V > > pm : p.getB().getInliers() )
+			{
+				// assign correspondences
+				final GroupedInterestPoint< V > gpA = pm.getPoint1();
+				final GroupedInterestPoint< V > gpB = pm.getPoint2();
+
+				final V viewIdA = gpA.getV();
+				final V viewIdB = gpB.getV();
 
 				final String labelA = labelMap.get( viewIdA );
 				final String labelB = labelMap.get( viewIdB );
@@ -81,14 +84,41 @@ public class MatcherPairwiseTools
 				
 				cMap.get( viewIdA ).add( correspondingToA );
 				cMap.get( viewIdB ).add( correspondingToB );
+
+				// update transformedMap
+				final Pair< V, V > pairX = new ValuePair<>( viewIdA, viewIdB );
+				final Pair< V, V > pairY = new ValuePair<>( viewIdB, viewIdA );
+
+				final PairwiseResult< GroupedInterestPoint< V > > pwr;
+
+				if ( transformedMap.containsKey( pairX ) )
+					pwr = transformedMap.get( pairX );
+				else if ( transformedMap.containsKey( pairY ) )
+					pwr = transformedMap.get( pairY );
+				else
+				{
+					pwr = new PairwiseResult<>();
+					pwr.setInliers( new ArrayList<>(), p.getB().getError() );
+					pwr.setCandidates( new ArrayList<>() );
+				}
+
+				pwr.getInliers().add( pm );
 			}
 
 			System.out.println( p.getB().getFullDesc() );
 		}
 
-		for ( final ViewId viewId : cMap.keySet() )
+		for ( final V viewId : cMap.keySet() )
 			iplMap.get( viewId ).setCorrespondingInterestPoints( cMap.get( viewId ) );
+
+		final ArrayList< Pair< Pair< V, V >, P > > transformedList = new ArrayList<>();
+
+		for ( final Pair< V, V > pair : transformedMap.keySet() )
+			transformedList.add( new ValuePair<>( pair, transformedMap.get( pair ) ) );
+
+		return transformedList;
 	}
+
 	/**
 	 * Add correspondences to the interestpointlists
 	 */

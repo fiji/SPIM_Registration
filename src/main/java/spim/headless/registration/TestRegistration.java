@@ -163,10 +163,12 @@ public class TestRegistration
 			final Map< ViewId, List< CorrespondingInterestPoints > > cMap = MatcherPairwiseTools.clearCorrespondences( iplMap );
 
 			// add the corresponding detections and output result
-			MatcherPairwiseTools.addCorrespondencesFromGroups( resultGroup, iplMap, labelMap, cMap );
+			final List< Pair< Pair< ViewId, ViewId >, PairwiseResult< GroupedInterestPoint< ViewId > > > > resultG =
+					MatcherPairwiseTools.addCorrespondencesFromGroups( resultGroup, iplMap, labelMap, cMap );
 
+			// run global optimization
 			final HashMap< ViewId, Tile< AffineModel3D > > models =
-					GlobalOpt.compute( new AffineModel3D(), result, fixedViews, groups );
+					GlobalOpt.compute( new AffineModel3D(), resultG, fixedViews, groups );
 
 			/*
 
