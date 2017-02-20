@@ -76,7 +76,7 @@ public class TestRegistration
 				iplMap );
 
 		// setup pairwise registration
-		final Set< Group< ViewId > > groups = new HashSet<>();
+		Set< Group< ViewId > > groups = new HashSet<>();
 		final PairwiseSetup< ViewId > setup = new AllToAll<>( viewIds, groups );
 
 		System.out.println( "Defined pairs, removed " + setup.definePairs().size() + " redundant view pairs." );
@@ -135,8 +135,14 @@ public class TestRegistration
 			final Map< Group< ViewId >, List< GroupedInterestPoint< ViewId > > > groupedInterestpoints = new HashMap<>();
 			final InterestPointGrouping< ViewId > ipGrouping = new InterestPointGroupingAll<>( interestpoints );
 
+			// which groups exist
+			groups.clear();
+
 			for ( final Pair< Group< ViewId >, Group< ViewId > > pair : groupedPairs )
 			{
+				groups.add( pair.getA() );
+				groups.add( pair.getB() );
+
 				System.out.print( "[" + pair.getA() + "] <=> [" + pair.getB() + "]" );
 
 				if ( !groupedInterestpoints.containsKey( pair.getA() ) )

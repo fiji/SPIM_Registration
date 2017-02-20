@@ -250,7 +250,7 @@ public class GlobalOpt
 				if ( fixedGroup != null )
 					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Fixing group-tile [" + fixedGroup + "]" );
 				else
-					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Fixing view-tile [viewSetupId = " + viewId.getViewSetupId() + "]" );
+					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Fixing view-tile [" + Group.pvid( viewId ) + "]" );
 				tc.fixTile( tile );
 			}
 
