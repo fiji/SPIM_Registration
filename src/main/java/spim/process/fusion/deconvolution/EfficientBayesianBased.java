@@ -240,7 +240,12 @@ public class EfficientBayesianBased extends Fusion
 						// device list for CPU or CUDA processing
 						final int[] devList = new int[ deviceList.size() ];
 						for ( int i = 0; i < devList.length; ++i )
+						{
 							devList[ i ] = deviceList.get( i ).getDeviceId();
+							
+							if ( devList[ i ] >= 0 && !ArrayImgFactory.class.isInstance( this.computeFactory ) )
+								throw new RuntimeException( "CUDA computing is only possible when selecting ArrayImg for 'ImgLib2 container FFTs'" );
+						}
 	
 						deconvolutionData.add( new MVDeconFFT(
 								pfd.getTransformedImgs().get( vd ),
