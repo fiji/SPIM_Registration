@@ -206,11 +206,11 @@ public class SlideBook6 implements MultiViewDatasetDefinition
         // TODO: query rotation angle of each SlideBook channel
         final double[] yaxis = new double[]{0, 1, 0};
         final ArrayList<Angle> angles = new ArrayList<Angle>();
-        final Angle angleA = new Angle(0, "Path A");
+        final Angle angleA = new Angle(0, "Path_A");
         angleA.setRotation(yaxis, defaultAngles[0]);
         angles.add(angleA);
 
-        final Angle angleB = new Angle(1, "Path B");
+        final Angle angleB = new Angle(1, "Path_B");
         angleB.setRotation(yaxis, defaultAngles[1]);
         angles.add(angleB);
 
@@ -225,17 +225,23 @@ public class SlideBook6 implements MultiViewDatasetDefinition
         }
 
         // create one illumination for each capture if defaultCapture == -1, otherwise just one capture
-        for (int capture = firstCapture; capture < numCaptures; capture++) {
+        for (int capture = firstCapture; capture < firstCapture + numCaptures; capture++) {
             final int channels = meta.getNumChannels(capture);
 
             // multi-angle captures must have pairs of channels
             if (channels > 1 && channels % 2 == 0) {
-                final String name = meta.getImageName(capture);
-                final Illumination i = new Illumination(capture * 8, name);
+                String imageName = meta.getImageName(capture);
+				imageName = imageName.replaceAll("[^a-zA-Z0-9_-]", "_"); // convert illegal characters to _
+				imageName = imageName.toLowerCase(); // convert to lowercase
+                final Illumination i = new Illumination(capture * 8, imageName);
 
                 for (int ch = 0; ch < channels / 2; ch++) {
                     // use name of first channel, SlideBook channels are diSPIM angles and each SlideBook image should have two angles per channel
-                    final Channel channel = new Channel(ch, meta.getChannelName(capture, ch * 2));
+					String channelName = meta.getChannelName(capture, ch * 2);
+					channelName = channelName.replaceAll("[^a-zA-Z0-9_-]", "_"); // convert illegal characters to _
+					channelName = channelName.toLowerCase(); // convert to lowercase
+
+					final Channel channel = new Channel(ch, channelName);
 
                     for (final Angle a : angles) {
                         float voxelSizeUm = defaultCalibrations[0];
