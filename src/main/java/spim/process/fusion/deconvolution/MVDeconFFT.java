@@ -31,7 +31,7 @@ public class MVDeconFFT
 	
 	private RandomAccessibleInterval< FloatType > image, weight;
 	private ArrayImg< FloatType, ? > kernel1, kernel2;
-	FFTConvolution< FloatType > fftConvolution1, fftConvolution2;
+	private FFTConvolution< FloatType > fftConvolution1, fftConvolution2;
 	protected int numViews = 0;
 
 	final protected ExecutorService service;
@@ -371,6 +371,7 @@ public class MVDeconFFT
 				if ( this.fftConvolution1 == null )
 				{
 					this.fftConvolution1 = new FFTConvolution< FloatType >( block, this.kernel1 );
+					this.fftConvolution1.setComputeComplexConjugate( false );
 					this.fftConvolution1.setExecutorService( service );
 					this.fftConvolution1.setKeepImgFFT( false );
 				}
@@ -391,6 +392,7 @@ public class MVDeconFFT
 				if ( this.fftConvolution1 == null )
 				{
 					this.fftConvolution1 = new FFTConvolution< FloatType >( this.image, this.kernel1, fftFactory );
+					this.fftConvolution1.setComputeComplexConjugate( false );
 					this.fftConvolution1.setExecutorService( service );
 					this.fftConvolution1.setKeepImgFFT( false );
 				}
@@ -462,6 +464,7 @@ public class MVDeconFFT
 				if ( this.fftConvolution2 == null )
 				{
 					this.fftConvolution2 = new FFTConvolution< FloatType >( block, this.kernel2 );
+					this.fftConvolution2.setComputeComplexConjugate( false );
 					this.fftConvolution2.setExecutorService( service );
 					this.fftConvolution2.setKeepImgFFT( false );
 				}
@@ -482,6 +485,7 @@ public class MVDeconFFT
 				if ( this.fftConvolution2 == null )
 				{
 					this.fftConvolution2 = new FFTConvolution< FloatType >( this.image, this.kernel2, fftFactory );
+					this.fftConvolution2.setComputeComplexConjugate( false );
 					this.fftConvolution2.setExecutorService( service );
 					this.fftConvolution2.setKeepImgFFT( false );
 				}
