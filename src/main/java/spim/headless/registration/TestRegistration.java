@@ -8,8 +8,11 @@ import java.util.Map;
 import java.util.Set;
 
 import mpicbg.models.AffineModel3D;
+import mpicbg.models.RigidModel3D;
 import mpicbg.models.Tile;
+import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.ViewId;
+import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.util.Pair;
 import simulation.imgloader.SimulatedBeadsImgLoader;
 import spim.fiji.spimdata.SpimData2;
@@ -176,26 +179,22 @@ public class TestRegistration
 			final HashMap< ViewId, Tile< AffineModel3D > > models =
 					GlobalOpt.compute( new AffineModel3D(), resultG, fixedViews, groups );
 
-			/*
+			final AffineTransform3D mapBack = TransformationTools.computeMapBackModel(
+					spimData.getSequenceDescription().getViewDescription( viewIds.get( 0 ) ).getViewSetup().getSize(),
+					spimData.getViewRegistrations().getViewRegistrations().get( viewIds.get( 0 ) ).getModel(),
+					models.get( viewIds.get( 0 ) ).getModel(),
+					new RigidModel3D() );
 
-		// map-back model (useless as we fix the first one)
-		final AffineTransform3D mapBack = computeMapBackModel(
-				spimData.getSequenceDescription().getViewDescription( viewIds.get( 0 ) ).getViewSetup().getSize(),
-				transformations.get( viewIds.get( 0 ) ).getModel(),
-				models.get( viewIds.get( 0 ) ).getModel(),
-				new RigidModel3D() );
+			System.out.println( mapBack );
 
-		// pre-concatenate models to spimdata2 viewregistrations (from SpimData(2))
-		for ( final ViewId viewId : viewIds )
-		{
-			final Tile< AffineModel3D > tile = models.get( viewId );
-			final ViewRegistration vr = transformations.get( viewId );
-
-			storeTransformation( vr, viewId, tile, mapBack, "AffineModel3D" );
-		}
-
-		// save XML?
-		*/
+			// pre-concatenate models to spimdata2 viewregistrations (from SpimData(2))
+			for ( final ViewId viewId : viewIds )
+			{
+				final Tile< AffineModel3D > tile = models.get( viewId );
+				final ViewRegistration vr = spimData.getViewRegistrations().getViewRegistrations().get( viewId );
+	
+				TransformationTools.storeTransformation( vr, viewId, tile, mapBack, "Scripted AffineModel3D" );
+			}
 		}
 	}
 }
