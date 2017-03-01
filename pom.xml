@@ -120,8 +120,8 @@
 		<url>https://github.com/fiji/SPIM_Registration/issues</url>
 	</issueManagement>
 	<ciManagement>
-		<system>Jenkins</system>
-		<url>https://jenkins.imagej.net/job/SPIM_Registration/</url>
+		<system>Travis CI</system>
+		<url>https://travis-ci.org/fiji/SPIM_Registration</url>
 	</ciManagement>
 
 	<properties>
