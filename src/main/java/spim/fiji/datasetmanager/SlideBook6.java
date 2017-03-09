@@ -2,8 +2,6 @@ package spim.fiji.datasetmanager;
 
 import fiji.util.gui.GenericDialogPlus;
 import ij.gui.GenericDialog;
-import loci.formats.FormatTools;
-import loci.formats.IFormatReader;
 
 import java.awt.Font;
 import java.io.File;
