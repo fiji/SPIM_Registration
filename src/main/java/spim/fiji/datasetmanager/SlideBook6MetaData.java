@@ -15,7 +15,7 @@ import spim.fiji.spimdata.imgloaders.LegacySlideBook6ImgLoader;
 
 public class SlideBook6MetaData
 {
-	private SlideBook6Image[] illuminations;
+	private SlideBook6Image[] captures;
 
 	private int pixelType = -1;
 	private int bytesPerPixel = -1; 
@@ -23,19 +23,19 @@ public class SlideBook6MetaData
 	private boolean isLittleEndian;
 	private IFormatReader r = null;
 
-	public int numIlluminations() { return illuminations.length; }
+	public int numCaptures() { return captures.length; }
 
-    public String imageName(final int i) { return illuminations[i].name; }
-    public int numChannels(final int i) { return illuminations[i].channels.length; }
-    public int numAngles(final int i) { return illuminations[i].angles.length; }
-    public int numTimepoints(final int i) { return illuminations[i].numT; }
-    public String objective(final int i) { return illuminations[i].objective; }
-    public double calX(final int i) { return illuminations[i].calX; }
-    public double calY(final int i) { return illuminations[i].calY; }
-    public double calZ(final int i) { return illuminations[i].calZ; }
-    public String[] channels(final int i) { return illuminations[i].channels; }
-    public String[] angles(final int i) { return illuminations[i].angles; }
-    public int[] imageSize(final int i) { return illuminations[i].imageSize;}
+    public String imageName(final int i) { return captures[i].name; }
+    public int numChannels(final int i) { return captures[i].channels.length; }
+    public int numAngles(final int i) { return captures[i].angles.length; }
+    public int numTimepoints(final int i) { return captures[i].numT; }
+    public String objective(final int i) { return captures[i].objective; }
+    public double calX(final int i) { return captures[i].calX; }
+    public double calY(final int i) { return captures[i].calY; }
+    public double calZ(final int i) { return captures[i].calZ; }
+    public String[] channels(final int i) { return captures[i].channels; }
+    public String[] angles(final int i) { return captures[i].angles; }
+    public int[] imageSize(final int i) { return captures[i].imageSize;}
 
 	public int pixelType() { return pixelType; }
 	public int bytesPerPixel() { return bytesPerPixel; }
@@ -94,8 +94,8 @@ public class SlideBook6MetaData
 		}
 
 		final Hashtable<String, Object> metaData = r.getGlobalMetadata();
-		final int numIlluminations = r.getSeriesCount();
-		illuminations = new SlideBook6Image[numIlluminations];
+		final int numCaptures = r.getSeriesCount();
+		captures = new SlideBook6Image[numCaptures];
 
 		// only one debug ouput
 		boolean printMetadata = false;
@@ -103,38 +103,38 @@ public class SlideBook6MetaData
 		Object tmp;
 
 		try {
-			for (int i = 0; i < illuminations.length; ++i) {
+			for (int i = 0; i < captures.length; ++i) {
 				r.setSeries(i);
 
-				illuminations[i] = new SlideBook6Image();
+				captures[i] = new SlideBook6Image();
 
                 final MetadataRetrieve retrieve = (MetadataRetrieve) r.getMetadataStore();
 
                 final int w = r.getSizeX();
 				final int h = r.getSizeY();
 				final int d = r.getSizeZ();
-				illuminations[i].imageSize = new int[]{w, h, d};
-				illuminations[i].numT = r.getSizeT();
-                illuminations[i].name = retrieve.getImageName(i);
+				captures[i].imageSize = new int[]{w, h, d};
+				captures[i].numT = r.getSizeT();
+				captures[i].name = retrieve.getImageName(i);
 
 				try {
-                    illuminations[i].objective = retrieve.getObjectiveSettingsID(i);
+					captures[i].objective = retrieve.getObjectiveSettingsID(i);
 				} catch (Exception e) {
 					IOFunctions.println("An error occured parsing the objective used: " + e + "\n. Proceeding.");
-					illuminations[i].objective = "Unknown Objective";
+					captures[i].objective = "Unknown Objective";
 					printMetadata = true;
 				}
 
 				try {
-					illuminations[i].channels = new String[r.getSizeC()];
+					captures[i].channels = new String[r.getSizeC()];
 
 					for (int c = 0; c < r.getSizeC(); ++c) {
-						illuminations[i].channels[c] = retrieve.getChannelName(i, c);
+						captures[i].channels[c] = retrieve.getChannelName(i, c);
 					}
 				} catch (Exception e) {
 					IOFunctions.println("An error occured parsing the channels: " + e + "\n. Proceeding.");
 					for (int c = 0; c < r.getSizeC(); ++c)
-						illuminations[i].channels[c] = String.valueOf(c);
+						captures[i].channels[c] = String.valueOf(c);
 					printMetadata = true;
 				}
 
@@ -142,7 +142,7 @@ public class SlideBook6MetaData
 					String info = retrieve.getImageDescription(i);
 
 					if (info.indexOf("stage") != -1) {
-						illuminations[i].stageScan = true;
+						captures[i].stageScan = true;
 					}
 
 				} catch (Exception e) {
@@ -163,7 +163,7 @@ public class SlideBook6MetaData
 						cal = 1;
 						IOFunctions.println("SlideBook6: Warning, calibration for dimension X seems corrupted, setting to 1.");
 					}
-					illuminations[i].calX = cal;
+					captures[i].calX = cal;
 
 					f = retrieve.getPixelsPhysicalSizeY(0);
 					if (f != null)
@@ -173,7 +173,7 @@ public class SlideBook6MetaData
 						cal = 1;
 						IOFunctions.println("SlideBook6: Warning, calibration for dimension Y seems corrupted, setting to 1.");
 					}
-					illuminations[i].calY = cal;
+					captures[i].calY = cal;
 
 					f = retrieve.getPixelsPhysicalSizeZ(0);
 					if (f != null)
@@ -183,10 +183,10 @@ public class SlideBook6MetaData
 						cal = 1;
 						IOFunctions.println("SlideBook6: Warning, calibration for dimension Z seems corrupted, setting to 1.");
 					}
-					illuminations[i].calZ = cal;
+					captures[i].calZ = cal;
 				} catch (Exception e) {
 					IOFunctions.println("An error occured parsing the calibration: " + e + "\n. Proceeding.");
-					illuminations[i].calX = illuminations[i].calY = illuminations[i].calZ = 1;
+					captures[i].calX = captures[i].calY = captures[i].calZ = 1;
 					printMetadata = true;
 				}
 			}
