@@ -204,7 +204,7 @@ public class LegacySlideBook6ImgLoader extends AbstractImgFactoryImgLoader
 		}
 		else
 		{
-			dim = meta.imageSize(i.getId());
+			dim = meta.imageSize(c);
 		}
 
 		final Img< T > img = imgFactory.imgFactory( type ).create( dim, type );
@@ -228,7 +228,7 @@ public class LegacySlideBook6ImgLoader extends AbstractImgFactoryImgLoader
 
 		// if we already loaded the metadata in this run, use the opened file
 		if ( meta.getReader() == null )
-			r = LegacyLightSheetZ1ImgLoader.instantiateImageReader();
+			r = LegacySlideBook6ImgLoader.instantiateImageReader();
 		else
 			r = meta.getReader();
 
@@ -246,12 +246,12 @@ public class LegacySlideBook6ImgLoader extends AbstractImgFactoryImgLoader
 				}
 
 				// set the right illumination
-				r.setSeries( i.getId() );
+				r.setSeries( c );
 			}
 			catch ( IllegalStateException e )
 			{
 				r.setId( sldFile.getAbsolutePath() );
-				r.setSeries( i.getId() );
+				r.setSeries( c );
 			}
 
 			IOFunctions.println(
@@ -271,7 +271,7 @@ public class LegacySlideBook6ImgLoader extends AbstractImgFactoryImgLoader
 				r.openBytes( r.getIndex( z, chIndex, t.getId() ), b );
 
 				IOFunctions.println("reader.readImagePlaneBuf z = " + z + ", capture = " + c + ", angle = " + a.getId() +
-				", channel = " + (chIndex) + ", channels = " + meta.numChannels(i.getId()) + ", timepoint = " + t.getId());
+				", channel = " + (chIndex) + ", channels = " + meta.numChannels(c) + ", timepoint = " + t.getId());
 
 				// SlideBook6Reader.dll
 				// i = illumination id (SPIMdata) = capture index * 8 (SlideBook)

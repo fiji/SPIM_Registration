@@ -4,7 +4,7 @@ package spim.fiji.datasetmanager;
  * Created by Richard on 2/15/2017.
  */
 public class SlideBook6Image {
-    // SlideBook image capture/illumination information
+    // SlideBook image capture information
     public String name;
     public String objective = "";
     public String calUnit = "um";

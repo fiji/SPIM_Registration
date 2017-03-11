@@ -192,7 +192,7 @@ public class SlideBook6 implements MultiViewDatasetDefinition {
         int numCaptures = 1;
         if (defaultCapture == -1) {
             firstCapture = 0;
-            numCaptures = meta.numIlluminations();
+            numCaptures = meta.numCaptures();
         }
 
         // create one illumination for each capture if defaultCapture == -1, otherwise just one capture
@@ -204,6 +204,7 @@ public class SlideBook6 implements MultiViewDatasetDefinition {
                 String imageName = meta.imageName(capture);
                 imageName = imageName.replaceAll("[^a-zA-Z0-9_-]", "_"); // convert illegal characters to _
                 imageName = imageName.toLowerCase(); // convert to lowercase
+                // up to 8 illuminations (SlideBook channels) per SlideBook capture
                 final Illumination i = new Illumination(capture * 8, imageName);
 
                 for (int ch = 0; ch < channels / 2; ch++) {
@@ -240,7 +241,7 @@ public class SlideBook6 implements MultiViewDatasetDefinition {
         int numCaptures = 1;
         if (defaultCapture == -1) {
             firstCapture = 0;
-            numCaptures = meta.numIlluminations();
+            numCaptures = meta.numCaptures();
         }
 
         int t = 0;
@@ -272,9 +273,9 @@ public class SlideBook6 implements MultiViewDatasetDefinition {
         {
             GenericDialog gd = new GenericDialog("Select SlideBook6 diSPIM Capture");
 
-            String[] imageNames = new String[meta.numIlluminations() + 1];
+            String[] imageNames = new String[meta.numCaptures() + 1];
             imageNames[0] = new String("< All Captures >");
-            for (int c = 0; c < meta.numIlluminations(); c++) {
+            for (int c = 0; c < meta.numCaptures(); c++) {
                 imageNames[c + 1] = meta.imageName(c);
             }
 
