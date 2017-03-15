@@ -8,10 +8,13 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 
+import ij.io.OpenDialog;
 import loci.formats.FormatException;
 import loci.formats.IFormatReader;
 import loci.formats.ImageReader;
@@ -220,7 +223,7 @@ public class FileListDatasetDefinitionUtil
 		public Integer axis;
 		public Integer index;
 		public Integer channelCount;
-		
+				
 		public String toString()
 		{
 			return "TileOrAngleInfo idx:" + index + ", x:" + locationX + ", y:" + locationY + ", z:" + locationZ
@@ -283,6 +286,7 @@ public class FileListDatasetDefinitionUtil
 			r.setSeries( i );
 			final TileOrAngleInfo infoI = new TileOrAngleInfo();
 			infoI.index = i;
+			
 			
 			// query x position
 			Length posX = null;
@@ -528,10 +532,22 @@ public class FileListDatasetDefinitionUtil
 			
 			if ( singleEntityPerFile && fileVariableToUse.get( cl ) != null )
 			{
-				Pair< Map< Integer, Object >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > expandChannelMap = expandMapSingleFromFile(
+				Pair< Map< Integer, Object >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > expandedMap;
+				
+				if (state.getGroupedFormat())
+				{
+					Map< String, Pair< File, Integer > > groupUsageMap = state.getGroupUsageMap();
+					expandedMap = expandMapSingleFromFileGroupedFormat( 
+							state.getAccumulateMap( cl ), patternDetector, fileVariableToUse.get( cl ), groupUsageMap );
+				}
+				
+				else
+				{
+					expandedMap = expandMapSingleFromFile(
 						state.getAccumulateMap( cl ), patternDetector, fileVariableToUse.get( cl ) );
-				state.getIdMap().get( cl ).putAll( expandChannelMap.getB() );
-				state.getDetailMap().get( cl ).putAll( expandChannelMap.getA() );
+				}
+				state.getIdMap().get( cl ).putAll( expandedMap.getB() );
+				state.getDetailMap().get( cl ).putAll( expandedMap.getA() );
 			}
 			
 			else if ( singleEntityPerFile )
@@ -702,6 +718,44 @@ public class FileListDatasetDefinitionUtil
 			//System.out.println( fileInfo.getA().getAbsolutePath() );
 			int id = 0;
 			Matcher m = det.getPatternAsRegex().matcher( fileInfo.getA().getAbsolutePath() );
+			if (m.matches())
+				id = Integer.parseInt( m.group( patternIdx + 1 ));
+			else
+				System.out.println( "WARNING: something went wrong while matching filenames" );
+			res2.put( id, attribute );
+			
+			if (!res.containsKey( id ))
+				res.put( id, new ArrayList<>() );
+			res.get( id ).add( fileInfo );
+		}
+		return new ValuePair< Map<Integer,T>, Map<Integer,List<Pair<File,Pair<Integer,Integer>>>> >( res2, res );
+			
+	}
+	
+	public static <T> Pair<Map<Integer, T>, Map<Integer, List<Pair<File, Pair< Integer, Integer >>>>> expandMapSingleFromFileGroupedFormat(
+			Map<T, List<Pair<File, Pair< Integer, Integer >>>> map,
+			FilenamePatternDetector det, 
+			int patternIdx,
+			Map< String, Pair< File, Integer > > groupUsageMap)
+	{
+		Map<Integer, List<Pair<File, Pair< Integer, Integer >>>> res = new HashMap<>();
+		Map<Integer, T> res2 = new HashMap<>();
+		SortedMap< Pair< File, Pair< Integer, Integer > >, T > invertedMap = invertMapSortValue( map );
+		for (Pair< File, Pair< Integer, Integer > > fileInfo : invertedMap.keySet())
+		{
+			T attribute = invertedMap.get( fileInfo );
+			//System.out.println( fileInfo.getA().getAbsolutePath() );
+			int id = 0;
+			
+			// find the actual used file
+			String seriesFile = null;
+			for (Entry< String, Pair< File, Integer > > e : groupUsageMap.entrySet())
+			{
+				if (new ValuePair<>( fileInfo.getA(), fileInfo.getB().getA() ).equals( e.getValue() ))
+					seriesFile = e.getKey();
+			}
+			
+			Matcher m = det.getPatternAsRegex().matcher( seriesFile );
 			if (m.matches())
 				id = Integer.parseInt( m.group( patternIdx + 1 ));
 			else
@@ -966,6 +1020,18 @@ public class FileListDatasetDefinitionUtil
 			
 			usedFiles.addAll( Arrays.asList( reader.getUsedFiles() ));
 			
+			// the format we use employs grouped files
+			if (reader.getUsedFiles().length > 1)
+				state.setGroupedFormat( true );
+			
+			// populate grouped format file usage map
+			for (int i = 0; i < reader.getSeriesCount(); i ++)
+			{
+				reader.setSeries( i );
+				// FIXME? what if this is != 1
+				state.getGroupUsageMap().put( reader.getSeriesUsedFiles()[0], new ValuePair< File, Integer >( file, i ));
+			}
+			
 			// for each entity class, create a map from identifying object to series
 			Map<Class<? extends Entity>, Map< ? extends Object, List< Pair< Integer, Integer > > >> infoMap = new HashMap<>();
 			
@@ -1108,6 +1174,33 @@ public class FileListDatasetDefinitionUtil
 		
 		
 		
+	}
+	
+	public static void main(String[] args)
+	{
+		ImageReader reader = new ImageReader();
+		reader.setMetadataStore( new OMEXMLMetadataImpl());
+		
+		try
+		{
+			reader.setId( new OpenDialog("pick file").getPath() );
+		}
+		catch ( FormatException | IOException e )
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		//System.out.println( reader.getCurrentFile() );
+		
+		//Arrays.asList( reader.getUsedFiles()).forEach( s -> System.out.println( s ) );
+		
+		for (int i = 0; i < reader.getSeriesCount(); i++)
+		{
+			reader.setSeries( i );
+			Arrays.asList( reader.getSeriesUsedFiles() ).forEach( s -> System.out.println( s ) );
+			//System.out.println( reader.getCurrentFile() );
+		}
 	}
 
 }

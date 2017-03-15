@@ -27,6 +27,8 @@ public class FileListViewDetectionState
 	Boolean ambiguousAngleTile;
 	Boolean ambiguousIllumChannel;
 	
+	Boolean groupedFormat;
+	
 	Map<Class<? extends Entity>, FileListDatasetDefinitionUtil.CheckResult> multiplicityMap;	
 	Map<Class<? extends Entity>, Map<Object, List<Pair<File, Pair< Integer, Integer >>>>> accumulativeMap;	
 	Map<Class<? extends Entity>, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > >> idMap;	
@@ -35,6 +37,7 @@ public class FileListViewDetectionState
 	
 	Map<Pair<File, Pair< Integer, Integer >>, Pair<Dimensions, VoxelDimensions>> dimensionMap;
 	
+	Map<String, Pair<File, Integer>> groupUsageMap;
 	
 	public FileListViewDetectionState()
 	{
@@ -42,6 +45,7 @@ public class FileListViewDetectionState
 		accumulativeMap = new HashMap<>();		
 		idMap = new HashMap<>();		
 		detailMap = new HashMap<>();
+		groupUsageMap = new HashMap<>();
 		
 		for (Class<? extends Entity> cl : new Class[] {Angle.class, TimePoint.class, Illumination.class, Tile.class, Channel.class})
 		{
@@ -53,6 +57,8 @@ public class FileListViewDetectionState
 		
 		ambiguousAngleTile = false;
 		ambiguousIllumChannel = false;
+		
+		groupedFormat = false;
 		
 		dimensionMap = new HashMap<>();
 		
@@ -129,6 +135,21 @@ public class FileListViewDetectionState
 	public Map< Class< ? extends Entity >, Map< Integer, Object > > getDetailMap()
 	{
 		return detailMap;
+	}
+
+	public Boolean getGroupedFormat()
+	{
+		return groupedFormat;
+	}
+
+	public void setGroupedFormat(Boolean groupedFormat)
+	{
+		this.groupedFormat = groupedFormat;
+	}
+
+	public Map< String, Pair< File, Integer > > getGroupUsageMap()
+	{
+		return groupUsageMap;
 	}
 
 	

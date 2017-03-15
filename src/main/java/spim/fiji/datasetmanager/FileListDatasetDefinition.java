@@ -60,6 +60,7 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.Dimensions;
+import net.imglib2.converter.ComplexPowerGLogFloatConverter;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.cell.CellImgFactory;
@@ -262,6 +263,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			
 		}
 		
+		Collections.sort( paths );
 		return paths;
 	}
 	
@@ -901,6 +903,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 	public static void main(String[] args)
 	{
 		new FileListDatasetDefinition().createDataset();
+		//new WildcardFileListChooser().getFileList().forEach( f -> System.out.println( f.getAbsolutePath() ) );
 	}
 
 }
