@@ -469,15 +469,15 @@ public abstract class FilteredAndGroupedExplorerPanel<AS extends AbstractSpimDat
 					{
 						final InterestPointList ipl = vipl.getInterestPointList( label );
 
-						if ( ipl.getInterestPoints() == null )
+						if ( ipl.getInterestPointsCopy() == null )
 							ipl.loadInterestPoints();
 
-						ipl.saveInterestPoints();
+						ipl.saveInterestPoints(false);
 
-						if ( ipl.getCorrespondingInterestPoints() == null )
+						if ( ipl.getCorrespondingInterestPointsCopy() == null )
 							ipl.loadCorrespondingInterestPoints();
 
-						ipl.saveCorrespondingInterestPoints();
+						ipl.saveCorrespondingInterestPoints(false);
 					}
 				}
 			}

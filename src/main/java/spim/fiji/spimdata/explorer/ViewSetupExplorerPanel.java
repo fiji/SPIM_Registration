@@ -80,31 +80,33 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 	}
 
 	
-	public ViewSetupExplorerPanel( final FilteredAndGroupedExplorer< AS, X > explorer, final AS data, final String xml, final X io )
+	public ViewSetupExplorerPanel( final FilteredAndGroupedExplorer< AS, X > explorer, final AS data, final String xml, final X io, boolean startBDVifHDF5 )
 	{
 		super( explorer, data, xml, io );
 
 		popups = initPopups();
 		initComponent();
 
-		if ( Hdf5ImageLoader.class.isInstance( data.getSequenceDescription().getImgLoader() ) )
+		if ( startBDVifHDF5 && Hdf5ImageLoader.class.isInstance( data.getSequenceDescription().getImgLoader() ) )
 		{
 			final BDVPopup bdvpopup = bdvPopup();
 			
 			if ( bdvpopup != null )
 			{
-				bdvpopup.bdv = BigDataViewer.open( getSpimData(), xml(), IOFunctions.getProgressWriter(), ViewerOptions.options() );
-
-//				if ( !bdv.tryLoadSettings( panel.xml() ) ) TODO: this should work, but currently tryLoadSettings is protected. fix that.
-					InitializeViewerState.initBrightness( 0.001, 0.999, bdvpopup.bdv.getViewer(), bdvpopup.bdv.getSetupAssignments() );
-
-				setFusedModeSimple( bdvpopup.bdv, data );
+				if (!bdvPopup().bdvRunning())
+					bdvPopup().bdv = BDVPopup.createBDV( this );
 			}
 		}
 
 		// for access to the current BDV
 		currentInstance = this;
 	}
+	
+	public ViewSetupExplorerPanel( final FilteredAndGroupedExplorer< AS, X > explorer, final AS data, final String xml, final X io)
+	{
+		this(explorer, data, xml, io, true);
+	}
+	
 
 	
 	public void initComponent()
