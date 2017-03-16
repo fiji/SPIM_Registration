@@ -1,5 +1,6 @@
 package spim.fiji.spimdata.explorer.popup;
 
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.lang.reflect.Field;
@@ -11,6 +12,9 @@ import javax.swing.JOptionPane;
 
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.Interval;
+import net.imglib2.realtransform.AffineTransform3D;
+import net.imglib2.util.LinAlgHelpers;
 import spim.fiji.plugin.apply.BigDataViewerTransformationWindow;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
@@ -18,6 +22,7 @@ import bdv.AbstractSpimSource;
 import bdv.BigDataViewer;
 import bdv.tools.InitializeViewerState;
 import bdv.tools.transformation.TransformedSource;
+import bdv.util.Affine3DHelpers;
 import bdv.viewer.Source;
 import bdv.viewer.ViewerOptions;
 import bdv.viewer.ViewerPanel;
@@ -110,7 +115,10 @@ public class BDVPopup extends JMenuItem implements ViewExplorerSetable
 		BigDataViewer bdv = BigDataViewer.open( panel.getSpimData(), panel.xml(), IOFunctions.getProgressWriter(), ViewerOptions.options() );
 //		if ( !bdv.tryLoadSettings( panel.xml() ) ) TODO: this should work, but currently tryLoadSettings is protected. fix that.
 			InitializeViewerState.initBrightness( 0.001, 0.999, bdv.getViewer(), bdv.getSetupAssignments() );
-		
+
+		// do not rotate BDV view by default
+		BDVPopup.initTransform( bdv.getViewer() );
+
 		ViewSetupExplorerPanel.updateBDV( bdv, panel.colorMode(), panel.getSpimData(), panel.firstSelectedVD(), panel.selectedRows() );
 
 //		final ArrayList< InterestPointSource > interestPointSources = new ArrayList< InterestPointSource >();
@@ -195,6 +203,78 @@ public class BDVPopup extends JMenuItem implements ViewExplorerSetable
 		bdv.getViewer().requestRepaint();
 
 	}
+
+	public static void initTransform( final ViewerPanel viewer )
+	{
+		final Dimension dim = viewer.getDisplay().getSize();
+		final ViewerState state = viewer.getState();
+		final AffineTransform3D viewerTransform = initTransform( dim.width, dim.height, false, state );
+		viewer.setCurrentViewerTransform( viewerTransform );
+	}
+
+	public static AffineTransform3D initTransform( final int viewerWidth, final int viewerHeight, final boolean zoomedIn, final ViewerState state )
+	{
+		final int cX = viewerWidth / 2;
+		final int cY = viewerHeight / 2;
+
+		final Source< ? > source = state.getSources().get( state.getCurrentSource() ).getSpimSource();
+		final int timepoint = state.getCurrentTimepoint();
+		if ( !source.isPresent( timepoint ) )
+			return new AffineTransform3D();
+
+		final AffineTransform3D sourceTransform = new AffineTransform3D();
+		source.getSourceTransform( timepoint, 0, sourceTransform );
+
+		final Interval sourceInterval = source.getSource( timepoint, 0 );
+		final double sX0 = sourceInterval.min( 0 );
+		final double sX1 = sourceInterval.max( 0 );
+		final double sY0 = sourceInterval.min( 1 );
+		final double sY1 = sourceInterval.max( 1 );
+		final double sZ0 = sourceInterval.min( 2 );
+		final double sZ1 = sourceInterval.max( 2 );
+		final double sX = ( sX0 + sX1 + 1 ) / 2;
+		final double sY = ( sY0 + sY1 + 1 ) / 2;
+		final double sZ = ( sZ0 + sZ1 + 1 ) / 2;
+
+		final double[][] m = new double[ 3 ][ 4 ];
+
+		// NO rotation
+		final double[] qViewer = new double[]{ 1, 0, 0, 0 };
+		LinAlgHelpers.quaternionToR( qViewer, m );
+
+		// translation
+		final double[] centerSource = new double[] { sX, sY, sZ };
+		final double[] centerGlobal = new double[ 3 ];
+		final double[] translation = new double[ 3 ];
+		sourceTransform.apply( centerSource, centerGlobal );
+		LinAlgHelpers.quaternionApply( qViewer, centerGlobal, translation );
+		LinAlgHelpers.scale( translation, -1, translation );
+		LinAlgHelpers.setCol( 3, translation, m );
+
+		final AffineTransform3D viewerTransform = new AffineTransform3D();
+		viewerTransform.set( m );
+
+		// scale
+		final double[] pSource = new double[] { sX1 + 0.5, sY1 + 0.5, sZ };
+		final double[] pGlobal = new double[ 3 ];
+		final double[] pScreen = new double[ 3 ];
+		sourceTransform.apply( pSource, pGlobal );
+		viewerTransform.apply( pGlobal, pScreen );
+		final double scaleX = cX / pScreen[ 0 ];
+		final double scaleY = cY / pScreen[ 1 ];
+		final double scale;
+		if ( zoomedIn )
+			scale = Math.max( scaleX, scaleY );
+		else
+			scale = Math.min( scaleX, scaleY );
+		viewerTransform.scale( scale );
+
+		// window center offset
+		viewerTransform.set( viewerTransform.get( 0, 3 ) + cX, 0, 3 );
+		viewerTransform.set( viewerTransform.get( 1, 3 ) + cY, 1, 3 );
+		return viewerTransform;
+	}
+
 	private static final void callLoadTimePoint( final AbstractSpimSource< ? > s, final int timePointIndex )
 	{
 		try
