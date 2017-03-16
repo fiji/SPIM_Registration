@@ -31,9 +31,16 @@ import javax.swing.table.DefaultTableCellRenderer;
 
 import bdv.BigDataViewer;
 import bdv.img.hdf5.Hdf5ImageLoader;
+import bdv.tools.InitializeViewerState;
 import bdv.tools.brightness.ConverterSetup;
+import bdv.util.Affine3DHelpers;
 import bdv.viewer.DisplayMode;
+
+import bdv.viewer.Source;
+import bdv.viewer.ViewerOptions;
+
 import bdv.viewer.VisibilityAndGrouping;
+import bdv.viewer.state.ViewerState;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
@@ -44,7 +51,10 @@ import mpicbg.spim.data.sequence.Tile;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.Interval;
+import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.ARGBType;
+import net.imglib2.util.LinAlgHelpers;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.popup.ApplyTransformationPopup;
 import spim.fiji.spimdata.explorer.popup.BDVPopup;
@@ -91,8 +101,18 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 			
 			if ( bdvpopup != null )
 			{
+
 				if (!bdvPopup().bdvRunning())
-					bdvPopup().bdv = BDVPopup.createBDV( this );
+					bdvpopup.bdv = BigDataViewer.open( getSpimData(), xml(), IOFunctions.getProgressWriter(), ViewerOptions.options() );
+
+//				if ( !bdv.tryLoadSettings( panel.xml() ) ) TODO: this should work, but currently tryLoadSettings is protected. fix that.
+				InitializeViewerState.initBrightness( 0.001, 0.999, bdvpopup.bdv.getViewer(), bdvpopup.bdv.getSetupAssignments() );
+
+				// do not rotate BDV view by default
+				BDVPopup.initTransform( bdvpopup.bdv.getViewer() );
+
+				setFusedModeSimple( bdvpopup.bdv, data );
+
 			}
 		}
 
