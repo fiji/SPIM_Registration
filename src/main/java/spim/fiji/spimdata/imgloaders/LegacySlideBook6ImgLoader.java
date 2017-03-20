@@ -10,47 +10,41 @@ import loci.common.services.DependencyException;
 import loci.common.services.ServiceException;
 import loci.common.services.ServiceFactory;
 import loci.formats.ChannelSeparator;
-
-//import java.nio.ByteBuffer;
-//import java.nio.ShortBuffer;
-//import java.nio.ByteOrder;
-
 import loci.formats.FormatTools;
 import loci.formats.IFormatReader;
-import loci.formats.in.SlideBook6Reader;
+import loci.formats.meta.IMetadata;
+import loci.formats.services.OMEXMLService;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
-import mpicbg.spim.data.sequence.*;
+import mpicbg.spim.data.sequence.Angle;
+import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.Illumination;
+import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
-//import net.imglib2.img.array.ArrayCursor;
 import net.imglib2.img.array.ArrayImg;
-//import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
-import spim.fiji.datasetmanager.LightSheetZ1MetaData;
 import spim.fiji.datasetmanager.SlideBook6;
-
-import org.scijava.nativelib.NativeLibraryUtil;
+import spim.fiji.datasetmanager.SlideBook6MetaData;
 
 public class LegacySlideBook6ImgLoader extends AbstractImgFactoryImgLoader
 {
 	final File sldFile;
 	final AbstractSequenceDescription<?, ?, ?> sequenceDescription;
 	
-	// TODO: once the metadata is loaded for one view, it is available for all other ones
+	// once the metadata is loaded for one view, it is available for all other ones
+	SlideBook6MetaData meta;
+	boolean isClosed = true;
 
-	// -- Static initializers --
-
-	private static boolean libraryFound = false;
-	
 	public LegacySlideBook6ImgLoader(
 			final File sldFile,
 			final ImgFactory< ? extends NativeType< ? > > imgFactory,
@@ -60,22 +54,6 @@ public class LegacySlideBook6ImgLoader extends AbstractImgFactoryImgLoader
 		this.sldFile = sldFile;
 		this.sequenceDescription = sequenceDescription;
 
-		try {
-			// load JNI wrapper of SBReadFile.dll
-			if (!libraryFound) {
-				libraryFound = NativeLibraryUtil.loadNativeLibrary(LegacySlideBook6ImgLoader.class, "SlideBook6Reader");
-			}
-		}
-		catch (UnsatisfiedLinkError e) {
-			// log level debug, otherwise a warning will be printed every time a file is initialized without the .dll present
-			IOFunctions.println("3i SlideBook SlideBook6Reader native library not found.");
-			libraryFound = false;
-		}
-		catch (SecurityException e) {
-			IOFunctions.println("Insufficient permission to load native library");
-			libraryFound = false;
-		}
-		
 		setImgFactory( imgFactory );
 	}
 
@@ -88,19 +66,13 @@ public class LegacySlideBook6ImgLoader extends AbstractImgFactoryImgLoader
 		{
 			int[] dim = new int[ 3 ];
 			float[] voxelSize = new float[ 3 ];
-			final Img< FloatType > img = openSLD(new FloatType(), view, dim, voxelSize);
+			final Img< FloatType > img = openSLD(new FloatType(), view);
 
 			if ( img == null )
 				throw new RuntimeException( "Could not load '" + sldFile + "' viewId=" + view.getViewSetupId() + ", tpId=" + view.getTimePointId() );
 
 			if ( normalize )
 				normalize( img );
-
-			// update the MetaDataCache of the AbstractImgLoader
-			// this does not update the XML ViewSetup but has to be called explicitly before saving
-			updateMetaDataCache(
-					view, dim[ 0 ], dim[ 1 ], dim[ 2 ],
-					voxelSize[ 0 ], voxelSize[ 1 ], voxelSize[ 2 ] );
 
 			return img;
 		}
@@ -117,16 +89,10 @@ public class LegacySlideBook6ImgLoader extends AbstractImgFactoryImgLoader
 		{
 			int[] dim = new int[ 3 ];
 			float[] voxelSize = new float[ 3 ];
-			final Img< UnsignedShortType > img = openSLD(new UnsignedShortType(), view, dim, voxelSize);
+			final Img< UnsignedShortType > img = openSLD(new UnsignedShortType(), view);
 
 			if ( img == null )
 				throw new RuntimeException( "Could not load '" + sldFile + "' viewId=" + view.getViewSetupId() + ", tpId=" + view.getTimePointId() );
-
-			// update the MetaDataCache of the AbstractImgLoader
-			// this does not update the XML ViewSetup but has to be called explicitly before saving
-			updateMetaDataCache(
-					view, dim[ 0 ], dim[ 1 ], dim[ 2 ],
-					voxelSize[ 0 ], voxelSize[ 1 ], voxelSize[ 2 ] );
 
 			return img;
 		}
@@ -139,6 +105,47 @@ public class LegacySlideBook6ImgLoader extends AbstractImgFactoryImgLoader
 	@Override
 	protected void loadMetaData( final ViewId view )
 	{
+		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Loading metadata for SlideBook6 imgloader not necessary." );
+	}
+
+	@Override
+	public void finalize()
+	{
+		IOFunctions.println( "Closing sld: " + sldFile );
+
+		try
+		{
+			if ( meta != null && meta.getReader() != null )
+			{
+				meta.getReader().close();
+				isClosed = true;
+			}
+		}
+		catch (IOException e) {}
+	}
+
+	protected < T extends RealType< T > & NativeType< T > > Img< T > openSLD( final T type, final ViewId view ) throws Exception
+	{
+		if ( meta == null )
+		{
+			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Investigating file '" + sldFile.getAbsolutePath() + "' (loading metadata)." );
+
+			meta = new SlideBook6MetaData();
+
+			if ( !meta.loadMetaData( sldFile, true ) )
+			{
+				IOFunctions.println( "Failed to analyze file: '" + sldFile.getAbsolutePath() + "'." );
+				meta = null;
+				isClosed = true;
+				return null;
+			}
+			else
+			{
+				isClosed = false;
+			}
+		}
+
+                /*
 		// SlideBook6Reader.dll
 		SlideBook6Reader reader = new SlideBook6Reader();
 
@@ -161,31 +168,8 @@ public class LegacySlideBook6ImgLoader extends AbstractImgFactoryImgLoader
 
 		// SlideBook6Reader.dll
 		reader.closeFile();
-	}
-
-	@Override
-	public void finalize()
-	{
-		// TODO: do not close file between reads
-		IOFunctions.println( "Closing SLD: " + sldFile );
-	}
-
-	protected < T extends RealType< T > & NativeType< T > > Img< T > openSLD( final T type, final ViewId view, int[] dim, float[] voxelSize ) throws Exception
-	{
-		IOFunctions.println( "Investigating file '" + sldFile.getAbsolutePath() + "'." );
-
-		final BasicViewDescription< ? > vd = sequenceDescription.getViewDescriptions().get( view );
-		final BasicViewSetup vs = vd.getViewSetup();
-
-		final TimePoint t = vd.getTimePoint();
-		final Angle a = getAngle( vd );
-		final Channel ch = getChannel( vd );
-		final Illumination i = getIllumination( vd );
-		final int c = i.getId() / 8; // map from illumination id to SlideBook capture index, up to 8 channels per SlideBook capture
 
 		// SlideBook6Reader.dll
-		SlideBook6Reader reader = new SlideBook6Reader();
-		reader.openFile(sldFile.getPath());
 		final int width = reader.getNumXColumns(c);
 		final int height = reader.getNumYRows(c);
 		final int depth = reader.getNumZPlanes(c);
@@ -200,40 +184,99 @@ public class LegacySlideBook6ImgLoader extends AbstractImgFactoryImgLoader
 		dim[ 0 ] = width;
 		dim[ 1 ] = height;
 		dim[ 2 ] = depth;
+               */
+
+		final BasicViewDescription< ? > vd = sequenceDescription.getViewDescriptions().get( view );
+		final BasicViewSetup vs = vd.getViewSetup();
+
+		final TimePoint t = vd.getTimePoint();
+		final Angle a = getAngle( vd );
+		final Channel ch = getChannel( vd );
+		final Illumination i = getIllumination( vd );
+		final int c = i.getId() / 8; // map from illumination id to SlideBook capture index, up to 8 channels per SlideBook capture
+		final int[] dim;
+
+		if ( vs.hasSize() )
+		{
+			dim = new int[ vs.getSize().numDimensions() ];
+			for ( int d = 0; d < vs.getSize().numDimensions(); ++d )
+				dim[ d ] = (int)vs.getSize().dimension( d );
+		}
+		else
+		{
+			dim = meta.imageSize(c);
+		}
 
 		final Img< T > img = imgFactory.imgFactory( type ).create( dim, type );
-		final int pixelType = FormatTools.UINT16;
 
 		if ( img == null )
 			throw new RuntimeException( "Could not instantiate " + getImgFactory().getClass().getSimpleName() + " for '" + sldFile + "' captureId=" + c + "' viewId=" + view.getViewSetupId() + ", tpId=" + view.getTimePointId() + ", most likely out of memory." );
 
 		IOFunctions.println(
 				new Date( System.currentTimeMillis() ) + ": Opening '" + sldFile.getName() + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] +
-						" angle=" + a.getName() + " ch=" + ch.getName() + " illum=" + i.getName() + " tp=" + t.getName() + " type=" + FormatTools.getPixelTypeString(pixelType) +
+						" angle=" + a.getName() + " ch=" + ch.getName() + " illum=" + i.getName() + " tp=" + t.getName() + " type=" + FormatTools.getPixelTypeString(FormatTools.UINT16) +
 						" img=" + img.getClass().getSimpleName() + "<" + type.getClass().getSimpleName() + ">]" );
 
-		final boolean isLittleEndian = true;
+		final boolean isLittleEndian = meta.isLittleEndian();
 		final boolean isArray = ArrayImg.class.isInstance(img);
+		final int pixelType = FormatTools.UINT16;
+		final int width = dim[ 0 ];
+		final int height = dim[ 1 ];
+		final int depth = dim[ 2 ];
+		final int numPx = width * height;
+		final IFormatReader r;
+
+		// if we already loaded the metadata in this run, use the opened file
+		if ( meta.getReader() == null )
+			r = LegacySlideBook6ImgLoader.instantiateImageReader();
+		else
+			r = meta.getReader();
 
 		final byte[] b = new byte[ numPx * FormatTools.getBytesPerPixel(pixelType) ];
 
 		try
 		{
+			// open the file if not already done
+			try
+			{
+				if ( meta.getReader() == null )
+				{
+					IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Opening '" + sldFile.getName() + "' for reading image data." );
+					r.setId( sldFile.getAbsolutePath() );
+				}
+
+				// set the right illumination
+				r.setSeries( c );
+			}
+			catch ( IllegalStateException e )
+			{
+				r.setId( sldFile.getAbsolutePath() );
+				r.setSeries( c );
+			}
+
+			IOFunctions.println(
+					new Date( System.currentTimeMillis() ) + ": Reading image data from '" + sldFile.getName() + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] +
+					" angle=" + a.getName() + " ch=" + ch.getName() + " illum=" + i.getName() + " tp=" + t.getName() + " type=" + meta.pixelTypeString() +
+					" img=" + img.getClass().getSimpleName() + "<" + type.getClass().getSimpleName() + ">]" );
+
+			// for every illumination, assume each pair of channels represents two angles of the same channel
+			int chIndex = (ch.getId()*2) + a.getId();
+
 			for ( int z = 0; z < depth; ++z )
 			{
 				IJ.showProgress( (double)z / (double)depth );
 
 				final Cursor< T > cursor = Views.iterable( Views.hyperSlice( img, 2, z ) ).localizingCursor();
 
+				r.openBytes( r.getIndex( z, chIndex, t.getId() ), b );
+
 				IOFunctions.println("reader.readImagePlaneBuf z = " + z + ", capture = " + c + ", angle = " + a.getId() +
-				", channel = " + (ch.getId()*2 + a.getId()) + ", channels = " + channels + ", timepoint = " + t.getId());
+				", channel = " + (chIndex) + ", channels = " + meta.numChannels(c) + ", timepoint = " + t.getId());
 
 				// SlideBook6Reader.dll
 				// i = illumination id (SPIMdata) = capture index * 8 (SlideBook)
 				// a = angle id (SPIMdata) = channel index  (SlideBook)
-				reader.readImagePlaneBuf(b, c, 0, t.getId(), z, (ch.getId()*2) + a.getId());
-
-				///r.openBytes( r.getIndex( z, ch, t.getId() ), b );
+				// reader.readImagePlaneBuf(b, c, 0, t.getId(), z, (ch.getId()*2) + a.getId());
 
 				if ( isArray )
 					readUnsignedShortsArray( b, cursor, numPx, isLittleEndian );
@@ -249,15 +292,28 @@ public class LegacySlideBook6ImgLoader extends AbstractImgFactoryImgLoader
 			IOFunctions.println( "Stopping" );
 
 			e.printStackTrace();
-			reader.closeFile();
 			return null;
 		}
-		reader.closeFile();
 
 		return img;
 	}
 
-	protected static final < T extends RealType< T > > void readUnsignedShorts( final byte[] b, final Cursor< T > cursor, final int width, final boolean isLittleEndian )
+	public static final < T extends RealType< T > > void readBytes( final byte[] b, final Cursor< T > cursor, final int width )
+	{
+		while( cursor.hasNext() )
+		{
+			cursor.fwd(); // otherwise the position is off below
+			cursor.get().setReal( b[ cursor.getIntPosition( 0 ) + cursor.getIntPosition( 1 ) * width ] & 0xff );
+		}
+	}
+
+	public static final < T extends RealType< T > > void readBytesArray( final byte[] b, final Cursor< T > cursor, final int numPx )
+	{
+		for ( int i = 0; i < numPx; ++i )
+			cursor.next().setReal( b[ i ] & 0xff );
+	}
+
+	public static final < T extends RealType< T > > void readUnsignedShorts( final byte[] b, final Cursor< T > cursor, final int width, final boolean isLittleEndian )
 	{
 		while( cursor.hasNext() )
 		{
@@ -266,10 +322,84 @@ public class LegacySlideBook6ImgLoader extends AbstractImgFactoryImgLoader
 		}
 	}
 
-	protected static final < T extends RealType< T > > void readUnsignedShortsArray( final byte[] b, final Cursor< T > cursor, final int numPx, final boolean isLittleEndian )
+	public static final < T extends RealType< T > > void readUnsignedShortsArray( final byte[] b, final Cursor< T > cursor, final int numPx, final boolean isLittleEndian )
 	{
 		for ( int i = 0; i < numPx; ++i )
 			cursor.next().setReal( LegacyStackImgLoaderLOCI.getShortValueInt( b, i * 2, isLittleEndian ) );
+	}
+
+	public static final < T extends RealType< T > > void readSignedShorts( final byte[] b, final Cursor< T > cursor, final int width, final boolean isLittleEndian )
+	{
+		while( cursor.hasNext() )
+		{
+			cursor.fwd();
+			cursor.get().setReal( LegacyStackImgLoaderLOCI.getShortValue( b, ( cursor.getIntPosition( 0 ) + cursor.getIntPosition( 1 ) * width ) * 2, isLittleEndian ) );
+		}
+	}
+
+	public static final < T extends RealType< T > > void readSignedShortsArray( final byte[] b, final Cursor< T > cursor, final int numPx, final boolean isLittleEndian )
+	{
+		for ( int i = 0; i < numPx; ++i )
+			cursor.next().setReal( LegacyStackImgLoaderLOCI.getShortValue( b, i * 2, isLittleEndian ) );
+	}
+
+	public static final < T extends RealType< T > > void readUnsignedInts( final byte[] b, final Cursor< T > cursor, final int width, final boolean isLittleEndian )
+	{
+		while( cursor.hasNext() )
+		{
+			cursor.fwd();
+			cursor.get().setReal( LegacyStackImgLoaderLOCI.getIntValue( b, ( cursor.getIntPosition( 0 ) + cursor.getIntPosition( 1 ) * width ) * 4, isLittleEndian ) );
+		}
+	}
+
+	public static final < T extends RealType< T > > void readUnsignedIntsArray( final byte[] b, final Cursor< T > cursor, final int numPx, final boolean isLittleEndian )
+	{
+		for ( int i = 0; i < numPx; ++i )
+			cursor.next().setReal( LegacyStackImgLoaderLOCI.getIntValue( b, i * 4, isLittleEndian ) );
+	}
+
+	public static final < T extends RealType< T > > void readFloats( final byte[] b, final Cursor< T > cursor, final int width, final boolean isLittleEndian )
+	{
+		while( cursor.hasNext() )
+		{
+			cursor.fwd();
+			cursor.get().setReal( LegacyStackImgLoaderLOCI.getFloatValue( b, ( cursor.getIntPosition( 0 ) + cursor.getIntPosition( 1 ) * width ) * 4, isLittleEndian ) );
+		}
+	}
+
+	public static final < T extends RealType< T > > void readFloatsArray( final byte[] b, final Cursor< T > cursor, final int numPx, final boolean isLittleEndian )
+	{
+		for ( int i = 0; i < numPx; ++i )
+			cursor.next().setReal( LegacyStackImgLoaderLOCI.getFloatValue( b, i * 4, isLittleEndian ) );
+	}
+
+	public static IFormatReader instantiateImageReader()
+	{
+		// should I use the ZeissCZIReader here directly?
+		return new ChannelSeparator();// new ZeissCZIReader();
+	}
+
+	public static boolean createOMEXMLMetadata( final IFormatReader r )
+	{
+		try
+		{
+			final ServiceFactory serviceFactory = new ServiceFactory();
+			final OMEXMLService service = serviceFactory.getInstance( OMEXMLService.class );
+			final IMetadata omexmlMeta = service.createOMEXMLMetadata();
+			r.setMetadataStore(omexmlMeta);
+		}
+		catch (final ServiceException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+		catch (final DependencyException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+
+		return true;
 	}
 
 	protected static Angle getAngle( final AbstractSequenceDescription< ?, ?, ? > seqDesc, final ViewId view )
@@ -315,6 +445,4 @@ public class LegacySlideBook6ImgLoader extends AbstractImgFactoryImgLoader
 	{
 		return new SlideBook6().getTitle() + ", ImgFactory=" + imgFactory.getClass().getSimpleName();
 	}
-
 }
-
