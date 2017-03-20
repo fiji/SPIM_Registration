@@ -1,3 +1,5 @@
+[![](https://travis-ci.org/fiji/SPIM_Registration.svg?branch=master)](https://travis-ci.org/fiji/SPIM_Registration)
+
 #  Introduction & Overview
 
 Selective Plane Illumination Microscopy
