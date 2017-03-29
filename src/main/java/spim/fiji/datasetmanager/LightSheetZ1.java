@@ -214,7 +214,15 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 			long n = 1;
 
 			for ( int d = 0; d < dim.length; ++d )
+			{
 				n *= (long)dim[ d ];
+
+				if ( dim[ d ] <= 0 )
+				{
+					IOFunctions.println( "Dimensions couldn't be read from metadata, using CellImg(256)." );
+					return new CellImgFactory< FloatType >( 256 );
+				}
+			}
 
 			maxNumPixels = Math.max( n, maxNumPixels );
 		}
@@ -296,30 +304,72 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 
 				final Img< FloatType > slice = ArrayImgs.floats( width, height );
 
-				int z = depth - 1;
-				for ( z = depth - 1; z >= 0; --z )
+				int z;
+
+				if ( depth <= 0 )
 				{
-					final Cursor< FloatType > cursor = slice.localizingCursor();
+					IOFunctions.println( "Size couldn't be read from metadata, trying the hard way ... this is slow as it opens everything, but might solve the problem" );
 
-					r.openBytes( r.getIndex( z, 0, vd.getTimePointId() ), b );
+					z = 0;
 
-					if ( pixelType == FormatTools.UINT8 )
-						LegacyLightSheetZ1ImgLoader.readBytesArray( b, cursor, numPx );
-					else if ( pixelType == FormatTools.UINT16 )
-						LegacyLightSheetZ1ImgLoader.readUnsignedShortsArray( b, cursor, numPx, isLittleEndian );
-					else if ( pixelType == FormatTools.INT16 )
-						LegacyLightSheetZ1ImgLoader.readSignedShortsArray( b, cursor, numPx, isLittleEndian );
-					else if ( pixelType == FormatTools.UINT32 )
-						LegacyLightSheetZ1ImgLoader.readUnsignedIntsArray( b, cursor, numPx, isLittleEndian );
-					else if ( pixelType == FormatTools.FLOAT )
-						LegacyLightSheetZ1ImgLoader.readFloatsArray( b, cursor, numPx, isLittleEndian );
+					do
+					{
+						final Cursor< FloatType > cursor = slice.localizingCursor();
 
-					if ( !allZero( slice ) )
-						break;
+						try
+						{
+							r.openBytes( r.getIndex( z, 0, vd.getTimePointId() ), b );
+
+							if ( pixelType == FormatTools.UINT8 )
+								LegacyLightSheetZ1ImgLoader.readBytesArray( b, cursor, numPx );
+							else if ( pixelType == FormatTools.UINT16 )
+								LegacyLightSheetZ1ImgLoader.readUnsignedShortsArray( b, cursor, numPx, isLittleEndian );
+							else if ( pixelType == FormatTools.INT16 )
+								LegacyLightSheetZ1ImgLoader.readSignedShortsArray( b, cursor, numPx, isLittleEndian );
+							else if ( pixelType == FormatTools.UINT32 )
+								LegacyLightSheetZ1ImgLoader.readUnsignedIntsArray( b, cursor, numPx, isLittleEndian );
+							else if ( pixelType == FormatTools.FLOAT )
+								LegacyLightSheetZ1ImgLoader.readFloatsArray( b, cursor, numPx, isLittleEndian );
+
+							++z;
+						}
+						catch ( IllegalArgumentException e )
+						{
+							++z;
+							break;
+						}
+					}
+					while ( !allZero( slice ) );
+
+					--z;
 				}
-
-				// size is one bigger than the last z-slice
-				z++;
+				else
+				{
+					z = depth - 1;
+					for ( z = depth - 1; z >= 0; --z )
+					{
+						final Cursor< FloatType > cursor = slice.localizingCursor();
+	
+						r.openBytes( r.getIndex( z, 0, vd.getTimePointId() ), b );
+	
+						if ( pixelType == FormatTools.UINT8 )
+							LegacyLightSheetZ1ImgLoader.readBytesArray( b, cursor, numPx );
+						else if ( pixelType == FormatTools.UINT16 )
+							LegacyLightSheetZ1ImgLoader.readUnsignedShortsArray( b, cursor, numPx, isLittleEndian );
+						else if ( pixelType == FormatTools.INT16 )
+							LegacyLightSheetZ1ImgLoader.readSignedShortsArray( b, cursor, numPx, isLittleEndian );
+						else if ( pixelType == FormatTools.UINT32 )
+							LegacyLightSheetZ1ImgLoader.readUnsignedIntsArray( b, cursor, numPx, isLittleEndian );
+						else if ( pixelType == FormatTools.FLOAT )
+							LegacyLightSheetZ1ImgLoader.readFloatsArray( b, cursor, numPx, isLittleEndian );
+	
+						if ( !allZero( slice ) )
+							break;
+					}
+	
+					// size is one bigger than the last z-slice
+					z++;
+				}
 
 				meta.imageSizes().put( a.getId(), new int[]{ width, height, z } );
 				for ( final ViewSetup vs : sd.getViewSetupsOrdered() )

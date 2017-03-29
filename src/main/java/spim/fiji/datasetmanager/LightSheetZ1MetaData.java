@@ -149,6 +149,7 @@ public class LightSheetZ1MetaData
 		final Hashtable< String, Object > metaData = r.getGlobalMetadata();
 		final int numA = r.getSeriesCount();
 
+		System.out.println( "numA: "+ numA );
 		// make sure every angle has the same amount of timepoints, channels, illuminations
 		this.numT = -1;
 		this.numI = -1;
@@ -165,10 +166,10 @@ public class LightSheetZ1MetaData
 			{
 				r.setSeries( a );
 
+				IOFunctions.println( "Querying information for angle/illumination #" + a );
+
 				final int w = r.getSizeX();
 				final int h = r.getSizeY();
-
-				IOFunctions.println( "Querying information for angle/illumination #" + a );
 
 				double dimZ = getDouble( metaData, "Information|Image|V|View|SizeZ #" + StackList.leadingZeros( Integer.toString( a+1 ), numDigits ) );
 
@@ -185,11 +186,34 @@ public class LightSheetZ1MetaData
 					dimZ = getDouble( metaData, "Information|Image|SizeZ #1" );
 
 				if ( Double.isNaN( dimZ ) )
-					throw new RuntimeException( "Could not read stack size for angle " + a + ", stopping." );
+				{
+					try
+					{
+						final int z = r.getSizeZ();
+
+						if ( z <= 1 )
+						{
+							IOFunctions.println( "Could not read stack size for angle " + a + ", trying the hard way later (w=" + w + ", h=" + h + ")" );
+							dimZ = 0;
+						}
+						else
+						{
+							IOFunctions.println( "Read stack size for angle " + a + " directly from Bioformats (w=" + w + ", h=" + h + ", d=" + z + ")" );
+							dimZ = z;
+						}
+					}
+					catch ( Exception e )
+					{
+						IOFunctions.println( "Could not read stack size for angle (not even bioformats directly) " + a + ", trying the hard way later (w=" + w + ", h=" + h + ")" );
+						dimZ = 0;
+					}
+				}
 
 				final int d = (int)Math.round( dimZ );
 
 				imageSizes.put( a, new int[]{ w, h, d } );
+
+				IOFunctions.println( "(w=" + w + ", h=" + h + ", d=" + d + ")" );
 
 				if ( numT >= 0 && numT != r.getSizeT() )
 				{
@@ -475,6 +499,9 @@ public class LightSheetZ1MetaData
 
 	public static void printMetaData( final Hashtable< String, Object > metaData )
 	{
+		System.out.println( "num keys: " + metaData.keySet().size() );
+		System.out.println( "num objects: " + metaData.size() );
+
 		ArrayList< String > entries = new ArrayList<String>();
 
 		for ( final String s : metaData.keySet() )
