@@ -3,17 +3,24 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>sc.fiji</groupId>
-		<artifactId>pom-fiji</artifactId>
-		<version>24.3.0</version>
+		<groupId>org.scijava</groupId>
+		<artifactId>pom-scijava</artifactId>
+		<version>14.0.0</version>
 		<relativePath />
 	</parent>
 
+	<groupId>sc.fiji</groupId>
 	<artifactId>SPIM_Registration</artifactId>
-	<version>5.0.11-SNAPSHOT</version>
+	<version>5.0.12-SNAPSHOT</version>
 
 	<name>SPIM Registration</name>
 	<description>Software for the reconstruction of multi-view microscopic acquisitions like Selective Plane Illumination Microscopy (SPIM) Data.</description>
+	<url>https://imagej.net/SPIM_Registration</url>
+	<inceptionYear>2007</inceptionYear>
+	<organization>
+		<name>Fiji</name>
+		<url>https://fiji.sc/</url>
+	</organization>
 	<licenses>
 		<license>
 			<name>GNU Public License v2</name>
@@ -25,7 +32,7 @@
 		<developer>
 			<id>StephanPreibisch</id>
 			<name>Stephan Preibisch</name>
-			<url>http://imagej.net/User:StephanP</url>
+			<url>https://imagej.net/User:StephanP</url>
 			<roles>
 				<role>founder</role>
 				<role>lead</role>
@@ -39,7 +46,7 @@
 		<developer>
 			<id>ctrueden</id>
 			<name>Curtis Rueden</name>
-			<url>http://imagej.net/User:Rueden</url>
+			<url>https://imagej.net/User:Rueden</url>
 			<roles>
 				<role>maintainer</role>
 			</roles>
@@ -48,12 +55,12 @@
 	<contributors>
 		<contributor>
 			<name>Johannes Schindelin</name>
-			<url>http://imagej.net/User:Schindelin</url>
+			<url>https://imagej.net/User:Schindelin</url>
 			<properties><id>dscho</id></properties>
 		</contributor>
 		<contributor>
 			<name>Tobias Pietzsch</name>
-			<url>http://imagej.net/User:Pietzsch</url>
+			<url>https://imagej.net/User:Pietzsch</url>
 			<properties><id>tpietzsch</id></properties>
 		</contributor>
 		<contributor>
@@ -62,22 +69,22 @@
 		</contributor>
 		<contributor>
 			<name>Christian Dietz</name>
-			<url>http://imagej.net/User:Dietzc</url>
+			<url>https://imagej.net/User:Dietzc</url>
 			<properties><id>dietzc</id></properties>
 		</contributor>
 		<contributor>
 			<name>Mark Hiner</name>
-			<url>http://imagej.net/User:Hinerm</url>
+			<url>https://imagej.net/User:Hinerm</url>
 			<properties><id>hinerm</id></properties>
 		</contributor>
 		<contributor>
 			<name>Stephan Janosch</name>
-			<url>http://imagej.net/User:StephanJanosch</url>
+			<url>https://imagej.net/User:StephanJanosch</url>
 			<properties><id>StephanJanosch</id></properties>
 		</contributor>
 		<contributor>
 			<name>Stephan Saalfeld</name>
-			<url>http://imagej.net/User:Saalfeld</url>
+			<url>https://imagej.net/User:Saalfeld</url>
 			<properties><id>axtimwalde</id></properties>
 		</contributor>
 		<contributor>
@@ -90,10 +97,17 @@
 		</contributor>
 		<contributor>
 			<name>Nico Stuurman</name>
-			<url>http://imagej.net/User:Nico</url>
+			<url>https://imagej.net/User:Nico</url>
 			<properties><id>nicost</id></properties>
 		</contributor>
 	</contributors>
+
+	<mailingLists>
+		<mailingList>
+			<name>ImageJ Forum</name>
+			<archive>http://forum.imagej.net/</archive>
+		</mailingList>
+	</mailingLists>
 
 	<scm>
 		<connection>scm:git:git://github.com/fiji/SPIM_Registration</connection>
@@ -106,34 +120,23 @@
 		<url>https://github.com/fiji/SPIM_Registration/issues</url>
 	</issueManagement>
 	<ciManagement>
-		<system>Jenkins</system>
-		<url>http://jenkins.imagej.net/job/SPIM_Registration/</url>
+		<system>Travis CI</system>
+		<url>https://travis-ci.org/fiji/SPIM_Registration</url>
 	</ciManagement>
 
 	<properties>
-		<scijava.jvm.version>1.8</scijava.jvm.version>
-		<pom-bigdataviewer.version>4.0.1</pom-bigdataviewer.version>
+		<license.licenseName>gpl_v2</license.licenseName>
+		<license.copyrightOwners>Fiji developers.</license.copyrightOwners>
+		<license.projectName>Fiji distribution of ImageJ for the life sciences.</license.projectName>
 	</properties>
 
 	<repositories>
-		<!-- NB: for project parent -->
 		<repository>
 			<id>imagej.public</id>
-			<url>http://maven.imagej.net/content/groups/public</url>
+			<url>https://maven.imagej.net/content/groups/public</url>
 		</repository>
 	</repositories>
 
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>sc.fiji</groupId>
-				<artifactId>pom-bigdataviewer</artifactId>
-				<version>${pom-bigdataviewer.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
 	<dependencies>
 		<!-- BigDataViewer dependencies -->
 		<dependency>
@@ -211,12 +214,12 @@
 			</exclusions>
 		</dependency>
 		<dependency>
-			<groupId>ome</groupId>
+			<groupId>org.openmicroscopy</groupId>
 			<artifactId>ome-xml</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>ome</groupId>
-			<artifactId>formats-common</artifactId>
+			<groupId>org.openmicroscopy</groupId>
+			<artifactId>ome-common</artifactId>
 		</dependency>
 
 		<!-- Third party dependencies -->
@@ -244,7 +247,5 @@
 			<groupId>org.jfree</groupId>
 			<artifactId>jfreechart</artifactId>
 		</dependency>
-
-		<!-- Java 3D dependencies -->
 	</dependencies>
 </project>
