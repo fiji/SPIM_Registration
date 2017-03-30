@@ -115,9 +115,9 @@ public class DisplayViewPopup extends JMenu implements ViewExplorerSetable
 							name = "Timepoint: " + vd.getTimePointId() + " ViewSetup: " + vd.getViewSetupId();
 			
 						if ( as16bit )
-							Display_View.display( panel.getSpimData(), vd, 1, name );
+							Display_View.display( panel.getSpimData(), vd, 1, name, true );
 						else
-							Display_View.display( panel.getSpimData(), vd, 0, name );
+							Display_View.display( panel.getSpimData(), vd, 0, name, true );
 					}
 				}
 			} ).start();

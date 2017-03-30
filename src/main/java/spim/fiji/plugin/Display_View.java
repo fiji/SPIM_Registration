@@ -130,7 +130,7 @@ public class Display_View implements PlugIn
 		}
 		
 		// display it
-		display( result.getData(), viewId, pixelType, name );
+		display( result.getData(), viewId, pixelType, name, false );
 	}
 
 	public static String name( final ViewDescription vd )
@@ -143,7 +143,7 @@ public class Display_View implements PlugIn
 		return "angle: " + angle.getName() + " channel: " + channel.getName() + " illum: " + illumination.getName() + " timepoint: " + tp.getName();
 	}
 
-	public static void display( final AbstractSpimData< ? > spimData, final ViewId viewId, final int pixelType, final String name )
+	public static void display( final AbstractSpimData< ? > spimData, final ViewId viewId, final int pixelType, final String name, final boolean virtual )
 	{
 		final ImgLoader imgLoader = (ImgLoader)spimData.getSequenceDescription().getImgLoader();
 		final ImgFactory< ? extends NativeType< ? > > factory;
@@ -163,7 +163,7 @@ public class Display_View implements PlugIn
 		}
 
 		// display it
-		DisplayImage export = new DisplayImage();
+		DisplayImage export = new DisplayImage( virtual );
 		
 		if ( pixelType == 0 )
 			export.exportImage( ((ImgLoader)spimData.getSequenceDescription().getImgLoader()).getSetupImgLoader( viewId.getViewSetupId() ).getFloatImage( viewId.getTimePointId(), false ), name );
