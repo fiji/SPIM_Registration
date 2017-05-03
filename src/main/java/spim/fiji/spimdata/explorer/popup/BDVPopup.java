@@ -31,6 +31,16 @@ import java.util.List;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
+import bdv.AbstractSpimSource;
+import bdv.BigDataViewer;
+import bdv.tools.InitializeViewerState;
+import bdv.tools.transformation.TransformedSource;
+import bdv.viewer.Source;
+import bdv.viewer.ViewerOptions;
+import bdv.viewer.ViewerPanel;
+import bdv.viewer.state.SourceState;
+import bdv.viewer.state.ViewerState;
+import mpicbg.spim.data.generic.sequence.BasicImgLoader;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Interval;
@@ -39,16 +49,7 @@ import net.imglib2.util.LinAlgHelpers;
 import spim.fiji.plugin.apply.BigDataViewerTransformationWindow;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
-import bdv.AbstractSpimSource;
-import bdv.BigDataViewer;
-import bdv.tools.InitializeViewerState;
-import bdv.tools.transformation.TransformedSource;
-import bdv.util.Affine3DHelpers;
-import bdv.viewer.Source;
-import bdv.viewer.ViewerOptions;
-import bdv.viewer.ViewerPanel;
-import bdv.viewer.state.SourceState;
-import bdv.viewer.state.ViewerState;
+import spim.fiji.spimdata.imgloaders.StackImgLoader;
 
 public class BDVPopup extends JMenuItem implements ViewExplorerSetable
 {
@@ -122,7 +123,8 @@ public class BDVPopup extends JMenuItem implements ViewExplorerSetable
 	}
 	public static BigDataViewer createBDV( final ViewSetupExplorerPanel< ?, ? > panel )
 	{
-		if ( AbstractImgLoader.class.isInstance( panel.getSpimData().getSequenceDescription().getImgLoader() ) )
+		BasicImgLoader il = panel.getSpimData().getSequenceDescription().getImgLoader();
+		if ( AbstractImgLoader.class.isInstance( il ) || StackImgLoader.class.isInstance( il ) )
 		{
 			if ( JOptionPane.showConfirmDialog( null,
 					"Opening <SpimData> dataset that is not suited for interactive browsing.\n" +
