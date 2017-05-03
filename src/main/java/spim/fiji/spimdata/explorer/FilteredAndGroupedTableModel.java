@@ -76,6 +76,7 @@ public class FilteredAndGroupedTableModel < AS extends AbstractSpimData< ? > > e
 	@Override
 	public void clearGroupingFactors() {
 		groupingFactors.clear();
+		fireTableDataChanged();
 	}
 	
 	/* (non-Javadoc)
