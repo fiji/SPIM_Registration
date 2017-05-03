@@ -1,11 +1,17 @@
 package spim.fiji.datasetmanager.patterndetector;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
@@ -32,8 +38,8 @@ public class NumericalFilenamePatternDetector implements FilenamePatternDetector
 	{
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < invariants.size() - 1; i++)
-			sb.append( invariants.get( i ) + "(\\d+)" );
-		sb.append( invariants.get( invariants.size()-1 ) );
+			sb.append( Pattern.quote( invariants.get( i ) ) + "(\\d+)" );
+		sb.append( Pattern.quote( invariants.get( invariants.size()-1 ) ) );
 		return Pattern.compile( sb.toString() );
 	}
 
@@ -63,7 +69,9 @@ public class NumericalFilenamePatternDetector implements FilenamePatternDetector
 					if (currentChar == null)
 						currentChar = s.charAt( maxIdx );
 					if (!currentChar.equals( s.charAt( maxIdx ) ))
+					{
 						return s.substring( 0, maxIdx );
+					}
 				}
 			}
 			currentChar = null;
@@ -98,11 +106,22 @@ public class NumericalFilenamePatternDetector implements FilenamePatternDetector
 		{
 			String prefix = maxPrefix( tStrings );
 			
+			// we can no longer find a constant prefix -> consider the rest of the filenames as variable
+			if (prefix.length() == 0)
+			{
+				invariants.add( ".*" );
+				break;
+			}
+			
+			
 			//System.out.println( prefix );
 			
 			invariants.add( prefix );
 			
 			tStrings = tStrings.stream().map( s -> s.substring(prefix.length() ) ).collect( Collectors.toList() );
+			
+			//tStrings.forEach( System.out::println );
+			
 			Pair< List< String >, List< String > > collectNumericPrefixes = collectNumericPrefixes( tStrings );
 			
 			if (collectNumericPrefixes == null)
@@ -121,5 +140,45 @@ public class NumericalFilenamePatternDetector implements FilenamePatternDetector
 
 	@Override
 	public int getNumVariables(){return variables.size();}
+	
+	public static void main(String[] args)
+	{
+		List< String > files = null;
+		try
+		{
+			Stream< Path > w = Files.list( Paths.get( "/Users/david/Desktop/Bordeaux/BIC Reconstruction/170331_EA810_Fred_MosZXY_Nocrop_12-36-22/" ));
+			
+					files = w.filter( new Predicate< Path >()
+					{
+
+						boolean res = false;
+						@Override
+						public boolean test(Path t)
+						{
+							try
+							{
+								res = Files.size( t ) > 100000;
+							}
+							catch ( IOException e )
+							{
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+							return res;
+						}
+					} ).map( p -> p.toFile().getAbsolutePath()).collect( Collectors.toList() );
+		}
+		catch ( IOException e )
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		System.out.println( files.get( 0 ) );
+		
+		Pair< List< String >, List< List< String > > > detectNumericPatterns = detectNumericPatterns( files );
+		
+		
+	}
 	
 }

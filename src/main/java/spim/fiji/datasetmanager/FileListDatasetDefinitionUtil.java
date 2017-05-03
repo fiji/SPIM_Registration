@@ -13,6 +13,8 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import ij.io.OpenDialog;
 import loci.formats.FormatException;
@@ -517,7 +519,7 @@ public class FileListDatasetDefinitionUtil
 	
 	public static void expandAccumulatedViewInfos
 	(
-			final Map<Class<? extends Entity>, Integer> fileVariableToUse,
+			final Map<Class<? extends Entity>, List<Integer>> fileVariableToUse,
 			final FilenamePatternDetector patternDetector,
 			FileListViewDetectionState state			
 	)
@@ -530,7 +532,7 @@ public class FileListDatasetDefinitionUtil
 			state.getDetailMap().get( cl ).clear();
 			Boolean singleEntityPerFile = state.getMultiplicityMap().get( cl ) == CheckResult.SINGLE;
 			
-			if ( singleEntityPerFile && fileVariableToUse.get( cl ) != null )
+			if ( singleEntityPerFile && fileVariableToUse.get( cl ).size() > 0 )
 			{
 				Pair< Map< Integer, Object >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > expandedMap;
 				
@@ -571,162 +573,54 @@ public class FileListDatasetDefinitionUtil
 			
 		}
 		
-//		// DO TIMEPOINTS
-//
-//		tpIdxMap.clear();
-//		Boolean singleTPperFile = multiplicityMap.get( 0 ) == CheckResult.SINGLE;
-//
-//		if ( singleTPperFile && fileVariableToUse.get( 0 ) != null )
-//		{
-//			Pair< Map< Integer, Integer >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > expandTPMap = expandMapSingleFromFile(
-//					accumulateTPMap, patternDetector, fileVariableToUse.get( 0 ) );
-//			tpIdxMap.putAll( expandTPMap.getB() );
-//		}
-//		else if ( singleTPperFile )
-//		{
-//			tpIdxMap.put( 0, accumulateTPMap.values().iterator().next() );
-//		}
-//		else if ( multiplicityMap.get( 0 ) == CheckResult.MULTIPLE_INDEXED )
-//		{
-//			tpIdxMap.putAll( expandTimePointMapIndexed( accumulateTPMap ) );
-//		}
-//				
-//		// DO CHANNELS
-//		channelIdxMap.clear();
-//		channelDetailMap.clear();
-//		Boolean singleChannelperFile = multiplicityMap.get( 1 ) == CheckResult.SINGLE;
-//
-//		if ( singleChannelperFile && fileVariableToUse.get( 1 ) != null )
-//		{
-//			Pair< Map< Integer, ChannelInfo >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > expandChannelMap = expandMapSingleFromFile(
-//					accumulateChannelMap, patternDetector, fileVariableToUse.get( 1 ) );
-//			channelIdxMap.putAll( expandChannelMap.getB() );
-//			channelDetailMap.putAll( expandChannelMap.getA() );
-//		}
-//		else if ( singleChannelperFile )
-//		{
-//
-//			channelIdxMap.put( 0, accumulateChannelMap.values().iterator().next() );
-//		}
-//		else if ( multiplicityMap.get( 1 ) == CheckResult.MULTIPLE_INDEXED )
-//		{
-//			channelIdxMap.putAll( expandMapIndexed( accumulateChannelMap, false ) );
-//		}
-//		else if ( multiplicityMap.get( 1 ) == CheckResult.MUlTIPLE_NAMED )
-//		{
-//			Pair< Map< Integer, ChannelInfo >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > resortMapNamed = resortMapNamed(
-//					accumulateChannelMap );
-//			channelDetailMap.putAll( resortMapNamed.getA() );
-//			channelIdxMap.putAll( resortMapNamed.getB() );
-//		}
-//				
-//		// DO ILLUMINATIONS
-//
-//		illumIdxMap.clear();
-//		Boolean singleIllumperFile = multiplicityMap.get( 2 ) == CheckResult.SINGLE;
-//
-//		if ( singleIllumperFile && fileVariableToUse.get( 2 ) != null )
-//		{
-//			Pair< Map< Integer, Integer >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > expandIllumMap = expandMapSingleFromFile(
-//					accumulateIllumMap, patternDetector, fileVariableToUse.get( 2 ) );
-//			illumIdxMap.putAll( expandIllumMap.getB() );
-//		}
-//		else if ( singleIllumperFile )
-//		{
-//			illumIdxMap.put( 0, accumulateIllumMap.values().iterator().next() );
-//		}
-//		else if ( multiplicityMap.get( 2 ) == CheckResult.MULTIPLE_INDEXED )
-//		{
-//			illumIdxMap.putAll( expandMapIndexed( accumulateIllumMap, false ) );
-//		}
-//		else if ( multiplicityMap.get( 2 ) == CheckResult.MUlTIPLE_NAMED )
-//		{
-//			Pair< Map< Integer, Integer >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > resortMapNamed = resortMapNamed(
-//					accumulateIllumMap );
-//			illumIdxMap.putAll( resortMapNamed.getB() );
-//
-//		}
-//				
-//		// DO TILES
-//
-//		tileIdxMap.clear();
-//		tileDetailMap.clear();
-//		Boolean singleTileperFile = multiplicityMap.get( 3 ) == CheckResult.SINGLE;
-//
-//		if ( singleTileperFile && fileVariableToUse.get( 3 ) != null )
-//		{
-//			Pair< Map< Integer, TileInfo >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > expandTileMap = expandMapSingleFromFile(
-//					accumulateTileMap, patternDetector, fileVariableToUse.get( 3 ) );
-//			tileIdxMap.putAll( expandTileMap.getB() );
-//			tileDetailMap.putAll( expandTileMap.getA() );
-//		}
-//		else if ( singleTileperFile )
-//		{
-//			tileIdxMap.put( 0, accumulateTileMap.values().iterator().next() );
-//		}
-//		else if ( multiplicityMap.get( 3 ) == CheckResult.MULTIPLE_INDEXED )
-//		{
-//			tileIdxMap.putAll( expandMapIndexed( accumulateTileMap, true ) );
-//		}
-//		else if ( multiplicityMap.get( 3 ) == CheckResult.MUlTIPLE_NAMED )
-//		{
-//			Pair< Map< Integer, TileInfo >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > resortMapNamed = resortMapNamed(
-//					accumulateTileMap );
-//			tileDetailMap.putAll( resortMapNamed.getA() );
-//			tileIdxMap.putAll( resortMapNamed.getB() );
-//		}
-//				
-//				
-//		// DO ANGLES
-//
-//		angleIdxMap.clear();
-//		angleDetailMap.clear();
-//		Boolean singleAngleperFile = multiplicityMap.get( 4 ) == CheckResult.SINGLE;
-//
-//		if ( singleAngleperFile && fileVariableToUse.get( 4 ) != null )
-//		{
-//			Pair< Map< Integer, AngleInfo >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > expandAngleMap = expandMapSingleFromFile(
-//					accumulateAngleMap, patternDetector, fileVariableToUse.get( 4 ) );
-//			angleIdxMap.putAll( expandAngleMap.getB() );
-//			angleDetailMap.putAll( expandAngleMap.getA() );
-//		}
-//		else if ( singleAngleperFile )
-//		{
-//			angleIdxMap.put( 0, accumulateAngleMap.values().iterator().next() );
-//		}
-//		else if ( multiplicityMap.get( 4 ) == CheckResult.MULTIPLE_INDEXED )
-//		{
-//			angleIdxMap.putAll( expandMapIndexed( accumulateAngleMap, true ) );
-//		}
-//		else if ( multiplicityMap.get( 4 ) == CheckResult.MUlTIPLE_NAMED )
-//		{
-//			Pair< Map< Integer, AngleInfo >, Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > > resortMapNamed = resortMapNamed(
-//					accumulateAngleMap );
-//			angleDetailMap.putAll( resortMapNamed.getA() );
-//			angleIdxMap.putAll( resortMapNamed.getB() );
-//		}
 	}
 	
-	public static <T> Pair<Map<Integer, T>, Map<Integer, List<Pair<File, Pair< Integer, Integer >>>>> expandMapSingleFromFile(Map<T, List<Pair<File, Pair< Integer, Integer >>>> map, FilenamePatternDetector det, int patternIdx)
+	public static <T> Pair<Map<Integer, T>, Map<Integer, List<Pair<File, Pair< Integer, Integer >>>>> expandMapSingleFromFile(Map<T, List<Pair<File, Pair< Integer, Integer >>>> map, FilenamePatternDetector det, List<Integer> patternIdx)
 	{
 		Map<Integer, List<Pair<File, Pair< Integer, Integer >>>> res = new HashMap<>();
 		Map<Integer, T> res2 = new HashMap<>();
 		SortedMap< Pair< File, Pair< Integer, Integer > >, T > invertedMap = invertMapSortValue( map );
+		
+		// 
+		Map<List<Integer>, Integer> multiIdxMap = new HashMap<>();
+		
 		for (Pair< File, Pair< Integer, Integer > > fileInfo : invertedMap.keySet())
 		{
+			int id = -1;
 			T attribute = invertedMap.get( fileInfo );
 			//System.out.println( fileInfo.getA().getAbsolutePath() );
-			int id = 0;
+			
 			Matcher m = det.getPatternAsRegex().matcher( fileInfo.getA().getAbsolutePath() );
-			if (m.matches())
-				id = Integer.parseInt( m.group( patternIdx + 1 ));
+			
+			// we have one numerical group describing this attribute -> use it as id
+			if (patternIdx.size() == 1)
+			{
+				if (m.matches())
+					id = Integer.parseInt( m.group( patternIdx.get( 0 ) + 1 ));
+				else
+					System.out.println( "WARNING: something went wrong while matching filenames" );
+			}
+			// we have more than one group describing attribute -> use increasing indices
 			else
-				System.out.println( "WARNING: something went wrong while matching filenames" );
+			{
+				if(!m.matches() || m.groupCount() < patternIdx.stream().reduce( Integer.MIN_VALUE, Math::max ))
+					System.out.println( "WARNING: something went wrong while matching filenames" );
+				else
+				{
+					List< Integer > multiIdx = patternIdx.stream().map( idx -> Integer.parseInt( m.group( idx + 1 )  ) ).collect( Collectors.toList() );
+					if (!multiIdxMap.containsKey( multiIdx ))
+						multiIdxMap.put( multiIdx, multiIdxMap.size() );
+					id = multiIdxMap.get( multiIdx );
+				}
+				
+			}
+			
 			res2.put( id, attribute );
 			
 			if (!res.containsKey( id ))
 				res.put( id, new ArrayList<>() );
 			res.get( id ).add( fileInfo );
+			
 		}
 		return new ValuePair< Map<Integer,T>, Map<Integer,List<Pair<File,Pair<Integer,Integer>>>> >( res2, res );
 			
@@ -735,17 +629,22 @@ public class FileListDatasetDefinitionUtil
 	public static <T> Pair<Map<Integer, T>, Map<Integer, List<Pair<File, Pair< Integer, Integer >>>>> expandMapSingleFromFileGroupedFormat(
 			Map<T, List<Pair<File, Pair< Integer, Integer >>>> map,
 			FilenamePatternDetector det, 
-			int patternIdx,
+			List<Integer> patternIdx,
 			Map< String, Pair< File, Integer > > groupUsageMap)
 	{
 		Map<Integer, List<Pair<File, Pair< Integer, Integer >>>> res = new HashMap<>();
 		Map<Integer, T> res2 = new HashMap<>();
 		SortedMap< Pair< File, Pair< Integer, Integer > >, T > invertedMap = invertMapSortValue( map );
+		
+		// 
+		Map<List<Integer>, Integer> multiIdxMap = new HashMap<>();
+		
 		for (Pair< File, Pair< Integer, Integer > > fileInfo : invertedMap.keySet())
 		{
+			int id = -1;
 			T attribute = invertedMap.get( fileInfo );
 			//System.out.println( fileInfo.getA().getAbsolutePath() );
-			int id = 0;
+			
 			
 			// find the actual used file
 			String seriesFile = null;
@@ -756,14 +655,36 @@ public class FileListDatasetDefinitionUtil
 			}
 			
 			Matcher m = det.getPatternAsRegex().matcher( seriesFile );
-			if (m.matches())
-				id = Integer.parseInt( m.group( patternIdx + 1 ));
-			else
-				System.out.println( "WARNING: something went wrong while matching filenames" );
-			res2.put( id, attribute );
 			
-			if (!res.containsKey( id ))
-				res.put( id, new ArrayList<>() );
+			// we have one numerical group describing this attribute -> use it as id
+			if ( patternIdx.size() == 1 )
+			{
+				if ( m.matches() )
+					id = Integer.parseInt( m.group( patternIdx.get( 0 ) + 1 ) );
+				else
+					System.out.println( "WARNING: something went wrong while matching filenames" );
+			}
+			// we have more than one group describing attribute -> use
+			// increasing indices
+			else
+			{
+				if ( !m.matches() || m.groupCount() < patternIdx.stream().reduce( Integer.MIN_VALUE, Math::max ) )
+					System.out.println( "WARNING: something went wrong while matching filenames" );
+				else
+				{
+					List< Integer > multiIdx = patternIdx.stream().map( idx -> Integer.parseInt( m.group( idx + 1 ) ) )
+							.collect( Collectors.toList() );
+					if ( !multiIdxMap.containsKey( multiIdx ) )
+						multiIdxMap.put( multiIdx, multiIdxMap.size() );
+					id = multiIdxMap.get( multiIdx );
+				}
+
+			}
+
+			res2.put( id, attribute );
+
+			if ( !res.containsKey( id ) )
+				res.put( id, new ArrayList< >() );
 			res.get( id ).add( fileInfo );
 		}
 		return new ValuePair< Map<Integer,T>, Map<Integer,List<Pair<File,Pair<Integer,Integer>>>> >( res2, res );
@@ -1028,8 +949,8 @@ public class FileListDatasetDefinitionUtil
 			for (int i = 0; i < reader.getSeriesCount(); i ++)
 			{
 				reader.setSeries( i );
-				// FIXME? what if this is != 1
-				state.getGroupUsageMap().put( reader.getSeriesUsedFiles()[0], new ValuePair< File, Integer >( file, i ));
+				for (String usedFileI : reader.getSeriesUsedFiles())
+					state.getGroupUsageMap().put( usedFileI , new ValuePair< File, Integer >( file, i ));
 			}
 			
 			// for each entity class, create a map from identifying object to series
@@ -1052,7 +973,7 @@ public class FileListDatasetDefinitionUtil
 			infoMap.put(TimePoint.class, mapTimepointsChannelsIlluminations.getA());
 			infoMap.put(Channel.class, mapTimepointsChannelsIlluminations.getB().getA());
 			infoMap.put(Illumination.class, mapTimepointsChannelsIlluminations.getB().getB());
-			
+
 			// check multiplicity of maps			
 			Map<Class<? extends Entity>, CheckResult> multiplicity = new HashMap<>();
 			
@@ -1060,8 +981,19 @@ public class FileListDatasetDefinitionUtil
 			multiplicity.put( TimePoint.class, checkMultipleTimepoints( (Map< Integer, List< Pair< Integer, Integer > > >) infoMap.get( TimePoint.class ) ));			
 			multiplicity.put( Channel.class, checkMultiplicity( infoMap.get( Channel.class ) ));
 			multiplicity.put( Illumination.class, checkMultiplicity( infoMap.get( Illumination.class ) ));
-			multiplicity.put( Angle.class, checkMultiplicity( infoMap.get( Angle.class ) ));
-			multiplicity.put( Tile.class, checkMultiplicity( infoMap.get( Tile.class ) ));
+			
+			Map< ? extends Object, List< Integer > > tileSeriesMap = infoMap.get( Tile.class ).entrySet().stream().collect(
+								Collectors.toMap( 
+										e -> e.getKey(),
+										e -> new ArrayList<>(e.getValue().stream().map(p -> p.getA()).collect(Collectors.toSet()))) );
+			
+			Map< ? extends Object, List< Integer > > angleSeriesMap = infoMap.get( Angle.class ).entrySet().stream().collect(
+					Collectors.toMap( 
+							e -> e.getKey(),
+							e -> new ArrayList<>(e.getValue().stream().map(p -> p.getA()).collect(Collectors.toSet()))) );
+			
+			multiplicity.put( Angle.class, checkMultiplicity( angleSeriesMap ));
+			multiplicity.put( Tile.class, checkMultiplicity( tileSeriesMap));
 			
 			boolean channelIllumAmbiguous = false;
 			// we found multiple illums/channels with metadata for illums -> consider only illums
@@ -1183,23 +1115,22 @@ public class FileListDatasetDefinitionUtil
 		
 		try
 		{
-			reader.setId( new OpenDialog("pick file").getPath() );
+			reader.setId( new OpenDialog("pick file").getPath() );		
+		
+			for (int i = 0; i < reader.getSeriesCount(); i++)
+			{
+				reader.setSeries( i );
+				Arrays.asList( reader.getSeriesUsedFiles() ).forEach( s -> System.out.println( s ) );
+				
+				System.out.println( ((OMEXMLMetadataImpl)reader.getMetadataStore()).dumpXML());
+			}
+
+			reader.close();
 		}
 		catch ( FormatException | IOException e )
 		{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
-		
-		//System.out.println( reader.getCurrentFile() );
-		
-		//Arrays.asList( reader.getUsedFiles()).forEach( s -> System.out.println( s ) );
-		
-		for (int i = 0; i < reader.getSeriesCount(); i++)
-		{
-			reader.setSeries( i );
-			Arrays.asList( reader.getSeriesUsedFiles() ).forEach( s -> System.out.println( s ) );
-			//System.out.println( reader.getCurrentFile() );
 		}
 	}
 

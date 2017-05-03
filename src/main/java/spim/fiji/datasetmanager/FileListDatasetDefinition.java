@@ -1,14 +1,9 @@
 package spim.fiji.datasetmanager;
 
-import java.awt.BorderLayout;
-import java.awt.GridBagConstraints;
 import java.awt.Label;
 import java.awt.Panel;
 import java.awt.TextField;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.InputMethodEvent;
-import java.awt.event.InputMethodListener;
+
 import java.awt.event.TextEvent;
 import java.awt.event.TextListener;
 import java.io.File;
@@ -30,16 +25,11 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import javax.swing.JLabel;
-
 import bdv.export.ExportMipmapInfo;
 import bdv.export.ProgressWriter;
 import fiji.util.gui.GenericDialogPlus;
-import ij.ImageJ;
 import ij.gui.GenericDialog;
-import loci.formats.IFormatReader;
-import loci.formats.in.ZeissCZIReader;
-import mdbtools.dbengine.sql.Join;
+import ij.io.DirectoryChooser;
 import mpicbg.spim.data.generic.base.Entity;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.registration.ViewRegistration;
@@ -59,14 +49,8 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.VoxelDimensions;
-import net.imglib2.Dimensions;
-import net.imglib2.converter.ComplexPowerGLogFloatConverter;
-import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.cell.CellImgFactory;
-import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.realtransform.AffineTransform3D;
-import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
 import spim.fiji.datasetmanager.FileListDatasetDefinitionUtil.AngleInfo;
@@ -75,7 +59,6 @@ import spim.fiji.datasetmanager.FileListDatasetDefinitionUtil.CheckResult;
 import spim.fiji.datasetmanager.FileListDatasetDefinitionUtil.TileInfo;
 import spim.fiji.datasetmanager.patterndetector.FilenamePatternDetector;
 import spim.fiji.datasetmanager.patterndetector.NumericalFilenamePatternDetector;
-import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.plugin.resave.Generic_Resave_HDF5;
 import spim.fiji.plugin.resave.ProgressWriterIJ;
 import spim.fiji.plugin.resave.Resave_HDF5;
@@ -84,7 +67,6 @@ import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.imgloaders.FileMapImgLoaderLOCI;
-import spim.fiji.spimdata.imgloaders.LegacyFileMapImgLoaderLOCI;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.fiji.spimdata.stitchingresults.StitchingResults;
 
@@ -96,6 +78,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 	static
 	{
 		fileListChoosers.add( new WildcardFileListChooser() );
+		fileListChoosers.add( new SimpleDirectoryFileListChooser() );
 	}
 	
 	private static interface FileListChooser
@@ -217,6 +200,63 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		
 	}
 	
+	private static class SimpleDirectoryFileListChooser implements FileListChooser
+	{
+
+		@Override
+		public List< File > getFileList()
+		{
+			List< File > res = new ArrayList<File>();
+			
+			DirectoryChooser dc = new DirectoryChooser ( "pick directory" );
+			if (dc.getDirectory() != null)
+				try
+				{
+					res = Files.list( Paths.get( dc.getDirectory() ))
+						.filter(p -> {
+							try
+							{
+								if ( Files.size( p ) > 10 * 1024 )
+									return true;
+								else
+									return false;
+							}
+							catch ( IOException e )
+							{
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+								return false;
+							}
+						}
+						).map( p -> p.toFile() ).collect( Collectors.toList() );
+					
+				}
+				catch ( IOException e )
+				{
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			return res;
+			
+			
+		}
+
+		@Override
+		public String getDescription()
+		{
+			// TODO Auto-generated method stub
+			return "select a directory manually";
+		}
+
+		@Override
+		public FileListChooser getNewInstance()
+		{
+			// TODO Auto-generated method stub
+			return new SimpleDirectoryFileListChooser();
+		}
+		
+	}
+	
 		
 	
 	public static List<File> getFilesFromPattern(String pattern, final long fileMinSize)
@@ -243,6 +283,10 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 				@Override
 				public boolean test(Path t)
 				{
+					// ignore directories
+					if (Files.isDirectory( t ))
+						return false;
+					
 					try
 					{
 						return Files.size( t ) > fileMinSize;
@@ -544,7 +588,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		
 		
 		
-		Map<Class<? extends Entity>, Integer> fileVariableToUse = new HashMap<>();
+		Map<Class<? extends Entity>, List<Integer>> fileVariableToUse = new HashMap<>();
 		List<String> choices = new ArrayList<>();
 		
 		FilenamePatternDetector patternDetector = new NumericalFilenamePatternDetector();
@@ -575,7 +619,8 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		// summary channel
 		if (state.getMultiplicityMap().get( Channel.class ) == CheckResult.SINGLE)
 		{
-			inFileSummarySB.append( "<p> No channels detected within files </p>" );
+			inFileSummarySB.append( !state.getAmbiguousIllumChannel() ? "<p> No channels detected within files </p>" :
+																	 		"<p> Channels OR Illuminations detected within files </p>");
 			choices.add( "Channels" );
 		}
 		else if (state.getMultiplicityMap().get( Channel.class ) == CheckResult.MULTIPLE_INDEXED)
@@ -600,7 +645,8 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		// summary illum
 		if ( state.getMultiplicityMap().get( Illumination.class ) == CheckResult.SINGLE )
 		{
-			inFileSummarySB.append( "<p> No illuminations detected within files </p>" );
+			if (!state.getAmbiguousIllumChannel())
+				inFileSummarySB.append( "<p> No illuminations detected within files </p>" );
 			choices.add( "Illuminations" );
 		}
 		else if ( state.getMultiplicityMap().get( Illumination.class ) == CheckResult.MULTIPLE_INDEXED )
@@ -677,8 +723,10 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 				
 		
 		
-		if (state.getAmbiguousAngleTile())
-			gd.addChoice( "map series to", choicesAngleTile, choicesAngleTile[0] );
+		//if (state.getAmbiguousAngleTile())
+		String preferedAnglesOrTiles = state.getMultiplicityMap().get( Angle.class ) == CheckResult.MULTIPLE_INDEXED ? "Angles" : "Tiles";
+		if (state.getAmbiguousAngleTile() || state.getMultiplicityMap().get( Tile.class) ==  CheckResult.MUlTIPLE_NAMED)
+			gd.addChoice( "map series to", choicesAngleTile, preferedAnglesOrTiles );
 		if (state.getAmbiguousIllumChannel())
 			gd.addChoice( "map channels to", choicesChannelIllum, choicesChannelIllum[0] );
 			
@@ -697,7 +745,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		gd.addMessage( sbfilePatterns.toString() );				
 		
 		
-		
+		choices.add( "-- ignore this pattern --"  );
 		String[] choicesAll = choices.toArray( new String[]{} );
 				
 		for (int i = 0; i < numVariables; i++)
@@ -710,27 +758,35 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		
 		boolean preferAnglesOverTiles = true;
 		boolean preferChannelsOverIlluminations = true;
-		if (state.getAmbiguousAngleTile())
+		if (state.getAmbiguousAngleTile() || state.getMultiplicityMap().get( Tile.class) ==  CheckResult.MUlTIPLE_NAMED)
 			preferAnglesOverTiles = gd.getNextChoiceIndex() == 0;
 		if (state.getAmbiguousIllumChannel())
 			preferChannelsOverIlluminations = gd.getNextChoiceIndex() == 0;
+		
+		fileVariableToUse.put( TimePoint.class, new ArrayList<>() );
+		fileVariableToUse.put( Channel.class, new ArrayList<>() );
+		fileVariableToUse.put( Illumination.class, new ArrayList<>() );
+		fileVariableToUse.put( Tile.class, new ArrayList<>() );
+		fileVariableToUse.put( Angle.class, new ArrayList<>() );
 		
 		for (int i = 0; i < numVariables; i++)
 		{
 			String choice = gd.getNextChoice();
 			if (choice.equals( "TimePoints" ))
-				fileVariableToUse.put( TimePoint.class , i);
+				fileVariableToUse.get( TimePoint.class ).add( i );
 			else if (choice.equals( "Channels" ))
-				fileVariableToUse.put( Channel.class , i);
+				fileVariableToUse.get( Channel.class ).add( i );
 			else if (choice.equals( "Illuminations" ))
-				fileVariableToUse.put( Illumination.class , i);
+				fileVariableToUse.get( Illumination.class ).add( i );
 			else if (choice.equals( "Tiles" ))
-				fileVariableToUse.put( Tile.class , i);
+				fileVariableToUse.get( Tile.class ).add( i );
 			else if (choice.equals( "Angles" ))
-				fileVariableToUse.put( Angle.class , i);
+				fileVariableToUse.get( Angle.class ).add( i );
+			
+				
 		}
 		
-				
+		// TODO handle Angle-Tile swap here	
 		FileListDatasetDefinitionUtil.resolveAmbiguity( state.getMultiplicityMap(), state.getAmbiguousIllumChannel(), preferChannelsOverIlluminations, state.getAmbiguousAngleTile(), !preferAnglesOverTiles );
 				
 		
@@ -750,7 +806,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		gdSave.addMessage( "<html> <h1> Saving options </h1> <br /> </html>" );
 		
 		
-		Class imgFactoryClass = ((FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() ).getImgFactory().getClass();
+		Class<?> imgFactoryClass = ((FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() ).getImgFactory().getClass();
 		if (imgFactoryClass.equals( CellImgFactory.class ))
 		{
 			gdSave.addMessage( "<html> <h2> ImgLib2 container </h2> <br/>"
@@ -767,7 +823,11 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		
 		Set<String> filenames = new HashSet<>();
 		((FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() ).getFileMap().values().stream().forEach(
-				p -> filenames.add( p.getA().getAbsolutePath()) );
+				p -> 
+				{
+					filenames.add( p.getA().getAbsolutePath());
+					System.out.println( p.getA().getAbsolutePath() );
+				});
 		
 		File prefixPath;
 		if (filenames.size() > 1)
