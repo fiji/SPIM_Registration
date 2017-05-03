@@ -106,10 +106,10 @@ public class LegacyMicroManagerImgLoader extends AbstractImgLoader
 
 		if ( countDroppedFrames > 0 )
 		{
-			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): WARNING!!! " + countDroppedFrames + " DROPPED FRAME(s) in timepoint="  + t + " viewsetup=" + vd.getViewSetupId() + " following slices:" );
+			IOFunctions.printlnSafe( "(" + new Date( System.currentTimeMillis() ) + "): WARNING!!! " + countDroppedFrames + " DROPPED FRAME(s) in timepoint="  + t + " viewsetup=" + vd.getViewSetupId() + " following slices:" );
 
 			for ( final int z : slices )
-				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): slice=" + z );
+				IOFunctions.printlnSafe( "(" + new Date( System.currentTimeMillis() ) + "): slice=" + z );
 		}
 	}
 
@@ -136,7 +136,7 @@ public class LegacyMicroManagerImgLoader extends AbstractImgLoader
 		}
 		catch ( Exception e )
 		{
-			IOFunctions.println( "Failed to load viewsetup=" + view.getViewSetupId() + " timepoint=" + view.getTimePointId() + ": " + e );
+			IOFunctions.printlnSafe( "Failed to load viewsetup=" + view.getViewSetupId() + " timepoint=" + view.getTimePointId() + ": " + e );
 			e.printStackTrace();
 			return null;
 		}
@@ -162,7 +162,7 @@ public class LegacyMicroManagerImgLoader extends AbstractImgLoader
 		}
 		catch ( Exception e )
 		{
-			IOFunctions.println( "Failed to load viewsetup=" + view.getViewSetupId() + " timepoint=" + view.getTimePointId() + ": " + e );
+			IOFunctions.printlnSafe( "Failed to load viewsetup=" + view.getViewSetupId() + " timepoint=" + view.getTimePointId() + ": " + e );
 			e.printStackTrace();
 			return null;
 		}
@@ -181,7 +181,7 @@ public class LegacyMicroManagerImgLoader extends AbstractImgLoader
 		}
 		catch ( Exception e )
 		{
-			IOFunctions.println( "Failed to load metadata for viewsetup=" + view.getViewSetupId() + " timepoint=" + view.getTimePointId() + ": " + e );
+			IOFunctions.printlnSafe( "Failed to load metadata for viewsetup=" + view.getViewSetupId() + " timepoint=" + view.getTimePointId() + ": " + e );
 			e.printStackTrace();
 		}
 	}

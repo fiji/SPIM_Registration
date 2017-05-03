@@ -102,10 +102,10 @@ public abstract class LegacyStackImgLoader extends AbstractImgFactoryImgLoader
 			if ( f.exists() )
 				return f;
 			else
-				IOFunctions.println( "File '" + f.getAbsolutePath() + "' does not exist." );
+				IOFunctions.printlnSafe( "File '" + f.getAbsolutePath() + "' does not exist." );
 		}
 
-		IOFunctions.println( "Could not find file for tp=" + timepoint + ", angle=" + angle + ", channel=" + channel + ", ill=" + illum );
+		IOFunctions.printlnSafe( "Could not find file for tp=" + timepoint + ", angle=" + angle + ", channel=" + channel + ", ill=" + illum );
 
 		return null;
 	}
@@ -162,18 +162,18 @@ public abstract class LegacyStackImgLoader extends AbstractImgFactoryImgLoader
 		if ( replaceAngles != null )
 			numDigitsAngles = replaceAngles.length() - 2;
 		/*
-		IOFunctions.println( replaceTimepoints );
-		IOFunctions.println( replaceChannels );
-		IOFunctions.println( replaceIlluminations );
-		IOFunctions.println( replaceAngles );
-		
-		IOFunctions.println( layoutTP );
-		IOFunctions.println( layoutChannels );
-		IOFunctions.println( layoutIllum );
-		IOFunctions.println( layoutAngles );
-		
-		IOFunctions.println( path );
-		IOFunctions.println( fileNamePattern );
-		*/		
+		IOFunctions.printlnSafe( replaceTimepoints );
+		IOFunctions.printlnSafe( replaceChannels );
+		IOFunctions.printlnSafe( replaceIlluminations );
+		IOFunctions.printlnSafe( replaceAngles );
+
+		IOFunctions.printlnSafe( layoutTP );
+		IOFunctions.printlnSafe( layoutChannels );
+		IOFunctions.printlnSafe( layoutIllum );
+		IOFunctions.printlnSafe( layoutAngles );
+
+		IOFunctions.printlnSafe( path );
+		IOFunctions.printlnSafe( fileNamePattern );
+		*/
 	}
 }

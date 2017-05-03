@@ -151,14 +151,14 @@ public class MultipageTiffReader
 				lastDisplayedFile = "";
 
 			if ( !lastDisplayedFile.equals( file.getAbsolutePath() ) )
-				IOFunctions.println( "Using the following files for the MicroManager ImgLoader: " );
+				IOFunctions.printlnSafe( "Using the following files for the MicroManager ImgLoader: " );
 
 			for ( i = 0; i < this.files.size(); ++i )
 			{
 				final File f = this.files.get( i );
 
 				if ( !lastDisplayedFile.equals( file.getAbsolutePath() ) )
-					IOFunctions.println( f.getAbsolutePath() );
+					IOFunctions.printlnSafe( f.getAbsolutePath() );
 
 				this.raFiles.add( new RandomAccessFile( f, "rw" ) );
 				this.fileChannels.add( this.raFiles.get( this.raFiles.size() - 1 ).getChannel() );
@@ -245,7 +245,7 @@ public class MultipageTiffReader
 				byteDepth_ = 2;
 			}
 		} catch (Exception ex) {
-			IOFunctions.println(ex);
+			IOFunctions.printlnSafe(ex);
 		}
 	}
 
@@ -259,7 +259,7 @@ public class MultipageTiffReader
 
 			if ( fileChannel == null )
 			{
-				IOFunctions.println( "Attempted to read image on FileChannel that is null" );
+				IOFunctions.printlnSafe( "Attempted to read image on FileChannel that is null" );
 				return null;
 			}
 
@@ -272,13 +272,13 @@ public class MultipageTiffReader
 			}
 			catch ( IOException ex )
 			{
-				IOFunctions.println(ex);
+				IOFunctions.printlnSafe(ex);
 				return null;
 			}
 		}
 		else
 		{
-			IOFunctions.println( "Exception: label '" + label + "' not in present in hashmap, cannot read data." );
+			IOFunctions.printlnSafe( "Exception: label '" + label + "' not in present in hashmap, cannot read data." );
 			// label not in map--either writer hasnt finished writing it
 			return null;
 		}
@@ -301,7 +301,7 @@ public class MultipageTiffReader
 
 			if ( header != SUMMARY_MD_HEADER )
 			{
-				IOFunctions.println( "Summary Metadata Header Incorrect" );
+				IOFunctions.printlnSafe( "Summary Metadata Header Incorrect" );
 				return false;
 			}
 
@@ -311,7 +311,7 @@ public class MultipageTiffReader
 			final HashMap< String, Object > summaryMD = parseJSONSimple( getString( mdBuffer ) );
 
 			if ( summaryMD == null )
-				IOFunctions.println( "Couldn't read summary Metadata from file: " + getFileForFileChannel( fileChannel ).getName() );
+				IOFunctions.printlnSafe( "Couldn't read summary Metadata from file: " + getFileForFileChannel( fileChannel ).getName() );
 
 			// MVRotationAxis = 0_1_0
 			// MVRotations = 0_90_0_90
@@ -341,7 +341,7 @@ public class MultipageTiffReader
 		{
 			ex.printStackTrace();
 
-			IOFunctions.println( "Couldn't read summary Metadata from file: " + getFileForFileChannel( fileChannel ).getName() );
+			IOFunctions.printlnSafe( "Couldn't read summary Metadata from file: " + getFileForFileChannel( fileChannel ).getName() );
 			return false;
 		}
 	}
@@ -372,7 +372,7 @@ public class MultipageTiffReader
 		{
 			if ( !jsonString.startsWith( "\"" ) )
 			{
-				IOFunctions.println( "Failed to parse json string: " + json );
+				IOFunctions.printlnSafe( "Failed to parse json string: " + json );
 				return null;
 			}
 
@@ -463,7 +463,7 @@ public class MultipageTiffReader
 			// current version
 			final String label = generateLabel( channel, slice, frame, position );
 			if ( indexMap_.containsKey( label ) )
-				IOFunctions.println( "ERROR!!! Label: " + label + " already present." );
+				IOFunctions.printlnSafe( "ERROR!!! Label: " + label + " already present." );
 
 			//System.out.println( label + " " + getFileForFileChannel( fileChannel ).getName() );
 
@@ -507,7 +507,7 @@ public class MultipageTiffReader
 		try {
 			return new String(buffer.array(), "UTF-8");
 		} catch (UnsupportedEncodingException ex) {
-			IOFunctions.println(ex);
+			IOFunctions.printlnSafe(ex);
 			return "";
 		}
 	}
@@ -526,7 +526,7 @@ public class MultipageTiffReader
 
 		if ( rgb_ )
 		{
-			IOFunctions.println( "RGB types not supported." );
+			IOFunctions.printlnSafe( "RGB types not supported." );
 			return null;
 		}
 		else
@@ -691,7 +691,7 @@ public class MultipageTiffReader
 	{
 		if ( angleId < 0 || angleId >= numAngles() )
 		{
-			IOFunctions.println( "No angle with id " + angleId + ", there are only " + numAngles() + " angles." );
+			IOFunctions.printlnSafe( "No angle with id " + angleId + ", there are only " + numAngles() + " angles." );
 			return String.valueOf( angleId );
 		}
 
@@ -710,7 +710,7 @@ public class MultipageTiffReader
 		}
 		catch ( Exception e )
 		{
-			IOFunctions.println( "Failed to get rotation angle: " + e );
+			IOFunctions.printlnSafe( "Failed to get rotation angle: " + e );
 			return "0";
 		}
 	}
@@ -724,7 +724,7 @@ public class MultipageTiffReader
 	{
 		if ( channelId < 0 || channelId >= numChannels() )
 		{
-			IOFunctions.println( "No channel with id " + channelId + ", there are only " + numChannels() + " channels." );
+			IOFunctions.printlnSafe( "No channel with id " + channelId + ", there are only " + numChannels() + " channels." );
 			return String.valueOf( channelId );
 		}
 
@@ -744,7 +744,7 @@ public class MultipageTiffReader
 	
 			if ( entries.length != numChannelsAndAngles() )
 			{
-				IOFunctions.println( "Number of entries in " + summaryMetadata_.get( "ChNames" ).toString().trim() + " does not match numAngles()*numChannels()=" + numChannelsAndAngles() );
+				IOFunctions.printlnSafe( "Number of entries in " + summaryMetadata_.get( "ChNames" ).toString().trim() + " does not match numAngles()*numChannels()=" + numChannelsAndAngles() );
 				return String.valueOf( channelId );
 			}
 
@@ -757,7 +757,7 @@ public class MultipageTiffReader
 		}
 		catch ( Exception e )
 		{
-			IOFunctions.println( "Failed to parse channel name: " + e );
+			IOFunctions.printlnSafe( "Failed to parse channel name: " + e );
 			return String.valueOf( channelId );
 		}
 	}
