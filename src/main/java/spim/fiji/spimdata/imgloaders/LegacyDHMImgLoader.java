@@ -205,12 +205,12 @@ public class LegacyDHMImgLoader extends AbstractImgLoader
 
 		if ( countDroppedFrames > 0 )
 		{
-			IOFunctions.println(
+			IOFunctions.printlnSafe(
 					"(" + new Date( System.currentTimeMillis() ) + "): WARNING!!! " + countDroppedFrames +
 					" DROPPED FRAME(s) in timepoint="  + timepoint + " channel=" + ampOrPhaseDirectory + " following slices:" );
 
 			for ( final int z : slices )
-				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): sliceindex=" + z + ", slice=" + zPlanes.get( z ));
+				IOFunctions.printlnSafe( "(" + new Date( System.currentTimeMillis() ) + "): sliceindex=" + z + ", slice=" + zPlanes.get( z ));
 		}
 	}
 }

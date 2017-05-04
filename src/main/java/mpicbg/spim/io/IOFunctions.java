@@ -30,6 +30,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 
+import javax.swing.SwingUtilities;
+
 import bdv.export.ProgressWriter;
 import bdv.export.ProgressWriterConsole;
 import ij.IJ;
@@ -91,6 +93,36 @@ public class IOFunctions
 			return progressWriterIJ;
 		else
 			return progressWriterConsole;
+	}
+
+	public static void printlnSafe() { printlnSafe( "" ); }
+	public static void printlnSafe( final Object object) { printlnSafe( object.toString() ); }
+	public static void printlnSafe( final String string )
+	{
+		if ( printIJLog )
+		{
+			if ( SwingUtilities.isEventDispatchThread() )
+				IJ.log( string );
+			else
+				SwingUtilities.invokeLater( () -> IJ.log( string ) );
+		}
+		else
+			System.out.println( string );
+	}
+
+	public static void printErrSafe() { printErr( "" ); }
+	public static void printErrSafe( final Object object) { printErr( object.toString() ); }
+	public static void printErrSafe( final String string )
+	{
+		if ( printIJLog )
+		{
+			if ( SwingUtilities.isEventDispatchThread() )
+				IJ.error( string );
+			else
+				SwingUtilities.invokeLater( () -> IJ.error( string ) );
+		}
+		else
+			System.err.println( string );
 	}
 
 	public static SPIMConfiguration initSPIMProcessing()

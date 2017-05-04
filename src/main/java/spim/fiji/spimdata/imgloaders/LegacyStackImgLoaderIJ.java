@@ -69,7 +69,7 @@ public class LegacyStackImgLoaderIJ extends LegacyStackImgLoader
 
 		if ( imp == null )
 		{
-			IOFunctions.println( "Could not open file with ImageJ TIFF reader: '" + file.getAbsolutePath() + "'" );
+			IOFunctions.printlnSafe( "Could not open file with ImageJ TIFF reader: '" + file.getAbsolutePath() + "'" );
 			return null;
 		}
 
@@ -93,7 +93,7 @@ public class LegacyStackImgLoaderIJ extends LegacyStackImgLoader
 		if ( file == null )
 			throw new RuntimeException( "Could not find file '" + file + "'." );
 
-		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Loading '" + file + "' ..." );
+		IOFunctions.printlnSafe( new Date( System.currentTimeMillis() ) + ": Loading '" + file + "' ..." );
 
 		final ImagePlus imp = open( file );
 
@@ -106,7 +106,7 @@ public class LegacyStackImgLoaderIJ extends LegacyStackImgLoader
 		if ( img == null )
 			throw new RuntimeException( "Could not instantiate " + getImgFactory().getClass().getSimpleName() + " for '" + file + "', most likely out of memory." );
 		else
-			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Opened '" + file + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] + " image=" + img.getClass().getSimpleName() + "<FloatType>]" );
+			IOFunctions.printlnSafe( new Date( System.currentTimeMillis() ) + ": Opened '" + file + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] + " image=" + img.getClass().getSimpleName() + "<FloatType>]" );
 
 		imagePlus2ImgLib2Img( imp, img, normalize );
 
@@ -231,7 +231,7 @@ public class LegacyStackImgLoaderIJ extends LegacyStackImgLoader
 		if ( file == null )
 			throw new RuntimeException( "Could not find file '" + file + "'." );
 
-		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Loading '" + file + "' ..." );
+		IOFunctions.printlnSafe( new Date( System.currentTimeMillis() ) + ": Loading '" + file + "' ..." );
 
 		final ImagePlus imp = open( file );
 
@@ -244,7 +244,7 @@ public class LegacyStackImgLoaderIJ extends LegacyStackImgLoader
 		if ( imp.getType() == ImagePlus.GRAY32 )
 		{
 			is32bit = true;
-			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Image '" + file + "' is 32bit, opening as 16bit with scaling" );
+			IOFunctions.printlnSafe( new Date( System.currentTimeMillis() ) + ": Image '" + file + "' is 32bit, opening as 16bit with scaling" );
 
 			if ( params == null )
 				params = queryParameters();
@@ -267,7 +267,7 @@ public class LegacyStackImgLoaderIJ extends LegacyStackImgLoader
 		if ( img == null )
 			throw new RuntimeException( "Could not instantiate " + getImgFactory().getClass().getSimpleName() + " for '" + file + "', most likely out of memory." );
 		else
-			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Opened '" + file + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] + " image=" + img.getClass().getSimpleName() + "<UnsignedShortType>]" );
+			IOFunctions.printlnSafe( new Date( System.currentTimeMillis() ) + ": Opened '" + file + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] + " image=" + img.getClass().getSimpleName() + "<UnsignedShortType>]" );
 
 		final ImageStack stack = imp.getStack();
 		final int sizeZ = imp.getStack().getSize();
