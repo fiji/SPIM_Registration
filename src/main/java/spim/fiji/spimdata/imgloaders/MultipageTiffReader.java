@@ -385,6 +385,10 @@ public class MultipageTiffReader
 			{
 				valueEnd = jsonString.indexOf( ']' ) + 1;
 			}
+			else if ( jsonString.charAt( valueStart ) == '{' )
+			{
+				valueEnd = jsonString.indexOf( '}' ) + 1;
+			}
 			else if ( jsonString.charAt( valueStart ) == '\"' )
 			{
 				++valueStart;
