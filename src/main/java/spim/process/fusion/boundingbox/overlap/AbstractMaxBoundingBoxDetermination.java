@@ -46,7 +46,7 @@ public abstract class AbstractMaxBoundingBoxDetermination < V extends ViewId > i
 
 
 	@Override
-	public BoundingBox getMaxBoundingBox(Collection< Collection< V > > viewGroups)
+	public BoundingBox getMaxBoundingBox(Collection<? extends Collection< V > > viewGroups)
 	{
 		Collection<Collection<Pair<RealInterval, AffineGet>>> viewGroupsInner = new ArrayList<>();
 		

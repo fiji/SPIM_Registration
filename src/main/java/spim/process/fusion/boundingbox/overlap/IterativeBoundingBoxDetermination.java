@@ -45,7 +45,7 @@ public class IterativeBoundingBoxDetermination<V extends ViewId> extends Abstrac
 	}
 
 	@Override
-	public BoundingBox getMaxOverlapBoundingBox(Collection< Collection< V > > viewGroups)
+	public BoundingBox getMaxOverlapBoundingBox(Collection< ? extends Collection< V > > viewGroups)
 	{
 		Collection< Collection< Pair< RealInterval, AffineGet > > > viewGroupsInner = new ArrayList< >();
 
