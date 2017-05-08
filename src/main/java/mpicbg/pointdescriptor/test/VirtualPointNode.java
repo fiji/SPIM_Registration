@@ -1,20 +1,19 @@
 package mpicbg.pointdescriptor.test;
 
-import fiji.util.node.Leaf;
 import mpicbg.models.Point;
+import net.imglib2.RealLocalizable;
+import spim.fiji.spimdata.interestpoints.InterestPoint;
 
-public class VirtualPointNode<P extends Point> implements Leaf<VirtualPointNode<P>>
+public class VirtualPointNode<P extends Point> implements RealLocalizable
 {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	
+
 	final P p;
 	final int numDimensions;
+	final boolean useW;
 	
 	public VirtualPointNode( final P p )
 	{
+		this.useW = true;
 		this.p = p;
 		this.numDimensions = p.getL().length;
 	}
@@ -22,17 +21,27 @@ public class VirtualPointNode<P extends Point> implements Leaf<VirtualPointNode<
 	public P getPoint() { return p; }
 
 	@Override
-	public float distanceTo( final VirtualPointNode<P> other ) { return (float)Point.distance( p, other.getPoint() ); }
+	public int numDimensions() { return numDimensions; }
 
 	@Override
-	public float get( final int k ) { return (float)p.getW()[ k ]; }
+	public void localize( final float[] position )
+	{
+		for ( int d = 0; d < position.length; ++d )
+			position[ d ] = useW? (float)p.getW()[ d ] : (float)p.getL()[ d ];
+	}
 
 	@Override
-	public int getNumDimensions() { return numDimensions; }
+	public void localize( final double[] position )
+	{
+		for ( int d = 0; d < position.length; ++d )
+			position[ d ] = useW? p.getW()[ d ] : p.getL()[ d ];
+	}
 
 	@Override
-	public boolean isLeaf() { return true; }
+	public float getFloatPosition( final int d ) { return useW? (float)p.getW()[ d ] : (float)p.getL()[ d ]; }
 
 	@Override
-	public VirtualPointNode<P>[] createArray( final int n ) { return new VirtualPointNode[ n ]; }
+	public double getDoublePosition( final int d ) { return useW? p.getW()[ d ] : p.getL()[ d ]; }
+
+	public InterestPoint newInstance( final int id, final double[] l ) { return new InterestPoint( id, l ); }
 }

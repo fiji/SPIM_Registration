@@ -26,13 +26,12 @@ import mpicbg.pointdescriptor.model.TranslationInvariantModel;
 import mpicbg.pointdescriptor.model.TranslationInvariantRigidModel3D;
 import mpicbg.pointdescriptor.similarity.SimilarityMeasure;
 import mpicbg.pointdescriptor.similarity.SquareDistance;
-import mpicbg.spim.vis3d.VisualizationFunctions;
-import mpicbg.spim.vis3d.VisualizeBeads;
 import mpicbg.util.TransformUtils;
+import net.imglib2.KDTree;
+import net.imglib2.neighborsearch.KNearestNeighborSearch;
+import net.imglib2.neighborsearch.KNearestNeighborSearchOnKDTree;
 import net.imglib2.util.Util;
 //import customnode.CustomLineMesh;
-import fiji.util.KDTree;
-import fiji.util.NNearestNeighborSearch;
 
 public class TestPointDescriptor
 {
@@ -167,17 +166,18 @@ public class TestPointDescriptor
 	                                                                                               final Matcher matcher, 
 	                                                                                               final SimilarityMeasure similarityMeasure )
 	{
-		final NNearestNeighborSearch< VirtualPointNode< P > > nnsearch = new NNearestNeighborSearch< VirtualPointNode< P > >( tree );
+		final KNearestNeighborSearch< VirtualPointNode< P > > nnsearch = new KNearestNeighborSearchOnKDTree< VirtualPointNode< P > >( tree, numNeighbors + 1 );
 		final ArrayList< ModelPointDescriptor< P > > descriptors = new ArrayList< ModelPointDescriptor< P > > ( );
 		
 		for ( final VirtualPointNode< P > p : basisPoints )
 		{
 			final ArrayList< P > neighbors = new ArrayList< P >();
-			final VirtualPointNode< P > neighborList[] = nnsearch.findNNearestNeighbors( p, numNeighbors + 1 );
-			
+			nnsearch.search( p );
+
 			// the first hit is always the point itself
-			for ( int n = 1; n < neighborList.length; ++n )
-				neighbors.add( neighborList[ n ].getPoint() );
+			for ( int n = 1; n <= numNeighbors + 1; ++n )
+				neighbors.add( nnsearch.getSampler( n ).get().getPoint() );
+				//neighbors.add( neighborList[ n ].getPoint() );
 			
 			try
 			{
@@ -198,17 +198,17 @@ public class TestPointDescriptor
             final int numNeighbors,
             final boolean normalize )
 	{
-		final NNearestNeighborSearch< VirtualPointNode< P > > nnsearch = new NNearestNeighborSearch< VirtualPointNode< P > >( tree );
+		final KNearestNeighborSearch< VirtualPointNode< P > > nnsearch = new KNearestNeighborSearchOnKDTree< VirtualPointNode< P > >( tree, numNeighbors + 1 );
 		final ArrayList< LocalCoordinateSystemPointDescriptor< P > > descriptors = new ArrayList< LocalCoordinateSystemPointDescriptor< P > > ( );
 		
 		for ( final VirtualPointNode< P > p : basisPoints )
 		{
 			final ArrayList< P > neighbors = new ArrayList< P >();
-			final VirtualPointNode< P > neighborList[] = nnsearch.findNNearestNeighbors( p, numNeighbors + 1 );
-			
+			nnsearch.search( p );
+
 			// the first hit is always the point itself
-			for ( int n = 1; n < neighborList.length; ++n )
-			neighbors.add( neighborList[ n ].getPoint() );
+			for ( int n = 1; n <= numNeighbors + 1; ++n )
+				neighbors.add( nnsearch.getSampler( n ).get().getPoint() );
 			
 			try
 			{
@@ -239,8 +239,8 @@ public class TestPointDescriptor
 		final ArrayList< VirtualPointNode< Point > > nodeList1 = createVirtualNodeList( points1 );
 		final ArrayList< VirtualPointNode< Point > > nodeList2 = createVirtualNodeList( points2 );
 		
-		final KDTree< VirtualPointNode< Point > > tree1 = new KDTree< VirtualPointNode< Point > >( nodeList1 );
-		final KDTree< VirtualPointNode< Point > > tree2 = new KDTree< VirtualPointNode< Point > >( nodeList2 );
+		final KDTree< VirtualPointNode< Point > > tree1 = new KDTree< VirtualPointNode< Point > >( nodeList1, nodeList1 );
+		final KDTree< VirtualPointNode< Point > > tree2 = new KDTree< VirtualPointNode< Point > >( nodeList2, nodeList2 );
 		
 		/* extract point descriptors */						
 		final int numNeighbors = 4;
@@ -427,8 +427,8 @@ public class TestPointDescriptor
 		final ArrayList< VirtualPointNode< Point > > nodeList1 = createVirtualNodeList( points1 );
 		final ArrayList< VirtualPointNode< Point > > nodeList2 = createVirtualNodeList( points2 );
 		
-		final KDTree< VirtualPointNode< Point > > tree1 = new KDTree< VirtualPointNode< Point > >( nodeList1 );
-		final KDTree< VirtualPointNode< Point > > tree2 = new KDTree< VirtualPointNode< Point > >( nodeList2 );
+		final KDTree< VirtualPointNode< Point > > tree1 = new KDTree< VirtualPointNode< Point > >( nodeList1, nodeList1 );
+		final KDTree< VirtualPointNode< Point > > tree2 = new KDTree< VirtualPointNode< Point > >( nodeList2, nodeList2 );
 	
 		int detectedRight = 0;
 		int detectedWrong = 0;
@@ -447,20 +447,20 @@ public class TestPointDescriptor
 				createLocalCoordinateSystemPointDescriptors( tree2, nodeList2, numNeighbors, false );
 			
 			// create lookup tree for descriptors2
-			final KDTree< LocalCoordinateSystemPointDescriptor< Point > > lookUpTree2 = new KDTree< LocalCoordinateSystemPointDescriptor< Point > >( descriptors2 );
-			final NNearestNeighborSearch< LocalCoordinateSystemPointDescriptor< Point > > nnsearch = new NNearestNeighborSearch< LocalCoordinateSystemPointDescriptor< Point > >( lookUpTree2 );
+			final KDTree< LocalCoordinateSystemPointDescriptor< Point > > lookUpTree2 = new KDTree< LocalCoordinateSystemPointDescriptor< Point > >( descriptors2, descriptors2 );
+			final KNearestNeighborSearch< LocalCoordinateSystemPointDescriptor< Point > > nnsearch = new KNearestNeighborSearchOnKDTree< LocalCoordinateSystemPointDescriptor< Point > >( lookUpTree2, 2 );
 		
 			/* compute matching */
 			for ( final LocalCoordinateSystemPointDescriptor< Point > descriptorA : descriptors1 )
 			{
-				LocalCoordinateSystemPointDescriptor< Point > matches[] = nnsearch.findNNearestNeighbors( descriptorA, 2 );
+				nnsearch.search( descriptorA );
 
-				double best = descriptorA.descriptorDistance( matches[ 0 ]);
-				double secondBest = descriptorA.descriptorDistance( matches[ 1 ]);
+				double best = descriptorA.descriptorDistance( nnsearch.getSampler( 0 ).get() );
+				double secondBest = descriptorA.descriptorDistance( nnsearch.getSampler( 1 ).get() );
 
 				if ( best * nTimesBetter < secondBest )
 				{
-					if ( isCorrect( descriptorA.getBasisPoint(), matches[ 0 ].getBasisPoint() ) )
+					if ( isCorrect( descriptorA.getBasisPoint(), nnsearch.getSampler( 0 ).get().getBasisPoint() ) )
 					{
 						++detectedRight;
 						ArrayList< Point > neighbors = descriptorA.getOrderedNearestNeighboringPoints();
