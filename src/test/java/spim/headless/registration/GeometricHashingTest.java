@@ -12,14 +12,19 @@ import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
-import spim.process.interestpointregistration.GlobalOpt;
-import spim.process.interestpointregistration.pairwise.GeometricHashingPairwise;
+import spim.process.interestpointregistration.global.GlobalOpt;
 import spim.process.interestpointregistration.pairwise.MatcherPairwiseTools;
 import spim.process.interestpointregistration.pairwise.PairwiseResult;
 import spim.process.interestpointregistration.pairwise.PairwiseStrategyTools;
+import spim.process.interestpointregistration.pairwise.methods.geometrichashing.GeometricHashingPairwise;
+import spim.process.interestpointregistration.pairwise.methods.geometrichashing.GeometricHashingParameters;
+import spim.process.interestpointregistration.pairwise.methods.ransac.RANSACParameters;
 import spim.headless.interestpointdetection.DoGParameters;
-import spim.headless.registration.geometrichashing.GeometricHashingParameters;
 import simulation.imgloader.SimulatedBeadsImgLoader;
+
+import static spim.process.interestpointregistration.TransformationTools.computeMapBackModel;
+import static spim.process.interestpointregistration.TransformationTools.getAllTransformedInterestPoints;
+import static spim.process.interestpointregistration.TransformationTools.storeTransformation;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -29,10 +34,6 @@ import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Test;
-
-import static spim.headless.registration.TransformationTools.computeMapBackModel;
-import static spim.headless.registration.TransformationTools.getAllTransformedInterestPoints;
-import static spim.headless.registration.TransformationTools.storeTransformation;
 
 /**
  * GeometricHashing Test Class

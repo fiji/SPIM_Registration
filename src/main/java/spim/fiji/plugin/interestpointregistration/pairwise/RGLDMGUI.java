@@ -2,9 +2,9 @@ package spim.fiji.plugin.interestpointregistration.pairwise;
 
 import ij.gui.GenericDialog;
 import spim.fiji.plugin.interestpointregistration.TransformationModelGUI;
-import spim.headless.registration.RANSACParameters;
-import spim.headless.registration.geometricdescriptor.RGLDMParameters;
-import spim.process.interestpointregistration.pairwise.RGLDMPairwise;
+import spim.process.interestpointregistration.pairwise.methods.ransac.RANSACParameters;
+import spim.process.interestpointregistration.pairwise.methods.rgldm.RGLDMPairwise;
+import spim.process.interestpointregistration.pairwise.methods.rgldm.RGLDMParameters;
 
 /**
  * Redundant Geometric Local Descriptor Matching (RGLDM)

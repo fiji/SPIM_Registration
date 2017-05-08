@@ -1,4 +1,4 @@
-package spim.headless.registration.geometrichashing;
+package spim.process.interestpointregistration.pairwise.methods.geometrichashing;
 
 import mpicbg.models.Model;
 

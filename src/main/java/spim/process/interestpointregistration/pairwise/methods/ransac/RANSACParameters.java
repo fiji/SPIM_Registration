@@ -1,4 +1,4 @@
-package spim.headless.registration;
+package spim.process.interestpointregistration.pairwise.methods.ransac;
 
 /**
  * 

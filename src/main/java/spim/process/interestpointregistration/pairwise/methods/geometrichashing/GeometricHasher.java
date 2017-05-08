@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.pairwise;
+package spim.process.interestpointregistration.pairwise.methods.geometrichashing;
 
 import java.util.ArrayList;
 

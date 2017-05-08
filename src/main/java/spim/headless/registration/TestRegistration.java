@@ -20,9 +20,8 @@ import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.headless.interestpointdetection.DoGParameters;
-import spim.headless.registration.geometrichashing.GeometricHashingParameters;
-import spim.process.interestpointregistration.GlobalOpt;
-import spim.process.interestpointregistration.pairwise.GeometricHashingPairwise;
+import spim.process.interestpointregistration.TransformationTools;
+import spim.process.interestpointregistration.global.GlobalOpt;
 import spim.process.interestpointregistration.pairwise.MatcherPairwiseTools;
 import spim.process.interestpointregistration.pairwise.PairwiseResult;
 import spim.process.interestpointregistration.pairwise.constellation.AllToAll;
@@ -33,6 +32,9 @@ import spim.process.interestpointregistration.pairwise.constellation.grouping.Gr
 import spim.process.interestpointregistration.pairwise.constellation.grouping.InterestPointGrouping;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.InterestPointGroupingAll;
 import spim.process.interestpointregistration.pairwise.constellation.overlap.SimpleBoundingBoxOverlap;
+import spim.process.interestpointregistration.pairwise.methods.geometrichashing.GeometricHashingPairwise;
+import spim.process.interestpointregistration.pairwise.methods.geometrichashing.GeometricHashingParameters;
+import spim.process.interestpointregistration.pairwise.methods.ransac.RANSACParameters;
 
 public class TestRegistration
 {

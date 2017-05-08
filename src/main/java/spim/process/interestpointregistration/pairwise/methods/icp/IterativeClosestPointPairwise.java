@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.pairwise;
+package spim.process.interestpointregistration.pairwise.methods.icp;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -16,7 +16,8 @@ import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 import net.imglib2.util.Util;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.headless.registration.icp.IterativeClosestPointParameters;
+import spim.process.interestpointregistration.pairwise.MatcherPairwise;
+import spim.process.interestpointregistration.pairwise.PairwiseResult;
 
 /**
  * Iterative closest point implementation

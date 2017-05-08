@@ -1,4 +1,4 @@
-package spim.headless.registration;
+package spim.process.interestpointregistration;
 
 import java.util.ArrayList;
 import java.util.Collection;

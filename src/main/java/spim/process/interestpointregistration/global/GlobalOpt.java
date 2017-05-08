@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration;
+package spim.process.interestpointregistration.global;
 
 import java.util.ArrayList;
 import java.util.Collection;

@@ -1,4 +1,4 @@
-package spim.headless.registration.centerofmass;
+package spim.process.interestpointregistration.pairwise.methods.centerofmass;
 
 /**
  * Center of Mass (Avg/Median) implementation

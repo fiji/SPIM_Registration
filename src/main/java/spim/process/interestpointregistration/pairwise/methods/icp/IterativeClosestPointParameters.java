@@ -1,4 +1,4 @@
-package spim.headless.registration.icp;
+package spim.process.interestpointregistration.pairwise.methods.icp;
 
 import mpicbg.models.Model;
 

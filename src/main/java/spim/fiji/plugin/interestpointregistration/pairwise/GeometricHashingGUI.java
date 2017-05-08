@@ -2,9 +2,9 @@ package spim.fiji.plugin.interestpointregistration.pairwise;
 
 import ij.gui.GenericDialog;
 import spim.fiji.plugin.interestpointregistration.TransformationModelGUI;
-import spim.headless.registration.RANSACParameters;
-import spim.headless.registration.geometrichashing.GeometricHashingParameters;
-import spim.process.interestpointregistration.pairwise.GeometricHashingPairwise;
+import spim.process.interestpointregistration.pairwise.methods.geometrichashing.GeometricHashingPairwise;
+import spim.process.interestpointregistration.pairwise.methods.geometrichashing.GeometricHashingParameters;
+import spim.process.interestpointregistration.pairwise.methods.ransac.RANSACParameters;
 
 public class GeometricHashingGUI implements PairwiseGUI
 {

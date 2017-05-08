@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.pairwise;
+package spim.process.interestpointregistration.pairwise.methods.geometrichashing;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,9 +6,10 @@ import java.util.List;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.headless.registration.RANSACParameters;
-import spim.headless.registration.geometrichashing.GeometricHashingParameters;
-import spim.process.interestpointregistration.RANSAC;
+import spim.process.interestpointregistration.pairwise.MatcherPairwise;
+import spim.process.interestpointregistration.pairwise.PairwiseResult;
+import spim.process.interestpointregistration.pairwise.methods.ransac.RANSAC;
+import spim.process.interestpointregistration.pairwise.methods.ransac.RANSACParameters;
 
 public class GeometricHashingPairwise< I extends InterestPoint > implements MatcherPairwise< I >
 {

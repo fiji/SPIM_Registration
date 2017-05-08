@@ -1,4 +1,4 @@
-package spim.headless.registration.geometricdescriptor;
+package spim.process.interestpointregistration.pairwise.methods.rgldm;
 
 import mpicbg.models.Model;
 

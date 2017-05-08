@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.pairwise;
+package spim.process.interestpointregistration.pairwise.methods.centerofmass;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,7 +7,8 @@ import mpicbg.spim.mpicbg.PointMatchGeneric;
 import net.imglib2.util.RealSum;
 import net.imglib2.util.Util;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.headless.registration.centerofmass.CenterOfMassParameters;
+import spim.process.interestpointregistration.pairwise.MatcherPairwise;
+import spim.process.interestpointregistration.pairwise.PairwiseResult;
 
 public class CenterOfMassPairwise< I extends InterestPoint > implements MatcherPairwise< I >
 {

@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration;
+package spim.process.interestpointregistration.pairwise.methods.ransac;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;

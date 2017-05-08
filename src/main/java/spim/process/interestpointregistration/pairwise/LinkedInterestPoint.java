@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration;
+package spim.process.interestpointregistration.pairwise;
 
 import net.imglib2.util.Util;
 import spim.fiji.spimdata.interestpoints.InterestPoint;

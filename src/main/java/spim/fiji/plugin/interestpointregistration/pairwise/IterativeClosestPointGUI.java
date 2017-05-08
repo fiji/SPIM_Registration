@@ -2,8 +2,8 @@ package spim.fiji.plugin.interestpointregistration.pairwise;
 
 import ij.gui.GenericDialog;
 import spim.fiji.plugin.interestpointregistration.TransformationModelGUI;
-import spim.headless.registration.icp.IterativeClosestPointParameters;
-import spim.process.interestpointregistration.pairwise.IterativeClosestPointPairwise;
+import spim.process.interestpointregistration.pairwise.methods.icp.IterativeClosestPointPairwise;
+import spim.process.interestpointregistration.pairwise.methods.icp.IterativeClosestPointParameters;
 
 /**
  * Iterative closest point implementation
