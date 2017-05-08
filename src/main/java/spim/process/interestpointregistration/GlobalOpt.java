@@ -7,12 +7,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-
-import spim.vecmath.Transform3D;
-import spim.vecmath.Matrix4f;
-import spim.vecmath.Quat4f;
-import spim.vecmath.Vector3d;
-import spim.vecmath.Vector3f;
+import java.util.Set;
 
 import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.Affine3D;
@@ -28,8 +23,13 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 import net.imglib2.util.Pair;
-import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.interestpointregistration.pairwise.PairwiseResult;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
+import spim.vecmath.Matrix4f;
+import spim.vecmath.Quat4f;
+import spim.vecmath.Transform3D;
+import spim.vecmath.Vector3d;
+import spim.vecmath.Vector3f;
 
 /**
  * 
@@ -41,29 +41,36 @@ public class GlobalOpt
 	/**
 	 * Computes a global optimization based on the corresponding points
 	 * 
-	 * @param registrationType - to determine which tiles are fixed
-	 * @param subset - to get the correspondences
-	 * @return - list of Tiles containing the final transformation models
 	 */
 	public static < M extends Model< M > > HashMap< ViewId, Tile< M > > compute(
 			final M model,
 			final List< ? extends Pair< ? extends Pair< ViewId, ViewId >, ? extends PairwiseResult< ? > > > pairs,
 			final Collection< ViewId > fixedViews,
-			final List< ? extends List< ViewId > > groups )
+			final Set< Group< ViewId > > groupsIn )
 	{
-		// assemble all views and corresponding points
-		final HashSet< ViewId > tmpSet = new HashSet<ViewId>();
+		// merge overlapping groups if necessary
+		final ArrayList< Group< ViewId > > groups = Group.mergeAllOverlappingGroups( groupsIn );
+
+		// remove empty groups
+		Group.removeEmptyGroups( groups );
+
+		// assemble all views
+		final HashSet< ViewId > tmpSet = new HashSet<>();
 		for ( Pair< ? extends Pair< ViewId, ViewId >, ? extends PairwiseResult< ? > > pair : pairs )
 		{
 			tmpSet.add( pair.getA().getA() );
 			tmpSet.add( pair.getA().getB() );
 		}
 
+		// views that are part of a group but not of a pair and will thus be transformed as well
+		for ( final Group< ViewId > group : groups )
+				tmpSet.addAll( group.getViews() );
+
 		final List< ViewId > views = new ArrayList< ViewId >();
 		views.addAll( tmpSet );
 		Collections.sort( views );
 
-		// assign ViewIds to the individual Tiles (either one tile per view or one tile per timepoint)
+		// assign ViewIds to the individual Tiles (either one tile per view or one tile per group)
 		final HashMap< ViewId, Tile< M > > map = assignViewsToTiles( model, views, groups );
 
 		// assign the pointmatches to all the tiles
@@ -114,7 +121,7 @@ public class GlobalOpt
 		{
 			final Tile< M > tile = map.get( viewId );
 			
-			String output = "ViewId=" + viewId.getViewSetupId() + ": " + printAffine3D( (Affine3D<?>)tile.getModel() );
+			String output = Group.pvid( viewId ) + ": " + printAffine3D( (Affine3D<?>)tile.getModel() );
 			
 			if ( (Model)tile.getModel() instanceof RigidModel3D )
 				IOFunctions.println( output + ", " + getRotationAxis( (RigidModel3D)(Model)tile.getModel() ) );
@@ -224,7 +231,7 @@ public class GlobalOpt
 			final List< ViewId > views,
 			final HashMap< ViewId, Tile< M > > map,
 			final Collection< ViewId > fixedViews,
-			final List< ? extends List< ViewId > > groups )
+			final List< ? extends Group < ViewId > > groups )
 	{
 		// create a new tileconfiguration organizing the global optimization
 		final TileConfiguration tc = new TileConfiguration();
@@ -239,10 +246,11 @@ public class GlobalOpt
 			// if one of the views that maps to this tile is fixed, fix this tile if it is not already fixed
 			if ( fixedViews.contains( viewId ) && !tc.getFixedTiles().contains( tile ) )
 			{
-				if ( groups != null && groups.size() > 0 )
-					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Fixing timepoint-tile (timepointId = " + viewId.getTimePointId() + ")" );
+				final Group< ViewId > fixedGroup = Group.isContained( viewId, groups );
+				if ( fixedGroup != null )
+					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Fixing group-tile [" + fixedGroup + "]" );
 				else
-					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Fixing view-tile (viewSetupId = " + viewId.getViewSetupId() + ")" );
+					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Fixing view-tile [" + Group.pvid( viewId ) + "]" );
 				tc.fixTile( tile );
 			}
 
@@ -261,14 +269,14 @@ public class GlobalOpt
 	protected static < M extends Model< M > > HashMap< ViewId, Tile< M > > assignViewsToTiles(
 			final M model,
 			final List< ViewId > views,
-			final List< ? extends List< ViewId > > groups )
+			final List< Group< ViewId > > groups )
 	{
 		final HashMap< ViewId, Tile< M > > map = new HashMap< ViewId, Tile< M > >();
 
 		if ( groups != null && groups.size() > 0 )
 		{
 			//
-			// there is one tile per group only
+			// we make only mpicbg-Tile per group since all views are transformed together
 			//
 
 			// remember those who are not part of a group
@@ -276,9 +284,9 @@ public class GlobalOpt
 			remainingViews.addAll( views );
 
 			// for all groups find the viewIds that belong to this timepoint
-			for ( final List< ViewId > viewIds : groups )
+			for ( final Group< ViewId > viewIds : groups )
 			{
-				// one tile per timepoint
+				// one tile per group
 				final Tile< M > tileGroup = new Tile< M >( model.copy() );
 
 				// all viewIds of one group map to the same tile (see main method for test, that works)
@@ -286,11 +294,11 @@ public class GlobalOpt
 				{
 					map.put( viewId, tileGroup );
 
-					// TODO: merge groups that share tiles
+					// just to make sure that there are no views part of two groups or present twice
 					if ( !remainingViews.contains( viewId ) )
 						throw new RuntimeException(
 								"ViewSetupID:" + viewId.getViewSetupId() + ", timepointId: " + viewId.getTimePointId() +
-								" not part of two sets of groups, this is not supported." ); 
+								" is part of two groups, this is a bug since those should have been merged." ); 
 
 					remainingViews.remove( viewId );
 				}
@@ -310,7 +318,7 @@ public class GlobalOpt
 		return map;
 	}
 
-	protected static void addPointMatches( final List< ? extends PointMatchGeneric< ? > > correspondences, final Tile<?> tileA, final Tile<?> tileB )
+	protected static void addPointMatches( final List< ? extends PointMatchGeneric< ? > > correspondences, final Tile< ? > tileA, final Tile< ? > tileB )
 	{
 		final ArrayList< PointMatch > pm = new ArrayList<>();
 		pm.addAll( correspondences );

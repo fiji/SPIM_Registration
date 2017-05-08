@@ -48,7 +48,7 @@ public class AllToAllRange< V extends Comparable< V >, R extends RangeComparator
 
 				// only compare those to views if not both are fixed and not
 				// part of the same group
-				if ( !oneSetContainsBoth( viewIdA, viewIdB, groups ) && rangeComparator.inRange( viewIdA, viewIdB ) )
+				if ( !Group.containsBoth( viewIdA, viewIdB, groups ) && rangeComparator.inRange( viewIdA, viewIdB ) )
 					viewPairs.add( new ValuePair< V, V >( viewIdA, viewIdB ) );
 			}
 

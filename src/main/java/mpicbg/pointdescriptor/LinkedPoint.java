@@ -1,9 +1,9 @@
 package mpicbg.pointdescriptor;
 
-import net.imglib2.util.Util;
 import mpicbg.models.Point;
+import net.imglib2.util.Util;
 
-public class LinkedPoint<P> extends Point
+public class LinkedPoint< P > extends Point
 {
 	private static final long serialVersionUID = 1L;
 
@@ -11,7 +11,7 @@ public class LinkedPoint<P> extends Point
 	
 	public LinkedPoint( final double[] l, final P link )
 	{
-		super( l.clone() );		
+		super( l.clone() );
 		this.link = link;
 	}
 
