@@ -1,4 +1,4 @@
-package spim.process.interestpointdetection;
+package spim.process.interestpointdetection.methods.dog;
 
 import java.util.ArrayList;
 import java.util.Date;

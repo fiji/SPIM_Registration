@@ -1,4 +1,4 @@
-package spim.headless.interestpointdetection;
+package spim.process.interestpointdetection.methods.dom;
 
 import java.util.HashMap;
 import java.util.List;
@@ -13,7 +13,8 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.realtransform.AffineTransform3D;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.process.interestpointdetection.ProcessDOM;
+import spim.process.interestpointdetection.InterestPointTools;
+import spim.process.interestpointdetection.methods.downsampling.DownsampleTools;
 
 /**
  * Created by schmied on 01/07/15.

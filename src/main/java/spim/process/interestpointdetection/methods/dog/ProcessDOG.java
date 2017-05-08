@@ -1,4 +1,4 @@
-package spim.process.interestpointdetection;
+package spim.process.interestpointdetection.methods.dog;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -17,6 +17,7 @@ import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.cuda.CUDADevice;
 import spim.process.cuda.CUDASeparableConvolution;
 import spim.process.fusion.FusionHelper;
+import spim.process.interestpointdetection.Localization;
 
 public class ProcessDOG
 {

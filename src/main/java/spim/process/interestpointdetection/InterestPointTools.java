@@ -1,4 +1,4 @@
-package spim.headless.interestpointdetection;
+package spim.process.interestpointdetection;
 
 import java.io.File;
 import java.util.ArrayList;

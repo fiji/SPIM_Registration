@@ -1,4 +1,4 @@
-package spim.process.interestpointdetection;
+package spim.process.interestpointdetection.methods.downsampling;
 
 import ij.ImageJ;
 

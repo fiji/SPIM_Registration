@@ -20,7 +20,7 @@ import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.headless.interestpointdetection.InterestPointTools;
+import spim.process.interestpointdetection.InterestPointTools;
 
 /**
  * Plugin to detect interest points, store them on disk, and link them into the XML

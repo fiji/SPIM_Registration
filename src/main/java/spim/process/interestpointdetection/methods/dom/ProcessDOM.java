@@ -1,4 +1,4 @@
-package spim.process.interestpointdetection;
+package spim.process.interestpointdetection.methods.dom;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -14,6 +14,7 @@ import mpicbg.spim.segmentation.SimplePeak;
 import net.imglib2.img.Img;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.fusion.FusionHelper;
+import spim.process.interestpointdetection.Localization;
 
 public class ProcessDOM 
 {

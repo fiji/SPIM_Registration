@@ -1,4 +1,4 @@
-package spim.headless.interestpointdetection;
+package spim.process.interestpointdetection.methods;
 
 import java.util.Collection;
 

@@ -1,4 +1,4 @@
-package spim.headless.interestpointdetection;
+package spim.process.interestpointdetection.methods.downsampling;
 
 import static mpicbg.spim.data.generic.sequence.ImgLoaderHints.LOAD_COMPLETELY;
 
@@ -16,7 +16,6 @@ import net.imglib2.img.ImgFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.process.interestpointdetection.Downsample;
 
 public class DownsampleTools
 {

@@ -11,7 +11,7 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import spim.process.cuda.Block;
-import spim.process.interestpointdetection.DifferenceOfGaussianCUDA.CUDAOutput;
+import spim.process.interestpointdetection.methods.dog.DifferenceOfGaussianCUDA.CUDAOutput;
 
 public class MVDeconFFTThreads
 {

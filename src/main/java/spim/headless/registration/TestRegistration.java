@@ -19,7 +19,8 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
-import spim.headless.interestpointdetection.DoGParameters;
+import spim.headless.interestpointdetection.TestSegmentation;
+import spim.process.interestpointdetection.methods.dog.DoGParameters;
 import spim.process.interestpointregistration.TransformationTools;
 import spim.process.interestpointregistration.global.GlobalOpt;
 import spim.process.interestpointregistration.pairwise.MatcherPairwiseTools;
@@ -54,7 +55,7 @@ public class TestRegistration
 	public static void testRegistration( final SpimData2 spimData )
 	{
 		// run DoG
-		DoGParameters.testDoG( spimData );
+		TestSegmentation.testDoG( spimData );
 
 		// select views to process
 		final List< ViewId > viewIds = new ArrayList< ViewId >();

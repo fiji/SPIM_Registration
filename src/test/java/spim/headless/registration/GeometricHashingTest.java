@@ -12,6 +12,7 @@ import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
+import spim.process.interestpointdetection.methods.dog.DoGParameters;
 import spim.process.interestpointregistration.global.GlobalOpt;
 import spim.process.interestpointregistration.pairwise.MatcherPairwiseTools;
 import spim.process.interestpointregistration.pairwise.PairwiseResult;
@@ -19,7 +20,6 @@ import spim.process.interestpointregistration.pairwise.PairwiseStrategyTools;
 import spim.process.interestpointregistration.pairwise.methods.geometrichashing.GeometricHashingPairwise;
 import spim.process.interestpointregistration.pairwise.methods.geometrichashing.GeometricHashingParameters;
 import spim.process.interestpointregistration.pairwise.methods.ransac.RANSACParameters;
-import spim.headless.interestpointdetection.DoGParameters;
 import simulation.imgloader.SimulatedBeadsImgLoader;
 
 import static spim.process.interestpointregistration.TransformationTools.computeMapBackModel;

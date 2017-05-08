@@ -4,6 +4,8 @@ import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.sequence.ViewDescription;
 
 import simulation.imgloader.SimulatedBeadsImgLoader;
+import spim.process.interestpointdetection.methods.dom.DoM;
+import spim.process.interestpointdetection.methods.dom.DoMParameters;
 
 import java.util.ArrayList;
 import org.junit.Test;

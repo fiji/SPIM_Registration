@@ -8,7 +8,7 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
-import spim.headless.interestpointdetection.InterestPointTools;
+import spim.process.interestpointdetection.InterestPointTools;
 
 public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 {

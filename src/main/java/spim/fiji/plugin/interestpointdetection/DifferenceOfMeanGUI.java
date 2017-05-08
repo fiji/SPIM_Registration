@@ -17,9 +17,9 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.realtransform.AffineTransform3D;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.headless.interestpointdetection.DoM;
-import spim.headless.interestpointdetection.DoMParameters;
-import spim.headless.interestpointdetection.DownsampleTools;
+import spim.process.interestpointdetection.methods.dom.DoM;
+import spim.process.interestpointdetection.methods.dom.DoMParameters;
+import spim.process.interestpointdetection.methods.downsampling.DownsampleTools;
 
 
 public class DifferenceOfMeanGUI extends DifferenceOfGUI
