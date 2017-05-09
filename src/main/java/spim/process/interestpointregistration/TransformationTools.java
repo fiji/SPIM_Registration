@@ -21,6 +21,7 @@ import net.imglib2.realtransform.AffineGet;
 import net.imglib2.realtransform.AffineTransform3D;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
+import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 
 public class TransformationTools
 {
@@ -105,13 +106,14 @@ public class TransformationTools
 	public static <V> Map< V, List< InterestPoint > > getAllTransformedInterestPoints(
 			final Collection< ? extends V > viewIds,
 			final Map< V, ViewRegistration > registrations,
-			final Map< V, InterestPointList > interestpoints )
+			final Map< V, ViewInterestPointLists > interestpoints,
+			final Map< V, String > labelMap )
 	{
 		final HashMap< V, List< InterestPoint > > transformedInterestpoints =
 				new HashMap< V, List< InterestPoint > >();
 
 		for ( final V viewId : viewIds )
-			transformedInterestpoints.put( viewId, getTransformedInterestPoints( viewId, registrations, interestpoints ) );
+			transformedInterestpoints.put( viewId, getTransformedInterestPoints( viewId, registrations, interestpoints, labelMap ) );
 
 		return transformedInterestpoints;
 	}
@@ -120,9 +122,10 @@ public class TransformationTools
 	public static <V> List< InterestPoint > getTransformedInterestPoints(
 			final V viewId,
 			final Map< V, ViewRegistration > registrations,
-			final Map< V, InterestPointList > interestpoints )
+			final Map< V, ViewInterestPointLists > interestpoints,
+			final Map< V, String > labelMap )
 	{
-		final List< InterestPoint > list = loadInterestPoints( interestpoints.get( viewId ) );
+		final List< InterestPoint > list = loadInterestPoints( interestpoints.get( viewId ).getInterestPointList( labelMap.get( viewId ) ) );
 		final AffineTransform3D t = getTransform( viewId, registrations );
 
 		return applyTransformation( list, t );

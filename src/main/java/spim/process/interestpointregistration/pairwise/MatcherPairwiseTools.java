@@ -19,6 +19,7 @@ import spim.Threads;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
+import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.GroupedInterestPoint;
 
@@ -41,6 +42,19 @@ public class MatcherPairwiseTools
 		return computePairs( pairs, interestpoints, matcher, null );
 	}
 
+	public static < V extends ViewId > Map< V, List< CorrespondingInterestPoints > > clearCorrespondences(
+			final Collection< V > viewIds,
+			final Map< V, ViewInterestPointLists > interestpoints,
+			final Map< V, String > labelMap )
+	{
+		final Map< V, InterestPointList > map = new HashMap<>();
+
+		for ( final V view : viewIds )
+			map.put( view, interestpoints.get( view ).getInterestPointList( labelMap.get( view ) ) );
+
+		return clearCorrespondences( map );
+	}
+
 	public static < V extends ViewId > Map< V, List< CorrespondingInterestPoints > > clearCorrespondences( final Map< V, ? extends InterestPointList > map )
 	{
 		final Map< V, List< CorrespondingInterestPoints > > cMap = new HashMap<>();
@@ -60,11 +74,14 @@ public class MatcherPairwiseTools
 		List< Pair< Pair< V, V >, PairwiseResult< GroupedInterestPoint< V > > > >
 			addCorrespondencesFromGroups(
 			final Collection< ? extends Pair< ?, P > > resultGroup,
-			final Map< V, ? extends InterestPointList > iplMap,
+			final Map< V, ViewInterestPointLists > interestpoints,
 			final Map< V, String > labelMap,
 			final Map< V, ? extends List< CorrespondingInterestPoints > > cMap
 			)
 	{
+		//final InterestPointList listA = spimData.getViewInterestPoints().getViewInterestPoints().get( vA ).getInterestPointList( labelMap.get( vA ) );
+		//final InterestPointList listB = spimData.getViewInterestPoints().getViewInterestPoints().get( vB ).getInterestPointList( labelMap.get( vB ) );
+
 		final HashMap< Pair< V, V >, PairwiseResult< GroupedInterestPoint< V > > > transformedMap = new HashMap<>();
 
 		for ( final Pair< ?, P > p : resultGroup )
@@ -109,7 +126,7 @@ public class MatcherPairwiseTools
 		}
 
 		for ( final V viewId : cMap.keySet() )
-			iplMap.get( viewId ).setCorrespondingInterestPoints( cMap.get( viewId ) );
+			interestpoints.get( viewId ).getInterestPointList( labelMap.get( viewId ) ).setCorrespondingInterestPoints( cMap.get( viewId ) );
 
 		final ArrayList< Pair< Pair< V, V >, PairwiseResult< GroupedInterestPoint< V > > > > transformedList = new ArrayList<>();
 

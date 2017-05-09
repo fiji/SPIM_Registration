@@ -20,7 +20,6 @@ import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.headless.interestpointdetection.TestSegmentation;
-import spim.process.interestpointdetection.methods.dog.DoGParameters;
 import spim.process.interestpointregistration.TransformationTools;
 import spim.process.interestpointregistration.global.GlobalOpt;
 import spim.process.interestpointregistration.pairwise.MatcherPairwiseTools;
@@ -66,21 +65,18 @@ public class TestRegistration
 		//
 		final String label = "beads"; // this could be different for each ViewId
 
-		final Map< ViewId, InterestPointList > iplMap = new HashMap<>();
 		final Map< ViewId, String > labelMap = new HashMap<>();
 
 		for ( final ViewId viewId : viewIds )
-		{
-			iplMap.put( viewId, spimData.getViewInterestPoints().getViewInterestPoints().get( viewId ).getInterestPointList( label ) );
 			labelMap.put( viewId, label );
-		}
 
 		// load & transform all interest points
 		final Map< ViewId, List< InterestPoint > > interestpoints =
 				TransformationTools.getAllTransformedInterestPoints(
 					viewIds,
 					spimData.getViewRegistrations().getViewRegistrations(),
-					iplMap );
+					spimData.getViewInterestPoints().getViewInterestPoints(),
+					labelMap );
 
 		// setup pairwise registration
 		Set< Group< ViewId > > groups = new HashSet<>();
@@ -119,7 +115,7 @@ public class TestRegistration
 					MatcherPairwiseTools.computePairs( pairs, interestpoints, new GeometricHashingPairwise< InterestPoint >( rp, gp ) );
 
 			// clear correspondences
-			MatcherPairwiseTools.clearCorrespondences( iplMap );
+			MatcherPairwiseTools.clearCorrespondences( subset.getViews(), spimData.getViewInterestPoints().getViewInterestPoints(), labelMap );
 
 			// add the corresponding detections and output result
 			for ( final Pair< Pair< ViewId, ViewId >, PairwiseResult< InterestPoint > > p : result )
@@ -127,8 +123,8 @@ public class TestRegistration
 				final ViewId vA = p.getA().getA();
 				final ViewId vB = p.getA().getB();
 
-				final InterestPointList listA = iplMap.get( p.getA().getA() );
-				final InterestPointList listB = iplMap.get( p.getA().getB() );
+				final InterestPointList listA = spimData.getViewInterestPoints().getViewInterestPoints().get( vA ).getInterestPointList( labelMap.get( vA ) );
+				final InterestPointList listB = spimData.getViewInterestPoints().getViewInterestPoints().get( vB ).getInterestPointList( labelMap.get( vB ) );
 
 				MatcherPairwiseTools.addCorrespondences( p.getB().getInliers(), vA, vB, labelMap.get( vA ), labelMap.get( vB ), listA, listB );
 
@@ -173,11 +169,11 @@ public class TestRegistration
 					MatcherPairwiseTools.computePairs( groupedPairs, groupedInterestpoints, new GeometricHashingPairwise<>( rp, gp ) );
 
 			// clear correspondences and get a map linking ViewIds to the correspondence lists
-			final Map< ViewId, List< CorrespondingInterestPoints > > cMap = MatcherPairwiseTools.clearCorrespondences( iplMap );
+			final Map< ViewId, List< CorrespondingInterestPoints > > cMap = MatcherPairwiseTools.clearCorrespondences( subset.getViews(), spimData.getViewInterestPoints().getViewInterestPoints(), labelMap );
 
 			// add the corresponding detections and output result
 			final List< Pair< Pair< ViewId, ViewId >, PairwiseResult< GroupedInterestPoint< ViewId > > > > resultG =
-					MatcherPairwiseTools.addCorrespondencesFromGroups( resultGroup, iplMap, labelMap, cMap );
+					MatcherPairwiseTools.addCorrespondencesFromGroups( resultGroup, spimData.getViewInterestPoints().getViewInterestPoints(), labelMap, cMap );
 
 			// run global optimization
 			final HashMap< ViewId, Tile< AffineModel3D > > models =
@@ -206,7 +202,6 @@ public class TestRegistration
 			final SpimData2 spimData,
 			final Subset< ViewId > subset,
 			final Map< ViewId, List< InterestPoint > > interestpoints,
-			final Map< ViewId, InterestPointList > iplMap,
 			final Map< ViewId, String > labelMap,
 			final RANSACParameters rp,
 			final GeometricHashingParameters gp,
@@ -247,11 +242,11 @@ public class TestRegistration
 				MatcherPairwiseTools.computePairs( groupedPairs, groupedInterestpoints, new GeometricHashingPairwise<>( rp, gp ) );
 
 		// clear correspondences and get a map linking ViewIds to the correspondence lists
-		final Map< ViewId, List< CorrespondingInterestPoints > > cMap = MatcherPairwiseTools.clearCorrespondences( iplMap );
+		final Map< ViewId, List< CorrespondingInterestPoints > > cMap = MatcherPairwiseTools.clearCorrespondences( subset.getViews(), spimData.getViewInterestPoints().getViewInterestPoints(), labelMap );
 
 		// add the corresponding detections and output result
 		final List< Pair< Pair< ViewId, ViewId >, PairwiseResult< GroupedInterestPoint< ViewId > > > > resultG =
-				MatcherPairwiseTools.addCorrespondencesFromGroups( resultGroup, iplMap, labelMap, cMap );
+				MatcherPairwiseTools.addCorrespondencesFromGroups( resultGroup, spimData.getViewInterestPoints().getViewInterestPoints(), labelMap, cMap );
 
 		// run global optimization
 		final HashMap< ViewId, Tile< AffineModel3D > > models =
