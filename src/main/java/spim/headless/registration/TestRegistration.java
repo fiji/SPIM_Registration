@@ -102,103 +102,56 @@ public class TestRegistration
 			fixedViews.add( fixedView );
 			System.out.println( "Removed " + subset.fixViews( fixedViews ).size() + " views due to fixing view tpId=" + fixedView.getTimePointId() + " setupId=" + fixedView.getViewSetupId() );
 
-			//
 			// get all pairs to be compared (either that XOR grouped pairs)
-			//
-			final List< Pair< ViewId, ViewId > > pairs = subset.getPairs();
+			pairSubsetTest( spimData, subset, interestpoints, labelMap, rp, gp, fixedViews );
 
-			for ( final Pair< ViewId, ViewId > pair : pairs )
-				System.out.println( Group.pvid( pair.getA() ) + " <=> " + Group.pvid( pair.getB() ) );
-
-			// compute all pairwise matchings
-			final List< Pair< Pair< ViewId, ViewId >, PairwiseResult< InterestPoint > > > result =
-					MatcherPairwiseTools.computePairs( pairs, interestpoints, new GeometricHashingPairwise< InterestPoint >( rp, gp ) );
-
-			// clear correspondences
-			MatcherPairwiseTools.clearCorrespondences( subset.getViews(), spimData.getViewInterestPoints().getViewInterestPoints(), labelMap );
-
-			// add the corresponding detections and output result
-			for ( final Pair< Pair< ViewId, ViewId >, PairwiseResult< InterestPoint > > p : result )
-			{
-				final ViewId vA = p.getA().getA();
-				final ViewId vB = p.getA().getB();
-
-				final InterestPointList listA = spimData.getViewInterestPoints().getViewInterestPoints().get( vA ).getInterestPointList( labelMap.get( vA ) );
-				final InterestPointList listB = spimData.getViewInterestPoints().getViewInterestPoints().get( vB ).getInterestPointList( labelMap.get( vB ) );
-
-				MatcherPairwiseTools.addCorrespondences( p.getB().getInliers(), vA, vB, labelMap.get( vA ), labelMap.get( vB ), listA, listB );
-
-				System.out.println( p.getB().getFullDesc() );
-			}
-
-			//
-			// get all grouped pairs
-			//
-			final List< Pair< Group< ViewId >, Group< ViewId > > > groupedPairs = subset.getGroupedPairs();
-			final Map< Group< ViewId >, List< GroupedInterestPoint< ViewId > > > groupedInterestpoints = new HashMap<>();
-			final InterestPointGrouping< ViewId > ipGrouping = new InterestPointGroupingAll<>( interestpoints );
-
-			// which groups exist
-			groups.clear();
-
-			for ( final Pair< Group< ViewId >, Group< ViewId > > pair : groupedPairs )
-			{
-				groups.add( pair.getA() );
-				groups.add( pair.getB() );
-
-				System.out.print( "[" + pair.getA() + "] <=> [" + pair.getB() + "]" );
-
-				if ( !groupedInterestpoints.containsKey( pair.getA() ) )
-				{
-					System.out.print( ", grouping interestpoints for " + pair.getA() );
-
-					groupedInterestpoints.put( pair.getA(), ipGrouping.group( pair.getA() ) );
-				}
-
-				if ( !groupedInterestpoints.containsKey( pair.getB() ) )
-				{
-					System.out.print( ", grouping interestpoints for " + pair.getB() );
-
-					groupedInterestpoints.put( pair.getB(), ipGrouping.group( pair.getB() ) );
-				}
-
-				System.out.println();
-			}
-
-			final List< Pair< Pair< Group< ViewId >, Group< ViewId > >, PairwiseResult< GroupedInterestPoint< ViewId > > > > resultGroup =
-					MatcherPairwiseTools.computePairs( groupedPairs, groupedInterestpoints, new GeometricHashingPairwise<>( rp, gp ) );
-
-			// clear correspondences and get a map linking ViewIds to the correspondence lists
-			final Map< ViewId, List< CorrespondingInterestPoints > > cMap = MatcherPairwiseTools.clearCorrespondences( subset.getViews(), spimData.getViewInterestPoints().getViewInterestPoints(), labelMap );
-
-			// add the corresponding detections and output result
-			final List< Pair< Pair< ViewId, ViewId >, PairwiseResult< GroupedInterestPoint< ViewId > > > > resultG =
-					MatcherPairwiseTools.addCorrespondencesFromGroups( resultGroup, spimData.getViewInterestPoints().getViewInterestPoints(), labelMap, cMap );
-
-			// run global optimization
-			final HashMap< ViewId, Tile< AffineModel3D > > models =
-					GlobalOpt.compute( new AffineModel3D(), resultG, fixedViews, groups );
-
-			final AffineTransform3D mapBack = TransformationTools.computeMapBackModel(
-					spimData.getSequenceDescription().getViewDescription( subset.getViews().iterator().next() ).getViewSetup().getSize(),
-					spimData.getViewRegistrations().getViewRegistrations().get( subset.getViews().iterator().next() ).getModel(),
-					models.get( viewIds.get( 0 ) ).getModel(),
-					new RigidModel3D() );
-
-			System.out.println( mapBack );
-
-			// pre-concatenate models to spimdata2 viewregistrations (from SpimData(2))
-			for ( final ViewId viewId : viewIds )
-			{
-				final Tile< AffineModel3D > tile = models.get( viewId );
-				final ViewRegistration vr = spimData.getViewRegistrations().getViewRegistrations().get( viewId );
-	
-				TransformationTools.storeTransformation( vr, viewId, tile, mapBack, "Scripted AffineModel3D" );
-			}
+			// test grouped registration
+			groupedSubsetTest( spimData, subset, interestpoints, labelMap, rp, gp, fixedViews );
 		}
 	}
 
-	public static void groupedTest(
+	public static void pairSubsetTest(
+			final SpimData2 spimData,
+			final Subset< ViewId > subset,
+			final Map< ViewId, List< InterestPoint > > interestpoints,
+			final Map< ViewId, String > labelMap,
+			final RANSACParameters rp,
+			final GeometricHashingParameters gp,
+			final List< ViewId > fixedViews )
+	{
+		final List< Pair< ViewId, ViewId > > pairs = subset.getPairs();
+
+		for ( final Pair< ViewId, ViewId > pair : pairs )
+			System.out.println( Group.pvid( pair.getA() ) + " <=> " + Group.pvid( pair.getB() ) );
+
+		// compute all pairwise matchings
+		final List< Pair< Pair< ViewId, ViewId >, PairwiseResult< InterestPoint > > > result =
+				MatcherPairwiseTools.computePairs( pairs, interestpoints, new GeometricHashingPairwise< InterestPoint >( rp, gp ) );
+
+		// clear correspondences
+		MatcherPairwiseTools.clearCorrespondences( subset.getViews(), spimData.getViewInterestPoints().getViewInterestPoints(), labelMap );
+
+		// add the corresponding detections and output result
+		for ( final Pair< Pair< ViewId, ViewId >, PairwiseResult< InterestPoint > > p : result )
+		{
+			final ViewId vA = p.getA().getA();
+			final ViewId vB = p.getA().getB();
+
+			final InterestPointList listA = spimData.getViewInterestPoints().getViewInterestPoints().get( vA ).getInterestPointList( labelMap.get( vA ) );
+			final InterestPointList listB = spimData.getViewInterestPoints().getViewInterestPoints().get( vB ).getInterestPointList( labelMap.get( vB ) );
+
+			MatcherPairwiseTools.addCorrespondences( p.getB().getInliers(), vA, vB, labelMap.get( vA ), labelMap.get( vB ), listA, listB );
+
+			System.out.println( p.getB().getFullDesc() );
+		}
+
+		// run global optimization
+		final HashMap< ViewId, Tile< AffineModel3D > > models =
+				GlobalOpt.compute( new AffineModel3D(), result, fixedViews, subset.getGroups() );
+
+	}
+
+	public static void groupedSubsetTest(
 			final SpimData2 spimData,
 			final Subset< ViewId > subset,
 			final Map< ViewId, List< InterestPoint > > interestpoints,
