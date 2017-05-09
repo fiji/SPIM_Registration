@@ -1,11 +1,13 @@
 package spim.headless.interestpointdetection;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.io.IOFunctions;
 import simulation.imgloader.SimulatedBeadsImgLoader;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
@@ -24,6 +26,10 @@ public class TestSegmentation
 		dog.imgloader = spimData.getSequenceDescription().getImgLoader();
 		dog.toProcess = new ArrayList< ViewDescription >();
 		dog.toProcess.addAll( spimData.getSequenceDescription().getViewDescriptions().values() );
+
+		// filter not present ViewIds
+		final List< ViewDescription > removed = SpimData2.filterMissingViews( spimData, dog.toProcess );
+		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Removed " +  removed.size() + " views because they are not present." );
 
 		dog.downsampleXY = 2;
 		dog.sigma = 1.4;
@@ -48,7 +54,11 @@ public class TestSegmentation
 		dom.imgloader = spimData.getSequenceDescription().getImgLoader();
 		dom.toProcess = new ArrayList< ViewDescription >();
 		dom.toProcess.addAll( spimData.getSequenceDescription().getViewDescriptions().values() );
-		
+
+		// filter not present ViewIds
+		final List< ViewDescription > removed = SpimData2.filterMissingViews( spimData, dom.toProcess );
+		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Removed " +  removed.size() + " views because they are not present." );
+
 		dom.downsampleXY = 2;
 		dom.radius1 = 2;
 		
