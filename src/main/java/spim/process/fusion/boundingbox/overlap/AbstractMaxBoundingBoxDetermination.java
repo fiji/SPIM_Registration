@@ -38,7 +38,7 @@ public abstract class AbstractMaxBoundingBoxDetermination < V extends ViewId > i
 	}
 
 
-	public AbstractMaxBoundingBoxDetermination( final SequenceDescription sd, final ViewRegistrations vrs )
+	public AbstractMaxBoundingBoxDetermination( final AbstractSequenceDescription< ? extends BasicViewSetup, ?, ? > sd, final ViewRegistrations vrs )
 	{
 		this.vss = sd.getViewSetups();
 		this.vrs = vrs;

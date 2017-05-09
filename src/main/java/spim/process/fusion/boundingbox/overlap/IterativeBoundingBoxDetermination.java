@@ -39,7 +39,7 @@ public class IterativeBoundingBoxDetermination<V extends ViewId> extends Abstrac
 		super( spimData );
 	}
 	
-	public IterativeBoundingBoxDetermination( final SequenceDescription sd, final ViewRegistrations vrs )
+	public IterativeBoundingBoxDetermination( final AbstractSequenceDescription< ? extends BasicViewSetup, ?, ? > sd, final ViewRegistrations vrs )
 	{
 		super(sd, vrs);
 	}

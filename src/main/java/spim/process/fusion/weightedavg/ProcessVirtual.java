@@ -7,6 +7,8 @@ import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import mpicbg.spim.data.generic.sequence.BasicViewDescription;
+import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.TimePoint;
@@ -283,7 +285,7 @@ public class ProcessVirtual extends ProcessFusion
 		return fusedImg;
 	}
 
-	public static void adjustBlending( final ViewDescription vd, final float[] blending, final float[] border )
+	public static void adjustBlending( final BasicViewDescription< ? extends BasicViewSetup > vd, final float[] blending, final float[] border )
 	{
 		final float minRes = (float)getMinRes( vd );
 		VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSize( vd.getViewSetup() );
@@ -300,7 +302,7 @@ public class ProcessVirtual extends ProcessFusion
 		}
 	}
 
-	public static double getMinRes( final ViewDescription desc )
+	public static double getMinRes( final BasicViewDescription< ? extends BasicViewSetup > desc )
 	{
 		final VoxelDimensions size = ViewSetupUtils.getVoxelSize( desc.getViewSetup() );
 

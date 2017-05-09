@@ -1,6 +1,7 @@
 package spim.process.fusion.transformed;
 
 import mpicbg.spim.data.SpimData;
+import mpicbg.spim.data.generic.sequence.BasicImgLoader;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.MultiResolutionImgLoader;
@@ -187,7 +188,7 @@ public class TransformView
 	 * @param m
 	 * @return
 	 */
-	public static RandomAccessibleInterval openDownsampled( final ImgLoader imgLoader, final ViewId viewId, final AffineTransform3D m )
+	public static RandomAccessibleInterval openDownsampled( final BasicImgLoader imgLoader, final ViewId viewId, final AffineTransform3D m )
 	{
 		// have to go from input to output
 		// https://github.com/bigdataviewer/bigdataviewer-core/blob/master/src/main/java/bdv/util/MipmapTransforms.java
