@@ -1,7 +1,9 @@
 package spim.fiji.plugin.interestpointregistration.statistics;
 
-import java.util.Collection;
+import java.util.List;
 
+import mpicbg.spim.data.sequence.ViewId;
+import net.imglib2.util.Pair;
 import spim.process.interestpointregistration.pairwise.PairwiseResult;
 
 public class RegistrationStatistics implements Comparable< RegistrationStatistics >
@@ -23,7 +25,9 @@ public class RegistrationStatistics implements Comparable< RegistrationStatistic
 	 * information it wants
 	 *
 	 */
-	public RegistrationStatistics( final int timepoint, final Collection< PairwiseResult > pairwiseResults )
+	public RegistrationStatistics(
+			final int timepoint,
+			final List< ? extends Pair< ? extends Pair< ViewId, ViewId >, ? extends PairwiseResult< ? > > > pairwiseResults )
 	{
 		this.timePoint = timepoint;
 
@@ -53,7 +57,9 @@ public class RegistrationStatistics implements Comparable< RegistrationStatistic
 	int getNumValidPairs() { return numValidPairs; }
 	int getNumInvalidPairs() { return numInvalidPairs; }
 
-	protected void collect( final int timepoint, final Collection< PairwiseResult > pairwiseResults )
+	protected void collect(
+			final int timepoint,
+			final List< ? extends Pair< ? extends Pair< ViewId, ViewId >, ? extends PairwiseResult< ? > > > pairwiseResults )
 	{
 		minError = Double.MAX_VALUE;
 		avgError = 0;
@@ -63,12 +69,12 @@ public class RegistrationStatistics implements Comparable< RegistrationStatistic
 		maxRatio = 0;
 		avgRatio = 0;
 
-		for ( final PairwiseResult match : pairwiseResults )
-			if ( match.getViewIdA().getTimePointId() == timepoint || match.getViewIdB().getTimePointId() == timepoint )
+		for ( final Pair< ? extends Pair< ViewId, ViewId >, ? extends PairwiseResult< ? > > match : pairwiseResults )
+			if ( match.getA().getA().getTimePointId() == timepoint || match.getA().getB().getTimePointId() == timepoint )
 			{
-				final int numCandidates = match.getCandidates().size();
-				final int numInliers = match.getInliers().size();
-				final double error = match.getError();
+				final int numCandidates = match.getB().getCandidates().size();
+				final int numInliers = match.getB().getInliers().size();
+				final double error = match.getB().getError();
 
 				if ( !Double.isNaN( error ) && numCandidates > 0 && numInliers > 0 )
 				{
