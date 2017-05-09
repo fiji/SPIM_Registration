@@ -2,6 +2,7 @@ package spim.fiji.plugin.interestpointregistration.pairwise;
 
 import ij.gui.GenericDialog;
 import spim.fiji.plugin.interestpointregistration.TransformationModelGUI;
+import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.interestpointregistration.pairwise.methods.ransac.RANSACParameters;
 import spim.process.interestpointregistration.pairwise.methods.rgldm.RGLDMPairwise;
 import spim.process.interestpointregistration.pairwise.methods.rgldm.RGLDMParameters;
@@ -22,7 +23,10 @@ public class RGLDMGUI implements PairwiseGUI
 	protected RANSACParameters ransacParams;
 
 	@Override
-	public RGLDMPairwise pairwiseMatchingInstance() { return new RGLDMPairwise( ransacParams, parameters ); }
+	public RGLDMPairwise< InterestPoint > pairwiseMatchingInstance()
+	{
+		return new RGLDMPairwise< InterestPoint >( ransacParams, parameters );
+	}
 
 	@Override
 	public RGLDMGUI newInstance() { return new RGLDMGUI(); }

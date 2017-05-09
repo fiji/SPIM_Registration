@@ -1,9 +1,7 @@
 package spim.fiji.plugin.interestpointregistration.pairwise;
 
-import java.util.List;
-
 import ij.gui.GenericDialog;
-import mpicbg.spim.data.sequence.ViewId;
+import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.interestpointregistration.pairwise.MatcherPairwise;
 
 public interface PairwiseGUI
@@ -36,5 +34,5 @@ public interface PairwiseGUI
 	/**
 	 * @return - the object that will perform a pairwise matching and can return a result
 	 */
-	public MatcherPairwise pairwiseMatchingInstance();
+	public MatcherPairwise< InterestPoint > pairwiseMatchingInstance();
 }
