@@ -68,7 +68,7 @@ public class Interest_Point_Registration2 implements PlugIn
 		"Map back to user defined view using translation model",
 		"Map back to user defined view using rigid model" };
 
-	public final static String warningLabel = " (WARNING: Only available for "; 
+	public final static String warningLabel = " (WARNING: Only available for ";
 
 	static
 	{
@@ -82,12 +82,12 @@ public class Interest_Point_Registration2 implements PlugIn
 	// basic dialog
 	public static int defaultAlgorithm = 0;
 	public static int defaultRegistrationType = 0;
-	public static int[] defaultChannelLabels = null;
+	public static int defaultLabel = 0;
 	private class BasicRegistrationParamerters
 	{
 		PairwiseGUI pwr;
 		RegistrationType registrationType;
-		HashMap< Channel, String > channelProcess;
+		HashMap< ViewId, String > labelMap;
 	}
 
 	// advanced dialog
@@ -158,12 +158,8 @@ public class Interest_Point_Registration2 implements PlugIn
 		final List< TimePoint > timepointToProcess = SpimData2.getAllTimePointsSorted( data, viewIds );
 		final int nAllTimepoints = data.getSequenceDescription().getTimePoints().size();
 
-		// ask which channels have the objects we are searching for
-		final List< Channel > channels = SpimData2.getAllChannelsSorted( data, viewIds );
-		final int nAllChannels = data.getSequenceDescription().getAllChannelsOrdered().size();
-
 		// query basic registration parameters
-		final BasicRegistrationParamerters brp = basicRegistrationParameters( timepointToProcess, nAllTimepoints, channels, nAllChannels, data, viewIds );
+		final BasicRegistrationParamerters brp = basicRegistrationParameters( timepointToProcess, nAllTimepoints, data, viewIds );
 
 		if ( brp == null )
 			return false;
@@ -546,8 +542,6 @@ public class Interest_Point_Registration2 implements PlugIn
 	public BasicRegistrationParamerters basicRegistrationParameters(
 			final List< TimePoint > timepointToProcess,
 			final int nAllTimepoints,
-			final List< Channel > channels,
-			final int nAllChannels,
 			final SpimData2 data,
 			final List< ViewId > viewIds )
 	{
@@ -575,22 +569,19 @@ public class Interest_Point_Registration2 implements PlugIn
 
 		gd.addChoice( "Type_of_registration", choicesGlobal, choicesGlobal[ defaultRegistrationType ] );
 
-		if ( defaultChannelLabels == null || defaultChannelLabels.length != nAllChannels )
-			defaultChannelLabels = new int[ nAllChannels ];
-
 		// check which channels and labels are available and build the choices
-		final ArrayList< String[] > channelLabels = new ArrayList< String[] >();
-		int i = 0;
-		for ( final Channel channel : channels )
+		final String[] labels = getAllInterestPointLabels( data, viewIds );
+
+		if ( labels.length == 0 )
 		{
-			final String[] labels = getAllInterestPointLabelsForChannel( data, viewIds, channel, "register" );
-
-			if ( defaultChannelLabels[ channel.getId() ] >= labels.length )
-				defaultChannelLabels[ channel.getId() ] = 0;
-
-			gd.addChoice( "Interest_points_channel_" + channel.getName(), labels, labels[ defaultChannelLabels[ i++ ] ] );
-			channelLabels.add( labels );
+			IOFunctions.printErr( "No interest points available, stopping. Please run Interest Ppint Detection first" );
+			return null;
 		}
+
+		if ( defaultLabel >= labels.length )
+			defaultLabel = 0;
+
+		gd.addChoice( "Interest_points" , labels, labels[ defaultLabel ] );
 
 		// assemble the last registration names of all viewsetups involved
 		final HashMap< String, Integer > names = GUIHelper.assembleRegistrationNames( data, viewIds );
@@ -631,44 +622,25 @@ public class Interest_Point_Registration2 implements PlugIn
 		}
 
 		// assemble which channels have been selected with with label
-		final HashMap< Channel, String > channelsToProcess = new HashMap< Channel, String >();
-		i = 0;
+		final int choice = defaultLabel = gd.getNextChoiceIndex();
 
-		for ( final Channel channel : channels )
-		{
-			final int channelChoice = defaultChannelLabels[ channel.getId() ] = gd.getNextChoiceIndex();
-			
-			if ( channelChoice < channelLabels.get( i ).length - 1 )
-			{
-				String label = channelLabels.get( i )[ channelChoice ];
-				
-				if ( label.contains( warningLabel ) )
-					label = label.substring( 0, label.indexOf( warningLabel ) );
-				
-				channelsToProcess.put( channel, label );
-			}
-			++i;
-		}
-		
-		if ( channelsToProcess.size() == 0 )
-		{
-			IOFunctions.println( "No channels selected. Quitting." );
-			return null;
-		}
+		String label = labels[ choice ];
 
-		for ( final Channel c : channelsToProcess.keySet() )
-			IOFunctions.println( "registering channel: " + c.getId()  + " label: '" + channelsToProcess.get( c ) + "'" );
+		if ( label.contains( warningLabel ) )
+			label = label.substring( 0, label.indexOf( warningLabel ) );
 
 		final PairwiseGUI pwr = staticPairwiseAlgorithms.get( algorithm ).newInstance();
 
 		IOFunctions.println( "Registration algorithm: " + pwr.getDescription() );
 		IOFunctions.println( "Registration type: " + registrationType.name() );
-		IOFunctions.println( "Channels to process: " + channelsToProcess.size() );
 
 		final BasicRegistrationParamerters brp = new BasicRegistrationParamerters();
 		brp.pwr = pwr;
 		brp.registrationType = registrationType;
-		brp.channelProcess = channelsToProcess;
+		brp.labelMap = new HashMap<>();
+
+		for ( final ViewId viewId : viewIds )
+			brp.labelMap.put( viewId, label );
 
 		return brp;
 	}
@@ -699,18 +671,15 @@ public class Interest_Point_Registration2 implements PlugIn
 	}
 
 	/**
-	 * Goes through all ViewDescriptions and checks all available labels for interest point detection
+	 * Goes through all Views and checks all available labels for interest point detection
 	 * 
 	 * @param spimData
-	 * @param channel
 	 * @param doWhat - the text for not doing anything with this channel
 	 * @return
 	 */
-	public static String[] getAllInterestPointLabelsForChannel(
+	public static String[] getAllInterestPointLabels(
 			final SpimData2 spimData,
-			final List< ViewId > viewIdsToProcess,
-			final Channel channel,
-			final String doWhat )
+			final List< ViewId > viewIdsToProcess )
 	{
 		final ViewInterestPoints interestPoints = spimData.getViewInterestPoints();
 		final HashMap< String, Integer > labels = new HashMap< String, Integer >();
@@ -724,7 +693,7 @@ public class Interest_Point_Registration2 implements PlugIn
 					viewId.getTimePointId(), viewId.getViewSetupId() );
 
 			// check if the view is present
-			if ( !viewDescription.isPresent() || viewDescription.getViewSetup().getChannel().getId() != channel.getId() )
+			if ( !viewDescription.isPresent() )
 				continue;
 			
 			// which lists of interest points are available
@@ -743,14 +712,9 @@ public class Interest_Point_Registration2 implements PlugIn
 			// are they available in all viewdescriptions?
 			++countViewDescriptions;
 		}
-		
-		final String[] allLabels;
 
-		if ( doWhat == null )
-			allLabels = new String[ labels.keySet().size() ];
-		else
-			allLabels = new String[ labels.keySet().size() + 1 ];
-		
+		final String[] allLabels = new String[ labels.keySet().size() ];
+
 		int i = 0;
 		
 		for ( final String label : labels.keySet() )
@@ -762,9 +726,6 @@ public class Interest_Point_Registration2 implements PlugIn
 
 			++i;
 		}
-
-		if ( doWhat != null )
-			allLabels[ i ] = "(DO NOT " + doWhat + " this channel)";
 
 		return allLabels;
 	}
