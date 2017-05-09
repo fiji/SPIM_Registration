@@ -7,6 +7,11 @@ import java.util.Map;
 import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 
+/**
+ * Interface for grouping interest points from multiple views that are in one group
+ * 
+ * @author spreibi
+ */
 public abstract class InterestPointGrouping< V extends ViewId > implements Grouping< V, List< GroupedInterestPoint< V > > >
 {
 	// all interestpoints
