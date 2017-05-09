@@ -79,9 +79,6 @@ public class MatcherPairwiseTools
 			final Map< V, ? extends List< CorrespondingInterestPoints > > cMap
 			)
 	{
-		//final InterestPointList listA = spimData.getViewInterestPoints().getViewInterestPoints().get( vA ).getInterestPointList( labelMap.get( vA ) );
-		//final InterestPointList listB = spimData.getViewInterestPoints().getViewInterestPoints().get( vB ).getInterestPointList( labelMap.get( vB ) );
-
 		final HashMap< Pair< V, V >, PairwiseResult< GroupedInterestPoint< V > > > transformedMap = new HashMap<>();
 
 		for ( final Pair< ?, P > p : resultGroup )
