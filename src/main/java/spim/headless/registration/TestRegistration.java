@@ -76,10 +76,11 @@ public class TestRegistration
 		}
 
 		// load & transform all interest points
-		final Map< ViewId, List< InterestPoint > > interestpoints = TransformationTools.getAllTransformedInterestPoints(
-				viewIds,
-				spimData.getViewRegistrations().getViewRegistrations(),
-				iplMap );
+		final Map< ViewId, List< InterestPoint > > interestpoints =
+				TransformationTools.getAllTransformedInterestPoints(
+					viewIds,
+					spimData.getViewRegistrations().getViewRegistrations(),
+					iplMap );
 
 		// setup pairwise registration
 		Set< Group< ViewId > > groups = new HashSet<>();
@@ -183,8 +184,8 @@ public class TestRegistration
 					GlobalOpt.compute( new AffineModel3D(), resultG, fixedViews, groups );
 
 			final AffineTransform3D mapBack = TransformationTools.computeMapBackModel(
-					spimData.getSequenceDescription().getViewDescription( viewIds.get( 0 ) ).getViewSetup().getSize(),
-					spimData.getViewRegistrations().getViewRegistrations().get( viewIds.get( 0 ) ).getModel(),
+					spimData.getSequenceDescription().getViewDescription( subset.getViews().iterator().next() ).getViewSetup().getSize(),
+					spimData.getViewRegistrations().getViewRegistrations().get( subset.getViews().iterator().next() ).getModel(),
 					models.get( viewIds.get( 0 ) ).getModel(),
 					new RigidModel3D() );
 
@@ -198,6 +199,80 @@ public class TestRegistration
 	
 				TransformationTools.storeTransformation( vr, viewId, tile, mapBack, "Scripted AffineModel3D" );
 			}
+		}
+	}
+
+	public static void groupedTest(
+			final SpimData2 spimData,
+			final Subset< ViewId > subset,
+			final Map< ViewId, List< InterestPoint > > interestpoints,
+			final Map< ViewId, InterestPointList > iplMap,
+			final Map< ViewId, String > labelMap,
+			final RANSACParameters rp,
+			final GeometricHashingParameters gp,
+			final List< ViewId > fixedViews )
+	{
+		final List< Pair< Group< ViewId >, Group< ViewId > > > groupedPairs = subset.getGroupedPairs();
+		final Map< Group< ViewId >, List< GroupedInterestPoint< ViewId > > > groupedInterestpoints = new HashMap<>();
+		final InterestPointGrouping< ViewId > ipGrouping = new InterestPointGroupingAll<>( interestpoints );
+
+		// which groups exist
+		final Set< Group< ViewId > > groups = new HashSet<>();
+
+		for ( final Pair< Group< ViewId >, Group< ViewId > > pair : groupedPairs )
+		{
+			groups.add( pair.getA() );
+			groups.add( pair.getB() );
+
+			System.out.print( "[" + pair.getA() + "] <=> [" + pair.getB() + "]" );
+
+			if ( !groupedInterestpoints.containsKey( pair.getA() ) )
+			{
+				System.out.print( ", grouping interestpoints for " + pair.getA() );
+
+				groupedInterestpoints.put( pair.getA(), ipGrouping.group( pair.getA() ) );
+			}
+
+			if ( !groupedInterestpoints.containsKey( pair.getB() ) )
+			{
+				System.out.print( ", grouping interestpoints for " + pair.getB() );
+
+				groupedInterestpoints.put( pair.getB(), ipGrouping.group( pair.getB() ) );
+			}
+
+			System.out.println();
+		}
+
+		final List< Pair< Pair< Group< ViewId >, Group< ViewId > >, PairwiseResult< GroupedInterestPoint< ViewId > > > > resultGroup =
+				MatcherPairwiseTools.computePairs( groupedPairs, groupedInterestpoints, new GeometricHashingPairwise<>( rp, gp ) );
+
+		// clear correspondences and get a map linking ViewIds to the correspondence lists
+		final Map< ViewId, List< CorrespondingInterestPoints > > cMap = MatcherPairwiseTools.clearCorrespondences( iplMap );
+
+		// add the corresponding detections and output result
+		final List< Pair< Pair< ViewId, ViewId >, PairwiseResult< GroupedInterestPoint< ViewId > > > > resultG =
+				MatcherPairwiseTools.addCorrespondencesFromGroups( resultGroup, iplMap, labelMap, cMap );
+
+		// run global optimization
+		final HashMap< ViewId, Tile< AffineModel3D > > models =
+				GlobalOpt.compute( new AffineModel3D(), resultG, fixedViews, groups );
+
+		final ViewId firstView = subset.getViews().iterator().next();
+		final AffineTransform3D mapBack = TransformationTools.computeMapBackModel(
+				spimData.getSequenceDescription().getViewDescription( firstView ).getViewSetup().getSize(),
+				spimData.getViewRegistrations().getViewRegistrations().get( firstView ).getModel(),
+				models.get( firstView ).getModel(),
+				new RigidModel3D() );
+
+		System.out.println( mapBack );
+
+		// pre-concatenate models to spimdata2 viewregistrations (from SpimData(2))
+		for ( final ViewId viewId : subset.getViews() )
+		{
+			final Tile< AffineModel3D > tile = models.get( viewId );
+			final ViewRegistration vr = spimData.getViewRegistrations().getViewRegistrations().get( viewId );
+
+			TransformationTools.storeTransformation( vr, viewId, tile, mapBack, "Scripted AffineModel3D" );
 		}
 	}
 }
