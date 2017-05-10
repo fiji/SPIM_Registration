@@ -6,7 +6,7 @@ import java.awt.event.ActionListener;
 import javax.swing.JMenuItem;
 
 import mpicbg.spim.io.IOFunctions;
-import spim.fiji.plugin.Interest_Point_Registration;
+import spim.fiji.plugin.Interest_Point_Registration2;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
 
@@ -52,7 +52,7 @@ public class RegisterInterestPointsPopup extends JMenuItem implements ExplorerWi
 				@Override
 				public void run()
 				{
-					if ( new Interest_Point_Registration().register( (SpimData2)panel.getSpimData(), panel.selectedRowsViewId() ) )
+					if ( new Interest_Point_Registration2().register( (SpimData2)panel.getSpimData(), panel.selectedRowsViewId() ) )
 					{
 						panel.updateContent(); // update interestpoint and registration panel if available
 						panel.bdvPopup().updateBDV();

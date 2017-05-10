@@ -1,10 +1,14 @@
 package spim.process.interestpointregistration.pairwise.constellation;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
@@ -47,6 +51,14 @@ public class Subset< V >
 	public Set< Group< V > > getGroups() { return groups; }
 	public Set< V > getFixedViews() { return fixedViews; }
 	protected void setFixedViews( final Set< V > fixedViews ) { this.fixedViews = fixedViews; }
+
+	public static < V extends ViewId > List< V > getViewsSorted( final Set< V > views )
+	{
+		final ArrayList< V > sorted = new ArrayList<>();
+		sorted.addAll( views );
+		Collections.sort( sorted );
+		return sorted;
+	}
 
 	/**
 	 * Fix an additional list of views (removes pairs from subsets and sets list of fixed views)

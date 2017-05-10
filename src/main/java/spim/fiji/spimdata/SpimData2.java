@@ -316,6 +316,20 @@ public class SpimData2 extends SpimData
 		return setups;
 	}
 
+	public static ArrayList< Integer > getAllTimePointsSortedUnchecked( final Collection< ? extends ViewId > viewIds )
+	{
+		final HashSet< Integer > timepointSet = new HashSet< Integer >();
+
+		for ( final ViewId vd : viewIds )
+			timepointSet.add( vd.getTimePointId() );
+
+		final ArrayList< Integer > timepoints = new ArrayList< Integer >();
+		timepoints.addAll( timepointSet );
+		Collections.sort( timepoints );
+
+		return timepoints;
+	}
+
 	public static ArrayList< TimePoint > getAllTimePointsSorted( final SpimData data, final Collection< ? extends ViewId > viewIds )
 	{
 		final ArrayList< ViewDescription > vds = new ArrayList< ViewDescription >();
