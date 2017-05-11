@@ -9,7 +9,7 @@ import spim.process.interestpointregistration.pairwise.constellation.Subset;
 
 public class FixMapBackParameters
 {
-	public Set< ViewId > fixedTiles;
+	public Set< ViewId > fixedViews;
 	public Model< ? > model;
 	public Map< Subset< ViewId >, ViewId > mapBackView;
 }
