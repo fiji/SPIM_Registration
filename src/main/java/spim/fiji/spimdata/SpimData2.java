@@ -439,12 +439,12 @@ public class SpimData2 extends SpimData
 		return new SpimData2( data1.getBasePath(), s, vr, vipl, bb, sr);
 	}
 
-	public static List< ViewId > filterMissingViews( final AbstractSpimData< ? > data, final List< ViewId > viewIds )
+	public static <V extends ViewId> List< V > filterMissingViews( final AbstractSpimData< ? > data, final List< V > viewIds )
 	{
-		final ArrayList< ViewId > removed = new ArrayList<>();
-		final ArrayList< ViewId > present = new ArrayList<>();
+		final ArrayList< V > removed = new ArrayList<>();
+		final ArrayList< V > present = new ArrayList<>();
 
-		for ( final ViewId viewId : viewIds )
+		for ( final V viewId : viewIds )
 		{
 			final BasicViewDescription< ? > vd = data.getSequenceDescription().getViewDescriptions().get( viewId );
 			
