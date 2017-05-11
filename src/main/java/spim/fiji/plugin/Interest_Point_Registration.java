@@ -37,6 +37,7 @@ import spim.process.interestpointregistration.TransformationTools;
 import spim.process.interestpointregistration.pairwise.constellation.PairwiseSetup;
 import spim.process.interestpointregistration.pairwise.constellation.Subset;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
+import spim.process.interestpointregistration.pairwise.constellation.overlap.OverlapDetection;
 import spim.process.interestpointregistration.pairwise.constellation.overlap.SimpleBoundingBoxOverlap;
 
 /**
@@ -161,26 +162,39 @@ public class Interest_Point_Registration implements PlugIn
 		// identify subsets
 		final Set< Group< ViewId > > groups = arp.getGroups( viewIds );
 		final PairwiseSetup< ViewId > setup = arp.pairwiseSetupInstance( brp.registrationType, viewIds, groups );
+		final OverlapDetection< ViewId > overlapDetection = null; //new SimpleBoundingBoxOverlap<>( data );
+		final ArrayList< Subset< ViewId > > subsets = identifySubsets( setup, overlapDetection ).getSubsets();
 
-		System.out.println( "Defined pairs, removed " + setup.definePairs().size() + " redundant view pairs." );
-		System.out.println( "Removed " + setup.removeNonOverlappingPairs( new SimpleBoundingBoxOverlap<>( data ) ).size() + " pairs because they do not overlap." );
-		setup.reorderPairs();
-		setup.detectSubsets();
-		setup.sortSubsets();
-		final ArrayList< Subset< ViewId > > subsets = setup.getSubsets();
-		System.out.println( "Identified " + subsets.size() + " subsets " );
-
+		// query fixed and reference views for mapping back if necessary
 		final FixMapBackParameters mpbp = fixMapBackParameters( setup, subsets, arp.fixViewsIndex, arp.mapBackIndex, brp.registrationType );
 
 		if ( mpbp == null )
 			return false;
 
+		// run the registration
+
 		return true;
+	}
+
+	public PairwiseSetup< ViewId > identifySubsets( final PairwiseSetup< ViewId > setup, final OverlapDetection< ViewId > overlapDetection )
+	{
+		IOFunctions.println( "Defined pairs, removed " + setup.definePairs().size() + " redundant view pairs." );
+		if ( overlapDetection != null )
+			IOFunctions.println( "Removed " + setup.removeNonOverlappingPairs( overlapDetection ).size() + " pairs because they do not overlap." );
+		else
+			IOFunctions.println( "Comparing all views independent of their location in space." );
+		setup.reorderPairs();
+		setup.detectSubsets();
+		setup.sortSubsets();
+		IOFunctions.println( "Identified " + setup.getSubsets().size() + " subsets " );
+
+		return setup;
 	}
 
 	public boolean processRegistration(
 			final BasicRegistrationParameters brp,
 			final AdvancedRegistrationParameters arp,
+			final FixMapBackParameters fmbp,
 			final SpimData2 data,
 			final List< ViewId > viewIds )
 	{
