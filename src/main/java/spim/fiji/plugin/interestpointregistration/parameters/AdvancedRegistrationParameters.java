@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import mpicbg.spim.data.sequence.ViewId;
-import spim.fiji.plugin.Interest_Point_Registration.RegistrationType;
+import spim.fiji.plugin.interestpointregistration.parameters.BasicRegistrationParameters.RegistrationType;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.interestpointregistration.pairwise.constellation.AllToAll;
 import spim.process.interestpointregistration.pairwise.constellation.AllToAllRange;

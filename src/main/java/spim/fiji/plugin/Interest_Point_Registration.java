@@ -2,6 +2,7 @@ package spim.fiji.plugin;
 
 import java.awt.Font;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -12,8 +13,11 @@ import java.util.Set;
 
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
+import mpicbg.models.AffineModel3D;
 import mpicbg.models.RigidModel3D;
 import mpicbg.models.TranslationModel3D;
+import mpicbg.spim.data.registration.ViewRegistration;
+import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.TimePoints;
 import mpicbg.spim.data.sequence.ViewDescription;
@@ -26,7 +30,9 @@ import spim.fiji.plugin.interestpointregistration.pairwise.PairwiseGUI;
 import spim.fiji.plugin.interestpointregistration.pairwise.RGLDMGUI;
 import spim.fiji.plugin.interestpointregistration.parameters.AdvancedRegistrationParameters;
 import spim.fiji.plugin.interestpointregistration.parameters.BasicRegistrationParameters;
+import spim.fiji.plugin.interestpointregistration.parameters.BasicRegistrationParameters.RegistrationType;
 import spim.fiji.plugin.interestpointregistration.parameters.FixMapBackParameters;
+import spim.fiji.plugin.interestpointregistration.parameters.FixMapBackParameters.InterestpointGroupingType;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
@@ -39,6 +45,8 @@ import spim.process.interestpointregistration.pairwise.constellation.Subset;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 import spim.process.interestpointregistration.pairwise.constellation.overlap.OverlapDetection;
 import spim.process.interestpointregistration.pairwise.constellation.overlap.SimpleBoundingBoxOverlap;
+import spim.process.interestpointregistration.pairwise.methods.geometrichashing.GeometricHashingParameters;
+import spim.process.interestpointregistration.pairwise.methods.ransac.RANSACParameters;
 
 /**
 *
@@ -48,26 +56,6 @@ import spim.process.interestpointregistration.pairwise.constellation.overlap.Sim
 public class Interest_Point_Registration implements PlugIn
 {
 	public static ArrayList< PairwiseGUI > staticPairwiseAlgorithms = new ArrayList< PairwiseGUI >();
-
-	public static String[] registrationTypes = {
-		"Register timepoints individually", 
-		"Match against one reference timepoint (no global optimization)", 
-		"All-to-all timepoints matching (global optimization)", 
-		"All-to-all timepoints matching with range ('reasonable' global optimization)" };
-	
-	public enum RegistrationType { TIMEPOINTS_INDIVIDUALLY, TO_REFERENCE_TIMEPOINT, ALL_TO_ALL, ALL_TO_ALL_WITH_RANGE };
-
-	public static String[] fixViewsChoice = new String[]{
-		"Fix first view",
-		"Select fixed view",
-		"Do not fix views" };
-
-	public static String[] mapBackChoice = new String[]{
-		"Do not map back (use this if views are fixed)",
-		"Map back to first view using translation model",
-		"Map back to first view using rigid model",
-		"Map back to user defined view using translation model",
-		"Map back to user defined view using rigid model" };
 
 	public final static String warningLabel = " (WARNING: Only available for ";
 
@@ -98,6 +86,7 @@ public class Interest_Point_Registration implements PlugIn
 	public static boolean defaultSameReferenceView = true;
 	public static boolean[] defaultFixedViews = null;
 	public static int defaultReferenceView = 0;
+	public static int defaultIPGrouping = 0;
 
 	@Override
 	public void run( final String arg )
@@ -192,33 +181,40 @@ public class Interest_Point_Registration implements PlugIn
 	}
 
 	public boolean processRegistration(
-			final BasicRegistrationParameters brp,
-			final AdvancedRegistrationParameters arp,
-			final FixMapBackParameters fmbp,
-			final SpimData2 data,
-			final List< ViewId > viewIds )
+			final List< ViewId > viewIds,
+			final Set< ViewId > fixedViewsSet,
+			final PairwiseSetup< ViewId > setup,
+			final ArrayList< Subset< ViewId > > subsets,
+			final Map< ViewId, ViewRegistration > registrations,
+			final Map< ViewId, ViewInterestPointLists > interestpointLists,
+			final Map< ViewId, String > labelMap )
 	{
 		// load & transform all interest points
 		final Map< ViewId, List< InterestPoint > > interestpoints =
 				TransformationTools.getAllTransformedInterestPoints(
 					viewIds,
-					data.getViewRegistrations().getViewRegistrations(),
-					data.getViewInterestPoints().getViewInterestPoints(),
-					brp.labelMap );
+					registrations,
+					interestpointLists,
+					labelMap );
 
-		// define fixed views
-		final ArrayList< ViewId > fixedViews = new ArrayList< ViewId >();
-		fixedViews.add( viewIds.get( 0 ) );
+		for ( final Subset< ViewId > subset : subsets )
+		{
+			// parameters
+			final RANSACParameters rp = new RANSACParameters();
+			final GeometricHashingParameters gp = new GeometricHashingParameters( new AffineModel3D() );
 
-		// define groups
-		//final ArrayList< ArrayList< ViewId > > groupedViews = new ArrayList< ArrayList< ViewId > >();
+			// fix view(s)
+			final List< ViewId > fixedViews = setup.getDefaultFixedViews();
+			IOFunctions.println( "By default #fixed views for strategy " + setup.getClass().getSimpleName() + " = " + fixedViews.size() );
+			fixedViews.addAll( fixedViewsSet );
+			IOFunctions.println( "Removed " + subset.fixViews( fixedViews ).size() + " views due to fixing all views (in total " + fixedViews.size() + ")" );
 
-		// define all pairs depending on the registrationtype
-		//final List< Pair< ViewId, ViewId > > pairs = PairwiseStrategyTools.allToAll( viewIds, fixedViews, groupedViews );
+			// get all pairs to be compared (either that XOR grouped pairs)
+			pairSubsetTest( spimData, subset, interestpoints, labelMap, rp, gp, fixedViews );
 
-		// set the fixed views and the potential mapping back to some view
-		//if ( !setFixedViewsAndReference( fixViews, mapBack, brp.registrationType ) )
-		//	return false;
+			// test grouped registration
+			groupedSubsetTest( spimData, subset, interestpoints, labelMap, rp, gp, fixedViews );
+		}
 
 		return true;
 	}
@@ -229,7 +225,7 @@ public class Interest_Point_Registration implements PlugIn
 			final SpimData2 data,
 			final List< ViewId > viewIds )
 	{
-		final GenericDialog gd = new GenericDialog( "Register: " + registrationTypes[ brp.registrationType.ordinal() ] );
+		final GenericDialog gd = new GenericDialog( "Register: " + BasicRegistrationParameters.registrationTypes[ brp.registrationType.ordinal() ] );
 
 		if ( brp.registrationType == RegistrationType.TO_REFERENCE_TIMEPOINT )
 		{
@@ -261,8 +257,8 @@ public class Interest_Point_Registration implements PlugIn
 		// (otherwise all views of the reference are fixed)
 		if ( brp.registrationType != RegistrationType.TO_REFERENCE_TIMEPOINT )
 		{
-			gd.addChoice( "Fix_views", fixViewsChoice, fixViewsChoice[ defaultFixViews ] );
-			gd.addChoice( "Map_back_views", mapBackChoice, mapBackChoice[ defaultMapBack ] );
+			gd.addChoice( "Fix_views", FixMapBackParameters.fixViewsChoice, FixMapBackParameters.fixViewsChoice[ defaultFixViews ] );
+			gd.addChoice( "Map_back_views", FixMapBackParameters.mapBackChoice, FixMapBackParameters.mapBackChoice[ defaultMapBack ] );
 		}
 
 		gd.addMessage( "" );
@@ -356,9 +352,9 @@ public class Interest_Point_Registration implements PlugIn
 
 		final String[] choicesGlobal;
 		if ( timepointToProcess.size() > 1 )
-			choicesGlobal = registrationTypes.clone();
+			choicesGlobal = BasicRegistrationParameters.registrationTypes.clone();
 		else
-			choicesGlobal = new String[]{ registrationTypes[ 0 ] };
+			choicesGlobal = new String[]{ BasicRegistrationParameters.registrationTypes[ 0 ] };
 
 		if ( defaultRegistrationType >= choicesGlobal.length )
 			defaultRegistrationType = 0;
@@ -464,13 +460,41 @@ public class Interest_Point_Registration implements PlugIn
 		final FixMapBackParameters fmbp = new FixMapBackParameters();
 
 		//
+		// ask for what to do with groups
+		//
+		if ( hasGroups( subsets ) )
+		{
+			IOFunctions.println( "Registration configuration has groups." );
+
+			final GenericDialog gd = new GenericDialog( "Select interest point grouping" );
+			gd.addChoice( "Interestpoint_Grouping" , FixMapBackParameters.ipGroupChoice, FixMapBackParameters.ipGroupChoice[ defaultIPGrouping ] );
+
+			gd.showDialog();
+			if ( gd.wasCanceled() )
+				return null;
+
+			final int group = defaultIPGrouping = gd.getNextChoiceIndex();
+	
+			if ( group == 0 )
+				fmbp.grouping = InterestpointGroupingType.DO_NOT_GROUP;
+			else
+				fmbp.grouping = InterestpointGroupingType.ADD_ALL;
+		}
+		else
+		{
+			IOFunctions.println( "Registration configuration has no groups." );
+			fmbp.grouping = InterestpointGroupingType.DO_NOT_GROUP;
+		}
+
+		IOFunctions.println( "Interestpoint grouping type: " + fmbp.grouping );
+
+		//
 		// define fixed views
 		//
 		fmbp.fixedViews = new HashSet< ViewId >();
 
 		if ( type == RegistrationType.TO_REFERENCE_TIMEPOINT )
 		{
-			fmbp.fixedViews.addAll( setup.getDefaultFixedViews() );
 			fmbp.model = null;
 			fmbp.mapBackView = new HashMap< Subset< ViewId >, ViewId >();
 
@@ -656,6 +680,15 @@ public class Interest_Point_Registration implements PlugIn
 		}
 
 		return fmbp;
+	}
+
+	public static boolean hasGroups( final Collection< ? extends Subset< ? > > subsets )
+	{
+		for ( final Subset< ? > subset : subsets )
+			if ( subset.getGroups().size() > 0 )
+				return true;
+
+		return false;
 	}
 
 	protected ArrayList< Integer > getListOfViewSetupIdsPresentInAllSubsets( final List< Subset< ViewId > > subsets )
