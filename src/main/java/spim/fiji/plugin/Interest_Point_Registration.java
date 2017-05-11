@@ -14,10 +14,10 @@ import java.util.Set;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 import mpicbg.models.AffineModel3D;
+import mpicbg.models.Model;
 import mpicbg.models.RigidModel3D;
 import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.data.registration.ViewRegistration;
-import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.TimePoints;
 import mpicbg.spim.data.sequence.ViewDescription;
@@ -30,9 +30,11 @@ import spim.fiji.plugin.interestpointregistration.pairwise.PairwiseGUI;
 import spim.fiji.plugin.interestpointregistration.pairwise.RGLDMGUI;
 import spim.fiji.plugin.interestpointregistration.parameters.AdvancedRegistrationParameters;
 import spim.fiji.plugin.interestpointregistration.parameters.BasicRegistrationParameters;
+import spim.fiji.plugin.interestpointregistration.parameters.BasicRegistrationParameters.OverlapType;
 import spim.fiji.plugin.interestpointregistration.parameters.BasicRegistrationParameters.RegistrationType;
 import spim.fiji.plugin.interestpointregistration.parameters.FixMapBackParameters;
-import spim.fiji.plugin.interestpointregistration.parameters.FixMapBackParameters.InterestpointGroupingType;
+import spim.fiji.plugin.interestpointregistration.parameters.GroupParameters;
+import spim.fiji.plugin.interestpointregistration.parameters.GroupParameters.InterestpointGroupingType;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
@@ -44,7 +46,6 @@ import spim.process.interestpointregistration.pairwise.constellation.PairwiseSet
 import spim.process.interestpointregistration.pairwise.constellation.Subset;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 import spim.process.interestpointregistration.pairwise.constellation.overlap.OverlapDetection;
-import spim.process.interestpointregistration.pairwise.constellation.overlap.SimpleBoundingBoxOverlap;
 import spim.process.interestpointregistration.pairwise.methods.geometrichashing.GeometricHashingParameters;
 import spim.process.interestpointregistration.pairwise.methods.ransac.RANSACParameters;
 
@@ -71,6 +72,7 @@ public class Interest_Point_Registration implements PlugIn
 	// basic dialog
 	public static int defaultAlgorithm = 0;
 	public static int defaultRegistrationType = 0;
+	public static int defaultOverlapType = 1;
 	public static int defaultLabel = 0;
 
 	// advanced dialog
@@ -129,7 +131,7 @@ public class Interest_Point_Registration implements PlugIn
 			final boolean saveXML )
 	{
 		// filter not present ViewIds
-		final List< ViewId > removed = SpimData2.filterMissingViews( data, viewIds );
+		List< ViewId > removed = SpimData2.filterMissingViews( data, viewIds );
 		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Removed " +  removed.size() + " views because they are not present." );
 
 		// which timepoints are part of the 
@@ -142,6 +144,10 @@ public class Interest_Point_Registration implements PlugIn
 		if ( brp == null )
 			return false;
 
+		removed = filterRemainingViewIds( viewIds, brp.labelMap, data.getViewInterestPoints().getViewInterestPoints() );
+		for ( int i = 0; i < removed.size(); ++i )
+			IOFunctions.println( "Removed view " + Group.pvid( removed.get( i ) ) + " as the label '" + brp.labelMap.get( removed.get( i ) ) + "' was not present." );
+
 		// query advanced parameters
 		final AdvancedRegistrationParameters arp = advancedRegistrationParameters( brp, timepointToProcess, data, viewIds );
 
@@ -151,44 +157,45 @@ public class Interest_Point_Registration implements PlugIn
 		// identify subsets
 		final Set< Group< ViewId > > groups = arp.getGroups( viewIds );
 		final PairwiseSetup< ViewId > setup = arp.pairwiseSetupInstance( brp.registrationType, viewIds, groups );
-		final OverlapDetection< ViewId > overlapDetection = null; //new SimpleBoundingBoxOverlap<>( data );
-		final ArrayList< Subset< ViewId > > subsets = identifySubsets( setup, overlapDetection ).getSubsets();
+		identifySubsets( setup, brp.getOverlapDetection( data ) );
 
 		// query fixed and reference views for mapping back if necessary
-		final FixMapBackParameters mpbp = fixMapBackParameters( setup, subsets, arp.fixViewsIndex, arp.mapBackIndex, brp.registrationType );
+		final FixMapBackParameters fmbp = fixMapBackParameters( setup, arp.fixViewsIndex, arp.mapBackIndex, brp.registrationType );
 
-		if ( mpbp == null )
+		if ( fmbp == null )
+			return false;
+
+		// get the grouping parameters
+		final GroupParameters gp = groupingParameters( setup.getSubsets() );
+
+		if ( gp == null )
 			return false;
 
 		// run the registration
-
-		return true;
-	}
-
-	public PairwiseSetup< ViewId > identifySubsets( final PairwiseSetup< ViewId > setup, final OverlapDetection< ViewId > overlapDetection )
-	{
-		IOFunctions.println( "Defined pairs, removed " + setup.definePairs().size() + " redundant view pairs." );
-		if ( overlapDetection != null )
-			IOFunctions.println( "Removed " + setup.removeNonOverlappingPairs( overlapDetection ).size() + " pairs because they do not overlap." );
-		else
-			IOFunctions.println( "Comparing all views independent of their location in space." );
-		setup.reorderPairs();
-		setup.detectSubsets();
-		setup.sortSubsets();
-		IOFunctions.println( "Identified " + setup.getSubsets().size() + " subsets " );
-
-		return setup;
+		return processRegistration(
+				setup,
+				gp.grouping,
+				fmbp.fixedViews,
+				fmbp.model,
+				fmbp.mapBackViews,
+				data.getViewRegistrations().getViewRegistrations(),
+				data.getViewInterestPoints().getViewInterestPoints(),
+				brp.labelMap );
 	}
 
 	public boolean processRegistration(
-			final List< ViewId > viewIds,
-			final Set< ViewId > fixedViewsSet,
 			final PairwiseSetup< ViewId > setup,
-			final ArrayList< Subset< ViewId > > subsets,
+			final InterestpointGroupingType groupingType,
+			final Set< ViewId > viewsToFix,
+			final Model< ? > mapBackModel,
+			final Map< Subset< ViewId >, ViewId > mapBackViews,
 			final Map< ViewId, ViewRegistration > registrations,
 			final Map< ViewId, ViewInterestPointLists > interestpointLists,
 			final Map< ViewId, String > labelMap )
 	{
+		final List< ViewId > viewIds = setup.getViews();
+		final ArrayList< Subset< ViewId > > subsets = setup.getSubsets();
+
 		// load & transform all interest points
 		final Map< ViewId, List< InterestPoint > > interestpoints =
 				TransformationTools.getAllTransformedInterestPoints(
@@ -206,7 +213,7 @@ public class Interest_Point_Registration implements PlugIn
 			// fix view(s)
 			final List< ViewId > fixedViews = setup.getDefaultFixedViews();
 			IOFunctions.println( "By default #fixed views for strategy " + setup.getClass().getSimpleName() + " = " + fixedViews.size() );
-			fixedViews.addAll( fixedViewsSet );
+			fixedViews.addAll( viewsToFix );
 			IOFunctions.println( "Removed " + subset.fixViews( fixedViews ).size() + " views due to fixing all views (in total " + fixedViews.size() + ")" );
 
 			// get all pairs to be compared (either that XOR grouped pairs)
@@ -219,13 +226,47 @@ public class Interest_Point_Registration implements PlugIn
 		return true;
 	}
 
+	public ArrayList< ViewId > filterRemainingViewIds( final List< ViewId > viewIds, final Map< ViewId, String > labelMap, final Map< ViewId, ViewInterestPointLists > interestpointLists )
+	{
+		final ArrayList< ViewId > keep = new ArrayList<>();
+		final ArrayList< ViewId > remove = new ArrayList<>();
+
+		for ( final ViewId viewId : viewIds )
+		{
+			final String label = labelMap.get( viewId );
+	
+			// does it exist for this viewId?
+			final ViewInterestPointLists lists = interestpointLists.get( viewId );
+
+			if ( lists.getHashMap().keySet().contains( label ) && lists.getHashMap().get( label ) != null )
+				keep.add( viewId );
+			else
+				remove.add( viewId );
+		}
+
+		viewIds.clear();
+		viewIds.addAll( keep );
+
+		return remove;
+	}
+
+	public void identifySubsets( final PairwiseSetup< ViewId > setup, final OverlapDetection< ViewId > overlapDetection )
+	{
+		IOFunctions.println( "Defined pairs, removed " + setup.definePairs().size() + " redundant view pairs." );
+		IOFunctions.println( "Removed " + setup.removeNonOverlappingPairs( overlapDetection ).size() + " pairs because they do not overlap (Strategy='" + overlapDetection.getClass().getSimpleName() + "')" );
+		setup.reorderPairs();
+		setup.detectSubsets();
+		setup.sortSubsets();
+		IOFunctions.println( "Identified " + setup.getSubsets().size() + " subsets " );
+	}
+
 	public AdvancedRegistrationParameters advancedRegistrationParameters(
 			final BasicRegistrationParameters brp,
 			final List< TimePoint > timepointToProcess,
 			final SpimData2 data,
 			final List< ViewId > viewIds )
 	{
-		final GenericDialog gd = new GenericDialog( "Register: " + BasicRegistrationParameters.registrationTypes[ brp.registrationType.ordinal() ] );
+		final GenericDialog gd = new GenericDialog( "Register: " + BasicRegistrationParameters.registrationTypeChoices[ brp.registrationType.ordinal() ] );
 
 		if ( brp.registrationType == RegistrationType.TO_REFERENCE_TIMEPOINT )
 		{
@@ -352,14 +393,15 @@ public class Interest_Point_Registration implements PlugIn
 
 		final String[] choicesGlobal;
 		if ( timepointToProcess.size() > 1 )
-			choicesGlobal = BasicRegistrationParameters.registrationTypes.clone();
+			choicesGlobal = BasicRegistrationParameters.registrationTypeChoices.clone();
 		else
-			choicesGlobal = new String[]{ BasicRegistrationParameters.registrationTypes[ 0 ] };
+			choicesGlobal = new String[]{ BasicRegistrationParameters.registrationTypeChoices[ 0 ] };
 
 		if ( defaultRegistrationType >= choicesGlobal.length )
 			defaultRegistrationType = 0;
 
-		gd.addChoice( "Type_of_registration", choicesGlobal, choicesGlobal[ defaultRegistrationType ] );
+		gd.addChoice( "Registration_over_time", choicesGlobal, choicesGlobal[ defaultRegistrationType ] );
+		gd.addChoice( "Registration_in_between_views", BasicRegistrationParameters.overlapChoices, BasicRegistrationParameters.overlapChoices[ defaultOverlapType ] );
 
 		// check which channels and labels are available and build the choices
 		final String[] labels = getAllInterestPointLabels( data, viewIds );
@@ -391,10 +433,11 @@ public class Interest_Point_Registration implements PlugIn
 		if ( gd.wasCanceled() )
 			return null;
 
+		// which pairwise algorithm
 		final int algorithm = defaultAlgorithm = gd.getNextChoiceIndex();
 
+		// time registration
 		final RegistrationType registrationType;
-
 		switch ( defaultRegistrationType = gd.getNextChoiceIndex() )
 		{
 			case 0:
@@ -413,7 +456,21 @@ public class Interest_Point_Registration implements PlugIn
 				return null;
 		}
 
-		// assemble which channels have been selected with with label
+		// view registration
+		final OverlapType overlapType;
+		switch ( defaultOverlapType = gd.getNextChoiceIndex() )
+		{
+			case 0:
+				overlapType = OverlapType.ALL_AGAINST_ALL;
+				break;
+			case 1:
+				overlapType = OverlapType.OVERLAPPING_ONLY;
+				break;
+			default:
+				return null;
+		}
+
+		// assemble which label has been selected
 		final int choice = defaultLabel = gd.getNextChoiceIndex();
 
 		String label = labels[ choice ];
@@ -429,12 +486,49 @@ public class Interest_Point_Registration implements PlugIn
 		final BasicRegistrationParameters brp = new BasicRegistrationParameters();
 		brp.pwr = pwr;
 		brp.registrationType = registrationType;
+		brp.overlapType = overlapType;
 		brp.labelMap = new HashMap<>();
 
 		for ( final ViewId viewId : viewIds )
 			brp.labelMap.put( viewId, label );
 
 		return brp;
+	}
+
+	public GroupParameters groupingParameters( final Collection< Subset< ViewId > > subsets  )
+	{
+		final GroupParameters gp = new GroupParameters();
+
+		//
+		// ask for what to do with groups
+		//
+		if ( hasGroups( subsets ) )
+		{
+			IOFunctions.println( "Registration configuration has groups." );
+
+			final GenericDialog gd = new GenericDialog( "Select interest point grouping" );
+			gd.addChoice( "Interestpoint_Grouping" , GroupParameters.ipGroupChoice, GroupParameters.ipGroupChoice[ defaultIPGrouping ] );
+
+			gd.showDialog();
+			if ( gd.wasCanceled() )
+				return null;
+
+			final int group = defaultIPGrouping = gd.getNextChoiceIndex();
+	
+			if ( group == 0 )
+				gp.grouping = InterestpointGroupingType.DO_NOT_GROUP;
+			else
+				gp.grouping = InterestpointGroupingType.ADD_ALL;
+		}
+		else
+		{
+			IOFunctions.println( "Registration configuration has no groups." );
+			gp.grouping = InterestpointGroupingType.DO_NOT_GROUP;
+		}
+
+		IOFunctions.println( "Interestpoint grouping type: " + gp.grouping );
+
+		return gp;
 	}
 
 	/**
@@ -452,41 +546,12 @@ public class Interest_Point_Registration implements PlugIn
 	 */
 	public FixMapBackParameters fixMapBackParameters(
 			final PairwiseSetup< ViewId > setup,
-			final List< Subset< ViewId > > subsets,
 			final int fixViewsIndex,
 			final int mapBackIndex,
 			final RegistrationType type )
 	{
+		final List< Subset< ViewId > > subsets = setup.getSubsets();
 		final FixMapBackParameters fmbp = new FixMapBackParameters();
-
-		//
-		// ask for what to do with groups
-		//
-		if ( hasGroups( subsets ) )
-		{
-			IOFunctions.println( "Registration configuration has groups." );
-
-			final GenericDialog gd = new GenericDialog( "Select interest point grouping" );
-			gd.addChoice( "Interestpoint_Grouping" , FixMapBackParameters.ipGroupChoice, FixMapBackParameters.ipGroupChoice[ defaultIPGrouping ] );
-
-			gd.showDialog();
-			if ( gd.wasCanceled() )
-				return null;
-
-			final int group = defaultIPGrouping = gd.getNextChoiceIndex();
-	
-			if ( group == 0 )
-				fmbp.grouping = InterestpointGroupingType.DO_NOT_GROUP;
-			else
-				fmbp.grouping = InterestpointGroupingType.ADD_ALL;
-		}
-		else
-		{
-			IOFunctions.println( "Registration configuration has no groups." );
-			fmbp.grouping = InterestpointGroupingType.DO_NOT_GROUP;
-		}
-
-		IOFunctions.println( "Interestpoint grouping type: " + fmbp.grouping );
 
 		//
 		// define fixed views
@@ -496,7 +561,7 @@ public class Interest_Point_Registration implements PlugIn
 		if ( type == RegistrationType.TO_REFERENCE_TIMEPOINT )
 		{
 			fmbp.model = null;
-			fmbp.mapBackView = new HashMap< Subset< ViewId >, ViewId >();
+			fmbp.mapBackViews = new HashMap< Subset< ViewId >, ViewId >();
 
 			return fmbp;
 		}
@@ -582,7 +647,7 @@ public class Interest_Point_Registration implements PlugIn
 		if ( mapBackIndex == 0 )
 		{
 			fmbp.model = null;
-			fmbp.mapBackView = new HashMap< Subset< ViewId >, ViewId >();
+			fmbp.mapBackViews = new HashMap< Subset< ViewId >, ViewId >();
 		}
 		else if ( mapBackIndex == 1 || mapBackIndex == 3 )
 		{
@@ -596,7 +661,7 @@ public class Interest_Point_Registration implements PlugIn
 		if ( mapBackIndex == 1 || mapBackIndex == 2 )
 		{
 			for ( final Subset< ViewId > subset : subsets )
-				fmbp.mapBackView.put( subset, Subset.getViewsSorted( subset.getViews() ).get( 0 ) );
+				fmbp.mapBackViews.put( subset, Subset.getViewsSorted( subset.getViews() ).get( 0 ) );
 		}
 		else if ( mapBackIndex == 3 || mapBackIndex == 4 )
 		{
@@ -641,7 +706,7 @@ public class Interest_Point_Registration implements PlugIn
 					final int index = defaultReferenceView = gd2.getNextChoiceIndex();
 
 					for ( final Subset< ViewId > subset : subsets )
-						fmbp.mapBackView.put( subset, new ViewId( subset.getViews().iterator().next().getTimePointId(), setupList.get( index ) ) );
+						fmbp.mapBackViews.put( subset, new ViewId( subset.getViews().iterator().next().getTimePointId(), setupList.get( index ) ) );
 				}
 				else
 				{
@@ -652,7 +717,7 @@ public class Interest_Point_Registration implements PlugIn
 						if ( ref == null )
 							return null;
 						else
-							fmbp.mapBackView.put( subset, ref );
+							fmbp.mapBackViews.put( subset, ref );
 					}
 				}
 			}
@@ -663,7 +728,7 @@ public class Interest_Point_Registration implements PlugIn
 				if ( ref == null )
 					return null;
 				else
-					fmbp.mapBackView.put( subsets.get( 0 ), ref );
+					fmbp.mapBackViews.put( subsets.get( 0 ), ref );
 			}
 		}
 		else
@@ -674,7 +739,7 @@ public class Interest_Point_Registration implements PlugIn
 		IOFunctions.println( "Following views are references (for mapping back if there are no fixed views):" );
 		for ( final Subset< ViewId > subset : subsets )
 		{
-			final ViewId id = fmbp.mapBackView.get( subset );
+			final ViewId id = fmbp.mapBackViews.get( subset );
 			if ( id != null )
 				IOFunctions.println( "ViewSetupId: " + id.getViewSetupId() + " TimePoint:" + id.getTimePointId() );
 		}

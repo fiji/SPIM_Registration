@@ -2,8 +2,12 @@ package spim.fiji.plugin.interestpointregistration.parameters;
 
 import java.util.HashMap;
 
+import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.plugin.interestpointregistration.pairwise.PairwiseGUI;
+import spim.process.interestpointregistration.pairwise.constellation.overlap.AllAgainstAllOverlap;
+import spim.process.interestpointregistration.pairwise.constellation.overlap.OverlapDetection;
+import spim.process.interestpointregistration.pairwise.constellation.overlap.SimpleBoundingBoxOverlap;
 
 public class BasicRegistrationParameters
 {
@@ -24,4 +28,12 @@ public class BasicRegistrationParameters
 	public RegistrationType registrationType;
 	public OverlapType overlapType;
 	public HashMap< ViewId, String > labelMap;
+
+	public OverlapDetection< ViewId > getOverlapDetection( final SpimData spimData )
+	{
+		if ( overlapType == OverlapType.ALL_AGAINST_ALL )
+			return new AllAgainstAllOverlap<>();
+		else
+			return new SimpleBoundingBoxOverlap<>( spimData );
+	}
 }
