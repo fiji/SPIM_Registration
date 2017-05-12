@@ -16,6 +16,7 @@ import ij.plugin.PlugIn;
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.Model;
 import mpicbg.models.RigidModel3D;
+import mpicbg.models.Tile;
 import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.TimePoint;
@@ -23,6 +24,7 @@ import mpicbg.spim.data.sequence.TimePoints;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.util.Pair;
 import spim.fiji.plugin.interestpointregistration.pairwise.CenterOfMassGUI;
 import spim.fiji.plugin.interestpointregistration.pairwise.GeometricHashingGUI;
 import spim.fiji.plugin.interestpointregistration.pairwise.IterativeClosestPointGUI;
@@ -39,13 +41,18 @@ import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.process.interestpointregistration.TransformationTools;
+import spim.process.interestpointregistration.global.GlobalOpt;
+import spim.process.interestpointregistration.pairwise.MatcherPairwiseTools;
+import spim.process.interestpointregistration.pairwise.PairwiseResult;
 import spim.process.interestpointregistration.pairwise.constellation.PairwiseSetup;
 import spim.process.interestpointregistration.pairwise.constellation.Subset;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 import spim.process.interestpointregistration.pairwise.constellation.overlap.OverlapDetection;
+import spim.process.interestpointregistration.pairwise.methods.geometrichashing.GeometricHashingPairwise;
 import spim.process.interestpointregistration.pairwise.methods.geometrichashing.GeometricHashingParameters;
 import spim.process.interestpointregistration.pairwise.methods.ransac.RANSACParameters;
 
@@ -174,6 +181,7 @@ public class Interest_Point_Registration implements PlugIn
 		// run the registration
 		return processRegistration(
 				setup,
+				brp.pwr,
 				gp.grouping,
 				fmbp.fixedViews,
 				fmbp.model,
@@ -185,6 +193,7 @@ public class Interest_Point_Registration implements PlugIn
 
 	public boolean processRegistration(
 			final PairwiseSetup< ViewId > setup,
+			final PairwiseGUI pairwiseMatching,
 			final InterestpointGroupingType groupingType,
 			final Set< ViewId > viewsToFix,
 			final Model< ? > mapBackModel,
@@ -216,11 +225,45 @@ public class Interest_Point_Registration implements PlugIn
 			fixedViews.addAll( viewsToFix );
 			IOFunctions.println( "Removed " + subset.fixViews( fixedViews ).size() + " views due to fixing all views (in total " + fixedViews.size() + ")" );
 
-			// get all pairs to be compared (either that XOR grouped pairs)
-			pairSubsetTest( spimData, subset, interestpoints, labelMap, rp, gp, fixedViews );
+			if ( groupingType == InterestpointGroupingType.DO_NOT_GROUP )
+			{
+				// get all pairs to be compared (either that XOR grouped pairs)
+				final List< Pair< ViewId, ViewId > > pairs = subset.getPairs();
 
-			// test grouped registration
-			groupedSubsetTest( spimData, subset, interestpoints, labelMap, rp, gp, fixedViews );
+				for ( final Pair< ViewId, ViewId > pair : pairs )
+					System.out.println( Group.pvid( pair.getA() ) + " <=> " + Group.pvid( pair.getB() ) );
+
+				// compute all pairwise matchings
+				final List< Pair< Pair< ViewId, ViewId >, PairwiseResult< InterestPoint > > > result =
+						MatcherPairwiseTools.computePairs( pairs, interestpoints, pairwiseMatching.pairwiseMatchingInstance() );
+
+				// clear correspondences
+				MatcherPairwiseTools.clearCorrespondences( subset.getViews(), interestpointLists, labelMap );
+
+				// add the corresponding detections and output result
+				for ( final Pair< Pair< ViewId, ViewId >, PairwiseResult< InterestPoint > > p : result )
+				{
+					final ViewId vA = p.getA().getA();
+					final ViewId vB = p.getA().getB();
+
+					final InterestPointList listA = interestpointLists.get( vA ).getInterestPointList( labelMap.get( vA ) );
+					final InterestPointList listB = interestpointLists.get( vB ).getInterestPointList( labelMap.get( vB ) );
+
+					MatcherPairwiseTools.addCorrespondences( p.getB().getInliers(), vA, vB, labelMap.get( vA ), labelMap.get( vB ), listA, listB );
+
+					System.out.println( p.getB().getFullDesc() );
+				}
+
+				// run global optimization
+				final HashMap< ViewId, Tile< AffineModel3D > > models =
+						GlobalOpt.compute( new AffineModel3D(), result, fixedViews, subset.getGroups() );
+			}
+			else
+			{
+				// test grouped registration
+				throw new RuntimeException( "grouped interestpoint registration not supported yet." );
+				//groupedSubsetTest( spimData, subset, interestpoints, labelMap, rp, gp, fixedViews );
+			}
 		}
 
 		return true;
