@@ -22,7 +22,7 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 	public static int defaultDownsampleXYIndex = 4;
 	public static int defaultDownsampleZIndex = 0;
 
-	public static int defaultLocalization = 5;
+	public static int defaultLocalization = 1;
 	public static int defaultBrightness = 5;
 
 	public static double defaultImageSigmaX = 0.5;
