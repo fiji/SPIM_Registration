@@ -1,8 +1,11 @@
 package spim.fiji.plugin.interestpointregistration.pairwise;
 
 import ij.gui.GenericDialog;
+import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.plugin.interestpointregistration.TransformationModelGUI;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.process.interestpointregistration.pairwise.MatcherPairwise;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.GroupedInterestPoint;
 import spim.process.interestpointregistration.pairwise.methods.centerofmass.CenterOfMassPairwise;
 import spim.process.interestpointregistration.pairwise.methods.centerofmass.CenterOfMassParameters;
 
@@ -23,6 +26,12 @@ public class CenterOfMassGUI implements PairwiseGUI
 	public CenterOfMassPairwise< InterestPoint > pairwiseMatchingInstance()
 	{
 		return new CenterOfMassPairwise< InterestPoint >( new CenterOfMassParameters( centerType ) );
+	}
+
+	@Override
+	public MatcherPairwise< GroupedInterestPoint< ViewId > > pairwiseGroupedMatchingInstance()
+	{
+		return new CenterOfMassPairwise< GroupedInterestPoint< ViewId > >( new CenterOfMassParameters( centerType ) );
 	}
 
 	@Override

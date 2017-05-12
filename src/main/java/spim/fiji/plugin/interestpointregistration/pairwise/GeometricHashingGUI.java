@@ -1,8 +1,11 @@
 package spim.fiji.plugin.interestpointregistration.pairwise;
 
 import ij.gui.GenericDialog;
+import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.plugin.interestpointregistration.TransformationModelGUI;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.process.interestpointregistration.pairwise.MatcherPairwise;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.GroupedInterestPoint;
 import spim.process.interestpointregistration.pairwise.methods.geometrichashing.GeometricHashingPairwise;
 import spim.process.interestpointregistration.pairwise.methods.geometrichashing.GeometricHashingParameters;
 import spim.process.interestpointregistration.pairwise.methods.ransac.RANSACParameters;
@@ -20,6 +23,12 @@ public class GeometricHashingGUI implements PairwiseGUI
 	public GeometricHashingPairwise< InterestPoint > pairwiseMatchingInstance()
 	{
 		return new GeometricHashingPairwise< InterestPoint >( ransacParams, ghParams );
+	}
+
+	@Override
+	public MatcherPairwise< GroupedInterestPoint< ViewId > > pairwiseGroupedMatchingInstance()
+	{
+		return new GeometricHashingPairwise< GroupedInterestPoint< ViewId > >( ransacParams, ghParams );
 	}
 
 	@Override
