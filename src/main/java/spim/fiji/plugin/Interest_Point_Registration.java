@@ -846,9 +846,12 @@ public class Interest_Point_Registration implements PlugIn
 		IOFunctions.println( "Following views are references (for mapping back if there are no fixed views):" );
 		for ( final Subset< ViewId > subset : subsets )
 		{
-			final ViewId id = fmbp.mapBackViews.get( subset ).getA();
-			if ( id != null )
-				IOFunctions.println( "ViewSetupId: " + id.getViewSetupId() + " TimePoint:" + id.getTimePointId() );
+			if ( fmbp.mapBackViews != null )
+			{
+				final ViewId id = fmbp.mapBackViews.get( subset ).getA();
+				if ( id != null )
+					IOFunctions.println( "ViewSetupId: " + id.getViewSetupId() + " TimePoint:" + id.getTimePointId() );
+			}
 		}
 
 		return fmbp;
