@@ -276,7 +276,7 @@ public class Interest_Point_Registration implements PlugIn
 
 					MatcherPairwiseTools.addCorrespondences( p.getB().getInliers(), vA, vB, labelMap.get( vA ), labelMap.get( vB ), listA, listB );
 
-					IOFunctions.println( p.getB().getFullDesc() );
+					//IOFunctions.println( p.getB().getFullDesc() );
 
 					if ( collectStatistics )
 						statistics.add( p );
