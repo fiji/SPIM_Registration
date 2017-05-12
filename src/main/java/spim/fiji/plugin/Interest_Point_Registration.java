@@ -320,6 +320,8 @@ public class Interest_Point_Registration implements PlugIn
 			}
 		}
 
+		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): DONE." );
+
 		return true;
 	}
 

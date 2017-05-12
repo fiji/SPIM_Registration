@@ -166,6 +166,8 @@ public class Interest_Point_Detection implements PlugIn
 				SpimData2.saveXML( data, xmlFileName, clusterExtension );
 		}
 
+		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): DONE." );
+
 		return true;
 	}
 
