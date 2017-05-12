@@ -3,6 +3,7 @@ package spim.fiji.spimdata.explorer.popup;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -26,6 +27,8 @@ import spim.fiji.plugin.resave.Resave_TIFF;
 import spim.fiji.plugin.resave.Resave_TIFF.Parameters;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
+import spim.fiji.spimdata.explorer.FilteredAndGroupedExplorerPanel;
+import spim.fiji.spimdata.explorer.GroupedRowWindow;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 import spim.fiji.spimdata.imgloaders.AbstractImgFactoryImgLoader;
 import spim.fiji.spimdata.imgloaders.MicroManagerImgLoader;
@@ -37,7 +40,7 @@ public class ResavePopup extends JMenu implements ExplorerWindowSetable
 	public static final int askWhenMoreThan = 5;
 	private static final long serialVersionUID = 5234649267634013390L;
 
-	ViewSetupExplorerPanel< ?, ? > panel;
+	FilteredAndGroupedExplorerPanel< ?, ? > panel;
 
 	protected static String[] types = new String[]{ "As TIFF ...", "As compressed TIFF ...", "As HDF5 ...", "As compressed HDF5 ..." };
 
@@ -64,7 +67,7 @@ public class ResavePopup extends JMenu implements ExplorerWindowSetable
 	@Override
 	public JMenuItem setExplorerWindow(ExplorerWindow<? extends AbstractSpimData<? extends AbstractSequenceDescription<?, ?, ?>>, ?> panel )
 	{
-		this.panel = (ViewSetupExplorerPanel< ?, ? >)panel;
+		this.panel = (FilteredAndGroupedExplorerPanel< ?, ? >)panel;
 		return this;
 	}
 
@@ -98,7 +101,13 @@ public class ResavePopup extends JMenu implements ExplorerWindowSetable
 				public void run()
 				{
 					final SpimData2 data = (SpimData2)panel.getSpimData();
-					final List< ViewId > viewIds = panel.selectedRowsViewId();
+					
+					// get grouped vids if necessary
+					final List< ViewId > viewIds = new ArrayList<>();
+					if (GroupedRowWindow.class.isInstance( panel ))
+						((GroupedRowWindow)panel).selectedRowsViewIdGroups().forEach( vids -> viewIds.addAll( vids ) );
+					else
+						viewIds.addAll( panel.selectedRowsViewId() );
 
 					String question;
 
