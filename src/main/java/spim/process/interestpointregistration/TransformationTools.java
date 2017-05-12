@@ -6,8 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import mpicbg.models.AbstractModel;
 import mpicbg.models.Affine3D;
-import mpicbg.models.AffineModel3D;
 import mpicbg.models.Model;
 import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
@@ -36,7 +36,7 @@ public class TransformationTools
 	public static AffineTransform3D computeMapBackModel(
 			final Dimensions size,
 			final AffineTransform3D mapBackViewRegistration,
-			final AffineModel3D computedModel,
+			final AbstractModel< ? > computedModel,
 			final Model< ? > mapBackModel )
 	{
 		if ( mapBackModel.getMinNumMatches() > 4 )

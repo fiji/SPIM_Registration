@@ -13,18 +13,24 @@ import java.util.Set;
 
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
-import mpicbg.models.AffineModel3D;
+import mpicbg.models.AbstractModel;
 import mpicbg.models.Model;
 import mpicbg.models.RigidModel3D;
 import mpicbg.models.Tile;
 import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.data.registration.ViewRegistration;
+import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.TimePoints;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.Dimensions;
+import net.imglib2.realtransform.AffineGet;
+import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.util.Pair;
+import net.imglib2.util.ValuePair;
 import spim.fiji.plugin.interestpointregistration.pairwise.CenterOfMassGUI;
 import spim.fiji.plugin.interestpointregistration.pairwise.GeometricHashingGUI;
 import spim.fiji.plugin.interestpointregistration.pairwise.IterativeClosestPointGUI;
@@ -172,7 +178,7 @@ public class Interest_Point_Registration implements PlugIn
 		identifySubsets( setup, brp.getOverlapDetection( data ) );
 
 		// query fixed and reference views for mapping back if necessary
-		final FixMapBackParameters fmbp = fixMapBackParameters( setup, arp.fixViewsIndex, arp.mapBackIndex, brp.registrationType );
+		final FixMapBackParameters fmbp = fixMapBackParameters( data.getSequenceDescription(), setup, arp.fixViewsIndex, arp.mapBackIndex, brp.registrationType );
 
 		if ( fmbp == null )
 			return false;
@@ -218,7 +224,7 @@ public class Interest_Point_Registration implements PlugIn
 			final InterestpointGroupingType groupingType,
 			final Set< ViewId > viewsToFix,
 			final Model< ? > mapBackModel,
-			final Map< Subset< ViewId >, ViewId > mapBackViews,
+			final Map< Subset< ViewId >, Pair< ViewId, Dimensions > > mapBackViews,
 			final Map< ViewId, ViewRegistration > registrations,
 			final Map< ViewId, ViewInterestPointLists > interestpointLists,
 			final Map< ViewId, String > labelMap,
@@ -246,6 +252,8 @@ public class Interest_Point_Registration implements PlugIn
 			IOFunctions.println( "By default #fixed views for strategy " + setup.getClass().getSimpleName() + " = " + fixedViews.size() );
 			fixedViews.addAll( viewsToFix );
 			IOFunctions.println( "Removed " + subset.fixViews( fixedViews ).size() + " views due to fixing all views (in total " + fixedViews.size() + ")" );
+
+			final HashMap< ViewId, Tile< ? extends AbstractModel< ? > > > models;
 
 			if ( groupingType == InterestpointGroupingType.DO_NOT_GROUP )
 			{
@@ -280,14 +288,36 @@ public class Interest_Point_Registration implements PlugIn
 				}
 
 				// run global optimization
-				final HashMap< ViewId, Tile< AffineModel3D > > models =
-						GlobalOpt.compute( new AffineModel3D(), result, fixedViews, subset.getGroups() );
+				models = GlobalOpt.compute( pairwiseMatching.getMatchingModel().getModel(), result, fixedViews, subset.getGroups() );
 			}
 			else
 			{
 				// test grouped registration
 				throw new RuntimeException( "grouped interestpoint registration not supported yet." );
 				//groupedSubsetTest( spimData, subset, interestpoints, labelMap, rp, gp, fixedViews );
+			}
+
+			AffineTransform3D mapBack = null;
+
+			if ( mapBackModel != null )
+			{
+				final ViewId mapBackView = mapBackViews.get( subset ).getA();
+				mapBack = TransformationTools.computeMapBackModel(
+						mapBackViews.get( subset ).getB(),
+						registrations.get( mapBackView ).getModel(),
+						models.get( mapBackView ).getModel(),
+						mapBackModel );
+		
+				IOFunctions.println( "Mapback model: " + mapBack );
+			}
+
+			// pre-concatenate models to spimdata2 viewregistrations (from SpimData(2))
+			for ( final ViewId viewId : subset.getViews() )
+			{
+				final Tile< ? extends AbstractModel< ? > > tile = models.get( viewId );
+				final ViewRegistration vr = registrations.get( viewId );
+
+				TransformationTools.storeTransformation( vr, viewId, tile, mapBack, "Scripted AffineModel3D" );
 			}
 		}
 
@@ -602,6 +632,7 @@ public class Interest_Point_Registration implements PlugIn
 	/**
 	 * Assign the right fixed views and reference views for this type of optimization
 	 *
+	 * @param sd - the sequencedescription to fetch the image dimensions of views
 	 * @param subsets - which subsets exist
 	 * @param fixViewsIndex - "Fix first views", "Select fixed view", "Do not fix views"
 	 * @param mapBackIndex - 
@@ -613,6 +644,7 @@ public class Interest_Point_Registration implements PlugIn
 	 * @param type - the type of registration used
 	 */
 	public FixMapBackParameters fixMapBackParameters(
+			final SequenceDescription sd,
 			final PairwiseSetup< ViewId > setup,
 			final int fixViewsIndex,
 			final int mapBackIndex,
@@ -629,7 +661,7 @@ public class Interest_Point_Registration implements PlugIn
 		if ( type == RegistrationType.TO_REFERENCE_TIMEPOINT )
 		{
 			fmbp.model = null;
-			fmbp.mapBackViews = new HashMap< Subset< ViewId >, ViewId >();
+			fmbp.mapBackViews = new HashMap< Subset< ViewId >, Pair< ViewId, Dimensions > >();
 
 			return fmbp;
 		}
@@ -713,23 +745,20 @@ public class Interest_Point_Registration implements PlugIn
 		// now the reference view(s)
 		//
 		if ( mapBackIndex == 0 )
-		{
 			fmbp.model = null;
-			fmbp.mapBackViews = new HashMap< Subset< ViewId >, ViewId >();
-		}
 		else if ( mapBackIndex == 1 || mapBackIndex == 3 )
-		{
 			fmbp.model = new TranslationModel3D();
-		}
 		else
-		{
 			fmbp.model = new RigidModel3D();
-		}
 
 		if ( mapBackIndex == 1 || mapBackIndex == 2 )
 		{
 			for ( final Subset< ViewId > subset : subsets )
-				fmbp.mapBackViews.put( subset, Subset.getViewsSorted( subset.getViews() ).get( 0 ) );
+			{
+				final ViewId mapBackView = Subset.getViewsSorted( subset.getViews() ).get( 0 );
+				final Dimensions mapBackViewDims = sd.getViewDescription( mapBackView ).getViewSetup().getSize();
+				fmbp.mapBackViews.put( subset, new ValuePair< ViewId, Dimensions >( mapBackView, mapBackViewDims ) );
+			}
 		}
 		else if ( mapBackIndex == 3 || mapBackIndex == 4 )
 		{
@@ -774,7 +803,11 @@ public class Interest_Point_Registration implements PlugIn
 					final int index = defaultReferenceView = gd2.getNextChoiceIndex();
 
 					for ( final Subset< ViewId > subset : subsets )
-						fmbp.mapBackViews.put( subset, new ViewId( subset.getViews().iterator().next().getTimePointId(), setupList.get( index ) ) );
+					{
+						final ViewId mapBackView = new ViewId( subset.getViews().iterator().next().getTimePointId(), setupList.get( index ) );
+						final Dimensions mapBackViewDims = sd.getViewDescription( mapBackView ).getViewSetup().getSize();
+						fmbp.mapBackViews.put( subset, new ValuePair< ViewId, Dimensions >( mapBackView, mapBackViewDims ) );
+					}
 				}
 				else
 				{
@@ -785,7 +818,10 @@ public class Interest_Point_Registration implements PlugIn
 						if ( ref == null )
 							return null;
 						else
-							fmbp.mapBackViews.put( subset, ref );
+						{
+							final Dimensions mapBackViewDims = sd.getViewDescription( ref ).getViewSetup().getSize();
+							fmbp.mapBackViews.put( subset, new ValuePair< ViewId, Dimensions >( ref, mapBackViewDims ) );
+						}
 					}
 				}
 			}
@@ -796,7 +832,10 @@ public class Interest_Point_Registration implements PlugIn
 				if ( ref == null )
 					return null;
 				else
-					fmbp.mapBackViews.put( subsets.get( 0 ), ref );
+				{
+					final Dimensions mapBackViewDims = sd.getViewDescription( ref ).getViewSetup().getSize();
+					fmbp.mapBackViews.put( subsets.get( 0 ), new ValuePair< ViewId, Dimensions >( ref, mapBackViewDims ) );
+				}
 			}
 		}
 		else
@@ -807,7 +846,7 @@ public class Interest_Point_Registration implements PlugIn
 		IOFunctions.println( "Following views are references (for mapping back if there are no fixed views):" );
 		for ( final Subset< ViewId > subset : subsets )
 		{
-			final ViewId id = fmbp.mapBackViews.get( subset );
+			final ViewId id = fmbp.mapBackViews.get( subset ).getA();
 			if ( id != null )
 				IOFunctions.println( "ViewSetupId: " + id.getViewSetupId() + " TimePoint:" + id.getTimePointId() );
 		}

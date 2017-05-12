@@ -5,6 +5,8 @@ import java.util.Set;
 
 import mpicbg.models.Model;
 import mpicbg.spim.data.sequence.ViewId;
+import net.imglib2.Dimensions;
+import net.imglib2.util.Pair;
 import spim.process.interestpointregistration.pairwise.constellation.Subset;
 
 public class FixMapBackParameters
@@ -23,5 +25,5 @@ public class FixMapBackParameters
 
 	public Set< ViewId > fixedViews;
 	public Model< ? > model;
-	public Map< Subset< ViewId >, ViewId > mapBackViews;
+	public Map< Subset< ViewId >, Pair< ViewId, Dimensions > > mapBackViews;
 }
