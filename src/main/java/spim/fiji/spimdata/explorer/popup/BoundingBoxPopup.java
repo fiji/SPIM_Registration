@@ -2,16 +2,20 @@ package spim.fiji.spimdata.explorer.popup;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.JMenuItem;
 
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.Define_Bounding_Box;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
+import spim.fiji.spimdata.explorer.GroupedRowWindow;
 
 public class BoundingBoxPopup extends JMenuItem implements ExplorerWindowSetable
 {
@@ -55,7 +59,13 @@ public class BoundingBoxPopup extends JMenuItem implements ExplorerWindowSetable
 				@Override
 				public void run()
 				{
-					if ( new Define_Bounding_Box().defineBoundingBox( (SpimData2)panel.getSpimData(), panel.selectedRowsViewId() ) != null )
+					final List< ViewId > vids = new ArrayList<>();
+					if (panel instanceof GroupedRowWindow)
+						((GroupedRowWindow)panel).selectedRowsViewIdGroups().forEach( vidsI -> vids.addAll( vidsI ) );
+					else
+						vids.addAll( panel.selectedRowsViewId() );
+					
+					if ( new Define_Bounding_Box().defineBoundingBox( (SpimData2)panel.getSpimData(), vids ) != null )
 					{
 						panel.updateContent(); // update main table and registration panel if available
 						panel.bdvPopup().updateBDV();
