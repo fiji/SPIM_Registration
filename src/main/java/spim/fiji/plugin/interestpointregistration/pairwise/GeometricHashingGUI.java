@@ -56,4 +56,10 @@ public class GeometricHashingGUI implements PairwiseGUI
 
 		return true;
 	}
+
+	@Override
+	public TransformationModelGUI getMatchingModel()
+	{
+		return model;
+	}
 }

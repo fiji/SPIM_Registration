@@ -1,6 +1,7 @@
 package spim.fiji.plugin.interestpointregistration.pairwise;
 
 import ij.gui.GenericDialog;
+import spim.fiji.plugin.interestpointregistration.TransformationModelGUI;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.interestpointregistration.pairwise.methods.centerofmass.CenterOfMassPairwise;
 import spim.process.interestpointregistration.pairwise.methods.centerofmass.CenterOfMassParameters;
@@ -43,4 +44,10 @@ public class CenterOfMassGUI implements PairwiseGUI
 
 	@Override
 	public String getDescription() { return "Center of Mass (translation invariant)";}
+
+	@Override
+	public TransformationModelGUI getMatchingModel()
+	{
+		return new TransformationModelGUI( 0 );
+	}
 }

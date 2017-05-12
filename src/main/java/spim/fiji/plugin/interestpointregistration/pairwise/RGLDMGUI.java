@@ -66,4 +66,10 @@ public class RGLDMGUI implements PairwiseGUI
 		
 		return true;
 	}
+
+	@Override
+	public TransformationModelGUI getMatchingModel()
+	{
+		return model;
+	}
 }

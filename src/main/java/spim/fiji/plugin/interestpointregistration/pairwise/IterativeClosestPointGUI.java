@@ -60,4 +60,10 @@ public class IterativeClosestPointGUI implements PairwiseGUI
 
 	@Override
 	public String getDescription() { return "Iterative closest-point (ICP, no invariance)";}
+
+	@Override
+	public TransformationModelGUI getMatchingModel()
+	{
+		return model;
+	}
 }

@@ -30,7 +30,7 @@ public class TransformationModelGUI
 		this.modelIndex = modelIndex;
 		this.regularize = regularize;
 		this.regularizedModelIndex = regularizedModelIndex;
-		this.lambda = lambda;		
+		this.lambda = lambda;
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })

@@ -1,6 +1,7 @@
 package spim.fiji.plugin.interestpointregistration.pairwise;
 
 import ij.gui.GenericDialog;
+import spim.fiji.plugin.interestpointregistration.TransformationModelGUI;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.interestpointregistration.pairwise.MatcherPairwise;
 
@@ -35,4 +36,9 @@ public interface PairwiseGUI
 	 * @return - the object that will perform a pairwise matching and can return a result
 	 */
 	public MatcherPairwise< InterestPoint > pairwiseMatchingInstance();
+
+	/**
+	 * @return - the model the user chose to perform the registration with
+	 */
+	public TransformationModelGUI getMatchingModel();
 }
