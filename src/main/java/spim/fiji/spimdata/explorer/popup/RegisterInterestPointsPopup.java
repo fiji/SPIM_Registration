@@ -2,13 +2,17 @@ package spim.fiji.spimdata.explorer.popup;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JMenuItem;
 
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.Interest_Point_Registration;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
+import spim.fiji.spimdata.explorer.GroupedRowWindow;
 
 public class RegisterInterestPointsPopup extends JMenuItem implements ExplorerWindowSetable
 {
@@ -52,7 +56,13 @@ public class RegisterInterestPointsPopup extends JMenuItem implements ExplorerWi
 				@Override
 				public void run()
 				{
-					if ( new Interest_Point_Registration().register( (SpimData2)panel.getSpimData(), panel.selectedRowsViewId() ) )
+					final List< ViewId > vids = new ArrayList<>();					
+					if (GroupedRowWindow.class.isInstance( panel ))
+						((GroupedRowWindow)panel).selectedRowsViewIdGroups().forEach( vidsI -> vids.addAll( vidsI ) );
+					else
+						vids.addAll(panel.selectedRowsViewId());					
+					
+					if ( new Interest_Point_Registration().register( (SpimData2)panel.getSpimData(), vids ) )
 					{
 						panel.updateContent(); // update interestpoint and registration panel if available
 						panel.bdvPopup().updateBDV();
