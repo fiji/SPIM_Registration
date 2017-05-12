@@ -316,7 +316,7 @@ public class Interest_Point_Registration implements PlugIn
 				final Tile< ? extends AbstractModel< ? > > tile = models.get( viewId );
 				final ViewRegistration vr = registrations.get( viewId );
 
-				TransformationTools.storeTransformation( vr, viewId, tile, mapBack, "Scripted AffineModel3D" );
+				TransformationTools.storeTransformation( vr, viewId, tile, mapBack, pairwiseMatching.getMatchingModel().getDescription() );
 			}
 		}
 
