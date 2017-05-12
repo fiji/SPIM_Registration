@@ -297,6 +297,10 @@ public class Interest_Point_Registration implements PlugIn
 				//groupedSubsetTest( spimData, subset, interestpoints, labelMap, rp, gp, fixedViews );
 			}
 
+			// global opt failed
+			if ( models == null )
+				return false;
+
 			AffineTransform3D mapBack = null;
 
 			if ( mapBackModel != null )
@@ -657,12 +661,11 @@ public class Interest_Point_Registration implements PlugIn
 		// define fixed views
 		//
 		fmbp.fixedViews = new HashSet< ViewId >();
+		fmbp.mapBackViews = new HashMap< Subset< ViewId >, Pair< ViewId, Dimensions > >();
 
 		if ( type == RegistrationType.TO_REFERENCE_TIMEPOINT )
 		{
 			fmbp.model = null;
-			fmbp.mapBackViews = new HashMap< Subset< ViewId >, Pair< ViewId, Dimensions > >();
-
 			return fmbp;
 		}
 
