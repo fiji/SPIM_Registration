@@ -12,7 +12,6 @@ import mpicbg.models.AffineModel3D;
 import mpicbg.models.RigidModel3D;
 import mpicbg.models.Tile;
 import mpicbg.spim.data.registration.ViewRegistration;
-import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.realtransform.AffineTransform3D;
