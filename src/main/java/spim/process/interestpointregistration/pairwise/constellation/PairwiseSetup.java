@@ -41,6 +41,8 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	public PairwiseSetup( final List< V > views, final Set< Group< V > > groups )
 	{
 		this.views = views;
+
+		// if there are views inside groups that are not in List< V > views, remove them from groups
 		this.groups = removeNonExistentViewsInGroups( views, groups );
 	}
 
@@ -60,8 +62,14 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	 */
 	public ArrayList< Pair< V, V > > definePairs()
 	{
-		pairs = definePairsAbstract();
-		return removeRedundantPairs( pairs, groups );
+		// define all pairs
+		this.pairs = definePairsAbstract();
+
+		// removed those who were in the same group
+		final ArrayList< Pair< V, V > > removed = removeRedundantPairs( pairs, groups );
+
+		// return the removed ones
+		return removed;
 	}
 
 	/**
@@ -77,7 +85,9 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	 */
 	public ArrayList< Pair< V, V > > removeNonOverlappingPairs( final OverlapDetection< V > ovlp )
 	{
-		return removeNonOverlappingPairs( pairs, ovlp );
+		final ArrayList< Pair< V, V > > removed = removeNonOverlappingPairs( pairs, ovlp );
+
+		return removed;
 	}
 
 	/**
@@ -114,7 +124,7 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	 * 
 	 * @param fixedViews
 	 */
-	public ArrayList< Pair< V, V > > fixViews( final List< V > fixedViews )
+	public ArrayList< Pair< V, V > > fixViewsInAllSubsets( final List< V > fixedViews )
 	{
 		final ArrayList< Pair< V, V > > removed = new ArrayList<>();
 
@@ -125,7 +135,7 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	}
 
 	/**
-	 * Remove all views in groups that do not exist in the views list
+	 * Remove all views in groups that do not exist in the views list - called from constructor
 	 * 
 	 * @param views
 	 * @param groups
@@ -164,11 +174,11 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 
 	/**
 	 * Checks all pairs if both views are contained in the same group,
-	 * and if so removes the pair from the list
+	 * and if so removes the pair from the list - called from definePairs()
 	 * 
 	 * @param pairs
 	 * @param groups
-	 * @return
+	 * @return - removed pairs
 	 */
 	public static < V > ArrayList< Pair< V, V > > removeRedundantPairs(
 			final List< Pair< V, V > > pairs,
@@ -185,20 +195,24 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 
 			// if both views of a pair are contained in the same group
 			// we can safely remove this pair
-			boolean didRemove = false;
+
+			boolean removedPair = false;
+
 			for ( final Group< V > group : groups )
 			{
 				if ( group.contains( viewA ) && group.contains( viewB ) )
 				{
 					pairs.remove( i );
 					removed.add( pair );
-					didRemove = true;
+					removedPair = true;
+
 					break;
 				}
 			}
 			
 			// we removed pair on first test, nothing more to be done
-			if (didRemove)
+
+			if ( removedPair )
 				continue;
 
 			// now test if the groups that both views belong to overlap,
@@ -206,7 +220,6 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 			final ArrayList< Group< V > > memberA = Group.memberOf( viewA, groups );
 			final ArrayList< Group< V > > memberB = Group.memberOf( viewB, groups );
 
-			boolean removedPair = false;
 			for ( int a = 0; a < memberA.size() && !removedPair; ++a )
 				for ( int b = 0; b < memberB.size() && !removedPair; ++b )
 				{
@@ -381,6 +394,13 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 		return subsets;
 	}
 
+	/**
+	 * Find all groups that contain views from this "potential" subset
+	 * 
+	 * @param setsViews
+	 * @param groups
+	 * @return
+	 */
 	public static < V > HashSet< Group< V > > findGroupsAssociatedWithSubset( final HashSet< V > setsViews, final Set< Group< V > > groups )
 	{
 		final HashSet< Group< V > > associated = new HashSet<>();
@@ -401,7 +421,7 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	}
 
 	/** 
-	 * which subsets are part of a group
+	 * which subsets are part of a group - called by detectSubsets()
 	 * 
 	 * @param group
 	 * @param vSets
@@ -428,6 +448,14 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 		return contained;
 	}
 
+	/**
+	 * Merge two sets with indices i1, i2
+	 *
+	 * @param vSets - subset precursors
+	 * @param pairSets - sets of pairs to compare
+	 * @param i1 - first index to merge
+	 * @param i2 - second index to merge
+	 */
 	public static < V > void mergeSets(
 			final ArrayList< HashSet< V > > vSets,
 			final ArrayList< ArrayList< Pair< V, V > > > pairSets,
@@ -439,6 +467,13 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 		mergeSets( vSets, pairSets, mergeIndicies );
 	}
 
+	/**
+	 * Merge N sets with indices
+	 *
+	 * @param vSets - subset precursors
+	 * @param pairSets - sets of pairs to compare
+	 * @param mergeIndicies - indices to merge
+	 */
 	public static < V > void mergeSets(
 			final ArrayList< HashSet< V > > vSets,
 			final ArrayList< ArrayList< Pair< V, V > > > pairSets,

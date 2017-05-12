@@ -2,54 +2,39 @@ package spim.fiji.plugin.interestpointregistration.pairwise;
 
 import ij.gui.GenericDialog;
 import spim.fiji.plugin.interestpointregistration.TransformationModelGUI;
-import spim.headless.registration.icp.IterativeClosestPointParameters;
-import spim.process.interestpointregistration.pairwise.IterativeClosestPointPairwise;
+import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.process.interestpointregistration.pairwise.methods.centerofmass.CenterOfMassPairwise;
+import spim.process.interestpointregistration.pairwise.methods.centerofmass.CenterOfMassParameters;
 
 /**
- * Iterative closest point implementation
+ * Center of mass GUI
  * 
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
 public class CenterOfMassGUI implements PairwiseGUI
 {
-	public static int defaultModel = 2;
-	public static boolean defaultRegularize = true;
-	protected TransformationModelGUI model = null;
+	final static String[] centerChoice = new String[]{ "Average", "Median" };
+	public static int defaultCenterChoice = 0;
 
-	protected IterativeClosestPointParameters parameters;
+	protected int centerType = 0;
 
 	@Override
-	public IterativeClosestPointPairwise pairwiseMatchingInstance()
+	public CenterOfMassPairwise< InterestPoint > pairwiseMatchingInstance()
 	{
-		IterativeClosestPointParameters ip = new IterativeClosestPointParameters( model.getModel() );
-		return new IterativeClosestPointPairwise( ip );
+		return new CenterOfMassPairwise< InterestPoint >( new CenterOfMassParameters( centerType ) );
 	}
 
 	@Override
 	public void addQuery( final GenericDialog gd )
 	{
-		gd.addChoice( "Transformation model", TransformationModelGUI.modelChoice, TransformationModelGUI.modelChoice[ defaultModel ] );
-		gd.addCheckbox( "Regularize_model", defaultRegularize );
-		gd.addSlider( "Maximal_distance for correspondence (px)", 0.25, 40.0, IterativeClosestPointParameters.maxDistance );
-		gd.addNumericField( "Maximal_number of iterations", IterativeClosestPointParameters.maxIterations, 0 );
+		gd.addChoice( "Type of Center Computation", centerChoice, centerChoice[ defaultCenterChoice ] );
 	}
 
 	@Override
 	public boolean parseDialog( final GenericDialog gd )
 	{
-		model = new TransformationModelGUI( defaultModel = gd.getNextChoiceIndex() );
-		
-		if ( defaultRegularize = gd.getNextBoolean() )
-		{
-			if ( !model.queryRegularizedModel() )
-				return false;
-		}
-
-		final double maxDistance = IterativeClosestPointParameters.maxDistance = gd.getNextNumber();
-		final int maxIterations = IterativeClosestPointParameters.maxIterations = (int)Math.round( gd.getNextNumber() );
-
-		this.parameters = new IterativeClosestPointParameters( model.getModel(), maxDistance, maxIterations );
+		this.centerType = defaultCenterChoice = gd.getNextChoiceIndex();
 
 		return true;
 	}
@@ -58,5 +43,11 @@ public class CenterOfMassGUI implements PairwiseGUI
 	public CenterOfMassGUI newInstance() { return new CenterOfMassGUI(); }
 
 	@Override
-	public String getDescription() { return "Iterative closest-point (ICP, no invariance)";}
+	public String getDescription() { return "Center of Mass (translation invariant)";}
+
+	@Override
+	public TransformationModelGUI getMatchingModel()
+	{
+		return new TransformationModelGUI( 0 );
+	}
 }

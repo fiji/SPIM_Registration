@@ -3,6 +3,7 @@ package spim.process.interestpointregistration.pairwise;
 import java.util.Date;
 import java.util.List;
 
+import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 
@@ -12,18 +13,19 @@ public class PairwiseResult< I extends InterestPoint >
 	private double error = Double.NaN;
 	private long time = 0;
 	private String result = "", desc = "";
-	//private ViewId viewIdA, viewIdB;
+
+	boolean printout = false;
+
+	public PairwiseResult( final boolean printout ) { this.printout = printout; }
+	public PairwiseResult() { this( true ); }
 
 	public void setResult( final long time, final String result )
 	{
 		this.time = time;
 		this.result = result;
+		if ( printout ) IOFunctions.println( getFullDesc() );
 	}
 	public void setDescriptions( final String desc ) { this.desc = desc; }
-	//public void setViewIdA( final ViewId viewIdA ) { this.viewIdA = viewIdA; }
-	//public void setViewIdB( final ViewId viewIdB ) { this.viewIdB = viewIdB; }
-	//public ViewId getViewIdA() { return viewIdA; }
-	//public ViewId getViewIdB() { return viewIdB; }
 	public List< PointMatchGeneric< I > > getCandidates() { return candidates; }
 	public List< PointMatchGeneric< I > > getInliers() { return inliers; }
 	public String getDescription() { return desc; }

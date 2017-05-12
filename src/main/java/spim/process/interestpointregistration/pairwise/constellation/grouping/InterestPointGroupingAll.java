@@ -7,6 +7,11 @@ import java.util.Map;
 import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 
+/**
+ * The simplest way to group interest points, just add them all (this will create problems in overlaps)
+ * 
+ * @author spreibi
+ */
 public class InterestPointGroupingAll< V extends ViewId > extends InterestPointGrouping< V >
 {
 	public InterestPointGroupingAll( final Map< V, List< InterestPoint > > interestpoints )

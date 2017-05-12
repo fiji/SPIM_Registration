@@ -2,9 +2,10 @@ package spim.fiji.plugin.interestpointregistration.pairwise;
 
 import ij.gui.GenericDialog;
 import spim.fiji.plugin.interestpointregistration.TransformationModelGUI;
-import spim.headless.registration.RANSACParameters;
-import spim.headless.registration.geometrichashing.GeometricHashingParameters;
-import spim.process.interestpointregistration.pairwise.GeometricHashingPairwise;
+import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.process.interestpointregistration.pairwise.methods.geometrichashing.GeometricHashingPairwise;
+import spim.process.interestpointregistration.pairwise.methods.geometrichashing.GeometricHashingParameters;
+import spim.process.interestpointregistration.pairwise.methods.ransac.RANSACParameters;
 
 public class GeometricHashingGUI implements PairwiseGUI
 {
@@ -16,7 +17,10 @@ public class GeometricHashingGUI implements PairwiseGUI
 	protected GeometricHashingParameters ghParams;
 
 	@Override
-	public GeometricHashingPairwise pairwiseMatchingInstance() { return new GeometricHashingPairwise( ransacParams, ghParams ); }
+	public GeometricHashingPairwise< InterestPoint > pairwiseMatchingInstance()
+	{
+		return new GeometricHashingPairwise< InterestPoint >( ransacParams, ghParams );
+	}
 
 	@Override
 	public GeometricHashingGUI newInstance() { return new GeometricHashingGUI(); }
@@ -51,5 +55,11 @@ public class GeometricHashingGUI implements PairwiseGUI
 		this.ghParams = new GeometricHashingParameters( model.getModel(), GeometricHashingParameters.differenceThreshold, ratioOfDistance, GeometricHashingParameters.useAssociatedBeads );
 
 		return true;
+	}
+
+	@Override
+	public TransformationModelGUI getMatchingModel()
+	{
+		return model;
 	}
 }

@@ -12,10 +12,10 @@ import spim.fiji.plugin.queryXML.GenericLoadParseQueryXML;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.thinout.ChannelProcessThinOut;
 import spim.fiji.spimdata.SpimData2;
-import spim.headless.interestpointdetection.DoG;
-import spim.headless.interestpointdetection.DoGParameters;
-import spim.headless.interestpointdetection.InterestPointTools;
 import spim.process.histogram.HistogramDisplay;
+import spim.process.interestpointdetection.InterestPointTools;
+import spim.process.interestpointdetection.methods.dog.DoG;
+import spim.process.interestpointdetection.methods.dog.DoGParameters;
 
 import java.io.File;
 import java.util.ArrayList;

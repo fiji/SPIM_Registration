@@ -13,9 +13,9 @@ import mpicbg.spim.data.sequence.ViewId;
 import simulation.imgloader.SimulatedBeadsImgLoader;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.headless.interestpointdetection.DoG;
-import spim.headless.interestpointdetection.DoGParameters;
-import spim.headless.interestpointdetection.InterestPointTools;
+import spim.process.interestpointdetection.InterestPointTools;
+import spim.process.interestpointdetection.methods.dog.DoG;
+import spim.process.interestpointdetection.methods.dog.DoGParameters;
 import spim.process.removeDetection.DetectionRemoval;
 
 /**

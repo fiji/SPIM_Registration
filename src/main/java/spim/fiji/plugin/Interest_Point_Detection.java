@@ -20,7 +20,7 @@ import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.headless.interestpointdetection.InterestPointTools;
+import spim.process.interestpointdetection.InterestPointTools;
 
 /**
  * Plugin to detect interest points, store them on disk, and link them into the XML
@@ -165,6 +165,8 @@ public class Interest_Point_Detection implements PlugIn
 			if ( saveXML )
 				SpimData2.saveXML( data, xmlFileName, clusterExtension );
 		}
+
+		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): DONE." );
 
 		return true;
 	}

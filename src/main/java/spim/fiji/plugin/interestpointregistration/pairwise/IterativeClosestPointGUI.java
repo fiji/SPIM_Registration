@@ -2,8 +2,9 @@ package spim.fiji.plugin.interestpointregistration.pairwise;
 
 import ij.gui.GenericDialog;
 import spim.fiji.plugin.interestpointregistration.TransformationModelGUI;
-import spim.headless.registration.icp.IterativeClosestPointParameters;
-import spim.process.interestpointregistration.pairwise.IterativeClosestPointPairwise;
+import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.process.interestpointregistration.pairwise.methods.icp.IterativeClosestPointPairwise;
+import spim.process.interestpointregistration.pairwise.methods.icp.IterativeClosestPointParameters;
 
 /**
  * Iterative closest point implementation
@@ -20,10 +21,10 @@ public class IterativeClosestPointGUI implements PairwiseGUI
 	protected IterativeClosestPointParameters parameters;
 
 	@Override
-	public IterativeClosestPointPairwise pairwiseMatchingInstance()
+	public IterativeClosestPointPairwise< InterestPoint > pairwiseMatchingInstance()
 	{
-		IterativeClosestPointParameters ip = new IterativeClosestPointParameters( model.getModel() );
-		return new IterativeClosestPointPairwise( ip );
+		final IterativeClosestPointParameters ip = new IterativeClosestPointParameters( model.getModel() );
+		return new IterativeClosestPointPairwise< InterestPoint >( ip );
 	}
 
 	@Override
@@ -59,4 +60,10 @@ public class IterativeClosestPointGUI implements PairwiseGUI
 
 	@Override
 	public String getDescription() { return "Iterative closest-point (ICP, no invariance)";}
+
+	@Override
+	public TransformationModelGUI getMatchingModel()
+	{
+		return model;
+	}
 }

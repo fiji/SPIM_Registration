@@ -12,6 +12,9 @@ import java.util.List;
 import org.junit.Test;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.process.interestpointdetection.InterestPointTools;
+import spim.process.interestpointdetection.methods.dog.DoG;
+import spim.process.interestpointdetection.methods.dog.DoGParameters;
 
 /**
  * DifferenceOfGaussian Test class

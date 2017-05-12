@@ -347,6 +347,20 @@ public class SpimData2 extends SpimData
 		return setups;
 	}
 
+	public static ArrayList< Integer > getAllTimePointsSortedUnchecked( final Collection< ? extends ViewId > viewIds )
+	{
+		final HashSet< Integer > timepointSet = new HashSet< Integer >();
+
+		for ( final ViewId vd : viewIds )
+			timepointSet.add( vd.getTimePointId() );
+
+		final ArrayList< Integer > timepoints = new ArrayList< Integer >();
+		timepoints.addAll( timepointSet );
+		Collections.sort( timepoints );
+
+		return timepoints;
+	}
+
 	public static ArrayList< TimePoint > getAllTimePointsSorted( final SpimData data, final Collection< ? extends ViewId > viewIds )
 	{
 		final ArrayList< ViewDescription > vds = new ArrayList< ViewDescription >();
@@ -439,7 +453,9 @@ public class SpimData2 extends SpimData
 		return new SpimData2( data1.getBasePath(), s, vr, vipl, bb, sr);
 	}
 
-	public static <V extends ViewId> List< V > filterMissingViews( final AbstractSpimData< ? > data, final List< V > viewIds )
+
+	public static < V extends ViewId > List< V > filterMissingViews( final AbstractSpimData< ? > data, final Collection< V > viewIds )
+
 	{
 		final ArrayList< V > removed = new ArrayList<>();
 		final ArrayList< V > present = new ArrayList<>();

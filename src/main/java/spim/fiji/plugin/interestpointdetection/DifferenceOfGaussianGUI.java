@@ -18,13 +18,13 @@ import net.imglib2.realtransform.AffineTransform3D;
 import spim.fiji.plugin.util.GenericDialogAppender;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.headless.interestpointdetection.DoG;
-import spim.headless.interestpointdetection.DoGParameters;
-import spim.headless.interestpointdetection.DownsampleTools;
 import spim.process.cuda.CUDADevice;
 import spim.process.cuda.CUDASeparableConvolution;
 import spim.process.cuda.CUDATools;
 import spim.process.cuda.NativeLibraryTools;
+import spim.process.interestpointdetection.methods.dog.DoG;
+import spim.process.interestpointdetection.methods.dog.DoGParameters;
+import spim.process.interestpointdetection.methods.downsampling.DownsampleTools;
 
 public class DifferenceOfGaussianGUI extends DifferenceOfGUI implements GenericDialogAppender
 {
