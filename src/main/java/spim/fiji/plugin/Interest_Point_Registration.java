@@ -37,6 +37,8 @@ import spim.fiji.plugin.interestpointregistration.parameters.BasicRegistrationPa
 import spim.fiji.plugin.interestpointregistration.parameters.FixMapBackParameters;
 import spim.fiji.plugin.interestpointregistration.parameters.GroupParameters;
 import spim.fiji.plugin.interestpointregistration.parameters.GroupParameters.InterestpointGroupingType;
+import spim.fiji.plugin.interestpointregistration.statistics.RegistrationStatistics;
+import spim.fiji.plugin.interestpointregistration.statistics.TimeLapseDisplay;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
@@ -179,7 +181,7 @@ public class Interest_Point_Registration implements PlugIn
 			return false;
 
 		// run the registration
-		return processRegistration(
+		if ( !processRegistration(
 				setup,
 				brp.pwr,
 				gp.grouping,
@@ -188,7 +190,22 @@ public class Interest_Point_Registration implements PlugIn
 				fmbp.mapBackViews,
 				data.getViewRegistrations().getViewRegistrations(),
 				data.getViewInterestPoints().getViewInterestPoints(),
-				brp.labelMap );
+				brp.labelMap ) )
+			return false;
+
+		// save the XML including transforms and correspondences
+		if ( saveXML )
+			SpimData2.saveXML( data, xmlFileName, clusterExtension );
+
+		if ( arp.showStatistics )
+		{
+			final ArrayList< RegistrationStatistics > rsData = new ArrayList< RegistrationStatistics >();
+			for ( final TimePoint t : timepointToProcess )
+				rsData.add( new RegistrationStatistics( t.getId(), brp.pwr.getStatistics() ) );
+			TimeLapseDisplay.plotData( data.getSequenceDescription().getTimePoints(), rsData, TimeLapseDisplay.getOptimalTimePoint( rsData ), true );
+		}
+
+		return true;
 	}
 
 	public boolean processRegistration(
