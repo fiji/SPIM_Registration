@@ -23,13 +23,17 @@ public class PairwiseResult< I extends InterestPoint >
 	{
 		this.time = time;
 		this.result = result;
-		if ( printout ) IOFunctions.println( getFullDesc() );
+		if ( printout && desc.length() > 0 ) IOFunctions.println( getFullDesc() );
 	}
 	public void setDescriptions( final String desc ) { this.desc = desc; }
 	public List< PointMatchGeneric< I > > getCandidates() { return candidates; }
 	public List< PointMatchGeneric< I > > getInliers() { return inliers; }
 	public String getDescription() { return desc; }
-	public void setDescription( final String desc ) { this.desc = desc; }
+	public void setDescription( final String desc )
+	{
+		this.desc = desc;
+		if ( printout && result.length() > 0 ) IOFunctions.println( getFullDesc() );
+	}
 	public double getError() { return error; }
 	public void setCandidates( final List< PointMatchGeneric< I > > candidates ) { this.candidates = candidates; }
 	public void setInliers( final List< PointMatchGeneric< I > > inliers, final double error )
