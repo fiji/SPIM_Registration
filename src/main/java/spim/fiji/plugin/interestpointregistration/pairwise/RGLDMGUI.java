@@ -77,8 +77,8 @@ public class RGLDMGUI implements PairwiseGUI
 	}
 
 	@Override
-	public TransformationModelGUI getMatchingModel()
-	{
-		return model;
-	}
+	public TransformationModelGUI getMatchingModel() { return model; }
+
+	@Override
+	public double getMaxError() { return ransacParams.getMaxEpsilon(); }
 }

@@ -27,4 +27,31 @@ public class GroupedInterestPoint< V > extends InterestPoint
 
 	@Override
 	public GroupedInterestPoint< V >  newInstance( final int id, final double[] l ) { return new GroupedInterestPoint< V > ( null, id, l ); }
+
+	@Override
+	public boolean equals( final Object obj )
+	{
+		if ( this == obj )
+			return true;
+		if ( obj == null )
+			return false;
+		if ( getClass() != obj.getClass() )
+			return false;
+		GroupedInterestPoint other = (GroupedInterestPoint) obj;
+		if ( view == null )
+		{
+			if ( other.view != null )
+				return false;
+		}
+		else if ( !view.equals( other.view ) )
+		{
+			return false;
+		}
+		else if ( id != other.id )
+		{
+			return false;
+		}
+
+		return true;
+	}
 }

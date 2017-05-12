@@ -25,6 +25,7 @@ import mpicbg.spim.data.sequence.TimePoints;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+import mpicbg.spim.mpicbg.PointMatchGeneric;
 import net.imglib2.Dimensions;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.util.Pair;
@@ -60,8 +61,9 @@ import spim.process.interestpointregistration.pairwise.constellation.Subset;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.GroupedInterestPoint;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.InterestPointGrouping;
-import spim.process.interestpointregistration.pairwise.constellation.grouping.InterestPointGroupingAll;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.InterestPointGroupingMinDistance;
 import spim.process.interestpointregistration.pairwise.constellation.overlap.OverlapDetection;
+import spim.process.interestpointregistration.pairwise.methods.ransac.RANSACParameters;
 
 /**
 *
@@ -292,7 +294,16 @@ public class Interest_Point_Registration implements PlugIn
 				// test grouped registration
 				final List< Pair< Group< ViewId >, Group< ViewId > > > groupedPairs = subset.getGroupedPairs();
 				final Map< Group< ViewId >, List< GroupedInterestPoint< ViewId > > > groupedInterestpoints = new HashMap<>();
-				final InterestPointGrouping< ViewId > ipGrouping = new InterestPointGroupingAll<>( interestpoints );
+
+				final double maxError = pairwiseMatching.getMaxError();
+				final InterestPointGroupingMinDistance< ViewId > ipGrouping;
+
+				if ( Double.isNaN( maxError ) )
+					ipGrouping = new InterestPointGroupingMinDistance<>( interestpoints );
+				else
+					ipGrouping = new InterestPointGroupingMinDistance<>( maxError, interestpoints );
+
+				IOFunctions.println( "Using a maximum radius of " + ipGrouping.getRadius() + " to filter interest points from overlapping views." );
 
 				// which groups exist
 				final Set< Group< ViewId > > groups = new HashSet<>();
@@ -302,34 +313,62 @@ public class Interest_Point_Registration implements PlugIn
 					groups.add( pair.getA() );
 					groups.add( pair.getB() );
 
-					System.out.print( "[" + pair.getA() + "] <=> [" + pair.getB() + "]" );
+					String out = "[" + pair.getA() + "] <=> [" + pair.getB() + "]";
 
 					if ( !groupedInterestpoints.containsKey( pair.getA() ) )
 					{
-						System.out.print( ", grouping interestpoints for " + pair.getA() );
+						out += ", grouping interestpoints for " + pair.getA();
 
 						groupedInterestpoints.put( pair.getA(), ipGrouping.group( pair.getA() ) );
+						
+						out += " (" + ipGrouping.countBefore() + " >>> " + ipGrouping.countAfter() + ")";
 					}
 
 					if ( !groupedInterestpoints.containsKey( pair.getB() ) )
 					{
-						System.out.print( ", grouping interestpoints for " + pair.getB() );
+						out += ", grouping interestpoints for " + pair.getB();
 
 						groupedInterestpoints.put( pair.getB(), ipGrouping.group( pair.getB() ) );
+
+						out += " (" + ipGrouping.countBefore() + " >>> " + ipGrouping.countAfter() + ")";
 					}
 
-					System.out.println();
+					IOFunctions.println( out );
 				}
 
 				final List< Pair< Pair< Group< ViewId >, Group< ViewId > >, PairwiseResult< GroupedInterestPoint< ViewId > > > > resultGroup =
 						MatcherPairwiseTools.computePairs( groupedPairs, groupedInterestpoints, pairwiseMatching.pairwiseGroupedMatchingInstance() );
 
+				// distribution of inliers across views is fine, is displayed wrong in the Application
+				int[][] hist = new int[3][ 7 ];
+
+				for ( final Pair< Pair< Group< ViewId >, Group< ViewId > >, PairwiseResult< GroupedInterestPoint< ViewId > > > p : resultGroup )
+				{
+					List< PointMatchGeneric< GroupedInterestPoint< ViewId  > >> pm = p.getB().getInliers();
+
+					for ( final PointMatchGeneric< GroupedInterestPoint< ViewId  > > point : pm )
+					{
+							++hist[ point.getPoint1().getV().getTimePointId() ][ point.getPoint1().getV().getViewSetupId() ];
+							++hist[point.getPoint2().getV().getTimePointId()][ point.getPoint2().getV().getViewSetupId() ];
+					}
+				}
+
+				for ( int tp = 1; tp <= 2; ++ tp)
+				{
+				System.out.println( "\ntp (inliers) = " + tp );
+
+				for ( int i = 0; i < hist[ tp].length; ++i )
+					System.out.println( i + ": " + hist[tp][ i ] );
+				}
+
+				// TODO: there is a bug between here
 				// clear correspondences and get a map linking ViewIds to the correspondence lists
 				final Map< ViewId, List< CorrespondingInterestPoints > > cMap = MatcherPairwiseTools.clearCorrespondences( subset.getViews(), interestpointLists, labelMap );
 
 				// add the corresponding detections and output result
 				final List< Pair< Pair< ViewId, ViewId >, PairwiseResult< GroupedInterestPoint< ViewId > > > > resultG =
 						MatcherPairwiseTools.addCorrespondencesFromGroups( resultGroup, interestpointLists, labelMap, cMap );
+				// TODO: and here
 
 				// run global optimization
 				models = GlobalOpt.compute( pairwiseMatching.getMatchingModel().getModel(), resultG, fixedViews, groups );

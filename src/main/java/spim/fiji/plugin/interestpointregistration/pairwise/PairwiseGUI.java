@@ -51,4 +51,9 @@ public interface PairwiseGUI
 	 * @return - the model the user chose to perform the registration with
 	 */
 	public TransformationModelGUI getMatchingModel();
+
+	/**
+	 * @return - a maximal error as selected by the user or Double.NaN if not applicable
+	 */
+	public double getMaxError();
 }

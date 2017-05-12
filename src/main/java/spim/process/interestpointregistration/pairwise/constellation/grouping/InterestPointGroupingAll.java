@@ -22,6 +22,11 @@ public class InterestPointGroupingAll< V extends ViewId > extends InterestPointG
 	@Override
 	protected List< GroupedInterestPoint< V > > merge( final Map< V, List< InterestPoint > > toMerge )
 	{
+		return mergeAll( toMerge );
+	}
+
+	public static < V extends ViewId > ArrayList< GroupedInterestPoint< V > > mergeAll( final Map< V, List< InterestPoint > > toMerge )
+	{
 		final ArrayList< GroupedInterestPoint< V > > grouped = new ArrayList<>();
 
 		for ( final V view : toMerge.keySet() )
