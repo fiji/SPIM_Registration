@@ -79,8 +79,10 @@ public class MatcherPairwiseTools
 			final Map< V, ? extends List< CorrespondingInterestPoints > > cMap
 			)
 	{
+		// we transform HashMap< Pair< Group < V >, Group< V > >, PairwiseResult > to HashMap< Pair< V, V >, PairwiseResult >
 		final HashMap< Pair< V, V >, PairwiseResult< GroupedInterestPoint< V > > > transformedMap = new HashMap<>();
 
+		// it doesn't matter which pair of groups it comes from: ?
 		for ( final Pair< ?, P > p : resultGroup )
 		{
 			for ( final PointMatchGeneric< GroupedInterestPoint< V > > pm : p.getB().getInliers() )
