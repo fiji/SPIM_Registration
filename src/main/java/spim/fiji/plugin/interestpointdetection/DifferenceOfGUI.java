@@ -193,9 +193,6 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 			final ViewDescription vd = views.get( i );
 			viewChoice[ i ] =
 					"Timepoint " + vd.getTimePointId() +
-					", Angle " + vd.getViewSetup().getAngle().getName() +
-					", Channel " + vd.getViewSetup().getChannel().getName() +
-					", Illum " + vd.getViewSetup().getIllumination().getName() +
 					", ViewSetupId " + vd.getViewSetupId();
 		}
 
