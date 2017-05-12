@@ -46,6 +46,7 @@ import spim.fiji.plugin.interestpointregistration.statistics.TimeLapseDisplay;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
@@ -57,6 +58,9 @@ import spim.process.interestpointregistration.pairwise.PairwiseResult;
 import spim.process.interestpointregistration.pairwise.constellation.PairwiseSetup;
 import spim.process.interestpointregistration.pairwise.constellation.Subset;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.GroupedInterestPoint;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.InterestPointGrouping;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.InterestPointGroupingAll;
 import spim.process.interestpointregistration.pairwise.constellation.overlap.OverlapDetection;
 
 /**
@@ -276,8 +280,6 @@ public class Interest_Point_Registration implements PlugIn
 
 					MatcherPairwiseTools.addCorrespondences( p.getB().getInliers(), vA, vB, labelMap.get( vA ), labelMap.get( vB ), listA, listB );
 
-					//IOFunctions.println( p.getB().getFullDesc() );
-
 					if ( collectStatistics )
 						statistics.add( p );
 				}
@@ -288,8 +290,49 @@ public class Interest_Point_Registration implements PlugIn
 			else
 			{
 				// test grouped registration
-				throw new RuntimeException( "grouped interestpoint registration not supported yet." );
-				//groupedSubsetTest( spimData, subset, interestpoints, labelMap, rp, gp, fixedViews );
+				final List< Pair< Group< ViewId >, Group< ViewId > > > groupedPairs = subset.getGroupedPairs();
+				final Map< Group< ViewId >, List< GroupedInterestPoint< ViewId > > > groupedInterestpoints = new HashMap<>();
+				final InterestPointGrouping< ViewId > ipGrouping = new InterestPointGroupingAll<>( interestpoints );
+
+				// which groups exist
+				final Set< Group< ViewId > > groups = new HashSet<>();
+
+				for ( final Pair< Group< ViewId >, Group< ViewId > > pair : groupedPairs )
+				{
+					groups.add( pair.getA() );
+					groups.add( pair.getB() );
+
+					System.out.print( "[" + pair.getA() + "] <=> [" + pair.getB() + "]" );
+
+					if ( !groupedInterestpoints.containsKey( pair.getA() ) )
+					{
+						System.out.print( ", grouping interestpoints for " + pair.getA() );
+
+						groupedInterestpoints.put( pair.getA(), ipGrouping.group( pair.getA() ) );
+					}
+
+					if ( !groupedInterestpoints.containsKey( pair.getB() ) )
+					{
+						System.out.print( ", grouping interestpoints for " + pair.getB() );
+
+						groupedInterestpoints.put( pair.getB(), ipGrouping.group( pair.getB() ) );
+					}
+
+					System.out.println();
+				}
+
+				final List< Pair< Pair< Group< ViewId >, Group< ViewId > >, PairwiseResult< GroupedInterestPoint< ViewId > > > > resultGroup =
+						MatcherPairwiseTools.computePairs( groupedPairs, groupedInterestpoints, pairwiseMatching.pairwiseGroupedMatchingInstance() );
+
+				// clear correspondences and get a map linking ViewIds to the correspondence lists
+				final Map< ViewId, List< CorrespondingInterestPoints > > cMap = MatcherPairwiseTools.clearCorrespondences( subset.getViews(), interestpointLists, labelMap );
+
+				// add the corresponding detections and output result
+				final List< Pair< Pair< ViewId, ViewId >, PairwiseResult< GroupedInterestPoint< ViewId > > > > resultG =
+						MatcherPairwiseTools.addCorrespondencesFromGroups( resultGroup, interestpointLists, labelMap, cMap );
+
+				// run global optimization
+				models = GlobalOpt.compute( pairwiseMatching.getMatchingModel().getModel(), resultG, fixedViews, groups );
 			}
 
 			// global opt failed
