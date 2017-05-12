@@ -24,10 +24,8 @@ import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.TimePoints;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Dimensions;
-import net.imglib2.realtransform.AffineGet;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
@@ -60,9 +58,6 @@ import spim.process.interestpointregistration.pairwise.constellation.PairwiseSet
 import spim.process.interestpointregistration.pairwise.constellation.Subset;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 import spim.process.interestpointregistration.pairwise.constellation.overlap.OverlapDetection;
-import spim.process.interestpointregistration.pairwise.methods.geometrichashing.GeometricHashingPairwise;
-import spim.process.interestpointregistration.pairwise.methods.geometrichashing.GeometricHashingParameters;
-import spim.process.interestpointregistration.pairwise.methods.ransac.RANSACParameters;
 
 /**
 *
@@ -851,9 +846,14 @@ public class Interest_Point_Registration implements PlugIn
 		{
 			if ( fmbp.mapBackViews != null )
 			{
-				final ViewId id = fmbp.mapBackViews.get( subset ).getA();
-				if ( id != null )
-					IOFunctions.println( "ViewSetupId: " + id.getViewSetupId() + " TimePoint:" + id.getTimePointId() );
+				final Pair< ViewId, Dimensions > view = fmbp.mapBackViews.get( subset );
+
+				if ( view != null )
+				{
+					final ViewId id = fmbp.mapBackViews.get( subset ).getA();
+					if ( id != null )
+						IOFunctions.println( "ViewSetupId: " + id.getViewSetupId() + " TimePoint:" + id.getTimePointId() );
+				}
 			}
 		}
 
