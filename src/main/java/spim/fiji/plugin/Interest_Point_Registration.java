@@ -99,6 +99,9 @@ public class Interest_Point_Registration implements PlugIn
 	public static int defaultReferenceView = 0;
 	public static int defaultIPGrouping = 0;
 
+	// Just in case we want to log statistics
+	List< Pair< Pair< ViewId, ViewId >, PairwiseResult< InterestPoint > > >  statistics;
+
 	@Override
 	public void run( final String arg )
 	{
@@ -190,7 +193,8 @@ public class Interest_Point_Registration implements PlugIn
 				fmbp.mapBackViews,
 				data.getViewRegistrations().getViewRegistrations(),
 				data.getViewInterestPoints().getViewInterestPoints(),
-				brp.labelMap ) )
+				brp.labelMap,
+				arp.showStatistics ) )
 			return false;
 
 		// save the XML including transforms and correspondences
@@ -201,7 +205,7 @@ public class Interest_Point_Registration implements PlugIn
 		{
 			final ArrayList< RegistrationStatistics > rsData = new ArrayList< RegistrationStatistics >();
 			for ( final TimePoint t : timepointToProcess )
-				rsData.add( new RegistrationStatistics( t.getId(), brp.pwr.getStatistics() ) );
+				rsData.add( new RegistrationStatistics( t.getId(), statistics ) );
 			TimeLapseDisplay.plotData( data.getSequenceDescription().getTimePoints(), rsData, TimeLapseDisplay.getOptimalTimePoint( rsData ), true );
 		}
 
@@ -217,7 +221,8 @@ public class Interest_Point_Registration implements PlugIn
 			final Map< Subset< ViewId >, ViewId > mapBackViews,
 			final Map< ViewId, ViewRegistration > registrations,
 			final Map< ViewId, ViewInterestPointLists > interestpointLists,
-			final Map< ViewId, String > labelMap )
+			final Map< ViewId, String > labelMap,
+			final boolean collectStatistics )
 	{
 		final List< ViewId > viewIds = setup.getViews();
 		final ArrayList< Subset< ViewId > > subsets = setup.getSubsets();
@@ -230,12 +235,12 @@ public class Interest_Point_Registration implements PlugIn
 					interestpointLists,
 					labelMap );
 
+		// statistics?
+		if ( collectStatistics )
+			this.statistics = new ArrayList<>();
+
 		for ( final Subset< ViewId > subset : subsets )
 		{
-			// parameters
-			final RANSACParameters rp = new RANSACParameters();
-			final GeometricHashingParameters gp = new GeometricHashingParameters( new AffineModel3D() );
-
 			// fix view(s)
 			final List< ViewId > fixedViews = setup.getDefaultFixedViews();
 			IOFunctions.println( "By default #fixed views for strategy " + setup.getClass().getSimpleName() + " = " + fixedViews.size() );
@@ -268,7 +273,10 @@ public class Interest_Point_Registration implements PlugIn
 
 					MatcherPairwiseTools.addCorrespondences( p.getB().getInliers(), vA, vB, labelMap.get( vA ), labelMap.get( vB ), listA, listB );
 
-					System.out.println( p.getB().getFullDesc() );
+					IOFunctions.println( p.getB().getFullDesc() );
+
+					if ( collectStatistics )
+						statistics.add( p );
 				}
 
 				// run global optimization
