@@ -17,4 +17,13 @@ public interface MatcherPairwise< I extends InterestPoint >
 	 * @return
 	 */
 	public PairwiseResult< I > match( final List< I > listAIn, final List< I > listBIn );
+
+	/**
+	 * Determines if this pairwise matching requires a duplication of the input InterestPoints as these instances are ran
+	 * multithreaded. So if the InterestPoints are modified in any way (e.g. RANSAC), this method must return true, otherwise
+	 * false (e.g. if only interestpoint.getL() is read).
+	 *
+	 * @return if duplication is necessary
+	 */
+	public boolean requiresInterestPointDuplication();
 }

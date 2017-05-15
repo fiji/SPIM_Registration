@@ -34,14 +34,6 @@ public class MatcherPairwiseTools
 		return all;
 	}
 
-	public static < V, I extends InterestPoint > List< Pair< Pair< V, V >, PairwiseResult< I > > > computePairs(
-			final List< Pair< V, V > > pairs,
-			final Map< V, List< I > > interestpoints,
-			final MatcherPairwise< I > matcher )
-	{
-		return computePairs( pairs, interestpoints, matcher, null );
-	}
-
 	public static < V extends ViewId > Map< V, List< CorrespondingInterestPoints > > clearCorrespondences(
 			final Collection< V > viewIds,
 			final Map< V, ViewInterestPointLists > interestpoints,
@@ -200,6 +192,14 @@ public class MatcherPairwiseTools
 
 	public static < V, I extends InterestPoint > List< Pair< Pair< V, V >, PairwiseResult< I > > > computePairs(
 			final List< Pair< V, V > > pairs,
+			final Map< V, List< I > > interestpoints,
+			final MatcherPairwise< I > matcher )
+	{
+		return computePairs( pairs, interestpoints, matcher, null );
+	}
+
+	public static < V, I extends InterestPoint > List< Pair< Pair< V, V >, PairwiseResult< I > > > computePairs(
+			final List< Pair< V, V > > pairs,
 			final Map< V, ? extends List< I > > interestpoints,
 			final MatcherPairwise< I > matcher,
 			final ExecutorService exec )
@@ -215,8 +215,24 @@ public class MatcherPairwiseTools
 
 		for ( final Pair< V, V > pair : pairs )
 		{
-			final List< I > listA = interestpoints.get( pair.getA() );
-			final List< I > listB = interestpoints.get( pair.getB() );
+			final List< I > listA, listB;
+
+			if ( matcher.requiresInterestPointDuplication() )
+			{
+				listA = new ArrayList<>();
+				listB = new ArrayList<>();
+
+				for ( final I ip : interestpoints.get( pair.getA() ) )
+					listA.add( (I)ip.clone() );
+
+				for ( final I ip : interestpoints.get( pair.getB() ) )
+					listB.add( (I)ip.clone() );
+			}
+			else
+			{
+				listA = interestpoints.get( pair.getA() );
+				listB = interestpoints.get( pair.getB() );
+			}
 
 			tasks.add( new Callable< PairwiseResult< I > >()
 			{
