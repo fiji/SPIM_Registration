@@ -87,21 +87,9 @@ public class InterestPointGroupingMinDistance< V extends ViewId > extends Intere
 
 		grouped.clear();
 
-		int[] hist = new int[ 7 ];
-		int tp = -1;
-
 		for ( final Pair< GroupedInterestPoint< V >, Bool > p : markedPoints )
 			if ( p.getB().state )
-			{
 				grouped.add( p.getA() );
-				++hist[ ((ViewId)(p.getA().getV())).getViewSetupId() ];
-				tp = ((ViewId)(p.getA().getV())).getTimePointId();
-			}
-
-		System.out.println( "\ntp = " + tp );
-
-		for ( int i = 0; i < hist.length; ++i )
-			System.out.println( i + ": " + hist[ i ] );
 
 		return grouped;
 	}
