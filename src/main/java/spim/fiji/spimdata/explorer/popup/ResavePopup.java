@@ -110,13 +110,36 @@ public class ResavePopup extends JMenu implements ExplorerWindowSetable
 						viewIds.addAll( panel.selectedRowsViewId() );
 
 					String question;
+					
+					final boolean notAllSelected = viewIds.size() < data.getSequenceDescription().getViewDescriptions().size();
 
-					if ( viewIds.size() < panel.getTableModel().getElements().size() )
+					// user has not selected all views (or not all views are selectable at once)
+					// ask them whether they want to expand selection to all views in SpimData
+					if ( notAllSelected )
+					{
 						question =
-							"Are you sure you only want to export " + viewIds.size() + " of " +
-							panel.getTableModel().getElements().size() + " views?\n" +
+							"You have only selected " + viewIds.size() + " of " +
+							data.getSequenceDescription().getViewDescriptions().size() + " views for export.\n" +
 							"(the rest will not be visible in the new dataset)\n";
+						
+						final int  choice = JOptionPane.showConfirmDialog( null,
+								question + "Note: this will first save the current state of the open XML.\n"
+										+ "Do you wish to expand the selection to the whole dataset before continuing?",
+								"Warning",
+								JOptionPane.YES_NO_CANCEL_OPTION );
+						
+						if (choice == JOptionPane.CANCEL_OPTION)
+							return;
+						else if (choice == JOptionPane.YES_OPTION)
+						{
+							viewIds.clear();
+							viewIds.addAll( data.getSequenceDescription().getViewDescriptions().keySet() );
+						}
+					}
+					
+					// all views in SpimData have been selected, ask user for confirmation before starting resave.
 					else
+					{
 						question = "Resaving all views of the current dataset.\n";
 
 					if ( JOptionPane.showConfirmDialog( null,
@@ -124,7 +147,9 @@ public class ResavePopup extends JMenu implements ExplorerWindowSetable
 							"Warning",
 							JOptionPane.YES_NO_OPTION ) == JOptionPane.NO_OPTION )
 						return;
+					}
 
+					
 					final ProgressWriter progressWriter = new ProgressWriterIJ();
 					progressWriter.out().println( "Resaving " + viewIds.size() + " views " + types[ index ] );
 
