@@ -982,15 +982,20 @@ public class FileListDatasetDefinitionUtil
 			multiplicity.put( Channel.class, checkMultiplicity( infoMap.get( Channel.class ) ));
 			multiplicity.put( Illumination.class, checkMultiplicity( infoMap.get( Illumination.class ) ));
 			
-			Map< ? extends Object, List< Integer > > tileSeriesMap = infoMap.get( Tile.class ).entrySet().stream().collect(
-								Collectors.toMap( 
-										e -> e.getKey(),
-										e -> new ArrayList<>(e.getValue().stream().map(p -> p.getA()).collect(Collectors.toSet()))) );
 			
+			// make Maps TileInfo -> Series (is TileInfo -> (Series, Channel) before)
+			Map< ? extends Object, List< Integer > > tileSeriesMap = infoMap.get( Tile.class ).entrySet().stream().collect(
+					Collectors.toMap( 
+							(Entry< ? extends Object, List< Pair< Integer, Integer > > > e) -> e.getKey(),
+							(Entry< ? extends Object, List< Pair< Integer, Integer > > > e) ->
+								new ArrayList<>(e.getValue().stream().map(p -> p.getA()).collect(Collectors.toSet()))) );
+			
+			// same but for Angles
 			Map< ? extends Object, List< Integer > > angleSeriesMap = infoMap.get( Angle.class ).entrySet().stream().collect(
 					Collectors.toMap( 
-							e -> e.getKey(),
-							e -> new ArrayList<>(e.getValue().stream().map(p -> p.getA()).collect(Collectors.toSet()))) );
+							(Entry< ? extends Object, List< Pair< Integer, Integer > > > e) -> e.getKey(),
+							(Entry< ? extends Object, List< Pair< Integer, Integer > > > e) ->
+								new ArrayList<>(e.getValue().stream().map(p -> p.getA()).collect(Collectors.toSet()))) );
 			
 			multiplicity.put( Angle.class, checkMultiplicity( angleSeriesMap ));
 			multiplicity.put( Tile.class, checkMultiplicity( tileSeriesMap));
