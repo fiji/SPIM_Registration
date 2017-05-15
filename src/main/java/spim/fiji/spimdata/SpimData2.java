@@ -11,7 +11,9 @@ import java.util.List;
 
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.generic.AbstractSpimData;
+import mpicbg.spim.data.generic.base.Entity;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
+import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
@@ -260,6 +262,40 @@ public class SpimData2 extends SpimData
 		Collections.sort( illums );
 
 		return illums;
+	}
+	
+	public static <E extends Entity> ArrayList<E> getAllInstancesOfEntitySorted(final SpimData data, final Collection< ? extends ViewId > viewIds, Class<E> cl)
+	{
+		final HashSet<E> resultSet = new HashSet<>();
+		
+		for (ViewId v : viewIds)
+		{
+			final ViewDescription vd = data.getSequenceDescription().getViewDescription( v );
+			
+			if ( vd.isPresent() )
+			{
+				if (BasicViewSetup.class.isAssignableFrom( cl ))
+					resultSet.add( (E) vd.getViewSetup() );
+				else if (cl.equals( TimePoint.class ))
+					resultSet.add( (E) vd.getTimePoint() );
+				else
+					resultSet.add( vd.getViewSetup().getAttribute( cl ) );
+			}
+		}
+		
+		final ArrayList< E > res = new ArrayList<>();
+		res.addAll( resultSet );
+		Collections.sort(res, new Comparator<E>(){
+
+			@Override
+			public int compare(E o1, E o2)
+			{
+				return o1.getId() - o2.getId();
+			}
+			
+		});
+
+		return res;
 	}
 
 	public static ArrayList< Channel > getAllChannelsSorted( final SpimData data, final Collection< ? extends ViewId > viewIds )
