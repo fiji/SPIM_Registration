@@ -23,10 +23,13 @@ public class GroupedInterestPoint< V > extends InterestPoint
 	public V getV() { return view; }
 
 	@Override
-	public GroupedInterestPoint< V > clone() { return new GroupedInterestPoint< V >( view, id, l.clone() ); }
+	public GroupedInterestPoint< V > duplicate() { return clone(); }
 
 	@Override
-	public GroupedInterestPoint< V >  newInstance( final int id, final double[] l ) { return new GroupedInterestPoint< V > ( null, id, l ); }
+	public GroupedInterestPoint< V > clone() { return new GroupedInterestPoint< V >( this.view, this.id, this.l.clone() ); }
+
+	@Override
+	public GroupedInterestPoint< V > newInstance( final int id, final double[] l ) { return new GroupedInterestPoint< V > ( null, id, l ); }
 
 	@Override
 	public boolean equals( final Object obj )
@@ -37,7 +40,7 @@ public class GroupedInterestPoint< V > extends InterestPoint
 			return false;
 		if ( getClass() != obj.getClass() )
 			return false;
-		GroupedInterestPoint other = (GroupedInterestPoint) obj;
+		GroupedInterestPoint< ? > other = (GroupedInterestPoint< ? >) obj;
 		if ( view == null )
 		{
 			if ( other.view != null )
