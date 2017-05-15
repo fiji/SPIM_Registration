@@ -70,7 +70,7 @@ public class RGLDMPairwise< I extends InterestPoint > implements MatcherPairwise
 	}
 
 	/**
-	 * We run RANSAC on these points which modifies w[], which is not a good idea when running things multithreaded
+	 * We only read the points, no reason to duplicate, RANSAC does its own duplication
 	 */
 	@Override
 	public boolean requiresInterestPointDuplication() { return true; }

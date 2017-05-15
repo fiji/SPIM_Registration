@@ -69,8 +69,8 @@ public class GeometricHashingPairwise< I extends InterestPoint > implements Matc
 	}
 
 	/**
-	 * We run RANSAC on these points which modifies w[], which is not a good idea when running things multithreaded
+	 * We run RANSAC on these points which makes copies, so no need to duplicate points
 	 */
 	@Override
-	public boolean requiresInterestPointDuplication() { return true; }
+	public boolean requiresInterestPointDuplication() { return false; }
 }

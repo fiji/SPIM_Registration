@@ -20,7 +20,7 @@ public interface MatcherPairwise< I extends InterestPoint >
 
 	/**
 	 * Determines if this pairwise matching requires a duplication of the input InterestPoints as these instances are ran
-	 * multithreaded. So if the InterestPoints are modified in any way (e.g. RANSAC), this method must return true, otherwise
+	 * multithreaded. So if the InterestPoints are modified in any way (e.g. fitting models to it), this method must return true, otherwise
 	 * false (e.g. if only interestpoint.getL() is read).
 	 *
 	 * @return if duplication is necessary
