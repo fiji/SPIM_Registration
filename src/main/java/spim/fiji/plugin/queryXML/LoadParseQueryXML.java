@@ -26,18 +26,20 @@ public class LoadParseQueryXML extends GenericLoadParseQueryXML< SpimData2, Sequ
 			final boolean askForAngles,
 			final boolean askForChannels,
 			final boolean askForIllum,
+			final boolean askForTiles,
 			final boolean askForTimepoints )
 	{
-		return queryXML( additionalTitle, "Process", askForAngles, askForChannels, askForIllum, askForTimepoints );
+		return queryXML( additionalTitle, "Process", askForAngles, askForChannels, askForIllum, askForTiles, askForTimepoints );
 	}
 
 	public boolean queryXML(
 			final boolean askForAngles,
 			final boolean askForChannels,
 			final boolean askForIllum,
+			final boolean askForTiles,
 			final boolean askForTimepoints )
 	{
-		return queryXML( "", "Process", askForAngles, askForChannels, askForIllum, askForTimepoints );
+		return queryXML( "", "Process", askForAngles, askForChannels, askForIllum, askForTiles, askForTimepoints );
 	}
 	
 	/**
@@ -55,7 +57,9 @@ public class LoadParseQueryXML extends GenericLoadParseQueryXML< SpimData2, Sequ
 			final boolean askForAngles,
 			final boolean askForChannels,
 			final boolean askForIllum,
-			final boolean askForTimepoints )
+			final boolean askForTiles,
+			final boolean askForTimepoints
+			)
 	{
 		final ArrayList< String > specifyAttributes = new ArrayList< String >();
 
@@ -70,6 +74,9 @@ public class LoadParseQueryXML extends GenericLoadParseQueryXML< SpimData2, Sequ
 
 		if ( askForIllum )
 			specifyAttributes.add( "illumination" );
+		
+		if ( askForTiles )
+			specifyAttributes.add( "tile" );
 
 		return queryXML( additionalTitle, query, specifyAttributes );
 	}
@@ -123,7 +130,7 @@ public class LoadParseQueryXML extends GenericLoadParseQueryXML< SpimData2, Sequ
 		queryFor.add( "angle" );
 		queryFor.add( "illumination" );
 		
-		lpq.queryXML( true, true, true, true );
+		lpq.queryXML( true, true, true, true, true );
 		
 		for ( final TimePoint i : lpq.getTimePointsToProcess() )
 			System.out.println( i.getId() );

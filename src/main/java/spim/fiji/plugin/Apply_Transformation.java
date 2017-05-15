@@ -18,6 +18,7 @@ import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.SequenceDescription;
+import mpicbg.spim.data.sequence.Tile;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
@@ -49,6 +50,7 @@ public class Apply_Transformation implements PlugIn
 	public static boolean defaultSameModelChannels = true;
 	public static boolean defaultSameModelIlluminations = true;
 	public static boolean defaultSameModelAngles = true;
+	public static boolean defaultSameModelTiles = true;
 	
 	public static int defaultModel = 2;
 	public static int defaultDefineAs = 1;
@@ -72,7 +74,7 @@ public class Apply_Transformation implements PlugIn
 		// ask for everything
 		final LoadParseQueryXML result = new LoadParseQueryXML();
 
-		if ( !result.queryXML( "applying a transformation", "Apply to", true, true, true, true ) )
+		if ( !result.queryXML( "applying a transformation", "Apply to", true, true, true, true, true ) )
 			return;
 
 		final SpimData2 data = result.getData();
@@ -114,11 +116,13 @@ public class Apply_Transformation implements PlugIn
 		final List< Channel > channels = SpimData2.getAllChannelsSorted( data, viewIds );
 		final List< Illumination > illums = SpimData2.getAllIlluminationsSorted( data, viewIds );
 		final List< TimePoint > tps = SpimData2.getAllTimePointsSorted( data, viewIds );
+		final List< Tile > tiles = SpimData2.getAllInstancesOfEntitySorted( data, viewIds, Tile.class );
 
 		final boolean multipleTimePoints = tps.size() > 1;
 		final boolean multipleChannels = channels.size() > 1;
 		final boolean multipleIlluminations = illums.size() > 1;
 		final boolean multipleAngles = angles.size() > 1;
+		final boolean multipleTiles = tiles.size() > 1;
 
 		final GenericDialog gd = new GenericDialog( "Choose transformation model" );
 
@@ -136,6 +140,9 @@ public class Apply_Transformation implements PlugIn
 
 		if ( multipleAngles )
 			gd.addCheckbox( "Same_transformation_for_all_angles", defaultSameModelAngles );
+		
+		if ( multipleTiles )
+			gd.addCheckbox( "Same_transformation_for_all_tiles", defaultSameModelTiles );
 
 		gd.addMessage(
 				"Interactive application of transformations using the BigDataViewer is available when selecting a Rigid Model.",
@@ -187,6 +194,11 @@ public class Apply_Transformation implements PlugIn
 			params.sameModelAngles = defaultSameModelAngles = gd.getNextBoolean();
 		else
 			params.sameModelAngles = true;
+		
+		if ( multipleTiles )
+			params.sameModelTiles = defaultSameModelTiles = gd.getNextBoolean();
+		else
+			params.sameModelTiles = true;
 
 		// reset the transform to the calibration (x,y,z resolution), in this case we need to make sure the calibration is actually available
 		if ( params.applyTo == 1 )
@@ -212,7 +224,7 @@ public class Apply_Transformation implements PlugIn
 			final List< ViewId > viewIds,
 			final ApplyParameters params )
 	{
-		if ( !params.sameModelAngles || !params.sameModelChannels || !params.sameModelIlluminations || !params.sameModelIlluminations )
+		if ( !params.sameModelAngles || !params.sameModelChannels || !params.sameModelIlluminations || !params.sameModelIlluminations || !params.sameModelTiles )
 		{
 			IOFunctions.println( "You selected to not have the same transformation model for all views in the" );
 			IOFunctions.println( "previous dialog. This is not supported using the interactive setup using the" );
