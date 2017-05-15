@@ -138,6 +138,8 @@ public class LegacyFileMapImgLoaderLOCI extends AbstractImgFactoryImgLoader
 //			System.out.println( fileMap.get( vd ).getA().getAbsolutePath() );
 			if (reader.getCurrentFile() == null || !reader.getCurrentFile().equals( fileMap.get( vd ).getA().getAbsolutePath()))
 				reader.setId( fileMap.get( vd ).getA().getAbsolutePath() );
+		
+			
 		}
 		catch ( FormatException | IOException e )
 		{
@@ -145,6 +147,18 @@ public class LegacyFileMapImgLoaderLOCI extends AbstractImgFactoryImgLoader
 			e.printStackTrace();
 		}
 		reader.setSeries( fileMap.get( vd ).getB().getA() );
+		
+		
+		// we already read view sizes and voxel dimensions when setting up sd
+		// here, we pass them to the ImgLoaders metaDataCache, so that that knows the sizes as well		
+		int d0 = (int) vd.getViewSetup().getSize().dimension( 0 );
+		int d1 = (int) vd.getViewSetup().getSize().dimension( 1 );
+		int d2 = (int) vd.getViewSetup().getSize().dimension( 2 );
+		
+		double vox0 = vd.getViewSetup().getVoxelSize().dimension( 0 );
+		double vox1 = vd.getViewSetup().getVoxelSize().dimension( 1 );
+		double vox2 = vd.getViewSetup().getVoxelSize().dimension( 2 );
+		updateMetaDataCache( view, d0, d1, d2, vox0, vox1, vox2 );
 
 	}
 	
