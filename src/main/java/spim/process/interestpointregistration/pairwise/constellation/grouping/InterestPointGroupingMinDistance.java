@@ -77,10 +77,9 @@ public class InterestPointGroupingMinDistance< V extends ViewId > extends Intere
 					final Pair< GroupedInterestPoint< V >, Bool > neighbor = search.getSampler( i ).get();
 					final GroupedInterestPoint< V > neighborpoint = neighbor.getA();
 
-					if ( !neighborpoint.equals( p.getA() ) )// && !neighborpoint.getV().equals( p.getA().getV() ) )
-					{
-						neighbor.getB().state = false;
-					}
+					if ( !neighborpoint.getV().equals( p.getA().getV() )) // do not set false if it is from the same view
+						if ( !neighborpoint.equals( p.getA() ) ) // do not set false if it is the point we searched for
+							neighbor.getB().state = false;
 				}
 			}
 		}
