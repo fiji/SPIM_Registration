@@ -542,9 +542,9 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 				final Tile tile = viewDescription.getViewSetup().getAttribute( Tile.class );
 
 				if (tile.hasLocation()){
-					final double shiftX = tile.getLocation()[0] * calX;
-					final double shiftY = tile.getLocation()[1] * calY;
-					final double shiftZ = tile.getLocation()[2] * calZ;
+					final double shiftX = tile.getLocation()[0] / voxelSize.dimension( 0 ) * calX;
+					final double shiftY = tile.getLocation()[1] / voxelSize.dimension( 1 ) * calY;
+					final double shiftZ = tile.getLocation()[2] / voxelSize.dimension( 2 ) * calZ;
 					
 					final AffineTransform3D m2 = new AffineTransform3D();
 					m2.set( 1.0f, 0.0f, 0.0f, shiftX, 
