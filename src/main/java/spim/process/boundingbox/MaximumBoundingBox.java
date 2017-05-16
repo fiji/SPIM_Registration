@@ -21,7 +21,7 @@ public class MaximumBoundingBox implements BoundingBoxEstimation
 	final HashMap< ViewId, Dimensions > dimensions;
 	final HashMap< ViewId, ViewRegistration > registrations;
 
-	public MaximumBoundingBox( final AbstractSpimData< AbstractSequenceDescription<?,? extends BasicViewDescription< ? >, ? extends ImgLoader > > data )
+	public MaximumBoundingBox( final AbstractSpimData< ? extends AbstractSequenceDescription<?,? extends BasicViewDescription< ? >, ? extends ImgLoader > > data )
 	{
 		this.dimensions = new HashMap<>();
 		this.registrations = new HashMap<>();
