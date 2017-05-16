@@ -231,12 +231,12 @@ public class GlobalOpt
 			final double ratioA = ratio.get( pair.getA().getA() );
 			final double ratioB = ratio.get( pair.getA().getB() );
 
-			final double weight = Math.pow( Math.max( ratioA, ratioB ), 4 );
+			final double weight = Math.max( ratioA, ratioB );
 
 			for ( final PointMatchGeneric< ? > pm : pair.getB().getInliers() )
 				pm.setWeight( 0, weight );
 
-			System.out.println( Group.pvid( pair.getA().getA() ) + "<->" + Group.pvid( pair.getA().getB() ) + ": " + weight );
+			//System.out.println( Group.pvid( pair.getA().getA() ) + "<->" + Group.pvid( pair.getA().getB() ) + ": " + weight );
 		}
 	}
 
