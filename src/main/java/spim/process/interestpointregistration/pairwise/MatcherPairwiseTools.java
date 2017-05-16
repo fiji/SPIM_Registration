@@ -112,8 +112,6 @@ public class MatcherPairwiseTools
 
 				pwr.getInliers().add( pm );
 			}
-
-			System.out.println( p.getB().getFullDesc() );
 		}
 
 		for ( final V viewId : cMap.keySet() )
