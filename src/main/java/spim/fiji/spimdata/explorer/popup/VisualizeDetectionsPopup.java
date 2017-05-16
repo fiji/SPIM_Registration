@@ -65,7 +65,7 @@ public class VisualizeDetectionsPopup extends JMenuItem implements ExplorerWindo
 					if ( params == null )
 						return;
 					
-					Visualize_Detections.visualize( data, viewIds, params.channelsToProcess, params.detections, params.downsample, params.displayInput );
+					Visualize_Detections.visualize( data, viewIds, params.label, params.detections, params.downsample, params.displayInput );
 				}
 			} ).start();
 		}
