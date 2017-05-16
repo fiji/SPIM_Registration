@@ -297,16 +297,14 @@ public class Interest_Point_Registration implements PlugIn
 				final Map< Group< ViewId >, List< GroupedInterestPoint< ViewId > > > groupedInterestpoints = new HashMap<>();
 
 				final double maxError = pairwiseMatching.getMaxError();
-				final InterestPointGroupingAll< ViewId > ipGrouping;
+				final InterestPointGroupingMinDistance< ViewId > ipGrouping;
 
-				//if ( Double.isNaN( maxError ) )
-				//	ipGrouping = new InterestPointGroupingMinDistance<>( interestpoints );
-				//else
-				//	ipGrouping = new InterestPointGroupingMinDistance<>( maxError, interestpoints );
+				if ( Double.isNaN( maxError ) )
+					ipGrouping = new InterestPointGroupingMinDistance<>( interestpoints );
+				else
+					ipGrouping = new InterestPointGroupingMinDistance<>( maxError, interestpoints );
 
-				//IOFunctions.println( "Using a maximum radius of " + ipGrouping.getRadius() + " to filter interest points from overlapping views." );
-
-				ipGrouping = new InterestPointGroupingAll< ViewId >( interestpoints );
+				IOFunctions.println( "Using a maximum radius of " + ipGrouping.getRadius() + " to filter interest points from overlapping views." );
 
 				// which groups exist
 				final Set< Group< ViewId > > groups = new HashSet<>();
@@ -337,12 +335,12 @@ public class Interest_Point_Registration implements PlugIn
 				final Map< ViewId, List< CorrespondingInterestPoints > > cMap = MatcherPairwiseTools.clearCorrespondences( subset.getViews(), interestpointLists, labelMap );
 
 				// add the corresponding detections and output result
-				final List< Pair< Pair< ViewId, ViewId >, PairwiseResult< GroupedInterestPoint< ViewId > > > > resultG =
+				final List< Pair< Pair< ViewId, ViewId >, PairwiseResult< GroupedInterestPoint< ViewId > > > > resultTransformed =
 						MatcherPairwiseTools.addCorrespondencesFromGroups( resultGroup, interestpointLists, labelMap, cMap );
 				// TODO: and here
 
 				// run global optimization
-				models = GlobalOpt.compute( pairwiseMatching.getMatchingModel().getModel(), resultG, fixedViews, groups );
+				models = GlobalOpt.compute( pairwiseMatching.getMatchingModel().getModel(), resultTransformed, fixedViews, groups );
 			}
 
 			// global opt failed
