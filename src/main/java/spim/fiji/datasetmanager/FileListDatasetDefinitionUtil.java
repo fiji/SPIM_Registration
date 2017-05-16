@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,7 @@ import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import ij.IJ;
 import ij.io.OpenDialog;
 import loci.formats.FormatException;
 import loci.formats.IFormatReader;
@@ -324,6 +326,8 @@ public class FileListDatasetDefinitionUtil
 			infoI.channelCount = r.getSizeC();
 			
 			result.add( infoI );
+			
+			IJ.log("" + new Date(System.currentTimeMillis()) + ": Detecting Tiles and Angles in Series " + (i+1) + " of " + nSeries );
 		}
 		
 		return result;
@@ -367,6 +371,8 @@ public class FileListDatasetDefinitionUtil
 			
 			//channelandIllumInfos.forEach( System.out::println );
 			result.add( new ValuePair<>( r.getSizeT(), channelandIllumInfos ));
+			
+			IJ.log("" + new Date(System.currentTimeMillis()) + ": Detecting Channels and Illuminations in Series " + (i+1) + " of " + nSeries );
 		}
 		
 		return result;
@@ -931,7 +937,8 @@ public class FileListDatasetDefinitionUtil
 			reader = new ImageReader();
 			reader.setMetadataStore( new OMEXMLMetadataImpl());
 		}
-		System.out.println( "Investigating file: " + file.getAbsolutePath() );
+		
+		IJ.log("" + new Date(System.currentTimeMillis()) + ": Investigating file " + file.getAbsolutePath() );
 		
 		
 		try
