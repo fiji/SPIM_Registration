@@ -112,6 +112,34 @@ public class MatcherPairwiseTools
 
 				pwr.getInliers().add( pm );
 			}
+
+			for ( final PointMatchGeneric< GroupedInterestPoint< V > > pm : p.getB().getCandidates() )
+			{
+				// assign correspondences
+				final GroupedInterestPoint< V > gpA = pm.getPoint1();
+				final GroupedInterestPoint< V > gpB = pm.getPoint2();
+
+				final V viewIdA = gpA.getV();
+				final V viewIdB = gpB.getV();
+
+				// update transformedMap
+				final Pair< V, V > pair = new ValuePair<>( viewIdA, viewIdB );
+
+				final PairwiseResult< GroupedInterestPoint< V > > pwr;
+
+				if ( transformedMap.containsKey( pair ) )
+					pwr = transformedMap.get( pair );
+				else
+				{
+					pwr = new PairwiseResult<>();
+					pwr.setInliers( new ArrayList<>(), p.getB().getError() );
+					pwr.setCandidates( new ArrayList<>() );
+					transformedMap.put( pair, pwr );
+				}
+
+				pwr.getCandidates().add( pm );
+			}
+
 		}
 
 		for ( final V viewId : cMap.keySet() )

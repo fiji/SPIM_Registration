@@ -25,7 +25,6 @@ import mpicbg.spim.data.sequence.TimePoints;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
-import mpicbg.spim.mpicbg.PointMatchGeneric;
 import net.imglib2.Dimensions;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.util.Pair;
@@ -60,11 +59,8 @@ import spim.process.interestpointregistration.pairwise.constellation.PairwiseSet
 import spim.process.interestpointregistration.pairwise.constellation.Subset;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.GroupedInterestPoint;
-import spim.process.interestpointregistration.pairwise.constellation.grouping.InterestPointGrouping;
-import spim.process.interestpointregistration.pairwise.constellation.grouping.InterestPointGroupingAll;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.InterestPointGroupingMinDistance;
 import spim.process.interestpointregistration.pairwise.constellation.overlap.OverlapDetection;
-import spim.process.interestpointregistration.pairwise.methods.ransac.RANSACParameters;
 
 /**
 *
@@ -108,7 +104,7 @@ public class Interest_Point_Registration implements PlugIn
 	public static int defaultIPGrouping = 0;
 
 	// Just in case we want to log statistics
-	List< Pair< Pair< ViewId, ViewId >, PairwiseResult< InterestPoint > > >  statistics;
+	List< Pair< Pair< ViewId, ViewId >, ? extends PairwiseResult< ? > > > statistics;
 
 	@Override
 	public void run( final String arg )
@@ -330,14 +326,19 @@ public class Interest_Point_Registration implements PlugIn
 				final List< Pair< Pair< Group< ViewId >, Group< ViewId > >, PairwiseResult< GroupedInterestPoint< ViewId > > > > resultGroup =
 						MatcherPairwiseTools.computePairs( groupedPairs, groupedInterestpoints, pairwiseMatching.pairwiseGroupedMatchingInstance() );
 
-				// TODO: there is a bug between here
 				// clear correspondences and get a map linking ViewIds to the correspondence lists
 				final Map< ViewId, List< CorrespondingInterestPoints > > cMap = MatcherPairwiseTools.clearCorrespondences( subset.getViews(), interestpointLists, labelMap );
 
-				// add the corresponding detections and output result
+				// add the corresponding detections and transform HashMap< Pair< Group < V >, Group< V > >, PairwiseResult > to HashMap< Pair< V, V >, PairwiseResult >
 				final List< Pair< Pair< ViewId, ViewId >, PairwiseResult< GroupedInterestPoint< ViewId > > > > resultTransformed =
 						MatcherPairwiseTools.addCorrespondencesFromGroups( resultGroup, interestpointLists, labelMap, cMap );
-				// TODO: and here
+
+				if ( collectStatistics )
+					for ( final Pair< Pair< ViewId, ViewId >, PairwiseResult< GroupedInterestPoint< ViewId > > > p : resultTransformed )
+					{
+						System.out.println( Group.pvid( p.getA().getA() ) + " " + Group.pvid( p.getA().getB() ) + ": " + p.getB().getInliers().size() +"/" + p.getB().getCandidates().size() + " with " + p.getB().getError() + " px." );
+						statistics.add( p );
+					}
 
 				// run global optimization
 				models = GlobalOpt.compute( pairwiseMatching.getMatchingModel().getModel(), resultTransformed, fixedViews, groups );
