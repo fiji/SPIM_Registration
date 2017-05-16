@@ -1,5 +1,10 @@
 package spim.fiji.datasetmanager;
 
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Label;
 import java.awt.Panel;
 import java.awt.TextField;
@@ -23,7 +28,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import javax.swing.JLabel;
 
 import bdv.export.ExportMipmapInfo;
 import bdv.export.ProgressWriter;
@@ -72,7 +80,7 @@ import spim.fiji.spimdata.stitchingresults.StitchingResults;
 
 public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 {
-	private static final String[] GLOB_SPECIAL_CHARS = new String[] {"{", "}", "[", "]", "*", "?"};
+	public static final String[] GLOB_SPECIAL_CHARS = new String[] {"{", "}", "[", "]", "*", "?"};
 	
 	private static ArrayList<FileListChooser> fileListChoosers = new ArrayList<>();
 	static
@@ -111,22 +119,32 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			return sb.toString();
 		}
 		
+		
+		
 		@Override
 		public List< File > getFileList()
 		{
 						
 			GenericDialogPlus gdp = new GenericDialogPlus("Pick files to include");
 			
-			gdp.addMessage( info );
+			
+			addMessageAsJLabel(info, gdp);
+			
+			
 			gdp.addDirectoryOrFileField( "path", "/", 65);
 			gdp.addNumericField( "exclude files smaller than (KB)", 10, 0 );
 			
-			// add empty preview
-			gdp.addMessage(previewFiles( new ArrayList<>()), GUIHelper.smallStatusFont);
+			System.out.println(gdp.getComponent(0).getClass());
 			
-			Label lab = (Label)gdp.getComponent( 5 );
+			// add empty preview
+			addMessageAsJLabel(previewFiles( new ArrayList<>()), gdp,  GUIHelper.smallStatusFont);
+			//gdp.add(new JLabel(previewFiles( new ArrayList<>())));
+			
+			//Label lab = (Label)gdp.getComponent( 5 );
+			JLabel lab = (JLabel)gdp.getComponent( 5 );
 			TextField num = (TextField)gdp.getComponent( 4 ); 
 			Panel pan = (Panel)gdp.getComponent( 2 );
+			
 			
 			num.addTextListener( new TextListener()
 			{
@@ -135,6 +153,9 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 				public void textValueChanged(TextEvent e)
 				{
 					String path = ((TextField)pan.getComponent( 0 )).getText();
+					
+					
+					System.out.println(path);
 					if (path.endsWith( File.separator ))
 						path = path.substring( 0, path.length() - File.separator.length() );
 					
@@ -240,6 +261,8 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			
 			
 		}
+		
+		
 
 		@Override
 		public String getDescription()
@@ -257,6 +280,36 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		
 	}
 	
+	public static void addMessageAsJLabel(String msg, GenericDialog gd)
+	{
+		addMessageAsJLabel(msg, gd, null);
+	}
+	
+	public static void addMessageAsJLabel(String msg, GenericDialog gd, Font font)
+	{
+		addMessageAsJLabel(msg, gd, font, null);
+	}
+	
+	public static void addMessageAsJLabel(String msg, GenericDialog gd, Font font, Color color)
+	{
+		gd.addMessage( msg );
+		Component msgC = gd.getComponent(gd.getComponentCount() - 1 );
+					
+		JLabel msgLabel = new JLabel(msg);
+		
+		if (font!=null)
+			msgLabel.setFont(font);
+		if (color!=null)
+			msgLabel.setForeground(color);
+		
+		gd.add(msgLabel);
+		GridBagConstraints constraints = ((GridBagLayout)gd.getLayout()).getConstraints(msgC);
+		
+		((GridBagLayout)gd.getLayout()).setConstraints(msgLabel, constraints);
+		
+		gd.remove(msgC);
+	}
+	
 		
 	
 	public static List<File> getFilesFromPattern(String pattern, final long fileMinSize)
@@ -266,14 +319,14 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		String justPattern = pAndp.getB();
 		
 		PathMatcher pm = FileSystems.getDefault().getPathMatcher( "glob:" + 
-				((justPattern.length() == 0) ? path : String.join( File.separator, path, justPattern )) );
+				((justPattern.length() == 0) ? path : String.join("/", path, justPattern )) );
 		
 		List<File> paths = new ArrayList<>();
 		
 		if (!new File( path ).exists())
 			return paths;
 		
-		int numLevels = justPattern.split( File.separator ).length;
+		int numLevels = justPattern.split( "/" ).length;
 						
 		try
 		{
@@ -714,9 +767,11 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		
 		GenericDialogPlus gd = new GenericDialogPlus("Assign attributes");
 		
-		gd.addMessage( "<html> <h1> View assignment </h1> </html> ");
+		//gd.addMessage( "<html> <h1> View assignment </h1> </html> ");
+		addMessageAsJLabel( "<html> <h1> View assignment </h1> </html> ", gd);
 		
-		gd.addMessage( inFileSummarySB.toString() );
+		//gd.addMessage( inFileSummarySB.toString() );
+		addMessageAsJLabel(inFileSummarySB.toString(), gd);
 		
 		String[] choicesAngleTile = new String[] {"Angles", "Tiles"};
 		String[] choicesChannelIllum = new String[] {"Channels", "Illums"};
@@ -742,7 +797,8 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		}
 		sbfilePatterns.append( "</html>" );
 		
-		gd.addMessage( sbfilePatterns.toString() );				
+		//gd.addMessage( sbfilePatterns.toString() );
+		addMessageAsJLabel(sbfilePatterns.toString(), gd);
 		
 		
 		choices.add( "-- ignore this pattern --"  );
@@ -803,23 +859,29 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		
 		GenericDialogPlus gdSave = new GenericDialogPlus( "Save dataset definition" );
 		
-		gdSave.addMessage( "<html> <h1> Saving options </h1> <br /> </html>" );
+		//gdSave.addMessage( "<html> <h1> Saving options </h1> <br /> </html>" );
+		addMessageAsJLabel("<html> <h1> Saving options </h1> <br /> </html>", gdSave);
 		
 		
 		Class<?> imgFactoryClass = ((FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() ).getImgFactory().getClass();
 		if (imgFactoryClass.equals( CellImgFactory.class ))
 		{
-			gdSave.addMessage( "<html> <h2> ImgLib2 container </h2> <br/>"
-					+ "<p style=\"color:orange\"> Some views of the dataset are larger than 2^31 pixels, will use CellImg </p>" );
+			//gdSave.addMessage( "<html> <h2> ImgLib2 container </h2> <br/>"
+			//		+ "<p style=\"color:orange\"> Some views of the dataset are larger than 2^31 pixels, will use CellImg </p>" );
+			
+			addMessageAsJLabel("<html> <h2> ImgLib2 container </h2> <br/>"
+					+ "<p style=\"color:orange\"> Some views of the dataset are larger than 2^31 pixels, will use CellImg </p>", gdSave);
 		}
 		else
 		{
-			gdSave.addMessage( "<html> <h2> ImgLib2 container </h2> <br/>");
+			//gdSave.addMessage( "<html> <h2> ImgLib2 container </h2> <br/>");
+			addMessageAsJLabel("<html> <h2> ImgLib2 container </h2> <br/>", gdSave);
 			String[] imglibChoice = new String[] {"ArrayImg", "CellImg"};
 			gdSave.addChoice( "imglib2 container", imglibChoice, imglibChoice[0] );
 		}
 			
-		gdSave.addMessage("<html><h2> Save path </h2></html>");
+		//gdSave.addMessage("<html><h2> Save path </h2></html>");
+		addMessageAsJLabel("<html><h2> Save path </h2></html>", gdSave);
 		
 		Set<String> filenames = new HashSet<>();
 		((FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() ).getFileMap().values().stream().forEach(
@@ -889,8 +951,8 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 	{
 		String prefixPath = paths.stream().reduce( paths.iterator().next(), 
 				(a,b) -> {
-					List<String> aDirs = Arrays.asList( a.split( File.separator ));
-					List<String> bDirs = Arrays.asList( b.split( File.separator ));
+					List<String> aDirs = Arrays.asList( a.split(Pattern.quote(File.separator) ));
+					List<String> bDirs = Arrays.asList( b.split( Pattern.quote(File.separator) ));
 					List<String> res = new ArrayList<>();
 					for (int i = 0; i< Math.min( aDirs.size(), bDirs.size() ); i++)
 					{
@@ -900,7 +962,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 							break;
 						}
 					}	
-					return String.join( File.separator, res );					
+					return String.join(File.separator, res );					
 				});
 		return new File(prefixPath);
 		
@@ -936,7 +998,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 	
 	public static Pair<String, String> splitIntoPathAndPattern(String s, String ... templates)
 	{
-		String[] subpaths = s.split( File.separator );
+		String[] subpaths = s.split( Pattern.quote(File.separator) );
 		ArrayList<String> path = new ArrayList<>(); 
 		ArrayList<String> pattern = new ArrayList<>();
 		boolean noPatternFound = true;
@@ -953,8 +1015,8 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			}
 		}
 		
-		String sPath = String.join( File.separator, path );
-		String sPattern = String.join( File.separator, pattern );
+		String sPath = String.join( "/", path );
+		String sPattern = String.join( "/", pattern );
 		
 		return new ValuePair< String, String >( sPath, sPattern );
 	}
