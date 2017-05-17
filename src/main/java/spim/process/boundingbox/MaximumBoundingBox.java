@@ -1,5 +1,6 @@
 package spim.process.boundingbox;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
@@ -18,37 +19,58 @@ import spim.process.interestpointregistration.pairwise.constellation.grouping.Gr
 
 public class MaximumBoundingBox implements BoundingBoxEstimation
 {
+	final ArrayList< ViewId > views;
 	final HashMap< ViewId, Dimensions > dimensions;
 	final HashMap< ViewId, ViewRegistration > registrations;
 
-	public MaximumBoundingBox( final AbstractSpimData< ? extends AbstractSequenceDescription<?,? extends BasicViewDescription< ? >, ? extends ImgLoader > > data )
+	public MaximumBoundingBox(
+			final Collection< ViewId > views,
+			final AbstractSpimData< ? extends AbstractSequenceDescription<?,? extends BasicViewDescription< ? >, ? extends ImgLoader > > data )
 	{
 		this.dimensions = new HashMap<>();
 		this.registrations = new HashMap<>();
+		this.views = filterMissingViews( views, data.getSequenceDescription() );
 
-		for ( final BasicViewDescription< ? > vd : data.getSequenceDescription().getViewDescriptions().values() )
+		for ( final ViewId viewId : this.views )
 		{
-			if ( vd.isPresent() )
-			{
-				final Dimensions size = ViewSetupUtils.getSizeOrLoad( vd.getViewSetup(), vd.getTimePoint(), data.getSequenceDescription().getImgLoader() );
-				dimensions.put( vd, size );
-				registrations.put( vd, data.getViewRegistrations().getViewRegistration( vd ) );
-			}
-			else
-			{
-				IOFunctions.println( "Warning: ViewID"  + Group.pvid( vd ) + " is not present." );
-			}
+			final BasicViewDescription< ? > vd = data.getSequenceDescription().getViewDescriptions().get( viewId );
+			dimensions.put( viewId, ViewSetupUtils.getSizeOrLoad( vd.getViewSetup(), vd.getTimePoint(), data.getSequenceDescription().getImgLoader() ) );
+			registrations.put( viewId, data.getViewRegistrations().getViewRegistration( vd ) );
 		}
+
+		IOFunctions.println( "Views for Maximum Bounding Box computation: " + this.views.size() );
 	}
 
-	public MaximumBoundingBox( final HashMap< ViewId, Dimensions > dimensions, final HashMap< ViewId, ViewRegistration > registrations )
+	public MaximumBoundingBox(
+			final Collection< ViewId > views,
+			final HashMap< ViewId, Dimensions > dimensions,
+			final HashMap< ViewId, ViewRegistration > registrations )
 	{
 		this.dimensions = dimensions;
 		this.registrations = registrations;
+		this.views = new ArrayList<>();
+		this.views.addAll( views );
+	}
+
+	public static ArrayList< ViewId > filterMissingViews( final Collection< ViewId > viewIds, final AbstractSequenceDescription< ?, ? extends BasicViewDescription< ? >, ? > sd )
+	{
+		final ArrayList< ViewId > views = new ArrayList<>();
+
+		for ( final ViewId viewId : viewIds )
+		{
+			final BasicViewDescription< ? > vd = sd.getViewDescriptions().get( viewId );
+
+			if ( vd.isPresent() )
+				views.add( vd );
+			else
+				IOFunctions.println( "Warning: ViewID"  + Group.pvid( vd ) + " is not present." );
+		}
+
+		return views;
 	}
 
 	@Override
-	public BoundingBox estimate( final Collection< ViewId > viewIds, final String title )
+	public BoundingBox estimate( final String title )
 	{
 		final double[] minBB = new double[ 3 ];
 		final double[] maxBB = new double[ 3 ];
@@ -59,7 +81,7 @@ public class MaximumBoundingBox implements BoundingBoxEstimation
 			maxBB[ d ] = -Double.MAX_VALUE;
 		}
 
-		computeMaxBoundingBoxDimensions( viewIds, dimensions, registrations, minBB, maxBB );
+		computeMaxBoundingBoxDimensions( views, dimensions, registrations, minBB, maxBB );
 
 		final BoundingBox maxsized = new BoundingBox( title, approximateLowerBound( minBB ), approximateUpperBound( maxBB ) );
 
