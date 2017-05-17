@@ -32,7 +32,6 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
-import spim.process.fusion.transformed.TransformView;
 import spim.process.fusion.transformed.TransformVirtual;
 import spim.process.fusion.transformed.TransformedInputRandomAccessible;
 import spim.process.fusion.transformed.TransformedRasteredRealRandomAccessible;
