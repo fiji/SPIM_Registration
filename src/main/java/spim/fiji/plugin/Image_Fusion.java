@@ -49,8 +49,8 @@ public class Image_Fusion implements PlugIn
 		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null ) );
 
 		staticBoundingBoxAlgorithms.add( new BoundingBoxGUI( null, null ) );
-		staticBoundingBoxAlgorithms.add( new BigDataViewerBoundingBox( null, null ) );
-		staticBoundingBoxAlgorithms.add( new AutomaticReorientation( null, null ) );
+		staticBoundingBoxAlgorithms.add( new BoundingBoxBigDataViewer( null, null ) );
+		staticBoundingBoxAlgorithms.add( new BoundingBoxReorientation( null, null ) );
 		staticBoundingBoxAlgorithms.add( new AutomaticBoundingBox( null, null ) );
 		staticBoundingBoxAlgorithms.add( new PreDefinedBoundingBox( null, null ) );
 

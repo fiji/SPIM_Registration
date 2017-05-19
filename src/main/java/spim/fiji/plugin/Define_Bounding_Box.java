@@ -30,8 +30,8 @@ public class Define_Bounding_Box implements PlugIn
 		IOFunctions.printIJLog = true;
 
 		staticBoundingBoxAlgorithms.add( new BoundingBoxGUI( null, null ) );
-		staticBoundingBoxAlgorithms.add( new BigDataViewerBoundingBox( null, null ) );
-		staticBoundingBoxAlgorithms.add( new AutomaticReorientation( null, null ) );
+		staticBoundingBoxAlgorithms.add( new BoundingBoxBigDataViewer( null, null ) );
+		staticBoundingBoxAlgorithms.add( new BoundingBoxReorientation( null, null ) );
 		staticBoundingBoxAlgorithms.add( new AutomaticBoundingBox( null, null ) );
 	}
 
