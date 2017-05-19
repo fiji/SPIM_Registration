@@ -14,10 +14,10 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import net.imglib2.util.Intervals;
+import spim.fiji.plugin.fusion.boundingbox.BoundingBoxGUI;
+import spim.fiji.plugin.fusion.boundingbox.BoundingBoxGUI.ManageListeners;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
-import spim.process.fusion.boundingbox.BoundingBoxGUI;
-import spim.process.fusion.boundingbox.BoundingBoxGUI.ManageListeners;
 import spim.process.fusion.export.ImgExport;
 
 public abstract class Fusion

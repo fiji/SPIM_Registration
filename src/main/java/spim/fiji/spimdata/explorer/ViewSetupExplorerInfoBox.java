@@ -3,9 +3,9 @@ package spim.fiji.spimdata.explorer;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import spim.fiji.plugin.fusion.boundingbox.PreDefinedBoundingBox;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
-import spim.process.fusion.boundingbox.PreDefinedBoundingBox;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.base.Entity;
 import mpicbg.spim.data.generic.base.NamedEntity;

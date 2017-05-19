@@ -36,9 +36,9 @@ public class TestBoundingBox
 		final List< ViewId > viewIds = new ArrayList< ViewId >();
 		viewIds.addAll( spimData.getSequenceDescription().getViewDescriptions().values() );
 
-		final BoundingBoxEstimation estimation = new MaximumBoundingBox( spimData );
+		final BoundingBoxEstimation estimation = new MaximumBoundingBox( viewIds, spimData );
 
-		final BoundingBox bb = estimation.estimate( viewIds, "Full Bounding Box" );
+		final BoundingBox bb = estimation.estimate( "Full Bounding Box" );
 
 		System.out.println( bb );
 	}

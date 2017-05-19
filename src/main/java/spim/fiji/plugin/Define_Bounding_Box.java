@@ -10,6 +10,7 @@ import java.util.List;
 
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+import spim.fiji.plugin.fusion.boundingbox.BoundingBoxGUI;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
@@ -17,7 +18,6 @@ import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.process.fusion.boundingbox.AutomaticBoundingBox;
 import spim.process.fusion.boundingbox.AutomaticReorientation;
 import spim.process.fusion.boundingbox.BigDataViewerBoundingBox;
-import spim.process.fusion.boundingbox.BoundingBoxGUI;
 
 public class Define_Bounding_Box implements PlugIn
 {

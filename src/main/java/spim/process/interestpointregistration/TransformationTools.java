@@ -3,6 +3,7 @@ package spim.process.interestpointregistration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +20,7 @@ import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Dimensions;
 import net.imglib2.realtransform.AffineGet;
 import net.imglib2.realtransform.AffineTransform3D;
+import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
@@ -131,12 +133,46 @@ public class TransformationTools
 		return applyTransformation( list, t );
 	}
 
+	/** call this method to load interestpoints and apply current transformation */
+	public static <V> List< InterestPoint > getTransformedCorrespondingInterestPoints(
+			final V viewId,
+			final Map< V, ViewRegistration > registrations,
+			final Map< V, ViewInterestPointLists > interestpoints,
+			final Map< V, String > labelMap )
+	{
+		final InterestPointList ipList = interestpoints.get( viewId ).getInterestPointList( labelMap.get( viewId ) );
+		final List< InterestPoint > allPoints = loadInterestPoints( ipList );
+		final ArrayList< InterestPoint > corrPoints = new ArrayList<>();
+		
+		// keep only those interest points who have correspondences
+		final HashSet< Integer > idSet = new HashSet<>();
+
+		for ( final CorrespondingInterestPoints cip : loadCorrespondingInterestPoints( ipList ) )
+			idSet.add( cip.getDetectionId() );
+
+		for ( final InterestPoint ip : allPoints )
+			if ( idSet.contains( ip.getId() ) )
+				corrPoints.add( ip );
+		
+		final AffineTransform3D t = getTransform( viewId, registrations );
+
+		return applyTransformation( corrPoints, t );
+	}
+
 	public static List< InterestPoint > loadInterestPoints( final InterestPointList list )
 	{
 		if ( !list.hasInterestPoints() )
 			list.loadInterestPoints();
 
 		return list.getInterestPointsCopy();
+	}
+
+	public static List< CorrespondingInterestPoints > loadCorrespondingInterestPoints( final InterestPointList list )
+	{
+		if ( !list.hasCorrespondingInterestPoints() )
+			list.loadCorrespondingInterestPoints();
+
+		return list.getCorrespondingInterestPointsCopy();
 	}
 
 	public static <V> AffineTransform3D getTransform( final V viewId, final Map< V, ViewRegistration > registrations )

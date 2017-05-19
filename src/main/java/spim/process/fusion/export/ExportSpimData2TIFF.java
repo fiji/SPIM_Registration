@@ -28,6 +28,7 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+import spim.fiji.plugin.fusion.boundingbox.BoundingBoxGUI;
 import spim.fiji.plugin.resave.Resave_TIFF;
 import spim.fiji.plugin.resave.Resave_TIFF.Parameters;
 import spim.fiji.spimdata.SpimData2;
@@ -36,7 +37,6 @@ import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.imgloaders.StackImgLoaderIJ;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
-import spim.process.fusion.boundingbox.BoundingBoxGUI;
 
 public class ExportSpimData2TIFF implements ImgExport
 {

@@ -21,10 +21,10 @@ import net.imglib2.img.imageplus.ImagePlusImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import spim.fiji.plugin.fusion.boundingbox.BoundingBoxGUI;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.imgloaders.AbstractImgFactoryImgLoader;
-import spim.process.fusion.boundingbox.BoundingBoxGUI;
 import spim.process.fusion.export.DisplayImage;
 
 public class Display_View implements PlugIn
