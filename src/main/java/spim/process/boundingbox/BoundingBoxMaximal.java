@@ -17,13 +17,13 @@ import spim.fiji.spimdata.ViewSetupUtils;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
-public class MaximumBoundingBox implements BoundingBoxEstimation
+public class BoundingBoxMaximal implements BoundingBoxEstimation
 {
 	final ArrayList< ViewId > views;
 	final HashMap< ViewId, Dimensions > dimensions;
 	final HashMap< ViewId, ViewRegistration > registrations;
 
-	public MaximumBoundingBox(
+	public BoundingBoxMaximal(
 			final Collection< ViewId > views,
 			final AbstractSpimData< ? extends AbstractSequenceDescription<?,? extends BasicViewDescription< ? >, ? extends ImgLoader > > data )
 	{
@@ -41,7 +41,7 @@ public class MaximumBoundingBox implements BoundingBoxEstimation
 		IOFunctions.println( "Views for Maximum Bounding Box computation: " + this.views.size() );
 	}
 
-	public MaximumBoundingBox(
+	public BoundingBoxMaximal(
 			final Collection< ViewId > views,
 			final HashMap< ViewId, Dimensions > dimensions,
 			final HashMap< ViewId, ViewRegistration > registrations )

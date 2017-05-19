@@ -9,7 +9,7 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.headless.registration.TestRegistration;
 import spim.process.boundingbox.BoundingBoxEstimation;
-import spim.process.boundingbox.MaximumBoundingBox;
+import spim.process.boundingbox.BoundingBoxMaximal;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class TestBoundingBox
@@ -36,7 +36,7 @@ public class TestBoundingBox
 		final List< ViewId > viewIds = new ArrayList< ViewId >();
 		viewIds.addAll( spimData.getSequenceDescription().getViewDescriptions().values() );
 
-		final BoundingBoxEstimation estimation = new MaximumBoundingBox( viewIds, spimData );
+		final BoundingBoxEstimation estimation = new BoundingBoxMaximal( viewIds, spimData );
 
 		final BoundingBox bb = estimation.estimate( "Full Bounding Box" );
 

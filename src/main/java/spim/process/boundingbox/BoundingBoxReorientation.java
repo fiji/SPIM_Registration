@@ -27,7 +27,7 @@ import spim.vecmath.Point3d;
 import spim.vecmath.Transform3D;
 import spim.vecmath.Vector3d;
 
-public class AutomaticReorientation implements BoundingBoxEstimation
+public class BoundingBoxReorientation implements BoundingBoxEstimation
 {
 	public static String reorientationDescription = "Reorientation to minimize bounding box";
 
@@ -47,7 +47,7 @@ public class AutomaticReorientation implements BoundingBoxEstimation
 	 * Warning: this will preconcatenate another rigid transform to all views listed in viewIdsToApply
 	 * @param viewIdsToApply - only used if testRotations==true, these are the views the identified rotation minimizing the bounding box size will be applied to
 	 */
-	public AutomaticReorientation(
+	public BoundingBoxReorientation(
 			final SpimData2 spimData,
 			final List< ViewId > viewIdsForEstimation,
 			final HashMap< ViewId, ? extends Collection< ? extends RealLocalizable > > points,
@@ -59,14 +59,14 @@ public class AutomaticReorientation implements BoundingBoxEstimation
 				spimData,
 				extractPoints(
 						points,
-						MaximumBoundingBox.filterMissingViews( viewIdsForEstimation, spimData.getSequenceDescription() ),
+						BoundingBoxMaximal.filterMissingViews( viewIdsForEstimation, spimData.getSequenceDescription() ),
 						spimData.getSequenceDescription() ),
 				percent,
 				testRotations,
 				viewIdsToApply );
 	}
 
-	public AutomaticReorientation(
+	public BoundingBoxReorientation(
 			final SpimData2 spimData,
 			final List< ViewId > viewIdsForEstimation,
 			final String label,
@@ -80,14 +80,14 @@ public class AutomaticReorientation implements BoundingBoxEstimation
 				extractPoints(
 						label,
 						useCorresponding,
-						MaximumBoundingBox.filterMissingViews( viewIdsForEstimation, spimData.getSequenceDescription() ),
+						BoundingBoxMaximal.filterMissingViews( viewIdsForEstimation, spimData.getSequenceDescription() ),
 						spimData ),
 				percent,
 				testRotations,
 				viewIdsToApply );
 	}
 
-	public AutomaticReorientation(
+	public BoundingBoxReorientation(
 			final SpimData2 spimData,
 			final ArrayList< RealLocalizable > points,
 			final double percent,
@@ -97,7 +97,7 @@ public class AutomaticReorientation implements BoundingBoxEstimation
 		this.spimData = spimData;
 		this.percent = percent;
 		this.testRotations = testRotations;
-		this.viewIdsToApply = MaximumBoundingBox.filterMissingViews( viewIdsToApply, spimData.getSequenceDescription() );
+		this.viewIdsToApply = BoundingBoxMaximal.filterMissingViews( viewIdsToApply, spimData.getSequenceDescription() );
 		this.points = points;
 	}
 
@@ -445,7 +445,7 @@ public class AutomaticReorientation implements BoundingBoxEstimation
 	{
 		final ArrayList< RealLocalizable > points = new ArrayList<>();
 
-		for ( final ViewId viewId : MaximumBoundingBox.filterMissingViews( viewIdsForEstimation, sd ) )
+		for ( final ViewId viewId : BoundingBoxMaximal.filterMissingViews( viewIdsForEstimation, sd ) )
 			points.addAll( pointsIn.get( viewId ) );
 
 		return points;

@@ -33,7 +33,7 @@ import spim.process.fusion.ImagePortion;
 import spim.process.fusion.weightedavg.ProcessFusion;
 import spim.process.fusion.weightedavg.ProcessVirtual;
 
-public class MinFilterThresholdBoundingBox implements BoundingBoxEstimation
+public class BoundingBoxMinFilterThreshold implements BoundingBoxEstimation
 {
 	final SpimData2 spimData;
 	final ArrayList< ViewId > views;
@@ -45,7 +45,7 @@ public class MinFilterThresholdBoundingBox implements BoundingBoxEstimation
 	final boolean displaySegmentationImage;
 	final int downsampling;
 
-	public MinFilterThresholdBoundingBox(
+	public BoundingBoxMinFilterThreshold(
 			final SpimData2 spimData,
 			final Collection< ViewId > viewIds,
 			final ImgFactory< FloatType > imgFactory,
@@ -56,7 +56,7 @@ public class MinFilterThresholdBoundingBox implements BoundingBoxEstimation
 			final int downsampling )
 	{
 		this.spimData = spimData;
-		this.views = MaximumBoundingBox.filterMissingViews( viewIds, spimData.getSequenceDescription() );
+		this.views = BoundingBoxMaximal.filterMissingViews( viewIds, spimData.getSequenceDescription() );
 		this.imgFactory = imgFactory;
 
 		this.background = background;
@@ -70,7 +70,7 @@ public class MinFilterThresholdBoundingBox implements BoundingBoxEstimation
 	public BoundingBox estimate( final String title )
 	{
 		// defines the range for the BDV bounding box
-		final BoundingBox maxBB = new MaximumBoundingBox( views, spimData ).estimate( "Maximum bounding box used for initalization" );
+		final BoundingBox maxBB = new BoundingBoxMaximal( views, spimData ).estimate( "Maximum bounding box used for initalization" );
 		IOFunctions.println( maxBB );
 
 		// fuse the dataset

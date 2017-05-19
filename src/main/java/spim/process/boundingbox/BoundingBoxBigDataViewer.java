@@ -30,26 +30,26 @@ import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 import spim.fiji.spimdata.explorer.popup.BDVPopup;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 
-public class BigDataViewerBoundingBox implements BoundingBoxEstimation
+public class BoundingBoxBigDataViewer implements BoundingBoxEstimation
 {
 	final SpimData spimData;
 	final Collection< ViewId > views;
 
 	public static int[] defaultMin, defaultMax;
 
-	public BigDataViewerBoundingBox(
+	public BoundingBoxBigDataViewer(
 			final SpimData spimData,
 			final Collection< ViewId > views )
 	{
 		this.spimData = spimData;
-		this.views = MaximumBoundingBox.filterMissingViews( views, spimData.getSequenceDescription() );
+		this.views = BoundingBoxMaximal.filterMissingViews( views, spimData.getSequenceDescription() );
 	}
 
 	@Override
 	public BoundingBox estimate( final String title )
 	{
 		// defines the range for the BDV bounding box
-		final BoundingBox maxBB = new MaximumBoundingBox( views, spimData ).estimate( "Maximum bounding box used for initalization" );
+		final BoundingBox maxBB = new BoundingBoxMaximal( views, spimData ).estimate( "Maximum bounding box used for initalization" );
 		IOFunctions.println( maxBB );
 
 		final Pair< BigDataViewer, Boolean > bdvPair = getBDV( spimData, views );
