@@ -7,6 +7,7 @@ import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.FinalInterval;
+import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
@@ -40,14 +41,15 @@ public class TestFusion
 
 	public static void testFusion( final SpimData2 spimData )
 	{
-		final BoundingBox bb = TestBoundingBox.testBoundingBox( spimData, false );
+		Interval bb = TestBoundingBox.testBoundingBox( spimData, false );
 
 		// select views to process
 		final List< ViewId > viewIds = new ArrayList< ViewId >();
 		viewIds.addAll( spimData.getSequenceDescription().getViewDescriptions().values() );
 
 		// downsampling
-		double downsampling = Double.NaN;
+		double downsampling = 4;
+		bb = TransformVirtual.scaleBoundingBox( bb, 1.0 / downsampling );
 
 		final long[] dim = new long[ bb.numDimensions() ];
 		bb.dimensions( dim );
