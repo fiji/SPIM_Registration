@@ -10,6 +10,7 @@ import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.headless.registration.TestRegistration;
 import spim.process.boundingbox.BoundingBoxBigDataViewer;
 import spim.process.boundingbox.BoundingBoxEstimation;
+import spim.process.boundingbox.BoundingBoxMaximal;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class TestBoundingBox
@@ -24,10 +25,10 @@ public class TestBoundingBox
 		for ( final ViewId viewId : spimData.getSequenceDescription().getViewDescriptions().values() )
 			System.out.println( Group.pvid( viewId ) );
 
-		testBoundingBox( spimData );
+		testBoundingBox( spimData, true );
 	}
 
-	public static void testBoundingBox( final SpimData2 spimData )
+	public static BoundingBox testBoundingBox( final SpimData2 spimData, final boolean bdv )
 	{
 		// run the whole pipeline
 		TestRegistration.testRegistration( spimData, false );
@@ -37,11 +38,16 @@ public class TestBoundingBox
 		viewIds.addAll( spimData.getSequenceDescription().getViewDescriptions().values() );
 
 		BoundingBoxEstimation estimation;
-		//estimation = new BoundingBoxMaximal( viewIds, spimData );
-		estimation = new BoundingBoxBigDataViewer( spimData, viewIds );
+
+		if ( bdv )
+			estimation = new BoundingBoxBigDataViewer( spimData, viewIds );
+		else
+			estimation = new BoundingBoxMaximal( viewIds, spimData );
 
 		final BoundingBox bb = estimation.estimate( "Full Bounding Box" );
 
 		System.out.println( bb );
+
+		return bb;
 	}
 }
