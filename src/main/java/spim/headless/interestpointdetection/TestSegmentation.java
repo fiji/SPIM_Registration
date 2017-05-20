@@ -31,8 +31,9 @@ public class TestSegmentation
 		final List< ViewDescription > removed = SpimData2.filterMissingViews( spimData, dog.toProcess );
 		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Removed " +  removed.size() + " views because they are not present." );
 
-		dog.downsampleXY = 2;
-		dog.sigma = 1.4;
+		dog.downsampleXY = 4;
+		dog.downsampleZ = 2;
+		dog.sigma = 1.1;
 
 		//dog.deviceList = spim.headless.cuda.CUDADevice.getSeparableCudaList( "lib/libSeparableConvolutionCUDALib.so" );
 		//dog.cuda = spim.headless.cuda.CUDADevice.separableConvolution;
