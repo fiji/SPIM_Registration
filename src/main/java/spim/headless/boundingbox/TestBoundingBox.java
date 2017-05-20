@@ -8,8 +8,8 @@ import simulation.imgloader.SimulatedBeadsImgLoader;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.headless.registration.TestRegistration;
+import spim.process.boundingbox.BoundingBoxBigDataViewer;
 import spim.process.boundingbox.BoundingBoxEstimation;
-import spim.process.boundingbox.BoundingBoxMaximal;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class TestBoundingBox
@@ -36,7 +36,9 @@ public class TestBoundingBox
 		final List< ViewId > viewIds = new ArrayList< ViewId >();
 		viewIds.addAll( spimData.getSequenceDescription().getViewDescriptions().values() );
 
-		final BoundingBoxEstimation estimation = new BoundingBoxMaximal( viewIds, spimData );
+		BoundingBoxEstimation estimation;
+		//estimation = new BoundingBoxMaximal( viewIds, spimData );
+		estimation = new BoundingBoxBigDataViewer( spimData, viewIds );
 
 		final BoundingBox bb = estimation.estimate( "Full Bounding Box" );
 
