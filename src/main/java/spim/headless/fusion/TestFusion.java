@@ -11,24 +11,21 @@ import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
-import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.cache.img.DiskCachedCellImgFactory;
+import net.imglib2.cache.img.DiskCachedCellImgOptions;
 import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImgFactory;
-import net.imglib2.img.imageplus.ImagePlusImgFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import simulation.imgloader.SimulatedBeadsImgLoader;
 import spim.Threads;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.headless.boundingbox.TestBoundingBox;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
 import spim.process.fusion.export.DisplayImage;
-import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
 import spim.process.fusion.transformed.TransformView;
 import spim.process.fusion.transformed.TransformVirtual;
 import spim.process.fusion.transformed.TransformWeight;
@@ -36,7 +33,6 @@ import spim.process.fusion.weightedavg.ProcessFusion;
 import spim.process.fusion.weightedavg.ProcessVirtual;
 import spim.process.fusion.weightedavg.ProcessVirtualPortion;
 import spim.process.fusion.weightedavg.ProcessVirtualPortionWeight;
-import spim.process.fusion.weightedavg.ProcessVirtualPortionWeights;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class TestFusion
@@ -63,7 +59,7 @@ public class TestFusion
 		viewIds.addAll( spimData.getSequenceDescription().getViewDescriptions().values() );
 
 		// downsampling
-		double downsampling = Double.NaN;
+		double downsampling = 2; //Double.NaN;
 
 		if ( !Double.isNaN( downsampling ) )
 			bb = TransformVirtual.scaleBoundingBox( bb, 1.0 / downsampling );
@@ -73,7 +69,7 @@ public class TestFusion
 
 		final ArrayList< RandomAccessibleInterval< FloatType > > images = new ArrayList<>();
 		final ArrayList< RandomAccessibleInterval< FloatType > > weights = new ArrayList<>();
-		
+
 		for ( final ViewId viewId : viewIds )
 		{
 			final ImgLoader imgloader = spimData.getSequenceDescription().getImgLoader();
@@ -104,7 +100,7 @@ public class TestFusion
 		//
 		// display virtually fused
 		//
-		DisplayImage.getImagePlusInstance( new FusedRandomAccessibleInterval( new FinalInterval( dim ), images, weights ), true, "Fused, Virtual", 0, 255 ).show();
+//		DisplayImage.getImagePlusInstance( new FusedRandomAccessibleInterval( new FinalInterval( dim ), images, weights ), true, "Fused, Virtual", 0, 255 ).show();
 
 		//
 		// actually fuse into an image multithreaded
@@ -115,7 +111,31 @@ public class TestFusion
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Reserving memory for fused image, size = " + Util.printCoordinates( size ) );
 
 		// try creating the output (type needs to be there to define T)
-		final Img< FloatType > fusedImg = new ImagePlusImgFactory< FloatType >().create( bb, new FloatType() );
+/*
+	 	// copying from FusedRandomAccessibleIntervalas the source
+		FusedRandomAccessibleInterval source = new FusedRandomAccessibleInterval( new FinalInterval( dim ), images, weights );
+		DiskCachedCellImgFactory< FloatType > factory = new DiskCachedCellImgFactory<>(
+				DiskCachedCellImgOptions.options()
+						.cacheType( CacheType.BOUNDED )
+						.maxCacheSize( 10 )
+						.numIoThreads( 7 )
+						.dirtyAccesses( false ) );
+		final Img< FloatType > fusedImg = factory.create( Intervals.dimensionsAsLongArray( bb ), new FloatType(), cell ->
+		{
+			Cursor< FloatType > i = Views.interval( source, cell ).cursor();
+			Cursor< FloatType > o = cell.cursor();
+			while ( o.hasNext() )
+				o.next().set( i.next() );
+		} );
+
+		SharedQueue queue = new SharedQueue( 7 );
+		BdvFunctions.show( VolatileViews.wrapAsVolatile( fusedImg, queue ), "title" );
+*/
+	 	// creating empty DiskCachedCellImg and writing to it multithreaded
+		DiskCachedCellImgFactory< FloatType > factory = new DiskCachedCellImgFactory<>(
+				DiskCachedCellImgOptions.options().cellDimensions( 100 ) );
+		final Img< FloatType > fusedImg = factory.create( bb, new FloatType() );
+//		final Img< FloatType > fusedImg = new ImagePlusImgFactory< FloatType >().create( bb, new FloatType() );
 
 		if ( fusedImg == null )
 		{
@@ -151,6 +171,6 @@ public class TestFusion
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Finished fusion process." );
 
-		DisplayImage.getImagePlusInstance( fusedImg, false, "Fused", 0, 255 ).show();
+		DisplayImage.getImagePlusInstance( fusedImg, true, "Fused", 0, 255 ).show();
 	}
 }
