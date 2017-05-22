@@ -1,20 +1,32 @@
 package spim.headless.fusion;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Vector;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.io.IOFunctions;
 import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.imageplus.ImagePlusImgFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Util;
 import simulation.imgloader.SimulatedBeadsImgLoader;
+import spim.Threads;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.headless.boundingbox.TestBoundingBox;
+import spim.process.fusion.FusionHelper;
+import spim.process.fusion.ImagePortion;
 import spim.process.fusion.export.DisplayImage;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
 import spim.process.fusion.transformed.TransformView;
@@ -22,6 +34,9 @@ import spim.process.fusion.transformed.TransformVirtual;
 import spim.process.fusion.transformed.TransformWeight;
 import spim.process.fusion.weightedavg.ProcessFusion;
 import spim.process.fusion.weightedavg.ProcessVirtual;
+import spim.process.fusion.weightedavg.ProcessVirtualPortion;
+import spim.process.fusion.weightedavg.ProcessVirtualPortionWeight;
+import spim.process.fusion.weightedavg.ProcessVirtualPortionWeights;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class TestFusion
@@ -48,8 +63,10 @@ public class TestFusion
 		viewIds.addAll( spimData.getSequenceDescription().getViewDescriptions().values() );
 
 		// downsampling
-		double downsampling = 4;
-		bb = TransformVirtual.scaleBoundingBox( bb, 1.0 / downsampling );
+		double downsampling = Double.NaN;
+
+		if ( !Double.isNaN( downsampling ) )
+			bb = TransformVirtual.scaleBoundingBox( bb, 1.0 / downsampling );
 
 		final long[] dim = new long[ bb.numDimensions() ];
 		bb.dimensions( dim );
@@ -84,7 +101,56 @@ public class TestFusion
 			//weights.add( Views.interval( new ConstantRandomAccessible< FloatType >( new FloatType( 1 ), 3 ), new FinalInterval( dim ) ) );
 		}
 
+		//
+		// display virtually fused
+		//
 		DisplayImage.getImagePlusInstance( new FusedRandomAccessibleInterval( new FinalInterval( dim ), images, weights ), true, "Fused, Virtual", 0, 255 ).show();
 
+		//
+		// actually fuse into an image multithreaded
+		//
+		final long[] size = new long[ bb.numDimensions() ];
+		bb.dimensions( size );
+
+		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Reserving memory for fused image, size = " + Util.printCoordinates( size ) );
+
+		// try creating the output (type needs to be there to define T)
+		final Img< FloatType > fusedImg = new ImagePlusImgFactory< FloatType >().create( bb, new FloatType() );
+
+		if ( fusedImg == null )
+		{
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): FusionFromVirtual: Cannot create output image."  );
+			return;
+		}
+
+		// split up into many parts for multithreading
+		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( fusedImg.size(), Threads.numThreads() * 4 );
+
+		// set up executor service
+		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
+		final ArrayList< ProcessVirtualPortion< FloatType > > tasks = new ArrayList< ProcessVirtualPortion< FloatType > >();
+
+		for ( final ImagePortion portion : portions )
+			tasks.add( new ProcessVirtualPortionWeight< FloatType >( portion, images, weights, fusedImg ) );
+
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Starting fusion process." );
+
+		try
+		{
+			// invokeAll() returns when all tasks are complete
+			taskExecutor.invokeAll( tasks );
+		}
+		catch ( final InterruptedException e )
+		{
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Failed to compute fusion: " + e );
+			e.printStackTrace();
+			return;
+		}
+
+		taskExecutor.shutdown();
+
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Finished fusion process." );
+
+		DisplayImage.getImagePlusInstance( fusedImg, false, "Fused", 0, 255 ).show();
 	}
 }
