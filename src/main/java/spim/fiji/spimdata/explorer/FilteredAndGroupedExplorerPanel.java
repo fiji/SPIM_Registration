@@ -69,7 +69,7 @@ public abstract class FilteredAndGroupedExplorerPanel<AS extends AbstractSpimDat
 	protected final String xml;
 	protected final X io;
 	protected final boolean isMac;
-	protected boolean colorMode = true;
+	protected boolean colorMode = false;
 	
 
 	final protected HashSet< List<BasicViewDescription< ? extends BasicViewSetup >> > selectedRows;
@@ -407,7 +407,7 @@ public abstract class FilteredAndGroupedExplorerPanel<AS extends AbstractSpimDat
 	public static void whiteSources(final List< ConverterSetup > cs)
 	{
 		for ( int i = 0; i < cs.size(); ++i )
-			cs.get( i ).setColor( new ARGBType( ARGBType.rgba( 255, 255, 255, 0 ) ) );
+			cs.get( i ).setColor( new ARGBType( ARGBType.rgba( 255, 255, 255, 255 ) ) );
 	}
 
 	public static void setVisibleSources(final VisibilityAndGrouping vag, final boolean[] active)
