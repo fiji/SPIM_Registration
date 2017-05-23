@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
@@ -197,6 +198,20 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		header.add( buttons, BorderLayout.EAST );
 		this.add( header, BorderLayout.NORTH );
 		this.add( new JScrollPane( table ), BorderLayout.CENTER );
+		
+		final JPanel footer = new JPanel(new BorderLayout());
+		final JCheckBox groupTilesCheckbox = new JCheckBox("Group Tiles", true);
+		footer.add(groupTilesCheckbox, BorderLayout.EAST);
+		this.add(footer, BorderLayout.SOUTH);
+		
+		groupTilesCheckbox.addActionListener(e -> {
+			if (groupTilesCheckbox.isSelected())
+				tableModel.addGroupingFactor(Tile.class);
+			else
+				tableModel.clearGroupingFactors();
+			updateContent();
+		});
+		
 
 		table.getSelectionModel().setSelectionInterval( 0, 0 );
 
