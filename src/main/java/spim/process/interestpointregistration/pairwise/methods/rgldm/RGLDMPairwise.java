@@ -68,4 +68,10 @@ public class RGLDMPairwise< I extends InterestPoint > implements MatcherPairwise
 		
 		return result;
 	}
+
+	/**
+	 * We only read the points, no reason to duplicate, RANSAC does its own duplication
+	 */
+	@Override
+	public boolean requiresInterestPointDuplication() { return true; }
 }

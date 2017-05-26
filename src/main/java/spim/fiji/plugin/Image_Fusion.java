@@ -13,6 +13,8 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.fusion.Fusion;
+import spim.fiji.plugin.fusion.boundingbox.BoundingBoxGUI;
+import spim.fiji.plugin.fusion.boundingbox.PreDefinedBoundingBox;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
@@ -20,8 +22,6 @@ import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import spim.process.fusion.boundingbox.AutomaticBoundingBox;
 import spim.process.fusion.boundingbox.AutomaticReorientation;
 import spim.process.fusion.boundingbox.BigDataViewerBoundingBox;
-import spim.process.fusion.boundingbox.BoundingBoxGUI;
-import spim.process.fusion.boundingbox.PreDefinedBoundingBox;
 import spim.process.fusion.deconvolution.EfficientBayesianBased;
 import spim.process.fusion.export.AppendSpimData2;
 import spim.process.fusion.export.DisplayImage;
@@ -49,8 +49,8 @@ public class Image_Fusion implements PlugIn
 		staticFusionAlgorithms.add( new WeightedAverageFusion( null, null ) );
 
 		staticBoundingBoxAlgorithms.add( new BoundingBoxGUI( null, null ) );
-		staticBoundingBoxAlgorithms.add( new BigDataViewerBoundingBox( null, null ) );
-		staticBoundingBoxAlgorithms.add( new AutomaticReorientation( null, null ) );
+		staticBoundingBoxAlgorithms.add( new BoundingBoxBigDataViewer( null, null ) );
+		staticBoundingBoxAlgorithms.add( new BoundingBoxReorientation( null, null ) );
 		staticBoundingBoxAlgorithms.add( new AutomaticBoundingBox( null, null ) );
 		staticBoundingBoxAlgorithms.add( new PreDefinedBoundingBox( null, null ) );
 

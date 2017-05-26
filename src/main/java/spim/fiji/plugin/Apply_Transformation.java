@@ -235,7 +235,7 @@ public class Apply_Transformation implements PlugIn
 
 		try
 		{
-			final Pair< BigDataViewer, Boolean > bdvPair = BigDataViewerBoundingBox.getBDV( data, viewIds );
+			final Pair< BigDataViewer, Boolean > bdvPair = BoundingBoxBigDataViewer.getBDV( data, viewIds );
 			
 			if ( bdvPair == null || bdvPair.getA() == null )
 				return null;

@@ -1,5 +1,6 @@
 package spim.fiji.spimdata.boundingbox;
 
+import mpicbg.imglib.util.Util;
 import net.imglib2.Interval;
 import net.imglib2.Positionable;
 import net.imglib2.RealPositionable;
@@ -110,4 +111,10 @@ public class BoundingBox implements Interval, Comparable< BoundingBox >
 
 	@Override
 	public int compareTo( final BoundingBox o ) { return o.getTitle().compareTo( this.getTitle() ); }
+
+	@Override
+	public String toString()
+	{
+		return "Bounding Box '" + getTitle() + "' " + Util.printCoordinates( min ) + " >>> " + Util.printCoordinates( max );
+	}
 }

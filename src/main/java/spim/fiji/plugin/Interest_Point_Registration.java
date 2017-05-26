@@ -46,6 +46,7 @@ import spim.fiji.plugin.interestpointregistration.statistics.TimeLapseDisplay;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
@@ -57,6 +58,8 @@ import spim.process.interestpointregistration.pairwise.PairwiseResult;
 import spim.process.interestpointregistration.pairwise.constellation.PairwiseSetup;
 import spim.process.interestpointregistration.pairwise.constellation.Subset;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.GroupedInterestPoint;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.InterestPointGroupingMinDistance;
 import spim.process.interestpointregistration.pairwise.constellation.overlap.OverlapDetection;
 
 /**
@@ -83,7 +86,7 @@ public class Interest_Point_Registration implements PlugIn
 	public static int defaultAlgorithm = 0;
 	public static int defaultRegistrationType = 0;
 	public static int defaultOverlapType = 1;
-	public static int defaultLabel = 0;
+	public static int defaultLabel = -1;
 
 	// advanced dialog
 	public static int defaultRange = 5;
@@ -101,7 +104,7 @@ public class Interest_Point_Registration implements PlugIn
 	public static int defaultIPGrouping = 0;
 
 	// Just in case we want to log statistics
-	List< Pair< Pair< ViewId, ViewId >, PairwiseResult< InterestPoint > > >  statistics;
+	List< Pair< Pair< ViewId, ViewId >, ? extends PairwiseResult< ? > > > statistics;
 
 	@Override
 	public void run( final String arg )
@@ -276,8 +279,6 @@ public class Interest_Point_Registration implements PlugIn
 
 					MatcherPairwiseTools.addCorrespondences( p.getB().getInliers(), vA, vB, labelMap.get( vA ), labelMap.get( vB ), listA, listB );
 
-					//IOFunctions.println( p.getB().getFullDesc() );
-
 					if ( collectStatistics )
 						statistics.add( p );
 				}
@@ -288,8 +289,59 @@ public class Interest_Point_Registration implements PlugIn
 			else
 			{
 				// test grouped registration
-				throw new RuntimeException( "grouped interestpoint registration not supported yet." );
-				//groupedSubsetTest( spimData, subset, interestpoints, labelMap, rp, gp, fixedViews );
+				final List< Pair< Group< ViewId >, Group< ViewId > > > groupedPairs = subset.getGroupedPairs();
+				final Map< Group< ViewId >, List< GroupedInterestPoint< ViewId > > > groupedInterestpoints = new HashMap<>();
+
+				final double maxError = pairwiseMatching.getMaxError();
+				final InterestPointGroupingMinDistance< ViewId > ipGrouping;
+
+				if ( Double.isNaN( maxError ) )
+					ipGrouping = new InterestPointGroupingMinDistance<>( interestpoints );
+				else
+					ipGrouping = new InterestPointGroupingMinDistance<>( maxError, interestpoints );
+
+				IOFunctions.println( "Using a maximum radius of " + ipGrouping.getRadius() + " to filter interest points from overlapping views." );
+
+				// which groups exist
+				final Set< Group< ViewId > > groups = new HashSet<>();
+
+				for ( final Pair< Group< ViewId >, Group< ViewId > > pair : groupedPairs )
+				{
+					groups.add( pair.getA() );
+					groups.add( pair.getB() );
+
+					if ( !groupedInterestpoints.containsKey( pair.getA() ) )
+					{
+						groupedInterestpoints.put( pair.getA(), ipGrouping.group( pair.getA() ) );
+						IOFunctions.println( "Grouping interestpoints for " + pair.getA() + " (" + ipGrouping.countBefore() + " >>> " + ipGrouping.countAfter() + ")" );
+					}
+
+					if ( !groupedInterestpoints.containsKey( pair.getB() ) )
+					{
+						groupedInterestpoints.put( pair.getB(), ipGrouping.group( pair.getB() ) );
+						IOFunctions.println( "Grouping interestpoints for " + pair.getB() + " (" + ipGrouping.countBefore() + " >>> " + ipGrouping.countAfter() + ")" );
+					}
+				}
+
+				final List< Pair< Pair< Group< ViewId >, Group< ViewId > >, PairwiseResult< GroupedInterestPoint< ViewId > > > > resultGroup =
+						MatcherPairwiseTools.computePairs( groupedPairs, groupedInterestpoints, pairwiseMatching.pairwiseGroupedMatchingInstance() );
+
+				// clear correspondences and get a map linking ViewIds to the correspondence lists
+				final Map< ViewId, List< CorrespondingInterestPoints > > cMap = MatcherPairwiseTools.clearCorrespondences( subset.getViews(), interestpointLists, labelMap );
+
+				// add the corresponding detections and transform HashMap< Pair< Group < V >, Group< V > >, PairwiseResult > to HashMap< Pair< V, V >, PairwiseResult >
+				final List< Pair< Pair< ViewId, ViewId >, PairwiseResult< GroupedInterestPoint< ViewId > > > > resultTransformed =
+						MatcherPairwiseTools.addCorrespondencesFromGroups( resultGroup, interestpointLists, labelMap, cMap );
+
+				if ( collectStatistics )
+					for ( final Pair< Pair< ViewId, ViewId >, PairwiseResult< GroupedInterestPoint< ViewId > > > p : resultTransformed )
+					{
+						System.out.println( Group.pvid( p.getA().getA() ) + " " + Group.pvid( p.getA().getB() ) + ": " + p.getB().getInliers().size() +"/" + p.getB().getCandidates().size() + " with " + p.getB().getError() + " px." );
+						statistics.add( p );
+					}
+
+				// run global optimization
+				models = GlobalOpt.compute( pairwiseMatching.getMatchingModel().getModel(), resultTransformed, fixedViews, groups );
 			}
 
 			// global opt failed
@@ -511,8 +563,21 @@ public class Interest_Point_Registration implements PlugIn
 			return null;
 		}
 
-		if ( defaultLabel >= labels.length )
-			defaultLabel = 0;
+		// choose the first label that is complete if possible
+		if ( defaultLabel < 0 || defaultLabel >= labels.length )
+		{
+			defaultLabel = -1;
+
+			for ( int i = 0; i < labels.length; ++i )
+				if ( !labels[ i ].contains( warningLabel ) )
+				{
+					defaultLabel = i;
+					break;
+				}
+
+			if ( defaultLabel == -1 )
+				defaultLabel = 0;
+		}
 
 		gd.addChoice( "Interest_points" , labels, labels[ defaultLabel ] );
 

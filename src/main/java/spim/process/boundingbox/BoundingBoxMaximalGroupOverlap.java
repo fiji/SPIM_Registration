@@ -1,9 +1,10 @@
-package spim.process.fusion.boundingbox.overlap;
+package spim.process.boundingbox;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -13,12 +14,10 @@ import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.registration.ViewRegistrations;
-import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.Dimensions;
 import net.imglib2.FinalInterval;
 import net.imglib2.FinalRealInterval;
-import net.imglib2.Interval;
 import net.imglib2.RealInterval;
 import net.imglib2.realtransform.AffineGet;
 import net.imglib2.realtransform.AffineTransform2D;
@@ -29,27 +28,36 @@ import net.imglib2.util.Pair;
 import net.imglib2.util.Util;
 import net.imglib2.util.ValuePair;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
+import spim.process.fusion.boundingbox.overlap.AbstractMaxBoundingBoxDetermination;
 
-public class IterativeBoundingBoxDetermination<V extends ViewId> extends AbstractMaxBoundingBoxDetermination<V>
+public class BoundingBoxMaximalGroupOverlap< V extends ViewId > implements BoundingBoxEstimation
 {
+	final Collection< ? extends Iterable< V > > viewGroups;
+	protected final ViewRegistrations vrs;
+	protected final Map< Integer, ? extends BasicViewSetup > vss;
 
-	public IterativeBoundingBoxDetermination(
-			AbstractSpimData< ? extends AbstractSequenceDescription< ? extends BasicViewSetup, ?, ? > > spimData)
+	public BoundingBoxMaximalGroupOverlap( final Collection< ? extends Iterable< V > > viewGroups,
+			final AbstractSpimData< ? extends AbstractSequenceDescription< ? extends BasicViewSetup, ?, ? > > spimData )
 	{
-		super( spimData );
+		this.vss = spimData.getSequenceDescription().getViewSetups();
+		this.vrs = spimData.getViewRegistrations();
+		this.viewGroups = viewGroups;
+	}
+
+	public BoundingBoxMaximalGroupOverlap( final Collection< ? extends Iterable< V > > viewGroups,
+			final AbstractSequenceDescription< ? extends BasicViewSetup, ?, ? > sd, final ViewRegistrations vrs )
+	{
+		this.vss = sd.getViewSetups();
+		this.vrs = vrs;
+		this.viewGroups = viewGroups;
 	}
 	
-	public IterativeBoundingBoxDetermination( final AbstractSequenceDescription< ? extends BasicViewSetup, ?, ? > sd, final ViewRegistrations vrs )
-	{
-		super(sd, vrs);
-	}
-
 	@Override
-	public BoundingBox getMaxOverlapBoundingBox(Collection< ? extends Collection< V > > viewGroups)
+	public BoundingBox estimate( String title )
 	{
 		Collection< Collection< Pair< RealInterval, AffineGet > > > viewGroupsInner = new ArrayList< >();
 
-		for ( Collection< V > group : viewGroups )
+		for ( Iterable< V > group : viewGroups )
 		{
 			ArrayList< Pair< RealInterval, AffineGet > > viewGroupInnerI = new ArrayList< >();
 
@@ -82,9 +90,9 @@ public class IterativeBoundingBoxDetermination<V extends ViewId> extends Abstrac
 			max[d] = (int) Math.ceil( maxBoundingInterval.realMax( d ) );
 		}
 
-		return new BoundingBox( min, max );
+		return new BoundingBox( title, min, max );
 	}
-	
+
 	public static RealInterval getMinBoundingInterval(Collection<Collection<Pair<RealInterval, AffineGet>>> viewGroups)
 	{
 		
@@ -115,8 +123,7 @@ public class IterativeBoundingBoxDetermination<V extends ViewId> extends Abstrac
 		return res;
 		
 	}
-	
-	
+
 	/**
 	 * Compute the smallest interval that contains both input intervals.
 	 * 
@@ -142,7 +149,7 @@ public class IterativeBoundingBoxDetermination<V extends ViewId> extends Abstrac
 		}
 		return new FinalRealInterval( min, max );
 	}
-	
+
 	/**
 	 * Calculate the boundary interval of the intersection of all views (view := interval + transformation)
 	 * may be null, if no intersection exists 
@@ -188,7 +195,39 @@ public class IterativeBoundingBoxDetermination<V extends ViewId> extends Abstrac
 
 		return new FinalRealInterval( min, max );
 	}
-	
+
+	/**
+	 * get String representation of RealInterval TODO: PR to ImgLib2 ({@link Util}) ?
+	 * @param interval
+	 * @return
+	 */
+	public static String printRealInterval( final RealInterval interval )
+	{
+		String out = "(Interval empty)";
+
+		if ( interval == null || interval.numDimensions() == 0 )
+			return out;
+
+		out = "[" + interval.realMin( 0 );
+
+		for ( int i = 1; i < interval.numDimensions(); i++ )
+			out += ", " + interval.realMin( i );
+
+		out += "] -> [" + interval.realMax( 0 );
+
+		for ( int i = 1; i < interval.numDimensions(); i++ )
+			out += ", " + interval.realMax( i );
+
+		out += "], dimensions (" + (interval.realMax( 0 ) - interval.realMin( 0 ));
+
+		for ( int i = 1; i < interval.numDimensions(); i++ )
+			out += ", " + (interval.realMax( i ) - interval.realMin( i ));
+
+		out += ")";
+
+		return out;
+	}
+
 	public static void main(String[] args)
 	{
 		Collection<Collection<Pair<RealInterval, AffineGet>>> viewGroups = new ArrayList<>();

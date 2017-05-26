@@ -23,10 +23,10 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+import spim.fiji.plugin.fusion.boundingbox.BoundingBoxGUI;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.imgloaders.StackImgLoaderIJ;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
-import spim.process.fusion.boundingbox.BoundingBoxGUI;
 import spim.process.fusion.export.ExportSpimData2TIFF.FileNamePattern;
 import bdv.img.hdf5.Hdf5ImageLoader;
 

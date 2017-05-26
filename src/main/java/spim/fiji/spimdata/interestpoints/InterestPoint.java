@@ -1,7 +1,7 @@
 package spim.fiji.spimdata.interestpoints;
 
-import net.imglib2.RealLocalizable;
 import mpicbg.models.Point;
+import net.imglib2.RealLocalizable;
 
 /**
  * Single interest point, extends mpicbg Point by an id
@@ -58,4 +58,9 @@ public class InterestPoint extends Point implements RealLocalizable
 	public double getDoublePosition( final int d ) { return useW? w[ d ] : l[ d ]; }
 
 	public InterestPoint newInstance( final int id, final double[] l ) { return new InterestPoint( id, l ); }
+
+	public InterestPoint duplicate() { return clone(); }
+
+	@Override
+	public InterestPoint clone() { return new InterestPoint( this.id, this.l ); }
 }

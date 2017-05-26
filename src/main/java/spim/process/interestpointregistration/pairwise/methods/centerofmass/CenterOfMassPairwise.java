@@ -107,4 +107,10 @@ public class CenterOfMassPairwise< I extends InterestPoint > implements MatcherP
 
 		return center;
 	}
+
+	/**
+	 * We only read l[]
+	 */
+	@Override
+	public boolean requiresInterestPointDuplication() { return false; }
 }

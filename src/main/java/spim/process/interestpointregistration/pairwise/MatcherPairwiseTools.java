@@ -34,14 +34,6 @@ public class MatcherPairwiseTools
 		return all;
 	}
 
-	public static < V, I extends InterestPoint > List< Pair< Pair< V, V >, PairwiseResult< I > > > computePairs(
-			final List< Pair< V, V > > pairs,
-			final Map< V, List< I > > interestpoints,
-			final MatcherPairwise< I > matcher )
-	{
-		return computePairs( pairs, interestpoints, matcher, null );
-	}
-
 	public static < V extends ViewId > Map< V, List< CorrespondingInterestPoints > > clearCorrespondences(
 			final Collection< V > viewIds,
 			final Map< V, ViewInterestPointLists > interestpoints,
@@ -79,8 +71,10 @@ public class MatcherPairwiseTools
 			final Map< V, ? extends List< CorrespondingInterestPoints > > cMap
 			)
 	{
+		// we transform HashMap< Pair< Group < V >, Group< V > >, PairwiseResult > to HashMap< Pair< V, V >, PairwiseResult >
 		final HashMap< Pair< V, V >, PairwiseResult< GroupedInterestPoint< V > > > transformedMap = new HashMap<>();
 
+		// it doesn't matter which pair of groups it comes from: ?
 		for ( final Pair< ?, P > p : resultGroup )
 		{
 			for ( final PointMatchGeneric< GroupedInterestPoint< V > > pm : p.getB().getInliers() )
@@ -119,7 +113,33 @@ public class MatcherPairwiseTools
 				pwr.getInliers().add( pm );
 			}
 
-			System.out.println( p.getB().getFullDesc() );
+			for ( final PointMatchGeneric< GroupedInterestPoint< V > > pm : p.getB().getCandidates() )
+			{
+				// assign correspondences
+				final GroupedInterestPoint< V > gpA = pm.getPoint1();
+				final GroupedInterestPoint< V > gpB = pm.getPoint2();
+
+				final V viewIdA = gpA.getV();
+				final V viewIdB = gpB.getV();
+
+				// update transformedMap
+				final Pair< V, V > pair = new ValuePair<>( viewIdA, viewIdB );
+
+				final PairwiseResult< GroupedInterestPoint< V > > pwr;
+
+				if ( transformedMap.containsKey( pair ) )
+					pwr = transformedMap.get( pair );
+				else
+				{
+					pwr = new PairwiseResult<>();
+					pwr.setInliers( new ArrayList<>(), p.getB().getError() );
+					pwr.setCandidates( new ArrayList<>() );
+					transformedMap.put( pair, pwr );
+				}
+
+				pwr.getCandidates().add( pm );
+			}
+
 		}
 
 		for ( final V viewId : cMap.keySet() )
@@ -198,6 +218,14 @@ public class MatcherPairwiseTools
 
 	public static < V, I extends InterestPoint > List< Pair< Pair< V, V >, PairwiseResult< I > > > computePairs(
 			final List< Pair< V, V > > pairs,
+			final Map< V, List< I > > interestpoints,
+			final MatcherPairwise< I > matcher )
+	{
+		return computePairs( pairs, interestpoints, matcher, null );
+	}
+
+	public static < V, I extends InterestPoint > List< Pair< Pair< V, V >, PairwiseResult< I > > > computePairs(
+			final List< Pair< V, V > > pairs,
 			final Map< V, ? extends List< I > > interestpoints,
 			final MatcherPairwise< I > matcher,
 			final ExecutorService exec )
@@ -213,8 +241,24 @@ public class MatcherPairwiseTools
 
 		for ( final Pair< V, V > pair : pairs )
 		{
-			final List< I > listA = interestpoints.get( pair.getA() );
-			final List< I > listB = interestpoints.get( pair.getB() );
+			final List< I > listA, listB;
+
+			if ( matcher.requiresInterestPointDuplication() )
+			{
+				listA = new ArrayList<>();
+				listB = new ArrayList<>();
+
+				for ( final I ip : interestpoints.get( pair.getA() ) )
+					listA.add( (I)ip.clone() );
+
+				for ( final I ip : interestpoints.get( pair.getB() ) )
+					listB.add( (I)ip.clone() );
+			}
+			else
+			{
+				listA = interestpoints.get( pair.getA() );
+				listB = interestpoints.get( pair.getB() );
+			}
 
 			tasks.add( new Callable< PairwiseResult< I > >()
 			{

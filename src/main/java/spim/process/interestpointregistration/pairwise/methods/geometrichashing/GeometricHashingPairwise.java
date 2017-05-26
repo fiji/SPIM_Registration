@@ -67,4 +67,10 @@ public class GeometricHashingPairwise< I extends InterestPoint > implements Matc
 
 		return result;
 	}
+
+	/**
+	 * We run RANSAC on these points which makes copies, so no need to duplicate points
+	 */
+	@Override
+	public boolean requiresInterestPointDuplication() { return false; }
 }

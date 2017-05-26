@@ -193,4 +193,9 @@ public class IterativeClosestPointPairwise< I extends InterestPoint > implements
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Found " + icp.getNumPointMatches() + " matches, avg error [px] " + icp.getAverageError() + " after " + i + " iterations" );
 	}
 
+	/**
+	 * We modify w[] on these points, which is not a good idea when running things multithreaded
+	 */
+	@Override
+	public boolean requiresInterestPointDuplication() { return true; }
 }

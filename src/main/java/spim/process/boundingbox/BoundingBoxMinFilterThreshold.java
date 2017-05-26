@@ -1,6 +1,7 @@
-package spim.process.fusion.boundingbox.automatic;
+package spim.process.boundingbox;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.Callable;
@@ -18,6 +19,7 @@ import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessible;
 import net.imglib2.img.Img;
+import net.imglib2.img.ImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
@@ -25,78 +27,81 @@ import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import spim.Threads;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
-import spim.process.fusion.boundingbox.BoundingBoxGUI;
 import spim.process.fusion.weightedavg.ProcessFusion;
 import spim.process.fusion.weightedavg.ProcessVirtual;
 
-public class MinFilterThreshold
+public class BoundingBoxMinFilterThreshold implements BoundingBoxEstimation
 {
-	final List< ViewId > viewIdsToProcess;
-	final Channel channel;
-	final TimePoint timepoint;
 	final SpimData2 spimData;
-	final BoundingBoxGUI bb;
+	final ArrayList< ViewId > views;
+	final ImgFactory< FloatType > imgFactory;
+
 	final double background;
 	final int radiusMin;
 	final boolean loadSequentially;
 	final boolean displaySegmentationImage;
+	final int downsampling;
 
-	int[] min, max;
-
-	public MinFilterThreshold(
+	public BoundingBoxMinFilterThreshold(
 			final SpimData2 spimData,
-			final List< ViewId > viewIdsToProcess,
-			final Channel channel,
-			final TimePoint timepoint,
-			final BoundingBoxGUI bb,
+			final Collection< ViewId > viewIds,
+			final ImgFactory< FloatType > imgFactory,
 			final double background,
 			final int discardedObjectSize,
 			final boolean loadSequentially,
-			final boolean displaySegmentationImage )
+			final boolean displaySegmentationImage,
+			final int downsampling )
 	{
 		this.spimData = spimData;
-		this.viewIdsToProcess = viewIdsToProcess;
-		this.channel = channel;
-		this.timepoint = timepoint;
-		this.bb = bb;
+		this.views = BoundingBoxMaximal.filterMissingViews( viewIds, spimData.getSequenceDescription() );
+		this.imgFactory = imgFactory;
+
 		this.background = background;
 		this.radiusMin = discardedObjectSize / 2;
 		this.loadSequentially = loadSequentially;
 		this.displaySegmentationImage = displaySegmentationImage;
+		this.downsampling = downsampling;
 	}
-	
-	public int[] getMin() { return min; }
-	public int[] getMax() { return max; }
-	
-	public boolean run()
-	{
-		// fuse the dataset
-		final ProcessFusion process = new ProcessVirtual( spimData, viewIdsToProcess, bb, bb.getDownSampling(), 0, false, false );
 
-		Img< FloatType > img = process.fuseStack( new FloatType(), timepoint, channel, bb.getImgFactory( new FloatType() ) );
+	@Override
+	public BoundingBox estimate( final String title )
+	{
+		// defines the range for the BDV bounding box
+		final BoundingBox maxBB = new BoundingBoxMaximal( views, spimData ).estimate( "Maximum bounding box used for initalization" );
+		IOFunctions.println( maxBB );
+
+		// fuse the dataset
+		final ProcessFusion process = new ProcessVirtual( spimData, views, maxBB, downsampling, 0, false, false );
+
+		// TODO: THIS MUST NOT BE CHANNEL/TIMEPOINT SPECIFIC
+		final TimePoint tpTmp = spimData.getSequenceDescription().getViewDescription( views.get( 0 ) ).getTimePoint();
+		final Channel tpCh = spimData.getSequenceDescription().getViewDescription( views.get( 0 ) ).getViewSetup().getChannel();
+
+		Img< FloatType > img = process.fuseStack( new FloatType(), tpTmp, tpCh, imgFactory );
 
 		final float[] minmax = FusionHelper.minMax( img );
-		final int effR = Math.max( radiusMin / bb.getDownSampling(), 1 );
+		final int effR = Math.max( radiusMin / downsampling, 1 );
 		final double threshold = (minmax[ 1 ] - minmax[ 0 ]) * ( background / 100.0 ) + minmax[ 0 ];
 
 		IOFunctions.println( "Fused image minimum: " + minmax[ 0 ] );
 		IOFunctions.println( "Fused image maximum: " + minmax[ 1 ] );
 		IOFunctions.println( "Threshold: " + threshold );
 
-		IOFunctions.println( "Computing minimum filter with effective radius of " + effR + " (downsampling=" + bb.getDownSampling() + ")" );
+		IOFunctions.println( "Computing minimum filter with effective radius of " + effR + " (downsampling=" + downsampling + ")" );
 
 		img = computeLazyMinFilter( img, effR );
 
 		if ( displaySegmentationImage )
 			ImageJFunctions.show( img );
 
-		this.min = new int[ img.numDimensions() ];
-		this.max = new int[ img.numDimensions() ];
+		final int[] min = new int[ img.numDimensions() ];
+		final int[] max = new int[ img.numDimensions() ];
 
 		if ( !computeBoundingBox( img, threshold, min, max ) )
-			return false;
+			return null;
 
 		IOFunctions.println( "Bounding box dim scaled: [" + Util.printCoordinates( min ) + "] >> [" + Util.printCoordinates( max ) + "]" );
 
@@ -104,21 +109,21 @@ public class MinFilterThreshold
 		for ( int d = 0; d < img.numDimensions(); ++d )
 		{
 			// downsampling
-			min[ d ] *= bb.getDownSampling();
-			max[ d ] *= bb.getDownSampling();
+			min[ d ] *= downsampling;
+			max[ d ] *= downsampling;
 			
 			// global coordinates
-			min[ d ] += bb.min( d );
-			max[ d ] += bb.min( d );
+			min[ d ] += maxBB.getMin()[ d ];
+			max[ d ] += maxBB.getMin()[ d ];
 			
 			// effect of the min filter + extra space
 			min[ d ] -= radiusMin * 3;
 			max[ d ] += radiusMin * 3;
 		}
-		
+
 		IOFunctions.println( "Bounding box dim global: [" + Util.printCoordinates( min ) + "] >> [" + Util.printCoordinates( max ) + "]" );
-		
-		return true;
+
+		return new BoundingBox( title, min, max );
 	}
 	
 	final public static < T extends RealType< T > > boolean computeBoundingBox( final Img< T > img, final double threshold, final int[] min, final int[] max )

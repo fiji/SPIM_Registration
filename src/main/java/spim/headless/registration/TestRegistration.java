@@ -12,7 +12,6 @@ import mpicbg.models.AffineModel3D;
 import mpicbg.models.RigidModel3D;
 import mpicbg.models.Tile;
 import mpicbg.spim.data.registration.ViewRegistration;
-import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.realtransform.AffineTransform3D;
@@ -51,10 +50,10 @@ public class TestRegistration
 		for ( final ViewId viewId : spimData.getSequenceDescription().getViewDescriptions().values() )
 			System.out.println( Group.pvid( viewId ) );
 
-		testRegistration( spimData );
+		testRegistration( spimData, false );
 	}
 
-	public static void testRegistration( final SpimData2 spimData )
+	public static void testRegistration( final SpimData2 spimData, final boolean grouped )
 	{
 		// run DoG
 		TestSegmentation.testDoG( spimData );
@@ -109,15 +108,32 @@ public class TestRegistration
 			fixedViews.add( fixedView );
 			System.out.println( "Removed " + subset.fixViews( fixedViews ).size() + " views due to fixing view tpId=" + fixedView.getTimePointId() + " setupId=" + fixedView.getViewSetupId() );
 
-			// get all pairs to be compared (either that XOR grouped pairs)
-			pairSubsetTest( spimData, subset, interestpoints, labelMap, rp, gp, fixedViews );
+			final HashMap< ViewId, Tile< AffineModel3D > > models;
 
-			// test grouped registration
-			groupedSubsetTest( spimData, subset, interestpoints, labelMap, rp, gp, fixedViews );
+			if ( grouped )
+				models = groupedSubsetTest( spimData, subset, interestpoints, labelMap, rp, gp, fixedViews );
+			else
+				models = pairSubsetTest( spimData, subset, interestpoints, labelMap, rp, gp, fixedViews );
+
+			final ViewId firstView = subset.getViews().iterator().next();
+			final AffineTransform3D mapBack = TransformationTools.computeMapBackModel(
+					spimData.getSequenceDescription().getViewDescription( firstView ).getViewSetup().getSize(),
+					spimData.getViewRegistrations().getViewRegistrations().get( firstView ).getModel(),
+					models.get( firstView ).getModel(),
+					new RigidModel3D() );
+
+			// pre-concatenate models to spimdata2 viewregistrations (from SpimData(2))
+			for ( final ViewId viewId : subset.getViews() )
+			{
+				final Tile< AffineModel3D > tile = models.get( viewId );
+				final ViewRegistration vr = spimData.getViewRegistrations().getViewRegistrations().get( viewId );
+
+				TransformationTools.storeTransformation( vr, viewId, tile, mapBack, "Scripted AffineModel3D" );
+			}
 		}
 	}
 
-	public static void pairSubsetTest(
+	public static final HashMap< ViewId, Tile< AffineModel3D > > pairSubsetTest(
 			final SpimData2 spimData,
 			final Subset< ViewId > subset,
 			final Map< ViewId, List< InterestPoint > > interestpoints,
@@ -153,12 +169,10 @@ public class TestRegistration
 		}
 
 		// run global optimization
-		final HashMap< ViewId, Tile< AffineModel3D > > models =
-				GlobalOpt.compute( new AffineModel3D(), result, fixedViews, subset.getGroups() );
-
+		return GlobalOpt.compute( new AffineModel3D(), result, fixedViews, subset.getGroups() );
 	}
 
-	public static void groupedSubsetTest(
+	public static final HashMap< ViewId, Tile< AffineModel3D > > groupedSubsetTest(
 			final SpimData2 spimData,
 			final Subset< ViewId > subset,
 			final Map< ViewId, List< InterestPoint > > interestpoints,
@@ -209,25 +223,6 @@ public class TestRegistration
 				MatcherPairwiseTools.addCorrespondencesFromGroups( resultGroup, spimData.getViewInterestPoints().getViewInterestPoints(), labelMap, cMap );
 
 		// run global optimization
-		final HashMap< ViewId, Tile< AffineModel3D > > models =
-				GlobalOpt.compute( new AffineModel3D(), resultG, fixedViews, groups );
-
-		final ViewId firstView = subset.getViews().iterator().next();
-		final AffineTransform3D mapBack = TransformationTools.computeMapBackModel(
-				spimData.getSequenceDescription().getViewDescription( firstView ).getViewSetup().getSize(),
-				spimData.getViewRegistrations().getViewRegistrations().get( firstView ).getModel(),
-				models.get( firstView ).getModel(),
-				new RigidModel3D() );
-
-		System.out.println( mapBack );
-
-		// pre-concatenate models to spimdata2 viewregistrations (from SpimData(2))
-		for ( final ViewId viewId : subset.getViews() )
-		{
-			final Tile< AffineModel3D > tile = models.get( viewId );
-			final ViewRegistration vr = spimData.getViewRegistrations().getViewRegistrations().get( viewId );
-
-			TransformationTools.storeTransformation( vr, viewId, tile, mapBack, "Scripted AffineModel3D" );
-		}
+		return GlobalOpt.compute( new AffineModel3D(), resultG, fixedViews, groups );
 	}
 }

@@ -16,16 +16,22 @@ public abstract class InterestPointGrouping< V extends ViewId > implements Group
 {
 	// all interestpoints
 	final Map< V, List< InterestPoint > > interestpoints;
+	int before, after;
 
 	public InterestPointGrouping( final Map< V, List< InterestPoint > > interestpoints )
 	{
 		this.interestpoints = interestpoints;
 	}
 
+	public int countBefore() { return before; }
+	public int countAfter() { return after; }
+
 	@Override
 	public List< GroupedInterestPoint< V > > group( final Group< V > group )
 	{
 		final Map< V, List< InterestPoint > > toMerge = new HashMap<>();
+
+		this.before = 0;
 
 		for ( final V view : group )
 		{
@@ -34,10 +40,16 @@ public abstract class InterestPointGrouping< V extends ViewId > implements Group
 			if ( points == null )
 				throw new RuntimeException( "no interestpoints available" );
 
+			before += points.size();
+	
 			toMerge.put( view, points );
 		}
 
-		return merge( toMerge );
+		final List< GroupedInterestPoint< V > > merged = merge( toMerge );
+
+		this.after = merged.size();
+
+		return merged;
 	}
 
 	protected abstract List< GroupedInterestPoint< V > > merge( Map< V, List< InterestPoint > > toMerge );

@@ -1,10 +1,14 @@
 package spim.fiji.plugin.interestpointregistration.pairwise;
 
 import ij.gui.GenericDialog;
+import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.plugin.interestpointregistration.TransformationModelGUI;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.process.interestpointregistration.pairwise.MatcherPairwise;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.GroupedInterestPoint;
 import spim.process.interestpointregistration.pairwise.methods.icp.IterativeClosestPointPairwise;
 import spim.process.interestpointregistration.pairwise.methods.icp.IterativeClosestPointParameters;
+import spim.process.interestpointregistration.pairwise.methods.ransac.RANSACParameters;
 
 /**
  * Iterative closest point implementation
@@ -25,6 +29,13 @@ public class IterativeClosestPointGUI implements PairwiseGUI
 	{
 		final IterativeClosestPointParameters ip = new IterativeClosestPointParameters( model.getModel() );
 		return new IterativeClosestPointPairwise< InterestPoint >( ip );
+	}
+
+	@Override
+	public MatcherPairwise< GroupedInterestPoint< ViewId > > pairwiseGroupedMatchingInstance()
+	{
+		final IterativeClosestPointParameters ip = new IterativeClosestPointParameters( model.getModel() );
+		return new IterativeClosestPointPairwise< GroupedInterestPoint< ViewId > >( ip );
 	}
 
 	@Override
@@ -62,8 +73,8 @@ public class IterativeClosestPointGUI implements PairwiseGUI
 	public String getDescription() { return "Iterative closest-point (ICP, no invariance)";}
 
 	@Override
-	public TransformationModelGUI getMatchingModel()
-	{
-		return model;
-	}
+	public TransformationModelGUI getMatchingModel() { return model; }
+
+	@Override
+	public double getMaxError() { return parameters.getMaxDistance(); }
 }
