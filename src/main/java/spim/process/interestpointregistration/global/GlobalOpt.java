@@ -47,7 +47,7 @@ public class GlobalOpt
 			final PointMatchCreator pmc,
 			final ConvergenceStrategy cs,
 			final Collection< ViewId > fixedViews,
-			final Set< Group< ViewId > > groupsIn )
+			final Collection< Group< ViewId > > groupsIn )
 	{
 		final Pair< HashMap< ViewId, Tile< M > >, ArrayList< Group< ViewId > > > globalOpt = initGlobalOpt( model, pmc, fixedViews, groupsIn );
 

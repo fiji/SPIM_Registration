@@ -3,6 +3,7 @@ package spim.process.interestpointregistration.global;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 
 import mpicbg.models.Model;
@@ -12,6 +13,8 @@ import spim.process.interestpointregistration.global.convergence.ConvergenceStra
 import spim.process.interestpointregistration.global.convergence.IterativeConvergenceStrategy;
 import spim.process.interestpointregistration.global.linkremoval.LinkRemovalStrategy;
 import spim.process.interestpointregistration.global.pointmatchcreating.PointMatchCreator;
+import spim.process.interestpointregistration.global.pointmatchcreating.WeakLinkFactory;
+import spim.process.interestpointregistration.global.pointmatchcreating.WeakLinkPointMatchCreator;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class GlobalOptTwoRound
@@ -21,6 +24,7 @@ public class GlobalOptTwoRound
 			final PointMatchCreator pmc,
 			final IterativeConvergenceStrategy ics,
 			final LinkRemovalStrategy lms,
+			final WeakLinkFactory wlf,
 			final ConvergenceStrategy cs,
 			final Collection< ViewId > fixedViews,
 			final Set< Group< ViewId > > groupsIn )
@@ -35,11 +39,34 @@ public class GlobalOptTwoRound
 		final HashMap< ViewId, Tile< M > > models = GlobalOptIterative.compute( model, pmc, ics, lms, fixedViews, groups );
 
 		// identify groups of connected views
+		final List< Set< Tile< ? > > > sets = Tile.identifyConnectedGraphs( models.values() );
 
-		// make weak links for things that are not in the same group
+		// every connected set becomes one group
+		final ArrayList< Group< ViewId > > groupsNew = new ArrayList<>();
+		for ( final Set< Tile< ? > > connected : sets )
+		{
+			final Group< ViewId > group = assembleViews( connected, models );
+			groupsNew.add( group );
+		}
+
+		// compute the weak links
+		final WeakLinkPointMatchCreator< M > wlpmc = wlf.create( groupsNew, models );
 
 		// run global opt without iterative
+		final HashMap< ViewId, Tile< M > > models2 = GlobalOpt.compute( model, wlpmc, cs, fixedViews, groups );
 
-		return null;
+		// TODO: remove models from first iteration that were applied? Or maybe never apply them and concatenate them here?
+		return models2;
+	}
+
+	public static Group< ViewId > assembleViews( final Set< Tile< ? > > set, final HashMap< ViewId, ? extends Tile< ? > > models )
+	{
+		final Group< ViewId > group = new Group<>();
+
+		for ( final ViewId viewId : models.keySet() )
+			if ( set.contains( models.get( viewId ) ) )
+				group.getViews().add( viewId );
+
+		return group;
 	}
 }
