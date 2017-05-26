@@ -17,7 +17,7 @@ import mpicbg.spim.io.IOFunctions;
 import net.imglib2.util.Pair;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
-public class IterativeGlobalOpt
+public class GlobalOptIterative
 {
 	public static < M extends Model< M > > HashMap< ViewId, Tile< M > > compute(
 			final M model,
