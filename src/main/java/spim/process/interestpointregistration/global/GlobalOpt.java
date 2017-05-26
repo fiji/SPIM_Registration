@@ -20,6 +20,8 @@ import mpicbg.models.Tile;
 import mpicbg.models.TileConfiguration;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.util.Pair;
+import net.imglib2.util.ValuePair;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 import spim.vecmath.Matrix4f;
 import spim.vecmath.Quat4f;
@@ -44,31 +46,17 @@ public class GlobalOpt
 			final Collection< ViewId > fixedViews,
 			final Set< Group< ViewId > > groupsIn )
 	{
-		// merge overlapping groups if necessary
-		final ArrayList< Group< ViewId > > groups = Group.mergeAllOverlappingGroups( groupsIn );
-
-		// remove empty groups
-		Group.removeEmptyGroups( groups );
-
-		// assemble all views
-		final HashSet< ViewId > tmpSet = pmc.getAllViews();
-
-		// views that are part of a group but not of a pair and will thus be transformed as well
-		for ( final Group< ViewId > group : groups )
-				tmpSet.addAll( group.getViews() );
-
-		final List< ViewId > views = new ArrayList< ViewId >();
-		views.addAll( tmpSet );
-		Collections.sort( views );
+		final Pair< HashMap< ViewId, Tile< M > >, ArrayList< Group< ViewId > > > globalOpt = initGlobalOpt( model, pmc, fixedViews, groupsIn );
 
 		// assign ViewIds to the individual Tiles (either one tile per view or one tile per group)
-		final HashMap< ViewId, Tile< M > > map = assignViewsToTiles( model, views, groups );
+		final HashMap< ViewId, Tile< M > > map = globalOpt.getA();
 
-		// assign weights per group
-		pmc.assignWeights( map, groups, fixedViews );
+		// Groups are potentially modfied (merged, empty ones removed)
+		final ArrayList< Group< ViewId > > groups = globalOpt.getB();
 
-		// assign the pointmatches to all the tiles
-		pmc.assignPointMatches( map, groups, fixedViews );
+		// all views sorted (optional, but nice for user feedback)
+		final ArrayList< ViewId > views = new ArrayList<>( map.keySet() );
+		Collections.sort( views );
 
 		// add and fix tiles as defined in the GlobalOptimizationType
 		final TileConfiguration tc = addAndFixTiles( views, map, fixedViews, groups );
@@ -125,6 +113,42 @@ public class GlobalOpt
 		return map;
 	}
 
+	public static < M extends Model< M > > Pair< HashMap< ViewId, Tile< M > >, ArrayList< Group< ViewId > > > initGlobalOpt(
+			final M model,
+			final PointMatchCreator pmc,
+			final Collection< ViewId > fixedViews,
+			final Set< Group< ViewId > > groupsIn )
+	{
+		// merge overlapping groups if necessary
+		final ArrayList< Group< ViewId > > groups = Group.mergeAllOverlappingGroups( groupsIn );
+
+		// remove empty groups
+		Group.removeEmptyGroups( groups );
+
+		// assemble all views
+		final HashSet< ViewId > tmpSet = pmc.getAllViews();
+
+		// views that are part of a group but not of a pair and will thus be transformed as well
+		for ( final Group< ViewId > group : groups )
+				tmpSet.addAll( group.getViews() );
+
+		final List< ViewId > views = new ArrayList< ViewId >();
+		views.addAll( tmpSet );
+		Collections.sort( views );
+
+		// assign ViewIds to the individual Tiles (either one tile per view or one tile per group)
+		final HashMap< ViewId, Tile< M > > map = assignViewsToTiles( model, views, groups );
+
+		// assign weights per group
+		pmc.assignWeights( map, groups, fixedViews );
+
+		// assign the pointmatches to all the tiles
+		pmc.assignPointMatches( map, groups, fixedViews );
+
+		return new ValuePair<>( map, groups );
+	}
+	
+	
 	/**
 	 * WARNING: This fails on older MACs, in this case remove: 
 	 * 
@@ -221,10 +245,10 @@ public class GlobalOpt
 	}
 	
 	protected static < M extends Model< M > > TileConfiguration addAndFixTiles(
-			final List< ViewId > views,
+			final Collection< ViewId > views,
 			final HashMap< ViewId, Tile< M > > map,
 			final Collection< ViewId > fixedViews,
-			final List< ? extends Group < ViewId > > groups )
+			final Collection< ? extends Group < ViewId > > groups )
 	{
 		// create a new tileconfiguration organizing the global optimization
 		final TileConfiguration tc = new TileConfiguration();
