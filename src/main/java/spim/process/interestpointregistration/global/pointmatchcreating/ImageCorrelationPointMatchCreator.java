@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.global;
+package spim.process.interestpointregistration.global.pointmatchcreating;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,7 +17,9 @@ import net.imglib2.realtransform.Translation3D;
 import net.imglib2.util.ValuePair;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.fiji.spimdata.stitchingresults.PairwiseStitchingResult;
-import spim.process.interestpointregistration.global.Link.LinkType;
+import spim.process.interestpointregistration.global.GlobalOpt;
+import spim.process.interestpointregistration.global.convergence.ConvergenceStrategy;
+import spim.process.interestpointregistration.global.pointmatchcreating.Link.LinkType;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class ImageCorrelationPointMatchCreator implements PointMatchCreator

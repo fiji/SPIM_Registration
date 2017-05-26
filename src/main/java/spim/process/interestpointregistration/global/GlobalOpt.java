@@ -22,6 +22,8 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
+import spim.process.interestpointregistration.global.convergence.ConvergenceStrategy;
+import spim.process.interestpointregistration.global.pointmatchcreating.PointMatchCreator;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 import spim.vecmath.Matrix4f;
 import spim.vecmath.Quat4f;
@@ -118,7 +120,7 @@ public class GlobalOpt
 			final M model,
 			final PointMatchCreator pmc,
 			final Collection< ViewId > fixedViews,
-			final Set< Group< ViewId > > groupsIn )
+			final Collection< Group< ViewId > > groupsIn )
 	{
 		// merge overlapping groups if necessary
 		final ArrayList< Group< ViewId > > groups = Group.mergeAllOverlappingGroups( groupsIn );

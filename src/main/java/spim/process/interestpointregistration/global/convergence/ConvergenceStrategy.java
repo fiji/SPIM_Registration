@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.global;
+package spim.process.interestpointregistration.global.convergence;
 
 public class ConvergenceStrategy
 {

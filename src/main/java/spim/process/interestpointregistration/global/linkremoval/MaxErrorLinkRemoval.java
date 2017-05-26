@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.global;
+package spim.process.interestpointregistration.global.linkremoval;
 
 import mpicbg.models.PointMatch;
 import mpicbg.models.Tile;

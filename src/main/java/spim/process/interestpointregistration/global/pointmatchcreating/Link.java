@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.global;
+package spim.process.interestpointregistration.global.pointmatchcreating;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,7 +11,8 @@ import net.imglib2.realtransform.AffineGet;
 
 public class Link<T>
 {
-		
+	public enum LinkType{ WEAK, STRONG; }
+
 	private final T first;
 	private final T second;
 	private final AffineGet transform;
@@ -28,45 +29,14 @@ public class Link<T>
 	}
 	
 	public RealInterval getBoundingBox() { return boundingBox; }
-	public T getFirst()
-	{
-		return first;
-	}
+	public T getFirst() { return first; }
+	public T getSecond() { return second; }
+	public AffineGet getTransform() { return transform; }
+	public LinkType getLinkType() { return linkType; }
 
-	public T getSecond()
-	{
-		return second;
-	}
-
-	public AffineGet getTransform()
-	{
-		return transform;
-	}
-	
-	/*
-	public double[] getInverseShift()
-	{
-		final double[] tmp = new double[ shift.length ];
-		for ( int d = 0; d < tmp.length; ++d )
-			tmp[ d ] = -shift[ d ];
-		return tmp;
-	}
-	*/
-
-	public LinkType getLinkType()
-	{
-		return linkType;
-	}
-
-	public enum LinkType{
-		WEAK, STRONG;
-	}
-	
 	@Override
 	public String toString()
-	{
-		return "("+ first.toString() + ", " + second.toString() + ")";		
-	}
+	{ return "("+ first.toString() + ", " + second.toString() + ")"; }
 	
 	public static <T> List<Set<T>> 
 			getConnectedComponents(Collection<Link<T>> links, LinkType linkType)

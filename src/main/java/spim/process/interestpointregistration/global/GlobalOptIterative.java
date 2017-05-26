@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Set;
 
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.Model;
@@ -15,6 +14,9 @@ import mpicbg.models.TileConfiguration;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.util.Pair;
+import spim.process.interestpointregistration.global.convergence.IterativeConvergenceStrategy;
+import spim.process.interestpointregistration.global.linkremoval.LinkRemovalStrategy;
+import spim.process.interestpointregistration.global.pointmatchcreating.PointMatchCreator;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class GlobalOptIterative
@@ -25,7 +27,7 @@ public class GlobalOptIterative
 			final IterativeConvergenceStrategy ics,
 			final LinkRemovalStrategy lms,
 			final Collection< ViewId > fixedViews,
-			final Set< Group< ViewId > > groupsIn )
+			final Collection< Group< ViewId > > groupsIn )
 	{
 
 		final Pair< HashMap< ViewId, Tile< M > >, ArrayList< Group< ViewId > > > globalOpt = GlobalOpt.initGlobalOpt( model, pmc, fixedViews, groupsIn );
@@ -87,7 +89,6 @@ public class GlobalOptIterative
 					finished = true;
 			}
 		}
-		
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Transformation Models:" );
 
