@@ -43,6 +43,7 @@ public class GlobalOpt
 	public static < M extends Model< M > > HashMap< ViewId, Tile< M > > compute(
 			final M model,
 			final PointMatchCreator pmc,
+			final ConvergenceStrategy cs,
 			final Collection< ViewId > fixedViews,
 			final Set< Group< ViewId > > groupsIn )
 	{
@@ -76,7 +77,7 @@ public class GlobalOpt
 			else
 				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): prealigned all tiles" );
 
-			tc.optimize( 10, 10000, 200 );
+			tc.optimize( cs.getMaxError(), cs.getMaxIterations(), cs.getMaxPlateauWidth() );
 
 			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Global optimization of " + 
 				tc.getTiles().size() +  " view-tiles (Model=" + model.getClass().getSimpleName()  + "):" );

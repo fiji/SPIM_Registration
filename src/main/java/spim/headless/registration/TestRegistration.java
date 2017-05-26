@@ -23,8 +23,10 @@ import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.headless.interestpointdetection.TestSegmentation;
 import spim.process.interestpointregistration.TransformationTools;
+import spim.process.interestpointregistration.global.ConvergenceStrategy;
 import spim.process.interestpointregistration.global.GlobalOpt;
 import spim.process.interestpointregistration.global.InterestPointMatchCreator;
+import spim.process.interestpointregistration.global.PointMatchCreator;
 import spim.process.interestpointregistration.pairwise.MatcherPairwiseTools;
 import spim.process.interestpointregistration.pairwise.PairwiseResult;
 import spim.process.interestpointregistration.pairwise.constellation.AllToAll;
@@ -169,8 +171,11 @@ public class TestRegistration
 			System.out.println( p.getB().getFullDesc() );
 		}
 
+		final ConvergenceStrategy cs = new ConvergenceStrategy( 10.0 );
+		final PointMatchCreator pmc = new InterestPointMatchCreator( result );
+
 		// run global optimization
-		return GlobalOpt.compute( new AffineModel3D(), new InterestPointMatchCreator( result ), fixedViews, subset.getGroups() );
+		return GlobalOpt.compute( new AffineModel3D(), pmc, cs, fixedViews, subset.getGroups() );
 	}
 
 	public static final HashMap< ViewId, Tile< AffineModel3D > > groupedSubsetTest(
@@ -224,6 +229,9 @@ public class TestRegistration
 				MatcherPairwiseTools.addCorrespondencesFromGroups( resultGroup, spimData.getViewInterestPoints().getViewInterestPoints(), labelMap, cMap );
 
 		// run global optimization
-		return GlobalOpt.compute( new AffineModel3D(), new InterestPointMatchCreator( resultG ), fixedViews, groups );
+		final ConvergenceStrategy cs = new ConvergenceStrategy( 10.0 );
+		final PointMatchCreator pmc = new InterestPointMatchCreator( resultG );
+
+		return GlobalOpt.compute( new AffineModel3D(), pmc, cs, fixedViews, groups );
 	}
 }
