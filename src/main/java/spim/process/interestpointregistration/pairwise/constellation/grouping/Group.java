@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -14,6 +15,7 @@ import mpicbg.spim.data.generic.base.Entity;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
@@ -84,6 +86,97 @@ public class Group< V > implements Iterable< V >
 
 	@Override
 	public String toString() { return gvids( this ); }
+
+	/**
+	 * Combining means to combine all views that share everything except what they are grouped after, e.g. channel
+	 * (for example used to group GFP, RFP, DAPI for a Tile)
+	 * 
+	 * v1: angle 0, channel 0
+	 * v2: angle 1, channel 0
+	 * v3: angle 1, channel 1
+	 * 
+	 * combine by channel: [v1], [v2 v3]
+	 *
+	 * @param vds - the ViewDescriptions to process
+	 * @param groupingFactors - by which attribute(s)
+	 * @return - list of groups
+	 */
+
+	public static < V extends BasicViewDescription< ? > > List< Group< V > > combineBy(List<V> vds,
+			Set<Class<? extends Entity>> groupingFactors)
+	{
+		return combineOrSplitBy( vds, groupingFactors, true );
+	}
+
+	/**
+	 * Split means to make a group for every instance of an attribute, e.g. channel
+	 * (for example group everthing that is GFP and everything that it RFP)
+	 * 
+	 * v1: angle 0, channel 0
+	 * v2: angle 1, channel 0
+	 * v3: angle 1, channel 1
+	 * 
+	 * split by channel: [v1 v2], [v3]
+	 *
+	 * @param vds - the ViewDescriptions to process
+	 * @param groupingFactors - by which attribute(s)
+	 * @return - list of groups
+	 */
+
+	public static < V extends BasicViewDescription< ? > > List<Group<V>> splitBy(List<V> vds,
+			Set<Class<? extends Entity>> groupingFactors)
+	{
+		return combineOrSplitBy( vds, groupingFactors, false );
+	}
+
+	/**
+	 * Combining means to combine all views that share everything except what they are grouped after, e.g. channel
+	 * (for example used to group GFP, RFP, DAPI for a Tile)
+	 * 
+	 * Split means the opposite in some way, make a group for every instance of an attribute, e.g. channel
+	 * (for example group everthing that is GFP and everything that it RFP)
+	 * 
+	 * v1: angle 0, channel 0
+	 * v2: angle 1, channel 0
+	 * v3: angle 1, channel 1
+	 * 
+	 * combine by channel: [v1], [v2 v3]
+	 * split by channel: [v1 v2], [v3]
+	 *
+	 * @param vds - the ViewDescriptions to process
+	 * @param groupingFactors - by which attribute(s)
+	 * @param combine - combine or split
+	 * @return - list of groups
+	 */
+	public static < V extends BasicViewDescription< ? > > List<Group<V>> combineOrSplitBy(List<V> vds,
+			Set<Class<? extends Entity>> groupingFactors, boolean combine)
+	{
+		Map<List<Entity>, Group<V>> res = new HashMap<>();
+
+		// pre-sort vd List
+		Collections.sort( vds );
+		
+		
+		for (V vd : vds) {
+			List<Entity> key = new ArrayList<>();
+
+			if ((combine && !groupingFactors.contains(TimePoint.class)) || (!combine && groupingFactors.contains(TimePoint.class))) {
+				key.add(vd.getTimePoint());
+			}
+
+			for (Entity e : vd.getViewSetup().getAttributes().values()) {
+				if ((combine && !groupingFactors.contains(e.getClass())) || (!combine && groupingFactors.contains(e.getClass())) )
+					key.add(e);
+			}
+
+			if (!res.containsKey(key))
+				res.put(key, new Group<V>());
+
+			res.get(key).getViews().add(vd);
+		}
+
+		return new ArrayList<>(res.values());
+	}
 
 	public static < V extends ViewId > ArrayList< Group< V > > groupByChannel( final List< V > viewIds, final AbstractSequenceDescription< ?, ? extends BasicViewDescription< ? >, ? > sd )
 	{
