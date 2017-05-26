@@ -65,10 +65,10 @@ public class GlobalOpt
 		final HashMap< ViewId, Tile< M > > map = assignViewsToTiles( model, views, groups );
 
 		// assign weights per group
-		pmc.assignWeights( groups, map );
+		pmc.assignWeights( map, groups, fixedViews );
 
 		// assign the pointmatches to all the tiles
-		pmc.assignPointMatches( map );
+		pmc.assignPointMatches( map, groups, fixedViews );
 
 		// add and fix tiles as defined in the GlobalOptimizationType
 		final TileConfiguration tc = addAndFixTiles( views, map, fixedViews, groups );

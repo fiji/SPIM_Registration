@@ -1,6 +1,7 @@
 package spim.process.interestpointregistration.global;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -12,22 +13,34 @@ import spim.process.interestpointregistration.pairwise.constellation.grouping.Gr
 public interface PointMatchCreator
 {
 	/**
-	 * @return - all views that this class knows and that are part of the global opt
+	 * @return - all views that this class knows and that are part of the global opt, called first
 	 */
 	public HashSet< ViewId > getAllViews();
 
 	/**
-	 * assign pointmatches for all views that this object knows and that are present in tileMap.keySet(), which comes from getAllViews() plus what is in the group definition of the globalopt
+	 * By default all weights are 1, if wanted one can adjust them here, otherwise simply return.
+	 * The idea is to modify the weights in the PointMatchGeneric objects, that are later on just added
+	 * called second
 	 * 
 	 * @param tileMap - the map from viewId to Tile
+	 * @param groups - which groups exist
+	 * @param fixedViews - which views are fixed (one might need it?)
 	 */
-	public < M extends Model< M > > void assignPointMatches( final HashMap< ViewId, Tile< M > > tileMap );
+	public < M extends Model< M > > void assignWeights(
+			final HashMap< ViewId, Tile< M > > tileMap,
+			final ArrayList< Group< ViewId > > groups,
+			final Collection< ViewId > fixedViews );
 
 	/**
-	 * By default all weights are 1, if wanted one can adjust them here, otherwise simply return
-	 * 
-	 * @param groups - which groups exist
+	 * assign pointmatches for all views that this object knows and that are present in tileMap.keySet(), which comes from getAllViews() plus what is in the group definition of the globalopt
+	 * called last
+	 *
 	 * @param tileMap - the map from viewId to Tile
+	 * @param groups - which groups exist (one might need it?)
+	 * @param fixedViews - which views are fixed (one might need it?)
 	 */
-	public < M extends Model< M > > void assignWeights( final ArrayList< Group< ViewId > > groups, final HashMap< ViewId, Tile< M > > tileMap );
+	public < M extends Model< M > > void assignPointMatches(
+			final HashMap< ViewId, Tile< M > > tileMap,
+			final ArrayList< Group< ViewId > > groups,
+			final Collection< ViewId > fixedViews );
 }

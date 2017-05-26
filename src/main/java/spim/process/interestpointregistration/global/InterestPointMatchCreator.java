@@ -1,6 +1,7 @@
 package spim.process.interestpointregistration.global;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,14 +40,20 @@ public class InterestPointMatchCreator implements PointMatchCreator
 	}
 
 	@Override
-	public < M extends Model< M > > void assignPointMatches( final HashMap< ViewId, Tile< M > > map )
+	public < M extends Model< M > > void assignPointMatches(
+			final HashMap< ViewId, Tile< M > > tileMap,
+			final ArrayList< Group< ViewId > > groups,
+			final Collection< ViewId > fixedViews )
 	{
 		for ( Pair< ? extends Pair< ViewId, ViewId >, ? extends PairwiseResult< ? > > pair : pairs )
-			addPointMatches( pair.getB().getInliers(), map.get( pair.getA().getA() ), map.get( pair.getA().getB() ) );
+			addPointMatches( pair.getB().getInliers(), tileMap.get( pair.getA().getA() ), tileMap.get( pair.getA().getB() ) );
 	}
 
 	@Override
-	public < M extends Model< M > > void assignWeights( final ArrayList< Group< ViewId > > groups, final HashMap< ViewId, Tile< M > > tileMap )
+	public < M extends Model< M > > void assignWeights(
+			final HashMap< ViewId, Tile< M > > tileMap,
+			final ArrayList< Group< ViewId > > groups,
+			final Collection< ViewId > fixedViews )
 	{
 		assignWeights( pairs, groups, tileMap );
 	}
