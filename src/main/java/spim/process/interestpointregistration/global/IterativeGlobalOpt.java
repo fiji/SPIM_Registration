@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Set;
 
 import mpicbg.models.IllDefinedDataPointsException;
@@ -16,7 +15,6 @@ import mpicbg.models.TileConfiguration;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.util.Pair;
-import spim.process.interestpointregistration.pairwise.PairwiseResult;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class IterativeGlobalOpt

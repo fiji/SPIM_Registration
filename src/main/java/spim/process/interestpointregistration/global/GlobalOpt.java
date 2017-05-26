@@ -105,8 +105,8 @@ public class GlobalOpt
 			
 			String output = Group.pvid( viewId ) + ": " + printAffine3D( (Affine3D<?>)tile.getModel() );
 			
-			if ( (Model)tile.getModel() instanceof RigidModel3D )
-				IOFunctions.println( output + ", " + getRotationAxis( (RigidModel3D)(Model)tile.getModel() ) );
+			if ( tile.getModel() instanceof RigidModel3D )
+				IOFunctions.println( output + ", " + getRotationAxis( (RigidModel3D)tile.getModel() ) );
 			else
 				IOFunctions.println( output + ", " + getScaling( (Affine3D<?>)tile.getModel() ) );
 		}
