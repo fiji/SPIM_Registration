@@ -24,6 +24,7 @@ import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.headless.interestpointdetection.TestSegmentation;
 import spim.process.interestpointregistration.TransformationTools;
 import spim.process.interestpointregistration.global.GlobalOpt;
+import spim.process.interestpointregistration.global.InterestPointMatchCreator;
 import spim.process.interestpointregistration.pairwise.MatcherPairwiseTools;
 import spim.process.interestpointregistration.pairwise.PairwiseResult;
 import spim.process.interestpointregistration.pairwise.constellation.AllToAll;
@@ -169,7 +170,7 @@ public class TestRegistration
 		}
 
 		// run global optimization
-		return GlobalOpt.compute( new AffineModel3D(), result, fixedViews, subset.getGroups() );
+		return GlobalOpt.compute( new AffineModel3D(), new InterestPointMatchCreator( result ), fixedViews, subset.getGroups() );
 	}
 
 	public static final HashMap< ViewId, Tile< AffineModel3D > > groupedSubsetTest(
@@ -223,6 +224,6 @@ public class TestRegistration
 				MatcherPairwiseTools.addCorrespondencesFromGroups( resultGroup, spimData.getViewInterestPoints().getViewInterestPoints(), labelMap, cMap );
 
 		// run global optimization
-		return GlobalOpt.compute( new AffineModel3D(), resultG, fixedViews, groups );
+		return GlobalOpt.compute( new AffineModel3D(), new InterestPointMatchCreator( resultG ), fixedViews, groups );
 	}
 }
