@@ -2,11 +2,18 @@ package spim.process.interestpointregistration.pairwise.constellation.grouping;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import mpicbg.spim.data.generic.base.Entity;
+import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
+import mpicbg.spim.data.generic.sequence.BasicViewDescription;
+import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
@@ -77,6 +84,82 @@ public class Group< V > implements Iterable< V >
 
 	@Override
 	public String toString() { return gvids( this ); }
+
+	public static < V extends ViewId > ArrayList< Group< V > > groupByChannel( final List< V > viewIds, final AbstractSequenceDescription< ?, ? extends BasicViewDescription< ? >, ? > sd )
+	{
+		final ArrayList< V > input = new ArrayList<>();
+		final ArrayList< Group< V > > grouped = new ArrayList<>();
+
+		input.addAll( viewIds );
+
+		while ( input.size() > 0 )
+		{
+			final BasicViewDescription< ? > vd1 = sd.getViewDescriptions().get( input.get( 0 ) );
+			final ArrayList< V > localGroup = new ArrayList<>();
+			localGroup.add( input.get( 0 ) );
+			input.remove( 0 );
+
+			for ( int i = input.size() - 1; i >=0; --i )
+			{
+				boolean attributesSame = true;
+
+				final BasicViewDescription< ? > vd2 = sd.getViewDescriptions().get( input.get( i ) );
+
+				final int id1 = vd1.getViewSetup().getAttribute( Channel.class ).getId();
+				final int id2 = vd2.getViewSetup().getAttribute( Channel.class ).getId();
+
+				// same timepoint, different channel
+				if ( vd1.getTimePointId() == vd2.getTimePointId() && id1 != id2 )
+				{
+					final Map< String, Entity > map1 = vd1.getViewSetup().getAttributes();
+					final Map< String, Entity > map2 = vd2.getViewSetup().getAttributes();
+
+					for ( final String key : map1.keySet() )
+					{
+						if ( key.toLowerCase().equals( "channel" ) )
+							continue;
+
+						if ( map1.containsKey( key ) && map2.containsKey( key ) )
+						{
+							if ( !map1.get( key ).equals( map2.get( key ) ) )
+								attributesSame = false;
+						}
+						else
+						{
+							attributesSame = false;
+						}
+					}
+				}
+				else
+				{
+					attributesSame = false;
+				}
+				
+				if ( attributesSame )
+				{
+					localGroup.add( input.get( i ) );
+					input.remove( i );
+				}
+			}
+
+			// sort by channel, so it is always the same order
+			Collections.sort( localGroup, new Comparator< ViewId >()
+			{
+				@Override
+				public int compare( final ViewId o1, final ViewId o2 )
+				{
+					final int id1 = sd.getViewDescriptions().get( o1 ).getViewSetup().getAttribute( Channel.class ).getId();
+					final int id2 = sd.getViewDescriptions().get( o2 ).getViewSetup().getAttribute( Channel.class ).getId();
+
+					return id1 - id2;
+				}
+			} );
+
+			grouped.add( new Group< V >( localGroup ) );
+		}
+
+		return grouped;
+	}
 
 	public static < V > boolean containsBoth(
 			final V viewIdA,
