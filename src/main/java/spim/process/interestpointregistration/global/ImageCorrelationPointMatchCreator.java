@@ -10,19 +10,23 @@ import mpicbg.models.Model;
 import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
 import mpicbg.models.Tile;
+import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.RealInterval;
+import net.imglib2.realtransform.Translation3D;
+import net.imglib2.util.ValuePair;
+import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.fiji.spimdata.stitchingresults.PairwiseStitchingResult;
 import spim.process.interestpointregistration.global.Link.LinkType;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class ImageCorrelationPointMatchCreator implements PointMatchCreator
 {
-	final Collection< PairwiseStitchingResult< ? extends ViewId > > pairwiseResults;
+	final Collection< ? extends PairwiseStitchingResult< ? extends ViewId > > pairwiseResults;
 	final double correlationT;
 
 	public ImageCorrelationPointMatchCreator(
-			final Collection< PairwiseStitchingResult< ? extends ViewId > > pairwiseResults,
+			final Collection< ? extends PairwiseStitchingResult< ? extends ViewId > > pairwiseResults,
 			final double correlationT )
 	{
 		this.pairwiseResults = pairwiseResults;
@@ -119,5 +123,36 @@ public class ImageCorrelationPointMatchCreator implements PointMatchCreator
 		tileB.addMatches( PointMatch.flip( pm ) );
 		tileA.addConnectedTile( tileB );
 		tileB.addConnectedTile( tileA );
+	}
+
+	public static void main( String[] args )
+	{
+		final ViewId view0 = new ViewId( 0, 0 );
+		final ViewId view1 = new ViewId( 0, 1 );
+		final ViewId view2 = new ViewId( 0, 2 );
+
+		final Group< ViewId > group0 = new Group<>( view0 );
+		final Group< ViewId > group1 = new Group<>( view1 );
+		final Group< ViewId > group2 = new Group<>( view2 );
+
+		final HashSet< Group< ViewId > > groups = new HashSet<>();
+		groups.add( group0 );
+		groups.add( group1 );
+		groups.add( group2 );
+
+		final ArrayList< ViewId > fixed = new ArrayList<>();
+		fixed.add( view0 );
+
+		final BoundingBox bb = new BoundingBox( new int[]{ 0, 0, 0 }, new int[]{ 511, 511, 511 } );
+		final ArrayList< PairwiseStitchingResult< ViewId > > pairwiseResults = new ArrayList<>();
+
+		pairwiseResults.add( new PairwiseStitchingResult<>( new ValuePair<>( group0, group1 ), bb,  new Translation3D( 100, 0, 0 ), 0.5 ) );
+		pairwiseResults.add( new PairwiseStitchingResult<>( new ValuePair<>( group1, group2 ), bb,  new Translation3D( 0, 100.25, 0 ), 0.5 ) );
+		pairwiseResults.add( new PairwiseStitchingResult<>( new ValuePair<>( group0, group2 ), bb,  new Translation3D( 100, 100.5, 0 ), 0.5 ) );
+
+		final ConvergenceStrategy cs = new ConvergenceStrategy( 10.0 );
+		final PointMatchCreator pmc = new ImageCorrelationPointMatchCreator( pairwiseResults, 0.3 );
+
+		GlobalOpt.compute( new TranslationModel3D(), pmc, cs, fixed, groups );
 	}
 }
