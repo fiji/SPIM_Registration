@@ -17,6 +17,7 @@ import spim.fiji.spimdata.imgloaders.LegacyStackImgLoaderLOCI;
 import spim.fiji.spimdata.imgloaders.StackImgLoader;
 import spim.fiji.spimdata.imgloaders.StackImgLoaderLOCI;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.fiji.spimdata.stitchingresults.StitchingResults;
 
 import java.io.File;
 import java.util.Properties;
@@ -59,7 +60,7 @@ public class StackListLOCI extends StackList
 		viewInterestPoints.createViewInterestPoints( sequenceDescription.getViewDescriptions() );
 
 		// finally create the SpimData itself based on the sequence description and the view registration
-		final SpimData2 spimData = new SpimData2( new File( params.directory ), sequenceDescription, viewRegistrations, viewInterestPoints, new BoundingBoxes() );
+		final SpimData2 spimData = new SpimData2( new File( params.directory ), sequenceDescription, viewRegistrations, viewInterestPoints, new BoundingBoxes(), new StitchingResults() );
 
 		return spimData;
 	}
@@ -95,6 +96,7 @@ public class StackListLOCI extends StackList
 
 		String fileNamePattern = assembleDefaultPattern( hasMultipleTimePoints, hasMultipleChannels, hasMultipleIlluminations, hasMultipleAngles );
 
+		// TODO: Tiles are missing
 		return new StackImgLoaderLOCI(
 				new File( basePath.getAbsolutePath(), path ),
 				fileNamePattern, imgFactory,

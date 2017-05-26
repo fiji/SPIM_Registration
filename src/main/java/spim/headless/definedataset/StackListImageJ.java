@@ -19,6 +19,7 @@ import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.imgloaders.StackImgLoader;
 import spim.fiji.spimdata.imgloaders.StackImgLoaderIJ;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.fiji.spimdata.stitchingresults.StitchingResults;
 
 /**
  * DataSet definition for ImageJ
@@ -58,7 +59,7 @@ public class StackListImageJ extends StackList
 		viewInterestPoints.createViewInterestPoints( sequenceDescription.getViewDescriptions() );
 
 		// finally create the SpimData itself based on the sequence description and the view registration
-		final SpimData2 spimData = new SpimData2( new File( params.directory ), sequenceDescription, viewRegistrations, viewInterestPoints, new BoundingBoxes() );
+		final SpimData2 spimData = new SpimData2( new File( params.directory ), sequenceDescription, viewRegistrations, viewInterestPoints, new BoundingBoxes(), new StitchingResults() );
 
 		return spimData;
 	}
@@ -93,6 +94,8 @@ public class StackListImageJ extends StackList
 		}
 
 		String fileNamePattern = assembleDefaultPattern( hasMultipleTimePoints, hasMultipleChannels, hasMultipleIlluminations, hasMultipleAngles );
+
+		// TODO: Tiles are missing
 		return new StackImgLoaderIJ(
 				new File( basePath.getAbsolutePath(), path ),
 				fileNamePattern, imgFactory,

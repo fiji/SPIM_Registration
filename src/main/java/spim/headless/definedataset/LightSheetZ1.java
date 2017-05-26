@@ -26,6 +26,7 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.imgloaders.LightSheetZ1ImgLoader;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.fiji.spimdata.stitchingresults.StitchingResults;
 
 /**
  * DataSet definition for LightSheetZ1
@@ -95,7 +96,7 @@ public class LightSheetZ1 extends DefineDataSet
 		viewInterestPoints.createViewInterestPoints( sequenceDescription.getViewDescriptions() );
 
 		// finally create the SpimData itself based on the sequence description and the view registration
-		final SpimData2 spimData = new SpimData2( new File( cziFile.getParent() ), sequenceDescription, viewRegistrations, viewInterestPoints, new BoundingBoxes() );
+		final SpimData2 spimData = new SpimData2( new File( cziFile.getParent() ), sequenceDescription, viewRegistrations, viewInterestPoints, new BoundingBoxes(), new StitchingResults() );
 
 		// TODO: Remove BIOFORMATS bug workaround
 		LightSheetZ1MetaData.fixBioformats( spimData, cziFile, meta );
