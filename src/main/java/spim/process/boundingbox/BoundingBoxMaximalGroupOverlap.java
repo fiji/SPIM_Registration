@@ -28,7 +28,6 @@ import net.imglib2.util.Pair;
 import net.imglib2.util.Util;
 import net.imglib2.util.ValuePair;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
-import spim.process.fusion.boundingbox.overlap.AbstractMaxBoundingBoxDetermination;
 
 public class BoundingBoxMaximalGroupOverlap< V extends ViewId > implements BoundingBoxEstimation
 {
@@ -164,7 +163,7 @@ public class BoundingBoxMaximalGroupOverlap< V extends ViewId > implements Bound
 
 			for (Pair<RealInterval, AffineGet> view : views)
 			{
-				FinalRealInterval transformedBounds = AbstractMaxBoundingBoxDetermination.estimateBounds( view.getA(), view.getB() );
+				FinalRealInterval transformedBounds = estimateBounds( view.getA(), view.getB() );
 				if (n == null)
 					n = transformedBounds.numDimensions();
 
@@ -194,6 +193,51 @@ public class BoundingBoxMaximalGroupOverlap< V extends ViewId > implements Bound
 				return null;
 
 		return new FinalRealInterval( min, max );
+	}
+
+	/**
+	 * Calculate the boundary interval of an interval after it has been
+	 * transformed by transform.
+	 * 
+	 * generalized version of code in {@link AffineTransform3D}
+	 * 
+	 * @param interval
+	 * @param transform
+	 */
+	public static FinalRealInterval estimateBounds( final RealInterval interval, final AffineGet transform )
+	{
+		final int n =  interval.numDimensions();
+		final double[] min = new double[ n];
+		final double[] max = new double[ n ];
+		final double[] rMin = new double[ n ];
+		final double[] rMax = new double[ n ];
+
+		interval.realMin( min );
+		interval.realMax( max );
+		
+		for (int d = 0; d < n; d++)
+		{
+			rMin[ d ] = Double.MAX_VALUE;
+			rMax[ d ] = -Double.MAX_VALUE;
+		}
+
+		final double[] f = new double[ n ];
+		final double[] g = new double[ n ];
+
+		for (int i = 0; i < (int) Math.pow( 2, n ); i++)
+		{
+			int j = i;
+			for (int d = 0; d < n; d++)
+			{
+				f[d] = j % 2 == 0 ? min[d] : max[d];
+				j /= 2;
+			}
+			transform.apply( f, g );
+			Util.min( rMin, g );
+			Util.max( rMax, g );
+		}
+
+		return new FinalRealInterval( rMin, rMax );
 	}
 
 	/**
