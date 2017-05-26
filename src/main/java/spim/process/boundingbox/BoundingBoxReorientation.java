@@ -399,14 +399,15 @@ public class BoundingBoxReorientation implements BoundingBoxEstimation
 	public static ArrayList< RealLocalizable > extractPoints(
 			final String label,
 			final boolean useCorresponding,
-			final List< ViewId > viewIdsForEstimation,
+			final boolean transform,
+			final List< ViewId > viewIds,
 			final SpimData2 data )
 	{
 		final Map< ViewId, ViewRegistration > registrations = new HashMap<>();
 		final Map< ViewId, ViewInterestPointLists > interestpoints = new HashMap<>();
 		final Map< ViewId, String > labelMap = new HashMap<>();
 
-		for ( final ViewId viewId : viewIdsForEstimation )
+		for ( final ViewId viewId : viewIds )
 		{
 			labelMap.put( viewId, label );
 			registrations.put( viewId, data.getViewRegistrations().getViewRegistration( viewId ) );
@@ -415,7 +416,7 @@ public class BoundingBoxReorientation implements BoundingBoxEstimation
 		
 		final ArrayList< RealLocalizable > points = new ArrayList<>();
 
-		for ( final ViewId viewId : viewIdsForEstimation )
+		for ( final ViewId viewId : viewIds )
 		{
 			if ( useCorresponding )
 			{
