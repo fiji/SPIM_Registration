@@ -53,7 +53,7 @@ public class GlobalOptTwoRound
 		final WeakLinkPointMatchCreator< M > wlpmc = wlf.create( groupsNew, models );
 
 		// run global opt without iterative
-		final HashMap< ViewId, Tile< M > > models2 = GlobalOpt.compute( model, wlpmc, cs, fixedViews, groups );
+		final HashMap< ViewId, Tile< M > > models2 = GlobalOpt.compute( model, wlpmc, cs, fixedViews, groupsNew );
 
 		// TODO: remove models from first iteration that were applied? Or maybe never apply them and concatenate them here?
 		return models2;
