@@ -4,11 +4,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import mpicbg.models.Model;
 import mpicbg.models.Tile;
 import mpicbg.spim.data.sequence.ViewId;
+import net.imglib2.realtransform.AffineGet;
 import spim.process.interestpointregistration.global.convergence.ConvergenceStrategy;
 import spim.process.interestpointregistration.global.convergence.IterativeConvergenceStrategy;
 import spim.process.interestpointregistration.global.linkremoval.LinkRemovalStrategy;
@@ -55,7 +57,10 @@ public class GlobalOptTwoRound
 		// run global opt without iterative
 		final HashMap< ViewId, Tile< M > > models2 = GlobalOpt.compute( model, wlpmc, cs, fixedViews, groupsNew );
 
-		// TODO: remove models from first iteration that were applied? Or maybe never apply them and concatenate them here?
+		// the models that were applied before running the second round
+		final Map< ViewId, AffineGet > relativeTransforms = wlpmc.getRelativeTransforms();
+
+		// TODO: combine models from 1st and 2nd round
 		return models2;
 	}
 

@@ -6,8 +6,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import mpicbg.models.AbstractAffineModel3D;
+import mpicbg.models.Affine3D;
 import mpicbg.models.Model;
 import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
@@ -17,7 +19,6 @@ import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.realtransform.AffineGet;
 import net.imglib2.realtransform.AffineTransform3D;
-import spim.process.interestpointregistration.TransformationTools;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 /**
@@ -27,6 +28,7 @@ import spim.process.interestpointregistration.pairwise.constellation.grouping.Gr
 public class MetaDataWeakLinkCreator< N extends Model< N > > extends WeakLinkPointMatchCreator< N >
 {
 	final ViewRegistrations viewRegistrations;
+	HashMap< ViewId, AffineGet > relativeTransforms;
 
 	public MetaDataWeakLinkCreator(
 			final ArrayList< Group< ViewId > > groupsNew,
@@ -61,11 +63,35 @@ A:		for ( final ViewId v : views )
 		for ( final Group< ViewId > group : groupsNew )
 			groupMapback.put( group, averageMapBackTransform( group, models ) );
 
+		// compute and save the transformations that we apply to the pointmatches
+		this.relativeTransforms = new HashMap<>();
+		final HashMap< ViewId, AffineGet > fullTransforms = new HashMap<>();
+
 		for ( final ViewId viewId : views )
 		{
-			// TODO: do this temporarily here
 			final ViewRegistration vr = viewRegistrations.getViewRegistration( viewId );
-			TransformationTools.storeTransformation( vr, viewId, tileMap.get( viewId ), groupMapback.get( viewId ), "Applying Strong Links" );
+
+			final Affine3D< ? > tilemodel = (Affine3D< ? >)tileMap.get( viewId ).getModel();
+			final double[][] m = new double[ 3 ][ 4 ];
+			tilemodel.toMatrix( m );
+			
+			final AffineTransform3D firstRunTransform = new AffineTransform3D();
+			firstRunTransform.set(
+					m[0][0], m[0][1], m[0][2], m[0][3],
+					m[1][0], m[1][1], m[1][2], m[1][3],
+					m[2][0], m[2][1], m[2][2], m[2][3] );
+
+			firstRunTransform.preConcatenate( groupMapback.get( viewId ) );
+
+			// this is the relative update from the first global opt run combined with the average mapback model
+			this.relativeTransforms.put( viewId, firstRunTransform );
+
+			// get the current status from the ViewRegistrations (the METADATA)
+			vr.updateModel();
+			final AffineTransform3D oldGlobalCoordinates = vr.getModel().copy();
+
+			// combine this "old" transformation with the relative update
+			fullTransforms.put( viewId, oldGlobalCoordinates.preConcatenate( firstRunTransform ) );
 		}
 
 		for ( int a = 0; a < views.size() - 1; ++a )
@@ -80,16 +106,18 @@ A:		for ( final ViewId v : views )
 				if ( !gA.equals( gB ) ) // TODO: Test overlay?
 				{
 					// not in the same group, so we need weak links
-					final ViewRegistration vrA = viewRegistrations.getViewRegistration( vA );
-					final ViewRegistration vrB = viewRegistrations.getViewRegistration( vB );
-
-					final AffineTransform3D modelA = vrA.getModel();
-					final AffineTransform3D modelB = vrB.getModel();
+					// we use the full transformations (METADATA + 1st run global opt + average Mapback)
+					// to transform the input for the 2nd run of global opt
+					final AffineGet modelA = fullTransforms.get( vA );
+					final AffineGet modelB = fullTransforms.get( vB );
 
 					addPointMatches( modelA, modelB, tileMap.get( vA ), tileMap.get( vB ) );
 				}
 			}
 	}
+
+	@Override
+	public Map< ViewId, AffineGet > getRelativeTransforms() { return relativeTransforms; }
 
 	public static <M extends Model< M >> void addPointMatches( 
 			final AffineGet modelA,
@@ -179,5 +207,4 @@ A:		for ( final ViewId v : views )
 
 		return affine.inverse();
 	}
-
 }
