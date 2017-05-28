@@ -25,6 +25,7 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import spim.fiji.spimdata.SpimDataTools;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 
 public class FilteredAndGroupedTableModel < AS extends AbstractSpimData< ? > > extends AbstractTableModel implements ISpimDataTableModel<AS>
@@ -152,23 +153,25 @@ public class FilteredAndGroupedTableModel < AS extends AbstractSpimData< ? > > e
 	{
 		final List<BasicViewDescription< ? > > ungroupedElements =
 				SpimDataTools.getFilteredViewDescriptions( panel.getSpimData().getSequenceDescription(), filters);
-		final List< List< BasicViewDescription< ?  > >> elementsNew = 
-				SpimDataTools.groupByAttributes(ungroupedElements, groupingFactors);
+		final List< Group< BasicViewDescription< ? > > > elementsNew = 
+				Group.combineBy(ungroupedElements, groupingFactors);
 
-		
-		// sort the grouped VDs
-		for (List< BasicViewDescription< ?  > > l : elementsNew)
+		final List< List< BasicViewDescription< ? > > > elementsOut = new ArrayList<>();
+
+		// sort the grouped VDs and make a List copy
+		for (Group< BasicViewDescription< ?  > > l : elementsNew)
 		{
+			elementsOut.add( new ArrayList< BasicViewDescription< ? > >( l.getViews() ) );
 			for (Class<? extends Entity> cl : sortingFactors)
-				Collections.sort(l, SpimDataTools.getVDComparator(cl));
+				Collections.sort(elementsOut.get( elementsOut.size() - 1 ), SpimDataTools.getVDComparator(cl));
 		}
 		
 		// sort the groups of VDS
 		for (Class<? extends Entity> cl : sortingFactors)
-			Collections.sort(elementsNew, SpimDataTools.getVDListComparator(cl));
+			Collections.sort(elementsOut, SpimDataTools.getVDListComparator(cl));
 		
 		//if ( this.elements == null )
-			this.elements = elementsNew;
+			this.elements = elementsOut;
 
 		return elements;
 	}
