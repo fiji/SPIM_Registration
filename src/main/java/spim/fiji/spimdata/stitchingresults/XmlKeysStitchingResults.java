@@ -11,4 +11,6 @@ public class XmlKeysStitchingResults
 	public static final String STITCHING_TP_B_TAG = "tp_b";
 	public static final String STICHING_SHIFT_TAG = "shift";
 	public static final String STICHING_CORRELATION_TAG = "correlation";
+	public static final String STICHING_BBOX_TAG = "overlap_boundingbox";
+	
 }

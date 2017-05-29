@@ -23,8 +23,11 @@ import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.XmlHelpers;
 import mpicbg.spim.data.generic.base.XmlIoSingleton;
 import mpicbg.spim.data.sequence.ViewId;
+import net.imglib2.RealInterval;
 import net.imglib2.realtransform.AffineTransform3D;
+import net.imglib2.util.Intervals;
 import net.imglib2.util.ValuePair;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 
 
@@ -63,6 +66,12 @@ public class XmlIoStitchingResults extends XmlIoSingleton<StitchingResults>
 			final double[] shift = XmlHelpers.getDoubleArray( pairwiseResultsElement, STICHING_SHIFT_TAG );
 			final double corr = XmlHelpers.getDouble( pairwiseResultsElement, STICHING_CORRELATION_TAG );
 			
+			double[] minmax = null; 
+			if (pairwiseResultsElement.getChild( XmlKeysStitchingResults.STICHING_BBOX_TAG ) != null)
+				minmax = XmlHelpers.getDoubleArray( pairwiseResultsElement, XmlKeysStitchingResults.STICHING_BBOX_TAG );
+
+			
+			
 			AffineTransform3D transform = new AffineTransform3D();
 			// backwards-compatibility with just translation
 			if (shift.length == 3)
@@ -71,18 +80,25 @@ public class XmlIoStitchingResults extends XmlIoSingleton<StitchingResults>
 			else
 				transform.set( shift );
 
-			Set<ViewId> vidsA = new HashSet<>();
+			Group<ViewId> vidsA = new Group<>();
 			for (int i = 0; i < vsA.size(); i++)
-				vidsA.add( new ViewId( tpA.get( i ), vsA.get( i ) ) );
+				vidsA.getViews().add( new ViewId( tpA.get( i ), vsA.get( i ) ) );
 
-			Set<ViewId> vidsB = new HashSet<>();
+			Group<ViewId> vidsB = new Group<>();
 			for (int i = 0; i < vsB.size(); i++)
-				vidsB.add( new ViewId( tpB.get( i ), vsB.get( i ) ) );
+				vidsB.getViews().add( new ViewId( tpB.get( i ), vsB.get( i ) ) );
 			
-			final ValuePair< Set<ViewId>, Set<ViewId> > pair = new ValuePair<>( vidsA, vidsB );
+			final ValuePair< Group<ViewId>, Group<ViewId> > pair = new ValuePair<>( vidsA, vidsB );
+			final ValuePair< Set<ViewId>, Set<ViewId> > pairSets = new ValuePair<>( vidsA.getViews(), vidsB.getViews() );
 			
-			final PairwiseStitchingResult< ViewId > pairwiseStitchingResult = new PairwiseStitchingResult<>(pair, transform, corr );
-			stitchingResults.setPairwiseResultForPair( pair, pairwiseStitchingResult );
+			// TODO: handle null case (maybe insert a default overlap e.g. (0,0,..) -> (1,1,..) ?)
+			RealInterval bb = null;
+			if (minmax != null)
+				bb  = Intervals.createMinMaxReal( minmax );
+
+			
+			final PairwiseStitchingResult< ViewId > pairwiseStitchingResult = new PairwiseStitchingResult<>(pair, bb, transform, corr );
+			stitchingResults.setPairwiseResultForPair( pairSets, pairwiseStitchingResult );
 		}
 
 		return stitchingResults;
@@ -92,13 +108,23 @@ public class XmlIoStitchingResults extends XmlIoSingleton<StitchingResults>
 	{
 		final Element elem = new Element( STITCHINGRESULT_PW_TAG );
 
-		elem.setAttribute( STITCHING_VS_A_TAG, String.join( ",", sr.pair().getA().stream().map( vi ->  Integer.toString( vi.getViewSetupId() ) ).collect( Collectors.toList() ) ) );
-		elem.setAttribute( STITCHING_VS_B_TAG, String.join( ",", sr.pair().getB().stream().map( vi ->  Integer.toString( vi.getViewSetupId() ) ).collect( Collectors.toList() ) ) );
-		elem.setAttribute( STITCHING_TP_A_TAG, String.join( ",", sr.pair().getA().stream().map( vi ->  Integer.toString( vi.getTimePointId() ) ).collect( Collectors.toList() ) ) );
-		elem.setAttribute( STITCHING_TP_B_TAG, String.join( ",", sr.pair().getB().stream().map( vi ->  Integer.toString( vi.getTimePointId() ) ).collect( Collectors.toList() ) ) );
+		elem.setAttribute( STITCHING_VS_A_TAG, String.join( ",", sr.pair().getA().getViews().stream().map( vi ->  Integer.toString( vi.getViewSetupId() ) ).collect( Collectors.toList() ) ) );
+		elem.setAttribute( STITCHING_VS_B_TAG, String.join( ",", sr.pair().getB().getViews().stream().map( vi ->  Integer.toString( vi.getViewSetupId() ) ).collect( Collectors.toList() ) ) );
+		elem.setAttribute( STITCHING_TP_A_TAG, String.join( ",", sr.pair().getA().getViews().stream().map( vi ->  Integer.toString( vi.getTimePointId() ) ).collect( Collectors.toList() ) ) );
+		elem.setAttribute( STITCHING_TP_B_TAG, String.join( ",", sr.pair().getB().getViews().stream().map( vi ->  Integer.toString( vi.getTimePointId() ) ).collect( Collectors.toList() ) ) );
 		
 		elem.addContent( XmlHelpers.doubleArrayElement( STICHING_SHIFT_TAG, sr.getTransform().getRowPackedCopy() ) );
 		elem.addContent( XmlHelpers.doubleElement(  STICHING_CORRELATION_TAG, sr.r() ) );
+		
+		final RealInterval bb = sr.getBoundingBox();
+		final double[] bbox = new double[bb.numDimensions() * 2];
+		for (int d = 0; d < bb.numDimensions(); d++)
+		{
+			bbox[d] = bb.realMin( d );
+			bbox[d+bb.numDimensions()] = bb.realMax( d );
+		}
+		
+		elem.addContent( XmlHelpers.doubleArrayElement( XmlKeysStitchingResults.STICHING_BBOX_TAG, bbox ) );
 		
 		return elem;
 	}
