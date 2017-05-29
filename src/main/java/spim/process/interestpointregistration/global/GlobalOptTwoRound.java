@@ -45,14 +45,9 @@ public class GlobalOptTwoRound
 			final Collection< ViewId > fixedViews,
 			final Set< Group< ViewId > > groupsIn )
 	{
-		// merge overlapping groups if necessary
-		final ArrayList< Group< ViewId > > groups = Group.mergeAllOverlappingGroups( groupsIn );
-
-		// remove empty groups
-		Group.removeEmptyGroups( groups );
 
 		// find strong links, run global opt iterative
-		final HashMap< ViewId, Tile< M > > models = GlobalOptIterative.compute( model, pmc, ics, lms, fixedViews, groups );
+		final HashMap< ViewId, Tile< M > > models = GlobalOptIterative.compute( model, pmc, ics, lms, fixedViews, groupsIn );
 
 		// identify groups of connected views
 		final List< Set< Tile< ? > > > sets = Tile.identifyConnectedGraphs( models.values() );
