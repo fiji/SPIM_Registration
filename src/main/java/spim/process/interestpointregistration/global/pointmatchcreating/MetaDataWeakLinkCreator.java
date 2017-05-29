@@ -55,13 +55,14 @@ A:		for ( final ViewId v : views )
 				if ( group.contains( v ) )
 				{
 					groupMap.put( v, group );
-					break A;
+					continue A;
 				}
 
 		// compute an average affine mapback transform for each new group (which was not in the same group for the first global opt run)
-		final HashMap< Group< ViewId >, AffineGet > groupMapback = new HashMap<>();
+		final HashMap<  ViewId , AffineGet > groupMapback = new HashMap<>();
 		for ( final Group< ViewId > group : groupsNew )
-			groupMapback.put( group, averageMapBackTransform( group, models ) );
+			for (ViewId vid: group)
+				groupMapback.put( vid, averageMapBackTransform( group, models ) );
 
 		// compute and save the transformations that we apply to the pointmatches
 		this.relativeTransforms = new HashMap<>();
