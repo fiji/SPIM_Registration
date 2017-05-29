@@ -72,7 +72,8 @@ A:		for ( final ViewId v : views )
 		{
 			final ViewRegistration vr = viewRegistrations.getViewRegistration( viewId );
 
-			final Affine3D< ? > tilemodel = (Affine3D< ? >)tileMap.get( viewId ).getModel();
+			
+			final Affine3D< ? > tilemodel = (Affine3D< ? >)models.get( viewId ).getModel();
 			final double[][] m = new double[ 3 ][ 4 ];
 			tilemodel.toMatrix( m );
 			
@@ -89,7 +90,8 @@ A:		for ( final ViewId v : views )
 
 			// get the current status from the ViewRegistrations (the METADATA)
 			vr.updateModel();
-			final AffineTransform3D oldGlobalCoordinates = vr.getModel().copy();
+			//final AffineTransform3D oldGlobalCoordinates = vr.getModel().copy();
+			final AffineTransform3D oldGlobalCoordinates = new AffineTransform3D();
 
 			// combine this "old" transformation with the relative update
 			fullTransforms.put( viewId, oldGlobalCoordinates.preConcatenate( firstRunTransform ) );
@@ -148,7 +150,7 @@ A:		for ( final ViewId v : views )
 		for (int i = 0; i < pa.length; ++i)
 		{
 			modelA.applyInverse( pb[i], p[i] );
-			modelA.applyInverse( pa[i], p[i] );
+			modelB.applyInverse( pa[i], p[i] );
 			pointsA.add( new Point( pa[i] ) );
 			pointsB.add( new Point( pb[i] ) );
 		}
