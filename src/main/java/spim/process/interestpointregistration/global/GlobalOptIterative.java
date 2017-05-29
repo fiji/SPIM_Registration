@@ -92,6 +92,6 @@ public class GlobalOptIterative
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Transformation Models:" );
 
-		return null;
+		return map;
 	}
 }
