@@ -41,7 +41,7 @@ public class Data_Explorer implements PlugIn
 			}
 		});
 
-		if ( !result.queryXML( "XML Explorer", "", false, false, false, false ) && !newDataset )
+		if ( !result.queryXML( "XML Explorer", "", false, false, false, false, false ) && !newDataset )
 			return;
 
 		final SpimData2 data;
