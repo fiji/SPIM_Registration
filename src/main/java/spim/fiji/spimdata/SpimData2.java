@@ -264,13 +264,13 @@ public class SpimData2 extends SpimData
 		return illums;
 	}
 	
-	public static <E extends Entity> ArrayList<E> getAllInstancesOfEntitySorted(final SpimData data, final Collection< ? extends ViewId > viewIds, Class<E> cl)
+	public static <E extends Entity> ArrayList<E> getAllInstancesOfEntitySorted(final AbstractSpimData<?> data, final Collection< ? extends ViewId > viewIds, Class<E> cl)
 	{
 		final HashSet<E> resultSet = new HashSet<>();
 		
 		for (ViewId v : viewIds)
 		{
-			final ViewDescription vd = data.getSequenceDescription().getViewDescription( v );
+			final BasicViewDescription<?> vd = data.getSequenceDescription().getViewDescriptions().get( v );
 			
 			if ( vd.isPresent() )
 			{
