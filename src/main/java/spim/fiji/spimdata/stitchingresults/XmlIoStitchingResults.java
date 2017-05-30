@@ -89,8 +89,7 @@ public class XmlIoStitchingResults extends XmlIoSingleton<StitchingResults>
 				vidsB.getViews().add( new ViewId( tpB.get( i ), vsB.get( i ) ) );
 			
 			final ValuePair< Group<ViewId>, Group<ViewId> > pair = new ValuePair<>( vidsA, vidsB );
-			final ValuePair< Set<ViewId>, Set<ViewId> > pairSets = new ValuePair<>( vidsA.getViews(), vidsB.getViews() );
-			
+
 			// TODO: handle null case (maybe insert a default overlap e.g. (0,0,..) -> (1,1,..) ?)
 			RealInterval bb = null;
 			if (minmax != null)
@@ -98,7 +97,7 @@ public class XmlIoStitchingResults extends XmlIoSingleton<StitchingResults>
 
 			
 			final PairwiseStitchingResult< ViewId > pairwiseStitchingResult = new PairwiseStitchingResult<>(pair, bb, transform, corr );
-			stitchingResults.setPairwiseResultForPair( pairSets, pairwiseStitchingResult );
+			stitchingResults.setPairwiseResultForPair( pair, pairwiseStitchingResult );
 		}
 
 		return stitchingResults;

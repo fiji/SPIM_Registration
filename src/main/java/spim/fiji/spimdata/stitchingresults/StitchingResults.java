@@ -10,11 +10,12 @@ import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.realtransform.AffineGet;
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 
 public class StitchingResults
 {
-	Map<Pair<Set<ViewId>, Set<ViewId>>, PairwiseStitchingResult<ViewId>> pairwiseResults;
+	Map<Pair<Group<ViewId>, Group<ViewId>>, PairwiseStitchingResult<ViewId>> pairwiseResults;
 	Map<ViewId, AffineGet> globalShifts;
 	
 	public StitchingResults()
@@ -23,7 +24,7 @@ public class StitchingResults
 		globalShifts = new HashMap<>();
 	}
 
-	public Map< Pair< Set<ViewId>, Set<ViewId> >, PairwiseStitchingResult<ViewId> > getPairwiseResults() { return pairwiseResults; }
+	public Map< Pair< Group<ViewId>, Group<ViewId> >, PairwiseStitchingResult<ViewId> > getPairwiseResults() { return pairwiseResults; }
 	
 	public Map< ViewId, AffineGet > getGlobalShifts() { return globalShifts;	}
 	
@@ -33,12 +34,12 @@ public class StitchingResults
 	 * @param pair
 	 * @param res
 	 */
-	public void setPairwiseResultForPair(Pair<Set<ViewId>, Set<ViewId>> pair, PairwiseStitchingResult<ViewId> res )
+	public void setPairwiseResultForPair(Pair<Group<ViewId>, Group<ViewId>> pair, PairwiseStitchingResult<ViewId> res )
 	{
 		//Pair< Set<ViewId>, Set<ViewId> > key = pair.getA().compareTo( pair.getB() ) < 0 ? pair : new ValuePair<>(pair.getB(), pair.getA());
 		pairwiseResults.put( pair, res );
 	}	
-	public PairwiseStitchingResult<ViewId> getPairwiseResultsForPair(Pair<Set<ViewId>, Set<ViewId>> pair)
+	public PairwiseStitchingResult<ViewId> getPairwiseResultsForPair(Pair<Group<ViewId>, Group<ViewId>> pair)
 	{
 		//Pair< ViewId, ViewId > key = pair.getA().compareTo( pair.getB() ) < 0 ? pair : new ValuePair<>(pair.getB(), pair.getA());
 		return pairwiseResults.get( pair );
@@ -53,9 +54,9 @@ public class StitchingResults
 	public ArrayList< PairwiseStitchingResult<ViewId> > getAllPairwiseResultsForViewId(Set<ViewId> vid)
 	{
 		ArrayList< PairwiseStitchingResult<ViewId> > res = new ArrayList<>();
-		for (Pair< Set<ViewId>, Set<ViewId> > p : pairwiseResults.keySet())
+		for (Pair< Group<ViewId>, Group<ViewId> > p : pairwiseResults.keySet())
 		{
-			if (p.getA().equals( vid ) || p.getB().equals( vid )){
+			if (p.getA().getViews().equals( vid ) || p.getB().getViews().equals( vid )){
 				res.add( pairwiseResults.get( p ) );
 			}
 		}
@@ -92,7 +93,7 @@ public class StitchingResults
 		int count = 0;
 		for (PairwiseStitchingResult<ViewId> psr : pairwiseResults.values())
 		{
-			if (vid.equals( psr .pair().getA()) || vid.equals( psr .pair().getB()))
+			if (vid.equals( psr .pair().getA().getViews()) || vid.equals( psr .pair().getB().getViews()))
 			{
 				sum += psr.r();
 				count++;
