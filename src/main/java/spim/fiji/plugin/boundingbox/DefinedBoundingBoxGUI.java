@@ -16,12 +16,12 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.process.fusion.export.ImgExport;
 
-public class PreDefinedBoundingBox extends BoundingBoxGUI
+public class DefinedBoundingBoxGUI extends BoundingBoxGUI
 {
 	public static int defaultBoundingBox = 0;
 	public static boolean defaultAllowModify = false;
 
-	public PreDefinedBoundingBox( final SpimData2 spimData, final List<ViewId> viewIdsToProcess )
+	public DefinedBoundingBoxGUI( final SpimData2 spimData, final List<ViewId> viewIdsToProcess )
 	{
 		super( spimData, viewIdsToProcess );
 	}
@@ -92,9 +92,9 @@ public class PreDefinedBoundingBox extends BoundingBoxGUI
 	}
 
 	@Override
-	public PreDefinedBoundingBox newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
+	public DefinedBoundingBoxGUI newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
-		return new PreDefinedBoundingBox( spimData, viewIdsToProcess );
+		return new DefinedBoundingBoxGUI( spimData, viewIdsToProcess );
 	}
 
 	@Override

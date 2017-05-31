@@ -27,13 +27,17 @@ import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.img.imageplus.ImagePlusImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.ComplexType;
+import net.imglib2.util.Util;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
+import spim.process.boundingbox.BoundingBoxMaximal;
 import spim.process.fusion.export.ImgExport;
 
+
+// TODO: THIS MUST BE ABSTRACT
 public class BoundingBoxGUI extends BoundingBox
 {
 	public static int staticDownsampling = 1;
@@ -235,10 +239,24 @@ public class BoundingBoxGUI extends BoundingBox
 	 */
 	protected void setUpDefaultValues( final int[] rangeMin, final int rangeMax[] )
 	{
+		final BoundingBox bb = new BoundingBoxMaximal( viewIdsToProcess, spimData ).estimate( "test" );
+
+		this.min = bb.getMin();
+		this.max = bb.getMax();
+
+		for ( int d = 0; d < this.min.length; ++d )
+		{
+			if ( min[ d ] < rangeMin[ d ] )
+				rangeMin[ d ] = min[ d ];
+	
+			if ( max[ d ] > rangeMax[ d ] )
+				rangeMax[ d ] = max[ d ];
+		}
+		/*
 		final double[] minBB = new double[ rangeMin.length ];
 		final double[] maxBB = new double[ rangeMin.length ];
 
-		this.changedSpimDataObject = computeMaxBoundingBoxDimensions( spimData, viewIdsToProcess, minBB, maxBB );
+		//this.changedSpimDataObject = computeMaxBoundingBoxDimensions( spimData, viewIdsToProcess, minBB, maxBB );
 
 		for ( int d = 0; d < minBB.length; ++d )
 		{
@@ -289,7 +307,7 @@ public class BoundingBoxGUI extends BoundingBox
 			//if ( max[ d ] > rangeMax[ d ] )
 			//	max[ d ] = rangeMax[ d ];
 
-		}
+		}	*/
 	}
 
 	/**
@@ -346,56 +364,6 @@ public class BoundingBoxGUI extends BoundingBox
 			dim[ d ] /= this.getDownSampling();
 		
 		return dim;
-	}
-
-	/**
-	 * @param spimData
-	 * @param viewIdsToProcess
-	 * @param minBB
-	 * @param maxBB
-	 * @return - true if the SpimData object was modified, otherwise false
-	 */
-	public static boolean computeMaxBoundingBoxDimensions( final SpimData2 spimData, final List< ViewId > viewIdsToProcess, final double[] minBB, final double[] maxBB )
-	{
-		for ( int d = 0; d < minBB.length; ++d )
-		{
-			minBB[ d ] = Double.MAX_VALUE;
-			maxBB[ d ] = -Double.MAX_VALUE;
-		}
-
-		boolean changed = false;
-		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Estimating Bounding Box for Fusion. If size of images is not known (they were never opened before), some of them need to be opened once to determine their size.");
-
-		for ( final ViewId viewId : viewIdsToProcess )
-		{
-			final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
-					viewId.getTimePointId(), viewId.getViewSetupId() );
-
-			if ( !viewDescription.isPresent() )
-				continue;
-
-			if ( !viewDescription.getViewSetup().hasSize() )
-				changed = true;
-
-			final Dimensions size = ViewSetupUtils.getSizeOrLoad( viewDescription.getViewSetup(), viewDescription.getTimePoint(), spimData.getSequenceDescription().getImgLoader() );
-			final double[] min = new double[]{ 0, 0, 0 };
-			final double[] max = new double[]{
-					size.dimension( 0 ) - 1,
-					size.dimension( 1 ) - 1,
-					size.dimension( 2 ) - 1 };
-			
-			final ViewRegistration r = spimData.getViewRegistrations().getViewRegistration( viewId );
-			r.updateModel();
-			final FinalRealInterval interval = r.getModel().estimateBounds( new FinalRealInterval( min, max ) );
-			
-			for ( int d = 0; d < minBB.length; ++d )
-			{
-				minBB[ d ] = Math.min( minBB[ d ], interval.realMin( d ) );
-				maxBB[ d ] = Math.max( maxBB[ d ], interval.realMax( d ) );
-			}
-		}
-
-		return changed;
 	}
 
 	protected static long numPixels( final long[] min, final long[] max, final int downsampling )
