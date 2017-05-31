@@ -63,7 +63,7 @@ public class ReorientSamplePopup extends JMenuItem implements ExplorerWindowSeta
 				@Override
 				public void run()
 				{
-					final List< ViewId > viewIds = panel.selectedRowsViewId();
+					final List< ViewId > viewIds = ApplyTransformationPopup.getSelectedViews( panel );
 					final SpimData data = (SpimData)panel.getSpimData();
 		
 					final Apply_Transformation t = new Apply_Transformation();

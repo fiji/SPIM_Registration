@@ -87,7 +87,7 @@ public class RemoveDetectionsPopup extends JMenu implements ExplorerWindowSetabl
 
 			if ( index == 0 )
 			{
-				final List< ViewId > viewIds = panel.selectedRowsViewId();
+				final List< ViewId > viewIds = ApplyTransformationPopup.getSelectedViews( panel );
 				final SpimData2 data = (SpimData2)panel.getSpimData();
 
 				// ask which channels have the objects we are searching for

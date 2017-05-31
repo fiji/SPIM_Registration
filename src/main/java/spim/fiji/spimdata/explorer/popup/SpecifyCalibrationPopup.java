@@ -49,7 +49,7 @@ public class SpecifyCalibrationPopup extends JMenuItem implements ExplorerWindow
 				return;
 			}
 
-			final List< ViewId > viewIds = panel.selectedRowsViewId();
+			final List< ViewId > viewIds = ApplyTransformationPopup.getSelectedViews( panel );
 
 			final ArrayList< Cal > calibrations = Specify_Calibration.findCalibrations( panel.getSpimData(), viewIds );
 

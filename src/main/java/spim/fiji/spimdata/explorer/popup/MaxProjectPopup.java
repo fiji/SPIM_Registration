@@ -48,7 +48,7 @@ public class MaxProjectPopup extends JMenuItem implements ExplorerWindowSetable
 				return;
 			}
 
-			final List< ViewId > viewIds = panel.selectedRowsViewId();
+			final List< ViewId > viewIds = ApplyTransformationPopup.getSelectedViews( panel );
 
 			if ( SpimData.class.isInstance( panel.getSpimData() ) )
 				Max_Project.maxProject( (SpimData)panel.getSpimData(), viewIds, new FloatType() );

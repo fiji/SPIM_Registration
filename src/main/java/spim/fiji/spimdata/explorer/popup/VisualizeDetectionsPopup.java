@@ -57,7 +57,7 @@ public class VisualizeDetectionsPopup extends JMenuItem implements ExplorerWindo
 				@Override
 				public void run()
 				{
-					final List< ViewId > viewIds = panel.selectedRowsViewId();
+					final List< ViewId > viewIds = ApplyTransformationPopup.getSelectedViews( panel );
 					final SpimData2 data = (SpimData2)panel.getSpimData();
 
 					final Params params = Visualize_Detections.queryDetails( data, viewIds );

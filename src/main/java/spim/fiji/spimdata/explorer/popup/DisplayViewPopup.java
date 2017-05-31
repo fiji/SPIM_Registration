@@ -136,8 +136,8 @@ public class DisplayViewPopup extends JMenu implements ExplorerWindowSetable
 				public void run()
 				{
 					final SpimData2 spimData = (SpimData2)panel.getSpimData();
-					final List< ViewId > views = panel.selectedRowsViewId();
-
+					final List< ViewId > views = ApplyTransformationPopup.getSelectedViews( panel );
+					
 					Interval bb;
 
 					if ( boundingBox == null )

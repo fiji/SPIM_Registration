@@ -3,9 +3,6 @@ package spim.fiji.spimdata.explorer;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import spim.fiji.plugin.fusion.boundingbox.PreDefinedBoundingBox;
-import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.boundingbox.BoundingBox;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.base.Entity;
 import mpicbg.spim.data.generic.base.NamedEntity;
@@ -16,6 +13,9 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.Dimensions;
 import net.imglib2.util.Util;
+import spim.fiji.plugin.boundingbox.DefinedBoundingBoxGUI;
+import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.boundingbox.BoundingBox;
 
 public class ViewSetupExplorerInfoBox< AS extends AbstractSpimData< ? > >
 {
@@ -100,7 +100,7 @@ public class ViewSetupExplorerInfoBox< AS extends AbstractSpimData< ? > >
 			else
 			{
 				for ( final BoundingBox bb : sd.getBoundingBoxes().getBoundingBoxes() )
-					text += PreDefinedBoundingBox.getBoundingBoxDescription( bb ) + "\n";
+					text += DefinedBoundingBoxGUI.getBoundingBoxDescription( bb ) + "\n";
 			}
 		}
 

@@ -2,12 +2,14 @@ package spim.fiji.spimdata.explorer.popup;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.JMenuItem;
 
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.Image_Fusion;
 import spim.fiji.spimdata.SpimData2;
@@ -54,7 +56,9 @@ public class FusionPopup extends JMenuItem implements ExplorerWindowSetable
 				@Override
 				public void run()
 				{
-					if ( new Image_Fusion().fuse( (SpimData2)panel.getSpimData(), panel.selectedRowsViewId() ) )
+					final List< ViewId > viewIds = ApplyTransformationPopup.getSelectedViews( panel );
+					
+					if ( new Image_Fusion().fuse( (SpimData2)panel.getSpimData(), viewIds ) )
 					{
 						panel.updateContent(); // update main table and registration panel if available
 						panel.saveXML();

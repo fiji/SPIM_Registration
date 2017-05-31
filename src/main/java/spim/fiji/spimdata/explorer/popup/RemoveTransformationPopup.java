@@ -63,36 +63,20 @@ public class RemoveTransformationPopup extends JMenu implements ExplorerWindowSe
 				return;
 			}
 
-			final List<List< ViewId >> viewIds = new ArrayList<>();
-			
-			//final AbstractSpimData< ? > data = (AbstractSpimData< ? >)panel.getSpimData();
-			if (panel instanceof GroupedRowWindow)
-			{
-				viewIds.addAll( ((GroupedRowWindow)panel).selectedRowsViewIdGroups() );
-			}
-			else
-			{
-				for (ViewId vid : panel.selectedRowsViewId())
-				{
-					ArrayList<ViewId> singleVidList = new ArrayList<>();
-					singleVidList.add( vid );
-					viewIds.add( singleVidList );
-				}
-			}
+			final List< ViewId > viewIds = ApplyTransformationPopup.getSelectedViews( panel );
 
 			final ViewRegistrations vr = panel.getSpimData().getViewRegistrations();
-			for ( final List<ViewId> viewIdListI : viewIds )
-				for ( final ViewId viewId : viewIdListI )
-				{
-					final ViewRegistration v = vr.getViewRegistrations().get( viewId );
-					
-					if ( index == 0 )
-						v.getTransformList().remove( 0 );
-					else
-						v.getTransformList().remove( v.getTransformList().size() - 1 );
-	
-					v.updateModel();
-				}
+			for ( final ViewId viewId : viewIds )
+			{
+				final ViewRegistration v = vr.getViewRegistrations().get( viewId );
+				
+				if ( index == 0 )
+					v.getTransformList().remove( 0 );
+				else
+					v.getTransformList().remove( v.getTransformList().size() - 1 );
+
+				v.updateModel();
+			}
 
 			panel.updateContent();
 			panel.bdvPopup().updateBDV();

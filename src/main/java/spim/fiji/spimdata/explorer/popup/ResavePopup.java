@@ -101,14 +101,8 @@ public class ResavePopup extends JMenu implements ExplorerWindowSetable
 				public void run()
 				{
 					final SpimData2 data = (SpimData2)panel.getSpimData();
-					
-					// get grouped vids if necessary
-					final List< ViewId > viewIds = new ArrayList<>();
-					if (GroupedRowWindow.class.isInstance( panel ))
-						((GroupedRowWindow)panel).selectedRowsViewIdGroups().forEach( vids -> viewIds.addAll( vids ) );
-					else
-						viewIds.addAll( panel.selectedRowsViewId() );
 
+					final List< ViewId > viewIds = ApplyTransformationPopup.getSelectedViews( panel );
 					String question;
 					
 					final boolean notAllSelected = viewIds.size() < data.getSequenceDescription().getViewDescriptions().size();

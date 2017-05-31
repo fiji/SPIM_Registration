@@ -2,6 +2,7 @@ package spim.fiji.spimdata.explorer.popup;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +18,7 @@ import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.plugin.apply.ApplyParameters;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
+import spim.fiji.spimdata.explorer.GroupedRowWindow;
 
 public class ApplyTransformationPopup extends JMenuItem implements ExplorerWindowSetable
 {
@@ -37,6 +39,18 @@ public class ApplyTransformationPopup extends JMenuItem implements ExplorerWindo
 	{
 		this.panel = panel;
 		return this;
+	}
+
+	public static final List< ViewId > getSelectedViews(
+			final ExplorerWindow< ? extends AbstractSpimData< ? extends AbstractSequenceDescription< ?, ?, ? > >, ? > panel )
+	{
+		final List< ViewId > viewIds = new ArrayList<>();
+		if (GroupedRowWindow.class.isInstance( panel ))
+			((GroupedRowWindow)panel).selectedRowsViewIdGroups().forEach( vidsI -> viewIds.addAll( vidsI ) );
+		else
+			viewIds.addAll(panel.selectedRowsViewId());
+
+		return viewIds;
 	}
 
 	public class MyActionListener implements ActionListener
@@ -61,7 +75,8 @@ public class ApplyTransformationPopup extends JMenuItem implements ExplorerWindo
 				@Override
 				public void run()
 				{
-					final List< ViewId > viewIds = panel.selectedRowsViewId();
+					final List< ViewId > viewIds = getSelectedViews( panel );
+
 					final SpimData data = (SpimData)panel.getSpimData();
 		
 					final Apply_Transformation t = new Apply_Transformation();

@@ -50,7 +50,7 @@ public class BakeManualTransformationPopup extends JMenuItem implements Explorer
 			return;
 		}
 
-		final List< ViewId > viewIds = panel.selectedRowsViewId();
+		final List< ViewId > viewIds = ApplyTransformationPopup.getSelectedViews( panel );
 
 		final ViewRegistrations vr = panel.getSpimData().getViewRegistrations();
 		ViewerState state = panel.bdvPopup().getBDV().getViewer().getState();

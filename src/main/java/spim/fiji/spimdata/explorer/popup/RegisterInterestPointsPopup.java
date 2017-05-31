@@ -56,13 +56,9 @@ public class RegisterInterestPointsPopup extends JMenuItem implements ExplorerWi
 				@Override
 				public void run()
 				{
-					final List< ViewId > vids = new ArrayList<>();					
-					if (GroupedRowWindow.class.isInstance( panel ))
-						((GroupedRowWindow)panel).selectedRowsViewIdGroups().forEach( vidsI -> vids.addAll( vidsI ) );
-					else
-						vids.addAll(panel.selectedRowsViewId());					
-					
-					if ( new Interest_Point_Registration().register( (SpimData2)panel.getSpimData(), vids ) )
+					final List< ViewId > viewIds = ApplyTransformationPopup.getSelectedViews( panel );
+
+					if ( new Interest_Point_Registration().register( (SpimData2)panel.getSpimData(), viewIds ) )
 					{
 						panel.updateContent(); // update interestpoint and registration panel if available
 						panel.bdvPopup().updateBDV();

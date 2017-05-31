@@ -59,13 +59,9 @@ public class BoundingBoxPopup extends JMenuItem implements ExplorerWindowSetable
 				@Override
 				public void run()
 				{
-					final List< ViewId > vids = new ArrayList<>();
-					if (panel instanceof GroupedRowWindow)
-						((GroupedRowWindow)panel).selectedRowsViewIdGroups().forEach( vidsI -> vids.addAll( vidsI ) );
-					else
-						vids.addAll( panel.selectedRowsViewId() );
-					
-					if ( new Define_Bounding_Box().defineBoundingBox( (SpimData2)panel.getSpimData(), vids ) != null )
+					final List< ViewId > viewIds = ApplyTransformationPopup.getSelectedViews( panel );
+
+					if ( new Define_Bounding_Box().defineBoundingBox( (SpimData2)panel.getSpimData(), viewIds ) != null )
 					{
 						panel.updateContent(); // update main table and registration panel if available
 						panel.bdvPopup().updateBDV();
