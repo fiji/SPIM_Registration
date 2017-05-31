@@ -79,6 +79,9 @@ public class BoundingBoxMaximalGroupOverlap< V extends ViewId > implements Bound
 		}
 
 		final RealInterval maxBoundingInterval = getMinBoundingInterval( viewGroupsInner );
+		
+		if (maxBoundingInterval == null)
+			return null;
 
 		final int[] min = new int[maxBoundingInterval.numDimensions()];
 		final int[] max = new int[maxBoundingInterval.numDimensions()];
