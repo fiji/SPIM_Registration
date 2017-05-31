@@ -87,9 +87,15 @@ public class SpimData2 extends SpimData
 	 * @param i
 	 * @return - the ViewId that fits to timepoint, angle, channel &amp; illumination by ID (or null if it does not exist)
 	 */
-	public static ViewId getViewId( final SequenceDescription seqDesc, final TimePoint t, final Channel c, final Angle a, final Illumination i )
+	public static ViewId getViewId(
+			final SequenceDescription seqDesc,
+			final TimePoint t,
+			final Channel c,
+			final Angle a,
+			final Illumination i,
+			final Tile x )
 	{
-		final ViewSetup viewSetup = getViewSetup( seqDesc.getViewSetupsOrdered(), c, a, i );
+		final ViewSetup viewSetup = getViewSetup( seqDesc.getViewSetupsOrdered(), c, a, i, x );
 		
 		if ( viewSetup == null )
 			return null;
@@ -97,13 +103,14 @@ public class SpimData2 extends SpimData
 			return new ViewId( t.getId(), viewSetup.getId() );
 	}
 
-	public static ViewSetup getViewSetup( final List< ? extends ViewSetup > list, final Channel c, final Angle a, final Illumination i )
+	public static ViewSetup getViewSetup( final List< ? extends ViewSetup > list, final Channel c, final Angle a, final Illumination i, final Tile x )
 	{
 		for ( final ViewSetup viewSetup : list )
 		{
 			if ( viewSetup.getAngle().getId() == a.getId() && 
 				 viewSetup.getChannel().getId() == c.getId() && 
-				 viewSetup.getIllumination().getId() == i.getId() )
+				 viewSetup.getIllumination().getId() == i.getId() &&
+				 viewSetup.getTile().getId() == x.getId() )
 			{
 				return viewSetup;
 			}
