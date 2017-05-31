@@ -19,9 +19,9 @@ import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
+import spim.process.boundingbox.BoundingBoxBigDataViewer;
+import spim.process.boundingbox.BoundingBoxReorientation;
 import spim.process.fusion.boundingbox.AutomaticBoundingBox;
-import spim.process.fusion.boundingbox.AutomaticReorientation;
-import spim.process.fusion.boundingbox.BigDataViewerBoundingBox;
 import spim.process.fusion.deconvolution.EfficientBayesianBased;
 import spim.process.fusion.export.AppendSpimData2;
 import spim.process.fusion.export.DisplayImage;
@@ -67,7 +67,7 @@ public class Image_Fusion implements PlugIn
 		// ask for everything
 		final LoadParseQueryXML result = new LoadParseQueryXML();
 		
-		if ( !result.queryXML( "image fusion", true, true, true, true ) )
+		if ( !result.queryXML( "image fusion", true, true, true, true, true ) )
 			return;
 
 		fuse(

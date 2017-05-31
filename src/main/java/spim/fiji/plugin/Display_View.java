@@ -11,6 +11,7 @@ import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.ImgLoader;
+import mpicbg.spim.data.sequence.Tile;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
@@ -32,6 +33,7 @@ public class Display_View implements PlugIn
 	public static int defaultAngleChoice = 0;
 	public static int defaultChannelChoice = 0;
 	public static int defaultIlluminationChoice = 0;
+	public static int defaultTileChoice = 0;
 	public static int defaultTimepointChoice = 0;
 
 	public static int defaultPixelType = 0;
@@ -42,7 +44,7 @@ public class Display_View implements PlugIn
 		// ask for everything but the channels
 		final LoadParseQueryXML result = new LoadParseQueryXML();
 
-		if ( !result.queryXML( "displaying a view", false, false, false, false ) )
+		if ( !result.queryXML( "displaying a view", false,false, false, false, false ) )
 			return;
 
 		final GenericDialog gd = new GenericDialog( "Select View" );
@@ -67,9 +69,15 @@ public class Display_View implements PlugIn
 		for ( int i = 0; i < illuminations.size(); ++i )
 			illuminationNames[ i ] = illuminations.get( i ).getName();
 
+		final List< Tile > tiles = result.getData().getSequenceDescription().getAllTilesOrdered();
+		final String[] tileNames = new String[ tiles.size() ];
+		for ( int i = 0; i < tiles.size(); ++i )
+			tileNames[ i ] = tiles.get( i ).getName();
+
 		gd.addChoice( "Angle", angleNames, angleNames[ defaultAngleChoice ] );
 		gd.addChoice( "Channel", channelNames, channelNames[ defaultChannelChoice ] );
 		gd.addChoice( "Illumination", illuminationNames, illuminationNames[ defaultIlluminationChoice ] );
+		gd.addChoice( "Tile", tileNames, tileNames[ defaultTileChoice ] );
 		gd.addChoice( "Timepoint", timepointNames, timepointNames[ defaultTimepointChoice ] );
 		gd.addMessage( "" );
 		gd.addChoice( "Pixel_type", BoundingBoxGUI.pixelTypes, BoundingBoxGUI.pixelTypes[ defaultPixelType ] );
@@ -82,11 +90,12 @@ public class Display_View implements PlugIn
 		final Angle angle = angles.get( defaultAngleChoice = gd.getNextChoiceIndex() );
 		final Channel channel = channels.get( defaultChannelChoice = gd.getNextChoiceIndex() );
 		final Illumination illumination = illuminations.get( defaultIlluminationChoice = gd.getNextChoiceIndex() );
+		final Tile tile = tiles.get( defaultTileChoice = gd.getNextChoiceIndex() );
 		final TimePoint tp = timepoints.get( defaultTimepointChoice = gd.getNextChoiceIndex() );
 		final int pixelType = defaultPixelType = gd.getNextChoiceIndex();
 
 		// get the corresponding viewid
-		final ViewId viewId = SpimData2.getViewId( result.getData().getSequenceDescription(), tp, channel, angle, illumination );
+		final ViewId viewId = SpimData2.getViewId( result.getData().getSequenceDescription(), tp, channel, angle, illumination, tile );
 		final String name = name( result.getData().getSequenceDescription().getViewDescription( viewId ) );
 
 		// this happens only if a viewsetup is not present in any timepoint

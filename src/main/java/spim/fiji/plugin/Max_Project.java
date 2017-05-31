@@ -1,10 +1,5 @@
 package spim.fiji.plugin;
 
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.plugin.PlugIn;
-import ij.process.FloatProcessor;
-
 import static mpicbg.spim.data.generic.sequence.ImgLoaderHints.LOAD_COMPLETELY;
 
 import java.util.ArrayList;
@@ -12,6 +7,10 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.plugin.PlugIn;
+import ij.process.FloatProcessor;
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.TimePoint;
@@ -30,7 +29,6 @@ import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.deconvolution.ExtractPSF;
-import spim.process.fusion.weightedavg.ProcessFusion;
 
 public class Max_Project implements PlugIn
 {
@@ -40,7 +38,7 @@ public class Max_Project implements PlugIn
 		// ask for everything
 		final LoadParseQueryXML result = new LoadParseQueryXML();
 		
-		if ( !result.queryXML( "image fusion", true, true, true, true ) )
+		if ( !result.queryXML( "image fusion", true, true, true, true, true ) )
 			return;
 
 		maxProject(

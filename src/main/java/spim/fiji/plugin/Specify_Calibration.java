@@ -35,7 +35,7 @@ public class Specify_Calibration implements PlugIn
 		// ask for everything
 		final LoadParseQueryXML result = new LoadParseQueryXML();
 		
-		if ( !result.queryXML( "specifying calibration", true, true, true, true ) )
+		if ( !result.queryXML( "specifying calibration", true, true, true, true, true ) )
 			return;
 
 		final SpimData2 data = result.getData();

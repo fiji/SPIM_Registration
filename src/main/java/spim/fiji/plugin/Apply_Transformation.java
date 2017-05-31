@@ -1,14 +1,14 @@
 package spim.fiji.plugin;
 
-import ij.gui.GenericDialog;
-import ij.plugin.PlugIn;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import bdv.BigDataViewer;
+import ij.gui.GenericDialog;
+import ij.plugin.PlugIn;
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
@@ -40,9 +40,8 @@ import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
-import spim.process.fusion.boundingbox.BigDataViewerBoundingBox;
+import spim.process.boundingbox.BoundingBoxBigDataViewer;
 import spim.vecmath.Transform3D;
-import bdv.BigDataViewer;
 
 public class Apply_Transformation implements PlugIn
 {

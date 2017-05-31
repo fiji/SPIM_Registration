@@ -1,13 +1,12 @@
 package spim.fiji.plugin;
 
-import ij.ImageJ;
-import ij.gui.GenericDialog;
-import ij.plugin.PlugIn;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import ij.ImageJ;
+import ij.gui.GenericDialog;
+import ij.plugin.PlugIn;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.fusion.boundingbox.BoundingBoxGUI;
@@ -15,9 +14,6 @@ import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
-import spim.process.fusion.boundingbox.AutomaticBoundingBox;
-import spim.process.fusion.boundingbox.AutomaticReorientation;
-import spim.process.fusion.boundingbox.BigDataViewerBoundingBox;
 
 public class Define_Bounding_Box implements PlugIn
 {
@@ -42,7 +38,7 @@ public class Define_Bounding_Box implements PlugIn
 		// ask for everything
 		final LoadParseQueryXML result = new LoadParseQueryXML();
 		
-		if ( !result.queryXML( "bounding box definition", true, true, true, true ) )
+		if ( !result.queryXML( "bounding box definition", true, true, true, true, true ) )
 			return;
 
 		defineBoundingBox(

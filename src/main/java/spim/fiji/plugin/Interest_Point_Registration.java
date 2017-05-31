@@ -53,6 +53,9 @@ import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.process.interestpointregistration.TransformationTools;
 import spim.process.interestpointregistration.global.GlobalOpt;
+import spim.process.interestpointregistration.global.convergence.ConvergenceStrategy;
+import spim.process.interestpointregistration.global.pointmatchcreating.InterestPointMatchCreator;
+import spim.process.interestpointregistration.global.pointmatchcreating.PointMatchCreator;
 import spim.process.interestpointregistration.pairwise.MatcherPairwiseTools;
 import spim.process.interestpointregistration.pairwise.PairwiseResult;
 import spim.process.interestpointregistration.pairwise.constellation.PairwiseSetup;
@@ -112,7 +115,7 @@ public class Interest_Point_Registration implements PlugIn
 		// ask for everything but the channels
 		final LoadParseQueryXML result = new LoadParseQueryXML();
 
-		if ( !result.queryXML( "for performing interest point registration", true, false, true, true ) )
+		if ( !result.queryXML( "for performing interest point registration", true, true, true, true, true ) )
 			return;
 
 		register(
@@ -284,7 +287,10 @@ public class Interest_Point_Registration implements PlugIn
 				}
 
 				// run global optimization
-				models = GlobalOpt.compute( pairwiseMatching.getMatchingModel().getModel(), result, fixedViews, subset.getGroups() );
+				final ConvergenceStrategy cs = new ConvergenceStrategy( 5.0 );
+				final PointMatchCreator pmc = new InterestPointMatchCreator( result );
+
+				models = GlobalOpt.compute( pairwiseMatching.getMatchingModel().getModel(), pmc, cs, fixedViews, subset.getGroups() );
 			}
 			else
 			{
@@ -341,7 +347,10 @@ public class Interest_Point_Registration implements PlugIn
 					}
 
 				// run global optimization
-				models = GlobalOpt.compute( pairwiseMatching.getMatchingModel().getModel(), resultTransformed, fixedViews, groups );
+				final ConvergenceStrategy cs = new ConvergenceStrategy( 5.0 );
+				final PointMatchCreator pmc = new InterestPointMatchCreator( resultTransformed );
+
+				models = GlobalOpt.compute( pairwiseMatching.getMatchingModel().getModel(), pmc, cs, fixedViews, groups );
 			}
 
 			// global opt failed

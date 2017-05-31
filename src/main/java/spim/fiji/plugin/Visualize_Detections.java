@@ -55,7 +55,7 @@ public class Visualize_Detections implements PlugIn
 		// ask for everything but the channels
 		final LoadParseQueryXML result = new LoadParseQueryXML();
 		
-		if ( !result.queryXML( "visualize detections", true, false, true, true ) )
+		if ( !result.queryXML( "visualize detections", true, true, true, true, true ) )
 			return;
 
 		final List< ViewId > viewIds = SpimData2.getAllViewIdsSorted( result.getData(), result.getViewSetupsToProcess(), result.getTimePointsToProcess() );

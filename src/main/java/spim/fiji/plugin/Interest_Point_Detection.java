@@ -53,7 +53,7 @@ public class Interest_Point_Detection implements PlugIn
 		// ask for everything but the channels
 		final LoadParseQueryXML result = new LoadParseQueryXML();
 		
-		if ( !result.queryXML( "perfoming interest point detection", true, true, true, true ) )
+		if ( !result.queryXML( "perfoming interest point detection", true, true, true, true, true ) )
 			return;
 
 		detectInterestPoints(
