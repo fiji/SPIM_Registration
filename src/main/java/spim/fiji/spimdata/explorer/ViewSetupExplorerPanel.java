@@ -11,8 +11,12 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -36,6 +40,7 @@ import bdv.viewer.VisibilityAndGrouping;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
+import mpicbg.spim.data.generic.base.Entity;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.Channel;
@@ -70,6 +75,7 @@ import spim.fiji.spimdata.explorer.util.ColorStream;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > > extends FilteredAndGroupedExplorerPanel< AS, X > implements ExplorerWindow< AS, X >
 {
@@ -329,19 +335,91 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 
 		final boolean[] active = new boolean[ data.getSequenceDescription().getViewSetupsOrdered().size() ];
 
+		// set selected views active
+		// also check whether at least one "group" of views is a real group (not just a single, wrapped, view) 
+		boolean anyGrouped = false;		
 		for ( final List<BasicViewDescription< ? >> vds : selectedRows )
+		{
+			if (vds.size() > 1)
+				anyGrouped = true;
+
 			for (BasicViewDescription< ? > vd : vds)
 				if ( vd.getTimePointId() == firstTP.getId() )
 					active[ getBDVSourceIndex( vd.getViewSetup(), data ) ] = true;
+		}
 
+		
 		if ( selectedRows.size() > 1 && colorMode )
-			colorSources( bdv.getSetupAssignments().getConverterSetups(), 0 );
+		{
+			// we have grouped views
+			// a.t.m. we can only group by tiles, therefore we just color by Tile
+			if (anyGrouped)
+			{
+				Set< Class< ? extends Entity > > factors = new HashSet<>();
+				factors.add( Tile.class );
+				colorByFactors( bdv, data, factors );
+			}
+			else
+				colorSources( bdv.getSetupAssignments().getConverterSetups(), 0 );
+		}
 		else
 			whiteSources( bdv.getSetupAssignments().getConverterSetups() );
 
 		setVisibleSources( bdv.getViewer().getVisibilityAndGrouping(), active );
 	}
 
+	/**
+	 * color the views displayed in bdv according to one or more Entity classes
+	 * @param bdv - the BigDataViewer instance
+	 * @param data - the SpimData
+	 * @param groupingFactors - the Entity classes to group by (each distinct combination of instances will receive its own color)
+	 */
+	public static void colorByFactors(BigDataViewer bdv, AbstractSpimData< ? > data, Set<Class<? extends Entity>> groupingFactors)
+	{
+		List<BasicViewDescription< ? > > vds = new ArrayList<>();
+		Map<BasicViewDescription< ? >, ConverterSetup> vdToCs = new HashMap<>();
+		
+		for (ConverterSetup cs : bdv.getSetupAssignments().getConverterSetups())
+		{
+			Integer timepointId = data.getSequenceDescription().getTimePoints().getTimePointsOrdered().get( bdv.getViewer().getState().getCurrentTimepoint()).getId();
+			BasicViewDescription< ? > vd = data.getSequenceDescription().getViewDescriptions().get( new ViewId( timepointId, cs.getSetupId() ) );
+			vds.add( vd );
+			vdToCs.put( vd, cs );
+		}
+		
+		List< Group< BasicViewDescription< ? > > > vdGroups = Group.combineBy( vds, groupingFactors );
+		
+		// nothing to group
+		if (vdGroups.size() < 1)
+			return;
+		
+		// one group -> white
+		if (vdGroups.size() == 1)
+		{
+			FilteredAndGroupedExplorerPanel.whiteSources(bdv.getSetupAssignments().getConverterSetups());
+			return;
+		}
+		
+		List<ArrayList<ConverterSetup>> groups =  new ArrayList<>();
+		
+		for (Group< BasicViewDescription< ? > > lVd : vdGroups)
+		{
+			ArrayList< ConverterSetup > lCs = new ArrayList<>();
+			for (BasicViewDescription< ? > vd : lVd)
+				lCs.add( vdToCs.get( vd ) );
+			groups.add( lCs );
+		}
+				
+		Iterator< ARGBType > colorIt = ColorStream.iterator();
+				
+		for (ArrayList< ConverterSetup > csg : groups)
+		{
+			ARGBType color = colorIt.next();
+			for (ConverterSetup cs : csg)
+				cs.setColor( color );
+		}
+	}
+	
 	public static void setFusedModeSimple( final BigDataViewer bdv, final AbstractSpimData< ? > data )
 	{
 		if ( bdv == null )
