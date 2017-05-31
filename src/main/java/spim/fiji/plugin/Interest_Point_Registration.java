@@ -94,7 +94,7 @@ public class Interest_Point_Registration implements PlugIn
 	// advanced dialog
 	public static int defaultRange = 5;
 	public static int defaultReferenceTimepointIndex = -1;
-	public static boolean defaultConsiderTimepointAsUnit = false;
+	public static boolean defaultGroupTimePoints = false;
 	public static int defaultFixViews = 0;
 	public static int defaultMapBack = 0;
 	public static boolean defaultShowStatistics = true;
@@ -173,8 +173,8 @@ public class Interest_Point_Registration implements PlugIn
 		if ( arp == null )
 			return false;
 
-		// identify subsets
-		final Set< Group< ViewId > > groups = arp.getGroups( viewIds );
+		// identify groups/subsets
+		final Set< Group< ViewId > > groups = arp.getGroups( data, viewIds, brp.groupTiles );
 		final PairwiseSetup< ViewId > setup = arp.pairwiseSetupInstance( brp.registrationType, viewIds, groups );
 		identifySubsets( setup, brp.getOverlapDetection( data ) );
 
@@ -448,7 +448,7 @@ public class Interest_Point_Registration implements PlugIn
 		// for all registrations that include multiple timepointss
 		if ( brp.registrationType != RegistrationType.TIMEPOINTS_INDIVIDUALLY )
 		{
-			gd.addCheckbox( "Consider_each_timepoint_as_rigid_unit", defaultConsiderTimepointAsUnit );
+			gd.addCheckbox( "Consider_each_timepoint_as_rigid_unit", defaultGroupTimePoints );
 			gd.addMessage( "Note: This option applies the same transformation model to all views of one timepoint. This makes for example\n" +
 					"sense if all timepoints are individually pre-registered using an affine transformation model, and for the timeseries\n" +
 					"stabilization a translation model should be used.\n ", GUIHelper.smallStatusFont );
@@ -507,9 +507,9 @@ public class Interest_Point_Registration implements PlugIn
 			arp.range = defaultRange = (int)Math.round( gd.getNextNumber() );
 
 		if ( brp.registrationType != RegistrationType.TIMEPOINTS_INDIVIDUALLY )
-			arp.considerTimepointsAsUnit = defaultConsiderTimepointAsUnit = gd.getNextBoolean();
+			arp.groupTimePoints = defaultGroupTimePoints = gd.getNextBoolean();
 		else
-			arp.considerTimepointsAsUnit = false;
+			arp.groupTimePoints = false;
 
 		if ( brp.registrationType != RegistrationType.TO_REFERENCE_TIMEPOINT )
 		{
@@ -590,6 +590,13 @@ public class Interest_Point_Registration implements PlugIn
 
 		gd.addChoice( "Interest_points" , labels, labels[ defaultLabel ] );
 
+		final HashSet< Integer > tiles = new HashSet<>();
+		for ( final ViewId viewId : viewIds )
+			tiles.add( data.getSequenceDescription().getViewDescription( viewId ).getViewSetup().getTile().getId() );
+
+		if ( tiles.size() > 1 )
+			gd.addCheckbox( "Group_tiles", true );
+
 		// assemble the last registration names of all viewsetups involved
 		final HashMap< String, Integer > names = GUIHelper.assembleRegistrationNames( data, viewIds );
 		gd.addMessage( "" );
@@ -651,6 +658,10 @@ public class Interest_Point_Registration implements PlugIn
 		if ( label.contains( warningLabel ) )
 			label = label.substring( 0, label.indexOf( warningLabel ) );
 
+		boolean groupTiles = false;
+		if ( tiles.size() > 1 )
+			groupTiles = gd.getNextBoolean();
+
 		final PairwiseGUI pwr = staticPairwiseAlgorithms.get( algorithm ).newInstance();
 
 		IOFunctions.println( "Registration algorithm: " + pwr.getDescription() );
@@ -661,6 +672,7 @@ public class Interest_Point_Registration implements PlugIn
 		brp.registrationType = registrationType;
 		brp.overlapType = overlapType;
 		brp.labelMap = new HashMap<>();
+		brp.groupTiles = groupTiles;
 
 		for ( final ViewId viewId : viewIds )
 			brp.labelMap.put( viewId, label );
