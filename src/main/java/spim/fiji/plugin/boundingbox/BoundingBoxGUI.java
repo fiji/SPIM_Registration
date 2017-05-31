@@ -1,4 +1,4 @@
-package spim.fiji.plugin.fusion.boundingbox;
+package spim.fiji.plugin.boundingbox;
 
 import ij.gui.GenericDialog;
 

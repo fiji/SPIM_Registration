@@ -1,21 +1,20 @@
 package spim.fiji.plugin.fusion;
 
-import ij.gui.GenericDialog;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import ij.gui.GenericDialog;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import net.imglib2.util.Intervals;
-import spim.fiji.plugin.fusion.boundingbox.BoundingBoxGUI;
-import spim.fiji.plugin.fusion.boundingbox.BoundingBoxGUI.ManageListeners;
+import spim.fiji.plugin.boundingbox.BoundingBoxGUI;
+import spim.fiji.plugin.boundingbox.BoundingBoxGUI.ManageListeners;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
 import spim.process.fusion.export.ImgExport;
