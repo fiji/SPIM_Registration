@@ -247,7 +247,7 @@
 		<dependency>
 			<groupId>net.imglib2.simulation</groupId>
 			<artifactId>multiview-simulation</artifactId>
-			<version>1.0.0</version>
+			<version>1.0.1</version>
 		</dependency>
 	</dependencies>
 </project>
