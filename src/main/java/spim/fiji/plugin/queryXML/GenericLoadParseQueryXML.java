@@ -804,6 +804,9 @@ public class GenericLoadParseQueryXML<
 	{
 		final ArrayList< HashSet< Integer > > numEntitiesPerAttrib = new ArrayList< HashSet< Integer > >( this.attributes.size() );
 
+		if (allAttributeInstances == null)
+			allAttributeInstances = new HashMap<>();
+		
 		for ( int attributeIndex = 0; attributeIndex < this.attributes.size(); ++attributeIndex )
 		{
 			this.allAttributeInstances.put( this.attributes.get( attributeIndex ), new ArrayList< Entity >() );
