@@ -24,8 +24,9 @@ public class SpimDataExample
 
 		MissingViews m = spimData.getSequenceDescription().getMissingViews();
 
-		for ( final ViewId view : m.getMissingViews() )
-			System.out.println( "Missing: " + view.getTimePointId() + " " + view.getViewSetupId() );
+		if ( m != null )
+			for ( final ViewId view : m.getMissingViews() )
+				System.out.println( "Missing: " + view.getTimePointId() + " " + view.getViewSetupId() );
 
 		for ( final ViewDescription vd : spimData.getSequenceDescription().getViewDescriptions().values() )
 			System.out.println( "Present: " + vd.isPresent() + " -- " + vd.getTimePointId() + " " + vd.getViewSetupId() );
