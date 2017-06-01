@@ -698,74 +698,8 @@ public class GenericLoadParseQueryXML<
 				// also populates this.allAttributeInstances
 				final ArrayList< HashSet< Integer > > numEntitiesPerAttrib = entitiesPerAttribute();
 
-				for ( final V viewSetup : this.data.getSequenceDescription().getViewSetupsOrdered() )
-				{ 
-					for ( int attributeIndex = 0; attributeIndex < numAttributes; ++attributeIndex )
-					{
-						final String attribute = this.attributes.get( attributeIndex );
-						
-						// the number of id's per attribute
-						final HashSet< Integer > numEntityIds = numEntitiesPerAttrib.get( attributeIndex );
-
-						// the entity instance (could be Angle, Channel, etc ... )
-						Entity e = viewSetup.getAttributes().get( attribute );
-
-						if ( e == null )
-						{
-							if ( attribute.equals( "angle" ) )
-							{
-								IOFunctions.println( new Date( System.currentTimeMillis() ) + ": 'angle' attribute undefined, using Angle 0 to support it." );
-								e = new Angle( 0 );
-								viewSetup.setAttribute( e );
-							}
-							else if ( attribute.equals( "channel" ) )
-							{
-								IOFunctions.println( new Date( System.currentTimeMillis() ) + ": 'channel' attribute undefined, using Channel 0 to support it." );
-								e = new Channel( 0 );
-								viewSetup.setAttribute( e );
-							}
-							else if ( attribute.equals( "illumination" ) )
-							{
-								IOFunctions.println( new Date( System.currentTimeMillis() ) + ": 'illumination' attribute undefined, using Illumination 0 to support it." );
-								e = new Illumination( 0 );
-								viewSetup.setAttribute( e );
-							}
-							else if ( attribute.equals( "tile" ) )
-							{
-								IOFunctions.println( new Date( System.currentTimeMillis() ) + ": 'tile' attribute undefined, using Tile 0 to support it." );
-								e = new Tile( 0 );
-								viewSetup.setAttribute( e );
-							}
-							else
-							{
-								// something new we do not know
-								IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Unknown entity '" + attribute + "', adding placeholder entity to support it." );
-								e = new EmptyEntity( 0, attribute );
-								viewSetup.getAttributes().put( attribute, e );
-							}
-						}
-
-						final int id = e.getId();
-						
-						if ( !numEntityIds.contains( id ) )
-						{
-							numEntityIds.add( id );
-							this.allAttributeInstances.get( attribute ).add( e );
-						}
-					}
-				}
-
-				// sort all entity lists
-				for ( final String attribute : this.allAttributeInstances.keySet() )
-					Collections.sort( this.allAttributeInstances.get( attribute ),
-							new Comparator<Entity>()
-							{
-								@Override
-								public int compare( final Entity o1, final Entity o2 )
-								{
-									return o1.getId() - o2.getId();
-								}
-							});
+				// populate entity lists
+				populateAttributesEntities( numAttributes, numEntitiesPerAttrib );
 
 				this.message1 = goodMsg1;
 				this.message2 = getSpimDataDescription( this.data, this.attributes, numEntitiesPerAttrib, numAttributes );
@@ -791,6 +725,78 @@ public class GenericLoadParseQueryXML<
 		}
 		
 		return true;
+	}
+
+	protected void populateAttributesEntities( final int numAttributes, final ArrayList< HashSet< Integer > > numEntitiesPerAttrib )
+	{
+		for ( final V viewSetup : this.data.getSequenceDescription().getViewSetupsOrdered() )
+		{ 
+			for ( int attributeIndex = 0; attributeIndex < numAttributes; ++attributeIndex )
+			{
+				final String attribute = this.attributes.get( attributeIndex );
+
+				// the number of id's per attribute
+				final HashSet< Integer > numEntityIds = numEntitiesPerAttrib.get( attributeIndex );
+
+				// the entity instance (could be Angle, Channel, etc ... )
+				Entity e = viewSetup.getAttributes().get( attribute );
+
+				if ( e == null )
+				{
+					if ( attribute.equals( "angle" ) )
+					{
+						IOFunctions.println( new Date( System.currentTimeMillis() ) + ": 'angle' attribute undefined, using Angle 0 to support it." );
+						e = new Angle( 0 );
+						viewSetup.setAttribute( e );
+					}
+					else if ( attribute.equals( "channel" ) )
+					{
+						IOFunctions.println( new Date( System.currentTimeMillis() ) + ": 'channel' attribute undefined, using Channel 0 to support it." );
+						e = new Channel( 0 );
+						viewSetup.setAttribute( e );
+					}
+					else if ( attribute.equals( "illumination" ) )
+					{
+						IOFunctions.println( new Date( System.currentTimeMillis() ) + ": 'illumination' attribute undefined, using Illumination 0 to support it." );
+						e = new Illumination( 0 );
+						viewSetup.setAttribute( e );
+					}
+					else if ( attribute.equals( "tile" ) )
+					{
+						IOFunctions.println( new Date( System.currentTimeMillis() ) + ": 'tile' attribute undefined, using Tile 0 to support it." );
+						e = new Tile( 0 );
+						viewSetup.setAttribute( e );
+					}
+					else
+					{
+						// something new we do not know
+						IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Unknown entity '" + attribute + "', adding placeholder entity to support it." );
+						e = new EmptyEntity( 0, attribute );
+						viewSetup.getAttributes().put( attribute, e );
+					}
+				}
+
+				final int id = e.getId();
+
+				if ( !numEntityIds.contains( id ) )
+				{
+					numEntityIds.add( id );
+					this.allAttributeInstances.get( attribute ).add( e );
+				}
+			}
+		}
+
+		// sort all entity lists
+		for ( final String attribute : this.allAttributeInstances.keySet() )
+			Collections.sort( this.allAttributeInstances.get( attribute ),
+					new Comparator<Entity>()
+					{
+						@Override
+						public int compare( final Entity o1, final Entity o2 )
+						{
+							return o1.getId() - o2.getId();
+						}
+					});
 	}
 
 	// count number of entity id's per attribute and make sure we add them only once
@@ -877,7 +883,7 @@ public class GenericLoadParseQueryXML<
 	{
 		return io.load( xmlFilename );
 	}
-	
+
 	protected void addListeners( final GenericDialog gd, final TextField tf, final Label label1, final Label label2  )
 	{
 		final GenericLoadParseQueryXML< ?,?,?,?,?,? > lpq = this;
