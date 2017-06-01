@@ -11,6 +11,14 @@ import javax.swing.JOptionPane;
 
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.histogram.DiscreteFrequencyDistribution;
+import net.imglib2.histogram.Histogram1d;
+import net.imglib2.histogram.Real1dBinMapper;
+import net.imglib2.type.numeric.NumericType;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.view.Views;
 import spim.fiji.plugin.apply.BigDataViewerTransformationWindow;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
 import spim.fiji.spimdata.explorer.GroupedRowWindow;
@@ -19,6 +27,8 @@ import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import bdv.AbstractSpimSource;
 import bdv.BigDataViewer;
 import bdv.tools.InitializeViewerState;
+import bdv.tools.brightness.MinMaxGroup;
+import bdv.tools.brightness.SetupAssignments;
 import bdv.tools.transformation.TransformedSource;
 import bdv.viewer.Source;
 import bdv.viewer.ViewerOptions;
@@ -172,6 +182,61 @@ public class BDVPopup extends JMenuItem implements ExplorerWindowSetable, BasicB
 		ViewSetupExplorerPanel.updateBDV( this.bdv, panel.colorMode(), panel.getSpimData(), panel.firstSelectedVD(), ((GroupedRowWindow)panel).selectedRowsGroups() );
 	}
 	
+	/**
+	 * set BDV brightness by sampling the mid z plane (and 1/4 and 3/4 if z is large enough )
+	 * of the currently selected source (typically the first source) and getting quantiles from intensity histogram
+	 * (slightly modified version of {@link InitializeViewerState.initBrightness})
+	 *
+	 * @param cumulativeMinCutoff - quantile of min 
+	 * @param cumulativeMaxCutoff - quantile of max
+	 * @param state - Bdv's ViewerSate
+	 * @param setupAssignments - Bdv's View assignments
+	 */
+	public static <T extends RealType<T>> void initBrightness( final double cumulativeMinCutoff, final double cumulativeMaxCutoff, final ViewerState state, final SetupAssignments setupAssignments )
+	{
+		final Source< ? > source = state.getSources().get( state.getCurrentSource() ).getSpimSource();
+		final int timepoint = state.getCurrentTimepoint();
+		if ( !source.isPresent( timepoint ) )
+			return;
+		if ( !RealType.class.isInstance( source.getType() ) )
+			return;
+		@SuppressWarnings( "unchecked" )
+		final RandomAccessibleInterval< T > img = ( RandomAccessibleInterval< T > ) source.getSource( timepoint, source.getNumMipmapLevels() - 1 );
+		final long z = ( img.min( 2 ) + img.max( 2 ) + 1 ) / 2;
+
+		final int numBins = 6535;
+		final Histogram1d< T > histogram = new Histogram1d< T >( Views.iterable( Views.hyperSlice( img, 2, z ) ), new Real1dBinMapper< T >( 0, 65535, numBins, false ) );
+
+		// sample some more planes if we have enough
+		if ( (img.max( 2 ) + 1 -  img.min( 2 ) ) > 4 )
+		{
+			final long z14 = ( img.min( 2 ) + img.max( 2 ) + 1 ) / 4;
+			final long z34 = ( img.min( 2 ) + img.max( 2 ) + 1 ) / 4 * 3;
+			histogram.addData(  Views.iterable( Views.hyperSlice( img, 2, z14 ) ) );
+			histogram.addData(  Views.iterable( Views.hyperSlice( img, 2, z34 ) ) );
+		}
+
+		final DiscreteFrequencyDistribution dfd = histogram.dfd();
+		final long[] bin = new long[] { 0 };
+		double cumulative = 0;
+		int i = 0;
+		for ( ; i < numBins && cumulative < cumulativeMinCutoff; ++i )
+		{
+			bin[ 0 ] = i;
+			cumulative += dfd.relativeFrequency( bin );
+		}
+		final int min = i * 65535 / numBins;
+		for ( ; i < numBins && cumulative < cumulativeMaxCutoff; ++i )
+		{
+			bin[ 0 ] = i;
+			cumulative += dfd.relativeFrequency( bin );
+		}
+		final int max = i * 65535 / numBins;
+		final MinMaxGroup minmax = setupAssignments.getMinMaxGroups().get( 0 );
+		minmax.getMinBoundedValue().setCurrentValue( min );
+		minmax.getMaxBoundedValue().setCurrentValue( max );
+	}
+
 	public static BigDataViewer createBDV( final ExplorerWindow< ?, ? > panel )
 	{
 		if ( AbstractImgLoader.class.isInstance( panel.getSpimData().getSequenceDescription().getImgLoader() ) )
@@ -187,7 +252,8 @@ public class BDVPopup extends JMenuItem implements ExplorerWindowSetable, BasicB
 
 		BigDataViewer bdv = BigDataViewer.open( panel.getSpimData(), panel.xml(), IOFunctions.getProgressWriter(), ViewerOptions.options() );
 //		if ( !bdv.tryLoadSettings( panel.xml() ) ) TODO: this should work, but currently tryLoadSettings is protected. fix that.
-			InitializeViewerState.initBrightness( 0.001, 0.999, bdv.getViewer(), bdv.getSetupAssignments() );
+		//	InitializeViewerState.initBrightness( 0.001, 0.999, bdv.getViewer(), bdv.getSetupAssignments() );
+		initBrightness( 0.001, 0.999, bdv.getViewer().getState(), bdv.getSetupAssignments() );
 		
 		ViewSetupExplorerPanel.updateBDV( bdv, panel.colorMode(), panel.getSpimData(), panel.firstSelectedVD(), ((GroupedRowWindow)panel).selectedRowsGroups() );
 
