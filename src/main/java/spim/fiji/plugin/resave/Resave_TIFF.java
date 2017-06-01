@@ -78,7 +78,7 @@ public class Resave_TIFF implements PlugIn
 	{
 		final LoadParseQueryXML lpq = new LoadParseQueryXML();
 
-		if ( !lpq.queryXML( "Resaving as TIFF", "Resave", true, true, true, true ) )
+		if ( !lpq.queryXML( "Resaving as TIFF", "Resave", true, true, true, true, true ) )
 			return;
 
 		final ProgressWriter progressWriter = new ProgressWriterIJ();

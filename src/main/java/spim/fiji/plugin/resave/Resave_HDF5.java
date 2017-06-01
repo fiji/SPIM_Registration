@@ -54,7 +54,7 @@ public class Resave_HDF5 implements PlugIn
 
 		final LoadParseQueryXML xml = new LoadParseQueryXML();
 
-		if ( !xml.queryXML( "Resaving as HDF5", "Resave", true, true, true, true ) )
+		if ( !xml.queryXML( "Resaving as HDF5", "Resave", true, true, true, true, true ) )
 			return;
 
 		Toggle_Cluster_Options.displayClusterProcessing = rememberClusterProcessing;
