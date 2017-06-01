@@ -10,6 +10,7 @@ import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.SequenceDescription;
+import mpicbg.spim.data.sequence.Tile;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewSetup;
@@ -114,6 +115,12 @@ public class LoadParseQueryXML extends GenericLoadParseQueryXML< SpimData2, Sequ
 	@SuppressWarnings("unchecked")
 	public List< Illumination > getIlluminationsToProcess() { return (List< Illumination >)(Object)attributeInstancesToProcess.get( "illumination" ); }
 
+	/**
+	 * @return All tiles directions that should be processed
+	 */
+	@SuppressWarnings("unchecked")
+	public List< Tile > getTilesToProcess() { return (List< Tile >)(Object)attributeInstancesToProcess.get( "tile" ); }
+
 	//@Override
 	//public XmlIoSpimData2 getIO() { return (XmlIoSpimData2)io; }
 
@@ -128,6 +135,7 @@ public class LoadParseQueryXML extends GenericLoadParseQueryXML< SpimData2, Sequ
 		queryFor.add( "Timepoint" );
 		queryFor.add( "channel" );
 		queryFor.add( "angle" );
+		queryFor.add( "Tile" );
 		queryFor.add( "illumination" );
 		
 		lpq.queryXML( true, true, true, true, true );

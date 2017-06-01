@@ -1,8 +1,5 @@
 package spim.fiji.plugin.queryXML;
 
-import fiji.util.gui.GenericDialogPlus;
-import ij.gui.GenericDialog;
-
 import java.awt.Color;
 import java.awt.Label;
 import java.awt.TextField;
@@ -18,8 +15,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-import javax.management.RuntimeErrorException;
-
+import fiji.util.gui.GenericDialogPlus;
+import ij.gui.GenericDialog;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.Version;
 import mpicbg.spim.data.XmlKeys;
@@ -34,6 +31,7 @@ import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
+import mpicbg.spim.data.sequence.Tile;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.Toggle_Cluster_Options;
@@ -688,29 +686,17 @@ public class GenericLoadParseQueryXML<
 			try 
 			{
 				this.data = parseXML( xmlfile );
-				
-				// which attributes
-				this.attributes = new ArrayList< String >();
-				this.attributes.addAll( this.data.getSequenceDescription().getViewSetupsOrdered().get( 0 ).getAttributes().keySet() );
 
-				// the attributes are ordered by alphabet (or user defined) so that the details and then queried in the same order
-				if ( comparator == null )
-					Collections.sort( this.attributes );
-				else
-					Collections.sort( this.attributes, comparator );
+				// which attributes
+				this.attributes = getAttributes( data, comparator );
 
 				// get the list of entity instances per attribute
 				final int numAttributes = this.attributes.size();
 				this.allAttributeInstances = new HashMap< String, List< Entity > >();
 
 				// count number of entity id's per attribute and make sure we add them only once
-				final ArrayList< HashSet< Integer > > numEntitiesPerAttrib = new ArrayList< HashSet< Integer > >( numAttributes );
-				
-				for ( int attributeIndex = 0; attributeIndex < numAttributes; ++attributeIndex )
-				{
-					this.allAttributeInstances.put( this.attributes.get( attributeIndex ), new ArrayList< Entity >() );
-					numEntitiesPerAttrib.add( new HashSet< Integer >() );
-				}
+				// also populates this.allAttributeInstances
+				final ArrayList< HashSet< Integer > > numEntitiesPerAttrib = entitiesPerAttribute();
 
 				for ( final V viewSetup : this.data.getSequenceDescription().getViewSetupsOrdered() )
 				{ 
@@ -744,6 +730,12 @@ public class GenericLoadParseQueryXML<
 								e = new Illumination( 0 );
 								viewSetup.setAttribute( e );
 							}
+							else if ( attribute.equals( "tile" ) )
+							{
+								IOFunctions.println( new Date( System.currentTimeMillis() ) + ": 'tile' attribute undefined, using Tile 0 to support it." );
+								e = new Tile( 0 );
+								viewSetup.setAttribute( e );
+							}
 							else
 							{
 								// something new we do not know
@@ -774,39 +766,9 @@ public class GenericLoadParseQueryXML<
 									return o1.getId() - o2.getId();
 								}
 							});
-				
-				int countMissingViews = 0;
-				
-				for ( final D v : this.data.getSequenceDescription().getViewDescriptions().values() )
-					if ( !v.isPresent() )
-						++countMissingViews;
-
-				final int timepoints = this.data.getSequenceDescription().getTimePoints().size();
 
 				this.message1 = goodMsg1;
-				this.message2 = "";
-				
-				for ( int attributeIndex = 0; attributeIndex < numAttributes; ++attributeIndex )
-				{
-					final int numEntities = numEntitiesPerAttrib.get( attributeIndex ).size();
-					String entityName = this.attributes.get( attributeIndex );
-					
-					if ( numEntities > 1 )
-						entityName += "s";
-
-					this.message2 += numEntities + " " + entityName +  ", ";
-				}
-				
-				if ( timepoints > 1 )
-					this.message2 += timepoints + " timepoints, ";
-				else
-					this.message2 += timepoints + " timepoint, ";
-				
-				if ( countMissingViews == 1 )
-					this.message2 += countMissingViews + " missing view";
-				else
-					this.message2 += countMissingViews + " missing views";
-				
+				this.message2 = getSpimDataDescription( this.data, this.attributes, numEntitiesPerAttrib, numAttributes );
 				this.color = GUIHelper.good;
 			}
 			catch ( final Exception e )
@@ -829,6 +791,86 @@ public class GenericLoadParseQueryXML<
 		}
 		
 		return true;
+	}
+
+	// count number of entity id's per attribute and make sure we add them only once
+	protected final ArrayList< HashSet< Integer > > entitiesPerAttribute()
+	{
+		final ArrayList< HashSet< Integer > > numEntitiesPerAttrib = new ArrayList< HashSet< Integer > >( this.attributes.size() );
+
+		for ( int attributeIndex = 0; attributeIndex < this.attributes.size(); ++attributeIndex )
+		{
+			this.allAttributeInstances.put( this.attributes.get( attributeIndex ), new ArrayList< Entity >() );
+			numEntitiesPerAttrib.add( new HashSet< Integer >() );
+		}
+
+		return numEntitiesPerAttrib;
+	}
+
+	public static < AS extends AbstractSpimData< S >,
+					S extends AbstractSequenceDescription< V, D, L >,
+					V extends BasicViewSetup,
+					D extends BasicViewDescription< V >,
+					L extends BasicImgLoader,
+					X extends XmlIoAbstractSpimData< S, AS > > ArrayList< String > getAttributes(
+							final AS data,
+							final Comparator< String > comparator )
+	{
+		final ArrayList< String > attributes = new ArrayList< String >();
+		attributes.addAll( data.getSequenceDescription().getViewSetupsOrdered().get( 0 ).getAttributes().keySet() );
+
+		// the attributes are ordered by alphabet (or user defined) so that the details and then queried in the same order
+		if ( comparator == null )
+			Collections.sort( attributes );
+		else
+			Collections.sort( attributes, comparator );
+
+		return attributes;
+	}
+
+	public static < AS extends AbstractSpimData< S >,
+					S extends AbstractSequenceDescription< V, D, L >,
+					V extends BasicViewSetup,
+					D extends BasicViewDescription< V >,
+					L extends BasicImgLoader,
+					X extends XmlIoAbstractSpimData< S, AS > > String getSpimDataDescription(
+							final AS data,
+							final ArrayList< String > attributes,
+							final ArrayList< HashSet< Integer > > numEntitiesPerAttrib,
+							final int numAttributes )
+	{
+		int countMissingViews = 0;
+		
+		for ( final D v : data.getSequenceDescription().getViewDescriptions().values() )
+			if ( !v.isPresent() )
+				++countMissingViews;
+
+		final int timepoints = data.getSequenceDescription().getTimePoints().size();
+
+		String message2 = "";
+
+		for ( int attributeIndex = 0; attributeIndex < numAttributes; ++attributeIndex )
+		{
+			final int numEntities = numEntitiesPerAttrib.get( attributeIndex ).size();
+			String entityName = attributes.get( attributeIndex );
+			
+			if ( numEntities > 1 )
+				entityName += "s";
+
+			message2 += numEntities + " " + entityName +  ", ";
+		}
+		
+		if ( timepoints > 1 )
+			message2 += timepoints + " timepoints, ";
+		else
+			message2 += timepoints + " timepoint, ";
+		
+		if ( countMissingViews == 1 )
+			message2 += countMissingViews + " missing view";
+		else
+			message2 += countMissingViews + " missing views";
+
+		return message2;
 	}
 
 	protected AS parseXML( final String xmlFilename ) throws SpimDataException
