@@ -13,11 +13,11 @@ import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 
-public class DefinedBoundingBoxGUI extends BoundingBoxGUI
+public class ModifyDefinedBoundingBoxGUI extends BoundingBoxGUI
 {
 	public static int defaultBoundingBox = 0;
 
-	public DefinedBoundingBoxGUI( final SpimData2 spimData, final List<ViewId> viewIdsToProcess )
+	public ModifyDefinedBoundingBoxGUI( final SpimData2 spimData, final List<ViewId> viewIdsToProcess )
 	{
 		super( spimData, viewIdsToProcess );
 	}
@@ -76,9 +76,9 @@ public class DefinedBoundingBoxGUI extends BoundingBoxGUI
 	}
 
 	@Override
-	public DefinedBoundingBoxGUI newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
+	public ModifyDefinedBoundingBoxGUI newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
-		return new DefinedBoundingBoxGUI( spimData, viewIdsToProcess );
+		return new ModifyDefinedBoundingBoxGUI( spimData, viewIdsToProcess );
 	}
 
 	@Override

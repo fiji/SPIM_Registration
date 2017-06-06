@@ -8,9 +8,11 @@ import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+import spim.fiji.plugin.boundingbox.BDVBoundingBoxGUI;
 import spim.fiji.plugin.boundingbox.BoundingBoxGUI;
-import spim.fiji.plugin.boundingbox.DefinedBoundingBoxGUI;
+import spim.fiji.plugin.boundingbox.ModifyDefinedBoundingBoxGUI;
 import spim.fiji.plugin.boundingbox.MaximumBoundingBoxGUI;
+import spim.fiji.plugin.boundingbox.MinFilterThresholdBoundingBoxGUI;
 import spim.fiji.plugin.queryXML.GenericLoadParseQueryXML;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
@@ -27,10 +29,11 @@ public class Define_Bounding_Box implements PlugIn
 	{
 		IOFunctions.printIJLog = true;
 
-		staticBoundingBoxAlgorithms.add( new DefinedBoundingBoxGUI( null, null ) );
+		staticBoundingBoxAlgorithms.add( new ModifyDefinedBoundingBoxGUI( null, null ) );
+		staticBoundingBoxAlgorithms.add( new BDVBoundingBoxGUI( null, null ) );
 		staticBoundingBoxAlgorithms.add( new MaximumBoundingBoxGUI( null, null ) );
+		staticBoundingBoxAlgorithms.add( new MinFilterThresholdBoundingBoxGUI( null, null ) );
 	}
-
 
 	@Override
 	public void run( final String arg0 )

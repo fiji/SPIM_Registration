@@ -225,6 +225,16 @@ public abstract class BoundingBoxGUI extends BoundingBox
 		return numpixels;
 	}
 
+	protected static long numPixels( final long[] dim, final int downsampling )
+	{
+		long numpixels = 1;
+		
+		for ( int d = 0; d < dim.length; ++d )
+			numpixels *= (dim[ d ])/downsampling;
+		
+		return numpixels;
+	}
+
 	public class ManageListeners
 	{
 		final GenericDialog gd;
