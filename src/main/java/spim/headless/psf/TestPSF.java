@@ -8,11 +8,15 @@ import ij.ImageJ;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Pair;
+import net.imglib2.util.ValuePair;
 import simulation.imgloader.SimulatedBeadsImgLoader;
 import spim.fiji.spimdata.SpimData2;
 import spim.headless.registration.TestRegistration;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
+import spim.process.psf.PSFCombination;
 import spim.process.psf.PSFExtraction;
 
 public class TestPSF
@@ -27,10 +31,10 @@ public class TestPSF
 		for ( final ViewId viewId : spimData.getSequenceDescription().getViewDescriptions().values() )
 			System.out.println( Group.pvid( viewId ) );
 
-		testPSF( spimData );
+		testPSF( spimData, true );
 	}
 
-	public static void testPSF( final SpimData2 spimData )
+	public static void testPSF( final SpimData2 spimData, final boolean display )
 	{
 		new ImageJ();
 
@@ -47,6 +51,8 @@ public class TestPSF
 
 		final String label = "beads"; // this could be different for each ViewId
 
+		final ArrayList< Pair< PSFExtraction< FloatType >, AffineTransform3D > > psfs = new ArrayList<>();
+
 		for ( final ViewId viewId : viewIds )
 		{
 			final PSFExtraction< FloatType > psf = new PSFExtraction< FloatType >( new FloatType(), new long[]{ 15, 15, 19 } );
@@ -54,8 +60,18 @@ public class TestPSF
 
 			spimData.getViewRegistrations().getViewRegistration( viewId ).updateModel();
 
-			ImageJFunctions.show( psf.getPSF() );
-			ImageJFunctions.show( psf.getTransformedPSF( spimData.getViewRegistrations().getViewRegistration( viewId ).getModel() ) );
+			psfs.add( new ValuePair<>( psf, spimData.getViewRegistrations().getViewRegistration( viewId ).getModel() ) );
+
+			//ImageJFunctions.show( psf.getPSF() );
+			//ImageJFunctions.show( psf.getTransformedNormalizedPSF( spimData.getViewRegistrations().getViewRegistration( viewId ).getModel() ) );
+		}
+
+		final PSFCombination< FloatType > psf = new PSFCombination<>( psfs );
+
+		if ( display )
+		{
+			ImageJFunctions.show( psf.computeAverageTransformedPSF() );
+			ImageJFunctions.show( psf.computeMaxAverageTransformedPSF() );
 		}
 	}
 }
