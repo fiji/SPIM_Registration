@@ -111,7 +111,7 @@ public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 
 				interpolator.setPosition( tmpD );
 
-				psfCursor.get().add( interpolator.get() );
+				psfCursor.get().setReal( psfCursor.get().getRealDouble() + interpolator.get().getRealDouble() );
 			}
 		}
 	}
