@@ -27,6 +27,23 @@ public class PSFCombination< T extends RealType< T > & NativeType< T > >
 		this.psfs = psfs;
 	}
 
+	public Img< T > computeMaxAverageTransformedPSF()
+	{
+		final Img< T > avg = computeAverageTransformedPSF();
+
+		int minDim = -1;
+		long minDimSize = Long.MAX_VALUE;
+
+		for ( int d = 0; d < avg.numDimensions(); ++d )
+			if ( avg.dimension( d ) < minDimSize )
+			{
+				minDimSize = avg.dimension( d );
+				minDim = d;
+			}
+
+		return computeMaxProjection( avg, minDim );
+	}
+
 	/**
 	 * compute the average psf in original calibration and after applying the transformations
 	 */
@@ -47,7 +64,7 @@ public class PSFCombination< T extends RealType< T > & NativeType< T > >
 
 		for ( final Pair< PSFExtraction< T >, AffineTransform3D > psfObject : psfs )
 		{
-			final Img< T > psf = psfObject.getA().getTransformedPSF( psfObject.getB() );
+			final Img< T > psf = psfObject.getA().getTransformedNormalizedPSF( psfObject.getB() );
 
 			// works if the kernel is even
 			final RandomAccess< T > avgCursor = Views.extendZero( avgPSF ).randomAccess();
@@ -114,7 +131,7 @@ public class PSFCombination< T extends RealType< T > & NativeType< T > >
 
 		for ( final Pair< PSFExtraction< T >, AffineTransform3D > psf : psfs )
 		{
-			final Img< T > transformedPSF  = psf.getA().getTransformedPSF( psf.getB() );
+			final Img< T > transformedPSF  = psf.getA().getTransformedNormalizedPSF( psf.getB() );
 
 			for ( int d = 0; d < numDimensions; ++d )
 				maxSize[ d ] = Math.max( maxSize[ d ], transformedPSF.dimension( d ) );
