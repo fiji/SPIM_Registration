@@ -1,50 +1,29 @@
 package spim.fiji.plugin.boundingbox;
 
-import ij.gui.GenericDialog;
-
-import java.awt.Choice;
 import java.awt.Label;
 import java.awt.Scrollbar;
 import java.awt.TextField;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.TextEvent;
 import java.awt.event.TextListener;
 import java.lang.reflect.Field;
-import java.util.Date;
 import java.util.List;
 import java.util.Vector;
 
-import mpicbg.spim.data.registration.ViewRegistration;
-import mpicbg.spim.data.sequence.ViewDescription;
+import ij.gui.GenericDialog;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
-import net.imglib2.Dimensions;
-import net.imglib2.FinalRealInterval;
-import net.imglib2.img.ImgFactory;
-import net.imglib2.img.array.ArrayImgFactory;
-import net.imglib2.img.cell.CellImgFactory;
-import net.imglib2.img.imageplus.ImagePlusImgFactory;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.ComplexType;
-import net.imglib2.util.Util;
-import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.ViewSetupUtils;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.process.boundingbox.BoundingBoxMaximal;
-import spim.process.fusion.export.ImgExport;
 
 
-// TODO: THIS MUST BE ABSTRACT
-public class BoundingBoxGUI extends BoundingBox
+public abstract class BoundingBoxGUI extends BoundingBox
 {
-	public static int staticDownsampling = 1;
-	
-	public static int defaultMin[] = { 0, 0, 0 };
-	public static int defaultMax[] = { 0, 0, 0 };
+	public static int defaultMin[] = null;
+	public static int defaultMax[] = null;
 
+	/*
 	public static String[] pixelTypes = new String[]{ "32-bit floating point", "16-bit unsigned integer" };
 	public static int defaultPixelType = 0;
 	protected int pixelType = 0;
@@ -52,17 +31,13 @@ public class BoundingBoxGUI extends BoundingBox
 	public static String[] imgTypes = new String[]{ "ArrayImg", "PlanarImg (large images, easy to display)", "CellImg (large images)" };
 	public static int defaultImgType = 1;
 	protected int imgtype = 1;
+	*/
 
 	/**
 	 * which viewIds to process, set in queryParameters
 	 */
 	protected final List< ViewId > viewIdsToProcess;
-
 	protected final SpimData2 spimData;
-
-	protected int downsampling = 1;
-
-	protected boolean changedSpimDataObject = false;
 
 	/**
 	 * @param spimData
@@ -86,53 +61,23 @@ public class BoundingBoxGUI extends BoundingBox
 		this.viewIdsToProcess = viewIdsToProcess;
 	}
 
-	public boolean queryParameters( final Fusion fusion, final ImgExport imgExport )
-	{
-		return queryParameters( fusion, imgExport, true );
-	}
+	protected abstract boolean allowModifyDimensions();
 
-	/**
+	/*
 	 * Query the necessary parameters for the bounding box
-	 * 
-	 * @param fusion - the fusion for which the bounding box is computed, can be null
-	 * @param imgExport - the export module used, can be null
-	 * @return
 	 */
-	public boolean queryParameters( final Fusion fusion, final ImgExport imgExport, final boolean allowModifyDimensions )
+	public boolean queryParameters()
 	{
-		final boolean compress = fusion == null ? false : fusion.compressBoundingBoxDialog();
-		final boolean supportsDownsampling = fusion == null ? false : fusion.supportsDownsampling();
-		final boolean supports16BitUnsigned = fusion == null ? false : fusion.supports16BitUnsigned();
+		final GenericDialog gd = getSimpleDialog( allowModifyDimensions() );
 
-		final GenericDialog gd = getSimpleDialog( compress, allowModifyDimensions );
-
-		if ( !compress )
-			gd.addMessage( "" );
-
-		if ( supportsDownsampling )
-			gd.addSlider( "Downsample fused dataset", 1.0, 10.0, BoundingBoxGUI.staticDownsampling );
-		
-		if ( supports16BitUnsigned )
-			gd.addChoice( "Pixel_type", pixelTypes, pixelTypes[ defaultPixelType ] );
-
-		if ( fusion != null && imgExport != null )
-			gd.addChoice( "ImgLib2_container", imgTypes, imgTypes[ defaultImgType ] );
-
-		if ( fusion != null )
-			fusion.queryAdditionalParameters( gd );
-
-		if ( imgExport != null )
-			imgExport.queryAdditionalParameters( gd, spimData );
+		gd.addMessage( "" );
 
 		gd.addMessage( "Estimated size: ", GUIHelper.largestatusfont, GUIHelper.good );
 		Label l1 = (Label)gd.getMessage();
 		gd.addMessage( "???x???x??? pixels", GUIHelper.smallStatusFont, GUIHelper.good );
 		Label l2 = (Label)gd.getMessage();
 
-		final ManageListeners m = new ManageListeners( gd, gd.getNumericFields(), gd.getChoices(), l1, l2, fusion, imgExport, supportsDownsampling, supports16BitUnsigned );
-
-		if ( fusion != null )
-			fusion.registerAdditionalListeners( m );
+		final ManageListeners m = new ManageListeners( gd, gd.getNumericFields(), gd.getChoices(), l1, l2 );
 
 		m.update();
 
@@ -141,7 +86,7 @@ public class BoundingBoxGUI extends BoundingBox
 		if ( gd.wasCanceled() )
 			return false;
 
-		if ( allowModifyDimensions )
+		if ( allowModifyDimensions() )
 		{
 			this.min[ 0 ] = (int)Math.round( gd.getNextNumber() );
 			this.min[ 1 ] = (int)Math.round( gd.getNextNumber() );
@@ -156,32 +101,11 @@ public class BoundingBoxGUI extends BoundingBox
 			setNFIndex( gd, 6 );
 		}
 
-		if ( supportsDownsampling )
-			this.downsampling = BoundingBoxGUI.staticDownsampling = (int)Math.round( gd.getNextNumber() );
-		else
-			this.downsampling = 1;
-
-		if ( supports16BitUnsigned )
-			this.pixelType = BoundingBoxGUI.defaultPixelType = gd.getNextChoiceIndex();
-		else
-			this.pixelType = BoundingBoxGUI.defaultPixelType = 0; //32-bit
-
-		if ( fusion != null && imgExport != null )
-			this.imgtype = BoundingBoxGUI.defaultImgType = gd.getNextChoiceIndex();
-
 		if ( min[ 0 ] > max[ 0 ] || min[ 1 ] > max[ 1 ] || min[ 2 ] > max[ 2 ] )
 		{
 			IOFunctions.println( "Invalid coordinates, min cannot be larger than max" );
 			return false;
 		}
-
-		if ( fusion != null )
-			if ( !fusion.parseAdditionalParameters( gd ) )
-				return false;
-
-		if ( imgExport != null )
-			if ( !imgExport.parseAdditionalParameters( gd, spimData ) )
-				return false;
 
 		BoundingBoxGUI.defaultMin[ 0 ] = min[ 0 ];
 		BoundingBoxGUI.defaultMin[ 1 ] = min[ 1 ];
@@ -193,27 +117,32 @@ public class BoundingBoxGUI extends BoundingBox
 		return true;
 	}
 
-	protected GenericDialog getSimpleDialog( final boolean compress, final boolean allowModifyDimensions )
+	protected GenericDialog getSimpleDialog( final boolean allowModifyDimensions )
 	{
 		final int[] rangeMin = new int[ 3 ];
 		final int[] rangeMax = new int[ 3 ];
 
-		setUpDefaultValues( rangeMin, rangeMax );
+		for ( int d = 0; d < rangeMin.length; ++d )
+		{
+			rangeMin[ d ] = Integer.MAX_VALUE;
+			rangeMax[ d ] = Integer.MIN_VALUE;
+		}
+
+		if ( !setUpDefaultValues( rangeMin, rangeMax ) )
+			return null;
 
 		final GenericDialog gd = new GenericDialog( "Manually define Bounding Box" );
 
 		gd.addMessage( "Note: Coordinates are in global coordinates as shown " +
 				"in Fiji status bar of a fused datasets", GUIHelper.smallStatusFont );
 
-		if ( !compress )
-			gd.addMessage( "", GUIHelper.smallStatusFont );
+		gd.addMessage( "", GUIHelper.smallStatusFont );
 
 		gd.addSlider( "Minimal_X", rangeMin[ 0 ], rangeMax[ 0 ], this.min[ 0 ] );
 		gd.addSlider( "Minimal_Y", rangeMin[ 1 ], rangeMax[ 1 ], this.min[ 1 ] );
 		gd.addSlider( "Minimal_Z", rangeMin[ 2 ], rangeMax[ 2 ], this.min[ 2 ] );
 
-		if ( !compress )
-			gd.addMessage( "" );
+		gd.addMessage( "" );
 
 		gd.addSlider( "Maximal_X", rangeMin[ 0 ], rangeMax[ 0 ], this.max[ 0 ] );
 		gd.addSlider( "Maximal_Y", rangeMin[ 1 ], rangeMax[ 1 ], this.max[ 1 ] );
@@ -231,130 +160,49 @@ public class BoundingBoxGUI extends BoundingBox
 		return gd;
 	}
 
+	protected static boolean findRange( final SpimData2 spimData, final List< ViewId > viewIdsToProcess, final int[] rangeMin, final int[] rangeMax )
+	{
+		final BoundingBox bb = new BoundingBoxMaximal( viewIdsToProcess, spimData ).estimate( "test" );
+
+		if ( bb == null )
+			return false;
+
+		for ( int d = 0; d < bb.getMin().length; ++d )
+		{
+			if ( bb.getMin()[ d ] < rangeMin[ d ] )
+				rangeMin[ d ] = bb.getMin()[ d ];
+	
+			if ( bb.getMax()[ d ] > rangeMax[ d ] )
+				rangeMax[ d ] = bb.getMax()[ d ];
+		}
+
+		return true;
+	}
+
 	/**
 	 * populates this.min[] and this.max[] from the defaultMin and defaultMax
 	 *
 	 * @param rangeMin - will be populated with the maximal dimension that all views span
 	 * @param rangeMax - will be populated with the maximal dimension that all views span
+	 * 
+	 * @return true if it was successful, otherwise false
 	 */
-	protected void setUpDefaultValues( final int[] rangeMin, final int rangeMax[] )
-	{
-		final BoundingBox bb = new BoundingBoxMaximal( viewIdsToProcess, spimData ).estimate( "test" );
-
-		this.min = bb.getMin();
-		this.max = bb.getMax();
-
-		for ( int d = 0; d < this.min.length; ++d )
-		{
-			if ( min[ d ] < rangeMin[ d ] )
-				rangeMin[ d ] = min[ d ];
-	
-			if ( max[ d ] > rangeMax[ d ] )
-				rangeMax[ d ] = max[ d ];
-		}
-		/*
-		final double[] minBB = new double[ rangeMin.length ];
-		final double[] maxBB = new double[ rangeMin.length ];
-
-		//this.changedSpimDataObject = computeMaxBoundingBoxDimensions( spimData, viewIdsToProcess, minBB, maxBB );
-
-		for ( int d = 0; d < minBB.length; ++d )
-		{
-			rangeMin[ d ] = Math.round( (float)Math.floor( minBB[ d ] ) );
-			rangeMax[ d ] = Math.round( (float)Math.floor( maxBB[ d ] ) );
-
-			if ( rangeMin[ d ] < 0 )
-				--rangeMin[ d ];
-
-			if ( rangeMax[ d ] > 0 )
-				++rangeMax[ d ];
-
-			// first time called on this object
-			if ( this.min == null || this.max == null )
-			{
-				this.min = new int[ rangeMin.length ];
-				this.max = new int[ rangeMin.length ];
-			}
-
-			if ( this.min[ d ] == 0 && this.max[ d ] == 0 )
-			{
-				// not preselected
-				if ( BoundingBoxGUI.defaultMin[ d ] == 0 && BoundingBoxGUI.defaultMax[ d ] == 0 )
-				{
-					min[ d ] = rangeMin[ d ];
-					max[ d ] = rangeMax[ d ];
-				}
-				else
-				{
-					min[ d ] = BoundingBoxGUI.defaultMin[ d ];
-					max[ d ] = BoundingBoxGUI.defaultMax[ d ];
-				}
-			}
-
-			if ( min[ d ] > max[ d ] )
-				min[ d ] = max[ d ];
-
-			if ( min[ d ] < rangeMin[ d ] )
-				rangeMin[ d ] = min[ d ];
-
-			if ( max[ d ] > rangeMax[ d ] )
-				rangeMax[ d ] = max[ d ];
-
-			// test if the values are valid
-			//if ( min[ d ] < rangeMin[ d ] )
-			//	min[ d ] = rangeMin[ d ];
-
-			//if ( max[ d ] > rangeMax[ d ] )
-			//	max[ d ] = rangeMax[ d ];
-
-		}	*/
-	}
+	protected abstract boolean setUpDefaultValues( final int[] rangeMin, final int rangeMax[] );
 
 	/**
 	 * @param spimData
 	 * @param viewIdsToProcess - which view ids to fuse
 	 * @return - a new instance without any special properties
 	 */
-	public BoundingBoxGUI newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
-	{
-		return new BoundingBoxGUI( spimData, viewIdsToProcess );
-	}
+	public abstract BoundingBoxGUI newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess );
 
 	/**
 	 * @return - to be displayed in the generic dialog
 	 */
-	public String getDescription() { return "Define manually"; }
+	public abstract String getDescription();
 
-	/**
-	 * Called before the XML is potentially saved
-	 *
-	 * @return - true if the spimdata was modified, otherwise false
-	 */
-	public boolean cleanUp() { return changedSpimDataObject; }
-
-	public int getDownSampling() { return downsampling; }
-
-	public int getPixelType() { return pixelType; }
-
-	public int getImgType() { return imgtype; }
-
-	public < T extends ComplexType< T > & NativeType < T > > ImgFactory< T > getImgFactory( final T type )
-	{
-		final ImgFactory< T > imgFactory;
-		
-		if ( this.getImgType() == 0 )
-			imgFactory = new ArrayImgFactory< T >();
-		else if ( this.getImgType() == 1 )
-			imgFactory = new ImagePlusImgFactory< T >();
-		else
-			imgFactory = new CellImgFactory<T>( 256 );
-
-		return imgFactory;
-	}
-
-	/**
+	/*
 	 * @return - the final dimensions including downsampling of this bounding box (to instantiate an img)
-	 */
 	public long[] getDimensions()
 	{
 		final long[] dim = new long[ this.numDimensions() ];
@@ -365,6 +213,7 @@ public class BoundingBoxGUI extends BoundingBox
 		
 		return dim;
 	}
+	 */
 
 	protected static long numPixels( final long[] min, final long[] max, final int downsampling )
 	{
@@ -379,13 +228,9 @@ public class BoundingBoxGUI extends BoundingBox
 	public class ManageListeners
 	{
 		final GenericDialog gd;
-		final TextField minX, minY, minZ, maxX, maxY, maxZ, downsample;
-		final Choice pixelTypeChoice, imgTypeChoice;
+		final TextField minX, minY, minZ, maxX, maxY, maxZ;
 		final Label label1;
 		final Label label2;
-		final Fusion fusion;
-		final boolean supportsDownsampling;
-		final boolean supports16bit;
 
 		final long[] min = new long[ 3 ];
 		final long[] max = new long[ 3 ];
@@ -395,11 +240,7 @@ public class BoundingBoxGUI extends BoundingBox
 				final Vector<?> tf,
 				final Vector<?> choices,
 				final Label label1,
-				final Label label2,
-				final Fusion fusion,
-				final ImgExport imgExport,
-				final boolean supportsDownsampling,
-				final boolean supports16bit )
+				final Label label2 )
 		{
 			this.gd = gd;
 
@@ -411,39 +252,13 @@ public class BoundingBoxGUI extends BoundingBox
 			this.maxY = (TextField)tf.get( 4 );
 			this.maxZ = (TextField)tf.get( 5 );
 
-			if ( supports16bit )
-			{
-				pixelTypeChoice = (Choice)choices.get( 0 );
-
-				if ( fusion != null && imgExport != null )
-					imgTypeChoice = (Choice)choices.get( 1 );
-				else
-					imgTypeChoice = null;
-			}
-			else
-			{
-				pixelTypeChoice = null;
-				if ( fusion != null && imgExport != null )
-					imgTypeChoice = (Choice)choices.get( 0 );
-				else
-					imgTypeChoice = null;
-			}
-			
-			if ( supportsDownsampling )
-				downsample = (TextField)tf.get( 6 );
-			else
-				downsample = null;
-			
 			this.label1 = label1;
 			this.label2 = label2;
-			this.supportsDownsampling = supportsDownsampling;
-			this.supports16bit = supports16bit;
-			this.fusion = fusion;
-			
-			this.addListeners( imgExport );
+
+			this.addListeners();
 		}
-		
-		protected void addListeners( final ImgExport imgExport )
+
+		protected void addListeners()
 		{
 			this.minX.addTextListener( new TextListener() { @Override
 				public void textValueChanged(TextEvent e) { update(); } });
@@ -457,18 +272,6 @@ public class BoundingBoxGUI extends BoundingBox
 				public void textValueChanged(TextEvent e) { update(); } });
 			this.maxZ.addTextListener( new TextListener() { @Override
 				public void textValueChanged(TextEvent e) { update(); } });
-
-			if ( fusion != null && imgExport != null )
-				this.imgTypeChoice.addItemListener( new ItemListener() { @Override
-					public void itemStateChanged(ItemEvent e) { update(); } });
-
-			if ( supportsDownsampling )
-				this.downsample.addTextListener( new TextListener() { @Override
-					public void textValueChanged(TextEvent e) { update(); } });
-
-			if ( supports16bit )
-				this.pixelTypeChoice.addItemListener( new ItemListener() { @Override
-					public void itemStateChanged(ItemEvent e) { update(); } });
 		}
 		
 		public void update()
@@ -485,48 +288,18 @@ public class BoundingBoxGUI extends BoundingBox
 			}
 			catch (Exception e ) {}
 
-			if ( supportsDownsampling )
-				downsampling = Integer.parseInt( downsample.getText() );
-			else
-				downsampling = 1;
-			
-			if ( supports16bit )
-				pixelType = pixelTypeChoice.getSelectedIndex();
-			else
-				pixelType = 0;
-
-			if ( imgTypeChoice != null )
-				imgtype = imgTypeChoice.getSelectedIndex();
-			else
-				imgtype = 1;
-
+			final int bytePerPixel = 4;
+			final int downsampling = 1;
 			final long numPixels = numPixels( min, max, downsampling );
-			final int bytePerPixel;
-			if ( pixelType == 1 )
-				bytePerPixel = 2;
-			else
-				bytePerPixel = 4;
-			
 			final long megabytes = (numPixels * bytePerPixel) / (1024*1024);
 			
-			if ( numPixels > Integer.MAX_VALUE && imgtype == 0 )
-			{
-				label1.setText( megabytes + " MB is too large for ArrayImg!" );
-				label1.setForeground( GUIHelper.error );
-			}
-			else
-			{
-				if ( fusion == null )
-					label1.setText( "Fused image: " + megabytes + " MB" );
-				else
-					label1.setText( "Fused image: " + megabytes + " MB, required total memory ~" + fusion.totalRAM( megabytes, bytePerPixel ) +  " MB" );
-				label1.setForeground( GUIHelper.good );
-			}
-				
+			label1.setText( "Fused image: " + megabytes + " MB" );
+			label1.setForeground( GUIHelper.good );
+
 			label2.setText( "Dimensions: " + 
 					(max[ 0 ] - min[ 0 ] + 1)/downsampling + " x " + 
 					(max[ 1 ] - min[ 1 ] + 1)/downsampling + " x " + 
-					(max[ 2 ] - min[ 2 ] + 1)/downsampling + " pixels @ " + BoundingBoxGUI.pixelTypes[ pixelType ] );
+					(max[ 2 ] - min[ 2 ] + 1)/downsampling + " pixels @ 32 bit and full resolution."  );
 		}
 	}
 
@@ -569,5 +342,4 @@ public class BoundingBoxGUI extends BoundingBox
 		}
 		catch ( Exception e ) { e.printStackTrace(); }
 	}
-
 }

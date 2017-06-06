@@ -31,6 +31,7 @@ import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
+import spim.fiji.spimdata.boundingbox.BoundingBox;
 
 public class GUIHelper
 {
@@ -89,6 +90,32 @@ public class GUIHelper
 
 		for ( final String name : names.keySet() )
 			n.add( name  + " (" + names.get( name ) + " views)" );
+
+		Collections.sort( n );
+
+		String text = n.get( 0 );
+
+		for ( int i = 1; i < n.size(); ++i )
+			text += "\n" + n.get( i );
+
+		gd.addMessage( text, smallStatusFont );
+	}
+
+	public static void displayBoundingBoxes( final GenericDialog gd, final List< BoundingBox > bbs )
+	{
+		gd.addMessage( "Existing Bounding Boxes", headline );
+		gd.addMessage( "", smallStatusFont );
+
+		if ( bbs == null || bbs.size() == 0 )
+		{
+			gd.addMessage( "No Bounding Boxes defined yet." );
+			return;
+		}
+
+		final ArrayList< String > n = new ArrayList< String >();
+
+		for ( final BoundingBox bb : bbs )
+			n.add( BoundingBox.getBoundingBoxDescription( bb ) );
 
 		Collections.sort( n );
 

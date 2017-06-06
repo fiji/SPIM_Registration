@@ -13,7 +13,6 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.Dimensions;
 import net.imglib2.util.Util;
-import spim.fiji.plugin.boundingbox.DefinedBoundingBoxGUI;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 
@@ -100,7 +99,7 @@ public class ViewSetupExplorerInfoBox< AS extends AbstractSpimData< ? > >
 			else
 			{
 				for ( final BoundingBox bb : sd.getBoundingBoxes().getBoundingBoxes() )
-					text += DefinedBoundingBoxGUI.getBoundingBoxDescription( bb ) + "\n";
+					text += BoundingBox.getBoundingBoxDescription( bb ) + "\n";
 			}
 		}
 

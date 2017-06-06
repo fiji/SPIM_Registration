@@ -1,25 +1,21 @@
 package spim.fiji.plugin.boundingbox;
 
-import ij.gui.GenericDialog;
-
 import java.awt.Choice;
 import java.awt.Label;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.List;
 
+import ij.gui.GenericDialog;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
-import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
-import spim.process.fusion.export.ImgExport;
 
 public class DefinedBoundingBoxGUI extends BoundingBoxGUI
 {
 	public static int defaultBoundingBox = 0;
-	public static boolean defaultAllowModify = false;
 
 	public DefinedBoundingBoxGUI( final SpimData2 spimData, final List<ViewId> viewIdsToProcess )
 	{
@@ -27,13 +23,16 @@ public class DefinedBoundingBoxGUI extends BoundingBoxGUI
 	}
 
 	@Override
-	public boolean queryParameters( final Fusion fusion, final ImgExport imgExport )
+	protected boolean setUpDefaultValues( final int[] rangeMin, final int[] rangeMax )
 	{
 		if ( spimData.getBoundingBoxes().getBoundingBoxes().size() == 0 )
 		{
 			IOFunctions.println( "No bounding boxes pre-defined." );
 			return false;
 		}
+
+		if ( !findRange( spimData, viewIdsToProcess, rangeMin, rangeMax ) )
+			return false;
 
 		final GenericDialog gd1 = new GenericDialog( "Pre-defined Bounding Box" );
 
@@ -47,9 +46,6 @@ public class DefinedBoundingBoxGUI extends BoundingBoxGUI
 
 		gd1.addChoice( "Bounding_box_title", boundingBoxes, boundingBoxes[ defaultBoundingBox ] );
 		final Choice choice = (Choice)gd1.getChoices().lastElement();
-
-		gd1.addCheckbox( "Allow_to_modify bounding box in next dialog", defaultAllowModify );
-		gd1.addMessage( "Note: Not allowing this is very useful for macro programming", GUIHelper.smallStatusFont );
 
 		gd1.addMessage( "" );
 		gd1.addMessage( "BoundingBox size: ???x???x??? pixels", GUIHelper.mediumstatusfont );
@@ -66,29 +62,17 @@ public class DefinedBoundingBoxGUI extends BoundingBoxGUI
 			return false;
 
 		final BoundingBox bb = spimData.getBoundingBoxes().getBoundingBoxes().get( defaultBoundingBox = gd1.getNextChoiceIndex() );
-		final boolean allowModifyDimensions = defaultAllowModify = gd1.getNextBoolean();
 
 		this.min = bb.getMin().clone();
 		this.max = bb.getMax().clone();
 
-		return super.queryParameters( fusion, imgExport, allowModifyDimensions );
-	}
+		if ( defaultMin == null )
+			defaultMin = min.clone();
 
-	public static String getBoundingBoxDescription( final BoundingBox bb )
-	{
-		String title = bb.getTitle() + " (dim=";
+		if ( defaultMax == null )
+			defaultMax = max.clone();
 
-		for ( int d = 0; d < bb.numDimensions(); ++d )
-			title += bb.dimension( d ) + "x";
-
-		title = title.substring( 0, title.length() - 1 ) + "px, offset=";
-
-		for ( int d = 0; d < bb.numDimensions(); ++d )
-			title += bb.min( d ) + "x";
-
-		title = title.substring( 0, title.length() - 1 ) + "px)";
-
-		return title;
+		return true;
 	}
 
 	@Override
@@ -100,7 +84,7 @@ public class DefinedBoundingBoxGUI extends BoundingBoxGUI
 	@Override
 	public String getDescription()
 	{
-		return "Use pre-defined Bounding Box";
+		return "Modify pre-defined Bounding Box";
 	}
 
 	protected void addListeners(
@@ -130,4 +114,6 @@ public class DefinedBoundingBoxGUI extends BoundingBoxGUI
 		label2.setText( "Bounding Box offset: " + bb.min( 0 ) + "x" + bb.min( 1 ) + "x" + bb.min( 2 ) + " pixels" );
 	}
 
+	@Override
+	protected boolean allowModifyDimensions() { return true; }
 }

@@ -1,16 +1,16 @@
 package spim.fiji.plugin;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import ij.ImageJ;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
-import mpicbg.imglib.util.Util;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.boundingbox.BoundingBoxGUI;
+import spim.fiji.plugin.boundingbox.DefinedBoundingBoxGUI;
+import spim.fiji.plugin.boundingbox.MaximumBoundingBoxGUI;
 import spim.fiji.plugin.queryXML.GenericLoadParseQueryXML;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
@@ -27,8 +27,8 @@ public class Define_Bounding_Box implements PlugIn
 	{
 		IOFunctions.printIJLog = true;
 
-		staticBoundingBoxAlgorithms.add( new BoundingBoxGUI( null, null ) );
-		//staticBoundingBoxAlgorithms.add( new PreDefinedBoundingBox( null, null ) );
+		staticBoundingBoxAlgorithms.add( new DefinedBoundingBoxGUI( null, null ) );
+		staticBoundingBoxAlgorithms.add( new MaximumBoundingBoxGUI( null, null ) );
 	}
 
 
@@ -74,18 +74,19 @@ public class Define_Bounding_Box implements PlugIn
 
 		final GenericDialog gd = new GenericDialog( "Bounding Box Definition" );
 
+		defaultName = updateDefaultName( defaultName, data.getBoundingBoxes().getBoundingBoxes() );
+
 		gd.addChoice( "Bounding_Box", boundingBoxDescriptions, boundingBoxDescriptions[ defaultBoundingBoxAlgorithm ] );
 		gd.addStringField( "Bounding_Box_Name", defaultName, 30 );
 
-		// assemble the last registration names of all viewsetups involved
-		final HashMap< String, Integer > names = GUIHelper.assembleRegistrationNames( data, viewIds );
+		// show existing bounding boxes
 		gd.addMessage( "" );
-		GUIHelper.displayRegistrationNames( gd, names );
+		GUIHelper.displayBoundingBoxes( gd, data.getBoundingBoxes().getBoundingBoxes() );
 		gd.addMessage( "" );
 
 		GUIHelper.addWebsite( gd );
 
-		if ( names.keySet().size() > 5 )
+		if ( data.getBoundingBoxes().getBoundingBoxes().size() > 5 )
 			GUIHelper.addScrollBars( gd );
 		
 		gd.showDialog();
@@ -97,22 +98,20 @@ public class Define_Bounding_Box implements PlugIn
 		final String boundingBoxName = gd.getNextString();
 
 		for ( final BoundingBox bb : data.getBoundingBoxes().getBoundingBoxes() )
-		{
 			if ( bb.getTitle().equals( boundingBoxName ) )
-			{
-				IOFunctions.println( "A bounding box with the name '" + boundingBoxName + "' already exists." );
-				defaultName = boundingBoxName + "1";
-				return null;
-			}
-		}
+				IOFunctions.println( "WARNING: A bounding box with the name '" + boundingBoxName + "' already exists and will be overwritten!!!" );
 
 		final BoundingBoxGUI boundingBox = staticBoundingBoxAlgorithms.get( boundingBoxAlgorithm ).newInstance( data, viewIds );
 
-		if ( !boundingBox.queryParameters( null, null ) )
+		if ( !boundingBox.queryParameters() )
 			return null;
 
 		boundingBox.setTitle( boundingBoxName );
-		defaultName = boundingBoxName + "1";
+		defaultName = boundingBoxName;
+
+		for ( int i = data.getBoundingBoxes().getBoundingBoxes().size() - 1; i >= 0; --i )
+			if ( data.getBoundingBoxes().getBoundingBoxes().get( i ).getTitle().equals( boundingBoxName ) )
+				data.getBoundingBoxes().getBoundingBoxes().remove( i );
 
 		data.getBoundingBoxes().addBoundingBox( boundingBox );
 
@@ -122,6 +121,28 @@ public class Define_Bounding_Box implements PlugIn
 		return boundingBox;
 	}
 
+	protected String updateDefaultName( String defaultName, final List< BoundingBox > bbs )
+	{
+		if ( bbs == null || bbs.size() == 0 )
+			return defaultName;
+
+		boolean collision = false;
+
+		do
+		{
+			collision = false;
+
+			for ( final BoundingBox bb : bbs )
+				if ( bb.getTitle().equals( defaultName ) )
+					collision = true;
+
+			if ( collision )
+				defaultName += "1";
+		}
+		while ( collision );
+
+		return defaultName;
+	}
 	public static void main( final String[] args )
 	{
 		new ImageJ();

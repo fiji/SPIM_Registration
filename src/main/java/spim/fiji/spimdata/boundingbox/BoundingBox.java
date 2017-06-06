@@ -117,4 +117,21 @@ public class BoundingBox implements Interval, Comparable< BoundingBox >
 	{
 		return "Bounding Box '" + getTitle() + "' " + Util.printCoordinates( min ) + " >>> " + Util.printCoordinates( max );
 	}
+
+	public static String getBoundingBoxDescription( final BoundingBox bb )
+	{
+		String title = bb.getTitle() + " (dim=";
+
+		for ( int d = 0; d < bb.numDimensions(); ++d )
+			title += bb.dimension( d ) + "x";
+
+		title = title.substring( 0, title.length() - 1 ) + "px, offset=";
+
+		for ( int d = 0; d < bb.numDimensions(); ++d )
+			title += bb.min( d ) + "x";
+
+		title = title.substring( 0, title.length() - 1 ) + "px)";
+
+		return title;
+	}
 }
