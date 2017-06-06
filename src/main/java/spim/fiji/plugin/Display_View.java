@@ -1,11 +1,10 @@
 package spim.fiji.plugin;
 
+import java.util.List;
+
 import ij.ImageJ;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
-
-import java.util.List;
-
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
@@ -22,7 +21,6 @@ import net.imglib2.img.imageplus.ImagePlusImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
-import spim.fiji.plugin.fusion.boundingbox.BoundingBoxGUI;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.imgloaders.AbstractImgFactoryImgLoader;
@@ -30,13 +28,19 @@ import spim.process.fusion.export.DisplayImage;
 
 public class Display_View implements PlugIn
 {
+	public static String[] pixelTypes = new String[]{ "32-bit floating point", "16-bit unsigned integer" };
+	public static int defaultPixelType = 0;
+	protected int pixelType = 0;
+
+	public static String[] imgTypes = new String[]{ "ArrayImg", "PlanarImg (large images, easy to display)", "CellImg (large images)" };
+	public static int defaultImgType = 1;
+	protected int imgtype = 1;
+
 	public static int defaultAngleChoice = 0;
 	public static int defaultChannelChoice = 0;
 	public static int defaultIlluminationChoice = 0;
 	public static int defaultTileChoice = 0;
 	public static int defaultTimepointChoice = 0;
-
-	public static int defaultPixelType = 0;
 
 	@Override
 	public void run(String arg0)
@@ -80,7 +84,7 @@ public class Display_View implements PlugIn
 		gd.addChoice( "Tile", tileNames, tileNames[ defaultTileChoice ] );
 		gd.addChoice( "Timepoint", timepointNames, timepointNames[ defaultTimepointChoice ] );
 		gd.addMessage( "" );
-		gd.addChoice( "Pixel_type", BoundingBoxGUI.pixelTypes, BoundingBoxGUI.pixelTypes[ defaultPixelType ] );
+		gd.addChoice( "Pixel_type", pixelTypes, pixelTypes[ defaultPixelType ] );
 
 		gd.showDialog();
 
