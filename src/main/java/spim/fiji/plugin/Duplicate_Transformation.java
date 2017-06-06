@@ -14,6 +14,7 @@ import mpicbg.spim.data.registration.ViewTransform;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
+import mpicbg.spim.data.sequence.Tile;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
@@ -30,6 +31,7 @@ public class Duplicate_Transformation implements PlugIn
 		"One channel to other channels",
 		"One illumination direction to other illumination directions",
 		"One angle to other angles",
+		"One tile to other tiles"
 	};
 
 	public static String[] transformationChoice = new String[]{
@@ -61,7 +63,13 @@ public class Duplicate_Transformation implements PlugIn
 	public static int defaultIllumIndex = 0;
 	public static boolean[] defaultIllumIndices = null;
 	public static String defaultIllumString = null;
-	
+
+	public static String[] tileChoice = new String[]{ "All Tiles", "Single Tile (Select from List)", "Multiple Tiles (Select from List)", "Range of Tiles (Specify by Name)" };
+	public static int defaultTileChoice = 0;
+	public static int defaultTileIndex = 0;
+	public static boolean[] defaultTileIndices = null;
+	public static String defaultTileString = null;
+
 	public static int defaultChoice = 0;
 	public static int defaultTransformationChoice = 0;
 	public static int defaultNumTransformations = 2;
@@ -73,6 +81,8 @@ public class Duplicate_Transformation implements PlugIn
 	public static int defaultSelectedIllumIndex = 1;
 	public static int defaultAngle = 0;
 	public static int defaultSelectedAngleIndex = 1;
+	public static int defaultTile = 0;
+	public static int defaultSelectedTileIndex = 1;
 
 	@Override
 	public void run( final String arg0 )
@@ -89,10 +99,11 @@ public class Duplicate_Transformation implements PlugIn
 		final boolean askForChannels = choice != 1;
 		final boolean askForIllum = choice != 2;
 		final boolean askForAngles = choice != 3;
+		final boolean askForTiles = choice != 4;
 
 		final LoadParseQueryXML result = new LoadParseQueryXML();
 		
-		if ( !result.queryXML( "duplicating transformations", "Apply to", askForAngles, askForChannels, askForIllum, askForTimepoints ) )
+		if ( !result.queryXML( "duplicating transformations", "Apply to", askForAngles, askForChannels, askForIllum, askForTiles, askForTimepoints ) )
 			return;
 		
 		if ( !askForTimepoints )
@@ -144,6 +155,19 @@ public class Duplicate_Transformation implements PlugIn
 			else
 			{
 				if ( !applyAngles( result ) )
+					return;
+			}			
+		}
+		else if ( !askForTiles )
+		{
+			if ( result.getTilesToProcess().size() == 1 )
+			{
+				IOFunctions.println( "Only one tile available, cannot apply to another tile." );
+				return;
+			}
+			else
+			{
+				if ( !applyTiles( result ) )
 					return;
 			}			
 		}
@@ -330,17 +354,18 @@ public class Duplicate_Transformation implements PlugIn
 					for ( final Channel c : result.getChannelsToProcess() )
 						for ( final Illumination i : result.getIlluminationsToProcess() )
 							for ( final Angle a : result.getAnglesToProcess() )
-							{
-								final ViewId sourceViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), source, c, a, i );
-								final ViewId targetViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), targets.get( j ), c, a, i );
-								
-								// this happens only if a viewsetup is not present in any timepoint
-								// (e.g. after appending fusion to a dataset)
-								if ( sourceViewId == null || targetViewId == null )
-									continue;
-
-								duplicateTransformations( transformations, sourceViewId, targetViewId, result.getData() );
-							}
+								for ( final Tile x : result.getTilesToProcess() )
+								{
+									final ViewId sourceViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), source, c, a, i, x );
+									final ViewId targetViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), targets.get( j ), c, a, i, x );
+									
+									// this happens only if a viewsetup is not present in any timepoint
+									// (e.g. after appending fusion to a dataset)
+									if ( sourceViewId == null || targetViewId == null )
+										continue;
+	
+									duplicateTransformations( transformations, sourceViewId, targetViewId, result.getData() );
+								}
 				}
 			
 			if ( countApplied == 0 )
@@ -437,17 +462,18 @@ public class Duplicate_Transformation implements PlugIn
 					for ( final TimePoint t : result.getTimePointsToProcess() )
 						for ( final Illumination i : result.getIlluminationsToProcess() )
 							for ( final Angle a : result.getAnglesToProcess() )
-							{
-								final ViewId sourceViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, source, a, i );
-								final ViewId targetViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, targets.get( j ), a, i );
-								
-								// this happens only if a viewsetup is not present in any timepoint
-								// (e.g. after appending fusion to a dataset)
-								if ( sourceViewId == null || targetViewId == null )
-									continue;
-
-								duplicateTransformations( transformations, sourceViewId, targetViewId, result.getData() );
-							}
+								for ( final Tile x : result.getTilesToProcess() )
+								{
+									final ViewId sourceViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, source, a, i, x );
+									final ViewId targetViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, targets.get( j ), a, i, x );
+									
+									// this happens only if a viewsetup is not present in any timepoint
+									// (e.g. after appending fusion to a dataset)
+									if ( sourceViewId == null || targetViewId == null )
+										continue;
+	
+									duplicateTransformations( transformations, sourceViewId, targetViewId, result.getData() );
+								}
 				}
 			
 			if ( countApplied == 0 )
@@ -544,17 +570,18 @@ public class Duplicate_Transformation implements PlugIn
 					for ( final TimePoint t : result.getTimePointsToProcess() )
 						for ( final Channel c : result.getChannelsToProcess() )
 							for ( final Angle a : result.getAnglesToProcess() )
-							{
-								final ViewId sourceViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c, a, source );
-								final ViewId targetViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c, a, targets.get( j ) );
-								
-								// this happens only if a viewsetup is not present in any timepoint
-								// (e.g. after appending fusion to a dataset)
-								if ( sourceViewId == null || targetViewId == null )
-									continue;
-
-								duplicateTransformations( transformations, sourceViewId, targetViewId, result.getData() );
-							}
+								for ( final Tile x : result.getTilesToProcess() )
+								{
+									final ViewId sourceViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c, a, source, x );
+									final ViewId targetViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c, a, targets.get( j ), x );
+									
+									// this happens only if a viewsetup is not present in any timepoint
+									// (e.g. after appending fusion to a dataset)
+									if ( sourceViewId == null || targetViewId == null )
+										continue;
+	
+									duplicateTransformations( transformations, sourceViewId, targetViewId, result.getData() );
+								}
 				}
 			
 			if ( countApplied == 0 )
@@ -651,17 +678,126 @@ public class Duplicate_Transformation implements PlugIn
 					for ( final TimePoint t : result.getTimePointsToProcess() )
 						for ( final Channel c : result.getChannelsToProcess() )
 							for ( final Illumination i : result.getIlluminationsToProcess() )
-							{
-								final ViewId sourceViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c, source, i );
-								final ViewId targetViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c, targets.get( j ), i );
-								
-								// this happens only if a viewsetup is not present in any timepoint
-								// (e.g. after appending fusion to a dataset)
-								if ( sourceViewId == null || targetViewId == null )
-									continue;
+								for ( final Tile x : result.getTilesToProcess() )
+								{
+									final ViewId sourceViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c, source, i, x );
+									final ViewId targetViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c, targets.get( j ), i, x );
+									
+									// this happens only if a viewsetup is not present in any timepoint
+									// (e.g. after appending fusion to a dataset)
+									if ( sourceViewId == null || targetViewId == null )
+										continue;
+	
+									duplicateTransformations( transformations, sourceViewId, targetViewId, result.getData() );
+								}
+				}
+			
+			if ( countApplied == 0 )
+				return false;
+		}
+		return true;
+	}
 
-								duplicateTransformations( transformations, sourceViewId, targetViewId, result.getData() );
-							}
+	protected boolean applyTiles( final LoadParseQueryXML result )
+	{
+		final GenericDialog gd = new GenericDialog( "Define source and target tiles" );
+		
+		final String[] tiles = assembleTiles( result.getTilesToProcess() );
+		
+		if ( defaultTile >= tiles.length )
+			defaultTile = 0;
+		
+		gd.addChoice( "Source tiles", tiles, tiles[ defaultTile ] );
+		gd.addChoice( "Target tile(s)", tileChoice, tileChoice[ defaultTileChoice ] );
+
+		askForRegistrations( gd );
+
+		gd.showDialog();
+		
+		if ( gd.wasCanceled() )
+			return false;
+		
+		final Tile source = result.getTilesToProcess().get( defaultTile = gd.getNextChoiceIndex() );
+		final ArrayList< Tile > targets = new ArrayList< Tile >();
+		
+		final int choice = defaultTileChoice = gd.getNextChoiceIndex();
+		
+		if ( choice == 1 )
+		{
+			if ( defaultSelectedTileIndex >= tiles.length )
+				defaultSelectedTileIndex = 1;
+			
+			final int selection = GenericLoadParseQueryXML.queryIndividualEntry( "Tile", tiles, defaultSelectedTileIndex );
+			
+			if ( selection >= 0 )
+				targets.add( result.getTilesToProcess().get( defaultSelectedTileIndex = selection ) );
+			else
+				return false;
+		}
+		else if ( choice == 2 || choice == 3 ) // choose multiple tiles or tiles defined by pattern
+		{
+			final boolean[] selection;
+			String[] defaultTile = new String[]{ defaultTileString };
+			
+			if ( choice == 2 )
+				selection = GenericLoadParseQueryXML.queryMultipleEntries( "Tiles", tiles, defaultTileIndices );
+			else
+				selection = GenericLoadParseQueryXML.queryPattern( "Tiles", tiles, defaultTile );
+			
+			if ( selection == null )
+				return false;
+			else
+			{
+				defaultTileIndices = selection;
+				
+				if ( choice == 3 )
+					defaultTileString = defaultTile[ 0 ];
+				
+				for ( int i = 0; i < selection.length; ++i )
+					if ( selection[ i ] )
+						targets.add( result.getTilesToProcess().get( i ) );
+			}
+		}
+		else
+		{
+			targets.addAll( result.getTilesToProcess() );
+		}
+		
+		if ( targets.size() == 0 )
+		{
+			IOFunctions.println( "List of tiles is empty. Stopping." );
+			return false;
+		}
+		else
+		{
+			final int transformations = parseRegistrations( gd );
+
+			if ( transformations < 0 )
+				return false;
+
+			int countApplied = 0;
+			
+			for ( int j = 0; j < targets.size(); ++j )
+				if ( !source.equals( targets.get( j ) ) )
+				{
+					IOFunctions.println( "Applying tile " + source.getName() + " >>> " + targets.get( j ).getName() );
+					++countApplied;
+					
+					for ( final TimePoint t : result.getTimePointsToProcess() )
+						for ( final Channel c : result.getChannelsToProcess() )
+							for ( final Illumination i : result.getIlluminationsToProcess() )
+								for ( final Angle a : result.getAnglesToProcess() )
+								{
+									final ViewId sourceViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c, a, i, source );
+									final ViewId targetViewId = SpimData2.getViewId( result.getData().getSequenceDescription(), t, c, a, i, targets.get( j ) );
+									
+									// this happens only if a viewsetup is not present in any timepoint
+									// (e.g. after appending fusion to a dataset)
+									if ( sourceViewId == null || targetViewId == null )
+										continue;
+	
+									duplicateTransformations( transformations, sourceViewId, targetViewId, result.getData() );
+								}
 				}
 			
 			if ( countApplied == 0 )
@@ -708,6 +844,16 @@ public class Duplicate_Transformation implements PlugIn
 			as[ t ] = angles.get( t ).getName();
 		
 		return as;
+	}
+
+	protected String[] assembleTiles( final List< Tile > tiles )
+	{
+		final String[] ts = new String[ tiles.size() ];
+		
+		for ( int t = 0; t < ts.length; ++t )
+			ts[ t ] = tiles.get( t ).getName();
+		
+		return ts;
 	}
 
 	public static void main( final String[] args )
