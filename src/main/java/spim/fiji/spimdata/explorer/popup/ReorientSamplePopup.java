@@ -74,6 +74,7 @@ public class ReorientSamplePopup extends JMenuItem implements ExplorerWindowSeta
 					params.sameModelChannels = true;
 					params.sameModelIlluminations = true;
 					params.sameModelTimePoints = true;
+					params.sameModelTiles = true;
 
 					params.model = 2; // rigid
 					params.applyTo = 2; // apply on top
