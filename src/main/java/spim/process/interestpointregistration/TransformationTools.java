@@ -111,11 +111,22 @@ public class TransformationTools
 			final Map< V, ViewInterestPointLists > interestpoints,
 			final Map< V, String > labelMap )
 	{
+		return getAllInterestPoints( viewIds, registrations, interestpoints, labelMap, true );
+	}
+
+	/** call this method to load interestpoints and apply current transformation */
+	public static <V> Map< V, List< InterestPoint > > getAllInterestPoints(
+			final Collection< ? extends V > viewIds,
+			final Map< V, ViewRegistration > registrations,
+			final Map< V, ViewInterestPointLists > interestpoints,
+			final Map< V, String > labelMap,
+			final boolean transform )
+	{
 		final HashMap< V, List< InterestPoint > > transformedInterestpoints =
 				new HashMap< V, List< InterestPoint > >();
 
 		for ( final V viewId : viewIds )
-			transformedInterestpoints.put( viewId, getTransformedInterestPoints( viewId, registrations, interestpoints, labelMap ) );
+			transformedInterestpoints.put( viewId, getInterestPoints( viewId, registrations, interestpoints, labelMap, transform ) );
 
 		return transformedInterestpoints;
 	}
@@ -127,10 +138,28 @@ public class TransformationTools
 			final Map< V, ViewInterestPointLists > interestpoints,
 			final Map< V, String > labelMap )
 	{
-		final List< InterestPoint > list = loadInterestPoints( interestpoints.get( viewId ).getInterestPointList( labelMap.get( viewId ) ) );
-		final AffineTransform3D t = getTransform( viewId, registrations );
+		return getInterestPoints( viewId, registrations, interestpoints, labelMap, true );
+	}
 
-		return applyTransformation( list, t );
+	/** call this method to load interestpoints and apply current transformation if necessary */
+	public static <V> List< InterestPoint > getInterestPoints(
+			final V viewId,
+			final Map< V, ViewRegistration > registrations,
+			final Map< V, ViewInterestPointLists > interestpoints,
+			final Map< V, String > labelMap,
+			final boolean transform )
+	{
+		final List< InterestPoint > list = loadInterestPoints( interestpoints.get( viewId ).getInterestPointList( labelMap.get( viewId ) ) );
+
+		if ( transform )
+		{
+			final AffineTransform3D t = getTransform( viewId, registrations );
+			return applyTransformation( list, t );
+		}
+		else
+		{
+			return list;
+		}
 	}
 
 	/** call this method to load interestpoints and apply current transformation */
@@ -139,6 +168,17 @@ public class TransformationTools
 			final Map< V, ViewRegistration > registrations,
 			final Map< V, ViewInterestPointLists > interestpoints,
 			final Map< V, String > labelMap )
+	{
+		return getCorrespondingInterestPoints( viewId, registrations, interestpoints, labelMap, true );
+	}
+
+	/** call this method to load interestpoints and apply current transformation */
+	public static <V> List< InterestPoint > getCorrespondingInterestPoints(
+			final V viewId,
+			final Map< V, ViewRegistration > registrations,
+			final Map< V, ViewInterestPointLists > interestpoints,
+			final Map< V, String > labelMap,
+			final boolean transform )
 	{
 		final InterestPointList ipList = interestpoints.get( viewId ).getInterestPointList( labelMap.get( viewId ) );
 		final List< InterestPoint > allPoints = loadInterestPoints( ipList );
@@ -153,10 +193,16 @@ public class TransformationTools
 		for ( final InterestPoint ip : allPoints )
 			if ( idSet.contains( ip.getId() ) )
 				corrPoints.add( ip );
-		
-		final AffineTransform3D t = getTransform( viewId, registrations );
 
-		return applyTransformation( corrPoints, t );
+		if ( transform )
+		{
+			final AffineTransform3D t = getTransform( viewId, registrations );
+			return applyTransformation( corrPoints, t );
+		}
+		else
+		{
+			return corrPoints;
+		}
 	}
 
 	public static List< InterestPoint > loadInterestPoints( final InterestPointList list )

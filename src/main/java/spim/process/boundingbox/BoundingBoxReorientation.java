@@ -80,6 +80,7 @@ public class BoundingBoxReorientation implements BoundingBoxEstimation
 				extractPoints(
 						label,
 						useCorresponding,
+						true,
 						BoundingBoxMaximal.filterMissingViews( viewIdsForEstimation, spimData.getSequenceDescription() ),
 						spimData ),
 				percent,
@@ -395,7 +396,16 @@ public class BoundingBoxReorientation implements BoundingBoxEstimation
 		return new ValuePair< double[], double[] >( min, max );
 	}
 
-
+	/**
+	 * Gets point locations in local or global coordinates
+	 * 
+	 * @param label - which label to use
+	 * @param useCorresponding - use only corresponding points?
+	 * @param transform - transform the points? Yes for Bounding box, no for PSF extraction
+	 * @param viewIds - which viewIds to process
+	 * @param data - the SpimData object
+	 * @return - a list of RealLocalizable objects
+	 */
 	public static ArrayList< RealLocalizable > extractPoints(
 			final String label,
 			final boolean useCorresponding,
@@ -413,26 +423,28 @@ public class BoundingBoxReorientation implements BoundingBoxEstimation
 			registrations.put( viewId, data.getViewRegistrations().getViewRegistration( viewId ) );
 			interestpoints.put( viewId, data.getViewInterestPoints().getViewInterestPointLists( viewId ) );
 		}
-		
+
 		final ArrayList< RealLocalizable > points = new ArrayList<>();
 
 		for ( final ViewId viewId : viewIds )
 		{
 			if ( useCorresponding )
 			{
-				points.addAll( TransformationTools.getTransformedCorrespondingInterestPoints(
-						viewId,
-						registrations,
-						interestpoints,
-						labelMap ) );
+				points.addAll( TransformationTools.getCorrespondingInterestPoints(
+					viewId,
+					registrations,
+					interestpoints,
+					labelMap,
+					transform ) );
 			}
 			else
 			{
-				points.addAll( TransformationTools.getTransformedInterestPoints(
-						viewId,
-						registrations,
-						interestpoints,
-						labelMap ) );
+				points.addAll( TransformationTools.getInterestPoints(
+					viewId,
+					registrations,
+					interestpoints,
+					labelMap,
+					transform ) );
 			}
 		}
 
