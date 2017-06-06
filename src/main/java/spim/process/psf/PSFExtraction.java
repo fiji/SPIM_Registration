@@ -63,7 +63,7 @@ public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 	}
 
 	public ArrayImg< T, ? > getPSF() { return psf; }
-	public ArrayImg< T, ? > getTransformedPSF( final AffineTransform3D model )
+	public ArrayImg< T, ? > getTransformedNormalizedPSF( final AffineTransform3D model )
 	{
 		final ArrayImg< T, ? > psfCopy = psf.copy();
 
