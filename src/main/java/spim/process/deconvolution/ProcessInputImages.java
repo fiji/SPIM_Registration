@@ -25,6 +25,7 @@ import spim.process.fusion.transformed.FusedWeightsRandomAccessibleInterval;
 import spim.process.fusion.transformed.TransformView;
 import spim.process.fusion.transformed.TransformVirtual;
 import spim.process.fusion.transformed.TransformWeight;
+import spim.process.fusion.weightedavg.ProcessFusion;
 import spim.process.fusion.weightedavg.ProcessVirtual;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
@@ -69,7 +70,8 @@ public class ProcessInputImages
 			}
 
 			final ArrayList< RandomAccessibleInterval< FloatType > > images = new ArrayList<>();
-			final ArrayList< RandomAccessibleInterval< FloatType > > weights = new ArrayList<>();
+			final ArrayList< RandomAccessibleInterval< FloatType > > weightsFusion = new ArrayList<>();
+			final ArrayList< RandomAccessibleInterval< FloatType > > weightsDecon = new ArrayList<>();
 
 			for ( final ViewId viewId : group.getViews() )
 			{
@@ -78,12 +80,6 @@ public class ProcessInputImages
 				vr.updateModel();
 				AffineTransform3D model = vr.getModel();
 
-				final float[] blending = new float[]{ defaultBlendingRangeNumber, defaultBlendingRangeNumber, defaultBlendingRangeNumber };
-				final float[] border = new float[]{ defaultBlendingBorderNumber, defaultBlendingBorderNumber, defaultBlendingBorderNumber };
-
-				// adjust for z-scaling
-				ProcessVirtual.adjustBlending( spimData.getSequenceDescription().getViewDescriptions().get( viewId ), blending, border );
-
 				// adjust the model for downsampling
 				if ( !Double.isNaN( downsampling ) )
 				{
@@ -91,17 +87,35 @@ public class ProcessInputImages
 					TransformVirtual.scaleTransform( model, 1.0 / downsampling );
 				}
 
+				// we need a different blending when virtually fusing the images since a negative
+				// value would actually lead to artifacts there
+				final float[] blendingFusion = ProcessFusion.defaultBlendingRange.clone();
+				final float[] borderFusion = ProcessFusion.defaultBlendingBorder.clone();
+
+				// however, to then run the deconvolution with this data, we want negative values
+				// to maximize the usage of image data
+				final float[] blendingDecon = new float[]{ defaultBlendingRangeNumber, defaultBlendingRangeNumber, defaultBlendingRangeNumber };
+				final float[] borderDecon = new float[]{ defaultBlendingBorderNumber, defaultBlendingBorderNumber, defaultBlendingBorderNumber };
+
+				// adjust both for z-scaling (anisotropy)
+				ProcessVirtual.adjustBlending( spimData.getSequenceDescription().getViewDescriptions().get( viewId ), blendingFusion, borderFusion );
+				ProcessVirtual.adjustBlending( spimData.getSequenceDescription().getViewDescriptions().get( viewId ), blendingDecon, borderDecon );
+
 				final RandomAccessibleInterval inputImg = TransformView.openDownsampled( imgloader, viewId, model );
 
 				images.add( TransformView.transformView( inputImg, model, bb, MVDeconvolution.minValueImg, 0, 1 ) );
-				weights.add( TransformWeight.transformBlending( inputImg, border, blending, model, bb ) );
+				weightsFusion.add( TransformWeight.transformBlending( inputImg, borderFusion, blendingFusion, model, bb ) );
+				weightsDecon.add( TransformWeight.transformBlending( inputImg, borderDecon, blendingDecon, model, bb ) );
 			}
 
-			final RandomAccessibleInterval< FloatType > img = new FusedRandomAccessibleInterval( new FinalInterval( dim ), images, weights );
-			final RandomAccessibleInterval< FloatType > weight = new FusedWeightsRandomAccessibleInterval( new FinalInterval( dim ), weights );
+			final RandomAccessibleInterval< FloatType > img = new FusedRandomAccessibleInterval( new FinalInterval( dim ), images, weightsFusion );
+			final RandomAccessibleInterval< FloatType > weight = new FusedWeightsRandomAccessibleInterval( new FinalInterval( dim ), weightsDecon );
 			
 			DisplayImage.getImagePlusInstance( img, true, "image", 0, 255 ).show();
-			DisplayImage.getImagePlusInstance( weight, true, "weight", 0, 1 ).show();
+			DisplayImage.getImagePlusInstance( weight, true, "weightsDecon", 0, 1 ).show();
+
+			DisplayImage.getImagePlusInstance( new FusedWeightsRandomAccessibleInterval( new FinalInterval( dim ), weightsFusion ), true, "weightsFusion", 0, 1 ).show();
+
 		}
 	}
 }
