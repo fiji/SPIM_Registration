@@ -9,7 +9,7 @@ import mpicbg.spim.data.sequence.ViewSetup;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import spim.fiji.plugin.fusion.boundingbox.BoundingBoxGUI;
+import spim.fiji.plugin.boundingbox.BoundingBoxGUI;
 import spim.fiji.spimdata.SpimData2;
 
 public interface ImgExport

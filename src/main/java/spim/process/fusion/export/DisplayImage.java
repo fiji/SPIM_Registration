@@ -13,7 +13,7 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.img.imageplus.ImagePlusImg;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import spim.fiji.plugin.fusion.boundingbox.BoundingBoxGUI;
+import spim.fiji.plugin.boundingbox.BoundingBoxGUI;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.FusionHelper;
 
