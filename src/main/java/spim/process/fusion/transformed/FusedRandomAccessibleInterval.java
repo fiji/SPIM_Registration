@@ -7,7 +7,6 @@ import net.imglib2.Positionable;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealPositionable;
-import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 
 public class FusedRandomAccessibleInterval implements RandomAccessibleInterval< FloatType >
@@ -28,6 +27,9 @@ public class FusedRandomAccessibleInterval implements RandomAccessibleInterval< 
 		this.images = images;
 		this.weights = weights;
 	}
+
+	public List< RandomAccessibleInterval< FloatType > > getImages() { return images; }
+	public List< RandomAccessibleInterval< FloatType > > getWeights() { return weights; }
 
 	@Override
 	public int numDimensions()

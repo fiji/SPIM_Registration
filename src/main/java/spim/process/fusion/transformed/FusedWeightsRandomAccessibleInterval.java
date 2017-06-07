@@ -25,6 +25,8 @@ public class FusedWeightsRandomAccessibleInterval implements RandomAccessibleInt
 		this.weights = weights;
 	}
 
+	public List< RandomAccessibleInterval< FloatType > > getWeights() { return weights; }
+
 	@Override
 	public int numDimensions()
 	{
