@@ -44,7 +44,7 @@ public class StitchingResults
 		//Pair< ViewId, ViewId > key = pair.getA().compareTo( pair.getB() ) < 0 ? pair : new ValuePair<>(pair.getB(), pair.getA());
 		return pairwiseResults.get( pair );
 	}
-	public void removePairwiseResultForPair(Pair<Set<ViewId>, Set<ViewId>> pair)
+	public void removePairwiseResultForPair(Pair<Group<ViewId>, Group<ViewId>> pair)
 	{
 		//Pair< ViewId, ViewId > key = pair.getA().compareTo( pair.getB() ) < 0 ? pair : new ValuePair<>(pair.getB(), pair.getA());
 		pairwiseResults.remove( pair );
