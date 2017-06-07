@@ -178,6 +178,29 @@ public class Group< V > implements Iterable< V >
 		return new ArrayList<>(res.values());
 	}
 
+	public static < V extends ViewId > ArrayList< Group< V > > toGroups( final Collection< V > views )
+	{
+		final ArrayList< Group< V > > groups = new ArrayList<>();
+
+		for ( final V view : views )
+			groups.add( new Group< V >( view ) );
+
+		return groups;
+	}
+
+	public static < V extends ViewId > ArrayList< Group< V > > toGroup( final Collection< V > views )
+	{
+		final ArrayList< Group< V > > groups = new ArrayList<>();
+		final Group< V > group = new Group<>();
+
+		for ( final V view : views )
+			group.getViews().add( view );
+
+		groups.add( group );
+
+		return groups;
+	}
+
 	public static < V extends ViewId > ArrayList< Group< V > > groupByChannel( final List< V > viewIds, final AbstractSequenceDescription< ?, ? extends BasicViewDescription< ? >, ? > sd )
 	{
 		final ArrayList< V > input = new ArrayList<>();
