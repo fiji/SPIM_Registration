@@ -46,7 +46,7 @@ public class MVDeconvolution
 	public static boolean debug = true;
 	public static int debugInterval = 1;
 	public static boolean setBackgroundToAvg = true;//false;
-	final static float minValueImg = 1f; // mininal value for the input image (as it is not normalized)
+	final public static float minValueImg = 1f; // mininal value for the input image (as it is not normalized)
 	final static private float minValue = 0.0001f; // minimal value for the deconvolved image
 
 	final static private boolean debugHeavy = true;
