@@ -30,6 +30,47 @@ public class TransformView
 	 * @param input - the input image
 	 * @param transform - the affine transformation
 	 * @param boundingBox - the bounding box (after transformation)
+	 * @param minValue - the minimal value inside the image
+	 * @param outsideValue - the value that is returned if it does not intersect with the input image
+	 * @param interpolation - 0=nearest neighbor, 1=linear interpolation
+	 * @return
+	 */
+	public static < T extends RealType< T > > RandomAccessibleInterval< FloatType > transformView(
+			final RandomAccessibleInterval< T > input,
+			final AffineTransform3D transform,
+			final Interval boundingBox,
+			final float minValue,
+			final float outsideValue,
+			final int interpolation )
+	{
+		final long[] offset = new long[ input.numDimensions() ];
+		final long[] size = new long[ input.numDimensions() ];
+
+		for ( int d = 0; d < offset.length; ++d )
+		{
+			offset[ d ] = boundingBox.min( d );
+			size[ d ] = boundingBox.dimension( d );
+		}
+
+		final TransformedInputRandomAccessible< T > virtual = new TransformedInputRandomAccessible< T >( input, transform, true, minValue, new FloatType( outsideValue ), offset );
+
+		if ( interpolation == 0 )
+			virtual.setNearestNeighborInterpolation();
+		else
+			virtual.setLinearInterpolation();
+
+		return Views.interval( virtual, new FinalInterval( size ) );
+	}
+	/**
+	 * Creates a virtual construct that transforms and zero-mins.
+	 * 
+	 * Note: we do not use a general outofbounds strategy so that when using linear interpolation there are no
+	 *       half-correct pixels at the interface between image/background and so that we can clearly know which
+	 *       parts are from image data and where there is no data
+	 * 
+	 * @param input - the input image
+	 * @param transform - the affine transformation
+	 * @param boundingBox - the bounding box (after transformation)
 	 * @param outsideValue - the value that is returned if it does not intersect with the input image
 	 * @param interpolation - 0=nearest neighbor, 1=linear interpolation
 	 * @return
