@@ -3,6 +3,7 @@ package spim.process.deconvolution;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
@@ -17,9 +18,10 @@ import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Pair;
+import net.imglib2.util.ValuePair;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.deconvolution.MVDeconvolution;
-import spim.process.fusion.export.DisplayImage;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
 import spim.process.fusion.transformed.FusedWeightsRandomAccessibleInterval;
 import spim.process.fusion.transformed.TransformView;
@@ -29,30 +31,73 @@ import spim.process.fusion.weightedavg.ProcessFusion;
 import spim.process.fusion.weightedavg.ProcessVirtual;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
-public class ProcessInputImages
+public class ProcessInputImages< V extends ViewId >
 {
 	public static int defaultBlendingRangeNumber = 12;
 	public static int defaultBlendingBorderNumber = -8;
 
-	public static < V extends ViewId > void preProcessVirtual(
+	final AbstractSpimData< ? extends AbstractSequenceDescription< ? extends BasicViewSetup, ? extends BasicViewDescription< ? >, ? extends BasicImgLoader > > spimData;
+	final Collection< Group< V > > groups;
+	final Interval bb;
+	Interval downsampledBB;
+	final double downsampling;
+
+	final HashMap< Group< V >, Pair< RandomAccessibleInterval< FloatType >, RandomAccessibleInterval< FloatType > > > imgWeights;
+	final HashMap< V, AffineTransform3D > models;
+
+	public ProcessInputImages(
+			final AbstractSpimData< ? extends AbstractSequenceDescription< ? extends BasicViewSetup, ? extends BasicViewDescription< ? >, ? extends BasicImgLoader > > spimData,
+			final Collection< Group< V > > groups,
+			final Interval bb,
+			final double downsampling )
+	{
+		this.spimData = spimData;
+		this.groups = groups;
+		this.bb = bb;
+		this.downsampling = downsampling;
+
+		this.imgWeights = new HashMap<>();
+		this.models = new HashMap<>();
+	}
+
+	public ProcessInputImages(
 			final AbstractSpimData< ? extends AbstractSequenceDescription< ? extends BasicViewSetup, ? extends BasicViewDescription< ? >, ? extends BasicImgLoader > > spimData,
 			final Collection< Group< V > > groups,
 			Interval bb )
 	{
-		preProcessVirtual( spimData, groups, bb, Double.NaN );
+		this( spimData, groups, bb, Double.NaN );
 	}
 
-	public static < V extends ViewId > void preProcessVirtual(
+	public HashMap< Group< V >, Pair< RandomAccessibleInterval< FloatType >, RandomAccessibleInterval< FloatType > > > getImgWeights()
+	{
+		return imgWeights;
+	}
+
+	public Interval getBoundingBox() { return bb; }
+	public Interval getDownsampledBoundingBox() { return downsampledBB; }
+	public HashMap< V, AffineTransform3D > getDownsampledModels() { return models; }
+
+	public void fuseGroups()
+	{
+		this.downsampledBB = fuseGroups( spimData, imgWeights, models, groups, bb, downsampling );
+	}
+
+	public static < V extends ViewId > Interval fuseGroups(
 			final AbstractSpimData< ? extends AbstractSequenceDescription< ? extends BasicViewSetup, ? extends BasicViewDescription< ? >, ? extends BasicImgLoader > > spimData,
+			final HashMap< Group< V >, Pair< RandomAccessibleInterval< FloatType >, RandomAccessibleInterval< FloatType > > > imgWeights,
+			final HashMap< V, AffineTransform3D > models,
 			final Collection< Group< V > > groups,
-			Interval bb,
+			final Interval boundingBox,
 			final double downsampling )
 	{
 		int i = 0;
 
 		// scale the bounding box if necessary
+		final Interval bb;
 		if ( !Double.isNaN( downsampling ) )
-			bb = TransformVirtual.scaleBoundingBox( bb, 1.0 / downsampling );
+			bb = TransformVirtual.scaleBoundingBox( boundingBox, 1.0 / downsampling );
+		else
+			bb = boundingBox;
 
 		final long[] dim = new long[ bb.numDimensions() ];
 		bb.dimensions( dim );
@@ -73,7 +118,7 @@ public class ProcessInputImages
 			final ArrayList< RandomAccessibleInterval< FloatType > > weightsFusion = new ArrayList<>();
 			final ArrayList< RandomAccessibleInterval< FloatType > > weightsDecon = new ArrayList<>();
 
-			for ( final ViewId viewId : group.getViews() )
+			for ( final V viewId : group.getViews() )
 			{
 				final BasicImgLoader imgloader = spimData.getSequenceDescription().getImgLoader();
 				final ViewRegistration vr = spimData.getViewRegistrations().getViewRegistration( viewId );
@@ -86,6 +131,8 @@ public class ProcessInputImages
 					model = model.copy();
 					TransformVirtual.scaleTransform( model, 1.0 / downsampling );
 				}
+
+				models.put( viewId, model );
 
 				// we need a different blending when virtually fusing the images since a negative
 				// value would actually lead to artifacts there
@@ -108,14 +155,15 @@ public class ProcessInputImages
 				weightsDecon.add( TransformWeight.transformBlending( inputImg, borderDecon, blendingDecon, model, bb ) );
 			}
 
+			// the fused image per group
 			final RandomAccessibleInterval< FloatType > img = new FusedRandomAccessibleInterval( new FinalInterval( dim ), images, weightsFusion );
+
+			// the weights used for deconvolution per group
 			final RandomAccessibleInterval< FloatType > weight = new FusedWeightsRandomAccessibleInterval( new FinalInterval( dim ), weightsDecon );
-			
-			DisplayImage.getImagePlusInstance( img, true, "image", 0, 255 ).show();
-			DisplayImage.getImagePlusInstance( weight, true, "weightsDecon", 0, 1 ).show();
 
-			DisplayImage.getImagePlusInstance( new FusedWeightsRandomAccessibleInterval( new FinalInterval( dim ), weightsFusion ), true, "weightsFusion", 0, 1 ).show();
-
+			imgWeights.put( group, new ValuePair<>( img, weight ) );
 		}
+
+		return bb;
 	}
 }

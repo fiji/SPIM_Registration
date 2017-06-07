@@ -6,11 +6,15 @@ import java.util.List;
 import ij.ImageJ;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.sequence.ViewId;
+import net.imglib2.FinalInterval;
 import simulation.imgloader.SimulatedBeadsImgLoader;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.process.deconvolution.ProcessInputImages;
+import spim.process.fusion.export.DisplayImage;
+import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
+import spim.process.fusion.transformed.FusedWeightsRandomAccessibleInterval;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class TestDeconvolution
@@ -57,10 +61,38 @@ public class TestDeconvolution
 
 		System.out.println( BoundingBox.getBoundingBoxDescription( boundingBox ) );
 
-		ProcessInputImages.preProcessVirtual(
+		final ProcessInputImages< ViewId > fusion = new ProcessInputImages<>(
 				spimData,
-				Group.toGroups( viewIds ),
+				Group.toGroup( viewIds ),
 				boundingBox,
 				4.0 );
+
+		fusion.fuseGroups();
+
+		displayDebug( fusion );
+	}
+
+	public static < V extends ViewId > void displayDebug( final ProcessInputImages< V > fusion )
+	{
+		int i = 0;
+
+		for ( final Group< V > group : fusion.getImgWeights().keySet() )
+		{
+			DisplayImage.getImagePlusInstance( fusion.getImgWeights().get( group ).getA(), true, "g=" + i + " image", 0, 255 ).show();
+			DisplayImage.getImagePlusInstance( fusion.getImgWeights().get( group ).getB(), true, "g=" + i + " weightsDecon", 0, 1 ).show();
+
+			final long[] dim = new long[ fusion.getDownsampledBoundingBox().numDimensions() ];
+			fusion.getDownsampledBoundingBox().dimensions( dim );
+
+			DisplayImage.getImagePlusInstance(
+					new FusedWeightsRandomAccessibleInterval(
+							new FinalInterval( dim ),
+							((FusedRandomAccessibleInterval)fusion.getImgWeights().get( group ).getA()).getWeights() ),
+					true,
+					"g=" + i + " weightsFusion",
+					0, 1 ).show();
+
+			++i;
+		}
 	}
 }
