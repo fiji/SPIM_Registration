@@ -40,6 +40,9 @@ public class TestDeconvolution
 		final List< ViewId > viewIds = new ArrayList< ViewId >();
 		viewIds.addAll( spimData.getSequenceDescription().getViewDescriptions().values() );
 
+		for ( int i = 0; i < 5; ++i )
+			viewIds.remove( viewIds.size() - 1 );
+
 		BoundingBox boundingBox = null;
 
 		for ( final BoundingBox bb : spimData.getBoundingBoxes().getBoundingBoxes() )
@@ -56,7 +59,7 @@ public class TestDeconvolution
 
 		ProcessInputImages.preProcessVirtual(
 				spimData,
-				Group.toGroup( viewIds ),
+				Group.toGroups( viewIds ),
 				boundingBox,
 				4.0 );
 	}

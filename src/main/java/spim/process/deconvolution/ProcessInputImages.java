@@ -49,6 +49,13 @@ public class ProcessInputImages
 	{
 		int i = 0;
 
+		// scale the bounding box if necessary
+		if ( !Double.isNaN( downsampling ) )
+			bb = TransformVirtual.scaleBoundingBox( bb, 1.0 / downsampling );
+
+		final long[] dim = new long[ bb.numDimensions() ];
+		bb.dimensions( dim );
+
 		for ( final Group< V > group : groups )
 		{
 			SpimData2.filterMissingViews( spimData, group.getViews() );
@@ -60,13 +67,6 @@ public class ProcessInputImages
 				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Group is empty. Continuing with next one." );
 				continue;
 			}
-
-			// scale the bounding box if necessary
-			if ( !Double.isNaN( downsampling ) )
-				bb = TransformVirtual.scaleBoundingBox( bb, 1.0 / downsampling );
-
-			final long[] dim = new long[ bb.numDimensions() ];
-			bb.dimensions( dim );
 
 			final ArrayList< RandomAccessibleInterval< FloatType > > images = new ArrayList<>();
 			final ArrayList< RandomAccessibleInterval< FloatType > > weights = new ArrayList<>();
