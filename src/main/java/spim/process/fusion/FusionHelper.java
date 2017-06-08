@@ -16,9 +16,17 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
+import net.imglib2.Interval;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.cache.img.CellLoader;
+import net.imglib2.cache.img.ReadOnlyCachedCellImgFactory;
+import net.imglib2.cache.img.ReadOnlyCachedCellImgOptions;
+import net.imglib2.cache.img.SingleCellArrayImg;
+import net.imglib2.img.Img;
+import net.imglib2.img.ImgFactory;
+import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
@@ -75,6 +83,67 @@ public class FusionHelper
 		}
 
 		return inputData;
+	}
+
+	public static < T extends NativeType< T > > RandomAccessibleInterval< T > cacheRandomAccessibleInterval(
+			final RandomAccessibleInterval< T > in,
+			final T type,
+			final int cellDim,
+			final long maxCacheSize )
+	{
+		final ReadOnlyCachedCellImgOptions options = new ReadOnlyCachedCellImgOptions().cellDimensions( cellDim ).maxCacheSize( maxCacheSize );
+		final ReadOnlyCachedCellImgFactory factory = new ReadOnlyCachedCellImgFactory( options );
+
+		final CellLoader< T > loader = new CellLoader< T >()
+		{
+			@Override
+			public void load( final SingleCellArrayImg< T, ? > cell ) throws Exception
+			{
+				final Cursor< T > cursor = cell.localizingCursor();
+				final RandomAccess< T > ra = in.randomAccess();
+				
+				while( cursor.hasNext() )
+				{
+					cursor.fwd();
+					ra.setPosition( cursor );
+					cursor.get().set( ra.get() );
+				}
+			}
+		};
+
+		final long[] dim = new long[ in.numDimensions() ];
+		in.dimensions( dim );
+
+		return translateIfNecessary( in, factory.create( dim, type, loader ) );
+	}
+
+	public static RandomAccessibleInterval< FloatType > copyImg( final RandomAccessibleInterval< FloatType > input, final ImgFactory< FloatType > factory )
+	{
+		final long[] dim = new long[ input.numDimensions() ];
+		input.dimensions( dim );
+
+		final Img< FloatType > tImg = factory.create( dim, new FloatType() );
+
+		// copy the virtual construct into an actual image
+		FusionHelper.copyImg( input, tImg );
+
+		return translateIfNecessary( input, tImg );
+	}
+
+	public static < T > RandomAccessibleInterval< T > translateIfNecessary( final Interval original, final RandomAccessibleInterval< T > copy )
+	{
+		final long[] min = new long[ original.numDimensions() ];
+		original.min( min );
+
+		boolean isZeroMin = true;
+		for ( int d = 0; d < min.length; ++d )
+			if ( original.min( d ) != 0 )
+				isZeroMin = false;
+
+		if ( isZeroMin )
+			return copy;
+		else
+			return Views.translate( copy, min );
 	}
 
 	public static void copyImg( final RandomAccessibleInterval< FloatType > input, final RandomAccessibleInterval< FloatType > output )
