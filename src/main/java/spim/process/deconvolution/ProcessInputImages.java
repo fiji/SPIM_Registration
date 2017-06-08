@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 
+import bdv.util.ConstantRandomAccessible;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.generic.sequence.BasicImgLoader;
@@ -57,6 +58,7 @@ public class ProcessInputImages< V extends ViewId >
 	final Interval bb;
 	Interval downsampledBB;
 	final double downsampling;
+	final boolean useWeightsFusion, useWeightsDecon;
 	ImgFactory< FloatType > factory = new CellImgFactory<>( 64 );
 
 	final HashMap< Group< V >, Pair< RandomAccessibleInterval< FloatType >, RandomAccessibleInterval< FloatType > > > imgWeights;
@@ -66,12 +68,16 @@ public class ProcessInputImages< V extends ViewId >
 			final AbstractSpimData< ? extends AbstractSequenceDescription< ? extends BasicViewSetup, ? extends BasicViewDescription< ? >, ? extends BasicImgLoader > > spimData,
 			final Collection< Group< V > > groups,
 			final Interval bb,
-			final double downsampling )
+			final double downsampling,
+			final boolean useWeightsFusion,
+			final boolean useWeightsDecon )
 	{
 		this.spimData = spimData;
 		this.groups = groups;
 		this.bb = bb;
 		this.downsampling = downsampling;
+		this.useWeightsDecon = useWeightsDecon;
+		this.useWeightsFusion = useWeightsFusion;
 
 		this.imgWeights = new HashMap<>();
 		this.models = new HashMap<>();
@@ -80,9 +86,9 @@ public class ProcessInputImages< V extends ViewId >
 	public ProcessInputImages(
 			final AbstractSpimData< ? extends AbstractSequenceDescription< ? extends BasicViewSetup, ? extends BasicViewDescription< ? >, ? extends BasicImgLoader > > spimData,
 			final Collection< Group< V > > groups,
-			Interval bb )
+			final Interval bb )
 	{
-		this( spimData, groups, bb, Double.NaN );
+		this( spimData, groups, bb, Double.NaN, true, true );
 	}
 
 	public Interval getBoundingBox() { return bb; }
@@ -92,7 +98,17 @@ public class ProcessInputImages< V extends ViewId >
 
 	public void fuseGroups()
 	{
-		this.downsampledBB = fuseGroups( spimData, imgWeights, models, groups, bb, downsampling );
+		this.downsampledBB = fuseGroups(
+				spimData,
+				imgWeights,
+				models,
+				groups,
+				bb,
+				downsampling,
+				useWeightsFusion ? ProcessFusion.defaultBlendingRange.clone() : null,
+				useWeightsFusion ? ProcessFusion.defaultBlendingBorder.clone() : null,
+				useWeightsDecon ? new float[]{ defaultBlendingRangeNumber, defaultBlendingRangeNumber, defaultBlendingRangeNumber } : null,
+				useWeightsDecon ? new float[]{ defaultBlendingBorderNumber, defaultBlendingBorderNumber, defaultBlendingBorderNumber } : null );
 	}
 
 	public void deVirtualizeImages( final ImgDataType typeImg, final ImgDataType typeWeights )
@@ -123,15 +139,17 @@ public class ProcessInputImages< V extends ViewId >
 		}
 	}
 
-
-
 	public static < V extends ViewId > Interval fuseGroups(
 			final AbstractSpimData< ? extends AbstractSequenceDescription< ? extends BasicViewSetup, ? extends BasicViewDescription< ? >, ? extends BasicImgLoader > > spimData,
 			final HashMap< Group< V >, Pair< RandomAccessibleInterval< FloatType >, RandomAccessibleInterval< FloatType > > > imgWeights,
 			final HashMap< V, AffineTransform3D > models,
 			final Collection< Group< V > > groups,
 			final Interval boundingBox,
-			final double downsampling )
+			final double downsampling,
+			final float[] blendingRangeFusion,
+			final float[] blendingBorderFusion,
+			final float[] blendingRangeDecon,
+			final float[] blendingBorderDecon )
 	{
 		int i = 0;
 
@@ -177,25 +195,42 @@ public class ProcessInputImages< V extends ViewId >
 
 				models.put( viewId, model );
 
-				// we need a different blending when virtually fusing the images since a negative
-				// value would actually lead to artifacts there
-				final float[] blendingFusion = ProcessFusion.defaultBlendingRange.clone();
-				final float[] borderFusion = ProcessFusion.defaultBlendingBorder.clone();
-
-				// however, to then run the deconvolution with this data, we want negative values
-				// to maximize the usage of image data
-				final float[] blendingDecon = new float[]{ defaultBlendingRangeNumber, defaultBlendingRangeNumber, defaultBlendingRangeNumber };
-				final float[] borderDecon = new float[]{ defaultBlendingBorderNumber, defaultBlendingBorderNumber, defaultBlendingBorderNumber };
-
-				// adjust both for z-scaling (anisotropy)
-				ProcessVirtual.adjustBlending( spimData.getSequenceDescription().getViewDescriptions().get( viewId ), blendingFusion, borderFusion );
-				ProcessVirtual.adjustBlending( spimData.getSequenceDescription().getViewDescriptions().get( viewId ), blendingDecon, borderDecon );
-
 				final RandomAccessibleInterval inputImg = TransformView.openDownsampled( imgloader, viewId, model );
-
 				images.add( TransformView.transformView( inputImg, model, bb, MVDeconvolution.minValueImg, 0, 1 ) );
-				weightsFusion.add( TransformWeight.transformBlending( inputImg, borderFusion, blendingFusion, model, bb ) );
-				weightsDecon.add( TransformWeight.transformBlending( inputImg, borderDecon, blendingDecon, model, bb ) );
+
+				if ( blendingRangeFusion != null && blendingBorderFusion != null )
+				{
+					// we need a different blending when virtually fusing the images since a negative
+					// value would actually lead to artifacts there
+					final float[] rangeFusion = blendingRangeFusion.clone();
+					final float[] borderFusion = blendingBorderFusion.clone();
+
+					// adjust both for z-scaling (anisotropy)
+					ProcessVirtual.adjustBlending( spimData.getSequenceDescription().getViewDescriptions().get( viewId ), rangeFusion, borderFusion );
+
+					weightsFusion.add( TransformWeight.transformBlending( inputImg, borderFusion, rangeFusion, model, bb ) );
+				}
+				else
+				{
+					weightsFusion.add( Views.interval( new ConstantRandomAccessible< FloatType >( new FloatType( 1 ), bb.numDimensions() ), bb ) );
+				}
+
+				if ( blendingRangeDecon != null && blendingBorderDecon != null )
+				{
+					// however, to then run the deconvolution with this data, we want negative values
+					// to maximize the usage of image data
+					final float[] rangeDecon = blendingRangeDecon.clone();
+					final float[] borderDecon = blendingBorderDecon.clone();
+
+					// adjust both for z-scaling (anisotropy)
+					ProcessVirtual.adjustBlending( spimData.getSequenceDescription().getViewDescriptions().get( viewId ), rangeDecon, borderDecon );
+
+					weightsDecon.add( TransformWeight.transformBlending( inputImg, borderDecon, rangeDecon, model, bb ) );
+				}
+				else
+				{
+					weightsDecon.add( Views.interval( new ConstantRandomAccessible< FloatType >( new FloatType( 1 ), bb.numDimensions() ), bb ) );
+				}
 			}
 
 			// the fused image per group

@@ -68,7 +68,9 @@ public class TestDeconvolution
 				spimData,
 				Group.toGroup( viewIds ),
 				boundingBox,
-				2.0 );
+				2.0,
+				true,
+				true );
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Virtual Fusion of groups " );
 		fusion.fuseGroups();
