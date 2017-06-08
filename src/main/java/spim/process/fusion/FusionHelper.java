@@ -86,11 +86,18 @@ public class FusionHelper
 	}
 
 	public static < T extends NativeType< T > > RandomAccessibleInterval< T > cacheRandomAccessibleInterval(
-			final RandomAccessibleInterval< T > in,
+			final RandomAccessibleInterval< T > input,
 			final T type,
 			final int cellDim,
 			final long maxCacheSize )
 	{
+		final RandomAccessibleInterval< T > in;
+
+		if ( Views.isZeroMin( input ) )
+			in = input;
+		else
+			in = Views.zeroMin( input );
+		
 		final ReadOnlyCachedCellImgOptions options = new ReadOnlyCachedCellImgOptions().cellDimensions( cellDim ).maxCacheSize( maxCacheSize );
 		final ReadOnlyCachedCellImgFactory factory = new ReadOnlyCachedCellImgFactory( options );
 
@@ -114,36 +121,42 @@ public class FusionHelper
 		final long[] dim = new long[ in.numDimensions() ];
 		in.dimensions( dim );
 
-		return translateIfNecessary( in, factory.create( dim, type, loader ) );
+		return translateIfNecessary( input, factory.create( dim, type, loader ) );
 	}
 
 	public static RandomAccessibleInterval< FloatType > copyImg( final RandomAccessibleInterval< FloatType > input, final ImgFactory< FloatType > factory )
 	{
-		final long[] dim = new long[ input.numDimensions() ];
-		input.dimensions( dim );
+		final RandomAccessibleInterval< FloatType > in;
+
+		if ( Views.isZeroMin( input ) )
+			in = input;
+		else
+			in = Views.zeroMin( input );
+
+		final long[] dim = new long[ in.numDimensions() ];
+		in.dimensions( dim );
 
 		final Img< FloatType > tImg = factory.create( dim, new FloatType() );
 
 		// copy the virtual construct into an actual image
-		FusionHelper.copyImg( input, tImg );
+		FusionHelper.copyImg( in, tImg );
 
 		return translateIfNecessary( input, tImg );
 	}
 
 	public static < T > RandomAccessibleInterval< T > translateIfNecessary( final Interval original, final RandomAccessibleInterval< T > copy )
 	{
-		final long[] min = new long[ original.numDimensions() ];
-		original.min( min );
-
-		boolean isZeroMin = true;
-		for ( int d = 0; d < min.length; ++d )
-			if ( original.min( d ) != 0 )
-				isZeroMin = false;
-
-		if ( isZeroMin )
+		if ( Views.isZeroMin( original ) )
+		{
 			return copy;
+		}
 		else
+		{
+			final long[] min = new long[ original.numDimensions() ];
+			original.min( min );
+
 			return Views.translate( copy, min );
+		}
 	}
 
 	public static void copyImg( final RandomAccessibleInterval< FloatType > input, final RandomAccessibleInterval< FloatType > output )
