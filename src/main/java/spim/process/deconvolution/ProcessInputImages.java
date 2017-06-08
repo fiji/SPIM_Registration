@@ -13,14 +13,27 @@ import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.Cursor;
 import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
+import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.cache.img.CachedCellImg;
+import net.imglib2.cache.img.CellLoader;
+import net.imglib2.cache.img.ReadOnlyCachedCellImgFactory;
+import net.imglib2.cache.img.ReadOnlyCachedCellImgOptions;
+import net.imglib2.cache.img.SingleCellArrayImg;
+import net.imglib2.img.Img;
+import net.imglib2.img.ImgFactory;
+import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.realtransform.AffineTransform3D;
+import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
+import net.imglib2.view.Views;
 import spim.fiji.spimdata.SpimData2;
+import spim.process.fusion.FusionHelper;
 import spim.process.fusion.deconvolution.MVDeconvolution;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
 import spim.process.fusion.transformed.FusedWeightsRandomAccessibleInterval;
@@ -35,12 +48,16 @@ public class ProcessInputImages< V extends ViewId >
 {
 	public static int defaultBlendingRangeNumber = 12;
 	public static int defaultBlendingBorderNumber = -8;
+	public static int cellDim = 64, maxCacheSize = 10000;
 
+	public static enum ImgDataType { VIRTUAL, CACHED, PRECOMPUTED };
+	
 	final AbstractSpimData< ? extends AbstractSequenceDescription< ? extends BasicViewSetup, ? extends BasicViewDescription< ? >, ? extends BasicImgLoader > > spimData;
 	final Collection< Group< V > > groups;
 	final Interval bb;
 	Interval downsampledBB;
 	final double downsampling;
+	ImgFactory< FloatType > factory = new CellImgFactory<>( 64 );
 
 	final HashMap< Group< V >, Pair< RandomAccessibleInterval< FloatType >, RandomAccessibleInterval< FloatType > > > imgWeights;
 	final HashMap< V, AffineTransform3D > models;
@@ -68,19 +85,45 @@ public class ProcessInputImages< V extends ViewId >
 		this( spimData, groups, bb, Double.NaN );
 	}
 
-	public HashMap< Group< V >, Pair< RandomAccessibleInterval< FloatType >, RandomAccessibleInterval< FloatType > > > getImgWeights()
-	{
-		return imgWeights;
-	}
-
 	public Interval getBoundingBox() { return bb; }
 	public Interval getDownsampledBoundingBox() { return downsampledBB; }
 	public HashMap< V, AffineTransform3D > getDownsampledModels() { return models; }
+	public HashMap< Group< V >, Pair< RandomAccessibleInterval< FloatType >, RandomAccessibleInterval< FloatType > > > getImgWeights() { return imgWeights; }
 
 	public void fuseGroups()
 	{
 		this.downsampledBB = fuseGroups( spimData, imgWeights, models, groups, bb, downsampling );
 	}
+
+	public void deVirtualizeImages( final ImgDataType typeImg, final ImgDataType typeWeights )
+	{
+		if ( typeImg == ImgDataType.VIRTUAL && typeWeights == ImgDataType.VIRTUAL )
+			return;
+
+		for ( final Group< V > group : groups )
+		{
+			if ( !imgWeights.containsKey( group ) )
+				continue;
+
+			final Pair< RandomAccessibleInterval< FloatType >, RandomAccessibleInterval< FloatType > > imgWeight = imgWeights.get( group );
+			RandomAccessibleInterval< FloatType > img = imgWeight.getA();
+			RandomAccessibleInterval< FloatType > weight = imgWeight.getB();
+
+			if ( typeImg == ImgDataType.CACHED )
+				img = FusionHelper.cacheRandomAccessibleInterval( img, new FloatType(), cellDim, maxCacheSize );
+			else if ( typeImg == ImgDataType.PRECOMPUTED )
+				img = FusionHelper.copyImg( img, factory );
+
+			if ( typeWeights == ImgDataType.CACHED )
+				weight = FusionHelper.cacheRandomAccessibleInterval( weight, new FloatType(), cellDim, maxCacheSize );
+			else if ( typeWeights == ImgDataType.PRECOMPUTED )
+				weight = FusionHelper.copyImg( weight, factory );
+
+			imgWeights.put( group, new ValuePair<>( img, weight ) );
+		}
+	}
+
+
 
 	public static < V extends ViewId > Interval fuseGroups(
 			final AbstractSpimData< ? extends AbstractSequenceDescription< ? extends BasicViewSetup, ? extends BasicViewDescription< ? >, ? extends BasicImgLoader > > spimData,
