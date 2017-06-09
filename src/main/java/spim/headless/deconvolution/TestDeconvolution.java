@@ -77,7 +77,10 @@ public class TestDeconvolution
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): De-virtualization ... " );
 		fusion.deVirtualizeImages( ImgDataType.PRECOMPUTED );
-		fusion.deVirtualizeWeights( ImgDataType.CACHED );
+		fusion.deVirtualizeUnnormalizedWeights( ImgDataType.CACHED );
+
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Normalizing weights ... " );
+		fusion.normalizeWeights();
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Displaying " );
 		displayDebug( fusion );
@@ -90,10 +93,12 @@ public class TestDeconvolution
 		for ( final Group< V > group : fusion.getGroups() )
 		{
 			System.out.println( "Img Instance: " + fusion.getImages().get( group ).getClass().getSimpleName() );
-			System.out.println( "Weight Instance: " + fusion.getUnnormalizedWeights().get( group ).getClass().getSimpleName() );
+			System.out.println( "Raw Weight Instance: " + fusion.getUnnormalizedWeights().get( group ).getClass().getSimpleName() );
+			System.out.println( "Normalized Weight Instance: " + fusion.getNormalizedWeights().get( group ).getClass().getSimpleName() );
 
 			DisplayImage.getImagePlusInstance( fusion.getImages().get( group ), true, "g=" + i + " image", 0, 255 ).show();
-			DisplayImage.getImagePlusInstance( fusion.getUnnormalizedWeights().get( group ), true, "g=" + i + " weightsDecon", 0, 2 ).show();
+			DisplayImage.getImagePlusInstance( fusion.getUnnormalizedWeights().get( group ), true, "g=" + i + " weightsRawDecon", 0, 2 ).show();
+			DisplayImage.getImagePlusInstance( fusion.getNormalizedWeights().get( group ), true, "g=" + i + " weightsNormDecon", 0, 2 ).show();
 
 			if ( FusedRandomAccessibleInterval.class.isInstance( fusion.getImages().get( group ) ) )
 			{

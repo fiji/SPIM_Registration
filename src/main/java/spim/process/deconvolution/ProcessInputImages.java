@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 import bdv.util.ConstantRandomAccessible;
 import mpicbg.spim.data.generic.AbstractSpimData;
@@ -25,6 +26,7 @@ import net.imglib2.view.Views;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.deconvolution.MVDeconvolution;
+import spim.process.fusion.deconvolution.normalize.NormalizingVirtualRandomAccessibleInterval;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
 import spim.process.fusion.transformed.FusedWeightsRandomAccessibleInterval;
 import spim.process.fusion.transformed.TransformView;
@@ -40,10 +42,15 @@ public class ProcessInputImages< V extends ViewId >
 	public static int defaultBlendingBorderNumber = -8;
 	public static int cellDim = 64, maxCacheSize = 10000;
 
+	// for additional smoothing of weights in areas where many views contribute less than 100%
+	public static float maxDiffRange = 0.1f;
+	public static float scalingRange = 0.05f;
+	public static boolean additionalSmoothBlending = false;
+
 	public static enum ImgDataType { VIRTUAL, CACHED, PRECOMPUTED };
 	
 	final AbstractSpimData< ? extends AbstractSequenceDescription< ? extends BasicViewSetup, ? extends BasicViewDescription< ? >, ? extends BasicImgLoader > > spimData;
-	final Collection< Group< V > > groups;
+	final ArrayList< Group< V > > groups;
 	final Interval bb;
 	Interval downsampledBB;
 	final double downsampling;
@@ -51,7 +58,7 @@ public class ProcessInputImages< V extends ViewId >
 	ImgFactory< FloatType > factory = new CellImgFactory<>( 64 );
 
 	final HashMap< Group< V >, RandomAccessibleInterval< FloatType > > images;
-	final HashMap< Group< V >, RandomAccessibleInterval< FloatType > > unnormalizedWeights;
+	final HashMap< Group< V >, RandomAccessibleInterval< FloatType > > unnormalizedWeights, normalizedWeights;
 	final HashMap< V, AffineTransform3D > models;
 
 	public ProcessInputImages(
@@ -63,7 +70,7 @@ public class ProcessInputImages< V extends ViewId >
 			final boolean useWeightsDecon )
 	{
 		this.spimData = spimData;
-		this.groups = groups;
+		this.groups = SpimData2.filterGroupsForMissingViews( spimData, groups );
 		this.bb = bb;
 		this.downsampling = downsampling;
 		this.useWeightsDecon = useWeightsDecon;
@@ -71,7 +78,10 @@ public class ProcessInputImages< V extends ViewId >
 
 		this.images = new HashMap<>();
 		this.unnormalizedWeights = new HashMap<>();
+		this.normalizedWeights = new HashMap<>();
 		this.models = new HashMap<>();
+
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Remaining groups: " + this.groups.size() );
 	}
 
 	public ProcessInputImages(
@@ -87,6 +97,7 @@ public class ProcessInputImages< V extends ViewId >
 	public Interval getDownsampledBoundingBox() { return downsampledBB; }
 	public HashMap< V, AffineTransform3D > getDownsampledModels() { return models; }
 	public HashMap< Group< V >, RandomAccessibleInterval< FloatType > > getImages() { return images; }
+	public HashMap< Group< V >, RandomAccessibleInterval< FloatType > > getNormalizedWeights() { return normalizedWeights; }
 	public HashMap< Group< V >, RandomAccessibleInterval< FloatType > > getUnnormalizedWeights() { return unnormalizedWeights; }
 
 	public void fuseGroups()
@@ -105,19 +116,61 @@ public class ProcessInputImages< V extends ViewId >
 				useWeightsDecon ? new float[]{ defaultBlendingBorderNumber, defaultBlendingBorderNumber, defaultBlendingBorderNumber } : null );
 	}
 
-	public void deVirtualizeImages( final ImgDataType type )
+	public void deVirtualizeImages( final ImgDataType type ) { deVirtualize( type, groups, factory, cellDim, maxCacheSize, images ); }
+	public void deVirtualizeUnnormalizedWeights( final ImgDataType type ) { deVirtualize( type, groups, factory, cellDim, maxCacheSize, unnormalizedWeights ); }
+	public void deVirtualizeNormalizedWeights( final ImgDataType type ) { deVirtualize( type, groups, factory, cellDim, maxCacheSize, normalizedWeights ); }
+
+	public void normalizeWeights() { normalizeWeights( 1.0 ); }
+	public void normalizeWeights( final double osemspeedup ) { normalizeWeights( osemspeedup, additionalSmoothBlending, maxDiffRange, scalingRange ); }
+	public void normalizeWeights(
+			final double osemspeedup,
+			final boolean additionalSmoothBlending,
+			final float maxDiffRange,
+			final float scalingRange )
 	{
-		deVirtualize( type, groups, factory, cellDim, maxCacheSize, images );
+		normalizedWeights.putAll(
+			normalizeWeights(
+				unnormalizedWeights,
+				groups,
+				osemspeedup,
+				additionalSmoothBlending,
+				maxDiffRange,
+				scalingRange ) );
 	}
 
-	public void deVirtualizeWeights( final ImgDataType type )
+	public static < V extends ViewId > HashMap< Group< V >, RandomAccessibleInterval< FloatType > > normalizeWeights(
+			final HashMap< Group< V >, RandomAccessibleInterval< FloatType > > unnormalizedWeights,
+			final List< Group< V > > groups,
+			final double osemspeedup,
+			final boolean additionalSmoothBlending,
+			final float maxDiffRange,
+			final float scalingRange )
 	{
-		deVirtualize( type, groups, factory, cellDim, maxCacheSize, unnormalizedWeights );
-	}
+		final HashMap< Group< V >, RandomAccessibleInterval< FloatType > > normalizedWeights = new HashMap<>();
+		final ArrayList< RandomAccessibleInterval< FloatType > > originalWeights = new ArrayList<>();
 
-	public void normalizeWeights()
-	{
-		
+		// ordered as in the group list
+		for ( int i = 0; i < groups.size(); ++i )
+			originalWeights.add( unnormalizedWeights.get( groups.get( i ) ) );
+
+		// normalizes the weights (sum == 1) and applies osem-speedup if wanted
+		for ( int i = 0; i < groups.size(); ++i )
+		{
+			final Group< V > group = groups.get( i );
+
+			normalizedWeights.put( group,
+				new NormalizingVirtualRandomAccessibleInterval< FloatType >(
+					unnormalizedWeights.get( group ),
+					i,
+					originalWeights,
+					osemspeedup,
+					additionalSmoothBlending,
+					maxDiffRange,
+					scalingRange,
+					new FloatType() ) );
+		}
+
+		return normalizedWeights;
 	}
 
 	public static < V extends ViewId > void deVirtualize(
@@ -174,15 +227,7 @@ public class ProcessInputImages< V extends ViewId >
 
 		for ( final Group< V > group : groups )
 		{
-			SpimData2.filterMissingViews( spimData, group.getViews() );
-
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Transforming group " + (++i) + " of " + groups.size() + " (group=" + group + ")" );
-
-			if ( group.getViews().size() == 0 )
-			{
-				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Group is empty. Continuing with next one." );
-				continue;
-			}
 
 			final ArrayList< RandomAccessibleInterval< FloatType > > images = new ArrayList<>();
 			final ArrayList< RandomAccessibleInterval< FloatType > > weightsFusion = new ArrayList<>();
