@@ -30,6 +30,7 @@ import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.fiji.spimdata.stitchingresults.StitchingResults;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 /**
  * Extends the {@link SpimData} class; has additonally detections
@@ -516,4 +517,29 @@ public class SpimData2 extends SpimData
 
 		return removed;
 	}
+
+	/**
+	 * Removes Views in Groups that are missing, and entire groups if no views are left
+	 * 
+	 * @param data - the SpimData object
+	 * @param groupsIn - a collection of groups consisting of views
+	 * @return a filtered list, potentially of size 0
+	 */
+	public static < V extends ViewId > ArrayList< Group< V > > filterGroupsForMissingViews(
+			final AbstractSpimData< ? > data,
+			final Collection< Group< V > > groupsIn )
+	{
+		final ArrayList< Group< V > > groupsOut = new ArrayList<>();
+
+		for ( final Group< V > group : groupsIn )
+		{
+			filterMissingViews( data, group.getViews() );
+
+			if ( group.getViews().size() > 0 )
+				groupsOut.add( group );
+		}
+
+		return groupsOut;
+	}
+
 }
