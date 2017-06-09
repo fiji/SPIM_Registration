@@ -76,7 +76,8 @@ public class TestDeconvolution
 		fusion.fuseGroups();
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): De-virtualization ... " );
-		fusion.deVirtualizeImages( ImgDataType.PRECOMPUTED, ImgDataType.CACHED );
+		fusion.deVirtualizeImages( ImgDataType.PRECOMPUTED );
+		fusion.deVirtualizeWeights( ImgDataType.CACHED );
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Displaying " );
 		displayDebug( fusion );
@@ -86,15 +87,15 @@ public class TestDeconvolution
 	{
 		int i = 0;
 
-		for ( final Group< V > group : fusion.getImgWeights().keySet() )
+		for ( final Group< V > group : fusion.getGroups() )
 		{
-			System.out.println( "Img Instance: " + fusion.getImgWeights().get( group ).getA().getClass().getSimpleName() );
-			System.out.println( "Weight Instance: " + fusion.getImgWeights().get( group ).getB().getClass().getSimpleName() );
+			System.out.println( "Img Instance: " + fusion.getImages().get( group ).getClass().getSimpleName() );
+			System.out.println( "Weight Instance: " + fusion.getUnnormalizedWeights().get( group ).getClass().getSimpleName() );
 
-			DisplayImage.getImagePlusInstance( fusion.getImgWeights().get( group ).getA(), true, "g=" + i + " image", 0, 255 ).show();
-			DisplayImage.getImagePlusInstance( fusion.getImgWeights().get( group ).getB(), true, "g=" + i + " weightsDecon", 0, 2 ).show();
+			DisplayImage.getImagePlusInstance( fusion.getImages().get( group ), true, "g=" + i + " image", 0, 255 ).show();
+			DisplayImage.getImagePlusInstance( fusion.getUnnormalizedWeights().get( group ), true, "g=" + i + " weightsDecon", 0, 2 ).show();
 
-			if ( FusedRandomAccessibleInterval.class.isInstance( fusion.getImgWeights().get( group ).getA() ) )
+			if ( FusedRandomAccessibleInterval.class.isInstance( fusion.getImages().get( group ) ) )
 			{
 				final long[] dim = new long[ fusion.getDownsampledBoundingBox().numDimensions() ];
 				fusion.getDownsampledBoundingBox().dimensions( dim );
@@ -102,7 +103,7 @@ public class TestDeconvolution
 				DisplayImage.getImagePlusInstance(
 						new FusedWeightsRandomAccessibleInterval(
 								new FinalInterval( dim ),
-								((FusedRandomAccessibleInterval)fusion.getImgWeights().get( group ).getA()).getWeights() ),
+								((FusedRandomAccessibleInterval)fusion.getImages().get( group )).getWeights() ),
 						true,
 						"g=" + i + " weightsFusion",
 						0, 1 ).show();

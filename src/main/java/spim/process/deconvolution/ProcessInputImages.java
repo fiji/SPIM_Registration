@@ -14,24 +14,13 @@ import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
-import net.imglib2.Cursor;
 import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
-import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.cache.img.CachedCellImg;
-import net.imglib2.cache.img.CellLoader;
-import net.imglib2.cache.img.ReadOnlyCachedCellImgFactory;
-import net.imglib2.cache.img.ReadOnlyCachedCellImgOptions;
-import net.imglib2.cache.img.SingleCellArrayImg;
-import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.realtransform.AffineTransform3D;
-import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.util.Pair;
-import net.imglib2.util.ValuePair;
 import net.imglib2.view.Views;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.FusionHelper;
@@ -61,7 +50,8 @@ public class ProcessInputImages< V extends ViewId >
 	final boolean useWeightsFusion, useWeightsDecon;
 	ImgFactory< FloatType > factory = new CellImgFactory<>( 64 );
 
-	final HashMap< Group< V >, Pair< RandomAccessibleInterval< FloatType >, RandomAccessibleInterval< FloatType > > > imgWeights;
+	final HashMap< Group< V >, RandomAccessibleInterval< FloatType > > images;
+	final HashMap< Group< V >, RandomAccessibleInterval< FloatType > > unnormalizedWeights;
 	final HashMap< V, AffineTransform3D > models;
 
 	public ProcessInputImages(
@@ -79,7 +69,8 @@ public class ProcessInputImages< V extends ViewId >
 		this.useWeightsDecon = useWeightsDecon;
 		this.useWeightsFusion = useWeightsFusion;
 
-		this.imgWeights = new HashMap<>();
+		this.images = new HashMap<>();
+		this.unnormalizedWeights = new HashMap<>();
 		this.models = new HashMap<>();
 	}
 
@@ -91,16 +82,19 @@ public class ProcessInputImages< V extends ViewId >
 		this( spimData, groups, bb, Double.NaN, true, true );
 	}
 
+	public Collection< Group< V > > getGroups() { return groups; }
 	public Interval getBoundingBox() { return bb; }
 	public Interval getDownsampledBoundingBox() { return downsampledBB; }
 	public HashMap< V, AffineTransform3D > getDownsampledModels() { return models; }
-	public HashMap< Group< V >, Pair< RandomAccessibleInterval< FloatType >, RandomAccessibleInterval< FloatType > > > getImgWeights() { return imgWeights; }
+	public HashMap< Group< V >, RandomAccessibleInterval< FloatType > > getImages() { return images; }
+	public HashMap< Group< V >, RandomAccessibleInterval< FloatType > > getUnnormalizedWeights() { return unnormalizedWeights; }
 
 	public void fuseGroups()
 	{
 		this.downsampledBB = fuseGroups(
 				spimData,
-				imgWeights,
+				images,
+				unnormalizedWeights,
 				models,
 				groups,
 				bb,
@@ -111,37 +105,52 @@ public class ProcessInputImages< V extends ViewId >
 				useWeightsDecon ? new float[]{ defaultBlendingBorderNumber, defaultBlendingBorderNumber, defaultBlendingBorderNumber } : null );
 	}
 
-	public void deVirtualizeImages( final ImgDataType typeImg, final ImgDataType typeWeights )
+	public void deVirtualizeImages( final ImgDataType type )
 	{
-		if ( typeImg == ImgDataType.VIRTUAL && typeWeights == ImgDataType.VIRTUAL )
+		deVirtualize( type, groups, factory, cellDim, maxCacheSize, images );
+	}
+
+	public void deVirtualizeWeights( final ImgDataType type )
+	{
+		deVirtualize( type, groups, factory, cellDim, maxCacheSize, unnormalizedWeights );
+	}
+
+	public void normalizeWeights()
+	{
+		
+	}
+
+	public static < V extends ViewId > void deVirtualize(
+			final ImgDataType type,
+			final Collection< Group< V > > groups,
+			final ImgFactory< FloatType > factory,
+			final int cellDim,
+			final int maxCacheSize,
+			final HashMap< Group< V >, RandomAccessibleInterval< FloatType > > images )
+	{
+		if ( type == ImgDataType.VIRTUAL )
 			return;
 
 		for ( final Group< V > group : groups )
 		{
-			if ( !imgWeights.containsKey( group ) )
+			if ( !images.containsKey( group ) )
 				continue;
 
-			final Pair< RandomAccessibleInterval< FloatType >, RandomAccessibleInterval< FloatType > > imgWeight = imgWeights.get( group );
-			RandomAccessibleInterval< FloatType > img = imgWeight.getA();
-			RandomAccessibleInterval< FloatType > weight = imgWeight.getB();
+			RandomAccessibleInterval< FloatType > img = images.get( group );
 
-			if ( typeImg == ImgDataType.CACHED )
+			if ( type == ImgDataType.CACHED )
 				img = FusionHelper.cacheRandomAccessibleInterval( img, new FloatType(), cellDim, maxCacheSize );
-			else if ( typeImg == ImgDataType.PRECOMPUTED )
+			else if ( type == ImgDataType.PRECOMPUTED )
 				img = FusionHelper.copyImg( img, factory );
 
-			if ( typeWeights == ImgDataType.CACHED )
-				weight = FusionHelper.cacheRandomAccessibleInterval( weight, new FloatType(), cellDim, maxCacheSize );
-			else if ( typeWeights == ImgDataType.PRECOMPUTED )
-				weight = FusionHelper.copyImg( weight, factory );
-
-			imgWeights.put( group, new ValuePair<>( img, weight ) );
+			images.put( group, img );
 		}
 	}
 
 	public static < V extends ViewId > Interval fuseGroups(
 			final AbstractSpimData< ? extends AbstractSequenceDescription< ? extends BasicViewSetup, ? extends BasicViewDescription< ? >, ? extends BasicImgLoader > > spimData,
-			final HashMap< Group< V >, Pair< RandomAccessibleInterval< FloatType >, RandomAccessibleInterval< FloatType > > > imgWeights,
+			final HashMap< Group< V >, RandomAccessibleInterval< FloatType > > tImgs,
+			final HashMap< Group< V >, RandomAccessibleInterval< FloatType > > tWeights,
 			final HashMap< V, AffineTransform3D > models,
 			final Collection< Group< V > > groups,
 			final Interval boundingBox,
@@ -239,7 +248,8 @@ public class ProcessInputImages< V extends ViewId >
 			// the weights used for deconvolution per group
 			final RandomAccessibleInterval< FloatType > weight = new FusedWeightsRandomAccessibleInterval( new FinalInterval( dim ), weightsDecon );
 
-			imgWeights.put( group, new ValuePair<>( img, weight ) );
+			tImgs.put( group, img );
+			tWeights.put( group, weight );
 		}
 
 		return bb;
