@@ -48,7 +48,14 @@ public class NormalizingVirtualRandomAccessibleInterval< T extends RealType< T >
 	@Override
 	public RandomAccess< T > randomAccess()
 	{
-		return new NormalizingVirtualRandomAccess< T >( index, originalWeights, osemspeedup, additionalSmoothBlending, maxDiffRange, scalingRange, type );
+		return new NormalizingVirtualRandomAccess< T >(
+				index,
+				originalWeights,
+				osemspeedup,
+				additionalSmoothBlending,
+				maxDiffRange,
+				scalingRange,
+				type );
 	}
 
 	@Override
