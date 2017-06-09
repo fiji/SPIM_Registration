@@ -54,27 +54,31 @@ public class NormalizingVirtualRandomAccess< T extends RealType< T > > extends A
 	{
 		double sumW = 0;
 
+		float myValue = 0;
+
 		for ( int i = 0; i < numImgs; ++i )
 		{
 			final RandomAccess< FloatType > ra = this.owRA.get( i );
 			ra.setPosition( position );
-			sumW += ra.get().get();
+
+			final double value = Math.min( 1.0, ra.get().get() );
+
+			if ( index == i )
+				myValue = (float)value;
+
+			// if the weight is bigger than 1 it doesn't matter since it is just the fusion
+			// of more than one input images from the same group
+			sumW += value;
 		}
 
 		final double v;
 
 		if ( additionalSmoothBlending )
-		{
-			v = WeightNormalizer.smoothWeights( myRA.get().get(), sumW, maxDiffRange, scalingRange );
-		}
+			v = WeightNormalizer.smoothWeights( myValue, sumW, maxDiffRange, scalingRange );
 		else if ( sumW > 1 )
-		{
-			v =  WeightNormalizer.hardWeights( myRA.get().get(), sumW );
-		}
+			v =  WeightNormalizer.hardWeights( myValue, sumW );
 		else
-		{
-			v = myRA.get().get();
-		}
+			v = myValue;
 
 		type.setReal( Math.min( 1, v * osemspeedup ) ); // individual contribution never higher than 1
 
