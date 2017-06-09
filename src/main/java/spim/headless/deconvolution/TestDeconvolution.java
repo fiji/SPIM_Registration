@@ -1,11 +1,12 @@
 package spim.headless.deconvolution;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
-import java.util.List;
 
 import ij.ImageJ;
 import mpicbg.spim.data.SpimDataException;
+import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.FinalInterval;
@@ -27,29 +28,24 @@ public class TestDeconvolution
 		new ImageJ();
 
 		SpimData2 spimData;
+		Collection< Group< ViewDescription > > groups = new ArrayList<>();
 
 		// generate 4 views with 1000 corresponding beads, single timepoint
 		spimData = SpimData2.convert( SimulatedBeadsImgLoader.spimdataExample( new int[]{ 0, 90, 135 } ) );
+		groups = Group.toGroups( spimData.getSequenceDescription().getViewDescriptions().values() );
 
 		// load drosophila
 		spimData = new XmlIoSpimData2( "" ).load( "/Users/spreibi/Documents/Microscopy/SPIM/HisYFP-SPIM/dataset.xml" );
-		System.out.println( "Views present:" );
+		groups = selectViews( spimData.getSequenceDescription().getViewDescriptions().values() );
 
-		for ( final ViewId viewId : spimData.getSequenceDescription().getViewDescriptions().values() )
-			System.out.println( Group.pvid( viewId ) );
-
-		testDeconvolution( spimData, "My Bounding Box" );
+		testDeconvolution( spimData, groups, "My Bounding Box" );
 	}
 
-	public static void testDeconvolution( final SpimData2 spimData, final String bbTitle )
+	public static < V extends ViewId > void testDeconvolution(
+			final SpimData2 spimData,
+			final Collection< Group< V > > groups,
+			final String bbTitle )
 	{
-		// select views to process
-		final List< ViewId > viewIds = new ArrayList< ViewId >();
-		viewIds.addAll( spimData.getSequenceDescription().getViewDescriptions().values() );
-
-		for ( int i = 0; i < 5; ++i )
-			viewIds.remove( viewIds.size() - 1 );
-
 		BoundingBox boundingBox = null;
 
 		for ( final BoundingBox bb : spimData.getBoundingBoxes().getBoundingBoxes() )
@@ -64,9 +60,9 @@ public class TestDeconvolution
 
 		System.out.println( BoundingBox.getBoundingBoxDescription( boundingBox ) );
 
-		final ProcessInputImages< ViewId > fusion = new ProcessInputImages<>(
+		final ProcessInputImages< V > fusion = new ProcessInputImages<>(
 				spimData,
-				Group.toGroup( viewIds ),
+				groups,
 				boundingBox,
 				2.0,
 				true,
@@ -116,5 +112,33 @@ public class TestDeconvolution
 
 			++i;
 		}
+	}
+
+	public static ArrayList< Group< ViewDescription > > selectViews( final Collection< ViewDescription > views )
+	{
+		final ArrayList< Group< ViewDescription > > groups = new ArrayList<>();
+
+		final Group< ViewDescription > angle0and180 = new Group<>();
+		final Group< ViewDescription > angle90and270 = new Group<>();
+
+		for ( final ViewDescription vd : views )
+		{
+			final int angle = Integer.parseInt( vd.getViewSetup().getAngle().getName() );
+
+			if ( angle == 0 || angle == 180 )
+				angle0and180.getViews().add( vd );
+
+			if ( angle == 90 || angle == 270 )
+				angle90and270.getViews().add( vd );
+		}
+
+		groups.add( angle0and180 );
+		groups.add( angle90and270 );
+
+		System.out.println( "Views remaining:" );
+		for ( final Group< ViewDescription > group : groups )
+			System.out.println( group );
+
+		return groups;
 	}
 }
