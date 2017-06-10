@@ -40,7 +40,8 @@ public class ProcessInputImages< V extends ViewId >
 {
 	public static int defaultBlendingRangeNumber = 12;
 	public static int defaultBlendingBorderNumber = -8;
-	public static int cellDim = 64, maxCacheSize = 10000;
+	public static int cellDim = 32;
+	public static int maxCacheSize = 10000;
 
 	// for additional smoothing of weights in areas where many views contribute less than 100%
 	public static float maxDiffRange = 0.1f;

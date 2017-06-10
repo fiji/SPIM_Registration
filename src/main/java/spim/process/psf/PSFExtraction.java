@@ -2,8 +2,10 @@ package spim.process.psf;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccessible;
@@ -40,6 +42,8 @@ public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 		final ArrayList< ViewId  > list = new ArrayList< ViewId >();
 		list.add( viewId );
 		final ArrayList< RealLocalizable > points = BoundingBoxReorientation.extractPoints( label, useCorresponding, false, list, data );
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Found " + points.size() + " locations for PSF extraction" );
+
 		@SuppressWarnings("rawtypes")
 		final RandomAccessibleInterval img = data.getSequenceDescription().getImgLoader().getSetupImgLoader( viewId.getViewSetupId() ).getImage( viewId.getTimePointId() );
 

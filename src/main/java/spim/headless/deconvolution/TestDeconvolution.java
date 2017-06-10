@@ -5,11 +5,14 @@ import java.util.Collection;
 import java.util.Date;
 
 import ij.ImageJ;
+import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.FinalInterval;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.numeric.real.FloatType;
 import simulation.imgloader.SimulatedBeadsImgLoader;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
@@ -20,6 +23,7 @@ import spim.process.fusion.export.DisplayImage;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
 import spim.process.fusion.transformed.FusedWeightsRandomAccessibleInterval;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
+import spim.process.psf.PSFExtraction;
 
 public class TestDeconvolution
 {
@@ -72,14 +76,26 @@ public class TestDeconvolution
 		fusion.fuseGroups();
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): De-virtualization ... " );
-		fusion.deVirtualizeImages( ImgDataType.PRECOMPUTED );
+		fusion.deVirtualizeImages( ImgDataType.CACHED );
 		fusion.deVirtualizeUnnormalizedWeights( ImgDataType.CACHED );
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Normalizing weights ... " );
-		fusion.normalizeWeights();
+		fusion.normalizeWeights( 1.0, true, 0.1f, 0.05f );
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Displaying " );
-		displayDebug( fusion );
+		//displayDebug( fusion );
+
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Extracting PSF's " );
+
+		for ( final Group< V > group : fusion.getGroups() )
+		{
+			final PSFExtraction< FloatType > extractPSF = new PSFExtraction< FloatType >( new FloatType(), new long[]{ 19, 19, 25 } );
+	
+			for ( final V view : group )
+				extractPSF.extractNext( spimData, view, "beads", true );
+
+			ImageJFunctions.show( extractPSF.getPSF() );
+		}
 	}
 
 	public static < V extends ViewId > void displayDebug( final ProcessInputImages< V > fusion )
@@ -119,6 +135,7 @@ public class TestDeconvolution
 		final ArrayList< Group< ViewDescription > > groups = new ArrayList<>();
 
 		final Group< ViewDescription > angle0and180 = new Group<>();
+		final Group< ViewDescription > angle45and225 = new Group<>();
 		final Group< ViewDescription > angle90and270 = new Group<>();
 
 		for ( final ViewDescription vd : views )
@@ -128,11 +145,15 @@ public class TestDeconvolution
 			if ( angle == 0 || angle == 180 )
 				angle0and180.getViews().add( vd );
 
+			if ( angle == 45 || angle == 225 )
+				angle45and225.getViews().add( vd );
+
 			if ( angle == 90 || angle == 270 )
 				angle90and270.getViews().add( vd );
 		}
 
 		groups.add( angle0and180 );
+		groups.add( angle45and225 );
 		groups.add( angle90and270 );
 
 		System.out.println( "Views remaining:" );
