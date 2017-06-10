@@ -213,6 +213,35 @@ public class TransformationTools
 		return list.getInterestPointsCopy();
 	}
 
+	public static < M extends Model< M > > AffineTransform3D averageTransform(
+			final Collection< AffineTransform3D > models )
+	{
+		final double[] sum = new double[ 12 ];
+
+		for ( final AffineTransform3D t : models )
+		{
+			System.out.println( t );
+			final double[] tmp = t.getRowPackedCopy();
+
+			for ( int i = 0; i < sum.length; ++i )
+				sum[ i ] += tmp[ i ];
+		}
+
+		for ( int i = 0; i < sum.length; ++i )
+			sum[ i ] /= (double)models.size();
+
+		final AffineTransform3D affine = new AffineTransform3D();
+
+		affine.set(
+				sum[ 0 ], sum[ 1 ], sum[ 2 ], sum[ 3 ],
+				sum[ 4 ], sum[ 5 ], sum[ 6 ], sum[ 7 ],
+				sum[ 8 ], sum[ 9 ], sum[ 10 ], sum[ 11 ] );
+
+		System.out.println( affine );
+
+		return affine;
+	}
+
 	public static List< CorrespondingInterestPoints > loadCorrespondingInterestPoints( final InterestPointList list )
 	{
 		if ( !list.hasCorrespondingInterestPoints() )
