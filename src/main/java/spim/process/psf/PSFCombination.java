@@ -4,32 +4,25 @@ import java.util.Collection;
 import java.util.List;
 
 import ij.IJ;
-import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
+import net.imglib2.Interval;
+import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
-import net.imglib2.realtransform.AffineTransform3D;
-import net.imglib2.type.NativeType;
 import net.imglib2.type.Type;
 import net.imglib2.type.numeric.RealType;
-import net.imglib2.util.Pair;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 
-public class PSFCombination< T extends RealType< T > & NativeType< T > >
+public class PSFCombination
 {
-	final Collection< Pair< PSFExtraction< T >, AffineTransform3D > > psfs;
-
-	public PSFCombination( final Collection< Pair< PSFExtraction< T >, AffineTransform3D > > psfs )
+	public static < T extends RealType< T > > Img< T > computeMaxAverageTransformedPSF(
+			final Collection< RandomAccessibleInterval< T > > imgs,
+			final ImgFactory< T > imgFactory )
 	{
-		this.psfs = psfs;
-	}
-
-	public Img< T > computeMaxAverageTransformedPSF()
-	{
-		final Img< T > avg = computeAverageTransformedPSF();
+		final Img< T > avg = computeAverageImage( imgs, imgFactory );
 
 		int minDim = -1;
 		long minDimSize = Long.MAX_VALUE;
@@ -47,31 +40,37 @@ public class PSFCombination< T extends RealType< T > & NativeType< T > >
 	/**
 	 * compute the average psf in original calibration and after applying the transformations
 	 */
-	public Img< T > computeAverageTransformedPSF()
+	public static < T extends RealType< T > > Img< T > computeAverageImage(
+			final Collection< RandomAccessibleInterval< T > > imgs,
+			final ImgFactory< T > imgFactory )
 	{
-		final long[] maxSize = computeMaxDimTransformedPSF();
+		final long[] maxSize = computeMaxDimTransformedPSF( imgs );
 		
 		final int numDimensions = maxSize.length;
 		
 		IJ.log( "maxSize: " + Util.printCoordinates( maxSize ) );
 
-		Img< T > someImg = psfs.iterator().next().getA().getPSF();
-		Img< T > avgPSF = someImg.factory().create( maxSize, someImg.firstElement() );
-		
+		Img< T > avgPSF = imgFactory.create( maxSize, Views.iterable( imgs.iterator().next() ).firstElement() );
+
 		final long[] avgCenter = new long[ numDimensions ];
 		for ( int d = 0; d < numDimensions; ++d )
 			avgCenter[ d ] = avgPSF.dimension( d ) / 2;
 
-		for ( final Pair< PSFExtraction< T >, AffineTransform3D > psfObject : psfs )
+		for ( final RandomAccessibleInterval< T > psfIn : imgs )
 		{
-			final Img< T > psf = psfObject.getA().getTransformedNormalizedPSF( psfObject.getB() );
+			final IterableInterval< T > psf;
+
+			if ( Views.isZeroMin( psfIn ) )
+				psf = Views.iterable( psfIn );
+			else
+				psf = Views.iterable( Views.zeroMin( psfIn ) );
 
 			// works if the kernel is even
 			final RandomAccess< T > avgCursor = Views.extendZero( avgPSF ).randomAccess();
 			final Cursor< T > psfCursor = psf.localizingCursor();
 			
 			final long[] loc = new long[ numDimensions ];
-			final long[] psfCenter = new long[ numDimensions ];		
+			final long[] psfCenter = new long[ numDimensions ];
 			for ( int d = 0; d < numDimensions; ++d )
 				psfCenter[ d ] = psf.dimension( d ) / 2;
 
@@ -92,49 +91,18 @@ public class PSFCombination< T extends RealType< T > & NativeType< T > >
 	}
 
 	/**
-	 * Compute average PSF in local image coordinates, all images are supposed to have the same dimensions
-	 * 
-	 * @return
-	 */
-	public Img< T > computeAveragePSF()
-	{
-		Img< T > someImg = psfs.iterator().next().getA().getPSF();
-		final Img< T > avgOriginalPSF = someImg.factory().create( someImg, someImg.firstElement() );
-
-		try
-		{
-			for ( final Pair< PSFExtraction< T >, AffineTransform3D > psf : psfs )
-			{
-				final Cursor< T > cursor = psf.getA().getPSF().cursor();
-
-				for ( final T t : avgOriginalPSF )
-					t.add( cursor.next() );
-			}
-		}
-		catch (Exception e) 
-		{
-			IOFunctions.println( "Input PSFs were most likely of different size ... not computing average image in original scale." );
-			e.printStackTrace();
-		}
-		
-		return avgOriginalPSF;
-	}
-
-	/**
 	 * @return - maximal dimensions of the transformed PSFs
 	 */
-	public long[] computeMaxDimTransformedPSF()
+	public static long[] computeMaxDimTransformedPSF( final Collection< ? extends Interval > imgs )
 	{
 		final int numDimensions = 3;
 		
 		final long[] maxSize = new long[ numDimensions ];
 
-		for ( final Pair< PSFExtraction< T >, AffineTransform3D > psf : psfs )
+		for ( final Interval img : imgs )
 		{
-			final Img< T > transformedPSF  = psf.getA().getTransformedNormalizedPSF( psf.getB() );
-
 			for ( int d = 0; d < numDimensions; ++d )
-				maxSize[ d ] = Math.max( maxSize[ d ], transformedPSF.dimension( d ) );
+				maxSize[ d ] = Math.max( maxSize[ d ], img.dimension( d ) );
 		}
 
 		return maxSize;
