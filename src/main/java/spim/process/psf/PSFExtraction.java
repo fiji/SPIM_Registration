@@ -3,8 +3,8 @@ package spim.process.psf;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.concurrent.Callable;
 
-import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
@@ -20,15 +20,15 @@ import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.array.ArrayLocalizingCursor;
-import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
+import spim.Threads;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.boundingbox.BoundingBoxReorientation;
+import spim.process.fusion.FusionHelper;
 
 public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 {
@@ -38,10 +38,33 @@ public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 			final RealRandomAccessible< T > img,
 			final Collection< RealLocalizable > locations,
 			final T type,
-			final long[] size )
+			final long[] size,
+			final boolean multithreaded )
 	{
 		psf = new ArrayImgFactory< T >().create( size, type );
-		extractPSFLocal( img, locations, psf );
+		if ( multithreaded )
+			extractPSFMultiThreaded( img, locations, psf );
+		else
+			extractPSFLocal( img, locations, psf );
+	}
+
+	public PSFExtraction(
+			final RealRandomAccessible< T > img,
+			final Collection< RealLocalizable > locations,
+			final T type,
+			final long[] size )
+	{
+		this( img, locations, type, size, false );
+	}
+
+	public PSFExtraction(
+			final RandomAccessible< T > img,
+			final Collection< RealLocalizable > locations,
+			final T type,
+			final long[] size,
+			final boolean multithreaded )
+	{
+		this( Views.interpolate( img, new NLinearInterpolatorFactory< T >() ), locations, type, size, multithreaded );
 	}
 
 	public PSFExtraction(
@@ -50,7 +73,18 @@ public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 			final T type,
 			final long[] size )
 	{
-		this( Views.interpolate( img, new NLinearInterpolatorFactory< T >() ), locations, type, size );
+		this( img, locations, type, size, false );
+	}
+
+	public PSFExtraction(
+			final RandomAccessibleInterval< T > img,
+			final Collection< RealLocalizable > locations,
+			final T type,
+			final long[] size,
+			final boolean multithreaded )
+	{
+		// Mirror produces some artifacts ... so we use periodic
+		this( Views.extendPeriodic( img ), locations, type, size, multithreaded );
 	}
 
 	public PSFExtraction(
@@ -59,8 +93,7 @@ public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 			final T type,
 			final long[] size )
 	{
-		// Mirror produces some artifacts ... so we use periodic
-		this( Views.extendPeriodic( img ), locations, type, size );
+		this( img, locations, type, size, false );
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -70,13 +103,26 @@ public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 			final String label,
 			final boolean useCorresponding,
 			final T type,
-			final long[] size )
+			final long[] size,
+			final boolean multithreaded )
 	{
 		this(
 				(RandomAccessibleInterval)data.getSequenceDescription().getImgLoader().getSetupImgLoader( viewId.getViewSetupId() ).getImage( viewId.getTimePointId() ),
 				getPoints( data, viewId, label, useCorresponding ),
 				type,
-				size );
+				size,
+				multithreaded );
+	}
+
+	public PSFExtraction(
+			final SpimData2 data,
+			final ViewId viewId,
+			final String label,
+			final boolean useCorresponding,
+			final T type,
+			final long[] size )
+	{
+		this( data, viewId, label, useCorresponding, type, size, false );
 	}
 
 	public static ArrayList< RealLocalizable > getPoints(
@@ -175,6 +221,94 @@ public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 				interpolator.setPosition( tmpD );
 
 				psfCursor.get().setReal( psfCursor.get().getRealDouble() + interpolator.get().getRealDouble() );
+			}
+		}
+	}
+
+	public static < T extends RealType< T > & NativeType< T > > void extractPSFMultiThreaded(
+			final RealRandomAccessible< T > img,
+			final Collection< RealLocalizable > locations,
+			final RandomAccessibleInterval< T > psfGlobal )
+	{
+		final int n = img.numDimensions();
+		final IterableInterval< T > psfSource = Views.iterable( Views.zeroMin( psfGlobal ) );
+
+		final int nThreads = Threads.numThreads();
+		final int nPortions = nThreads * 2;
+		final ArrayList< Callable< Void > > tasks = new ArrayList< Callable< Void > >();
+
+		// every task gets its own PSF image to fill, we add up later
+		final ArrayList< Img< T > > psfLocal = new ArrayList<>();
+
+		for ( int task = 0; task < nPortions; ++task )
+		{
+			final int myTask = task;
+
+			psfLocal.add( new ArrayImgFactory< T >().create( psfSource, psfSource.firstElement() ) );
+
+			tasks.add( new Callable< Void >()
+			{
+				@Override
+				public Void call() throws Exception
+				{
+					final Img< T > psf = psfLocal.get( myTask );
+
+					final RealRandomAccess< T > interpolator = img.realRandomAccess();
+
+					final Cursor< T > psfCursor = Views.iterable( Views.zeroMin( psf ) ).localizingCursor();
+
+					final long[] sizeHalf = new long[ n ];
+					for ( int d = 0; d < n; ++d )
+						sizeHalf[ d ] = psf.dimension( d ) / 2;
+
+					final int[] tmpI = new int[ n ];
+					final double[] tmpD = new double[ n ];
+
+					int j = 0;
+					for ( final RealLocalizable position : locations )
+					{
+						if ( j % myTask == 0 )
+						{
+							psfCursor.reset();
+							
+							while ( psfCursor.hasNext() )
+							{
+								psfCursor.fwd();
+								psfCursor.localize( tmpI );
+	
+								for ( int d = 0; d < n; ++d )
+									tmpD[ d ] = tmpI[ d ] - sizeHalf[ d ] + position.getDoublePosition( d );
+	
+								interpolator.setPosition( tmpD );
+	
+								psfCursor.get().setReal( psfCursor.get().getRealDouble() + interpolator.get().getRealDouble() );
+							}
+						}
+						++j;
+					}
+
+					return null;
+				}
+			});
+		}
+
+		FusionHelper.execTasks( tasks, nThreads, "extract PSF's" );
+
+		final ArrayList< RandomAccess< T > > ras = new ArrayList<>();
+
+		for ( final Img< T > psf : psfLocal )
+			ras.add( psf.randomAccess() );
+
+		final Cursor< T > cursor = psfSource.localizingCursor();
+
+		while ( cursor.hasNext() )
+		{
+			final T type = cursor.next();
+
+			for ( final RandomAccess< T > ra : ras )
+			{
+				ra.setPosition( cursor );
+				type.add( ra.get() );
 			}
 		}
 	}
