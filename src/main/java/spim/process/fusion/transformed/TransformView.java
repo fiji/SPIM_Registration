@@ -226,7 +226,7 @@ public class TransformView
 	 * Opens the image at an appropriate resolution and concatenates an extra transform 
 	 * @param imgLoader
 	 * @param viewId
-	 * @param m
+	 * @param m - WILL BE MODIFIED IF OPENED DOWNSAMPLED
 	 * @return
 	 */
 	public static RandomAccessibleInterval openDownsampled( final BasicImgLoader imgLoader, final ViewId viewId, final AffineTransform3D m )

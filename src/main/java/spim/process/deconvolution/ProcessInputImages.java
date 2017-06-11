@@ -248,8 +248,12 @@ public class ProcessInputImages< V extends ViewId >
 					TransformVirtual.scaleTransform( model, 1.0 / downsampling );
 				}
 
-				models.put( viewId, model );
+				// we need to add a copy here since below the model might be modified for downsampled opening
+				models.put( viewId, model.copy() );
 
+				// this modifies the model so it maps from a smaller image to the global coordinate space,
+				// which applies for the image itself as well as the weights since they also use the smaller
+				// input image as reference
 				final RandomAccessibleInterval inputImg = TransformView.openDownsampled( imgloader, viewId, model );
 				images.add( TransformView.transformView( inputImg, model, bb, MVDeconvolution.minValueImg, 0, 1 ) );
 
