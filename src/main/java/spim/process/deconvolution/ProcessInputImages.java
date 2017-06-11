@@ -24,9 +24,9 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import spim.fiji.spimdata.SpimData2;
+import spim.process.deconvolution.normalization.NormalizingRandomAccessibleInterval;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.deconvolution.MVDeconvolution;
-import spim.process.fusion.deconvolution.normalize.NormalizingVirtualRandomAccessibleInterval;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
 import spim.process.fusion.transformed.FusedWeightsRandomAccessibleInterval;
 import spim.process.fusion.transformed.TransformView;
@@ -160,7 +160,7 @@ public class ProcessInputImages< V extends ViewId >
 			final Group< V > group = groups.get( i );
 
 			normalizedWeights.put( group,
-				new NormalizingVirtualRandomAccessibleInterval< FloatType >(
+				new NormalizingRandomAccessibleInterval< FloatType >(
 					unnormalizedWeights.get( group ),
 					i,
 					originalWeights,

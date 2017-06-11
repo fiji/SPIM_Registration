@@ -1,15 +1,16 @@
-package spim.process.fusion.deconvolution.normalize;
+package spim.process.deconvolution.normalization;
 
 import java.util.ArrayList;
 
 import net.imglib2.AbstractLocalizableInt;
+import net.imglib2.Cursor;
 import net.imglib2.Localizable;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 
-public class NormalizingVirtualRandomAccess< T extends RealType< T > > extends AbstractLocalizableInt implements RandomAccess< T >
+public class NormalizingRandomAccess< T extends RealType< T > > extends AbstractLocalizableInt implements RandomAccess< T >
 {
 	final int index, numImgs;
 	final ArrayList< RandomAccessibleInterval< FloatType > > originalWeights;
@@ -21,7 +22,7 @@ public class NormalizingVirtualRandomAccess< T extends RealType< T > > extends A
 	final float maxDiffRange;
 	final float scalingRange;
 
-	public NormalizingVirtualRandomAccess(
+	public NormalizingRandomAccess(
 			final int index,
 			final ArrayList< RandomAccessibleInterval< FloatType > > originalWeights,
 			final double osemspeedup,
@@ -74,9 +75,9 @@ public class NormalizingVirtualRandomAccess< T extends RealType< T > > extends A
 		final double v;
 
 		if ( additionalSmoothBlending )
-			v = WeightNormalizer.smoothWeights( myValue, sumW, maxDiffRange, scalingRange );
+			v = smoothWeights( myValue, sumW, maxDiffRange, scalingRange );
 		else if ( sumW > 1 )
-			v =  WeightNormalizer.hardWeights( myValue, sumW );
+			v =  hardWeights( myValue, sumW );
 		else
 			v = myValue;
 
@@ -146,8 +147,47 @@ public class NormalizingVirtualRandomAccess< T extends RealType< T > > extends A
 	public void setPosition( final long position, final int d ) { this.position[ d ] = (int)position; }
 
 	@Override
-	public NormalizingVirtualRandomAccess< T > copy() { return new NormalizingVirtualRandomAccess< T >( index, originalWeights, osemspeedup, additionalSmoothBlending, maxDiffRange, scalingRange, type ); }
+	public NormalizingRandomAccess< T > copy() { return new NormalizingRandomAccess< T >( index, originalWeights, osemspeedup, additionalSmoothBlending, maxDiffRange, scalingRange, type ); }
 
 	@Override
-	public NormalizingVirtualRandomAccess<T> copyRandomAccess() { return copy(); }
+	public NormalizingRandomAccess<T> copyRandomAccess() { return copy(); }
+
+	final protected static void applySmooth( final ArrayList< Cursor< FloatType > > cursors, double sumW, final float maxDiffRange, final float scalingRange )
+	{
+		for ( final Cursor< FloatType > c : cursors )
+			c.get().set( smoothWeights( c.get().get(), sumW, maxDiffRange, scalingRange ) );
+	}
+
+	final public static float smoothWeights( final float w, final double sumW, final float maxDiffRange, final float scalingRange )
+	{
+		if ( sumW <= 0 )
+			return 0;
+
+		final float idealValue = (float)( w / sumW );
+
+		final float diff = w - idealValue;
+
+		// map diff: 0 ... maxDiffRange >> 1 ...  0, rest negative
+		final float y = Math.max( 0, ( maxDiffRange - Math.abs( diff ) ) * ( 1.0f / maxDiffRange ) );
+
+		// scale with the value of w
+		final float scale = y * w * scalingRange;
+
+		// final function is a scaling down
+		return ( Math.min( w, idealValue ) - (float)scale );
+	}
+
+	final protected static void applyHard( final ArrayList< Cursor< FloatType > > cursors, final double sumW )
+	{
+		if ( sumW > 1 )
+		{
+			for ( final Cursor< FloatType > c : cursors )
+				c.get().set( hardWeights( c.get().get(), sumW )  );
+		}
+	}
+
+	final public static float hardWeights( final float w, final double sumW )
+	{
+		return (float)( w / sumW );
+	}
 }

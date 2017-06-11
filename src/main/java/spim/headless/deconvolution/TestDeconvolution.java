@@ -6,17 +6,13 @@ import java.util.Date;
 import java.util.HashMap;
 
 import ij.ImageJ;
-import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.FinalInterval;
 import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.array.ArrayImgFactory;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import simulation.imgloader.SimulatedBeadsImgLoader;
@@ -28,7 +24,6 @@ import spim.process.deconvolution.ProcessInputImages.ImgDataType;
 import spim.process.fusion.export.DisplayImage;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
 import spim.process.fusion.transformed.FusedWeightsRandomAccessibleInterval;
-import spim.process.interestpointregistration.TransformationTools;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 import spim.process.psf.PSFCombination;
 import spim.process.psf.PSFExtraction;
@@ -76,7 +71,7 @@ public class TestDeconvolution
 				spimData,
 				groups,
 				boundingBox,
-				1.0,
+				2.0,
 				true,
 				true );
 
@@ -91,7 +86,7 @@ public class TestDeconvolution
 		fusion.normalizeWeights( 1.0, true, 0.1f, 0.05f );
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Displaying " );
-		//displayDebug( fusion );
+		displayDebug( fusion );
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Extracting PSF's " );
 
