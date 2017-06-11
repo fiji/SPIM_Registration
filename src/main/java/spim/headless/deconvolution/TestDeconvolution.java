@@ -18,6 +18,7 @@ import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
 import simulation.imgloader.SimulatedBeadsImgLoader;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
@@ -75,7 +76,7 @@ public class TestDeconvolution
 				spimData,
 				groups,
 				boundingBox,
-				2.0,
+				1.0,
 				true,
 				true );
 
@@ -117,13 +118,13 @@ public class TestDeconvolution
 			// basically the same transformation (e.g. angle 0 vs 180, or before after correction of chromatic abberations)
 			psfs.put( group, PSFCombination.computeAverageImage( viewPsfs, new ArrayImgFactory< FloatType >(), false ) );
 
-			DisplayImage.getImagePlusInstance( psfs.get( group ), false, "psf", 0, 1 ).show();
+			//DisplayImage.getImagePlusInstance( psfs.get( group ), false, "psf", 0, 1 ).show();
 		}
 
 		final Img< FloatType > avgPSF = PSFCombination.computeAverageImage( psfs.values(), new ArrayImgFactory< FloatType >(), true );
 		final Img< FloatType > maxAvgPSF = PSFCombination.computeMaxAverageTransformedPSF( psfs.values(), new ArrayImgFactory< FloatType >() );
 
-		DisplayImage.getImagePlusInstance( avgPSF, false, "avgPSF", 0, 1 ).show();
+		DisplayImage.getImagePlusInstance( Views.rotate( avgPSF, 0, 2 ), false, "avgPSF", 0, 1 ).show();
 		DisplayImage.getImagePlusInstance( maxAvgPSF, false, "maxAvgPSF", 0, 1 ).show();
 	}
 
