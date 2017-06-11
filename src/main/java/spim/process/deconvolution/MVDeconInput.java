@@ -1,20 +1,19 @@
-package spim.process.fusion.deconvolution;
+package spim.process.deconvolution;
 
 import java.util.ArrayList;
 
 import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.type.numeric.real.FloatType;
-import spim.process.fusion.deconvolution.MVDeconFFT.PSFTYPE;
+import spim.process.deconvolution.MVDeconFFT.PSFTYPE;
 
 public class MVDeconInput
 {
-	public final static float minValue = 0.0001f;
 	final ArrayList< MVDeconFFT > views = new ArrayList< MVDeconFFT >();
 	final private ImgFactory< FloatType > imgFactory;
 
 	/**
-	 * the imgfactory used for PSI, the temporary images and inputs
+	 * the imgfactory used for PSI and the temporary images
 	 * @param imgFactory
 	 */
 	public MVDeconInput( final ImgFactory< FloatType > imgFactory )

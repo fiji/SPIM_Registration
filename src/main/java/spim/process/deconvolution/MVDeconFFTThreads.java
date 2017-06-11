@@ -1,4 +1,4 @@
-package spim.process.fusion.deconvolution;
+package spim.process.deconvolution;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

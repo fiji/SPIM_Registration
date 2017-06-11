@@ -406,7 +406,7 @@ public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 		return transformed;
 	}
 
-	private static < T extends RealType< T > >void normalize( final IterableInterval< T > img )
+	private static < T extends RealType< T > > void normalize( final IterableInterval< T > img )
 	{
 		double min = Double.MAX_VALUE;
 		double max = -Double.MAX_VALUE;
