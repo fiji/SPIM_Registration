@@ -94,21 +94,37 @@ public class TestDeconvolution
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Extracting PSF's " );
 
+		final HashMap< Group< V >, Img< FloatType > > psfs = new HashMap<>();
+
 		for ( final Group< V > group : fusion.getGroups() )
 		{
-			final HashMap< V, Img< FloatType > > psfs = new HashMap<>();
+			final ArrayList< Img< FloatType > > viewPsfs = new ArrayList<>();
 	
 			for ( final V view : group )
 			{
 				final PSFExtraction< FloatType > extractPSF = new PSFExtraction<>( spimData, view, "beads", true, new FloatType(), new long[]{ 19, 19, 25 } );
+
+				// remove min projections in all dimensions to remove background
 				extractPSF.removeMinProjections();
-				psfs.put( view, extractPSF.getTransformedNormalizedPSF( fusion.getDownsampledModels().get( view ) ) );
+
+				// remember the normalized, transformed version (including downsampling!)
+				viewPsfs.add( extractPSF.getTransformedNormalizedPSF( fusion.getDownsampledModels().get( view ) ) );
 			}
 
-			ImageJFunctions.show( PSFCombination.computeAverageImage( psfs.values(), new ArrayImgFactory< FloatType >(), false ) );
+			// compute the PSF for a group by averaging over the minimal size of all inputs
+			// the sizes can be different if the transformations are not tranlations but affine.
+			// they should, however, not differ significantly but only combine views that have
+			// basically the same transformation (e.g. angle 0 vs 180, or before after correction of chromatic abberations)
+			psfs.put( group, PSFCombination.computeAverageImage( viewPsfs, new ArrayImgFactory< FloatType >(), false ) );
+
+			ImageJFunctions.show( psfs.get( group ) );
 		}
 
-		//PSFCombination
+		final Img< FloatType > avgPSF = PSFCombination.computeAverageImage( psfs.values(), new ArrayImgFactory< FloatType >(), true );
+		final Img< FloatType > maxAvgPSF = PSFCombination.computeMaxAverageTransformedPSF( psfs.values(), new ArrayImgFactory< FloatType >() );
+
+		DisplayImage.getImagePlusInstance( avgPSF, true, "avgPSF", 0, 1 ).show();
+		DisplayImage.getImagePlusInstance( maxAvgPSF, true, "maxAvgPSF", 0, 1 ).show();
 	}
 
 	public static < V extends ViewId > void displayDebug( final ProcessInputImages< V > fusion )
