@@ -97,7 +97,10 @@ public class PSFCombination
 				avgCursor.get().add( psfCursor.get() );
 			}
 		}
-		
+
+		for ( final T type : avgPSF )
+			type.setReal( type.getRealDouble() / (double)imgs.size() );
+
 		return avgPSF;
 	}
 
