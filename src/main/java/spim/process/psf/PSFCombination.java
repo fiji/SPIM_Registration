@@ -19,7 +19,7 @@ import net.imglib2.view.Views;
 public class PSFCombination
 {
 	public static < T extends RealType< T > > Img< T > computeMaxAverageTransformedPSF(
-			final Collection< RandomAccessibleInterval< T > > imgs,
+			final Collection< ? extends RandomAccessibleInterval< T > > imgs,
 			final ImgFactory< T > imgFactory )
 	{
 		final Img< T > avg = computeAverageImage( imgs, imgFactory, true );
