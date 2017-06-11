@@ -117,14 +117,14 @@ public class TestDeconvolution
 			// basically the same transformation (e.g. angle 0 vs 180, or before after correction of chromatic abberations)
 			psfs.put( group, PSFCombination.computeAverageImage( viewPsfs, new ArrayImgFactory< FloatType >(), false ) );
 
-			ImageJFunctions.show( psfs.get( group ) );
+			DisplayImage.getImagePlusInstance( psfs.get( group ), false, "psf", 0, 1 ).show();
 		}
 
 		final Img< FloatType > avgPSF = PSFCombination.computeAverageImage( psfs.values(), new ArrayImgFactory< FloatType >(), true );
 		final Img< FloatType > maxAvgPSF = PSFCombination.computeMaxAverageTransformedPSF( psfs.values(), new ArrayImgFactory< FloatType >() );
 
-		DisplayImage.getImagePlusInstance( avgPSF, true, "avgPSF", 0, 1 ).show();
-		DisplayImage.getImagePlusInstance( maxAvgPSF, true, "maxAvgPSF", 0, 1 ).show();
+		DisplayImage.getImagePlusInstance( avgPSF, false, "avgPSF", 0, 1 ).show();
+		DisplayImage.getImagePlusInstance( maxAvgPSF, false, "maxAvgPSF", 0, 1 ).show();
 	}
 
 	public static < V extends ViewId > void displayDebug( final ProcessInputImages< V > fusion )
