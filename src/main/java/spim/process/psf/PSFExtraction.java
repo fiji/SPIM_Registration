@@ -4,23 +4,28 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 
+import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
+import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealInterval;
 import net.imglib2.RealLocalizable;
 import net.imglib2.RealRandomAccess;
 import net.imglib2.RealRandomAccessible;
+import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.array.ArrayLocalizingCursor;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.boundingbox.BoundingBoxReorientation;
@@ -30,40 +35,62 @@ public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 	final ArrayImg< T, ? > psf;
 
 	public PSFExtraction(
+			final RealRandomAccessible< T > img,
+			final Collection< RealLocalizable > locations,
 			final T type,
 			final long[] size )
 	{
 		psf = new ArrayImgFactory< T >().create( size, type );
+		extractPSFLocal( img, locations, psf );
 	}
 
-	@SuppressWarnings("unchecked")
-	public void extractNext( final SpimData2 data, final ViewId viewId, final String label, final boolean useCorresponding )
+	public PSFExtraction(
+			final RandomAccessible< T > img,
+			final Collection< RealLocalizable > locations,
+			final T type,
+			final long[] size )
 	{
-		final ArrayList< ViewId  > list = new ArrayList< ViewId >();
+		this( Views.interpolate( img, new NLinearInterpolatorFactory< T >() ), locations, type, size );
+	}
+
+	public PSFExtraction(
+			final RandomAccessibleInterval< T > img,
+			final Collection< RealLocalizable > locations,
+			final T type,
+			final long[] size )
+	{
+		// Mirror produces some artifacts ... so we use periodic
+		this( Views.extendPeriodic( img ), locations, type, size );
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public PSFExtraction(
+			final SpimData2 data,
+			final ViewId viewId,
+			final String label,
+			final boolean useCorresponding,
+			final T type,
+			final long[] size )
+	{
+		this(
+				(RandomAccessibleInterval)data.getSequenceDescription().getImgLoader().getSetupImgLoader( viewId.getViewSetupId() ).getImage( viewId.getTimePointId() ),
+				getPoints( data, viewId, label, useCorresponding ),
+				type,
+				size );
+	}
+
+	public static ArrayList< RealLocalizable > getPoints(
+			final SpimData2 data,
+			final ViewId viewId,
+			final String label,
+			final boolean useCorresponding )
+	{
+		final ArrayList< ViewId > list = new ArrayList< ViewId >();
 		list.add( viewId );
 		final ArrayList< RealLocalizable > points = BoundingBoxReorientation.extractPoints( label, useCorresponding, false, list, data );
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Found " + points.size() + " locations for PSF extraction" );
-
-		@SuppressWarnings("rawtypes")
-		final RandomAccessibleInterval img = data.getSequenceDescription().getImgLoader().getSetupImgLoader( viewId.getViewSetupId() ).getImage( viewId.getTimePointId() );
-
-		extractNext( img, points );
-	}
-
-	public void extractNext( final RandomAccessibleInterval< T > img, final Collection< RealLocalizable > locations )
-	{
-		// Mirror produces some artifacts ... so we use periodic
-		extractNext( Views.extendPeriodic( img ), locations );
-	}
-
-	public void extractNext( final RandomAccessible< T > img, final Collection< RealLocalizable > locations )
-	{
-		extractNext( Views.interpolate( img, new NLinearInterpolatorFactory< T >() ), locations );
-	}
-
-	public void extractNext( final RealRandomAccessible< T > img, final Collection< RealLocalizable > locations )
-	{
-		extractPSFLocal( img, locations, psf );
+	
+		return points;
 	}
 
 	public ArrayImg< T, ? > getPSF() { return psf; }
@@ -75,6 +102,38 @@ public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 		normalize( psfCopy );
 
 		return transformPSF( psfCopy, model );
+	}
+
+	public void removeMinProjections()
+	{
+		for ( int d = 0; d < psf.numDimensions(); ++d )
+		{
+			final Img< T > minProjection = PSFCombination.computeProjection( psf, d, false );
+			subtractProjection( psf, minProjection, d );
+		}
+	}
+
+	public static < T extends RealType< T > > void subtractProjection(
+			final RandomAccessibleInterval< T > img,
+			final RandomAccessibleInterval< T > proj,
+			final int projDim )
+	{
+		final int n0 = img.numDimensions();
+
+		final Cursor< T > cursor = Views.iterable( img ).localizingCursor();
+		final RandomAccess< T > ra = proj.randomAccess();
+
+		while ( cursor.hasNext() )
+		{
+			final T type = cursor.next();
+
+			int dim = 0;
+			for ( int d = 0; d < n0; ++d )
+				if ( d != projDim )
+					ra.setPosition( cursor.getLongPosition( d ), dim++ );
+
+			type.sub( ra.get() );
+		}
 	}
 
 	/**

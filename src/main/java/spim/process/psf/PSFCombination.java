@@ -22,7 +22,7 @@ public class PSFCombination
 			final Collection< RandomAccessibleInterval< T > > imgs,
 			final ImgFactory< T > imgFactory )
 	{
-		final Img< T > avg = computeAverageImage( imgs, imgFactory );
+		final Img< T > avg = computeAverageImage( imgs, imgFactory, true );
 
 		int minDim = -1;
 		long minDimSize = Long.MAX_VALUE;
@@ -34,17 +34,28 @@ public class PSFCombination
 				minDim = d;
 			}
 
-		return computeMaxProjection( avg, minDim );
+		return computeProjection( avg, minDim, true );
 	}
 
 	/**
 	 * compute the average psf in original calibration and after applying the transformations
+	 * 
+	 * @param imgs - the input images
+	 * @param imgFactory - the image factory for the average image
+	 * @param max - if true, use the maximal size of all inputs, otherwise the minimal size of all inputs
+	 * @return
 	 */
 	public static < T extends RealType< T > > Img< T > computeAverageImage(
-			final Collection< RandomAccessibleInterval< T > > imgs,
-			final ImgFactory< T > imgFactory )
+			final Collection< ? extends RandomAccessibleInterval< T > > imgs,
+			final ImgFactory< T > imgFactory,
+			final boolean max )
 	{
-		final long[] maxSize = computeMaxDimTransformedPSF( imgs );
+		final long[] maxSize;
+
+		if ( max )
+			maxSize = computeMaxDimTransformedPSF( imgs );
+		else
+			maxSize = computeMinDimTransformedPSF( imgs );
 		
 		final int numDimensions = maxSize.length;
 		
@@ -109,6 +120,27 @@ public class PSFCombination
 	}
 
 	/**
+	 * @return - maximal dimensions of the transformed PSFs
+	 */
+	public static long[] computeMinDimTransformedPSF( final Collection< ? extends Interval > imgs )
+	{
+		final int numDimensions = 3;
+
+		final long[] minSize = new long[ numDimensions ];
+
+		for ( int d = 0; d < numDimensions; ++d )
+			minSize[ d ] = Long.MAX_VALUE;
+
+		for ( final Interval img : imgs )
+		{
+			for ( int d = 0; d < numDimensions; ++d )
+				minSize[ d ] = Math.min( minSize[ d ], img.dimension( d ) );
+		}
+
+		return minSize;
+	}
+
+	/**
 	 * Make image the same size as defined, center it
 	 * 
 	 * @param img
@@ -151,14 +183,19 @@ public class PSFCombination
 	 * 
 	 * @param avgPSF - the average psf
 	 * @param minDim - along which dimension to project, if set to &lt;0, the smallest dimension will be chosen
+	 * @param max - if true max projection, else min projection
 	 * @return - the averaged, projected PSF
 	 */
-	public static < S extends RealType< S > > Img< S > computeMaxProjection( final Img< S > avgPSF, int minDim )
+	public static < S extends RealType< S > > Img< S > computeProjection( final Img< S > avgPSF, final int minDim, final boolean max )
 	{
-		return computeMaxProjection( avgPSF, avgPSF.factory(), minDim );
+		return computeMaxProjection( avgPSF, avgPSF.factory(), minDim, max );
 	}
 
-	public static < S extends RealType< S > > Img< S > computeMaxProjection( final RandomAccessibleInterval< S > avgPSF, final ImgFactory< S > factory, int minDim )
+	public static < S extends RealType< S > > Img< S > computeMaxProjection(
+			final RandomAccessibleInterval< S > avgPSF,
+			final ImgFactory< S > factory,
+			int minDim,
+			final boolean max )
 	{
 		final long[] dimensions = new long[ avgPSF.numDimensions() ];
 		avgPSF.dimensions( dimensions );
@@ -207,20 +244,28 @@ public class PSFCombination
 					tmp[ d ] = projIterator.getIntPosition( dim++ );
 
 			tmp[ minDim ] = -1;
-			
-			double maxValue = -Double.MAX_VALUE;
-			
+
+			double extreme = max ? -Double.MAX_VALUE : Double.MAX_VALUE;
+
 			psfIterator.setPosition( tmp );
 			for ( int i = 0; i < sizeProjection; ++i )
 			{
 				psfIterator.fwd( minDim );
 				final double value = psfIterator.get().getRealDouble();
-				
-				if ( value > maxValue )
-					maxValue = value;
+
+				if ( max )
+				{
+					if ( value > extreme )
+						extreme = value;
+				}
+				else
+				{
+					if ( value < extreme )
+						extreme = value;
+				}
 			}
 			
-			projIterator.get().setReal( maxValue );
+			projIterator.get().setReal( extreme );
 		}
 		
 		return proj;
