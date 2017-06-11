@@ -2,19 +2,20 @@ package spim.headless.psf;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import ij.ImageJ;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.realtransform.AffineTransform3D;
+import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.util.Pair;
-import net.imglib2.util.ValuePair;
+import net.imglib2.view.Views;
 import simulation.imgloader.SimulatedBeadsImgLoader;
 import spim.fiji.spimdata.SpimData2;
 import spim.headless.registration.TestRegistration;
+import spim.process.fusion.export.DisplayImage;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 import spim.process.psf.PSFCombination;
 import spim.process.psf.PSFExtraction;
@@ -51,27 +52,26 @@ public class TestPSF
 
 		final String label = "beads"; // this could be different for each ViewId
 
-		final ArrayList< Pair< PSFExtraction< FloatType >, AffineTransform3D > > psfs = new ArrayList<>();
+		final HashMap< ViewId, Img< FloatType > > psfs = new HashMap<>();
 
 		for ( final ViewId viewId : viewIds )
 		{
-			final PSFExtraction< FloatType > psf = new PSFExtraction< FloatType >( new FloatType(), new long[]{ 15, 15, 19 } );
-			psf.extractNext( spimData, viewId, label, true );
+			final PSFExtraction< FloatType > psf = new PSFExtraction< FloatType >( spimData, viewId, label, true, new FloatType(), new long[]{ 19, 19, 25 } );
 
 			spimData.getViewRegistrations().getViewRegistration( viewId ).updateModel();
-
-			psfs.add( new ValuePair<>( psf, spimData.getViewRegistrations().getViewRegistration( viewId ).getModel() ) );
+			psfs.put( viewId, psf.getTransformedNormalizedPSF( spimData.getViewRegistrations().getViewRegistration( viewId ).getModel() ) );
 
 			//ImageJFunctions.show( psf.getPSF() );
-			//ImageJFunctions.show( psf.getTransformedNormalizedPSF( spimData.getViewRegistrations().getViewRegistration( viewId ).getModel() ) );
+			//ImageJFunctions.show( psfs.get( viewId ) );
 		}
-
-		final PSFCombination< FloatType > psf = new PSFCombination<>( psfs );
 
 		if ( display )
 		{
-			ImageJFunctions.show( psf.computeAverageTransformedPSF() );
-			ImageJFunctions.show( psf.computeMaxAverageTransformedPSF() );
+			final Img< FloatType > avgPSF = PSFCombination.computeAverageImage( psfs.values(), new ArrayImgFactory< FloatType >(), true );
+			final Img< FloatType > maxAvgPSF = PSFCombination.computeMaxAverageTransformedPSF( psfs.values(), new ArrayImgFactory< FloatType >() );
+
+			DisplayImage.getImagePlusInstance( Views.rotate( avgPSF, 0, 2 ), false, "avgPSF", 0, 1 ).show();
+			DisplayImage.getImagePlusInstance( maxAvgPSF, false, "maxAvgPSF", 0, 1 ).show();
 		}
 	}
 }
