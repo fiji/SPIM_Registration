@@ -3,6 +3,7 @@ package spim.headless.deconvolution;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 
 import ij.ImageJ;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
@@ -11,7 +12,11 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.FinalInterval;
+import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImg;
+import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
 import simulation.imgloader.SimulatedBeadsImgLoader;
 import spim.fiji.spimdata.SpimData2;
@@ -22,7 +27,9 @@ import spim.process.deconvolution.ProcessInputImages.ImgDataType;
 import spim.process.fusion.export.DisplayImage;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
 import spim.process.fusion.transformed.FusedWeightsRandomAccessibleInterval;
+import spim.process.interestpointregistration.TransformationTools;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
+import spim.process.psf.PSFCombination;
 import spim.process.psf.PSFExtraction;
 
 public class TestDeconvolution
@@ -89,13 +96,19 @@ public class TestDeconvolution
 
 		for ( final Group< V > group : fusion.getGroups() )
 		{
-			final PSFExtraction< FloatType > extractPSF = new PSFExtraction< FloatType >( new FloatType(), new long[]{ 19, 19, 25 } );
+			final HashMap< V, Img< FloatType > > psfs = new HashMap<>();
 	
 			for ( final V view : group )
-				extractPSF.extractNext( spimData, view, "beads", true );
+			{
+				final PSFExtraction< FloatType > extractPSF = new PSFExtraction<>( spimData, view, "beads", true, new FloatType(), new long[]{ 19, 19, 25 } );
+				extractPSF.removeMinProjections();
+				psfs.put( view, extractPSF.getTransformedNormalizedPSF( fusion.getDownsampledModels().get( view ) ) );
+			}
 
-			ImageJFunctions.show( extractPSF.getPSF() );
+			ImageJFunctions.show( PSFCombination.computeAverageImage( psfs.values(), new ArrayImgFactory< FloatType >(), false ) );
 		}
+
+		//PSFCombination
 	}
 
 	public static < V extends ViewId > void displayDebug( final ProcessInputImages< V > fusion )
