@@ -9,15 +9,15 @@ import java.util.Set;
 import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.realtransform.AffineGet;
 import net.imglib2.util.Pair;
-import net.imglib2.util.ValuePair;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 
 public class StitchingResults
 {
 	Map<Pair<Group<ViewId>, Group<ViewId>>, PairwiseStitchingResult<ViewId>> pairwiseResults;
+	// TODO: check and potentially change error calculation (this was done way back when we used absolute shifts)
 	Map<ViewId, AffineGet> globalShifts;
-	
+
 	public StitchingResults()
 	{
 		pairwiseResults = new HashMap<>();
@@ -25,32 +25,31 @@ public class StitchingResults
 	}
 
 	public Map< Pair< Group<ViewId>, Group<ViewId> >, PairwiseStitchingResult<ViewId> > getPairwiseResults() { return pairwiseResults; }
-	
+
 	public Map< ViewId, AffineGet > getGlobalShifts() { return globalShifts;	}
-	
+
 	/**
 	 * save the PairwiseStitchingResult for a pair of ViewIds, using the sorted ViewIds as a key
 	 * use this method to ensure consistency of the pairwiseResults Map 
+	 * TODO: we do not sort a.t.m. -> do we need this?
 	 * @param pair
 	 * @param res
 	 */
 	public void setPairwiseResultForPair(Pair<Group<ViewId>, Group<ViewId>> pair, PairwiseStitchingResult<ViewId> res )
 	{
-		//Pair< Set<ViewId>, Set<ViewId> > key = pair.getA().compareTo( pair.getB() ) < 0 ? pair : new ValuePair<>(pair.getB(), pair.getA());
 		pairwiseResults.put( pair, res );
 	}	
+
 	public PairwiseStitchingResult<ViewId> getPairwiseResultsForPair(Pair<Group<ViewId>, Group<ViewId>> pair)
 	{
-		//Pair< ViewId, ViewId > key = pair.getA().compareTo( pair.getB() ) < 0 ? pair : new ValuePair<>(pair.getB(), pair.getA());
 		return pairwiseResults.get( pair );
 	}
+
 	public void removePairwiseResultForPair(Pair<Group<ViewId>, Group<ViewId>> pair)
 	{
-		//Pair< ViewId, ViewId > key = pair.getA().compareTo( pair.getB() ) < 0 ? pair : new ValuePair<>(pair.getB(), pair.getA());
 		pairwiseResults.remove( pair );
 	}
-	
-	
+
 	public ArrayList< PairwiseStitchingResult<ViewId> > getAllPairwiseResultsForViewId(Set<ViewId> vid)
 	{
 		ArrayList< PairwiseStitchingResult<ViewId> > res = new ArrayList<>();
@@ -62,8 +61,12 @@ public class StitchingResults
 		}
 		return res;
 	}
-	
-	
+
+	/**
+	 * TODO: check if this still returns useful values
+	 * @param vid
+	 * @return
+	 */
 	public ArrayList< Double > getErrors(Set<ViewId> vid)
 	{
 		List<PairwiseStitchingResult<ViewId>> psrs = getAllPairwiseResultsForViewId( vid );
@@ -81,12 +84,10 @@ public class StitchingResults
 				double[] relativeGlobal = VectorUtil.getVectorDiff( vGlobal1, vGLobal2 );
 				res.add( new Double(VectorUtil.getVectorLength(  VectorUtil.getVectorDiff( relativeGlobal, vPairwise ) )) );
 			}
-				
 		}
-		return res;		
+		return res;
 	}
-	
-	
+
 	public double getAvgCorrelation(Set<ViewId> vid)
 	{
 		double sum = 0.0;
@@ -98,15 +99,14 @@ public class StitchingResults
 				sum += psr.r();
 				count++;
 			}
-							
 		}
-		
+
 		if (count == 0)
 			return 0;
 		else
 			return sum/count;
 	}
-	
+
 	public static void main(String[] args)
 	{
 //		StitchingResults sr = new StitchingResults();
@@ -117,6 +117,4 @@ public class StitchingResults
 //		ArrayList< PairwiseStitchingResult<ViewId> > psr = sr.getAllPairwiseResultsForViewId( new ViewId( 0, 0 ) );
 //		System.out.println( psr.size() );
 	}
-	
-	
 }
