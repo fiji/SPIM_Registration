@@ -7,6 +7,7 @@ import java.util.HashMap;
 
 import ij.IJ;
 import ij.ImageJ;
+import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
@@ -29,8 +30,8 @@ import spim.process.deconvolution.MVDeconFFT.PSFTYPE;
 import spim.process.deconvolution.MVDeconInput;
 import spim.process.deconvolution.MVDeconvolution;
 import spim.process.deconvolution.ProcessInputImages;
-import spim.process.deconvolution.ProcessInputImages.ImgDataType;
 import spim.process.export.DisplayImage;
+import spim.process.fusion.FusionHelper.ImgDataType;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
 import spim.process.fusion.transformed.FusedWeightsRandomAccessibleInterval;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
@@ -100,6 +101,7 @@ public class TestDeconvolution
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Displaying " );
 		displayDebug( fusion );
 
+		SimpleMultiThreading.threadHaltUnClean();
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Extracting PSF's " );
 
 		final HashMap< Group< V >, ArrayImg< FloatType, ? > > psfs = new HashMap<>();

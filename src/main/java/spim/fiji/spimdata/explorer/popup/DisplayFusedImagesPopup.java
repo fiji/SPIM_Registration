@@ -1,5 +1,6 @@
 package spim.fiji.spimdata.explorer.popup;
 
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -18,12 +19,15 @@ import mpicbg.spim.io.IOFunctions;
 import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.img.imageplus.ImagePlusImgFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
 import spim.process.export.DisplayImage;
+import spim.process.fusion.FusionHelper;
+import spim.process.fusion.FusionHelper.ImgDataType;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
 import spim.process.fusion.transformed.TransformView;
 import spim.process.fusion.transformed.TransformVirtual;
@@ -34,6 +38,12 @@ import spim.process.fusion.weightedavg.ProcessVirtual;
 public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSetable
 {
 	private static final long serialVersionUID = -4895470813542722644L;
+
+	public static int[] quickDownsampling = new int[]{ 1, 2, 3, 4, 8, 16 };
+	public static int defaultCache = 1;
+	public static int[] cellDim = new int[]{ 10, 10, 1 };
+	public static int maxCacheSize = 10000;
+
 	public static double defaultDownsampling = 2.0;
 	public static int defaultBB = 0;
 
@@ -44,12 +54,8 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 	{
 		super( "Display Transformed/Fused Image(s)" );
 
-		boundingBoxes = new JMenu( "Virtually Fused" );
-		final JMenuItem virtual = new JMenuItem( "Virtually Fused ..." );
-
-		virtual.addActionListener( new DisplayVirtualFused( null ) );
-
 		// populate with the current available boundingboxes
+		boundingBoxes = new JMenu( "Quick Display" );
 		boundingBoxes.addMenuListener( new MenuListener()
 		{
 			@Override
@@ -62,10 +68,34 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 					final SpimData2 spimData = (SpimData2)panel.getSpimData();
 					for ( final BoundingBox bb : spimData.getBoundingBoxes().getBoundingBoxes() )
 					{
-						final JMenuItem fused = new JMenuItem( bb.getTitle() + " [" + bb.dimension( 0 ) + "x" + bb.dimension( 1 ) + "x" + bb.dimension( 2 ) + "px]" );
-						boundingBoxes.add( fused );
-						fused.addActionListener( new DisplayVirtualFused( bb ) );
+						final JMenu downsampleOptions = new JMenu( bb.getTitle() + " [" + bb.dimension( 0 ) + "x" + bb.dimension( 1 ) + "x" + bb.dimension( 2 ) + "px]" );
+
+						for ( final int ds : quickDownsampling )
+						{
+							final JMenuItem fused;
+							final double downsample;
+
+							if ( ds == 1 )
+							{
+								fused = new JMenuItem( "Not downsampled" );
+								downsample = Double.NaN;
+							}
+							else
+							{
+								fused = new JMenuItem( "Downsampled " + ds + "x" );
+								downsample = ds;
+							}
+
+							fused.addActionListener( new DisplayVirtualFused( bb, downsample, ImgDataType.CACHED ) );
+							downsampleOptions.add( fused );
+						}
+						boundingBoxes.add( downsampleOptions );
 					}
+
+					final JMenuItem cachingState = new JMenuItem( FusionHelper.imgDataTypeChoice[ defaultCache ] );
+					cachingState.setForeground( Color.GRAY );
+					cachingState.addActionListener( new ChangeCacheState( cachingState ) );
+					boundingBoxes.add( cachingState );
 				}
 			}
 
@@ -75,6 +105,9 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 			@Override
 			public void menuCanceled( MenuEvent e ) {}
 		} );
+
+		final JMenuItem virtual = new JMenuItem( "Fuse image(s) ..." );
+		virtual.addActionListener( new DisplayVirtualFused( null, Double.NaN, null ) );
 
 		this.add( boundingBoxes );
 		this.add( virtual );
@@ -92,10 +125,13 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 	{
 		Interval boundingBox;
 		double downsampling = Double.NaN;
+		ImgDataType imgType;
 
-		public DisplayVirtualFused( final Interval bb )
+		public DisplayVirtualFused( final Interval bb, final double downsampling, final ImgDataType imgType )
 		{
 			this.boundingBox = bb;
+			this.downsampling = downsampling;
+			this.imgType = imgType;
 		}
 
 		@Override
@@ -136,7 +172,8 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 
 						GenericDialog gd = new GenericDialog( "Virtual Fusion" );
 						gd.addChoice( "Bounding Box", choices, choices[ defaultBB ] );
-						gd.addNumericField( "Downsampling", defaultDownsampling, 0 );
+						gd.addNumericField( "Downsampling", defaultDownsampling, 1 );
+						gd.addChoice( "Caching", FusionHelper.imgDataTypeChoice, FusionHelper.imgDataTypeChoice[ defaultCache ] );
 
 						gd.showDialog();
 
@@ -145,13 +182,22 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 
 						bb = spimData.getBoundingBoxes().getBoundingBoxes().get( defaultBB = gd.getNextChoiceIndex() );
 						downsampling = defaultDownsampling = gd.getNextNumber();
-						bb = TransformVirtual.scaleBoundingBox( bb, 1.0 / downsampling );
+						int caching = defaultCache = gd.getNextChoiceIndex();
+
+						if ( caching == 0 )
+							imgType = ImgDataType.VIRTUAL;
+						else if ( caching == 1 )
+							imgType = ImgDataType.CACHED;
+						else
+							imgType = ImgDataType.PRECOMPUTED;
 					}
 					else
 					{
-						downsampling = Double.NaN;
 						bb = boundingBox;
 					}
+
+					if ( !Double.isNaN( downsampling ) )
+						bb = TransformVirtual.scaleBoundingBox( bb, 1.0 / downsampling );
 
 					final long[] dim = new long[ bb.numDimensions() ];
 					bb.dimensions( dim );
@@ -186,10 +232,33 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 						//weights.add( Views.interval( new ConstantRandomAccessible< FloatType >( new FloatType( 1 ), 3 ), new FinalInterval( dim ) ) );
 					}
 
-					DisplayImage.getImagePlusInstance( new FusedRandomAccessibleInterval( new FinalInterval( dim ), images, weights ), true, "Fused, Virtual", 0, 255 ).show();
+					RandomAccessibleInterval< FloatType > img = new FusedRandomAccessibleInterval( new FinalInterval( dim ), images, weights );
+
+					if ( imgType == ImgDataType.CACHED )
+						img = FusionHelper.cacheRandomAccessibleInterval( img, maxCacheSize, new FloatType(), cellDim );
+					else if ( imgType == ImgDataType.PRECOMPUTED )
+						img = FusionHelper.copyImg( img, new ImagePlusImgFactory<>() );
+
+					DisplayImage.getImagePlusInstance( img, true, "Fused, Virtual", 0, 255 ).show();
 				}
 			} ).start();
 		}
 	}
 
+	public class ChangeCacheState implements ActionListener
+	{
+		final JMenuItem m;
+
+		public ChangeCacheState( final JMenuItem m ){ this.m = m; }
+
+		@Override
+		public void actionPerformed( final ActionEvent e )
+		{
+			if ( ++defaultCache > 2 )
+				defaultCache = 0;
+
+			m.setText( FusionHelper.imgDataTypeChoice[ defaultCache ]  );
+		}
+		
+	}
 }

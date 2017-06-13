@@ -35,6 +35,9 @@ import spim.fiji.spimdata.SpimData2;
 
 public class FusionHelper
 {
+	public static enum ImgDataType { VIRTUAL, CACHED, PRECOMPUTED };
+	public static String[] imgDataTypeChoice = new String[]{ "Virtual", "Cached", "Precompute Image" };
+
 	/**
 	 * Do not instantiate
 	 */
@@ -87,9 +90,9 @@ public class FusionHelper
 
 	public static < T extends NativeType< T > > RandomAccessibleInterval< T > cacheRandomAccessibleInterval(
 			final RandomAccessibleInterval< T > input,
+			final long maxCacheSize,
 			final T type,
-			final int cellDim,
-			final long maxCacheSize )
+			final int... cellDim )
 	{
 		final RandomAccessibleInterval< T > in;
 

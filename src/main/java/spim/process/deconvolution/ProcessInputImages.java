@@ -26,6 +26,7 @@ import net.imglib2.view.Views;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.deconvolution.normalization.NormalizingRandomAccessibleInterval;
 import spim.process.fusion.FusionHelper;
+import spim.process.fusion.FusionHelper.ImgDataType;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
 import spim.process.fusion.transformed.FusedWeightsRandomAccessibleInterval;
 import spim.process.fusion.transformed.TransformView;
@@ -47,8 +48,6 @@ public class ProcessInputImages< V extends ViewId >
 	public static float scalingRange = 0.05f;
 	public static boolean additionalSmoothBlending = false;
 
-	public static enum ImgDataType { VIRTUAL, CACHED, PRECOMPUTED };
-	
 	final AbstractSpimData< ? extends AbstractSequenceDescription< ? extends BasicViewSetup, ? extends BasicViewDescription< ? >, ? extends BasicImgLoader > > spimData;
 	final ArrayList< Group< V > > groups;
 	final Interval bb;
@@ -192,7 +191,7 @@ public class ProcessInputImages< V extends ViewId >
 			RandomAccessibleInterval< FloatType > img = images.get( group );
 
 			if ( type == ImgDataType.CACHED )
-				img = FusionHelper.cacheRandomAccessibleInterval( img, new FloatType(), cellDim, maxCacheSize );
+				img = FusionHelper.cacheRandomAccessibleInterval( img, maxCacheSize, new FloatType(), cellDim );
 			else if ( type == ImgDataType.PRECOMPUTED )
 				img = FusionHelper.copyImg( img, factory );
 
