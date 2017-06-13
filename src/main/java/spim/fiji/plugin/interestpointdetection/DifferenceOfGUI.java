@@ -12,7 +12,7 @@ import spim.process.interestpointdetection.InterestPointTools;
 
 public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 {
-	protected static final int[] ds = { 1, 2, 4, 8 };
+	protected static final int[] ds = { 1, 2, 4, 8, 16, 32, 64 };
 
 	public static String[] downsampleChoiceXY = { ds[ 0 ] + "x", ds[ 1 ] + "x", ds[ 2 ] + "x", ds[ 3 ] + "x", "Match Z Resolution (less downsampling)", "Match Z Resolution (more downsampling)"  };
 	public static String[] downsampleChoiceZ = { ds[ 0 ] + "x", ds[ 1 ] + "x", ds[ 2 ] + "x", ds[ 3 ] + "x" };
