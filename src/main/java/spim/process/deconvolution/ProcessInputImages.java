@@ -26,7 +26,6 @@ import net.imglib2.view.Views;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.deconvolution.normalization.NormalizingRandomAccessibleInterval;
 import spim.process.fusion.FusionHelper;
-import spim.process.fusion.deconvolution.MVDeconvolution;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
 import spim.process.fusion.transformed.FusedWeightsRandomAccessibleInterval;
 import spim.process.fusion.transformed.TransformView;

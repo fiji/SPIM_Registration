@@ -16,10 +16,7 @@ public class MVDeconInput
 	 * the imgfactory used for PSI and the temporary images
 	 * @param imgFactory
 	 */
-	public MVDeconInput( final ImgFactory< FloatType > imgFactory )
-	{
-		this.imgFactory = imgFactory;
-	}
+	public MVDeconInput( final ImgFactory< FloatType > imgFactory ) { this.imgFactory = imgFactory; }
 
 	public ImgFactory< FloatType > imgFactory() { return imgFactory; }
 
@@ -30,7 +27,7 @@ public class MVDeconInput
 		for ( final MVDeconFFT v : views )
 			v.setNumViews( getNumViews() );
 	}
-		
+
 	/**
 	 * init all views
 	 *
@@ -44,12 +41,12 @@ public class MVDeconInput
 		
 		return this;
 	}
-	
+
 	/**
 	 * @return - the image data
 	 */
 	public ArrayList< MVDeconFFT > getViews() { return views; }
-	
+
 	/**
 	 * The number of views for this deconvolution
 	 * @return

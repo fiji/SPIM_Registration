@@ -1,4 +1,4 @@
-package spim.process.fusion.deconvolution;
+package spim.process.deconvolution;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -30,9 +30,9 @@ import net.imglib2.view.Views;
 import spim.Threads;
 import spim.fiji.ImgLib2Temp.Triple;
 import spim.fiji.spimdata.imgloaders.LegacyStackImgLoaderIJ;
+import spim.process.deconvolution.MVDeconFFT.PSFTYPE;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
-import spim.process.fusion.deconvolution.MVDeconFFT.PSFTYPE;
 import spim.process.fusion.export.DisplayImage;
 
 public class MVDeconvolution
@@ -84,7 +84,6 @@ public class MVDeconvolution
 			final int numIterations,
 			final double lambda,
 			double osemspeedup,
-			final int osemspeedupindex,
 			final String name ) throws IncompatibleTypeException
 	{
 		this.psi = null;
