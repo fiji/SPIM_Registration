@@ -1,7 +1,5 @@
 package spim.process.fusion.export;
 
-import ij.gui.GenericDialog;
-
 import java.io.File;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -10,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import ij.gui.GenericDialog;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
@@ -24,11 +23,11 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import spim.fiji.plugin.fusion.boundingbox.BoundingBoxGUI;
 import spim.fiji.plugin.resave.Resave_TIFF;
 import spim.fiji.plugin.resave.Resave_TIFF.Parameters;
 import spim.fiji.spimdata.SpimData2;
@@ -55,22 +54,22 @@ public class ExportSpimData2TIFF implements ImgExport
 	}
 
 	@Override
-	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval<T> img, final BoundingBoxGUI bb, final TimePoint tp, final ViewSetup vs )
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval<T> img, final Interval bb, final double downsampling, final TimePoint tp, final ViewSetup vs )
 	{
-		return exportImage( img, bb, tp, vs, Double.NaN, Double.NaN );
+		return exportImage( img, bb, downsampling, tp, vs, Double.NaN, Double.NaN );
 	}
 
 	@Override
-	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval<T> img, final BoundingBoxGUI bb, final TimePoint tp, final ViewSetup vs, final double min, final double max )
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval<T> img, final Interval bb, final double downsampling, final TimePoint tp, final ViewSetup vs, final double min, final double max )
 	{
 		// write the image
-		if ( !this.saver.exportImage( img, bb, tp, vs, min, max ) )
+		if ( !this.saver.exportImage( img, bb, downsampling, tp, vs, min, max ) )
 			return false;
 
 		// update the registrations
 		final ViewRegistration vr = spimData.getViewRegistrations().getViewRegistration( new ViewId( tp.getId(), vs.getId() ) );
 		
-		final double scale = bb.getDownSampling();
+		final double scale = downsampling;
 		final AffineTransform3D m = new AffineTransform3D();
 		m.set( scale, 0.0f, 0.0f, bb.min( 0 ), 
 			   0.0f, scale, 0.0f, bb.min( 1 ),

@@ -1,13 +1,13 @@
 package spim.process.fusion.export;
 
-import ij.gui.GenericDialog;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import bdv.img.hdf5.Hdf5ImageLoader;
+import ij.gui.GenericDialog;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewTransform;
@@ -19,16 +19,15 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import spim.fiji.plugin.fusion.boundingbox.BoundingBoxGUI;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.imgloaders.StackImgLoaderIJ;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.process.fusion.export.ExportSpimData2TIFF.FileNamePattern;
-import bdv.img.hdf5.Hdf5ImageLoader;
 
 public class AppendSpimData2 implements ImgExport
 {
@@ -43,28 +42,28 @@ public class AppendSpimData2 implements ImgExport
 	AppendSpimData2HDF5 appendToHdf5 = null;
 
 	@Override
-	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval<T> img, final BoundingBoxGUI bb, final TimePoint tp, final ViewSetup vs )
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval<T> img, final Interval bb, final double downsampling, final TimePoint tp, final ViewSetup vs )
 	{
 		if ( appendToHdf5 != null )
-			return appendToHdf5.exportImage( img, bb, tp, vs );
+			return appendToHdf5.exportImage( img, bb, downsampling, tp, vs );
 
-		return exportImage( img, bb, tp, vs, Double.NaN, Double.NaN );
+		return exportImage( img, bb, downsampling, tp, vs, Double.NaN, Double.NaN );
 	}
 
 	@Override
-	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval<T> img, final BoundingBoxGUI bb, final TimePoint tp, final ViewSetup vs, final double min, final double max )
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval<T> img, final Interval bb, final double downsampling, final TimePoint tp, final ViewSetup vs, final double min, final double max )
 	{
 		if ( appendToHdf5 != null )
-			return appendToHdf5.exportImage( img, bb, tp, vs, min, max );
+			return appendToHdf5.exportImage( img, bb, downsampling, tp, vs, min, max );
 
 		// write the image
-		if ( !this.saver.exportImage( img, bb, tp, vs, min, max ) )
+		if ( !this.saver.exportImage( img, bb, downsampling, tp, vs, min, max ) )
 			return false;
 
 		// update the registrations
 		final ViewRegistration vr = spimData.getViewRegistrations().getViewRegistration( new ViewId( tp.getId(), vs.getId() ) );
 
-		final double scale = bb.getDownSampling();
+		final double scale = downsampling;
 		final AffineTransform3D m = new AffineTransform3D();
 		m.set( scale, 0.0f, 0.0f, bb.min( 0 ),
 			   0.0f, scale, 0.0f, bb.min( 1 ),

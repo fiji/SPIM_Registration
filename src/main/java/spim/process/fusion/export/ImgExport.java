@@ -1,15 +1,14 @@
 package spim.process.fusion.export;
 
-import ij.gui.GenericDialog;
-
 import java.util.List;
 
+import ij.gui.GenericDialog;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewSetup;
+import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import spim.fiji.plugin.boundingbox.BoundingBoxGUI;
 import spim.fiji.spimdata.SpimData2;
 
 public interface ImgExport
@@ -28,22 +27,24 @@ public interface ImgExport
 	 * 
 	 * @param img - Note, in rare cases this can be null (i.e. do nothing)
 	 * @param bb - the bounding box used to fuse this image
+	 * @param downsampling - how much it was downsampled
 	 * @param tp - the current (new) timepoint
 	 * @param vs - the current (new) viewsetup
 	 */
-	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval< T > img, final BoundingBoxGUI bb, final TimePoint tp, final ViewSetup vs );
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval< T > img, final Interval bb, final double downsampling, final TimePoint tp, final ViewSetup vs );
 	
 	/**
 	 * Exports the image using a predefined min/max
 	 * 
 	 * @param img - Note, in rare cases this can be null (i.e. do nothing)
 	 * @param bb - the bounding box used to fuse this image
+	 * @param downsampling - how much it was downsampled
 	 * @param tp - the current (new) timepoint
 	 * @param vs - the current (new) viewsetup
 	 * @param min - define min intensity of this image
 	 * @param max - define max intensity of this image
 	 */
-	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval< T > img, final BoundingBoxGUI bb, final TimePoint tp, final ViewSetup vs, final double min, final double max );
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval< T > img, final Interval bb, final double downsampling, final TimePoint tp, final ViewSetup vs, final double min, final double max );
 	
 	/**
 	 * Query the necessary parameters for the fusion (new dialog has to be made)

@@ -1,7 +1,5 @@
 package spim.process.fusion.export;
 
-import ij.gui.GenericDialog;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
@@ -9,6 +7,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import bdv.export.ExportMipmapInfo;
+import bdv.export.ProgressWriter;
+import bdv.export.SubTaskProgressWriter;
+import bdv.export.WriteSequenceToHdf5;
+import bdv.img.hdf5.Hdf5ImageLoader;
+import bdv.img.hdf5.Partition;
+import ij.gui.GenericDialog;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
@@ -21,6 +26,7 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.converter.RealUnsignedShortConverter;
 import net.imglib2.converter.read.ConvertedRandomAccessibleInterval;
@@ -31,7 +37,7 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.util.Pair;
 import net.imglib2.util.Util;
 import net.imglib2.util.ValuePair;
-import spim.fiji.plugin.fusion.boundingbox.BoundingBoxGUI;
+import spim.Threads;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.resave.Generic_Resave_HDF5;
 import spim.fiji.plugin.resave.Generic_Resave_HDF5.Parameters;
@@ -44,12 +50,6 @@ import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.fiji.spimdata.stitchingresults.StitchingResults;
 import spim.process.fusion.FusionHelper;
-import bdv.export.ExportMipmapInfo;
-import bdv.export.ProgressWriter;
-import bdv.export.SubTaskProgressWriter;
-import bdv.export.WriteSequenceToHdf5;
-import bdv.img.hdf5.Hdf5ImageLoader;
-import bdv.img.hdf5.Partition;
 
 public class ExportSpimData2HDF5 implements ImgExport
 {
@@ -196,10 +196,10 @@ public class ExportSpimData2HDF5 implements ImgExport
 	}
 
 	@Override
-	public < T extends RealType< T > & NativeType< T >> boolean exportImage( RandomAccessibleInterval< T > img, BoundingBoxGUI bb, TimePoint tp, ViewSetup vs )
+	public < T extends RealType< T > & NativeType< T >> boolean exportImage( RandomAccessibleInterval< T > img, final Interval bb, final double downsampling, TimePoint tp, ViewSetup vs )
 	{
 		System.out.println( "exportImage1()" );
-		return exportImage( img, bb, tp, vs, Double.NaN, Double.NaN );
+		return exportImage( img, bb, downsampling, tp, vs, Double.NaN, Double.NaN );
 	}
 
 	public static < T extends RealType< T > > double[] updateAndGetMinMax( final RandomAccessibleInterval< T > img, final Parameters params )
@@ -244,7 +244,7 @@ public class ExportSpimData2HDF5 implements ImgExport
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
-	public < T extends RealType< T > & NativeType< T > > boolean exportImage( RandomAccessibleInterval< T > img, BoundingBoxGUI bb, TimePoint tp, ViewSetup vs, double min, double max )
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage( RandomAccessibleInterval< T > img, final Interval bb, final double downsampling, TimePoint tp, ViewSetup vs, double min, double max )
 	{
 		System.out.println( "exportImage2()" );
 
@@ -259,12 +259,12 @@ public class ExportSpimData2HDF5 implements ImgExport
 		final boolean writeMipmapInfo = true; // TODO: remember whether we already wrote it and write only once
 		final boolean deflate = params.getDeflate();
 		final ProgressWriter progressWriter = new SubTaskProgressWriter( this.progressWriter, 0.0, 1.0 ); // TODO
-		WriteSequenceToHdf5.writeViewToHdf5PartitionFile( ushortimg, partition, tp.getId(), vs.getId(), mipmapInfo, writeMipmapInfo, deflate, null, null, progressWriter );
-
+		WriteSequenceToHdf5.writeViewToHdf5PartitionFile( ushortimg, partition, tp.getId(), vs.getId(), mipmapInfo, writeMipmapInfo, deflate, null, null, Threads.numThreads(), progressWriter );
+		
 		// update the registrations
 		final ViewRegistration vr = spimData.getViewRegistrations().getViewRegistration( new ViewId( tp.getId(), vs.getId() ) );
 
-		final double scale = bb.getDownSampling();
+		final double scale = downsampling;
 		final AffineTransform3D m = new AffineTransform3D();
 		m.set( scale, 0.0f, 0.0f, bb.min( 0 ),
 			   0.0f, scale, 0.0f, bb.min( 1 ),
@@ -295,7 +295,6 @@ public class ExportSpimData2HDF5 implements ImgExport
 	public ImgExport newInstance()
 	{
 		System.out.println( "newInstance()" );
-		BoundingBoxGUI.defaultPixelType = 1; // set to 16 bit by default
 		return new ExportSpimData2HDF5();
 	}
 

@@ -1,23 +1,22 @@
 package spim.process.fusion.export;
 
-import ij.ImagePlus;
-import ij.gui.GenericDialog;
-import ij.io.FileSaver;
-
 import java.io.File;
 import java.util.Date;
 import java.util.List;
 
+import ij.ImagePlus;
+import ij.gui.GenericDialog;
+import ij.io.FileSaver;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.exception.ImgLibException;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.img.imageplus.ImagePlusImg;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import spim.fiji.plugin.fusion.boundingbox.BoundingBoxGUI;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.FusionHelper;
 
@@ -43,19 +42,19 @@ public class Save3dTIFF implements ImgExportTitle
 		final ImgTitler current = this.getImgTitler();
 		this.setImgTitler( new FixedNameImgTitler( title ) );
 		
-		exportImage( img, null, null, null );
+		exportImage( img, null, 1.0, null, null );
 		
 		this.setImgTitler( current );
 	}
 
 	@Override
-	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval< T > img, final BoundingBoxGUI bb, final TimePoint tp, final ViewSetup vs )
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval< T > img, final Interval bb, final double downsampling, final TimePoint tp, final ViewSetup vs )
 	{
-		return exportImage( img, bb, tp, vs, Double.NaN, Double.NaN );
+		return exportImage( img, bb, 1.0, tp, vs, Double.NaN, Double.NaN );
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T extends RealType<T> & NativeType<T>> boolean exportImage( final RandomAccessibleInterval<T> img, final BoundingBoxGUI bb, final TimePoint tp, final ViewSetup vs, final double min, final double max )
+	public <T extends RealType<T> & NativeType<T>> boolean exportImage( final RandomAccessibleInterval<T> img, final Interval bb, final double downsampling, final TimePoint tp, final ViewSetup vs, final double min, final double max )
 	{
 		// do nothing in case the image is null
 		if ( img == null )
@@ -81,10 +80,10 @@ public class Save3dTIFF implements ImgExportTitle
 
 		if ( bb != null )
 		{
-			imp.getCalibration().xOrigin = -(bb.min( 0 ) / bb.getDownSampling());
-			imp.getCalibration().yOrigin = -(bb.min( 1 ) / bb.getDownSampling());
-			imp.getCalibration().zOrigin = -(bb.min( 2 ) / bb.getDownSampling());
-			imp.getCalibration().pixelWidth = imp.getCalibration().pixelHeight = imp.getCalibration().pixelDepth = bb.getDownSampling();
+			imp.getCalibration().xOrigin = -(bb.min( 0 ) / downsampling);
+			imp.getCalibration().yOrigin = -(bb.min( 1 ) / downsampling);
+			imp.getCalibration().zOrigin = -(bb.min( 2 ) / downsampling);
+			imp.getCalibration().pixelWidth = imp.getCalibration().pixelHeight = imp.getCalibration().pixelDepth = downsampling;
 		}
 		
 		imp.setDimensions( 1, (int)img.dimension( 2 ), 1 );
