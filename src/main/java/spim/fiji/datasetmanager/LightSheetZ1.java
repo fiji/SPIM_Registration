@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import bdv.BigDataViewer;
+import bdv.viewer.ViewerOptions;
 import fiji.util.gui.GenericDialogPlus;
 import ij.gui.GenericDialog;
 import mpicbg.spim.data.SpimData;
@@ -467,6 +468,6 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		//defaultFirstFile = "/Volumes/My Passport/Zeiss Olaf Lightsheet Z.1/worm7/Track1.czi";
 		SpimData2 sd = new LightSheetZ1().createDataset();
 		
-		new BigDataViewer( sd, "", null );
+		BigDataViewer.open(  sd, "", null, ViewerOptions.options() );
 	}
 }
