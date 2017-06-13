@@ -58,7 +58,6 @@ import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
 import mpicbg.spim.io.IOFunctions;
-import mpicbg.spim.registration.ViewStructure;
 import mpicbg.spim.registration.detection.DetectionSegmentation;
 import net.imglib2.RandomAccess;
 import net.imglib2.exception.ImgLibException;
@@ -732,8 +731,7 @@ public class InteractiveDoG implements PlugIn
 			                                				threshold, 
 			                                				threshold/4, 
 			                                				lookForMaxima,
-			                                				lookForMinima,
-			                                				ViewStructure.DEBUG_MAIN );
+			                                				lookForMinima );
 
 			IOFunctions.println( "Drawing DoG result ... " );
 

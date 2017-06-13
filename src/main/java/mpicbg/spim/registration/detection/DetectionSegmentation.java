@@ -11,7 +11,6 @@ import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.spim.io.IOFunctions;
-import mpicbg.spim.registration.ViewStructure;
 
 public class DetectionSegmentation 
 {	
@@ -21,7 +20,7 @@ public class DetectionSegmentation
 			float minPeakValue,
 			float minInitialPeakValue )
 	{
-		return extractBeadsLaPlaceImgLib(img, new OutOfBoundsStrategyMirrorFactory<T>(), 0.5f, initialSigma, minPeakValue, minInitialPeakValue, 4, true, false, ViewStructure.DEBUG_MAIN );
+		return extractBeadsLaPlaceImgLib(img, new OutOfBoundsStrategyMirrorFactory<T>(), 0.5f, initialSigma, minPeakValue, minInitialPeakValue, 4, true, false );
 	}	
 
 	public static <T extends RealType<T>> ArrayList< DifferenceOfGaussianPeak<T> > extractBeadsLaPlaceImgLib( 
@@ -33,14 +32,13 @@ public class DetectionSegmentation
  			float minInitialPeakValue,
  			final int stepsPerOctave,
  			final boolean findMax,
- 			final boolean findMin,
- 			final int debugLevel )
+ 			final boolean findMin )
          	{
 				final float k = (float)computeK( stepsPerOctave );
 				final float sigma1 = initialSigma;
 				final float sigma2 = initialSigma * k;
 				
-				return extractBeadsLaPlaceImgLib(img, oobsFactory, imageSigma, sigma1, sigma2, minPeakValue, minInitialPeakValue, findMax, findMin, debugLevel );
+				return extractBeadsLaPlaceImgLib(img, oobsFactory, imageSigma, sigma1, sigma2, minPeakValue, minInitialPeakValue, findMax, findMin );
          	}
 	
 	public static <T extends RealType<T>> ArrayList< DifferenceOfGaussianPeak<T> > extractBeadsLaPlaceImgLib( 
@@ -52,8 +50,7 @@ public class DetectionSegmentation
 			float minPeakValue,
 			float minInitialPeakValue,
 			final boolean findMax,
-			final boolean findMin,
-			final int debugLevel )
+			final boolean findMin )
 	{
         //
         // Compute the Sigmas for the gaussian folding
@@ -92,8 +89,7 @@ public class DetectionSegmentation
 		
 		if ( !dog.checkInput() || !dog.process() )
 		{
-    		if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
-    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Cannot compute difference of gaussian for " + dog.getErrorMessage() );
+    		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Cannot compute difference of gaussian for " + dog.getErrorMessage() );
 			
 			return new ArrayList< DifferenceOfGaussianPeak<T> >();
 		}
@@ -121,8 +117,7 @@ public class DetectionSegmentation
 		
 		if ( !spl.checkInput() || !spl.process() )
 		{
-    		if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
-    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Warning! Failed to compute subpixel localization " + spl.getErrorMessage() );
+    		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Warning! Failed to compute subpixel localization " + spl.getErrorMessage() );
 		}
 		
 		//dog.getDoGImage().getDisplay().setMinMax();
@@ -167,14 +162,6 @@ public class DetectionSegmentation
         	}
         }
         
-		if ( debugLevel <= ViewStructure.DEBUG_ALL )
-		{
-	        IOFunctions.println( "number of peaks: " + dog.getPeaks().size() );        
-	        IOFunctions.println( "invalid: " + invalid );
-	        IOFunctions.println( "extrema: " + extrema );
-	        IOFunctions.println( "peak to low: " + peakTooLow );
-		}
-		
 		return peakList;
 		
 	}
