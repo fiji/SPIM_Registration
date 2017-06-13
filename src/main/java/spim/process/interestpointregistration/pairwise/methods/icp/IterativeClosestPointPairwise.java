@@ -96,11 +96,19 @@ public class IterativeClosestPointPairwise< I extends InterestPoint > implements
 		}
 		while ( !converged && ++i < ip.getMaxNumIterations() );
 
-		result.setCandidates( ICP.unwrapPointMatches( icp.getPointMatches() ) );
-		result.setInliers( ICP.unwrapPointMatches( icp.getPointMatches() ), icp.getAverageError() );
-
-		result.setResult( System.currentTimeMillis(), "Found " + icp.getNumPointMatches() + " matches, avg error [px] " + icp.getAverageError() + " after " + i + " iterations" );
-
+		if ( icp.getPointMatches() == null )
+		{
+			result.setCandidates( new ArrayList<>() );
+			result.setInliers( new ArrayList<>(), Double.NaN );
+			result.setResult( System.currentTimeMillis(), "No corresponding points." );
+		}
+		else
+		{
+			result.setCandidates( ICP.unwrapPointMatches( icp.getPointMatches() ) );
+			result.setInliers( ICP.unwrapPointMatches( icp.getPointMatches() ), icp.getAverageError() );
+			result.setResult( System.currentTimeMillis(), "Found " + icp.getNumPointMatches() + " matches, avg error [px] " + icp.getAverageError() + " after " + i + " iterations" );
+		}
+		
 		return result;
 	}
 
