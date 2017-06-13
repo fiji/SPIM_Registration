@@ -51,7 +51,8 @@ import spim.fiji.spimdata.explorer.popup.BDVPopup;
 import spim.fiji.spimdata.explorer.popup.BakeManualTransformationPopup;
 import spim.fiji.spimdata.explorer.popup.BoundingBoxPopup;
 import spim.fiji.spimdata.explorer.popup.DetectInterestPointsPopup;
-import spim.fiji.spimdata.explorer.popup.DisplayViewPopup;
+import spim.fiji.spimdata.explorer.popup.DisplayFusedImagesPopup;
+import spim.fiji.spimdata.explorer.popup.DisplayRawImagesPopup;
 import spim.fiji.spimdata.explorer.popup.ExplorerWindowSetable;
 import spim.fiji.spimdata.explorer.popup.InterestPointsExplorerPopup;
 import spim.fiji.spimdata.explorer.popup.LabelPopUp;
@@ -72,14 +73,11 @@ import spim.process.interestpointregistration.pairwise.constellation.grouping.Gr
 
 public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > > extends FilteredAndGroupedExplorerPanel< AS, X > implements ExplorerWindow< AS, X >
 {
-	
-
 	static
 	{
 		IOFunctions.printIJLog = true;
 	}
 
-	
 	public ViewSetupExplorerPanel( final FilteredAndGroupedExplorer< AS, X > explorer, final AS data, final String xml, final X io, boolean startBDVifHDF5 )
 	{
 		super( explorer, data, xml, io );
@@ -581,8 +579,9 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 
 		popups.add( new LabelPopUp( " Displaying" ) );
 		popups.add( new BDVPopup() );
+		popups.add( new DisplayRawImagesPopup() );
 		popups.add( new BoundingBoxPopup() );
-		popups.add( new DisplayViewPopup() );
+		popups.add( new DisplayFusedImagesPopup() );
 		popups.add( new MaxProjectPopup() );
 		popups.add( new Separator() );
 
