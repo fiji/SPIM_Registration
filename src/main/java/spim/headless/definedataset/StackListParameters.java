@@ -16,6 +16,7 @@ public class StackListParameters
 	public String channels = "1,2";
 	public String illuminations = "0,1";
 	public String angles = "0-315:45";
+	public String tiles = "0,1";
 	public String directory = ".";
 
 	public enum AngleOption { OneAngle, OneFilePerAngle, AllAnglesInOneFile }
@@ -30,6 +31,9 @@ public class StackListParameters
 	public enum IlluminationOption { OneIllumination, OneFilePerIllumination, AllIlluminationsInOneFile }
 	public IlluminationOption multipleIlluminationOption = IlluminationOption.OneIllumination;
 
+	public enum TileOption { OneTile, OneFilePerTile, AllTilesInOneFile }
+	public TileOption multipleTileOption = TileOption.OneTile;
+
 	public void parseProperties( final Properties props )
 	{
 		container = Container.valueOf( props.getProperty( "container", "ArrayImg" ) );
@@ -39,6 +43,8 @@ public class StackListParameters
 		channels = props.getProperty( "channels" );
 
 		illuminations = props.getProperty( "illuminations" );
+
+		tiles = props.getProperty( "tiles" );
 
 		angles = props.getProperty( "angles" );
 
@@ -51,5 +57,7 @@ public class StackListParameters
 		multipleChannelOption = ChannelOption.valueOf( props.getProperty( "has_multiple_channels", "OneChannel" ) );
 
 		multipleIlluminationOption = IlluminationOption.valueOf( props.getProperty( "has_multiple_illuminations", "OneIllumination" ) );
+
+		multipleTileOption = TileOption.valueOf( props.getProperty( "has_multiple_tiles", "OneTile" ) );
 	}
 }

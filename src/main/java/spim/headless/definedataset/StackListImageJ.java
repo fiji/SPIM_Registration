@@ -39,7 +39,7 @@ public class StackListImageJ extends StackList
 		}
 
 		// assemble timepints, viewsetups, missingviews and the imgloader
-		final SequenceDescription sequenceDescription = createSequenceDescription( params.timepoints, params.channels, params.illuminations, params.angles, loadCalibration(new File(file)) );
+		final SequenceDescription sequenceDescription = createSequenceDescription( params.timepoints, params.channels, params.illuminations, params.angles, params.tiles, loadCalibration(new File(file)) );
 		final ImgLoader imgLoader = createAndInitImgLoader( ".", new File( params.directory ), imgFactory, sequenceDescription, params );
 		sequenceDescription.setImgLoader( imgLoader );
 
@@ -66,7 +66,7 @@ public class StackListImageJ extends StackList
 
 	static StackImgLoader createAndInitImgLoader( final String path, final File basePath, final ImgFactory< ? extends NativeType< ? > > imgFactory, final SequenceDescription sequenceDescription, final StackListParameters params )
 	{
-		int hasMultipleAngles = 0, hasMultipleTimePoints = 0, hasMultipleChannels = 0, hasMultipleIlluminations = 0;
+		int hasMultipleAngles = 0, hasMultipleTimePoints = 0, hasMultipleChannels = 0, hasMultipleIlluminations = 0, hasMultipleTiles = 0;
 
 		switch ( params.multipleAngleOption )
 		{
@@ -92,14 +92,20 @@ public class StackListImageJ extends StackList
 			case OneFilePerIllumination: hasMultipleIlluminations = 1; break;
 			case AllIlluminationsInOneFile: hasMultipleIlluminations = 2; break;
 		}
+		switch ( params.multipleTileOption )
+		{
+			case OneTile: hasMultipleTiles = 0; break;
+			case OneFilePerTile: hasMultipleTiles = 1; break;
+			case AllTilesInOneFile: hasMultipleTiles = 2; break;
+		}
 
-		String fileNamePattern = assembleDefaultPattern( hasMultipleTimePoints, hasMultipleChannels, hasMultipleIlluminations, hasMultipleAngles );
+		String fileNamePattern = assembleDefaultPattern( hasMultipleTimePoints, hasMultipleChannels, hasMultipleIlluminations, hasMultipleAngles, hasMultipleTiles );
 
 		// TODO: Tiles are missing
 		return new StackImgLoaderIJ(
 				new File( basePath.getAbsolutePath(), path ),
 				fileNamePattern, imgFactory,
-				hasMultipleTimePoints, hasMultipleChannels, hasMultipleIlluminations, hasMultipleAngles,
+				hasMultipleTimePoints, hasMultipleChannels, hasMultipleIlluminations, hasMultipleAngles, hasMultipleTiles,
 				sequenceDescription );
 	}
 

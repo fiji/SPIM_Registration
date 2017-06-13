@@ -1,5 +1,7 @@
 package spim.headless.definedataset;
 
+import java.io.File;
+
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.SequenceDescription;
@@ -8,7 +10,6 @@ import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.spimdata.SpimData2;
@@ -18,9 +19,6 @@ import spim.fiji.spimdata.imgloaders.StackImgLoader;
 import spim.fiji.spimdata.imgloaders.StackImgLoaderLOCI;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.fiji.spimdata.stitchingresults.StitchingResults;
-
-import java.io.File;
-import java.util.Properties;
 
 /**
  * DataSet definition for LOCI
@@ -40,7 +38,7 @@ public class StackListLOCI extends StackList
 		}
 
 		// assemble timepints, viewsetups, missingviews and the imgloader
-		final SequenceDescription sequenceDescription = createSequenceDescription( params.timepoints, params.channels, params.illuminations, params.angles, loadCalibration(new File(file)) );
+		final SequenceDescription sequenceDescription = createSequenceDescription( params.timepoints, params.channels, params.illuminations, params.angles, params.tiles, loadCalibration(new File(file)) );
 		final ImgLoader imgLoader = createAndInitImgLoader( ".", new File( params.directory ), imgFactory, sequenceDescription, params );
 		sequenceDescription.setImgLoader( imgLoader );
 
@@ -67,7 +65,7 @@ public class StackListLOCI extends StackList
 
 	static StackImgLoader createAndInitImgLoader( final String path, final File basePath, final ImgFactory< ? extends NativeType< ? > > imgFactory, final SequenceDescription sequenceDescription, final StackListParameters params )
 	{
-		int hasMultipleAngles = 0, hasMultipleTimePoints = 0, hasMultipleChannels = 0, hasMultipleIlluminations = 0;
+		int hasMultipleAngles = 0, hasMultipleTimePoints = 0, hasMultipleChannels = 0, hasMultipleIlluminations = 0, hasMultipleTiles = 0;
 
 		switch ( params.multipleAngleOption )
 		{
@@ -93,14 +91,20 @@ public class StackListLOCI extends StackList
 			case OneFilePerIllumination: hasMultipleIlluminations = 1; break;
 			case AllIlluminationsInOneFile: hasMultipleIlluminations = 2; break;
 		}
+		switch ( params.multipleTileOption )
+		{
+			case OneTile: hasMultipleTiles = 0; break;
+			case OneFilePerTile: hasMultipleTiles = 1; break;
+			case AllTilesInOneFile: hasMultipleTiles = 2; break;
+		}
 
-		String fileNamePattern = assembleDefaultPattern( hasMultipleTimePoints, hasMultipleChannels, hasMultipleIlluminations, hasMultipleAngles );
+		String fileNamePattern = assembleDefaultPattern( hasMultipleTimePoints, hasMultipleChannels, hasMultipleIlluminations, hasMultipleAngles, hasMultipleTiles );
 
 		// TODO: Tiles are missing
 		return new StackImgLoaderLOCI(
 				new File( basePath.getAbsolutePath(), path ),
 				fileNamePattern, imgFactory,
-				hasMultipleTimePoints, hasMultipleChannels, hasMultipleIlluminations, hasMultipleAngles,
+				hasMultipleTimePoints, hasMultipleChannels, hasMultipleIlluminations, hasMultipleAngles, hasMultipleTiles,
 				sequenceDescription );
 	}
 
