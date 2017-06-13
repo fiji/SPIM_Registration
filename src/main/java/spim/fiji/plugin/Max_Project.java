@@ -18,6 +18,7 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
+import mpicbg.spim.postprocessing.deconvolution.ExtractPSF;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
@@ -28,7 +29,7 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
-import spim.process.fusion.deconvolution.ExtractPSF;
+import spim.process.psf.PSFCombination;
 
 public class Max_Project implements PlugIn
 {
@@ -88,7 +89,7 @@ public class Max_Project implements PlugIn
 						final RandomAccessibleInterval< T > img = getImage( type, imgLoader, vd, false );
 
 						final FloatProcessor fp =
-								toProcessor( ExtractPSF.computeMaxProjection( img, new ArrayImgFactory< T >(), 2 ) );
+								toProcessor( PSFCombination.computeMaxProjection( img, new ArrayImgFactory< T >(), 2, true ) );
 
 						if ( stack == null )
 							stack = new ImageStack( fp.getWidth(), fp.getHeight() );
