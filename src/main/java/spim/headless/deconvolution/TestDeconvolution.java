@@ -30,7 +30,7 @@ import spim.process.deconvolution.MVDeconInput;
 import spim.process.deconvolution.MVDeconvolution;
 import spim.process.deconvolution.ProcessInputImages;
 import spim.process.deconvolution.ProcessInputImages.ImgDataType;
-import spim.process.fusion.export.DisplayImage;
+import spim.process.export.DisplayImage;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
 import spim.process.fusion.transformed.FusedWeightsRandomAccessibleInterval;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;

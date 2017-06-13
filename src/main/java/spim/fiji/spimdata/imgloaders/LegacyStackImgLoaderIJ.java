@@ -28,7 +28,7 @@ import spim.fiji.datasetmanager.StackListImageJ;
 import spim.fiji.plugin.resave.Generic_Resave_HDF5;
 import spim.fiji.plugin.resave.Generic_Resave_HDF5.Parameters;
 import spim.fiji.plugin.util.GUIHelper;
-import spim.process.fusion.export.ExportSpimData2HDF5;
+import spim.process.export.ExportSpimData2HDF5;
 
 public class LegacyStackImgLoaderIJ extends LegacyStackImgLoader
 {

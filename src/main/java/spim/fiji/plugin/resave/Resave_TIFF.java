@@ -48,7 +48,7 @@ import spim.fiji.spimdata.imgloaders.StackImgLoaderIJ;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
-import spim.process.fusion.export.Save3dTIFF;
+import spim.process.export.Save3dTIFF;
 import bdv.export.ProgressWriter;
 
 public class Resave_TIFF implements PlugIn

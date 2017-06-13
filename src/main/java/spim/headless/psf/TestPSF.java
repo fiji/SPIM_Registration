@@ -15,7 +15,7 @@ import net.imglib2.view.Views;
 import simulation.imgloader.SimulatedBeadsImgLoader;
 import spim.fiji.spimdata.SpimData2;
 import spim.headless.registration.TestRegistration;
-import spim.process.fusion.export.DisplayImage;
+import spim.process.export.DisplayImage;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 import spim.process.psf.PSFCombination;
 import spim.process.psf.PSFExtraction;

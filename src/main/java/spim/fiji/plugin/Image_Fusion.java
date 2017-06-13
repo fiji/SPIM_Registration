@@ -21,14 +21,14 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import spim.process.boundingbox.BoundingBoxBigDataViewer;
 import spim.process.boundingbox.BoundingBoxReorientation;
+import spim.process.export.AppendSpimData2;
+import spim.process.export.DisplayImage;
+import spim.process.export.ExportSpimData2HDF5;
+import spim.process.export.ExportSpimData2TIFF;
+import spim.process.export.ImgExport;
+import spim.process.export.Save3dTIFF;
 import spim.process.fusion.boundingbox.AutomaticBoundingBox;
 import spim.process.fusion.deconvolution.EfficientBayesianBased;
-import spim.process.fusion.export.AppendSpimData2;
-import spim.process.fusion.export.DisplayImage;
-import spim.process.fusion.export.ExportSpimData2HDF5;
-import spim.process.fusion.export.ExportSpimData2TIFF;
-import spim.process.fusion.export.ImgExport;
-import spim.process.fusion.export.Save3dTIFF;
 import spim.process.fusion.weightedavg.WeightedAverageFusion;
 
 public class Image_Fusion implements PlugIn

@@ -17,7 +17,7 @@ import spim.fiji.plugin.boundingbox.BoundingBoxGUI;
 import spim.fiji.plugin.boundingbox.BoundingBoxGUI.ManageListeners;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
-import spim.process.fusion.export.ImgExport;
+import spim.process.export.ImgExport;
 
 public abstract class Fusion
 {

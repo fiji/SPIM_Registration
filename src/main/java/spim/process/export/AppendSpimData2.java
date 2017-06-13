@@ -1,4 +1,4 @@
-package spim.process.fusion.export;
+package spim.process.export;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -27,7 +27,7 @@ import net.imglib2.type.numeric.RealType;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.imgloaders.StackImgLoaderIJ;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
-import spim.process.fusion.export.ExportSpimData2TIFF.FileNamePattern;
+import spim.process.export.ExportSpimData2TIFF.FileNamePattern;
 
 public class AppendSpimData2 implements ImgExport
 {

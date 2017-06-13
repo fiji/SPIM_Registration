@@ -1,4 +1,4 @@
-package spim.process.fusion.export;
+package spim.process.export;
 
 import java.io.File;
 import java.util.ArrayList;

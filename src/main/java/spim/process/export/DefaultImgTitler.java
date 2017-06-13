@@ -1,4 +1,4 @@
-package spim.process.fusion.export;
+package spim.process.export;
 
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewSetup;

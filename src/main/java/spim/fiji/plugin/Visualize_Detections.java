@@ -24,7 +24,7 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
-import spim.process.fusion.export.DisplayImage;
+import spim.process.export.DisplayImage;
 
 public class Visualize_Detections implements PlugIn
 {

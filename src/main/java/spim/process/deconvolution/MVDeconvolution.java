@@ -31,9 +31,9 @@ import spim.Threads;
 import spim.fiji.ImgLib2Temp.Triple;
 import spim.fiji.spimdata.imgloaders.LegacyStackImgLoaderIJ;
 import spim.process.deconvolution.MVDeconFFT.PSFTYPE;
+import spim.process.export.DisplayImage;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;
-import spim.process.fusion.export.DisplayImage;
 
 public class MVDeconvolution
 {

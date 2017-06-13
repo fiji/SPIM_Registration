@@ -35,7 +35,7 @@ import spim.fiji.plugin.Display_View;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
-import spim.process.fusion.export.DisplayImage;
+import spim.process.export.DisplayImage;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
 import spim.process.fusion.transformed.TransformView;
 import spim.process.fusion.transformed.TransformVirtual;
