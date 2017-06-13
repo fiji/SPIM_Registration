@@ -1,11 +1,8 @@
 package spim.fiji.spimdata.explorer.popup;
 
-import static mpicbg.spim.data.generic.sequence.ImgLoaderHints.LOAD_COMPLETELY;
-
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import javax.swing.JMenu;
@@ -14,15 +11,11 @@ import javax.swing.JOptionPane;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 
-import bdv.img.cache.VolatileImgCells.CellCache;
 import ij.gui.GenericDialog;
-import mpicbg.imglib.util.Util;
-import mpicbg.models.AffineModel3D;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.ImgLoader;
-import mpicbg.spim.data.sequence.MultiResolutionImgLoader;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
@@ -42,9 +35,6 @@ import spim.process.fusion.transformed.TransformVirtual;
 import spim.process.fusion.transformed.TransformWeight;
 import spim.process.fusion.weightedavg.ProcessFusion;
 import spim.process.fusion.weightedavg.ProcessVirtual;
-import spim.vecmath.Transform3D;
-import spim.vecmath.Vector3d;
-import spim.vecmath.Vector3f;
 
 public class DisplayViewPopup extends JMenu implements ExplorerWindowSetable
 {
