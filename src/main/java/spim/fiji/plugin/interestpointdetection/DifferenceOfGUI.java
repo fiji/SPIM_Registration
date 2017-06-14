@@ -176,7 +176,7 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 			return true;
 	}
 
-	/**
+	/*
 	 * Figure out which view to use for the interactive preview
 	 * 
 	 * @param dialogHeader

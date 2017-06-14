@@ -9,7 +9,7 @@ public interface MultiViewDatasetDefinition
 	 * Defines the title under which it will be displayed in the list
 	 * of available multi-view dataset definitions
 	 * 
-	 * @return
+	 * @return the title
 	 */
 	public String getTitle();
 	

@@ -6,7 +6,7 @@ import mpicbg.spim.data.sequence.ViewId;
 
 public interface GlobalGUI
 {
-	/**
+	/*
 	 * If the registration consists of multiple, completely indepedents sets of views, split them up here for later
 	 * 
 	 * @param viewIds

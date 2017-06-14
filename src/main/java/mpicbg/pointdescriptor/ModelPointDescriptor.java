@@ -25,6 +25,9 @@ public class ModelPointDescriptor< P extends Point > extends AbstractPointDescri
 	 * @param basisPoint - the center {@link Point}
 	 * @param orderedNearestNeighboringPoints - the {@link Point}s used to create the {@link ModelPointDescriptor}
 	 * @param model - the {@link Model} that should be used for matching, it is cloned upon initialization
+	 * @param similarityMeasure - which similarity measure
+	 * @param matcher - which matcher to use
+	 * @param <P> - something extending point
 	 * @throws NoSuitablePointsException if the dimensionality of the {@link Point}s does not fit the {@link Model} or the amount of {@link Point}s for the {@link Model} is too low
 	 */
 	public ModelPointDescriptor( final P basisPoint, final ArrayList<P> orderedNearestNeighboringPoints, final TranslationInvariantModel<?> model, 

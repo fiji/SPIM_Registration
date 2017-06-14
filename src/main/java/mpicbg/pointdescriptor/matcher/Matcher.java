@@ -10,6 +10,8 @@ import mpicbg.pointdescriptor.LinkedPoint;
 public interface Matcher
 {
 	/**
+	 * @param pd1 - pointdescriptor 1
+	 * @param pd2 - pointdescriptor 2
 	 * @return An {@link ArrayList} of corresponding set of {@link PointMatch}es which contain {@link LinkedPoint}s linking to the actual {@link Point} instance they are created from
 	 */
 	public ArrayList<ArrayList<PointMatch>> createCandidates( AbstractPointDescriptor<?, ?> pd1, AbstractPointDescriptor<?, ?> pd2 );
@@ -18,6 +20,7 @@ public interface Matcher
 	 * Computes a normalization factor for the case that the different set of {@link PointMatch}es are not comparable 
 	 * (for example number of neighbors used is not constant)
 	 * 
+	 * @param fitResult - potential data needed to compute it
 	 * @param matches the set of {@link PointMatch}es
 	 * @return The normalization factor for a certain set of {@link PointMatch}es 
 	 */

@@ -182,7 +182,7 @@ public class Duplicate_Transformation implements PlugIn
 		gd.addChoice( "Duplicate_which_transformations", transformationChoice, transformationChoice[ defaultTransformationChoice ] );
 	}
 
-	/**
+	/*
 	 * 
 	 * @param gd
 	 * @return -1 means invalid/cancelled, 0 means all, &gt;0 means how many

@@ -263,13 +263,13 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		return true;
 	}
 
-	/**
+	/*
 	 * Instantiate the {@link ImgLoader}
 	 * 
 	 * @param path - The path relative to the basepath
 	 * @param basePath - The base path, where XML will be and the image stack are
 	 * @param sequenceDescription 
-	 * @return
+	 * @return StackImgLoader
 	 */
 	protected abstract StackImgLoader createAndInitImgLoader( final String path, final File basePath, final ImgFactory< ? extends NativeType< ? > > imgFactory, SequenceDescription sequenceDescription );
 	
@@ -324,7 +324,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		return spimData;
 	}
 
-	/**
+	/*
 	 * Assembles the {@link ViewRegistration} object consisting of a list of {@link ViewRegistration}s for all {@link ViewDescription}s that are present
 	 * 
 	 * @param viewDescriptionList
@@ -374,7 +374,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		return new ViewRegistrations( viewRegistrationList );
 	}
 
-	/**
+	/*
 	 * Assembles the list of missing view instances, i.e. {@link ViewSetup} that
 	 * are missing at certain {@link TimePoint}s.
 	 * 
@@ -420,7 +420,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		return new MissingViews( missingViews );
 	}
 
-	/**
+	/*
 	 * Creates the List of {@link ViewSetup} for the {@link SpimData} object.
 	 * The {@link ViewSetup} are defined independent of the {@link TimePoint},
 	 * each {@link TimePoint} should have the same {@link ViewSetup}s. The {@link MissingViews}
@@ -465,7 +465,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		return viewSetups;
 	}
 
-	/**
+	/*
 	 * Creates the {@link TimePoints} for the {@link SpimData} object
 	 */
 	protected TimePoints createTimePoints()
@@ -894,7 +894,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		return stringList;
 	}
 	
-	/**
+	/*
 	 * Assemble the filename for the corresponding file based on the indices for time, channel, illumination, angle and tile
 	 * 
 	 * If the fileNamePattern is separated by ';', it will return multiple solutions for each filenamepattern
@@ -913,7 +913,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 				numDigitsTimepoints, numDigitsChannels, numDigitsIlluminations, numDigitsAngles, numDigitsTiles )[ 0 ];
 	}
 
-	/**
+	/*
 	 * Assemble the filename for the corresponding file based on the indices for time, channel, illumination and angle and tile
 	 * 
 	 * If the fileNamePattern is separated by ';', it will return multiple solutions for each filenamepattern
@@ -972,7 +972,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		return s;
 	}
 
-	/**
+	/*
 	 * populates the fields calX, calY, calZ from the first file of the series
 	 * 
 	 * @return - true if successful
@@ -1011,7 +1011,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		return false;
 	}
 
-	/**
+	/*
 	 * populates the fields calX, calY, calZ from the first file of the series
 	 * 
 	 * @return - true if successful
@@ -1048,7 +1048,7 @@ public abstract class StackList implements MultiViewDatasetDefinition
 		return true;
 	}
 
-	/**
+	/*
 	 * Loads the calibration stored in a specific file and closes it afterwards. Depends on the type of opener that is used.
 	 * 
 	 * @param file

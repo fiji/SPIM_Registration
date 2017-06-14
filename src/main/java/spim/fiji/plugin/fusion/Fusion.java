@@ -31,12 +31,12 @@ public abstract class Fusion
 	public static boolean defaultUseContentBased = false;
 	protected boolean useContentBased = false;
 
-	/**
+	/*
 	 * Maps from an old Viewsetup to a new ViewSetup that is created by the fusion
 	 */
 	protected Map< ViewSetup, ViewSetup > newViewsetups = null;
 
-	/**
+	/*
 	 * which ViewId to process, set in queryParameters
 	 */
 	final protected List< ViewId > viewIdsToProcess;
@@ -47,7 +47,7 @@ public abstract class Fusion
 	final protected SpimData2 spimData;
 	final int maxNumViews;
 
-	/**
+	/*
 	 * @param spimData
 	 * @param viewIdsToProcess - which viewIds to fuse
 	 */
@@ -86,7 +86,7 @@ public abstract class Fusion
 
 	public int getInterpolation() { return interpolation; }
 
-	/**
+	/*
 	 * Fuses and saves/displays
 	 * 
 	 * @param bb
@@ -94,7 +94,7 @@ public abstract class Fusion
 	 */
 	public abstract boolean fuseData( final BoundingBoxGUI bb, final ImgExport exporter );
 
-	/**
+	/*
 	 * @return - which timepoints will be processed, this is maybe inquired by the exporter
 	 * if it needs to assemble a new XML dataset or append to the current XML dataset
 	 */
@@ -103,7 +103,7 @@ public abstract class Fusion
 		return timepointsToProcess;
 	}
 
-	/**
+	/*
 	 * @return - a sorted List of ViewSetup(s) that are created by this fusion, this maybe requested
 	 * if the exporter creates a new XML dataset or appends to an existing XML dataset
 	 */
@@ -116,7 +116,7 @@ public abstract class Fusion
 		return newSetups;
 	}
 	
-	/**
+	/*
 	 * Set up the list of new viewsetups that are created with this fusion. This maybe required
 	 * if the exporter needs to assemble a new XML dataset or append to the current XML dataset.
 	 * 
@@ -132,46 +132,46 @@ public abstract class Fusion
 	public abstract boolean supports16BitUnsigned();
 	public abstract boolean supportsDownsampling();
 	
-	/**
+	/*
 	 * compress the bounding box dialog as much as possible to let more space for extra parameters
 	 * @return
 	 */
 	public abstract boolean compressBoundingBoxDialog();
 	
-	/**
+	/*
 	 * Query the necessary parameters for the fusion (new dialog has to be made)
 	 * 
 	 * @return
 	 */
 	public abstract boolean queryParameters();
 	
-	/**
+	/*
 	 * Query additional parameters within the bounding box dialog
 	 */
 	public abstract void queryAdditionalParameters( final GenericDialog gd );
 	
-	/**
+	/*
 	 * In case there are some other Listener upon whom the memory needs to be recomputed in the Manual Bounding Box.
 	 * 
 	 * @param m
 	 */
 	public void registerAdditionalListeners( final ManageListeners m ) {};
 
-	/**
+	/*
 	 * Parse the additional parameters added before within the bounding box dialog
 	 * @param gd
 	 * @return
 	 */
 	public abstract boolean parseAdditionalParameters( final GenericDialog gd );
 
-	/**
+	/*
 	 * @param spimData
 	 * @param viewIdsToProcess- which viewIds to fuse
 	 * @return - a new instance without any special properties
 	 */
 	public abstract Fusion newInstance( final SpimData2 spimData, final List< ViewId > viewIdsToProcess );
 	
-	/**
+	/*
 	 * @return - to be displayed in the generic dialog
 	 */
 	public abstract String getDescription();
@@ -198,7 +198,7 @@ public abstract class Fusion
 		return avgSize / countImgs;
 	}
 
-	/**
+	/*
 	 * @return - max num views per fused image
 	 */
 	protected int computeMaxNumViews()

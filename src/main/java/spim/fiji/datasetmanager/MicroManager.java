@@ -110,13 +110,11 @@ public class MicroManager implements MultiViewDatasetDefinition
 		return spimData;
 	}
 
-	/**
+	/*
 	 * Creates the List of {@link ViewSetup} for the {@link SpimData} object.
 	 * The {@link ViewSetup} are defined independent of the {@link TimePoint},
 	 * each {@link TimePoint} should have the same {@link ViewSetup}s. The {@link MissingViews}
 	 * class defines if some of them are missing for some of the {@link TimePoint}s
-	 *
-	 * @return
 	 */
 	protected ArrayList< ViewSetup > createViewSetups( final MultipageTiffReader meta )
 	{
@@ -159,7 +157,7 @@ public class MicroManager implements MultiViewDatasetDefinition
 		return viewSetups;
 	}
 
-	/**
+	/*
 	 * Creates the {@link TimePoints} for the {@link SpimData} object
 	 */
 	protected TimePoints createTimePoints( MultipageTiffReader meta )

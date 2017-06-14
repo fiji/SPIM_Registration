@@ -9,14 +9,14 @@ import spim.process.interestpointregistration.pairwise.constellation.grouping.Gr
 
 public interface PairwiseGUI
 {
-	/**
+	/*
 	 * adds the questions this registration wants to ask
 	 * 
 	 * @param gd
 	 */
 	public void addQuery( final GenericDialog gd );
 	
-	/**
+	/*
 	 * queries the questions asked before
 	 * 
 	 * @param gd

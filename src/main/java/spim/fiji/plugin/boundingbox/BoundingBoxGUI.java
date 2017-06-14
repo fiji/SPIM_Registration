@@ -33,13 +33,13 @@ public abstract class BoundingBoxGUI extends BoundingBox
 	protected int imgtype = 1;
 	*/
 
-	/**
+	/*
 	 * which viewIds to process, set in queryParameters
 	 */
 	protected final List< ViewId > viewIdsToProcess;
 	protected final SpimData2 spimData;
 
-	/**
+	/*
 	 * @param spimData
 	 * @param viewIdsToProcess - which view ids to fuse
 	 */
@@ -190,7 +190,7 @@ public abstract class BoundingBoxGUI extends BoundingBox
 	protected abstract boolean setUpDefaultValues( final int[] rangeMin, final int rangeMax[] );
 
 	/**
-	 * @param spimData
+	 * @param spimData - the spimdata
 	 * @param viewIdsToProcess - which view ids to fuse
 	 * @return - a new instance without any special properties
 	 */

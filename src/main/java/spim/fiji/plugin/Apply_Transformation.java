@@ -104,7 +104,7 @@ public class Apply_Transformation implements PlugIn
 
 	}
 
-	/**
+	/*
 	 * @param data
 	 * @param viewIds
 	 * @return - transformation model and explanation for each viewid, also sets global variables applyTo and minResolution
@@ -791,7 +791,7 @@ public class Apply_Transformation implements PlugIn
 		r.identity();
 	}
 
-	/**
+	/*
 	 * Should be called before registration to make sure all metadata is right
 	 * 
 	 * @return - minimal resolution in all dimensions
@@ -925,7 +925,7 @@ public class Apply_Transformation implements PlugIn
 		}
 	}
 
-	/**
+	/*
 	 * @param args
 	 */
 	public static void main( final String[] args )

@@ -31,6 +31,7 @@ public class BoundingBox implements Interval, Comparable< BoundingBox >
 	public int[] getMax() { return max; }
 
 	/**
+	 * @param downsampling - how much downsampling (TODO: remove)
 	 * @return - the final dimensions including downsampling of this bounding box (to instantiate an img)
 	 */
 	public long[] getDimensions( final int downsampling )

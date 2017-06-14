@@ -466,7 +466,7 @@ public class DOM
 	 * @param vY - number of pixels in y
 	 * @param vZ - number of pixels in z
 	 * @param randomAccess - randomAccess on the integral image
-	 * @return
+	 * @return the sum
 	 */
 	final public static long computeSum2( final int vX, final int vY, final int vZ, final LocalizableByDimCursor< LongType > randomAccess )
 	{
@@ -506,7 +506,7 @@ public class DOM
 	 * @param vY - number of pixels in y
 	 * @param vZ - number of pixels in z
 	 * @param randomAccess - randomAccess on the integral image
-	 * @return
+	 * @return - the sum
 	 */
 	final public static long computeSum( final int fromX, final int fromY, final int fromZ, final int vX, final int vY, final int vZ, final LocalizableByDimCursor< LongType > randomAccess )
 	{

@@ -137,14 +137,14 @@ public abstract class AbstractPointDescriptor< P extends Point, F extends Abstra
 	 * Computes a fit between this these {@link PointMatch}es, this method is called by the {@link Matcher}
 	 * 
 	 * @param matches - The {@link Point}s to match
-	 *
+	 * @return - a transformation
 	*/
-//	public abstract CoordinateTransform fit( final ArrayList<PointMatch> pointMatch );
 	public abstract Object fitMatches( final ArrayList<PointMatch> matches );
-	
+//	public abstract CoordinateTransform fit( final ArrayList<PointMatch> pointMatch );
+
 	/**
 	 * Tells if the descriptormatching should reset the world coordinates after the matching
-	 * @return
+	 * @return if reseting world coordinates
 	 */
 	public abstract boolean resetWorldCoordinatesAfterMatching();
 
@@ -161,7 +161,7 @@ public abstract class AbstractPointDescriptor< P extends Point, F extends Abstra
 
 	/**
 	 * Sets the {@link SimilarityMeasure} object that is used to compute how similar two descriptors are
-	 * @param similarityMeasure
+	 * @param similarityMeasure - which similarity measure
 	 */
 	public void setSimilarityMeasure( final SimilarityMeasure similarityMeasure) { this.similarityMeasure = similarityMeasure; }
 	
@@ -185,10 +185,9 @@ public abstract class AbstractPointDescriptor< P extends Point, F extends Abstra
 	 */
 	public Point getDescriptorPoint( final int index ) { return descriptorPoints.get( index ); }
 	
-	/**
+	/*
 	 * The points forming the {@link AbstractPointDescriptor} relative to the basis point
 	 */
-//	 * @return - Arraylist< P >
   	public ArrayList< P > getOrderedNearestNeighboringPoints(){ return neighbors; }
 
   	/**

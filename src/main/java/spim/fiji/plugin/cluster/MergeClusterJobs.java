@@ -27,9 +27,9 @@ public class MergeClusterJobs
 	 * This performs a merge of attributes of the different xml's only assuming the same instances of viewsetups and timepoints
 	 * are present in all instances. It simply fills up the first one that can be written again. 
 	 * 
-	 * @param xmls
+	 * @param xmls - xmls
 	 * @param output - where to save the merged xml
-	 * @throws SpimDataException
+	 * @throws SpimDataException - when failing
 	 */
 	public static void merge( final List< File > xmls, final File output ) throws SpimDataException
 	{

@@ -18,7 +18,7 @@ public abstract class InterestPointDetectionGUI
 	final SpimData2 spimData;
 
 	/**
-	 * @param spimData
+	 * @aram spimData
 	 * @param viewIdsToProcess - which view id's to segment
 	 */
 	public InterestPointDetectionGUI(
@@ -31,14 +31,14 @@ public abstract class InterestPointDetectionGUI
 
 	public List< ViewId > getViewIdsToProcess() { return viewIdsToProcess; }
 
-	/**
+	/*
 	 * Perform the interestpoint detection for one timepoint
 	 * 
 	 * @return
 	 */
 	public abstract HashMap< ViewId, List< InterestPoint > > findInterestPoints( final TimePoint tp );
 	
-	/**
+	/*
 	 * Query the necessary parameters for the interestpoint detection
 	 * 
 	 * @param defineAnisotropy - whether to use/query for anisotropy in resolution of the data
@@ -51,7 +51,7 @@ public abstract class InterestPointDetectionGUI
 			final boolean setMinMax,
 			final boolean limitDetections );
 
-	/**
+	/*
 	 * @param spimData
 	 * @param viewIdsToProcess - which view id's to segment
 	 * @return - a new instance without any special properties
@@ -60,12 +60,12 @@ public abstract class InterestPointDetectionGUI
 			final SpimData2 spimData,
 			final List< ViewId > viewIdsToProcess );
 	
-	/**
+	/*
 	 * @return - to be displayed in the generic dialog
 	 */
 	public abstract String getDescription();
 	
-	/**
+	/*
 	 * @return - stored in the XML so that it is reproducible how the points were segmented
 	 */
 	public abstract String getParameters();

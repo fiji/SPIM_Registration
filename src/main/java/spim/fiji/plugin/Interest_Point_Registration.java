@@ -716,7 +716,7 @@ public class Interest_Point_Registration implements PlugIn
 		return gp;
 	}
 
-	/**
+	/*
 	 * Assign the right fixed views and reference views for this type of optimization
 	 *
 	 * @param sd - the sequencedescription to fetch the image dimensions of views
@@ -1040,7 +1040,7 @@ public class Interest_Point_Registration implements PlugIn
 		return tps;
 	}
 
-	/**
+	/*
 	 * Goes through all Views and checks all available labels for interest point detection
 	 * 
 	 * @param spimData

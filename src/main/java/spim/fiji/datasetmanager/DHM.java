@@ -3,7 +3,7 @@ package spim.fiji.datasetmanager;
 import java.io.File;
 import java.util.ArrayList;
 
-import mpicbg.spim.data.SpimData;
+import fiji.util.gui.GenericDialogPlus;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
@@ -24,7 +24,6 @@ import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.imgloaders.DHMImgLoader;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.fiji.spimdata.stitchingresults.StitchingResults;
-import fiji.util.gui.GenericDialogPlus;
 
 public class DHM implements MultiViewDatasetDefinition
 {
@@ -101,7 +100,7 @@ public class DHM implements MultiViewDatasetDefinition
 		return spimData;
 	}
 
-	/**
+	/*
 	 * Creates the {@link TimePoints} for the {@link SpimData} object
 	 */
 	protected TimePoints createTimePoints( final DHMMetaData meta )
@@ -114,7 +113,7 @@ public class DHM implements MultiViewDatasetDefinition
 		return new TimePoints( timepoints );
 	}
 
-	/**
+	/*
 	 * Creates the List of {@link ViewSetup} for the {@link SpimData} object.
 	 * The {@link ViewSetup} are defined independent of the {@link TimePoint},
 	 * each {@link TimePoint} should have the same {@link ViewSetup}s. The {@link MissingViews}

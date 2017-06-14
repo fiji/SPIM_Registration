@@ -25,7 +25,7 @@ public class SelectTimepointEntry extends AbstractAction
 		this.data = data;
 	}
 
-	/**
+	/*
 	 * This method is called by the GraphFrame upon initialization
 	 * 
 	 * @param chartPanel

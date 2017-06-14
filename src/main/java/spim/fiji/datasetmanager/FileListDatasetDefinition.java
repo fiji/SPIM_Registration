@@ -566,9 +566,9 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 	/**
 	 * Assembles the {@link ViewRegistration} object consisting of a list of {@link ViewRegistration}s for all {@link ViewDescription}s that are present
 	 * 
-	 * @param viewDescriptionList
+	 * @param viewDescriptionList - map
 	 * @param minResolution - the smallest resolution in any dimension (distance between two pixels in the output image will be that wide)
-	 * @return
+	 * @return the viewregistrations
 	 */
 	protected static ViewRegistrations createViewRegistrations( final Map< ViewId, ViewDescription > viewDescriptionList, final double minResolution )
 	{

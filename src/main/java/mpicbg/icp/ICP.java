@@ -22,7 +22,7 @@ import spim.process.interestpointregistration.pairwise.LinkedInterestPoint;
  *
  * @author Stephan Preibisch
  *
- * @param <P>
+ * @param <P> - something extening point
  */
 public class ICP < P extends RealLocalizable >
 {
@@ -105,8 +105,9 @@ public class ICP < P extends RealLocalizable >
 	 * 
 	 * @param lastModel - The last {@link Model} that maps the target.local coordinates to the reference.world coordinates, used to find the corresponding points 
 	 * @param newModel - The {@link Model} that maps the target.local coordinates to the reference.world coordinates, will be fitted to the new points
-	 * @throws NotEnoughDataPointsException
-	 * @throws IllDefinedDataPointsException
+	 * @throws NotEnoughDataPointsException - if there are not enough points
+	 * @throws IllDefinedDataPointsException - if the points are ill-defined
+	 * @throws NoSuitablePointsException - if points are somehow wrong
 	 */
 	public void runICPIteration( final Model<?> lastModel, final Model<?> newModel ) throws NotEnoughDataPointsException, IllDefinedDataPointsException, NoSuitablePointsException
 	{
@@ -139,8 +140,8 @@ public class ICP < P extends RealLocalizable >
 	 * 
 	 * @param matches - The {@link List} of apriori known {@link PointMatch}es
 	 * @param model - The {@link Model} to use
-	 * @throws NotEnoughDataPointsException
-	 * @throws IllDefinedDataPointsException
+	 * @throws NotEnoughDataPointsException - if there are not enough points
+	 * @throws IllDefinedDataPointsException - if the points are ill-defined
 	 */
 	public void estimateIntialModel( final List< PointMatchGeneric< LinkedInterestPoint< P > > > matches, final Model<?> model ) throws NotEnoughDataPointsException, IllDefinedDataPointsException
 	{
@@ -163,6 +164,8 @@ public class ICP < P extends RealLocalizable >
 
 	/**
 	 * Return the {@link List} of {@link PointMatch}es (target, reference) of the last {@link ICP} iteration
+	 * @param pointMatches - the matches
+	 * @param <P> - something that extens point
 	 * @return - {@link List} of {@link PointMatch}es
 	 */
 	public static < P extends Point > List< PointMatchGeneric< P > > unwrapPointMatches( final List< ? extends PointMatchGeneric< ? extends LinkedInterestPoint< P > > > pointMatches )
@@ -242,6 +245,7 @@ public class ICP < P extends RealLocalizable >
 	/**
 	 * Detects ambigous (and duplicate) {@link PointMatch}es, i.e. if a {@link Point} corresponds with more than one other {@link Point}
 	 * @param matches - the {@link List} of {@link PointMatch}es
+	 * @param <P> - something extening point
 	 * @return - the {@link ArrayList} containing the removed ambigous or duplicate {@link PointMatch}es 
 	 */
 	public static < P extends Point & RealLocalizable > ArrayList<PointMatch> removeAmbigousMatches( final List<PointMatchGeneric< P > > matches )
@@ -286,6 +290,7 @@ public class ICP < P extends RealLocalizable >
 	 * @param pointTarget - one {@link Point}
 	 * @param pointReference - the other {@link Point}
 	 * @param list - the {@link List} of {@link PointMatch}es (target, reference)
+	 * @param <P> - something extening point
 	 * @return - an {@link ArrayList} of indices which should be removed due to duplicate or ambigous occurence
 	 */
 	protected static < P extends Point & RealLocalizable > ArrayList<Integer> getOccurences( final Point pointTarget, final Point pointReference, List< PointMatchGeneric< P > > list )

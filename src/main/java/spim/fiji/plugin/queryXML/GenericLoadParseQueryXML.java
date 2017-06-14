@@ -43,12 +43,6 @@ import spim.fiji.spimdata.NamePattern;
  * Interface for interactive parsing of spimdata XMLs
  * 
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
- *
- * @param <AS>
- * @param <S>
- * @param <V>
- * @param <D>
- * @param <L>
  */
 public class GenericLoadParseQueryXML<
 		AS extends AbstractSpimData< S >,
@@ -117,7 +111,7 @@ public class GenericLoadParseQueryXML<
 	protected GenericDialog gd = null;
 	protected boolean returnfalse = false;
 
-	/**
+	/*
 	 * Constructor for the class needs an appropriate IO module
 	 * @param io
 	 */
@@ -175,7 +169,7 @@ public class GenericLoadParseQueryXML<
 		return viewSetups;
 	}
 
-	/**
+	/*
 	 * Sets the comparator used to sort the Attributes in a specific order for display, can be null
 	 * Note that Timepoint (XmlKeys.TIMEPOINTS_TIMEPOINT_TAG) is always the last entry no matter what as it is special
 	 * @param comparator
@@ -202,7 +196,7 @@ public class GenericLoadParseQueryXML<
 	public GenericDialog getGenericDialog() { return gd; }
 	public void setReturnFalse( final boolean value ) { this.returnfalse = value; }
 
-	/**
+	/*
 	 * Asks the user for a valid XML (real time parsing)
 	 * 
 	 * @param specifyAttributes - set of attributes the user should be asked if he/she wants to select a subset of them

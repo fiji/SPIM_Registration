@@ -11,7 +11,6 @@ import bdv.BigDataViewer;
 import bdv.viewer.ViewerOptions;
 import fiji.util.gui.GenericDialogPlus;
 import ij.gui.GenericDialog;
-import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.registration.ViewTransform;
@@ -137,12 +136,12 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		return spimData;
 	}
 	
-	/**
+	/*
 	 * Assembles the {@link ViewRegistration} object consisting of a list of {@link ViewRegistration}s for all {@link ViewDescription}s that are present
 	 * 
 	 * @param viewDescriptionList
 	 * @param minResolution - the smallest resolution in any dimension (distance between two pixels in the output image will be that wide)
-	 * @return
+	 * @return the viewregistrations
 	 */
 	protected static ViewRegistrations createViewRegistrations( final Map< ViewId, ViewDescription > viewDescriptionList, final double minResolution )
 	{
@@ -187,13 +186,12 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		return new ViewRegistrations( viewRegistrationList );
 	}
 
-	/**
+	/*
 	 * Creates the List of {@link ViewSetup} for the {@link SpimData} object.
 	 * The {@link ViewSetup} are defined independent of the {@link TimePoint},
 	 * each {@link TimePoint} should have the same {@link ViewSetup}s. The {@link MissingViews}
 	 * class defines if some of them are missing for some of the {@link TimePoint}s
 	 *
-	 * @return
 	 */
 	protected ArrayList< ViewSetup > createViewSetups( final LightSheetZ1MetaData meta )
 	{
@@ -253,7 +251,7 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		return viewSetups;
 	}
 
-	/**
+	/*
 	 * Creates the {@link TimePoints} for the {@link SpimData} object
 	 */
 	protected TimePoints createTimePoints( final LightSheetZ1MetaData meta )

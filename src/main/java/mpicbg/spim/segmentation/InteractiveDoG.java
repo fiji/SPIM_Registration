@@ -335,7 +335,7 @@ public class InteractiveDoG implements PlugIn
 	 * @param source - the source image, a {@link Image} which is a copy of the {@link ImagePlus}
 	 * @param rectangle - the area of interest
 	 * @param extraSize - the extra size around so that detections at the border of the roi are not messed up
-	 * @return
+	 * @return the extracted image
 	 */
 	protected Image<FloatType> extractImage( final FloatImagePlus< net.imglib2.type.numeric.real.FloatType > source, final Rectangle rectangle, final int extraSize )
 	{
@@ -384,6 +384,8 @@ public class InteractiveDoG implements PlugIn
 	 * Normalize and make a copy of the {@link ImagePlus} into an {@link Image}&gt;FloatType&lt; for faster access when copying the slices
 	 * 
 	 * @param imp - the {@link ImagePlus} input image
+	 * @param channel - channel
+	 * @param timepoint - timepoint
 	 * @return - the normalized copy [0...1]
 	 */
 	public static FloatImagePlus< net.imglib2.type.numeric.real.FloatType > convertToFloat( final ImagePlus imp, int channel, int timepoint )

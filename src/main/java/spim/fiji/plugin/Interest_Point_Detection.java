@@ -64,7 +64,7 @@ public class Interest_Point_Detection implements PlugIn
 				true );
 	}
 
-	/**
+	/*
 	 * Does just the detection, no saving
 	 * 
 	 * @param data
