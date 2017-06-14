@@ -41,8 +41,8 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 
 	public static int[] quickDownsampling = new int[]{ 1, 2, 3, 4, 8, 16 };
 	public static int defaultCache = 1;
-	public static int[] cellDim = new int[]{ 10, 10, 1 };
-	public static int maxCacheSize = 10000;
+	public static int[] cellDim = new int[]{ 10, 10, 10 };
+	public static int maxCacheSize = 1000;
 
 	public static double defaultDownsampling = 2.0;
 	public static int defaultBB = 0;
