@@ -43,7 +43,8 @@ public class PSFCombination
 	 * @param imgs - the input images
 	 * @param imgFactory - the image factory for the average image
 	 * @param max - if true, use the maximal size of all inputs, otherwise the minimal size of all inputs
-	 * @return
+	 * @param <T> pixel type
+	 * @return averaged image
 	 */
 	public static < T extends RealType< T > > Img< T > computeAverageImage(
 			final Collection< ? extends RandomAccessibleInterval< T > > imgs,
@@ -105,6 +106,7 @@ public class PSFCombination
 	}
 
 	/**
+	 * @param imgs image dimensions
 	 * @return - maximal dimensions of the transformed PSFs
 	 */
 	public static long[] computeMaxDimTransformedPSF( final Collection< ? extends Interval > imgs )
@@ -123,6 +125,7 @@ public class PSFCombination
 	}
 
 	/**
+	 * @param imgs image dimensions
 	 * @return - maximal dimensions of the transformed PSFs
 	 */
 	public static long[] computeMinDimTransformedPSF( final Collection< ? extends Interval > imgs )
@@ -146,8 +149,10 @@ public class PSFCombination
 	/**
 	 * Make image the same size as defined, center it
 	 * 
-	 * @param img
-	 * @return
+	 * @param img input image
+	 * @param sizeIn the size we want
+	 * @param <T> pixel type
+	 * @return centered image of same type
 	 */
 	public static < T extends RealType< T > > Img< T > makeSameSize( final Img< T > img, final long[] sizeIn )
 	{
@@ -187,6 +192,7 @@ public class PSFCombination
 	 * @param avgPSF - the average psf
 	 * @param minDim - along which dimension to project, if set to &lt;0, the smallest dimension will be chosen
 	 * @param max - if true max projection, else min projection
+	 * @param <S> pixel type
 	 * @return - the averaged, projected PSF
 	 */
 	public static < S extends RealType< S > > Img< S > computeProjection( final Img< S > avgPSF, final int minDim, final boolean max )
@@ -278,8 +284,9 @@ public class PSFCombination
 	 * Returns the bounding box so that all images can fit in there
 	 * or null if input is null or input.size is 0
 	 * 
-	 * @param images
-	 * @return
+	 * @param images input images
+	 * @param <T> pixel type
+	 * @return largest size in every dimension or null
 	 */
 	public static < T extends Type< T > > long[] commonSize( final List< Img< T > > images )
 	{

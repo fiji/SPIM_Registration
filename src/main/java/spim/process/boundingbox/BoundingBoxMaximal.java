@@ -109,10 +109,11 @@ public class BoundingBoxMaximal implements BoundingBoxEstimation
 	}
 
 	/**
-	 * @param spimData
-	 * @param viewIdsToProcess
-	 * @param minBB
-	 * @param maxBB
+	 * @param viewIds - view ids to process
+	 * @param dimensions - map vid to dimensions
+	 * @param registrations - map vid to registrations
+	 * @param minBB - lower bounds to fill
+	 * @param maxBB - upper bounds to fill
 	 */
 	public static void computeMaxBoundingBoxDimensions(
 			final Collection< ViewId > viewIds,

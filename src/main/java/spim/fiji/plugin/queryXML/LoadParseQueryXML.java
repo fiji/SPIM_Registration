@@ -45,10 +45,12 @@ public class LoadParseQueryXML extends GenericLoadParseQueryXML< SpimData2, Sequ
 	
 	/**
 	 * Asks the user for a valid XML (real time parsing)
-	 * 
+	 * @param additionalTitle - additional tile
+	 * @param query - the query
 	 * @param askForAngles - ask the user if he/she wants to select a subset of angles, otherwise all angles are selected
 	 * @param askForChannels - ask the user if he/she wants to select a subset of channels, otherwise all channels are selected
 	 * @param askForIllum - ask the user if he/she wants to select a subset of illuminations, otherwise all illuminations are selected
+	 * @param askForTiles - ask the user if he/she wants to select a subset of tiles, otherwise all tiles are selected
 	 * @param askForTimepoints - ask the user if he/she wants to select a subset of timepoints, otherwise all timepoints are selected
 	 * @return null if cancelled or timepointlistsize = 0
 	 */

@@ -536,6 +536,7 @@ public class AxisAngle4f implements java.io.Serializable, Cloneable
 	 *            the axis-angle to be compared to this axis-angle
 	 * @param epsilon
 	 *            the threshold value
+	 * @return true or false
 	 */
 	public boolean epsilonEquals( AxisAngle4f a1, float epsilon )
 	{

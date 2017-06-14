@@ -46,7 +46,7 @@ package spim.vecmath;
  * NEGATIVE_DETERMINANT, together. There are public methods available to get the
  * ORed type of the transformation, the sign of the determinant, and the least
  * general matrix type. The matrix type flags are defined as follows:
- * <P>
+
  * <UL>
  * <LI>ZERO - zero matrix. All of the elements in the matrix have the value 0.</LI>
  * <LI>IDENTITY - identity matrix. A matrix with ones on its main diagonal and
@@ -67,7 +67,7 @@ package spim.vecmath;
  * parallel, but the angle between intersecting lines can change.</LI>
  * </UL>
  * A matrix is also classified by the sign of its determinant:
- * <P>
+
  * <UL>
  * <LI>NEGATIVE_DETERMINANT - this matrix has a negative determinant. An orthogonal
  * matrix with a positive determinant is a rotation matrix. An orthogonal matrix
@@ -4582,6 +4582,7 @@ public class Transform3D
 	 *            the transform to be compared to this transform
 	 * @param epsilon
 	 *            the threshold value
+	 * @return true or false
 	 */
 	public boolean epsilonEquals( Transform3D t1, double epsilon )
 	{

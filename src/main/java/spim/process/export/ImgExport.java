@@ -30,6 +30,8 @@ public interface ImgExport
 	 * @param downsampling - how much it was downsampled
 	 * @param tp - the current (new) timepoint
 	 * @param vs - the current (new) viewsetup
+	 * @param <T> pixel type
+	 * @return success? true or false
 	 */
 	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval< T > img, final Interval bb, final double downsampling, final TimePoint tp, final ViewSetup vs );
 	
@@ -43,22 +45,24 @@ public interface ImgExport
 	 * @param vs - the current (new) viewsetup
 	 * @param min - define min intensity of this image
 	 * @param max - define max intensity of this image
+	 * @param <T> pixel type
+	 * @return success? true or false
 	 */
 	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval< T > img, final Interval bb, final double downsampling, final TimePoint tp, final ViewSetup vs, final double min, final double max );
 	
-	/**
+	/*
 	 * Query the necessary parameters for the fusion (new dialog has to be made)
 	 * 
-	 * @return
+	 * @return success? true or false
 	 */
 	public abstract boolean queryParameters( final SpimData2 spimData, final boolean is16bit );
 	
-	/**
+	/*
 	 * Query additional parameters within the bounding box dialog
 	 */
 	public abstract void queryAdditionalParameters( final GenericDialog gd, final SpimData2 spimData );
 
-	/**
+	/*
 	 * Parse the additional parameters added before within the bounding box dialog
 	 * @param gd
 	 * @return

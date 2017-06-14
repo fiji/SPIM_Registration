@@ -18,6 +18,7 @@ public class TransformedRasteredRealRandomAccessible< T > implements RandomAcces
 	 * @param realRandomAccessible - some {@link RealRandomAccessible} that we transform
 	 * @param transform - the affine transformation
 	 * @param offset - an additional translational offset
+	 * @param zero - the zero constant
 	 */
 	public TransformedRasteredRealRandomAccessible(
 			final RealRandomAccessible< T > realRandomAccessible,

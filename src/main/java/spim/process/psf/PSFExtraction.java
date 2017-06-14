@@ -186,7 +186,8 @@ public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 	 * Extracts the PSF by summing up the local neighborhood of locations (most likely RANSAC correspondences)
 	 * @param img - the source image
 	 * @param locations - the locations inside the source image
-	 * @param the psf in local image coordinates NOT z-scaling corrected
+	 * @param psf - RAI to write result to
+	 * @param <T> pixel type
 	 */
 	public static < T extends RealType< T > > void extractPSFLocal(
 			final RealRandomAccessible< T > img,
@@ -318,6 +319,7 @@ public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 	 * 
 	 * @param psf - the extracted psf (NOT z-scaling corrected)
 	 * @param model - the transformation model
+	 * @param <T> pixel type
 	 * @return the transformed psf which has odd sizes and where the center of the psf is also the center of the transformed psf
 	 */
 	protected static < T extends RealType< T > & NativeType< T > > ArrayImg< T, ? > transformPSF(

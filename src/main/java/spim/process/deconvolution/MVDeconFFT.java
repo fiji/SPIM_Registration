@@ -155,7 +155,7 @@ public class MVDeconFFT
 	 */
 	protected void setNumViews( final int numViews ) { this.numViews = numViews; }
 	
-	/**
+	/*
 	 * This method is called once all views are added to the {@link LRInput}
 	 * @throws IncompatibleTypeException 
 	 */
@@ -359,6 +359,7 @@ public class MVDeconFFT
 	 * convolves the image with kernel1
 	 * 
 	 * @param image - the image to convolve with
+	 * @param result - the image to write the result to
 	 */
 	public void convolve1( final Img< FloatType > image, final Img< FloatType > result )
 	{
@@ -450,6 +451,7 @@ public class MVDeconFFT
 	 * convolves the image with kernel2 (inverted kernel1)
 	 * 
 	 * @param image - the image to convolve with
+	 * @param result - the image to write result to
 	 */
 	public void convolve2( final Img< FloatType > image, final Img< FloatType > result )
 	{

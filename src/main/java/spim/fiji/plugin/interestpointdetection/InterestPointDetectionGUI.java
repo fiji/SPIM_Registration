@@ -10,7 +10,7 @@ import spim.fiji.spimdata.interestpoints.InterestPoint;
 
 public abstract class InterestPointDetectionGUI
 {
-	/**
+	/*
 	 * which viewIds to process, set in queryParameters
 	 */
 	final List< ViewId > viewIdsToProcess;
@@ -18,7 +18,7 @@ public abstract class InterestPointDetectionGUI
 	final SpimData2 spimData;
 
 	/**
-	 * @aram spimData
+	 * @param spimData - the SpimData
 	 * @param viewIdsToProcess - which view id's to segment
 	 */
 	public InterestPointDetectionGUI(

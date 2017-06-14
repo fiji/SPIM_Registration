@@ -99,6 +99,7 @@ public class Group< V > implements Iterable< V >
 	 *
 	 * @param vds - the ViewDescriptions to process
 	 * @param groupingFactors - by which attribute(s)
+	 * @param <V> - something that extends {@link BasicViewDescription}
 	 * @return - list of groups
 	 */
 
@@ -120,6 +121,7 @@ public class Group< V > implements Iterable< V >
 	 *
 	 * @param vds - the ViewDescriptions to process
 	 * @param groupingFactors - by which attribute(s)
+	 * @param <V> - something that extends {@link BasicViewDescription}
 	 * @return - list of groups
 	 */
 
@@ -146,6 +148,7 @@ public class Group< V > implements Iterable< V >
 	 * @param vds - the ViewDescriptions to process
 	 * @param groupingFactors - by which attribute(s)
 	 * @param combine - combine or split
+	 * @param <V> - something that extends {@link BasicViewDescription}
 	 * @return - list of groups
 	 */
 	public static < V extends BasicViewDescription< ? > > List<Group<V>> combineOrSplitBy(List<V> vds,
@@ -309,9 +312,10 @@ public class Group< V > implements Iterable< V >
 	/**
 	 * Test if there is any overlap between two groups (at least one view part of both)
 	 *
-	 * @param groupA
-	 * @param groupB
-	 * @return
+	 * @param groupA - first group
+	 * @param groupB - second group
+	 * @param <V> - view id type
+	 * @return whether there is overlap
 	 */
 	public static < V > boolean overlaps( final Group< V > groupA, final Group< V > groupB )
 	{
@@ -325,9 +329,10 @@ public class Group< V > implements Iterable< V >
 	/**
 	 * Identifies all groups that a certain view is a member of
 	 * 
-	 * @param view
-	 * @param groups
-	 * @return
+	 * @param view - a view
+	 * @param groups - all views
+	 * @param <V> - view id type
+	 * @return the groups that view is a member of
 	 */
 	public static < V > ArrayList< Group< V > > memberOf( final V view, final Set< Group< V > > groups )
 	{
@@ -343,8 +348,9 @@ public class Group< V > implements Iterable< V >
 	/**
 	 * Identify all pairs of overlapping groups
 	 *
-	 * @param groups
-	 * @return
+	 * @param groups the groups
+	 * @param <V> - view id type
+	 * @return all overlapping group pairs
 	 */
 	public static < V > ArrayList< Pair< Group< V >, Group< V > > > overlappingGroups( final Collection< Group< V > > groups )
 	{
@@ -364,7 +370,9 @@ public class Group< V > implements Iterable< V >
 	/**
 	 * Merges all overlapping groups into a new List, the input remains unchanged
 	 *
-	 * @param groups
+	 * @param groups the groups to merge
+	 * @param <V> - view id type
+	 * @return merger Groups
 	 */
 	public static < V > ArrayList< Group< V > > mergeAllOverlappingGroups( final Collection< Group< V > > groups )
 	{
@@ -396,8 +404,9 @@ public class Group< V > implements Iterable< V >
 	/**
 	 * Identify the indices of the next overlapping groups ordered by size, or return null if none are overlapping
 	 *
-	 * @param groups
-	 * @return
+	 * @param groups list of Groups
+	 * @param <V> - view id type
+	 * @return index of first overlapping pair (Gi, Gj) in grops  
 	 */
 	public static < V > Pair< Integer, Integer > nextOverlappingGroup( final List< Group< V > > groups )
 	{
@@ -412,9 +421,10 @@ public class Group< V > implements Iterable< V >
 	/**
 	 * Merges two Groups of views
 	 *
-	 * @param groupA
-	 * @param groupB
-	 * @return
+	 * @param groupA first Group
+	 * @param groupB second Group
+	 * @param <V> - view id type
+	 * @return merged Group
 	 */
 	public static < V > Group< V > merge( final Group< V > groupA, final Group< V > groupB  )
 	{
@@ -429,9 +439,10 @@ public class Group< V > implements Iterable< V >
 	/**
 	 * Merges two Groups of views
 	 *
-	 * @param groupA
-	 * @param groupB
-	 * @return
+	 * @param groupA first Group
+	 * @param groupB second Group
+	 * @param <V> - view id type
+	 * @return merged Group
 	 */
 	public static < V > Group< V > mergeOverlapping( final Group< V > groupA, final Group< V > groupB  )
 	{

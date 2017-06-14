@@ -38,7 +38,7 @@ import spim.vecmath.Vector3f;
  */
 public class GlobalOpt
 {
-	/**
+	/*
 	 * Computes a global optimization based on the corresponding points
 	 * 
 	 */
@@ -158,8 +158,8 @@ public class GlobalOpt
 	 * Check if Apple's out-dated Java 3D version 1.3 is installed in System/Library/Java/Extensions/ on your Mac. 
 	 * Remove all Java 3D 1.3 related files including vecmath.jar (jar, jnilib), they are useless.
 	 * 
-	 * @param model
-	 * @return
+	 * @param model - the model
+	 * @return - String description of rot. axis
 	 */
 	public static String getRotationAxis( final RigidModel3D model )
 	{

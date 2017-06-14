@@ -361,8 +361,11 @@ public class Resave_TIFF implements PlugIn
 	 * 
 	 * It also fills up a list of filesToCopy from the interestpoints directory if it is not null.
 	 * 
-	 * @param filesToCopy
-	 * @return
+	 * @param spimData - the source SpimData
+	 * @param filesToCopy - list to be filled with files to copy
+	 * @param viewIds - view subset to resave
+	 * @param basePath - the base path
+	 * @return new SpimData
 	 */
 	public static SpimData2 assemblePartialSpimData2( final SpimData2 spimData, final List< ViewId > viewIds, final File basePath, final List< String > filesToCopy )
 	{

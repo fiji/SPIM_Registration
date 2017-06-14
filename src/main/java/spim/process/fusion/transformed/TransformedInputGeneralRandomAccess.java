@@ -20,7 +20,7 @@ import net.imglib2.view.Views;
  * 
  * @author preibisch
  *
- * @param <T>
+ * @param <T> pixel type
  */
 public class TransformedInputGeneralRandomAccess< T extends RealType< T > > extends AbstractLocalizableInt implements RandomAccess< FloatType >
 {

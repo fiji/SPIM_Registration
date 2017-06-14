@@ -25,7 +25,7 @@ public class BlockGeneratorVariableSizePrecise implements BlockGenerator< Block 
 	 * 
 	 * @param imgSize - the size of the image
 	 * @param kernelSize - the size of the kernel (has to be odd!)
-	 * @return
+	 * @return array of blocks
 	 */
 	public Block[] divideIntoBlocks( final long[] imgSize, final long[] kernelSize )
 	{

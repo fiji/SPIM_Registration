@@ -17,8 +17,8 @@ public class CUDATools
 	public static int standardDevice = -1;
 
 	/**
-	 * @param cuda
-	 * @param askForMultipleDevices
+	 * @param cuda the CUDAStandardFunctions
+	 * @param askForMultipleDevices true or false
 	 * @return - a list of CUDA device Id's to be used
 	 */
 	public static ArrayList< CUDADevice > queryCUDADetails( final CUDAStandardFunctions cuda, final boolean askForMultipleDevices )
@@ -27,9 +27,9 @@ public class CUDATools
 	}
 	
 	/**
-	 * @param cuda
-	 * @param askForMultipleDevices
-	 * @param additionalQueries
+	 * @param cuda the CUDAStandardFunctions
+	 * @param askForMultipleDevices true or false
+	 * @param additionalQueries the GenericDialogAppender, may be null
 	 * @return - a list of CUDA device Id's to be used
 	 */
 	public static ArrayList< CUDADevice > queryCUDADetails( final CUDAStandardFunctions cuda, final boolean askForMultipleDevices, final GenericDialogAppender additionalQueries )

@@ -21,7 +21,7 @@ import spim.process.interestpointdetection.Localization;
 
 public class ProcessDOG
 {
-	/**
+	/*
 	 * @param deviceList - a list of CUDA capable devices (or null if classic CPU computation in Java)
 	 * @param accurateCUDA - use accurate CUDA implementation (including out of bounds or not)
 	 * @param img - ImgLib1 image

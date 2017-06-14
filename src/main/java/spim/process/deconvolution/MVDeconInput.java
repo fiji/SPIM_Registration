@@ -14,7 +14,7 @@ public class MVDeconInput
 
 	/**
 	 * the imgfactory used for PSI and the temporary images
-	 * @param imgFactory
+	 * @param imgFactory ImgFactory to use
 	 */
 	public MVDeconInput( final ImgFactory< FloatType > imgFactory ) { this.imgFactory = imgFactory; }
 
@@ -31,8 +31,9 @@ public class MVDeconInput
 	/**
 	 * init all views
 	 *
+	 * @param iterationType the iteration type
 	 * @return the same instance again for convenience
-	 * @throws IncompatibleTypeException 
+	 * @throws IncompatibleTypeException when type is incompatible
 	 */
 	public MVDeconInput init( final PSFTYPE iterationType ) throws IncompatibleTypeException
 	{
@@ -49,7 +50,7 @@ public class MVDeconInput
 
 	/**
 	 * The number of views for this deconvolution
-	 * @return
+	 * @return the number of views
 	 */
 	public int getNumViews() { return views.size(); }
 }

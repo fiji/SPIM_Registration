@@ -10,11 +10,11 @@ public interface MatcherPairwise< I extends InterestPoint >
 	 * Computes a pairwise matching between two lists of interestpoints.
 	 * 
 	 * NOTE: If the interestpoints (local or world coordinates) are changed, you MUST duplicate them before using
-	 * them using e.g. LinkedInteresPoint< I >
+	 * them using e.g. LinkedInteresPoint {@literal< I >}
 	 * 
-	 * @param listAIn
-	 * @param listBIn
-	 * @return
+	 * @param listAIn interest point list A
+	 * @param listBIn interest point list B
+	 * @return matched pairwise results
 	 */
 	public PairwiseResult< I > match( final List< I > listAIn, final List< I > listBIn );
 

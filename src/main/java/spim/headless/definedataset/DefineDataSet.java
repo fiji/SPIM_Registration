@@ -20,9 +20,9 @@ public class DefineDataSet
 	/**
 	 * Assembles the {@link mpicbg.spim.data.registration.ViewRegistration} object consisting of a list of {@link mpicbg.spim.data.registration.ViewRegistration}s for all {@link mpicbg.spim.data.sequence.ViewDescription}s that are present
 	 *
-	 * @param viewDescriptionList
+	 * @param viewDescriptionList - the view description map
 	 * @param minResolution - the smallest resolution in any dimension (distance between two pixels in the output image will be that wide)
-	 * @return
+	 * @return - created ViewRegsitrations
 	 */
 	protected static ViewRegistrations createViewRegistrations( final Map< ViewId, ViewDescription > viewDescriptionList, final double minResolution )
 	{

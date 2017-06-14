@@ -2180,6 +2180,7 @@ public class Matrix3f implements java.io.Serializable, Cloneable
 	 *            the matrix to be compared to this matrix
 	 * @param epsilon
 	 *            the threshold value
+	 * @return true or false
 	 */
 	public boolean epsilonEquals( Matrix3f m1, float epsilon )
 	{

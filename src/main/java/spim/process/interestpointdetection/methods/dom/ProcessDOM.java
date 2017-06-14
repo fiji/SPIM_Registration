@@ -18,7 +18,7 @@ import spim.process.interestpointdetection.Localization;
 
 public class ProcessDOM 
 {
-	/**
+	/*
 	 * @param img - ImgLib1 image
 	 * @param imglib2img - ImgLib2 image (based on same image data as the ImgLib1 image, must be a wrap)
 	 * @param radius1

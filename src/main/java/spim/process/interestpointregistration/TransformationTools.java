@@ -104,7 +104,7 @@ public class TransformationTools
 		}
 	}
 
-	/** call this method to load interestpoints and apply current transformation */
+	/* call this method to load interestpoints and apply current transformation */
 	public static <V> Map< V, List< InterestPoint > > getAllTransformedInterestPoints(
 			final Collection< ? extends V > viewIds,
 			final Map< V, ViewRegistration > registrations,
@@ -114,7 +114,7 @@ public class TransformationTools
 		return getAllInterestPoints( viewIds, registrations, interestpoints, labelMap, true );
 	}
 
-	/** call this method to load interestpoints and apply current transformation */
+	/* call this method to load interestpoints and apply current transformation */
 	public static <V> Map< V, List< InterestPoint > > getAllInterestPoints(
 			final Collection< ? extends V > viewIds,
 			final Map< V, ViewRegistration > registrations,
@@ -131,7 +131,7 @@ public class TransformationTools
 		return transformedInterestpoints;
 	}
 
-	/** call this method to load interestpoints and apply current transformation */
+	/* call this method to load interestpoints and apply current transformation */
 	public static <V> List< InterestPoint > getTransformedInterestPoints(
 			final V viewId,
 			final Map< V, ViewRegistration > registrations,
@@ -141,7 +141,7 @@ public class TransformationTools
 		return getInterestPoints( viewId, registrations, interestpoints, labelMap, true );
 	}
 
-	/** call this method to load interestpoints and apply current transformation if necessary */
+	/* call this method to load interestpoints and apply current transformation if necessary */
 	public static <V> List< InterestPoint > getInterestPoints(
 			final V viewId,
 			final Map< V, ViewRegistration > registrations,
@@ -162,7 +162,7 @@ public class TransformationTools
 		}
 	}
 
-	/** call this method to load interestpoints and apply current transformation */
+	/* call this method to load interestpoints and apply current transformation */
 	public static <V> List< InterestPoint > getTransformedCorrespondingInterestPoints(
 			final V viewId,
 			final Map< V, ViewRegistration > registrations,
@@ -172,7 +172,7 @@ public class TransformationTools
 		return getCorrespondingInterestPoints( viewId, registrations, interestpoints, labelMap, true );
 	}
 
-	/** call this method to load interestpoints and apply current transformation */
+	/* call this method to load interestpoints and apply current transformation */
 	public static <V> List< InterestPoint > getCorrespondingInterestPoints(
 			final V viewId,
 			final Map< V, ViewRegistration > registrations,

@@ -28,7 +28,7 @@ public class CUDASeparableConvolutionFunctions
 	 * @param img - the image (1d/2d/3d) as flat float array
 	 * @param dim - the dimensions of the image in 1d/2d/3d
 	 * @param sigma - the sigma for all dimensions
-	 * @return
+	 * @return success? true or false
 	 */
 	public boolean gauss( final float[] img, final int[] dim, final double sigma )
 	{
@@ -41,7 +41,7 @@ public class CUDASeparableConvolutionFunctions
 	 * @param img - the image (1d/2d/3d) as flat float array
 	 * @param dim - the dimensions of the image in 1d/2d/3d
 	 * @param sigma - the sigma per dimension
-	 * @return
+	 * @return success? true or false
 	 */
 	public boolean gauss( final float[] img, final int[] dim, final double[] sigma )
 	{
@@ -65,7 +65,8 @@ public class CUDASeparableConvolutionFunctions
 	 * @param dim - the dimensions of the image in 1d/2d/3d
 	 * @param sigma - the sigma for all dimensions
 	 * @param oobs - the OutOfBounds strategy
-	 * @return
+	 * @param oobsValue - value to use in oobs
+	 * @return success? true or false
 	 */
 	public boolean gauss( final float[] img, final int[] dim, final double sigma, final OutOfBounds oobs, final float oobsValue )
 	{
@@ -80,7 +81,7 @@ public class CUDASeparableConvolutionFunctions
 	 * @param sigma - the sigma per dimension
 	 * @param oobs - the OutOfBounds strategy
 	 * @param oobsValue - the value for out of image pixels if the OutOfBoundsStrategy is OutOfBounds.VALUE
-	 * @return
+	 * @return success? true or false
 	 */
 	public boolean gauss( final float[] img, final int[] dim, final double[] sigma, final OutOfBounds oobs, final float oobsValue )
 	{
@@ -97,7 +98,7 @@ public class CUDASeparableConvolutionFunctions
 	 * @param oobsValue - the value for out of image pixels if the OutOfBoundsStrategy is OutOfBounds.VALUE
 	 * @param cuda - The {@link CUDASeparableConvolution} interface that loaded the external native library
 	 * @param cudaDeviceId - which CUDA device to use, -1 means single-threaded computation on CPU using native code
-	 * @return
+	 * @return success? true or false
 	 */
 	final public static boolean gauss( final float[] img, final int[] dim, final double sigma, final OutOfBounds oobs, final float oobsValue, final CUDASeparableConvolution cuda, final int cudaDeviceId )
 	{
@@ -122,7 +123,7 @@ public class CUDASeparableConvolutionFunctions
 	 * @param oobsValue - the value for out of image pixels if the OutOfBoundsStrategy is OutOfBounds.VALUE
 	 * @param cuda - The {@link CUDASeparableConvolution} interface that loaded the external native library
 	 * @param cudaDeviceId - which CUDA device to use, -1 means single-threaded computation on CPU using native code
-	 * @return
+	 * @return success? true or false
 	 */
 	final public static boolean gauss( final float[] img, final int[] dim, final double[] sigma, final OutOfBounds oobs, final float oobsValue, final CUDASeparableConvolution cuda, final int cudaDeviceId )
 	{

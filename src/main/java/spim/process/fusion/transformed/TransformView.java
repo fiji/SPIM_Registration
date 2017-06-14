@@ -33,7 +33,8 @@ public class TransformView
 	 * @param minValue - the minimal value inside the image
 	 * @param outsideValue - the value that is returned if it does not intersect with the input image
 	 * @param interpolation - 0=nearest neighbor, 1=linear interpolation
-	 * @return
+	 * @param <T> - type
+	 * @return transformed image
 	 */
 	public static < T extends RealType< T > > RandomAccessibleInterval< FloatType > transformView(
 			final RandomAccessibleInterval< T > input,
@@ -73,7 +74,8 @@ public class TransformView
 	 * @param boundingBox - the bounding box (after transformation)
 	 * @param outsideValue - the value that is returned if it does not intersect with the input image
 	 * @param interpolation - 0=nearest neighbor, 1=linear interpolation
-	 * @return
+	 * @param <T> type
+	 * @return transformed image
 	 */
 	public static < T extends RealType< T > > RandomAccessibleInterval< FloatType > transformView(
 			final RandomAccessibleInterval< T > input,
@@ -136,7 +138,8 @@ public class TransformView
 	 * @param boundingBox - the bounding box (after transformation)
 	 * @param outOfBoundsFactory - outofboundsfactory
 	 * @param interpolatorFactory - any interpolatorfactory
-	 * @return
+	 * @param <T> type
+	 * @return transformed image
 	 */
 	public static < T extends RealType< T > > RandomAccessibleInterval< FloatType > transformView(
 			final RandomAccessibleInterval< T > input,
@@ -224,10 +227,10 @@ public class TransformView
 
 	/**
 	 * Opens the image at an appropriate resolution and concatenates an extra transform 
-	 * @param imgLoader
-	 * @param viewId
+	 * @param imgLoader - the img loader
+	 * @param viewId - the view id
 	 * @param m - WILL BE MODIFIED IF OPENED DOWNSAMPLED
-	 * @return
+	 * @return - opened image
 	 */
 	public static RandomAccessibleInterval openDownsampled( final BasicImgLoader imgLoader, final ViewId viewId, final AffineTransform3D m )
 	{

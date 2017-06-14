@@ -3289,6 +3289,7 @@ public class Matrix4f implements java.io.Serializable, Cloneable
 	 *            the matrix to be compared to this matrix
 	 * @param epsilon
 	 *            the threshold value
+	 * @return true or false
 	 */
 	public boolean epsilonEquals( Matrix4f m1, float epsilon )
 	{

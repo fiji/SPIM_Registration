@@ -7,7 +7,7 @@ public interface BlockGenerator< T extends Block >
 	 * 
 	 * @param imgSize - the size of the image
 	 * @param kernelSize - the size of the kernel (has to be odd!)
-	 * @return
+	 * @return array of blocks
 	 */
 	public T[] divideIntoBlocks( final long[] imgSize, final long[] kernelSize );
 }

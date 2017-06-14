@@ -97,7 +97,7 @@ public class MultipageTiffReader
 
 	private HashMap< String, Pair< Long, FileChannel > > indexMap_;
 
-	/**
+	/*
 	 * This constructor is used for opening datasets that have already been
 	 * saved
 	 */

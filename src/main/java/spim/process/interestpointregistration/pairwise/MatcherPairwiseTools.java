@@ -153,7 +153,7 @@ public class MatcherPairwiseTools
 		return transformedList;
 	}
 
-	/**
+	/*
 	 * Add correspondences to the interestpointlists
 	 */
 	public static < I extends InterestPoint > void addCorrespondences(

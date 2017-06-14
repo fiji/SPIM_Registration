@@ -19,7 +19,7 @@ public class GroupedViews extends ViewId
 	/**
 	 * A group of ViewIds that represents itself as the first ViewId
 	 * 
-	 * @param group
+	 * @param group - the ViewIds
 	 */
 	public GroupedViews( final List< ViewId > group )
 	{

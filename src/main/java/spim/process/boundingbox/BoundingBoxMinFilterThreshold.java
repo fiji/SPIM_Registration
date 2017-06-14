@@ -215,6 +215,8 @@ public class BoundingBoxMinFilterThreshold implements BoundingBoxEstimation
 	 * 
 	 * @param tmp1 - input image (overwritten, not necessarily the result, depends if number of dimensions is even or odd)
 	 * @param radius - the integer radius of the min filter
+	 * @param <T> pixel type
+	 * @return min filtered image
 	 */
 	final public static < T extends RealType< T > > Img< T > computeLazyMinFilter( final Img< T > tmp1, final int radius )
 	{

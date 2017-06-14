@@ -221,7 +221,10 @@ public class ExportSpimData2TIFF implements ImgExport
 	/**
 	 * Assembles a new SpimData2 based on the timepoints and viewsetups.
 	 * The imgloader is still not set here.
-	 * 
+	 * @param timepointsToProcess TimePoints to process
+	 * @param viewSetupsToProcess ViewSetups to process
+	 * @param basePath the base path
+	 * @return the new SpimData2
 	 */
 	public static SpimData2 assembleSpimData2( 
 			final List< TimePoint > timepointsToProcess,

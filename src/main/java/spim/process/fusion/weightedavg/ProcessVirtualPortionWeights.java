@@ -15,7 +15,7 @@ import spim.process.fusion.ImagePortion;
  * 
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
- * @param <T>
+ * @param <T> pixel type
  */
 public class ProcessVirtualPortionWeights< T extends RealType< T > > extends ProcessVirtualPortion< T >
 {

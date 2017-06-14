@@ -185,12 +185,13 @@ public class BDVPopup extends JMenuItem implements ExplorerWindowSetable, BasicB
 	/**
 	 * set BDV brightness by sampling the mid z plane (and 1/4 and 3/4 if z is large enough )
 	 * of the currently selected source (typically the first source) and getting quantiles from intensity histogram
-	 * (slightly modified version of {@link InitializeViewerState.initBrightness})
+	 * (slightly modified version of InitializeViewerState.initBrightness)
 	 *
 	 * @param cumulativeMinCutoff - quantile of min 
 	 * @param cumulativeMaxCutoff - quantile of max
 	 * @param state - Bdv's ViewerSate
 	 * @param setupAssignments - Bdv's View assignments
+	 * @param <T> - type extending RealType
 	 */
 	public static <T extends RealType<T>> void initBrightness( final double cumulativeMinCutoff, final double cumulativeMaxCutoff, final ViewerState state, final SetupAssignments setupAssignments )
 	{

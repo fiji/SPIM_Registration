@@ -205,7 +205,7 @@ public class FusionHelper
 	}
 
 
-	/**
+	/*
 	 * One thread of a method to compute the quotient between two images of the multiview deconvolution
 	 * 
 	 * @param start

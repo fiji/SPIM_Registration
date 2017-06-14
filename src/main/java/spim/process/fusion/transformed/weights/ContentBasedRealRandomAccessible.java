@@ -30,7 +30,7 @@ import spim.process.fusion.FusionHelper;
  * 
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
- * @param <T>
+ * @param <T> pixel type
  */
 public class ContentBasedRealRandomAccessible< T extends RealType< T > > implements RealRandomAccessible< FloatType >
 {

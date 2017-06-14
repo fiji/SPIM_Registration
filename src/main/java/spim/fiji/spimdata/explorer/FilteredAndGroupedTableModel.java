@@ -178,7 +178,7 @@ public class FilteredAndGroupedTableModel < AS extends AbstractSpimData< ? > > e
 
 	/**
 	 * clicking on a column adds that columns class as the last class to sort by
-	 * @param column
+	 * @param column - index of the column to sort by
 	 */
 	@Override
 	public void sortByColumn( final int column )

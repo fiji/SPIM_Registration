@@ -28,7 +28,7 @@ public class StitchingResults
 
 	public Map< ViewId, AffineGet > getGlobalShifts() { return globalShifts;	}
 
-	/**
+	/*
 	 * save the PairwiseStitchingResult for a pair of ViewIds, using the sorted ViewIds as a key
 	 * use this method to ensure consistency of the pairwiseResults Map 
 	 * TODO: we do not sort a.t.m. -> do we need this?
@@ -62,7 +62,7 @@ public class StitchingResults
 		return res;
 	}
 
-	/**
+	/*
 	 * TODO: check if this still returns useful values
 	 * @param vid
 	 * @return

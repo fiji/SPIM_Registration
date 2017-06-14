@@ -25,6 +25,7 @@ public interface PointMatchCreator
 	 * @param tileMap - the map from viewId to Tile
 	 * @param groups - which groups exist
 	 * @param fixedViews - which views are fixed (one might need it?)
+	 * @param <M> model type
 	 */
 	public < M extends Model< M > > void assignWeights(
 			final HashMap< ViewId, Tile< M > > tileMap,
@@ -38,6 +39,7 @@ public interface PointMatchCreator
 	 * @param tileMap - the map from viewId to Tile
 	 * @param groups - which groups exist (one might need it?)
 	 * @param fixedViews - which views are fixed (one might need it?)
+	 * @param <M> model type
 	 */
 	public < M extends Model< M > > void assignPointMatches(
 			final HashMap< ViewId, Tile< M > > tileMap,

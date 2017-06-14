@@ -152,7 +152,7 @@ public class BoundingBoxMaximalGroupOverlap< V extends ViewId > implements Bound
 		return new FinalRealInterval( min, max );
 	}
 
-	/**
+	/*
 	 * Calculate the boundary interval of the intersection of all views (view := interval + transformation)
 	 * may be null, if no intersection exists 
 	 * @param views
@@ -204,8 +204,9 @@ public class BoundingBoxMaximalGroupOverlap< V extends ViewId > implements Bound
 	 * 
 	 * generalized version of code in {@link AffineTransform3D}
 	 * 
-	 * @param interval
-	 * @param transform
+	 * @param interval - the interval
+	 * @param transform - the transform
+	 * @return - boundary of transformed interval
 	 */
 	public static FinalRealInterval estimateBounds( final RealInterval interval, final AffineGet transform )
 	{
@@ -245,8 +246,8 @@ public class BoundingBoxMaximalGroupOverlap< V extends ViewId > implements Bound
 
 	/**
 	 * get String representation of RealInterval TODO: PR to ImgLib2 ({@link Util}) ?
-	 * @param interval
-	 * @return
+	 * @param interval the interval
+	 * @return String respresentation
 	 */
 	public static String printRealInterval( final RealInterval interval )
 	{

@@ -96,14 +96,15 @@ public abstract class LegacyStackImgLoader extends AbstractImgFactoryImgLoader
 	/**
 	 * For a local initialization without the XML
 	 * 
-	 * @param path
-	 * @param fileNamePattern
-	 * @param imgFactory
+	 * @param path - the path
+	 * @param fileNamePattern - the filename pattern
+	 * @param imgFactory - ImgFactory
 	 * @param layoutTP - 0 == one, 1 == one per file, 2 == all in one file
 	 * @param layoutChannels - 0 == one, 1 == one per file, 2 == all in one file
 	 * @param layoutIllum - 0 == one, 1 == one per file, 2 == all in one file
 	 * @param layoutAngles - 0 == one, 1 == one per file, 2 == all in one file
 	 * @param layoutTiles - 0 == one, 1 == one per file, 2 == all in one file
+	 * @param sequenceDescription - the sequence description
 	 */
 	public LegacyStackImgLoader(
 			final File path, final String fileNamePattern, final ImgFactory< ? extends NativeType< ? > > imgFactory,

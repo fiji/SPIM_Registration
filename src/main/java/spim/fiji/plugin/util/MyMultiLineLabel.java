@@ -63,7 +63,7 @@ public class MyMultiLineLabel extends Canvas
     	this.update( this.getGraphics() );
     }
 
-    /** Adds a message consisting of one or more lines of text,
+    /* Adds a message consisting of one or more lines of text,
     which will be displayed using the specified font and color. */
     public static MyMultiLineLabel addMessage( final GenericDialog gd, final String[] text, final Font font, final Color color )
     {

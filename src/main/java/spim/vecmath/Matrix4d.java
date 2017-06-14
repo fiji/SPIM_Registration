@@ -3524,6 +3524,11 @@ public class Matrix4d implements java.io.Serializable, Cloneable
 
 	/**
 	 * @deprecated Use epsilonEquals(Matrix4d,double) instead
+	 * @param m1
+	 *            the matrix to be compared to this matrix
+	 * @param epsilon
+	 *            the threshold value
+	 * @return true or false
 	 */
 	public boolean epsilonEquals( Matrix4d m1, float epsilon )
 	{
@@ -3540,6 +3545,7 @@ public class Matrix4d implements java.io.Serializable, Cloneable
 	 *            the matrix to be compared to this matrix
 	 * @param epsilon
 	 *            the threshold value
+	 * @return true or false
 	 */
 	public boolean epsilonEquals( Matrix4d m1, double epsilon )
 	{

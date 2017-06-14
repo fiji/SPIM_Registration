@@ -81,11 +81,12 @@ public class SpimData2 extends SpimData
 	}
 
 	/**
-	 * @param seqDesc
-	 * @param t
-	 * @param c
-	 * @param a
-	 * @param i
+	 * @param seqDesc the sequence description
+	 * @param t  - the timepoint
+	 * @param c - the channel
+	 * @param a - the angle
+	 * @param i - the illumination
+	 * @param x - the tile
 	 * @return - the ViewId that fits to timepoint, angle, channel &amp; illumination by ID (or null if it does not exist)
 	 */
 	public static ViewId getViewId(
@@ -523,6 +524,7 @@ public class SpimData2 extends SpimData
 	 * 
 	 * @param data - the SpimData object
 	 * @param groupsIn - a collection of groups consisting of views
+	 * @param <V> - something extending ViewId
 	 * @return a filtered list, potentially of size 0
 	 */
 	public static < V extends ViewId > ArrayList< Group< V > > filterGroupsForMissingViews(

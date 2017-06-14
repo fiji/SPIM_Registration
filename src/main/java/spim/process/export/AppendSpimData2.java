@@ -192,7 +192,7 @@ public class AppendSpimData2 implements ImgExport
 		return "Append to current XML Project";
 	}
 
-	/**
+	/*
 	 * Assembles a new SpimData2 based on the timepoints and viewsetups.
 	 * The imgloader is still not set here.
 	 *

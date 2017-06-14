@@ -360,7 +360,7 @@ public abstract class Tuple4d implements java.io.Serializable, Cloneable
 		this.w = s * t1.w + t2.w;
 	}
 
-	/**
+	/*
 	 * @deprecated Use scaleAdd(double,Tuple4d) instead
 	 */
 	public final void scaleAdd( float s, Tuple4d t1 )
@@ -507,7 +507,7 @@ public abstract class Tuple4d implements java.io.Serializable, Cloneable
 		return VecMathUtil.hashFinish( bits );
 	}
 
-	/**
+	/*
 	 * @deprecated Use clamp(double,double,Tuple4d) instead
 	 */
 	public final void clamp( float min, float max, Tuple4d t )
@@ -573,8 +573,8 @@ public abstract class Tuple4d implements java.io.Serializable, Cloneable
 		}
 
 	}
-
-	/**
+	
+	/*
 	 * @deprecated Use clampMin(double,Tuple4d) instead
 	 */
 	public final void clampMin( float min, Tuple4d t )
@@ -627,7 +627,7 @@ public abstract class Tuple4d implements java.io.Serializable, Cloneable
 
 	}
 
-	/**
+	/*
 	 * @deprecated Use clampMax(double,Tuple4d) instead
 	 */
 	public final void clampMax( float max, Tuple4d t )
@@ -696,7 +696,7 @@ public abstract class Tuple4d implements java.io.Serializable, Cloneable
 
 	}
 
-	/**
+	/*
 	 * @deprecated Use clamp(double,double) instead
 	 */
 	public final void clamp( float min, float max )
@@ -748,7 +748,7 @@ public abstract class Tuple4d implements java.io.Serializable, Cloneable
 
 	}
 
-	/**
+	/*
 	 * @deprecated Use clampMin(double) instead
 	 */
 	public final void clampMin( float min )
@@ -774,7 +774,7 @@ public abstract class Tuple4d implements java.io.Serializable, Cloneable
 			w = min;
 	}
 
-	/**
+	/*
 	 * @deprecated Use clampMax(double) instead
 	 */
 	public final void clampMax( float max )
@@ -813,7 +813,7 @@ public abstract class Tuple4d implements java.io.Serializable, Cloneable
 
 	}
 
-	/**
+	/*
 	 * @deprecated Use interpolate(Tuple4d,Tuple4d,double) instead
 	 */
 	public void interpolate( Tuple4d t1, Tuple4d t2, float alpha )
@@ -840,7 +840,7 @@ public abstract class Tuple4d implements java.io.Serializable, Cloneable
 		this.w = ( 1 - alpha ) * t1.w + alpha * t2.w;
 	}
 
-	/**
+	/*
 	 * @deprecated Use interpolate(Tuple4d,double) instead
 	 */
 	public void interpolate( Tuple4d t1, float alpha )

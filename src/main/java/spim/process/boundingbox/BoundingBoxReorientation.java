@@ -332,9 +332,9 @@ public class BoundingBoxReorientation implements BoundingBoxEstimation
 	 * Computes a Transform3D that will rotate vector v0 into the direction of vector v1.
 	 * Note: vectors MUST be normalized for this to work!
 	 *
-	 * @param v0
-	 * @param v1
-	 * @return
+	 * @param v0 - vector 0
+	 * @param v1 - vector 1
+	 * @return the transform
 	 */
 	public static Transform3D getRotation( final Vector3d v0, final Vector3d v1 )
 	{

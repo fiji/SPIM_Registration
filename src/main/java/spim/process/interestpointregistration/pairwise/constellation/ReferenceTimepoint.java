@@ -97,9 +97,10 @@ public class ReferenceTimepoint extends AllToAllRange< ViewId, ReferenceTimepoin
 	/**
 	 * Tests if pairs span over different timepoints (that are not the reference timepoint)
 	 * 
-	 * @param pairs
-	 * @param referenceTimepointId
-	 * @return
+	 * @param pairs list if view pairs
+	 * @param referenceTimepointId reference timepoint id
+	 * @param <V> view id type
+	 * @return test result
 	 */
 	public static < V extends ViewId > boolean pairsSpanTimepoints( final List< Pair< V, V > > pairs, final int referenceTimepointId )
 	{
@@ -119,9 +120,9 @@ public class ReferenceTimepoint extends AllToAllRange< ViewId, ReferenceTimepoin
 	/**
 	 * Checks if groups exist than span multiple timepoints
 	 * 
-	 * @param views
-	 * @param groups
-	 * @return
+	 * @param groups the view groups
+	 * @param <V> view id type
+	 * @return test result
 	 */
 	public static < V extends ViewId > boolean groupsSpanTimepoints( final Set< Group< V > > groups )
 	{

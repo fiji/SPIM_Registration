@@ -28,7 +28,7 @@ public abstract class AbstractImgLoader implements LegacyImgLoader< UnsignedShor
 		viewIdLookUp = new HashMap< Integer, ViewId >();
 	}
 
-	/**
+	/*
 	 * Updates the cached imageMetaData
 	 */
 	protected void updateMetaDataCache( final ViewId viewId,
@@ -45,7 +45,7 @@ public abstract class AbstractImgLoader implements LegacyImgLoader< UnsignedShor
 
 	/**
 	 * Loads only the metadata from the image, should call updateMetaDataCache( ... )
-	 * @param view
+	 * @param view - the view to load metadata for
 	 */
 	protected abstract void loadMetaData( final ViewId view );
 

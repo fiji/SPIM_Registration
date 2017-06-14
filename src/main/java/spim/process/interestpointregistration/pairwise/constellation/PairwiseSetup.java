@@ -35,8 +35,8 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	 * 7) subset.fixViews( this.getDefaultFixedViews() )
 	 * 8) subset.fixViews() - fixed some of the views necessary for the strategy to work
 	 * 
-	 * @param views
-	 * @param groups
+	 * @param views - all the views to include
+	 * @param groups - view groups to include
 	 */
 	public PairwiseSetup( final List< V > views, final Set< Group< V > > groups )
 	{
@@ -56,8 +56,6 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	/**
 	 * Given a list of views and their grouping, identify all pairs that need to be compared
 	 * 
-	 * @param views
-	 * @param groups
 	 * @return - redundant pairs that were removed
 	 */
 	public ArrayList< Pair< V, V > > definePairs()
@@ -74,6 +72,7 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 
 	/**
 	 * abstract method called by the public definePairs method
+	 * @return - the list of pairs
 	 */
 	protected abstract List< Pair< V, V > > definePairsAbstract();
 
@@ -103,7 +102,7 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	/**
 	 * Sorts each subset by comparing the first view of each pair, and then all subsets according to their first pair
 	 *
-	 * @param sets
+	 * 
 	 */
 	public void sortSubsets()
 	{
@@ -116,13 +115,15 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 
 	/**
 	 * Get a list of fixed views necessary for the specific strategy to work
+	 * @return list of default fixed views
 	 */
 	public abstract List< V > getDefaultFixedViews();
 
 	/**
 	 * Fix an additional list of views (removes them from pairs and subsets)
 	 * 
-	 * @param fixedViews
+	 * @param fixedViews the fixed views (will be modified)
+	 * @return - all the removed views
 	 */
 	public ArrayList< Pair< V, V > > fixViewsInAllSubsets( final List< V > fixedViews )
 	{
@@ -137,9 +138,10 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	/**
 	 * Remove all views in groups that do not exist in the views list - called from constructor
 	 * 
-	 * @param views
-	 * @param groups
-	 * @return
+	 * @param views the views to keep
+	 * @param groups the groups
+	 * @param <V> anything, but most likely extending ViewId
+	 * @return new set of groups
 	 */
 	public static < V > Set< Group< V > > removeNonExistentViewsInGroups(
 			final List< V > views,
@@ -176,8 +178,9 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	 * Checks all pairs if both views are contained in the same group,
 	 * and if so removes the pair from the list - called from definePairs()
 	 * 
-	 * @param pairs
-	 * @param groups
+	 * @param pairs - the pairs, will me modified
+	 * @param groups - the groups
+	 * @param <V> view id type
 	 * @return - removed pairs
 	 */
 	public static < V > ArrayList< Pair< V, V > > removeRedundantPairs(
@@ -238,8 +241,10 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	/**
 	 * Remove pairs that are not overlapping
 	 * 
+	 * @param pairs - the pairs, will be modified
 	 * @param ovlp - implementation of {@link OverlapDetection}
-	 * @return a list of pairs that were removed (not stored in this object)
+	 * @param <V> view id type
+	 * @return a list of pairs that were removed
 	 */
 	public static < V > ArrayList< Pair< V, V > > removeNonOverlappingPairs(
 			final List< Pair< V, V > > pairs,
@@ -261,7 +266,7 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 		return removed;
 	}
 
-	/**
+	/*
 	 * Reorder the pairs so that the "smaller" view comes first
 	 */
 	public static < V extends Comparable< V > > void reorderPairs( final List< Pair< V, V > > pairs )
@@ -286,6 +291,8 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	 * @param views - all views involved
 	 * @param pairs - all pairs that need to be compared
 	 * @param groups - all groups of views (transformed together)
+	 * @param <V> - view id type
+	 * @return - the found subsets
 	 */
 	public static < V > ArrayList< Subset< V > > detectSubsets(
 			final List< V > views,
@@ -394,12 +401,12 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 		return subsets;
 	}
 
-	/**
+	/*
 	 * Find all groups that contain views from this "potential" subset
 	 * 
 	 * @param setsViews
 	 * @param groups
-	 * @return
+	 * @return 
 	 */
 	public static < V > HashSet< Group< V > > findGroupsAssociatedWithSubset( final HashSet< V > setsViews, final Set< Group< V > > groups )
 	{
@@ -423,9 +430,10 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	/** 
 	 * which subsets are part of a group - called by detectSubsets()
 	 * 
-	 * @param group
-	 * @param vSets
-	 * @return
+	 * @param group a group of views
+	 * @param vSets list of view sets
+	 * @param <V> view id type
+	 * @return set of indices of sets in vSets that contain a view of group
 	 */
 	public static < V > HashSet< Integer > subsetsLinkedByGroup( final List< ? extends Set< V > > vSets, final Group< V > group )
 	{
@@ -455,6 +463,7 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	 * @param pairSets - sets of pairs to compare
 	 * @param i1 - first index to merge
 	 * @param i2 - second index to merge
+	 * @param <V> view id type
 	 */
 	public static < V > void mergeSets(
 			final ArrayList< HashSet< V > > vSets,
@@ -473,6 +482,7 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	 * @param vSets - subset precursors
 	 * @param pairSets - sets of pairs to compare
 	 * @param mergeIndicies - indices to merge
+	 * @param <V> view id type
 	 */
 	public static < V > void mergeSets(
 			final ArrayList< HashSet< V > > vSets,
@@ -509,7 +519,9 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 	/**
 	 * Sorts each list using a given comparator, and then the lists according to their first element
 	 *
-	 * @param sets
+	 * @param subsets the subsets to be sorted
+	 * @param comp the comparator
+	 * @param <V> viewId type
 	 */
 	public static < V > void sortSets( final ArrayList< Subset< V > > subsets, final Comparator< Pair< V, V > > comp )
 	{

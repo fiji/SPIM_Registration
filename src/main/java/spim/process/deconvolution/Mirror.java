@@ -27,6 +27,8 @@ public class Mirror
 	 * @param image - The {@link Img} to mirror
 	 * @param dimension - The axis to mirror (e.g. 0-&gt;x-Axis-&gt;horizontally, 1-&gt;y-axis-&gt;vertically)
 	 * @param numThreads - number of threads
+	 * @param <T> pixel type
+	 * @return success? true or false
 	 */
 	public static < T extends Type< T > > boolean mirror( final Img< T > image, final int dimension, final int numThreads )
 	{

@@ -16,7 +16,7 @@ import spim.process.fusion.ImagePortion;
  * 
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
- * @param <T>
+ * @param <T> pixel type
  */
 public class ProcessVirtualPortion< T extends RealType< T > > implements Callable< String >
 {

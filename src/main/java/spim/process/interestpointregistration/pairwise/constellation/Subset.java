@@ -63,7 +63,7 @@ public class Subset< V >
 	/**
 	 * Fix an additional list of views (removes pairs from subsets and sets list of fixed views)
 	 * 
-	 * @param fixedViews
+	 * @param fixedViews - the fixed views
 	 * @return - the removed pairs due to fixed views
 	 */
 	public ArrayList< Pair< V, V > > fixViews( final List< V > fixedViews )
@@ -85,6 +85,8 @@ public class Subset< V >
 	 * Single views are expressed as groups with cardinality 1. Then idea is that for
 	 * pairwise comparisons, the algorithm groups views (e.g. all interestpoints) before
 	 * running the actual algorithm.
+	 * 
+	 * @return list of grouped views that need to be compared
 	 */
 	public List< Pair< Group< V >, Group< V > > > getGroupedPairs()
 	{
@@ -139,11 +141,12 @@ public class Subset< V >
 	}
 
 	/**
-	 * Create a Set of groups that contains all views, with |group| >= 1.
+	 * Create a Set of groups that contains all views, with |group| {@literal >= 1}.
 	 * 
-	 * @param views
-	 * @param groups
-	 * @return
+	 * @param views all views
+	 * @param groups the groups
+	 * @param <V> view id type
+	 * @return set of groups
 	 */
 	public static < V > ArrayList< Group< V > > createGroupsForAllViews(
 			final Set< V > views,
@@ -181,9 +184,10 @@ public class Subset< V >
 	/**
 	 * Checks which fixed views are present in the views list and puts them into a HashMap
 	 * 
-	 * @param views
-	 * @param fixedViews
-	 * @return
+	 * @param views all views to consider
+	 * @param fixedViews input fixed views
+	 * @param <V> view id type
+	 * @return fixed views that area also in views
 	 */
 	public static < V > HashSet< V > filterPresentViews( final Set< V > views, final List< V > fixedViews )
 	{
@@ -197,11 +201,14 @@ public class Subset< V >
 		return fixedSubsetViews;
 	}
 
-	/**
+	/*
 	 * Fix an additional list of views (removes pairs from subsets and sets list of fixed views)
 	 * 
-	 * @param subset
-	 * @param fixedViews
+	 * @param fixedSubsetViews
+	 * @param pairs
+	 * @param groups
+	 * @param <V> view id type
+	 * @return 
 	 */
 	public static < V > ArrayList< Pair< V, V > > fixViews(
 			final HashSet< V > fixedSubsetViews,

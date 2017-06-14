@@ -67,12 +67,12 @@ public class DownsampleTools
 
 	/**
 	 * 
-	 * @param imgLoader
-	 * @param vd
+	 * @param imgLoader the imgloader
+	 * @param vd the view description
 	 * @param t - will be filled if downsampling is performed, otherwise identity transform
 	 * @param downsampleXY - specify which downsampling ( 1,2,4,8 )
 	 * @param downsampleZ - specify which downsampling ( 1,2,4,8 )
-	 * @return
+	 * @return opened image
 	 */
 	public static RandomAccessibleInterval< FloatType > openAndDownsample(
 			ImgLoader imgLoader,

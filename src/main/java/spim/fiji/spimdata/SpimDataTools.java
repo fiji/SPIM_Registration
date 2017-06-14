@@ -66,8 +66,8 @@ public class SpimDataTools {
 	 * get a Comparator to sort ViewDescriptions by the ID of the Attribute of
 	 * class cl
 	 * 
-	 * @param cl
-	 * @return
+	 * @param cl - the Entity class to compare by
+	 * @return - Comparator comparing by id of Entity class cl
 	 */
 	public static Comparator<BasicViewDescription<?>> getVDComparator(final Class<? extends Entity> cl) {
 		return new Comparator<BasicViewDescription<?>>() {
@@ -89,8 +89,8 @@ public class SpimDataTools {
 	 * lists are compared by the ID of their Attribute of class cl (it is a good
 	 * idea to sort the lists themselves first)
 	 * 
-	 * @param cl
-	 * @return
+	 * @param cl - the Entity class to compare by
+	 * @return - Comparator comparing by id of Entity class cl of first element of VD list
 	 */
 	public static Comparator<List<BasicViewDescription<?>>> getVDListComparator(final Class<? extends Entity> cl) {
 		return new Comparator<List<BasicViewDescription<?>>>() {

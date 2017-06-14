@@ -50,7 +50,7 @@ public class ViewInterestPoints
 	/**
 	 * Assembles the {@link ViewInterestPoints} object consisting of a list of {@link ViewInterestPointLists} objects for all {@link ViewDescription}s that are present
 	 *
-	 * @param viewDescriptions
+	 * @param viewDescriptions - the view description map
 	 *
 	 */
 	public void createViewInterestPoints( final Map< ViewId, ViewDescription > viewDescriptions )
