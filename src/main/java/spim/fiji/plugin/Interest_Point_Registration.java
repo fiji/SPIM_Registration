@@ -290,7 +290,7 @@ public class Interest_Point_Registration implements PlugIn
 				final ConvergenceStrategy cs = new ConvergenceStrategy( 5.0 );
 				final PointMatchCreator pmc = new InterestPointMatchCreator( result );
 
-				models = GlobalOpt.compute( pairwiseMatching.getMatchingModel().getModel(), pmc, cs, fixedViews, subset.getGroups() );
+				models = (HashMap< ViewId, Tile< ? extends AbstractModel< ? > > >)(Object)GlobalOpt.compute( pairwiseMatching.getMatchingModel().getModel(), pmc, cs, fixedViews, subset.getGroups() );
 			}
 			else
 			{
@@ -350,7 +350,7 @@ public class Interest_Point_Registration implements PlugIn
 				final ConvergenceStrategy cs = new ConvergenceStrategy( 5.0 );
 				final PointMatchCreator pmc = new InterestPointMatchCreator( resultTransformed );
 
-				models = GlobalOpt.compute( pairwiseMatching.getMatchingModel().getModel(), pmc, cs, fixedViews, groups );
+				models = (HashMap< ViewId, Tile< ? extends AbstractModel< ? > > >)(Object)GlobalOpt.compute( pairwiseMatching.getMatchingModel().getModel(), pmc, cs, fixedViews, groups );
 			}
 
 			// global opt failed
