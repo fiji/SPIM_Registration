@@ -40,7 +40,7 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 	private static final long serialVersionUID = -4895470813542722644L;
 
 	public static int[] quickDownsampling = new int[]{ 1, 2, 3, 4, 8, 16 };
-	public static int defaultCache = 1;
+	public static int defaultCache = 0;
 	public static int[] cellDim = new int[]{ 10, 10, 10 };
 	public static int maxCacheSize = 1000;
 
@@ -86,7 +86,7 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 								downsample = ds;
 							}
 
-							fused.addActionListener( new DisplayVirtualFused( bb, downsample, ImgDataType.CACHED ) );
+							fused.addActionListener( new DisplayVirtualFused( bb, downsample, ImgDataType.values()[ defaultCache ] ) );
 							downsampleOptions.add( fused );
 						}
 						boundingBoxes.add( downsampleOptions );
