@@ -221,6 +221,7 @@ public class DifferenceOfGaussianGUI extends DifferenceOfGUI implements GenericD
 		}
 
 		final ImagePlus imp = ImageJFunctions.wrapFloat( img, "" ).duplicate();
+		imp.resetDisplayRange();
 		img = null;
 		imp.setDimensions( 1, imp.getStackSize(), 1 );
 		imp.setTitle( "tp: " + viewDescription.getTimePoint().getName() + " viewSetup: " + viewDescription.getViewSetupId() );		
