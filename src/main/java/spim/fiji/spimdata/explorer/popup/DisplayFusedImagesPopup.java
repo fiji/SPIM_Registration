@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.swing.JMenu;
@@ -204,7 +205,9 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 
 					final ArrayList< RandomAccessibleInterval< FloatType > > images = new ArrayList<>();
 					final ArrayList< RandomAccessibleInterval< FloatType > > weights = new ArrayList<>();
-					
+
+					IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Fusing " + views.size() + ", caching strategy=" + imgType );
+
 					for ( final ViewId viewId : views )
 					{
 						final ImgLoader imgloader = spimData.getSequenceDescription().getImgLoader();
@@ -223,6 +226,9 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 							TransformVirtual.scaleTransform( model, 1.0 / downsampling );
 						}
 
+						// this modifies the model so it maps from a smaller image to the global coordinate space,
+						// which applies for the image itself as well as the weights since they also use the smaller
+						// input image as reference
 						final RandomAccessibleInterval inputImg = TransformView.openDownsampled( imgloader, viewId, model );
 
 						images.add( TransformView.transformView( inputImg, model, bb, 0, 1 ) );
