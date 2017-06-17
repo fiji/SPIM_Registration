@@ -100,32 +100,32 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 		
 		this.localization = defaultLocalization = gd.getNextChoiceIndex();
 
-		final int brightness = gd.getNextChoiceIndex();
+		final int brightness = defaultBrightness = gd.getNextChoiceIndex();
 
-			int dsxy = defaultDownsampleXYIndex = gd.getNextChoiceIndex();
-			int dsz = defaultDownsampleZIndex = gd.getNextChoiceIndex();
+		int dsxy = defaultDownsampleXYIndex = gd.getNextChoiceIndex();
+		int dsz = defaultDownsampleZIndex = gd.getNextChoiceIndex();
 
-			if ( dsz == 0 )
-				downsampleZ = 1;
-			else if ( dsz == 1 )
-				downsampleZ = 2;
-			else if ( dsz == 2 )
-				downsampleZ = 4;
-			else
-				downsampleZ = 8;
+		if ( dsz == 0 )
+			downsampleZ = 1;
+		else if ( dsz == 1 )
+			downsampleZ = 2;
+		else if ( dsz == 2 )
+			downsampleZ = 4;
+		else
+			downsampleZ = 8;
 
-			if ( dsxy == 0 )
-				downsampleXYIndex = 1;
-			else if ( dsxy == 1 )
-				downsampleXYIndex = 2;
-			else if ( dsxy == 2 )
-				downsampleXYIndex = 4;
-			else if ( dsxy == 3 )
-				downsampleXYIndex = 8;
-			else if ( dsxy == 4 )
-				downsampleXYIndex = 0;
-			else
-				downsampleXYIndex = -1;
+		if ( dsxy == 0 )
+			downsampleXYIndex = 1;
+		else if ( dsxy == 1 )
+			downsampleXYIndex = 2;
+		else if ( dsxy == 2 )
+			downsampleXYIndex = 4;
+		else if ( dsxy == 3 )
+			downsampleXYIndex = 8;
+		else if ( dsxy == 4 )
+			downsampleXYIndex = 0;
+		else
+			downsampleXYIndex = -1;
 
 		if ( setMinMax )
 		{
