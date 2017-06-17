@@ -64,6 +64,9 @@ public class DifferenceOfMeanGUI extends DifferenceOfGUI
 		dom.imageSigmaY = this.imageSigmaY;
 		dom.imageSigmaZ = this.imageSigmaZ;
 
+		dom.minIntensity = this.minIntensity;
+		dom.maxIntensity = this.maxIntensity;
+
 		dom.radius1 = this.radius1;
 		dom.radius2 = this.radius2;
 		dom.threshold = (float)this.threshold;

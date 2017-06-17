@@ -25,6 +25,7 @@ import spim.process.cuda.NativeLibraryTools;
 import spim.process.interestpointdetection.methods.dog.DoG;
 import spim.process.interestpointdetection.methods.dog.DoGParameters;
 import spim.process.interestpointdetection.methods.downsampling.DownsampleTools;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class DifferenceOfGaussianGUI extends DifferenceOfGUI implements GenericDialogAppender
 {
@@ -83,6 +84,9 @@ public class DifferenceOfGaussianGUI extends DifferenceOfGUI implements GenericD
 		dog.imageSigmaY = this.imageSigmaY;
 		dog.imageSigmaZ = this.imageSigmaZ;
 
+		dog.minIntensity = this.minIntensity;
+		dog.maxIntensity = this.maxIntensity;
+
 		dog.sigma = this.sigma;
 		dog.findMin = this.findMin;
 		dog.findMax = this.findMax;
@@ -121,10 +125,7 @@ public class DifferenceOfGaussianGUI extends DifferenceOfGUI implements GenericD
 			catch ( Exception  e )
 			{
 				IOFunctions.println( "An error occured (DOG): " + e ); 
-				IOFunctions.println( "Failed to segment angleId: " + 
-						vd.getViewSetup().getAngle().getId() + " channelId: " +
-						vd.getViewSetup().getChannel().getId() + " illumId: " +
-						vd.getViewSetup().getIllumination().getId() + ". Continuing with next one." );
+				IOFunctions.println( "Failed to segment viewId: " + Group.pvid( vd ) + ". Continuing with next one." );
 				e.printStackTrace();
 			}
 		}
