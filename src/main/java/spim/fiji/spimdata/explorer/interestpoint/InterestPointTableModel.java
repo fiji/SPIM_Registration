@@ -120,7 +120,11 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 		final ArrayList< String > labels = new ArrayList< String >();
 		labels.addAll( viewInterestPoints.getViewInterestPointLists( vd ).getHashMap().keySet() );
 		Collections.sort( labels );
-		return labels.get( row );
+
+		if ( row >= labels.size() )
+			return null;
+		else
+			return labels.get( row );
 	}
 
 	@Override
@@ -199,7 +203,12 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 
 			final String label = label( viewInterestPoints, currentVD, row );
 
-			if ( col == 1 )
+			if ( label == null )
+			{
+				this.selectedRow = this.selectedCol = -1;
+				this.points = new ArrayList< RealLocalizable >();
+			}
+			else if ( col == 1 )
 			{
 				points = panel.getInterestPoints( viewInterestPoints, currentVD, label );
 			}
