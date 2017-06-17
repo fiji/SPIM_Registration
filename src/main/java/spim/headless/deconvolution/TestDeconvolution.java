@@ -55,7 +55,7 @@ public class TestDeconvolution
 		spimData = new XmlIoSpimData2( "" ).load( "/Users/spreibi/Documents/Microscopy/SPIM/HisYFP-SPIM/dataset.xml" );
 		groups = selectViews( spimData.getSequenceDescription().getViewDescriptions().values() );
 
-		testDeconvolution( spimData, groups, "My Bounding Box" );
+		testDeconvolution( spimData, groups, "My Bounding Box1" );
 	}
 
 	public static < V extends ViewId > void testDeconvolution(
@@ -75,7 +75,7 @@ public class TestDeconvolution
 			return;
 		}
 
-		System.out.println( BoundingBox.getBoundingBoxDescription( boundingBox ) );
+		IOFunctions.println( BoundingBox.getBoundingBoxDescription( boundingBox ) );
 
 		final double osemSpeedUp = 1.0;
 
