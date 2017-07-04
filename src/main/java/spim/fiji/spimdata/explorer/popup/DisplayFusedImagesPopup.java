@@ -245,7 +245,12 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 					else if ( imgType == ImgDataType.PRECOMPUTED )
 						img = FusionHelper.copyImg( img, new ImagePlusImgFactory<>() );
 
-					DisplayImage.getImagePlusInstance( img, true, "Fused, Virtual", 0, 255 ).show();
+					// set ImageJ title according to fusion type
+					final String title = imgType == ImgDataType.CACHED ? 
+							"Fused, Virtual (cached) " : (imgType == ImgDataType.VIRTUAL ? 
+									"Fused, Virtual" : "Fused" );
+
+					DisplayImage.getImagePlusInstance( img, true, title, 0, 255 ).show();
 				}
 			} ).start();
 		}
