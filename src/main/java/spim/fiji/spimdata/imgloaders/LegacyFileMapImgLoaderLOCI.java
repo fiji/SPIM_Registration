@@ -62,7 +62,7 @@ public class LegacyFileMapImgLoaderLOCI extends AbstractImgFactoryImgLoader
 		for (TimePoint tp : sd.getTimePoints().getTimePointsOrdered()){
 			for (BasicViewDescription< ? > vd : fileMap.keySet())
 			{
-				if (vd.getTimePoint().equals( tp ))
+				if (vd.getTimePoint().equals( tp )) // TODO: THIS FAILS WHEN ONE FILE CONTAINS TWO CHANNELS
 				{
 					if (!tpSources.containsKey( tp.getId() ))
 						tpSources.put( tp.getId(), new HashSet<>() );
@@ -211,6 +211,7 @@ public class LegacyFileMapImgLoaderLOCI extends AbstractImgFactoryImgLoader
 			int ch = fileMap.get( vd ).getB().getB();
 			int tpNo = allTimepointsInSingleFiles ? 0 : t.getId();
 
+			System.out.println( "allTimepointsInSingleFiles " + allTimepointsInSingleFiles );
 			for ( int z = 0; z < depth; ++z )
 			{
 				IJ.showProgress( (double)z / (double)depth );
