@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
@@ -311,18 +312,8 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 			final V v1 = pair.getA();
 			final V v2 = pair.getB();
 
-			int i1 = -1;
-			int i2 = -1;
-
-			// does any of the subset-precursor HashSets already contain v1 or v2
-			for ( int i = 0; i < vSets.size(); ++i )
-			{
-				if ( vSets.get( i ).contains( v1 ) )
-					i1 = i;
-
-				if ( vSets.get( i ).contains( v2 ) )
-					i2 = i;
-			}
+			final int i1 = setId( v1, vSets );
+			final int i2 = setId( v2, vSets );
 
 			// both are not contained in any subset-precursor HashSet
 			if ( i1 == -1 && i2 == -1 )
@@ -399,6 +390,20 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 		}
 
 		return subsets;
+	}
+
+	protected static < V > int setId( final V v, final ArrayList< HashSet< V > > vSets )
+	{
+		int i = -1;
+
+		// does any of the subset-precursor HashSets contain the view?
+		for ( int j = 0; j < vSets.size(); ++j )
+		{
+			if ( vSets.get( j ).contains( v ) )
+				i = j;
+		}
+
+		return i;
 	}
 
 	/*
@@ -508,8 +513,8 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 		// remove indicies from large down to small
 		for ( int i = list.size() - 1; i >= 0; --i )
 		{
-			pairSets.remove( list.get( i ) );
-			vSets.remove( list.get( i ) );
+			pairSets.remove( (int)list.get( i ) );
+			vSets.remove( (int)list.get( i ) );
 		}
 
 		pairSets.add( pairSet );
