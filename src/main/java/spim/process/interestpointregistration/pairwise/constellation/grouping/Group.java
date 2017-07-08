@@ -22,7 +22,7 @@ import net.imglib2.util.ValuePair;
 
 public class Group< V > implements Iterable< V >
 {
-	private HashSet< V > views;
+	protected Set< V > views;
 
 	public Group( final Collection< V > views )
 	{
@@ -87,6 +87,14 @@ public class Group< V > implements Iterable< V >
 	@Override
 	public String toString() { return gvids( this ); }
 
+	public static < V extends ViewId > List< V > getViewsSorted( final Set< V > views )
+	{
+		final ArrayList< V > sorted = new ArrayList<>();
+		sorted.addAll( views );
+		Collections.sort( sorted );
+		return sorted;
+	}
+
 	/**
 	 * Combining means to combine all views that share everything except what they are grouped after, e.g. channel
 	 * (for example used to group GFP, RFP, DAPI for a Tile)
@@ -102,7 +110,6 @@ public class Group< V > implements Iterable< V >
 	 * @param <V> - something that extends {@link BasicViewDescription}
 	 * @return - list of groups
 	 */
-
 	public static < V extends BasicViewDescription< ? > > List< Group< V > > combineBy(List<V> vds,
 			Set<Class<? extends Entity>> groupingFactors)
 	{
@@ -467,13 +474,12 @@ public class Group< V > implements Iterable< V >
 	{
 		String groupS = "";
 
-		for ( final Object a : group.getViews() )
-		{
-			if ( ViewId.class.isInstance( a ) )
-				groupS += pvids( (ViewId)a ) + " ";
-			else
-				groupS += "? ";
-		}
+		if ( ViewId.class.isInstance( group.getViews().iterator().next() ) )
+			for ( final ViewId a : getViewsSorted( (Set<ViewId>)(group.getViews()) ) )
+				groupS += pvids( a ) + " ";
+		else
+			for ( final Object a : group.getViews() )
+				groupS += a + " ";
 
 		return groupS.trim();
 	}
