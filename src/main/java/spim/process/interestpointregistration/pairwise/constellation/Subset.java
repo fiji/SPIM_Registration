@@ -1,9 +1,7 @@
 package spim.process.interestpointregistration.pairwise.constellation;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -13,13 +11,8 @@ import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
-public class Subset< V >
+public class Subset< V > extends Group< V >
 {
-	/**
-	 *  all views contained in this subset
-	 */
-	Set< V > views;
-
 	/**
 	 * all pairs that need to be compared in that group
 	 */
@@ -40,25 +33,16 @@ public class Subset< V >
 			final List< Pair< V, V > > pairs,
 			final Set< Group< V > > groups )
 	{
-		this.views = views;
+		super( views );
 		this.pairs = pairs;
 		this.groups = groups;
 		this.fixedViews = new HashSet<>();
 	}
 
 	public List< Pair< V, V > > getPairs() { return pairs; }
-	public Set< V > getViews() { return views; }
 	public Set< Group< V > > getGroups() { return groups; }
 	public Set< V > getFixedViews() { return fixedViews; }
 	protected void setFixedViews( final Set< V > fixedViews ) { this.fixedViews = fixedViews; }
-
-	public static < V extends ViewId > List< V > getViewsSorted( final Set< V > views )
-	{
-		final ArrayList< V > sorted = new ArrayList<>();
-		sorted.addAll( views );
-		Collections.sort( sorted );
-		return sorted;
-	}
 
 	/**
 	 * Fix an additional list of views (removes pairs from subsets and sets list of fixed views)
