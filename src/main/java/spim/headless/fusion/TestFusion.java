@@ -84,7 +84,7 @@ public class TestFusion
 			final float[] blending = ProcessFusion.defaultBlendingRange.clone();
 			final float[] border = ProcessFusion.defaultBlendingBorder.clone();
 
-			ProcessVirtual.adjustBlending( spimData.getSequenceDescription().getViewDescription( viewId ), blending, border );
+			FusionHelper.adjustBlending( spimData.getSequenceDescription().getViewDescription( viewId ), blending, border );
 
 			if ( !Double.isNaN( downsampling ) )
 			{

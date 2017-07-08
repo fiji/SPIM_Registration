@@ -263,7 +263,7 @@ public class ProcessInputImages< V extends ViewId >
 					final float[] borderFusion = blendingBorderFusion.clone();
 
 					// adjust both for z-scaling (anisotropy)
-					ProcessVirtual.adjustBlending( spimData.getSequenceDescription().getViewDescriptions().get( viewId ), rangeFusion, borderFusion );
+					FusionHelper.adjustBlending( spimData.getSequenceDescription().getViewDescriptions().get( viewId ), rangeFusion, borderFusion );
 
 					weightsFusion.add( TransformWeight.transformBlending( inputImg, borderFusion, rangeFusion, model, bb ) );
 				}
@@ -280,7 +280,7 @@ public class ProcessInputImages< V extends ViewId >
 					final float[] borderDecon = blendingBorderDecon.clone();
 
 					// adjust both for z-scaling (anisotropy)
-					ProcessVirtual.adjustBlending( spimData.getSequenceDescription().getViewDescriptions().get( viewId ), rangeDecon, borderDecon );
+					FusionHelper.adjustBlending( spimData.getSequenceDescription().getViewDescriptions().get( viewId ), rangeDecon, borderDecon );
 
 					weightsDecon.add( TransformWeight.transformBlending( inputImg, borderDecon, rangeDecon, model, bb ) );
 				}

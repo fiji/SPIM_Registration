@@ -3,7 +3,6 @@ package spim.fiji.spimdata.explorer.popup;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -13,28 +12,15 @@ import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 
 import ij.gui.GenericDialog;
-import mpicbg.spim.data.registration.ViewRegistration;
-import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
-import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.img.imageplus.ImagePlusImgFactory;
-import net.imglib2.realtransform.AffineTransform3D;
-import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
-import spim.process.export.DisplayImage;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.FusionHelper.ImgDataType;
-import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
-import spim.process.fusion.transformed.TransformView;
-import spim.process.fusion.transformed.TransformVirtual;
-import spim.process.fusion.transformed.TransformWeight;
-import spim.process.fusion.weightedavg.ProcessFusion;
-import spim.process.fusion.weightedavg.ProcessVirtual;
+import spim.process.fusion.FusionTools;
 
 public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSetable
 {
@@ -197,60 +183,9 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 						bb = boundingBox;
 					}
 
-					if ( !Double.isNaN( downsampling ) )
-						bb = TransformVirtual.scaleBoundingBox( bb, 1.0 / downsampling );
-
-					final long[] dim = new long[ bb.numDimensions() ];
-					bb.dimensions( dim );
-
-					final ArrayList< RandomAccessibleInterval< FloatType > > images = new ArrayList<>();
-					final ArrayList< RandomAccessibleInterval< FloatType > > weights = new ArrayList<>();
-
 					IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Fusing " + views.size() + ", caching strategy=" + imgType );
 
-					for ( final ViewId viewId : views )
-					{
-						final ImgLoader imgloader = spimData.getSequenceDescription().getImgLoader();
-						final ViewRegistration vr = spimData.getViewRegistrations().getViewRegistration( viewId );
-						vr.updateModel();
-						AffineTransform3D model = vr.getModel();
-
-						final float[] blending = ProcessFusion.defaultBlendingRange.clone();
-						final float[] border = ProcessFusion.defaultBlendingBorder.clone();
-
-						ProcessVirtual.adjustBlending( spimData.getSequenceDescription().getViewDescription( viewId ), blending, border );
-
-						if ( !Double.isNaN( downsampling ) )
-						{
-							model = model.copy();
-							TransformVirtual.scaleTransform( model, 1.0 / downsampling );
-						}
-
-						// this modifies the model so it maps from a smaller image to the global coordinate space,
-						// which applies for the image itself as well as the weights since they also use the smaller
-						// input image as reference
-						final RandomAccessibleInterval inputImg = TransformView.openDownsampled( imgloader, viewId, model );
-
-						images.add( TransformView.transformView( inputImg, model, bb, 0, 1 ) );
-						weights.add( TransformWeight.transformBlending( inputImg, border, blending, model, bb ) );
-
-						//images.add( TransformWeight.transformBlending( inputImg, border, blending, vr.getModel(), bb ) );
-						//weights.add( Views.interval( new ConstantRandomAccessible< FloatType >( new FloatType( 1 ), 3 ), new FinalInterval( dim ) ) );
-					}
-
-					RandomAccessibleInterval< FloatType > img = new FusedRandomAccessibleInterval( new FinalInterval( dim ), images, weights );
-
-					if ( imgType == ImgDataType.CACHED )
-						img = FusionHelper.cacheRandomAccessibleInterval( img, maxCacheSize, new FloatType(), cellDim );
-					else if ( imgType == ImgDataType.PRECOMPUTED )
-						img = FusionHelper.copyImg( img, new ImagePlusImgFactory<>() );
-
-					// set ImageJ title according to fusion type
-					final String title = imgType == ImgDataType.CACHED ? 
-							"Fused, Virtual (cached) " : (imgType == ImgDataType.VIRTUAL ? 
-									"Fused, Virtual" : "Fused" );
-
-					DisplayImage.getImagePlusInstance( img, true, title, 0, 255 ).show();
+					FusionTools.display( FusionTools.fuseVirtual( spimData, views, true, bb, defaultDownsampling ), imgType ).show();	
 				}
 			} ).start();
 		}
