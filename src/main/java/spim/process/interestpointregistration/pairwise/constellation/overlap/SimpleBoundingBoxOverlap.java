@@ -13,7 +13,6 @@ import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.Dimensions;
 import net.imglib2.FinalRealInterval;
-import net.imglib2.realtransform.AffineGet;
 import net.imglib2.realtransform.AffineTransform3D;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 

@@ -1,12 +1,10 @@
 package spim.process.interestpointregistration.pairwise.constellation;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;

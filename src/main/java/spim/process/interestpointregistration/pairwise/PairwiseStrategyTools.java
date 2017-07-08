@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
 import spim.process.interestpointregistration.pairwise.constellation.range.AllInRange;
@@ -64,20 +63,5 @@ public class PairwiseStrategyTools
 				return true;
 
 		return false;
-	}
-
-	public static void main( String[] args )
-	{
-		final ArrayList< ViewId > views = new ArrayList<>();
-
-		for ( int tp = 0; tp < 10; ++tp )
-			for ( int viewSetupId = 0; viewSetupId < 6; ++viewSetupId )
-				views.add( new ViewId( tp, viewSetupId ) );
-
-		final ArrayList< Pair< ViewId, ViewId > > pairs = new ArrayList<>();
-
-		for ( int tp = 0; tp < 10; ++tp )
-		{
-		}
 	}
 }

@@ -470,6 +470,7 @@ public class Group< V > implements Iterable< V >
 
 	public static String pvid( final ViewId viewId ) { return "tpId=" + viewId.getTimePointId() + " setupId=" + viewId.getViewSetupId(); }
 	public static String pvids( final ViewId viewId ) { return viewId.getTimePointId() + "-" + viewId.getViewSetupId(); }
+	@SuppressWarnings("unchecked")
 	public static String gvids( final Group< ? > group )
 	{
 		String groupS = "";
