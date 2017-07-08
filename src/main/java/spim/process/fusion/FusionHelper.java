@@ -1,6 +1,7 @@
 package spim.process.fusion;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.Callable;
@@ -8,12 +9,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import mpicbg.spim.data.generic.sequence.BasicViewDescription;
+import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.Interval;
@@ -32,6 +37,8 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import spim.Threads;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.ViewSetupUtils;
+import spim.process.fusion.weightedavg.ProcessFusion;
 
 public class FusionHelper
 {
@@ -42,6 +49,36 @@ public class FusionHelper
 	 * Do not instantiate
 	 */
 	private FusionHelper() {}
+
+	public static void adjustBlending( final BasicViewDescription< ? extends BasicViewSetup > vd, final float[] blending, final float[] border )
+	{
+		final float minRes = (float)getMinRes( vd );
+		VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSize( vd.getViewSetup() );
+		if ( voxelSize == null )
+			voxelSize = new FinalVoxelDimensions( "px", new double[]{ 1, 1, 1 } );
+
+		if ( ProcessFusion.defaultAdjustBlendingForAnisotropy )
+		{
+			for ( int d = 0; d < blending.length; ++d )
+			{
+				blending[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
+				border[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
+			}
+		}
+	}
+
+	public static double getMinRes( final BasicViewDescription< ? extends BasicViewSetup > desc )
+	{
+		final VoxelDimensions size = ViewSetupUtils.getVoxelSize( desc.getViewSetup() );
+
+		if ( size == null )
+		{
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): WARNINIG, could not load voxel size!! Assuming 1,1,1"  );
+			return 1;
+		}
+
+		return Math.min( size.dimension( 0 ), Math.min( size.dimension( 1 ), size.dimension( 2 ) ) );
+	}
 
 	public static String getIllumName( final List< Illumination > illumsToProcess )
 	{
@@ -129,6 +166,11 @@ public class FusionHelper
 
 	public static RandomAccessibleInterval< FloatType > copyImg( final RandomAccessibleInterval< FloatType > input, final ImgFactory< FloatType > factory )
 	{
+		return translateIfNecessary( input, copyImgNoTranslation( input, factory ) );
+	}
+
+	public static Img< FloatType > copyImgNoTranslation( final RandomAccessibleInterval< FloatType > input, final ImgFactory< FloatType > factory )
+	{
 		final RandomAccessibleInterval< FloatType > in;
 
 		if ( Views.isZeroMin( input ) )
@@ -144,7 +186,7 @@ public class FusionHelper
 		// copy the virtual construct into an actual image
 		FusionHelper.copyImg( in, tImg );
 
-		return translateIfNecessary( input, tImg );
+		return tImg;
 	}
 
 	public static < T > RandomAccessibleInterval< T > translateIfNecessary( final Interval original, final RandomAccessibleInterval< T > copy )

@@ -7,8 +7,6 @@ import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import mpicbg.spim.data.generic.sequence.BasicViewDescription;
-import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.TimePoint;
@@ -181,7 +179,7 @@ public class ProcessVirtual extends ProcessFusion
 				final float[] blending = ProcessFusion.defaultBlendingRange.clone();
 				final float[] border = ProcessFusion.defaultBlendingBorder.clone();
 
-				adjustBlending( vd, blending, border );
+				FusionHelper.adjustBlending( vd, blending, border );
 
 				// the virtual weight construct
 				final RandomAccessible< FloatType > virtualBlending =
@@ -202,7 +200,7 @@ public class ProcessVirtual extends ProcessFusion
 				final double[] sigma1 = ProcessFusion.defaultContentBasedSigma1.clone();
 				final double[] sigma2 = ProcessFusion.defaultContentBasedSigma2.clone();
 
-				final float minRes = (float)getMinRes( vd );
+				final float minRes = (float)FusionHelper.getMinRes( vd );
 				VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSize( vd.getViewSetup() );
 				if ( voxelSize == null )
 					voxelSize = new FinalVoxelDimensions( "px", new double[]{ 1, 1, 1 } );
@@ -283,35 +281,4 @@ public class ProcessVirtual extends ProcessFusion
 		
 		return fusedImg;
 	}
-
-	public static void adjustBlending( final BasicViewDescription< ? extends BasicViewSetup > vd, final float[] blending, final float[] border )
-	{
-		final float minRes = (float)getMinRes( vd );
-		VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSize( vd.getViewSetup() );
-		if ( voxelSize == null )
-			voxelSize = new FinalVoxelDimensions( "px", new double[]{ 1, 1, 1 } );
-
-		if ( ProcessFusion.defaultAdjustBlendingForAnisotropy )
-		{
-			for ( int d = 0; d < blending.length; ++d )
-			{
-				blending[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
-				border[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
-			}
-		}
-	}
-
-	public static double getMinRes( final BasicViewDescription< ? extends BasicViewSetup > desc )
-	{
-		final VoxelDimensions size = ViewSetupUtils.getVoxelSize( desc.getViewSetup() );
-
-		if ( size == null )
-		{
-			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): WARNINIG, could not load voxel size!! Assuming 1,1,1"  );
-			return 1;
-		}
-
-		return Math.min( size.dimension( 0 ), Math.min( size.dimension( 1 ), size.dimension( 2 ) ) );
-	}
-
 }
