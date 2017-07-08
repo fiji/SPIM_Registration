@@ -56,31 +56,29 @@ public class LegacyFileMapImgLoaderLOCI extends AbstractImgFactoryImgLoader
 		this.reader = new ImageReader();
 
 		setImgFactory( imgFactory );
-		
+
 		allTimepointsInSingleFiles = true;
-		Map<Integer, Set<File>> tpSources = new HashMap<>();
-		for (TimePoint tp : sd.getTimePoints().getTimePointsOrdered()){
-			for (BasicViewDescription< ? > vd : fileMap.keySet())
+		
+		// populate map file -> {time points}
+		Map< File, Set< Integer > > tpsPerFile = new HashMap<>();
+		for ( BasicViewDescription< ? > vd : fileMap.keySet() )
+		{
+
+			final File fileForVd = fileMap.get( vd ).getA();
+			if ( !tpsPerFile.containsKey( fileForVd ) )
+				tpsPerFile.put( fileForVd, new HashSet<>() );
+
+			tpsPerFile.get( fileForVd ).add( vd.getTimePointId() );
+
+			// the current file has more than one time point
+			if ( tpsPerFile.get( fileForVd ).size() > 1 )
 			{
-				if (vd.getTimePoint().equals( tp )) // TODO: THIS FAILS WHEN ONE FILE CONTAINS TWO CHANNELS
-				{
-					if (!tpSources.containsKey( tp.getId() ))
-						tpSources.put( tp.getId(), new HashSet<>() );
-					
-					if (tpSources.get( tp.getId() ).contains( fileMap.get( vd ).getA() ))
-					{
-						allTimepointsInSingleFiles = false;
-						break;
-					}
-						
-					
-					tpSources.get( tp.getId() ).add( fileMap.get( vd ).getA() );
-				}
-			}
-			
-			if (!allTimepointsInSingleFiles)
+				allTimepointsInSingleFiles = false;
 				break;
+			}
+
 		}
+
 		System.out.println( allTimepointsInSingleFiles );
 		
 	}

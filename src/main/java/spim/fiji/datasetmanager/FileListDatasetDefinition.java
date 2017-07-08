@@ -805,7 +805,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		String[] choicesAll = choices.toArray( new String[]{} );
 				
 		for (int i = 0; i < numVariables; i++)
-			gd.addChoice( "pattern " + i + " assignment", choicesAll, choicesAll[0] );
+			gd.addChoice( "pattern_" + i + " assignment", choicesAll, choicesAll[0] );
 		
 		gd.showDialog();
 		
