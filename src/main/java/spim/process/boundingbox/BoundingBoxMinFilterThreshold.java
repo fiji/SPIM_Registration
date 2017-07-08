@@ -11,8 +11,6 @@ import java.util.concurrent.Future;
 
 import ij.ImageJ;
 import ij.ImagePlus;
-import mpicbg.spim.data.sequence.Channel;
-import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
@@ -20,6 +18,7 @@ import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessible;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
+import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
@@ -29,9 +28,8 @@ import spim.Threads;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.process.fusion.FusionHelper;
+import spim.process.fusion.FusionTools;
 import spim.process.fusion.ImagePortion;
-import spim.process.fusion.weightedavg.ProcessFusion;
-import spim.process.fusion.weightedavg.ProcessVirtual;
 
 public class BoundingBoxMinFilterThreshold implements BoundingBoxEstimation
 {
@@ -74,14 +72,12 @@ public class BoundingBoxMinFilterThreshold implements BoundingBoxEstimation
 		IOFunctions.println( maxBB );
 
 		// fuse the dataset
-		final ProcessFusion process = new ProcessVirtual( spimData, views, maxBB, downsampling, 0, false, false );
+		Img< FloatType > img =
+			FusionHelper.copyImgNoTranslation(
+				FusionTools.fuseVirtual( spimData, views, true, maxBB, downsampling ),
+				new ArrayImgFactory<>() );
 
-		// TODO: THIS MUST NOT BE CHANNEL/TIMEPOINT SPECIFIC
-		final TimePoint tpTmp = spimData.getSequenceDescription().getViewDescription( views.get( 0 ) ).getTimePoint();
-		final Channel tpCh = spimData.getSequenceDescription().getViewDescription( views.get( 0 ) ).getViewSetup().getChannel();
-
-		Img< FloatType > img = process.fuseStack( new FloatType(), tpTmp, tpCh, imgFactory );
-
+		
 		final float[] minmax = FusionHelper.minMax( img );
 		final int effR = Math.max( radiusMin / downsampling, 1 );
 		final double threshold = (minmax[ 1 ] - minmax[ 0 ]) * ( background / 100.0 ) + minmax[ 0 ];
