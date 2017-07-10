@@ -498,6 +498,13 @@ public class SpimData2 extends SpimData
 		return new SpimData2( data1.getBasePath(), s, vr, vipl, bb, sr);
 	}
 
+	/**
+	 * Removes all missing views from the list, be careful, it modifies the collection!
+	 *
+	 * @param data - the spimdata object
+	 * @param viewIds - the views
+	 * @return those who were removed
+	 */
 	public static < V extends ViewId > List< V > filterMissingViews( final AbstractSpimData< ? > data, final Collection< V > viewIds )
 	{
 		final ArrayList< V > removed = new ArrayList<>();
