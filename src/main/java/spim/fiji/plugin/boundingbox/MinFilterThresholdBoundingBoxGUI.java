@@ -20,7 +20,6 @@ public class MinFilterThresholdBoundingBoxGUI extends BoundingBoxGUI
 	public static int defaultDownsamplingAutomatic = 4;
 	public static double defaultBackgroundIntensity = 5;
 	public static int defaultDiscardedObjectSize = 25;
-	public static boolean defaultLoadSequentially = true;
 	public static boolean defaultDisplaySegmentationImage = false;
 
 	public MinFilterThresholdBoundingBoxGUI( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
@@ -63,7 +62,6 @@ public class MinFilterThresholdBoundingBoxGUI extends BoundingBoxGUI
 		gd.addSlider( "Size_of_objects to be discarded", 1, 100, defaultDiscardedObjectSize );
 		gd.addMessage( "" );
 		gd.addSlider( "Downsampling", 1.0, 10.0, defaultDownsamplingAutomatic );
-		gd.addCheckbox( "Load_input_images sequentially", defaultLoadSequentially );
 		gd.addCheckbox( "Display_image_used for segmentation", defaultDisplaySegmentationImage );
 		gd.addMessage( "Image size: ???x???x??? pixels", GUIHelper.mediumstatusfont, GUIHelper.good );
 		Label l = (Label)gd.getMessage();
@@ -80,7 +78,6 @@ public class MinFilterThresholdBoundingBoxGUI extends BoundingBoxGUI
 		final int discardedObjectSize = defaultDiscardedObjectSize = (int)Math.round( gd.getNextNumber() );
 
 		final int downsampling = defaultDownsamplingAutomatic = (int)Math.round( gd.getNextNumber() );
-		final boolean loadSequentially = defaultLoadSequentially = gd.getNextBoolean();
 		final boolean displaySegmentationImage = defaultDisplaySegmentationImage = gd.getNextBoolean();
 		
 		// compute approx bounding box
@@ -90,7 +87,6 @@ public class MinFilterThresholdBoundingBoxGUI extends BoundingBoxGUI
 				new CellImgFactory<>(),
 				background,
 				discardedObjectSize,
-				loadSequentially,
 				displaySegmentationImage,
 				downsampling ).estimate( "test" );
 

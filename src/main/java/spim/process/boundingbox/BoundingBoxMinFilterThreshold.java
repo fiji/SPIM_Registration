@@ -27,6 +27,7 @@ import net.imglib2.view.Views;
 import spim.Threads;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
+import spim.process.export.DisplayImage;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.FusionTools;
 import spim.process.fusion.ImagePortion;
@@ -39,9 +40,11 @@ public class BoundingBoxMinFilterThreshold implements BoundingBoxEstimation
 
 	final double background;
 	final int radiusMin;
-	final boolean loadSequentially;
 	final boolean displaySegmentationImage;
 	final int downsampling;
+
+	double extraSpaceFactor = 3;
+	float[] minmax;
 
 	public BoundingBoxMinFilterThreshold(
 			final SpimData2 spimData,
@@ -49,7 +52,6 @@ public class BoundingBoxMinFilterThreshold implements BoundingBoxEstimation
 			final ImgFactory< FloatType > imgFactory,
 			final double background,
 			final int discardedObjectSize,
-			final boolean loadSequentially,
 			final boolean displaySegmentationImage,
 			final int downsampling )
 	{
@@ -59,7 +61,6 @@ public class BoundingBoxMinFilterThreshold implements BoundingBoxEstimation
 
 		this.background = background;
 		this.radiusMin = discardedObjectSize / 2;
-		this.loadSequentially = loadSequentially;
 		this.displaySegmentationImage = displaySegmentationImage;
 		this.downsampling = downsampling;
 	}
@@ -77,7 +78,6 @@ public class BoundingBoxMinFilterThreshold implements BoundingBoxEstimation
 				FusionTools.fuseVirtual( spimData, views, true, maxBB, downsampling ),
 				new ArrayImgFactory<>() );
 
-		
 		final float[] minmax = FusionHelper.minMax( img );
 		final int effR = Math.max( radiusMin / downsampling, 1 );
 		final double threshold = (minmax[ 1 ] - minmax[ 0 ]) * ( background / 100.0 ) + minmax[ 0 ];
@@ -86,12 +86,18 @@ public class BoundingBoxMinFilterThreshold implements BoundingBoxEstimation
 		IOFunctions.println( "Fused image maximum: " + minmax[ 1 ] );
 		IOFunctions.println( "Threshold: " + threshold );
 
+		if ( displaySegmentationImage )
+			DisplayImage.getImagePlusInstance( img, false, "Fused input", minmax[ 0 ], minmax[ 1 ] ).show();
+
 		IOFunctions.println( "Computing minimum filter with effective radius of " + effR + " (downsampling=" + downsampling + ")" );
 
 		img = computeLazyMinFilter( img, effR );
 
 		if ( displaySegmentationImage )
-			ImageJFunctions.show( img );
+		{
+			final ImagePlus imp = DisplayImage.getImagePlusInstance( img, false, "Segmentation image", minmax[ 0 ], minmax[ 1 ] );
+			imp.show();
+		}
 
 		final int[] min = new int[ img.numDimensions() ];
 		final int[] max = new int[ img.numDimensions() ];
@@ -113,15 +119,37 @@ public class BoundingBoxMinFilterThreshold implements BoundingBoxEstimation
 			max[ d ] += maxBB.getMin()[ d ];
 			
 			// effect of the min filter + extra space
-			min[ d ] -= radiusMin * 3;
-			max[ d ] += radiusMin * 3;
+			min[ d ] -= radiusMin * extraSpaceFactor;
+			max[ d ] += radiusMin * extraSpaceFactor;
 		}
 
 		IOFunctions.println( "Bounding box dim global: [" + Util.printCoordinates( min ) + "] >> [" + Util.printCoordinates( max ) + "]" );
 
+		// maybe reuse it
+		this.minmax = minmax.clone();
+
 		return new BoundingBox( title, min, max );
 	}
-	
+
+	public double getExtraSpaceFactor() { return extraSpaceFactor; }
+	public void setExtraSpaceFactor( final double esf ) { this.extraSpaceFactor = esf; }
+
+	public float getMinIntensity()
+	{
+		if ( minmax != null && minmax.length == 2 )
+			return minmax[ 0 ];
+		else
+			return Float.NaN;
+	}
+
+	public float getMaxIntensity()
+	{
+		if ( minmax != null && minmax.length == 2 )
+			return minmax[ 1 ];
+		else
+			return Float.NaN;
+	}
+
 	final public static < T extends RealType< T > > boolean computeBoundingBox( final Img< T > img, final double threshold, final int[] min, final int[] max )
 	{
 		final int n = img.numDimensions();
