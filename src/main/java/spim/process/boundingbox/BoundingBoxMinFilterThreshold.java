@@ -35,7 +35,7 @@ import spim.process.fusion.ImagePortion;
 public class BoundingBoxMinFilterThreshold implements BoundingBoxEstimation
 {
 	final SpimData2 spimData;
-	final ArrayList< ViewId > views;
+	final Collection< ViewId > views;
 	final ImgFactory< FloatType > imgFactory;
 
 	final double background;
@@ -48,7 +48,7 @@ public class BoundingBoxMinFilterThreshold implements BoundingBoxEstimation
 
 	public BoundingBoxMinFilterThreshold(
 			final SpimData2 spimData,
-			final Collection< ViewId > viewIds,
+			final Collection< ? extends ViewId > views,
 			final ImgFactory< FloatType > imgFactory,
 			final double background,
 			final int discardedObjectSize,
@@ -56,13 +56,16 @@ public class BoundingBoxMinFilterThreshold implements BoundingBoxEstimation
 			final int downsampling )
 	{
 		this.spimData = spimData;
-		this.views = BoundingBoxMaximal.filterMissingViews( viewIds, spimData.getSequenceDescription() );
+		this.views = new ArrayList<>();
 		this.imgFactory = imgFactory;
 
 		this.background = background;
 		this.radiusMin = discardedObjectSize / 2;
 		this.displaySegmentationImage = displaySegmentationImage;
 		this.downsampling = downsampling;
+
+		this.views.addAll( views );
+		SpimData2.filterMissingViews( spimData, this.views );
 	}
 
 	@Override

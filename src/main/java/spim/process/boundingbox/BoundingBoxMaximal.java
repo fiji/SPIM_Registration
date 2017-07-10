@@ -13,23 +13,27 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Dimensions;
 import net.imglib2.FinalRealInterval;
+import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class BoundingBoxMaximal implements BoundingBoxEstimation
 {
-	final ArrayList< ViewId > views;
+	final Collection< ViewId > views;
 	final HashMap< ViewId, Dimensions > dimensions;
 	final HashMap< ViewId, ViewRegistration > registrations;
 
 	public BoundingBoxMaximal(
-			final Collection< ViewId > views,
+			final Collection< ? extends ViewId > views,
 			final AbstractSpimData< ? extends AbstractSequenceDescription<?,? extends BasicViewDescription< ? >, ? extends ImgLoader > > data )
 	{
+		this.views = new ArrayList<>();
 		this.dimensions = new HashMap<>();
 		this.registrations = new HashMap<>();
-		this.views = filterMissingViews( views, data.getSequenceDescription() );
+
+		this.views.addAll( views );
+		SpimData2.filterMissingViews( data, this.views );
 
 		for ( final ViewId viewId : this.views )
 		{
@@ -42,7 +46,7 @@ public class BoundingBoxMaximal implements BoundingBoxEstimation
 	}
 
 	public BoundingBoxMaximal(
-			final Collection< ViewId > views,
+			final Collection< ? extends ViewId > views,
 			final HashMap< ViewId, Dimensions > dimensions,
 			final HashMap< ViewId, ViewRegistration > registrations )
 	{
@@ -50,23 +54,6 @@ public class BoundingBoxMaximal implements BoundingBoxEstimation
 		this.registrations = registrations;
 		this.views = new ArrayList<>();
 		this.views.addAll( views );
-	}
-
-	public static ArrayList< ViewId > filterMissingViews( final Collection< ViewId > viewIds, final AbstractSequenceDescription< ?, ? extends BasicViewDescription< ? >, ? > sd )
-	{
-		final ArrayList< ViewId > views = new ArrayList<>();
-
-		for ( final ViewId viewId : viewIds )
-		{
-			final BasicViewDescription< ? > vd = sd.getViewDescriptions().get( viewId );
-
-			if ( vd.isPresent() )
-				views.add( vd );
-			else
-				IOFunctions.println( "Warning: ViewID"  + Group.pvid( vd ) + " is not present." );
-		}
-
-		return views;
 	}
 
 	@Override

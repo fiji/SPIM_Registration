@@ -25,6 +25,7 @@ import net.imglib2.util.Intervals;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
 import spim.fiji.plugin.apply.BigDataViewerTransformationWindow;
+import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 import spim.fiji.spimdata.explorer.popup.BDVPopup;
@@ -42,7 +43,9 @@ public class BoundingBoxBigDataViewer implements BoundingBoxEstimation
 			final Collection< ViewId > views )
 	{
 		this.spimData = spimData;
-		this.views = BoundingBoxMaximal.filterMissingViews( views, spimData.getSequenceDescription() );
+		this.views = views;
+
+		SpimData2.filterMissingViews( spimData, views );
 	}
 
 	@Override

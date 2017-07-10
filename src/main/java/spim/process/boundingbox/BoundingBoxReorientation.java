@@ -8,7 +8,6 @@ import java.util.Map;
 
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewTransformAffine;
-import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
@@ -59,8 +58,8 @@ public class BoundingBoxReorientation implements BoundingBoxEstimation
 				spimData,
 				extractPoints(
 						points,
-						BoundingBoxMaximal.filterMissingViews( viewIdsForEstimation, spimData.getSequenceDescription() ),
-						spimData.getSequenceDescription() ),
+						filterMissing( spimData, viewIdsForEstimation ),
+						spimData ),
 				percent,
 				testRotations,
 				viewIdsToApply );
@@ -81,7 +80,7 @@ public class BoundingBoxReorientation implements BoundingBoxEstimation
 						label,
 						useCorresponding,
 						true,
-						BoundingBoxMaximal.filterMissingViews( viewIdsForEstimation, spimData.getSequenceDescription() ),
+						filterMissing( spimData, viewIdsForEstimation ),
 						spimData ),
 				percent,
 				testRotations,
@@ -98,8 +97,16 @@ public class BoundingBoxReorientation implements BoundingBoxEstimation
 		this.spimData = spimData;
 		this.percent = percent;
 		this.testRotations = testRotations;
-		this.viewIdsToApply = BoundingBoxMaximal.filterMissingViews( viewIdsToApply, spimData.getSequenceDescription() );
+		this.viewIdsToApply = filterMissing( spimData, viewIdsToApply );
 		this.points = points;
+	}
+
+	private static < V extends ViewId > ArrayList< V > filterMissing( final SpimData2 spimData, final Collection< V > views )
+	{
+		final ArrayList< V > filteredViews = new ArrayList<>();
+		filteredViews.addAll( views );
+		SpimData2.filterMissingViews( spimData, filteredViews );
+		return filteredViews;
 	}
 
 	@Override
@@ -454,11 +461,11 @@ public class BoundingBoxReorientation implements BoundingBoxEstimation
 	public static ArrayList< RealLocalizable > extractPoints(
 			final HashMap< ViewId, ? extends Collection< ? extends RealLocalizable > > pointsIn,
 			final List< ViewId > viewIdsForEstimation,
-			final SequenceDescription sd )
+			final SpimData2 spimData )
 	{
 		final ArrayList< RealLocalizable > points = new ArrayList<>();
 
-		for ( final ViewId viewId : BoundingBoxMaximal.filterMissingViews( viewIdsForEstimation, sd ) )
+		for ( final ViewId viewId : filterMissing( spimData, viewIdsForEstimation ) )
 			points.addAll( pointsIn.get( viewId ) );
 
 		return points;
