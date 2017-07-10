@@ -18,6 +18,7 @@ import net.imglib2.Interval;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
+import spim.process.boundingbox.BoundingBoxTools;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.FusionHelper.ImgDataType;
 import spim.process.fusion.FusionTools;
@@ -53,7 +54,8 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 					boundingBoxes.removeAll();
 
 					final SpimData2 spimData = (SpimData2)panel.getSpimData();
-					for ( final BoundingBox bb : spimData.getBoundingBoxes().getBoundingBoxes() )
+
+					for ( final BoundingBox bb : BoundingBoxTools.getAllBoundingBoxes( spimData, ApplyTransformationPopup.getSelectedViews( panel ), true ) )
 					{
 						final JMenu downsampleOptions = new JMenu( bb.getTitle() + " [" + bb.dimension( 0 ) + "x" + bb.dimension( 1 ) + "x" + bb.dimension( 2 ) + "px]" );
 
@@ -148,8 +150,9 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 							return;
 						}
 
-						String[] choices = new String[ spimData.getBoundingBoxes().getBoundingBoxes().size() ];
-						
+						final List< BoundingBox > allBoxes = BoundingBoxTools.getAllBoundingBoxes( spimData, ApplyTransformationPopup.getSelectedViews( panel ), true );
+						final String[] choices = new String[ allBoxes.size() ];
+
 						int i = 0;
 						for ( final BoundingBox b : spimData.getBoundingBoxes().getBoundingBoxes() )
 							choices[ i++ ] = b.getTitle() + " [" + b.dimension( 0 ) + "x" + b.dimension( 1 ) + "x" + b.dimension( 2 ) + "px]";
@@ -167,7 +170,7 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 						if ( gd.wasCanceled() )
 							return;
 
-						bb = spimData.getBoundingBoxes().getBoundingBoxes().get( defaultBB = gd.getNextChoiceIndex() );
+						bb = allBoxes.get( defaultBB = gd.getNextChoiceIndex() );
 						downsampling = defaultDownsampling = gd.getNextNumber();
 						int caching = defaultCache = gd.getNextChoiceIndex();
 
@@ -183,9 +186,9 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 						bb = boundingBox;
 					}
 
-					IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Fusing " + views.size() + ", caching strategy=" + imgType );
+					IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Fusing " + views.size() + ", downsampling=" + downsampling + ", caching strategy=" + imgType );
 
-					FusionTools.display( FusionTools.fuseVirtual( spimData, views, true, bb, defaultDownsampling ), imgType ).show();	
+					FusionTools.display( FusionTools.fuseVirtual( spimData, views, true, bb, downsampling ), imgType ).show();
 				}
 			} ).start();
 		}
