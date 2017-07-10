@@ -62,6 +62,10 @@ public class TestFusion
 		final List< ViewId > viewIds = new ArrayList< ViewId >();
 		viewIds.addAll( spimData.getSequenceDescription().getViewDescriptions().values() );
 
+		// filter not present ViewIds
+		final List< ViewId > removed = SpimData2.filterMissingViews( spimData, viewIds );
+		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Removed " +  removed.size() + " views because they are not present." );
+
 		// downsampling
 		double downsampling = Double.NaN;
 
