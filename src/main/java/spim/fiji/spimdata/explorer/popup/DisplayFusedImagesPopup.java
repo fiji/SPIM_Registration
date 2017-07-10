@@ -81,10 +81,29 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 						boundingBoxes.add( downsampleOptions );
 					}
 
-					final JMenuItem cachingState = new JMenuItem( FusionHelper.imgDataTypeChoice[ defaultCache ] );
-					cachingState.setForeground( Color.GRAY );
-					cachingState.addActionListener( new ChangeCacheState( cachingState ) );
-					boundingBoxes.add( cachingState );
+					boundingBoxes.add( new Separator() );
+
+					final JMenuItem[] items = new JMenuItem[ FusionHelper.imgDataTypeChoice.length ];
+
+					for ( int i = 0; i < items.length; ++i )
+					{
+						final JMenuItem item = new JMenuItem( FusionHelper.imgDataTypeChoice[ i ] );
+
+						if ( i == defaultCache )
+							item.setForeground( Color.RED );
+						else
+							item.setForeground( Color.GRAY );
+
+						items[ i ] = item;
+					}
+
+					for ( int i = 0; i < items.length; ++i )
+					{
+						final JMenuItem item = items[ i ];
+						item.addActionListener( new ChangeCacheState( items, i ) );
+						boundingBoxes.add( item );
+					}
+
 				}
 			}
 
@@ -196,17 +215,27 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 
 	public class ChangeCacheState implements ActionListener
 	{
-		final JMenuItem m;
+		final JMenuItem[] items;
+		final int myState;
 
-		public ChangeCacheState( final JMenuItem m ){ this.m = m; }
+		public ChangeCacheState( final JMenuItem[] items, final int myState )
+		{
+			this.items = items;
+			this.myState = myState;
+		}
 
 		@Override
 		public void actionPerformed( final ActionEvent e )
 		{
-			if ( ++defaultCache > 2 )
-				defaultCache = 0;
+			for ( int i = 0; i < items.length; ++i )
+			{
+				if ( i == myState )
+					items[ i ].setForeground( Color.RED );
+				else
+					items[ i ].setForeground( Color.GRAY );
+			}
 
-			m.setText( FusionHelper.imgDataTypeChoice[ defaultCache ]  );
+			defaultCache = myState;
 		}
 		
 	}
