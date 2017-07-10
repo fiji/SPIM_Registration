@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import bdv.util.ConstantRandomAccessible;
+import ij.IJ;
 import ij.ImagePlus;
+import ij.gui.ProgressBar;
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.ImgLoader;
@@ -164,7 +166,7 @@ public class FusionTools
 		if ( imgType == ImgDataType.CACHED )
 			img = FusionHelper.cacheRandomAccessibleInterval( input, maxCacheSize, new FloatType(), cellDim );
 		else if ( imgType == ImgDataType.PRECOMPUTED )
-			img = FusionHelper.copyImg( input, new ImagePlusImgFactory<>() );
+			img = FusionHelper.copyImg( input, new ImagePlusImgFactory<>(), true );
 		else
 			img = input;
 

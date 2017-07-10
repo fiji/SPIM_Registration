@@ -8,7 +8,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import ij.IJ;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.Angle;
@@ -164,12 +166,22 @@ public class FusionHelper
 		return translateIfNecessary( input, factory.create( dim, type, loader ) );
 	}
 
-	public static RandomAccessibleInterval< FloatType > copyImg( final RandomAccessibleInterval< FloatType > input, final ImgFactory< FloatType > factory )
+	public static RandomAccessibleInterval< FloatType > copyImg( final RandomAccessibleInterval< FloatType > input, final ImgFactory< FloatType > factory  )
 	{
-		return translateIfNecessary( input, copyImgNoTranslation( input, factory ) );
+		return copyImg( input, factory, false );
 	}
 
-	public static Img< FloatType > copyImgNoTranslation( final RandomAccessibleInterval< FloatType > input, final ImgFactory< FloatType > factory )
+	public static RandomAccessibleInterval< FloatType > copyImg( final RandomAccessibleInterval< FloatType > input, final ImgFactory< FloatType > factory, final boolean showProgress  )
+	{
+		return translateIfNecessary( input, copyImgNoTranslation( input, factory, showProgress ) );
+	}
+
+	public static Img< FloatType > copyImgNoTranslation( final RandomAccessibleInterval< FloatType > input, final ImgFactory< FloatType > factory  )
+	{
+		return copyImgNoTranslation( input, factory, false );
+	}
+
+	public static Img< FloatType > copyImgNoTranslation( final RandomAccessibleInterval< FloatType > input, final ImgFactory< FloatType > factory, final boolean showProgress  )
 	{
 		final RandomAccessibleInterval< FloatType > in;
 
@@ -184,7 +196,7 @@ public class FusionHelper
 		final Img< FloatType > tImg = factory.create( dim, new FloatType() );
 
 		// copy the virtual construct into an actual image
-		FusionHelper.copyImg( in, tImg );
+		FusionHelper.copyImg( in, tImg, showProgress );
 
 		return tImg;
 	}
@@ -206,10 +218,17 @@ public class FusionHelper
 
 	public static void copyImg( final RandomAccessibleInterval< FloatType > input, final RandomAccessibleInterval< FloatType > output )
 	{
+		copyImg( input, output, false );
+	}
+
+	public static void copyImg( final RandomAccessibleInterval< FloatType > input, final RandomAccessibleInterval< FloatType > output, final boolean showProgress )
+	{
 		final int nThreads = Threads.numThreads();
-		final int nPortions = nThreads * 2;
+		final int nPortions = nThreads * 4;
 		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( Views.iterable( input ).size(), nPortions );
 		final ArrayList< Callable< Void > > tasks = new ArrayList< Callable< Void > >();
+
+		final AtomicInteger progress = new AtomicInteger( 0 );
 
 		for ( final ImagePortion portion : portions )
 		{
@@ -219,6 +238,10 @@ public class FusionHelper
 				public Void call() throws Exception
 				{
 					copyImg( portion.getStartPosition(), portion.getLoopSize(), input, output );
+
+					if ( showProgress )
+						IJ.showProgress( (double)progress.incrementAndGet() / tasks.size() );
+
 					return null;
 				}
 			});
