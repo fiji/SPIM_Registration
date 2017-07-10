@@ -154,7 +154,7 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 						final String[] choices = new String[ allBoxes.size() ];
 
 						int i = 0;
-						for ( final BoundingBox b : spimData.getBoundingBoxes().getBoundingBoxes() )
+						for ( final BoundingBox b : allBoxes )
 							choices[ i++ ] = b.getTitle() + " [" + b.dimension( 0 ) + "x" + b.dimension( 1 ) + "x" + b.dimension( 2 ) + "px]";
 
 						if ( defaultBB >= choices.length )
