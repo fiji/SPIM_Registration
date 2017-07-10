@@ -1,7 +1,7 @@
 package spim.process.fusion;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 
 import bdv.util.ConstantRandomAccessible;
 import ij.ImagePlus;
@@ -29,7 +29,7 @@ public class FusionTools
 {
 	public static RandomAccessibleInterval< FloatType > fuseVirtual(
 			final SpimData spimData,
-			final List< ViewId > views,
+			final Collection< ? extends ViewId > views,
 			final boolean useBlending,
 			final Interval boundingBox,
 			final double downsampling )
