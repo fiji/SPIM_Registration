@@ -87,6 +87,54 @@ public class FusionTools
 		return new FusedRandomAccessibleInterval( new FinalInterval( dim ), images, weights );
 	}
 
+	public static ImagePlus displayVirtually( final RandomAccessibleInterval< FloatType > input )
+	{
+		return display( input, ImgDataType.VIRTUAL, DisplayFusedImagesPopup.cellDim, DisplayFusedImagesPopup.maxCacheSize );
+	}
+
+	public static ImagePlus displayVirtually( final RandomAccessibleInterval< FloatType > input, final double min, final double max )
+	{
+		return display( input, ImgDataType.VIRTUAL, min, max, DisplayFusedImagesPopup.cellDim, DisplayFusedImagesPopup.maxCacheSize );
+	}
+
+	public static ImagePlus displayCopy( final RandomAccessibleInterval< FloatType > input )
+	{
+		return display( input, ImgDataType.PRECOMPUTED, DisplayFusedImagesPopup.cellDim, DisplayFusedImagesPopup.maxCacheSize );
+	}
+
+	public static ImagePlus displayCopy( final RandomAccessibleInterval< FloatType > input, final double min, final double max )
+	{
+		return display( input, ImgDataType.PRECOMPUTED, min, max, DisplayFusedImagesPopup.cellDim, DisplayFusedImagesPopup.maxCacheSize );
+	}
+
+	public static ImagePlus displayCached(
+			final RandomAccessibleInterval< FloatType > input,
+			final int[] cellDim,
+			final int maxCacheSize )
+	{
+		return display( input, ImgDataType.CACHED, cellDim, maxCacheSize );
+	}
+
+	public static ImagePlus displayCached(
+			final RandomAccessibleInterval< FloatType > input,
+			 final double min,
+			 final double max,
+			final int[] cellDim,
+			final int maxCacheSize )
+	{
+		return display( input, ImgDataType.CACHED, min, max, cellDim, maxCacheSize );
+	}
+
+	public static ImagePlus displayCached( final RandomAccessibleInterval< FloatType > input )
+	{
+		return displayCached( input, DisplayFusedImagesPopup.cellDim, DisplayFusedImagesPopup.maxCacheSize );
+	}
+
+	public static ImagePlus displayCached( final RandomAccessibleInterval< FloatType > input, final double min, final double max )
+	{
+		return display( input, ImgDataType.CACHED, min, max, DisplayFusedImagesPopup.cellDim, DisplayFusedImagesPopup.maxCacheSize );
+	}
+
 	public static ImagePlus display(
 			final RandomAccessibleInterval< FloatType > input,
 			final ImgDataType imgType )
@@ -97,6 +145,17 @@ public class FusionTools
 	public static ImagePlus display(
 			final RandomAccessibleInterval< FloatType > input,
 			final ImgDataType imgType,
+			final int[] cellDim,
+			final int maxCacheSize )
+	{
+		return display( input, imgType, 0, 255, cellDim, maxCacheSize );
+	}
+
+	public static ImagePlus display(
+			final RandomAccessibleInterval< FloatType > input,
+			final ImgDataType imgType,
+			final double min,
+			final double max,
 			final int[] cellDim,
 			final int maxCacheSize )
 	{
@@ -114,6 +173,6 @@ public class FusionTools
 				"Fused, Virtual (cached) " : (imgType == ImgDataType.VIRTUAL ? 
 						"Fused, Virtual" : "Fused" );
 
-		return DisplayImage.getImagePlusInstance( img, true, title, 0, 255 );
+		return DisplayImage.getImagePlusInstance( img, true, title, min, max );
 	}
 }
