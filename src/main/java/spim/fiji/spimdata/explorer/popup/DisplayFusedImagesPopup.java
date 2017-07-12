@@ -3,6 +3,7 @@ package spim.fiji.spimdata.explorer.popup;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -55,7 +56,14 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 
 					final SpimData2 spimData = (SpimData2)panel.getSpimData();
 
-					for ( final BoundingBox bb : BoundingBoxTools.getAllBoundingBoxes( spimData, ApplyTransformationPopup.getSelectedViews( panel ), true ) )
+					final ArrayList< ViewId > views = new ArrayList<>();
+					views.addAll( ApplyTransformationPopup.getSelectedViews( panel ) );
+
+					// filter not present ViewIds
+					List< ViewId > removed = SpimData2.filterMissingViews( panel.getSpimData(), views );
+					IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Removed " +  removed.size() + " views because they are not present." );
+
+					for ( final BoundingBox bb : BoundingBoxTools.getAllBoundingBoxes( spimData, views, true ) )
 					{
 						final JMenu downsampleOptions = new JMenu( bb.getTitle() + " [" + bb.dimension( 0 ) + "x" + bb.dimension( 1 ) + "x" + bb.dimension( 2 ) + "px]" );
 
@@ -157,8 +165,14 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 				public void run()
 				{
 					final SpimData2 spimData = (SpimData2)panel.getSpimData();
-					final List< ViewId > views = ApplyTransformationPopup.getSelectedViews( panel );
-					
+
+					final ArrayList< ViewId > views = new ArrayList<>();
+					views.addAll( ApplyTransformationPopup.getSelectedViews( panel ) );
+
+					// filter not present ViewIds
+					List< ViewId > removed = SpimData2.filterMissingViews( panel.getSpimData(), views );
+					IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Removed " +  removed.size() + " views because they are not present." );
+
 					Interval bb;
 
 					if ( boundingBox == null )
@@ -169,7 +183,7 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 							return;
 						}
 
-						final List< BoundingBox > allBoxes = BoundingBoxTools.getAllBoundingBoxes( spimData, ApplyTransformationPopup.getSelectedViews( panel ), true );
+						final List< BoundingBox > allBoxes = BoundingBoxTools.getAllBoundingBoxes( spimData, views, true );
 						final String[] choices = new String[ allBoxes.size() ];
 
 						int i = 0;
