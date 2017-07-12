@@ -58,6 +58,11 @@ public class RegisterInterestPointsPopup extends JMenuItem implements ExplorerWi
 				{
 					final List< ViewId > viewIds = ApplyTransformationPopup.getSelectedViews( panel );
 
+					// by default the registration suggests what is selected in the dialog
+					Interest_Point_Registration.defaultGroupTiles = panel.tilesGrouped();
+					Interest_Point_Registration.defaultGroupIllums = panel.illumsGrouped();
+					Interest_Point_Registration.defaultGroupChannels = panel.channelsGrouped();
+
 					if ( new Interest_Point_Registration().register( (SpimData2)panel.getSpimData(), viewIds ) )
 					{
 						panel.updateContent(); // update interestpoint and registration panel if available

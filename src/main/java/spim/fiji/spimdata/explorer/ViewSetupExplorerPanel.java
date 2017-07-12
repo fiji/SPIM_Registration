@@ -33,28 +33,21 @@ import bdv.BigDataViewer;
 import bdv.img.hdf5.Hdf5ImageLoader;
 import bdv.tools.InitializeViewerState;
 import bdv.tools.brightness.ConverterSetup;
-import bdv.util.Affine3DHelpers;
 import bdv.viewer.DisplayMode;
-
-import bdv.viewer.Source;
 import bdv.viewer.ViewerOptions;
-
 import bdv.viewer.VisibilityAndGrouping;
-import bdv.viewer.state.ViewerState;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
 import mpicbg.spim.data.generic.base.Entity;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
+import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.Tile;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
-import net.imglib2.Interval;
-import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.ARGBType;
-import net.imglib2.util.LinAlgHelpers;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.popup.ApplyTransformationPopup;
 import spim.fiji.spimdata.explorer.popup.BDVPopup;
@@ -87,6 +80,30 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 	{
 		IOFunctions.printIJLog = true;
 	}
+
+	protected JCheckBox groupTilesCheckbox;
+	protected JCheckBox groupIllumsCheckbox;
+
+	@Override
+	public boolean tilesGrouped()
+	{
+		if ( groupTilesCheckbox == null || !groupTilesCheckbox.isSelected() )
+			return false;
+		else
+			return true;
+	}
+
+	@Override
+	public boolean illumsGrouped()
+	{
+		if ( groupIllumsCheckbox == null || !groupIllumsCheckbox.isSelected() )
+			return false;
+		else
+			return true;
+	}
+
+	@Override
+	public boolean channelsGrouped() { return false; }
 
 	public ViewSetupExplorerPanel( final FilteredAndGroupedExplorer< AS, X > explorer, final AS data, final String xml, final X io, boolean startBDVifHDF5 )
 	{
@@ -217,18 +234,35 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		this.add( new JScrollPane( table ), BorderLayout.CENTER );
 		
 		final JPanel footer = new JPanel(new BorderLayout());
-		final JCheckBox groupTilesCheckbox = new JCheckBox("Group Tiles", true);
+		this.groupTilesCheckbox = new JCheckBox("Group Tiles", true);
+		this.groupIllumsCheckbox = new JCheckBox("Group Illuminations", true);
 		footer.add(groupTilesCheckbox, BorderLayout.EAST);
+		footer.add(groupIllumsCheckbox, BorderLayout.WEST);
 		this.add(footer, BorderLayout.SOUTH);
 		
 		groupTilesCheckbox.addActionListener(e -> {
 			if (groupTilesCheckbox.isSelected())
 				tableModel.addGroupingFactor(Tile.class);
 			else
+			{
 				tableModel.clearGroupingFactors();
+				if ( groupIllumsCheckbox.isSelected())
+					tableModel.addGroupingFactor(Illumination.class);
+			}
 			updateContent();
 		});
-		
+
+		groupIllumsCheckbox.addActionListener(e -> {
+			if (groupIllumsCheckbox.isSelected())
+				tableModel.addGroupingFactor(Illumination.class);
+			else
+			{
+				tableModel.clearGroupingFactors();
+				if (groupTilesCheckbox.isSelected())
+					tableModel.addGroupingFactor(Tile.class);
+			}
+			updateContent();
+		});
 
 		table.getSelectionModel().setSelectionInterval( 0, 0 );
 

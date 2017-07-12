@@ -90,6 +90,9 @@ public class Interest_Point_Registration implements PlugIn
 	public static int defaultRegistrationType = 0;
 	public static int defaultOverlapType = 1;
 	public static int defaultLabel = -1;
+	public static boolean defaultGroupTiles = true;
+	public static boolean defaultGroupIllums = true;
+	public static boolean defaultGroupChannels = true;
 
 	// advanced dialog
 	public static int defaultRange = 5;
@@ -174,7 +177,7 @@ public class Interest_Point_Registration implements PlugIn
 			return false;
 
 		// identify groups/subsets
-		final Set< Group< ViewId > > groups = arp.getGroups( data, viewIds, brp.groupTiles );
+		final Set< Group< ViewId > > groups = arp.getGroups( data, viewIds, brp.groupTiles, brp.groupIllums, brp.groupChannels );
 		final PairwiseSetup< ViewId > setup = arp.pairwiseSetupInstance( brp.registrationType, viewIds, groups );
 		identifySubsets( setup, brp.getOverlapDetection( data ) );
 
@@ -594,8 +597,22 @@ public class Interest_Point_Registration implements PlugIn
 		for ( final ViewId viewId : viewIds )
 			tiles.add( data.getSequenceDescription().getViewDescription( viewId ).getViewSetup().getTile().getId() );
 
+		final HashSet< Integer > illums = new HashSet<>();
+		for ( final ViewId viewId : viewIds )
+			illums.add( data.getSequenceDescription().getViewDescription( viewId ).getViewSetup().getIllumination().getId() );
+
+		final HashSet< Integer > channels = new HashSet<>();
+		for ( final ViewId viewId : viewIds )
+			channels.add( data.getSequenceDescription().getViewDescription( viewId ).getViewSetup().getChannel().getId() );
+
 		if ( tiles.size() > 1 )
-			gd.addCheckbox( "Group_tiles", true );
+			gd.addCheckbox( "Group_tiles", defaultGroupTiles );
+
+		if ( illums.size() > 1 )
+			gd.addCheckbox( "Group_illuminations", defaultGroupIllums );
+
+		if ( channels.size() > 1 )
+			gd.addCheckbox( "Group_channels", defaultGroupChannels );
 
 		// assemble the last registration names of all viewsetups involved
 		final HashMap< String, Integer > names = GUIHelper.assembleRegistrationNames( data, viewIds );
@@ -660,7 +677,15 @@ public class Interest_Point_Registration implements PlugIn
 
 		boolean groupTiles = false;
 		if ( tiles.size() > 1 )
-			groupTiles = gd.getNextBoolean();
+			groupTiles = defaultGroupTiles = gd.getNextBoolean();
+
+		boolean groupIllums = false;
+		if ( illums.size() > 1 )
+			groupIllums = defaultGroupIllums = gd.getNextBoolean();
+
+		boolean groupChannels = false;
+		if ( channels.size() > 1 )
+			groupChannels = defaultGroupChannels = gd.getNextBoolean();
 
 		final PairwiseGUI pwr = staticPairwiseAlgorithms.get( algorithm ).newInstance();
 
@@ -673,6 +698,8 @@ public class Interest_Point_Registration implements PlugIn
 		brp.overlapType = overlapType;
 		brp.labelMap = new HashMap<>();
 		brp.groupTiles = groupTiles;
+		brp.groupIllums = groupIllums;
+		brp.groupChannels = groupChannels;
 
 		for ( final ViewId viewId : viewIds )
 			brp.labelMap.put( viewId, label );

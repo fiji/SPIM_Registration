@@ -18,6 +18,10 @@ public interface ExplorerWindow< AS extends AbstractSpimData< ? >, X extends Xml
 	public String xml();
 	public void saveXML();
 
+	public boolean tilesGrouped();
+	public boolean illumsGrouped();
+	public boolean channelsGrouped();
+
 	// BDV-specific
 	public BasicBDVPopup bdvPopup();
 	public boolean colorMode();
