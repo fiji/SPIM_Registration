@@ -88,6 +88,7 @@ public class DifferenceOfGaussianGUI extends DifferenceOfGUI implements GenericD
 		dog.maxIntensity = this.maxIntensity;
 
 		dog.sigma = this.sigma;
+		dog.threshold = this.threshold;
 		dog.findMin = this.findMin;
 		dog.findMax = this.findMax;
 
