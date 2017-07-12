@@ -16,6 +16,7 @@ import mpicbg.models.Tile;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewTransform;
 import mpicbg.spim.data.registration.ViewTransformAffine;
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Dimensions;
 import net.imglib2.realtransform.AffineGet;
@@ -24,6 +25,7 @@ import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class TransformationTools
 {
@@ -151,7 +153,16 @@ public class TransformationTools
 	{
 		final List< InterestPoint > list = loadInterestPoints( interestpoints.get( viewId ).getInterestPointList( labelMap.get( viewId ) ) );
 
-		if ( transform )
+		if ( list == null )
+		{
+			if ( ViewId.class.isInstance( viewId  ))
+				IOFunctions.println( "WARNING: no interestpoints could be loaded for " + Group.pvid( (ViewId)viewId ) + ", label '" + labelMap.get( viewId ) + "'" );
+			else
+				IOFunctions.println( "WARNING: no interestpoints could be loaded for " + viewId + ", label '" + labelMap.get( viewId ) + "'" );
+
+			return new ArrayList<>();
+		}
+		else if ( transform )
 		{
 			final AffineTransform3D t = getTransform( viewId, registrations );
 			return applyTransformation( list, t );
@@ -183,7 +194,17 @@ public class TransformationTools
 		final InterestPointList ipList = interestpoints.get( viewId ).getInterestPointList( labelMap.get( viewId ) );
 		final List< InterestPoint > allPoints = loadInterestPoints( ipList );
 		final ArrayList< InterestPoint > corrPoints = new ArrayList<>();
-		
+
+		if ( allPoints == null )
+		{
+			if ( ViewId.class.isInstance( viewId  ))
+				IOFunctions.println( "WARNING: no interestpoints could be loaded for " + Group.pvid( (ViewId)viewId ) + ", label '" + labelMap.get( viewId ) + "'" );
+			else
+				IOFunctions.println( "WARNING: no interestpoints could be loaded for " + viewId + ", label '" + labelMap.get( viewId ) + "'" );
+
+			return new ArrayList<>();
+		}
+
 		// keep only those interest points who have correspondences
 		final HashSet< Integer > idSet = new HashSet<>();
 
@@ -207,6 +228,9 @@ public class TransformationTools
 
 	public static List< InterestPoint > loadInterestPoints( final InterestPointList list )
 	{
+		if ( list == null )
+			return null;
+
 		if ( !list.hasInterestPoints() )
 			list.loadInterestPoints();
 
