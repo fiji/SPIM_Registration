@@ -13,14 +13,13 @@ import ij.gui.GenericDialog;
 import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
-import spim.process.export.ImgExport;
 
 public class ManageFusionDialogListeners
 {
 	final GenericDialog gd;
 	final TextField downsampleField;
-	final Choice boundingBoxChoice, pixelTypeChoice, cachingChoice;
-	final Checkbox splitTimepoints, splitChannels;
+	final Choice boundingBoxChoice, pixelTypeChoice, cachingChoice, splitChoice;
+	final Checkbox contentbasedCheckbox;
 	final Label label1;
 	final Label label2;
 	final FusionGUI fusion;
@@ -31,8 +30,8 @@ public class ManageFusionDialogListeners
 			final TextField downsampleField,
 			final Choice pixelTypeChoice,
 			final Choice cachingChoice,
-			final Checkbox splitTimepoints,
-			final Checkbox splitChannels,
+			final Checkbox contentbasedCheckbox,
+			final Choice splitChoice,
 			final Label label1,
 			final Label label2,
 			final FusionGUI fusion )
@@ -42,8 +41,8 @@ public class ManageFusionDialogListeners
 		this.downsampleField = downsampleField;
 		this.pixelTypeChoice = pixelTypeChoice;
 		this.cachingChoice = cachingChoice;
-		this.splitTimepoints = splitTimepoints;
-		this.splitChannels = splitChannels;
+		this.contentbasedCheckbox = contentbasedCheckbox;
+		this.splitChoice = splitChoice;
 		this.label1 = label1;
 		this.label2 = label2;
 		this.fusion = fusion;
@@ -60,31 +59,25 @@ public class ManageFusionDialogListeners
 		this.cachingChoice.addItemListener( new ItemListener() { @Override
 			public void itemStateChanged(ItemEvent e) { update(); } });
 
-		if ( this.splitTimepoints != null )
-			this.splitTimepoints.addItemListener( new ItemListener() { @Override
-				public void itemStateChanged(ItemEvent e) { update(); } });
-
-		if ( this.splitChannels != null )
-			this.splitChannels.addItemListener( new ItemListener() { @Override
-				public void itemStateChanged(ItemEvent e) { update(); } });
+		this.splitChoice.addItemListener( new ItemListener() { @Override
+			public void itemStateChanged(ItemEvent e) { update(); } });
 	}
 	
 	public void update()
 	{
+		System.out.println( boundingBoxChoice.getSelectedItem() );
+		System.out.println( downsampleField.getText() );
+		System.out.println( pixelTypeChoice.getSelectedItem() );
+		System.out.println( cachingChoice.getSelectedItem() );
+		System.out.println( contentbasedCheckbox.getState() );
+		System.out.println( splitChoice.getSelectedItem() );
+
 		fusion.boundingBox = boundingBoxChoice.getSelectedIndex();
 		fusion.downsampling = Integer.parseInt( downsampleField.getText() );
 		fusion.pixelType = pixelTypeChoice.getSelectedIndex();
 		fusion.cacheType = cachingChoice.getSelectedIndex();
-
-		if ( this.splitTimepoints != null )
-			fusion.splitTimepoints = this.splitTimepoints.getState();
-		else
-			fusion.splitTimepoints = false;
-
-		if ( this.splitChannels != null )
-			fusion.splitChannels = this.splitChannels.getState();
-		else
-			fusion.splitChannels = false;
+		fusion.useContentBased = contentbasedCheckbox.getState();
+		fusion.splittingType = splitChoice.getSelectedIndex();
 
 		final BoundingBox bb = fusion.allBoxes.get( fusion.boundingBox );
 		final int[] min = bb.getMin();

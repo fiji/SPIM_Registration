@@ -1,6 +1,9 @@
 package spim.fiji.plugin.fusion;
 
+import java.awt.Checkbox;
+import java.awt.Choice;
 import java.awt.Label;
+import java.awt.TextField;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -47,8 +50,8 @@ public class FusionGUI
 	public static String[] pixelTypes = new String[]{ "32-bit floating point", "16-bit unsigned integer" };
 	public static int defaultPixelType = 0;
 
-	public static boolean defaultSplitTimepoints = true;
-	public static boolean defaultSplitChannels = true;
+	public static String[] splittingTypes = new String[]{ "Each timepoint & channel", "All views together", "Each view", "Specify in more detail ..." };
+	public static int defaultSplittingType = 0;
 
 	public static boolean defaultUseBlending = true;
 	public static boolean defaultUseContentBased = false;
@@ -61,9 +64,8 @@ public class FusionGUI
 	protected int boundingBox = defaultBB;
 	protected int pixelType = defaultPixelType;
 	protected int cacheType = defaultCache;
+	protected int splittingType = defaultSplittingType;
 	protected double downsampling = defaultDownsampling;
-	protected boolean splitTimepoints = defaultSplitTimepoints;
-	protected boolean splitChannels = defaultSplitChannels;
 	protected boolean useBlending = defaultUseBlending;
 	protected boolean useContentBased = defaultUseContentBased;
 
@@ -123,28 +125,41 @@ public class FusionGUI
 
 		final GenericDialog gd = new GenericDialog( "Image Fusion" );
 
-		gd.addChoice( "Fused_image", imgExportDescriptions, imgExportDescriptions[ defaultImgExportAlgorithm ] );
-		gd.addMessage( "" );
 		gd.addChoice( "Bounding_Box", choices, choices[ defaultBB ] );
+
+		gd.addMessage( "" );
+
 		gd.addSlider( "Downsampling", 1.0, 16.0, defaultDownsampling );
 		gd.addChoice( "Pixel_type", pixelTypes, pixelTypes[ defaultPixelType ] );
 		gd.addChoice( "Interpolation", interpolationTypes, interpolationTypes[ defaultInterpolation ] );
-		gd.addChoice( "Caching", FusionHelper.imgDataTypeChoice, FusionHelper.imgDataTypeChoice[ defaultCache ] );
+		gd.addChoice( "Image ", FusionHelper.imgDataTypeChoice, FusionHelper.imgDataTypeChoice[ defaultCache ] );
+		gd.addMessage( "For saving at TIFF use virtual, for saving as HDF5 use Cached", GUIHelper.smallStatusFont, GUIHelper.neutral );
+		gd.addMessage( "" );
 
-		if ( timepointsToProcess.size() > 1 )
-			gd.addCheckbox( "Fuse_each_timepoint individually", defaultSplitTimepoints );
+		gd.addCheckbox( "Blend images smoothly", defaultUseBlending );
+		gd.addCheckbox( "Use content based fusion (warning, huge memory requirements)", defaultUseContentBased );
 
-		if ( channelsToProcess.size() > 1 )
-			gd.addCheckbox( "Fuse_each_channel individually", defaultSplitChannels );
+		gd.addMessage( "" );
+
+		gd.addChoice( "Produce one fused image for", splittingTypes, splittingTypes[ defaultSplittingType ] );
+		gd.addChoice( "Fused_image", imgExportDescriptions, imgExportDescriptions[ defaultImgExportAlgorithm ] );
 
 		gd.addMessage( "Estimated size: ", GUIHelper.largestatusfont, GUIHelper.good );
-		Label l1 = (Label)gd.getMessage();
+		Label label1 = (Label)gd.getMessage();
 		gd.addMessage( "???x???x??? pixels", GUIHelper.smallStatusFont, GUIHelper.good );
-		Label l2 = (Label)gd.getMessage();
+		Label label2 = (Label)gd.getMessage();
 
 		final ManageFusionDialogListeners m = new ManageFusionDialogListeners(
 				gd,
-				);
+				(Choice)gd.getChoices().get( 0 ),
+				(TextField)gd.getNumericFields().get( 0 ),
+				(Choice)gd.getChoices().get( 1 ),
+				(Choice)gd.getChoices().get( 3 ),
+				(Checkbox)gd.getCheckboxes().get( 1 ),
+				(Choice)gd.getChoices().get( 4 ),
+				label1,
+				label2,
+				this );
 
 		m.update();
 
