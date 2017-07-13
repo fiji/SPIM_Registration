@@ -5,17 +5,17 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 
-import ij.gui.GenericDialog;
+import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Interval;
+import spim.fiji.plugin.Image_Fusion;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
@@ -26,26 +26,23 @@ import spim.process.fusion.FusionTools;
 
 public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSetable
 {
+	public static int defaultCache = 0;
+	public static int[] cellDim = new int[]{ 100, 100, 1 };
+	public static int maxCacheSize = 100000;
+
 	private static final long serialVersionUID = -4895470813542722644L;
 
-	public static int[] quickDownsampling = new int[]{ 1, 2, 3, 4, 8, 16 };
-	public static int defaultCache = 0;
-	public static int[] cellDim = new int[]{ 10, 10, 10 };
-	public static int maxCacheSize = 1000;
-
-	public static double defaultDownsampling = 2.0;
-	public static int defaultBB = 0;
-
 	ExplorerWindow< ?, ? > panel = null;
-	final JMenu boundingBoxes;
+	//final JMenu boundingBoxes;
 
 	public DisplayFusedImagesPopup()
 	{
-		super( "Display Transformed/Fused Image(s)" );
+		super( "Quick Display Transformed/Fused Image(s)" );
+
+		final JMenu boundingBoxes = this;
 
 		// populate with the current available boundingboxes
-		boundingBoxes = new JMenu( "Quick Display" );
-		boundingBoxes.addMenuListener( new MenuListener()
+		this.addMenuListener( new MenuListener()
 		{
 			@Override
 			public void menuSelected( MenuEvent e )
@@ -60,14 +57,13 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 					views.addAll( ApplyTransformationPopup.getSelectedViews( panel ) );
 
 					// filter not present ViewIds
-					List< ViewId > removed = SpimData2.filterMissingViews( panel.getSpimData(), views );
-					IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Removed " +  removed.size() + " views because they are not present." );
+					SpimData2.filterMissingViews( panel.getSpimData(), views );
 
 					for ( final BoundingBox bb : BoundingBoxTools.getAllBoundingBoxes( spimData, views, true ) )
 					{
 						final JMenu downsampleOptions = new JMenu( bb.getTitle() + " [" + bb.dimension( 0 ) + "x" + bb.dimension( 1 ) + "x" + bb.dimension( 2 ) + "px]" );
 
-						for ( final int ds : quickDownsampling )
+						for ( final int ds : Image_Fusion.quickDownsampling )
 						{
 							final JMenuItem fused;
 							final double downsample;
@@ -83,7 +79,7 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 								downsample = ds;
 							}
 
-							fused.addActionListener( new DisplayVirtualFused( bb, downsample, ImgDataType.values()[ defaultCache ] ) );
+							fused.addActionListener( new DisplayVirtualFused( spimData, views, bb, downsample, ImgDataType.values()[ defaultCache ] ) );
 							downsampleOptions.add( fused );
 						}
 						boundingBoxes.add( downsampleOptions );
@@ -122,11 +118,7 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 			public void menuCanceled( MenuEvent e ) {}
 		} );
 
-		final JMenuItem virtual = new JMenuItem( "Fuse image(s) ..." );
-		virtual.addActionListener( new DisplayVirtualFused( null, Double.NaN, null ) );
-
-		this.add( boundingBoxes );
-		this.add( virtual );
+		//this.add( boundingBoxes );
 	}
 
 	@Override
@@ -139,13 +131,17 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 
 	public class DisplayVirtualFused implements ActionListener
 	{
-		Interval boundingBox;
-		double downsampling = Double.NaN;
-		ImgDataType imgType;
+		final SpimData spimData;
+		final ArrayList< ViewId > views;
+		final Interval bb;
+		final double downsampling;
+		final ImgDataType imgType;
 
-		public DisplayVirtualFused( final Interval bb, final double downsampling, final ImgDataType imgType )
+		public DisplayVirtualFused( final SpimData spimData, final ArrayList< ViewId > views, final Interval bb, final double downsampling, final ImgDataType imgType )
 		{
-			this.boundingBox = bb;
+			this.spimData = spimData;
+			this.views = views;
+			this.bb = bb;
 			this.downsampling = downsampling;
 			this.imgType = imgType;
 		}
@@ -164,57 +160,7 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 				@Override
 				public void run()
 				{
-					final SpimData2 spimData = (SpimData2)panel.getSpimData();
-
-					final ArrayList< ViewId > views = new ArrayList<>();
-					views.addAll( ApplyTransformationPopup.getSelectedViews( panel ) );
-
-					// filter not present ViewIds
-					List< ViewId > removed = SpimData2.filterMissingViews( panel.getSpimData(), views );
-					IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Removed " +  removed.size() + " views because they are not present." );
-
-					Interval bb;
-
-					if ( boundingBox == null )
-					{
-						final List< BoundingBox > allBoxes = BoundingBoxTools.getAllBoundingBoxes( spimData, views, true );
-						final String[] choices = new String[ allBoxes.size() ];
-
-						int i = 0;
-						for ( final BoundingBox b : allBoxes )
-							choices[ i++ ] = b.getTitle() + " [" + b.dimension( 0 ) + "x" + b.dimension( 1 ) + "x" + b.dimension( 2 ) + "px]";
-
-						if ( defaultBB >= choices.length )
-							defaultBB = 0;
-
-						GenericDialog gd = new GenericDialog( "Virtual Fusion" );
-						gd.addChoice( "Bounding Box", choices, choices[ defaultBB ] );
-						gd.addNumericField( "Downsampling", defaultDownsampling, 1 );
-						gd.addChoice( "Caching", FusionHelper.imgDataTypeChoice, FusionHelper.imgDataTypeChoice[ defaultCache ] );
-
-						gd.showDialog();
-
-						if ( gd.wasCanceled() )
-							return;
-
-						bb = allBoxes.get( defaultBB = gd.getNextChoiceIndex() );
-						downsampling = defaultDownsampling = gd.getNextNumber();
-						int caching = defaultCache = gd.getNextChoiceIndex();
-
-						if ( caching == 0 )
-							imgType = ImgDataType.VIRTUAL;
-						else if ( caching == 1 )
-							imgType = ImgDataType.CACHED;
-						else
-							imgType = ImgDataType.PRECOMPUTED;
-					}
-					else
-					{
-						bb = boundingBox;
-					}
-
 					IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Fusing " + views.size() + ", downsampling=" + downsampling + ", caching strategy=" + imgType );
-
 					FusionTools.display( FusionTools.fuseVirtual( spimData, views, true, bb, downsampling ), imgType ).show();
 				}
 			} ).start();
