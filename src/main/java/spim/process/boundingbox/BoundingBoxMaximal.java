@@ -41,8 +41,6 @@ public class BoundingBoxMaximal implements BoundingBoxEstimation
 			dimensions.put( viewId, ViewSetupUtils.getSizeOrLoad( vd.getViewSetup(), vd.getTimePoint(), data.getSequenceDescription().getImgLoader() ) );
 			registrations.put( viewId, data.getViewRegistrations().getViewRegistration( vd ) );
 		}
-
-		IOFunctions.println( "Views for Maximum Bounding Box computation: " + this.views.size() );
 	}
 
 	public BoundingBoxMaximal(
