@@ -15,7 +15,6 @@ import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Interval;
-import spim.fiji.plugin.Image_Fusion;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
@@ -26,6 +25,7 @@ import spim.process.fusion.FusionTools;
 
 public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSetable
 {
+	public static int[] quickDownsampling = new int[]{ 1, 2, 3, 4, 8, 16 };
 	public static int defaultCache = 0;
 	public static int[] cellDim = new int[]{ 100, 100, 1 };
 	public static int maxCacheSize = 100000;
@@ -33,7 +33,6 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 	private static final long serialVersionUID = -4895470813542722644L;
 
 	ExplorerWindow< ?, ? > panel = null;
-	//final JMenu boundingBoxes;
 
 	public DisplayFusedImagesPopup()
 	{
@@ -63,7 +62,7 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 					{
 						final JMenu downsampleOptions = new JMenu( bb.getTitle() + " [" + bb.dimension( 0 ) + "x" + bb.dimension( 1 ) + "x" + bb.dimension( 2 ) + "px]" );
 
-						for ( final int ds : Image_Fusion.quickDownsampling )
+						for ( final int ds : quickDownsampling )
 						{
 							final JMenuItem fused;
 							final double downsample;
@@ -117,8 +116,6 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 			@Override
 			public void menuCanceled( MenuEvent e ) {}
 		} );
-
-		//this.add( boundingBoxes );
 	}
 
 	@Override
@@ -191,6 +188,5 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 
 			defaultCache = myState;
 		}
-		
 	}
 }
