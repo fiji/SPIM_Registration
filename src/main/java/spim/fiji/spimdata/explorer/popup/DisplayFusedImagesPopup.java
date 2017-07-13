@@ -177,12 +177,6 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 
 					if ( boundingBox == null )
 					{
-						if ( spimData.getBoundingBoxes() == null || spimData.getBoundingBoxes().getBoundingBoxes() == null || spimData.getBoundingBoxes().getBoundingBoxes().size() == 0 )
-						{
-							IOFunctions.println( "No bounding boxes defined, please define one from the menu.");
-							return;
-						}
-
 						final List< BoundingBox > allBoxes = BoundingBoxTools.getAllBoundingBoxes( spimData, views, true );
 						final String[] choices = new String[ allBoxes.size() ];
 
