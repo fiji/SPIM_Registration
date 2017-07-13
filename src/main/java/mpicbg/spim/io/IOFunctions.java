@@ -5,17 +5,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
+
+import javax.swing.SwingUtilities;
 
 import bdv.export.ProgressWriter;
 import bdv.export.ProgressWriterConsole;
 import ij.IJ;
-import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.AffineModel3D;
-import mpicbg.models.RigidModel3D;
-import mpicbg.models.TranslationModel3D;
 import net.imglib2.util.Util;
 import spim.fiji.plugin.resave.ProgressWriterIJ;
 
@@ -40,7 +37,12 @@ public class IOFunctions
 	public static void println( final String string )
 	{
 		if ( printIJLog )
-			IJ.log( string );
+		{
+			if ( SwingUtilities.isEventDispatchThread() )
+				IJ.log( string );
+			else
+				SwingUtilities.invokeLater( () -> IJ.log( string ) );
+		}
 		else
 			System.out.println( string );
 	}
@@ -50,7 +52,12 @@ public class IOFunctions
 	public static void printErr( final String string )
 	{
 		if ( printIJLog )
-			IJ.error( string );
+		{
+			if ( SwingUtilities.isEventDispatchThread() )
+				IJ.error( string );
+			else
+				SwingUtilities.invokeLater( () -> IJ.error( string ) );
+		}
 		else
 			System.err.println( string );
 	}
