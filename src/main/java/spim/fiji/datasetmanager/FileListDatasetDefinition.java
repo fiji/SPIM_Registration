@@ -75,6 +75,7 @@ import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.imgloaders.FileMapImgLoaderLOCI;
+import spim.fiji.spimdata.imgloaders.filemap2.FileMapImgLoaderLOCI2;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.fiji.spimdata.stitchingresults.StitchingResults;
 
@@ -542,7 +543,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			}			
 		}
 		
-		ImgLoader imgLoader = new FileMapImgLoaderLOCI( fileMap, FileListDatasetDefinitionUtil.selectImgFactory(state.getDimensionMap()), sd );
+		ImgLoader imgLoader = new FileMapImgLoaderLOCI2( fileMap, FileListDatasetDefinitionUtil.selectImgFactory(state.getDimensionMap()), sd );
 		sd.setImgLoader( imgLoader );
 		
 		double minResolution = Double.MAX_VALUE;
@@ -862,7 +863,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		//gdSave.addMessage( "<html> <h1> Saving options </h1> <br /> </html>" );
 		addMessageAsJLabel("<html> <h1> Saving options </h1> <br /> </html>", gdSave);
 		
-		
+		/*
 		Class<?> imgFactoryClass = ((FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() ).getImgFactory().getClass();
 		if (imgFactoryClass.equals( CellImgFactory.class ))
 		{
@@ -879,12 +880,13 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			String[] imglibChoice = new String[] {"ArrayImg", "CellImg"};
 			gdSave.addChoice( "imglib2 container", imglibChoice, imglibChoice[0] );
 		}
-			
+		*/
+		
 		//gdSave.addMessage("<html><h2> Save path </h2></html>");
 		addMessageAsJLabel("<html><h2> Save path </h2></html>", gdSave);
 		
 		Set<String> filenames = new HashSet<>();
-		((FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() ).getFileMap().values().stream().forEach(
+		((FileMapImgLoaderLOCI2)data.getSequenceDescription().getImgLoader() ).getFileMap().values().stream().forEach(
 				p -> 
 				{
 					filenames.add( p.getA().getAbsolutePath());
@@ -910,11 +912,13 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		if ( gdSave.wasCanceled() )
 			return null;
 		
+		/*
 		if (!imgFactoryClass.equals( CellImgFactory.class ))
 		{
 			if (gdSave.getNextChoiceIndex() != 0)
 				((FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() ).setImgFactory( new CellImgFactory<>(256) );
 		}
+		*/
 		
 		File chosenPath = new File( gdSave.getNextString());
 		data.setBasePath( chosenPath );
