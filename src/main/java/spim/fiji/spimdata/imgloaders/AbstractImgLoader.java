@@ -142,7 +142,7 @@ public abstract class AbstractImgLoader implements LegacyImgLoader< UnsignedShor
 		return updated;
 	}
 
-	protected static final void normalize( final RandomAccessibleInterval< FloatType > img )
+	public static final void normalize( final RandomAccessibleInterval< FloatType > img )
 	{
 		float min = Float.MAX_VALUE;
 		float max = -Float.MAX_VALUE;
