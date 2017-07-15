@@ -25,9 +25,8 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.deconvolution.normalization.NormalizingRandomAccessibleInterval;
-import spim.process.fusion.FusionHelper;
-import spim.process.fusion.FusionHelper.ImgDataType;
 import spim.process.fusion.FusionTools;
+import spim.process.fusion.FusionTools.ImgDataType;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
 import spim.process.fusion.transformed.TransformView;
 import spim.process.fusion.transformed.TransformVirtual;
@@ -191,9 +190,9 @@ public class ProcessInputImages< V extends ViewId >
 			RandomAccessibleInterval< FloatType > img = images.get( group );
 
 			if ( type == ImgDataType.CACHED )
-				img = FusionHelper.cacheRandomAccessibleInterval( img, maxCacheSize, new FloatType(), cellDim );
+				img = FusionTools.cacheRandomAccessibleInterval( img, maxCacheSize, new FloatType(), cellDim );
 			else if ( type == ImgDataType.PRECOMPUTED )
-				img = FusionHelper.copyImg( img, factory );
+				img = FusionTools.copyImg( img, factory );
 
 			images.put( group, img );
 		}
@@ -263,7 +262,7 @@ public class ProcessInputImages< V extends ViewId >
 					final float[] borderFusion = blendingBorderFusion.clone();
 
 					// adjust both for z-scaling (anisotropy)
-					FusionHelper.adjustBlending( spimData.getSequenceDescription().getViewDescriptions().get( viewId ), rangeFusion, borderFusion );
+					FusionTools.adjustBlending( spimData.getSequenceDescription().getViewDescriptions().get( viewId ), rangeFusion, borderFusion );
 
 					weightsFusion.add( TransformWeight.transformBlending( inputImg, borderFusion, rangeFusion, model, bb ) );
 				}
@@ -280,7 +279,7 @@ public class ProcessInputImages< V extends ViewId >
 					final float[] borderDecon = blendingBorderDecon.clone();
 
 					// adjust both for z-scaling (anisotropy)
-					FusionHelper.adjustBlending( spimData.getSequenceDescription().getViewDescriptions().get( viewId ), rangeDecon, borderDecon );
+					FusionTools.adjustBlending( spimData.getSequenceDescription().getViewDescriptions().get( viewId ), rangeDecon, borderDecon );
 
 					weightsDecon.add( TransformWeight.transformBlending( inputImg, borderDecon, rangeDecon, model, bb ) );
 				}

@@ -19,9 +19,8 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
 import spim.process.boundingbox.BoundingBoxTools;
-import spim.process.fusion.FusionHelper;
-import spim.process.fusion.FusionHelper.ImgDataType;
 import spim.process.fusion.FusionTools;
+import spim.process.fusion.FusionTools.ImgDataType;
 
 public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSetable
 {
@@ -86,11 +85,11 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 
 					boundingBoxes.add( new Separator() );
 
-					final JMenuItem[] items = new JMenuItem[ FusionHelper.imgDataTypeChoice.length ];
+					final JMenuItem[] items = new JMenuItem[ FusionTools.imgDataTypeChoice.length ];
 
 					for ( int i = 0; i < items.length; ++i )
 					{
-						final JMenuItem item = new JMenuItem( FusionHelper.imgDataTypeChoice[ i ] );
+						final JMenuItem item = new JMenuItem( FusionTools.imgDataTypeChoice[ i ] );
 
 						if ( i == defaultCache )
 							item.setForeground( Color.RED );

@@ -31,7 +31,7 @@ import spim.process.deconvolution.MVDeconInput;
 import spim.process.deconvolution.MVDeconvolution;
 import spim.process.deconvolution.ProcessInputImages;
 import spim.process.export.DisplayImage;
-import spim.process.fusion.FusionHelper.ImgDataType;
+import spim.process.fusion.FusionTools.ImgDataType;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
 import spim.process.fusion.transformed.weightcombination.CombineWeightsRandomAccessibleInterval;
 import spim.process.fusion.transformed.weightcombination.CombineWeightsRandomAccessibleInterval.CombineType;

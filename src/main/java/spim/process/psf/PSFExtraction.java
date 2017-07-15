@@ -28,7 +28,7 @@ import net.imglib2.view.Views;
 import spim.Threads;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.boundingbox.BoundingBoxReorientation;
-import spim.process.fusion.FusionHelper;
+import spim.process.fusion.FusionTools;
 
 public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 {
@@ -293,7 +293,7 @@ public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 			});
 		}
 
-		FusionHelper.execTasks( tasks, nThreads, "extract PSF's" );
+		FusionTools.execTasks( tasks, nThreads, "extract PSF's" );
 
 		final ArrayList< RandomAccess< T > > ras = new ArrayList<>();
 

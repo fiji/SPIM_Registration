@@ -1,15 +1,12 @@
 package spim.process.interestpointdetection.methods.downsampling;
 
-import ij.ImageJ;
-
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import ij.ImageJ;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
@@ -20,13 +17,11 @@ import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.iterator.IntervalIterator;
 import net.imglib2.iterator.ZeroMinIntervalIterator;
-import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import spim.Threads;
-import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.process.fusion.FusionHelper;
+import spim.process.fusion.FusionTools;
 import spim.process.fusion.ImagePortion;
 
 public class Downsample
@@ -88,7 +83,7 @@ public class Downsample
 				//Views.iterable( Views.hyperSlice( Views.zeroMin( output ), d, 0 ) );
 
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( numLines, Threads.numThreads() * 2 );
+		final Vector< ImagePortion > portions = FusionTools.divideIntoPortions( numLines, Threads.numThreads() * 2 );
 
 		// set up executor service
 		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );

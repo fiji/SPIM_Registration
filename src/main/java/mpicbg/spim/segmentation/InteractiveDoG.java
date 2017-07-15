@@ -1,22 +1,5 @@
 package mpicbg.spim.segmentation;
 
-import fiji.tool.SliceListener;
-import fiji.tool.SliceObserver;
-import ij.IJ;
-import ij.ImageJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.WindowManager;
-import ij.gui.OvalRoi;
-import ij.gui.Overlay;
-import ij.gui.Roi;
-import ij.io.Opener;
-import ij.plugin.PlugIn;
-import ij.process.ByteProcessor;
-import ij.process.FloatProcessor;
-import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
-
 import java.awt.Button;
 import java.awt.Checkbox;
 import java.awt.Color;
@@ -41,6 +24,22 @@ import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+import fiji.tool.SliceListener;
+import fiji.tool.SliceObserver;
+import ij.IJ;
+import ij.ImageJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.WindowManager;
+import ij.gui.OvalRoi;
+import ij.gui.Overlay;
+import ij.gui.Roi;
+import ij.io.Opener;
+import ij.plugin.PlugIn;
+import ij.process.ByteProcessor;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
 import mpicbg.imglib.algorithm.gauss.GaussianConvolutionReal;
 import mpicbg.imglib.algorithm.math.LocalizablePoint;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
@@ -64,7 +63,7 @@ import net.imglib2.exception.ImgLibException;
 import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.imageplus.FloatImagePlus;
 import net.imglib2.view.Views;
-import spim.process.fusion.FusionHelper;
+import spim.process.fusion.FusionTools;
 
 /**
  * An interactive tool for determining the required sigma and peak threshold
@@ -455,9 +454,9 @@ public class InteractiveDoG implements PlugIn
 		final FloatImagePlus< net.imglib2.type.numeric.real.FloatType > i = createImgLib2( img, w, h );
 
 		if ( Double.isNaN( min ) || Double.isNaN( max ) || Double.isInfinite( min ) || Double.isInfinite( max ) || min == max )
-			FusionHelper.normalizeImage( i );
+			FusionTools.normalizeImage( i );
 		else
-			FusionHelper.normalizeImage( i, (float)min, (float)max );
+			FusionTools.normalizeImage( i, (float)min, (float)max );
 
 		return i;
 	}

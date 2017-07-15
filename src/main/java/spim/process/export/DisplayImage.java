@@ -14,7 +14,7 @@ import net.imglib2.img.imageplus.ImagePlusImg;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import spim.fiji.spimdata.SpimData2;
-import spim.process.fusion.FusionHelper;
+import spim.process.fusion.FusionTools;
 
 public class DisplayImage implements ImgExportTitle
 {
@@ -60,7 +60,7 @@ public class DisplayImage implements ImgExportTitle
 		final float[] minmax;
 		
 		if ( Double.isNaN( min ) || Double.isNaN( max ) )
-			minmax = FusionHelper.minMax( img );
+			minmax = FusionTools.minMax( img );
 		else
 			minmax = new float[]{ (float)min, (float)max };
 

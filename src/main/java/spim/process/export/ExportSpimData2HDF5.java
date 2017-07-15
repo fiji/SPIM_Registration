@@ -49,7 +49,7 @@ import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.fiji.spimdata.stitchingresults.StitchingResults;
-import spim.process.fusion.FusionHelper;
+import spim.process.fusion.FusionTools;
 
 public class ExportSpimData2HDF5 implements ImgExport
 {
@@ -208,7 +208,7 @@ public class ExportSpimData2HDF5 implements ImgExport
 
 		if ( params == null || params.getConvertChoice() == 0 || Double.isNaN( params.getMin() ) || Double.isNaN( params.getMin() ) )
 		{
-			final float[] minmax = FusionHelper.minMax( img );
+			final float[] minmax = FusionTools.minMax( img );
 			min = minmax[ 0 ];
 			max = minmax[ 1 ];
 

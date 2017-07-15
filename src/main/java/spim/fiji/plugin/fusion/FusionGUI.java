@@ -32,7 +32,7 @@ import spim.process.export.ExportSpimData2HDF5;
 import spim.process.export.ExportSpimData2TIFF;
 import spim.process.export.ImgExport;
 import spim.process.export.Save3dTIFF;
-import spim.process.fusion.FusionHelper;
+import spim.process.fusion.FusionTools;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class FusionGUI
@@ -140,7 +140,7 @@ public class FusionGUI
 		gd.addSlider( "Downsampling", 1.0, 16.0, defaultDownsampling );
 		gd.addChoice( "Pixel_type", pixelTypes, pixelTypes[ defaultPixelType ] );
 		gd.addChoice( "Interpolation", interpolationTypes, interpolationTypes[ defaultInterpolation ] );
-		gd.addChoice( "Image ", FusionHelper.imgDataTypeChoice, FusionHelper.imgDataTypeChoice[ defaultCache ] );
+		gd.addChoice( "Image ", FusionTools.imgDataTypeChoice, FusionTools.imgDataTypeChoice[ defaultCache ] );
 		gd.addMessage( "We advise to use use VIRTUAL for saving at TIFF, and CACHED for saving as HDF5 if memory is low", GUIHelper.smallStatusFont, GUIHelper.neutral );
 		gd.addMessage( "" );
 

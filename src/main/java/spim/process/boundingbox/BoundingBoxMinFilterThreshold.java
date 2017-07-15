@@ -28,7 +28,6 @@ import spim.Threads;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.process.export.DisplayImage;
-import spim.process.fusion.FusionHelper;
 import spim.process.fusion.FusionTools;
 import spim.process.fusion.ImagePortion;
 
@@ -77,11 +76,11 @@ public class BoundingBoxMinFilterThreshold implements BoundingBoxEstimation
 
 		// fuse the dataset
 		Img< FloatType > img =
-			FusionHelper.copyImgNoTranslation(
+				FusionTools.copyImgNoTranslation(
 				FusionTools.fuseVirtual( spimData, views, true, maxBB, downsampling ),
 				new ArrayImgFactory<>() );
 
-		final float[] minmax = FusionHelper.minMax( img );
+		final float[] minmax = FusionTools.minMax( img );
 		final int effR = Math.max( radiusMin / downsampling, 1 );
 		final double threshold = (minmax[ 1 ] - minmax[ 0 ]) * ( background / 100.0 ) + minmax[ 0 ];
 
@@ -164,7 +163,7 @@ public class BoundingBoxMinFilterThreshold implements BoundingBoxEstimation
 		}
 
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( img.size(), Threads.numThreads() * 2 );
+		final Vector< ImagePortion > portions = FusionTools.divideIntoPortions( img.size(), Threads.numThreads() * 2 );
 
 		// set up executor service
 		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
@@ -252,7 +251,7 @@ public class BoundingBoxMinFilterThreshold implements BoundingBoxEstimation
 		final Img< T > tmp2 = tmp1.factory().create( tmp1, tmp1.firstElement() );
 		
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( tmp1.size(), Threads.numThreads() * 2 );
+		final Vector< ImagePortion > portions = FusionTools.divideIntoPortions( tmp1.size(), Threads.numThreads() * 2 );
 
 		// set up executor service
 		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );

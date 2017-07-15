@@ -23,7 +23,7 @@ import net.imglib2.type.numeric.complex.ComplexFloatType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
-import spim.process.fusion.FusionHelper;
+import spim.process.fusion.FusionTools;
 
 /**
  * Computes the content-based fusion on a given image
@@ -92,7 +92,7 @@ public class ContentBasedRealRandomAccessible< T extends RealType< T > > impleme
 		fftConv.convolve();
 
 		// normalize to [0...1]
-		FusionHelper.normalizeImage( conv );
+		FusionTools.normalizeImage( conv );
 
 		return conv;
 	}

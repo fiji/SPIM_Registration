@@ -32,7 +32,7 @@ import spim.fiji.ImgLib2Temp.Triple;
 import spim.fiji.spimdata.imgloaders.LegacyStackImgLoaderIJ;
 import spim.process.deconvolution.MVDeconFFT.PSFTYPE;
 import spim.process.export.DisplayImage;
-import spim.process.fusion.FusionHelper;
+import spim.process.fusion.FusionTools;
 import spim.process.fusion.ImagePortion;
 
 public class MVDeconvolution
@@ -216,7 +216,7 @@ public class MVDeconvolution
 		final int nPortions = nThreads * 2;
 
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( psi.size(), nPortions );
+		final Vector< ImagePortion > portions = FusionTools.divideIntoPortions( psi.size(), nPortions );
 		final ArrayList< Callable< Triple< RealSum, Long, float[] > > > tasks = new ArrayList< Callable< Triple< RealSum, Long, float[] > > >();
 
 		final ExecutorService taskExecutor = Executors.newFixedThreadPool( nThreads );
@@ -373,7 +373,7 @@ public class MVDeconvolution
 		final int nPortions = nThreads * 2;
 
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( psi.size(), nPortions );
+		final Vector< ImagePortion > portions = FusionTools.divideIntoPortions( psi.size(), nPortions );
 		final ArrayList< Callable< Void > > tasks = new ArrayList< Callable< Void > >();
 
 		for ( int v = 0; v < numViews; ++v )
@@ -416,7 +416,7 @@ public class MVDeconvolution
 				});
 			}
 
-			FusionHelper.execTasks( tasks, nThreads, "compute quotient" );
+			FusionTools.execTasks( tasks, nThreads, "compute quotient" );
 
 			if ( debugHeavy && ( view == debugHeavyView || debugHeavyView < 0 ) && iteration == debugHeavyIteration)
 				new DisplayImage().exportImage( tmp1, "quotient " + view );
@@ -456,7 +456,7 @@ public class MVDeconvolution
 				});
 			}
 
-			FusionHelper.execTasks( tasks, nThreads, "compute final values " + view );
+			FusionTools.execTasks( tasks, nThreads, "compute final values " + view );
 
 			// accumulate the results from the individual threads
 			double sumChange = 0;

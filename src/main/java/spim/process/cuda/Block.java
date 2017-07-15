@@ -18,10 +18,9 @@ import net.imglib2.img.basictypeaccess.array.FloatArray;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.iterator.LocalizingZeroMinIntervalIterator;
 import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import spim.Threads;
-import spim.process.fusion.FusionHelper;
+import spim.process.fusion.FusionTools;
 import spim.process.fusion.ImagePortion;
 
 public class Block 
@@ -85,7 +84,7 @@ public class Block
 			n *= blockSize[ d ];
 
 		// split up into many parts for multithreading
-		this.portions = FusionHelper.divideIntoPortions( n, Threads.numThreads() * 2 );
+		this.portions = FusionTools.divideIntoPortions( n, Threads.numThreads() * 2 );
 		this.taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
 	}
 

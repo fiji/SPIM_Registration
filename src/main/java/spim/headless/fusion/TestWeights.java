@@ -24,7 +24,6 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.process.export.DisplayImage;
-import spim.process.fusion.FusionHelper;
 import spim.process.fusion.FusionTools;
 import spim.process.fusion.transformed.TransformView;
 import spim.process.fusion.transformed.TransformVirtual;
@@ -87,7 +86,7 @@ public class TestWeights
 			final float[] border = FusionTools.defaultBlendingBorder.clone();
 			System.out.println( "Default blending = " + Util.printCoordinates( blending ) );
 			System.out.println( "Default border = " + Util.printCoordinates( border ) );
-			FusionHelper.adjustBlending( spimData.getSequenceDescription().getViewDescription( viewId ), blending, border );
+			FusionTools.adjustBlending( spimData.getSequenceDescription().getViewDescription( viewId ), blending, border );
 			System.out.println( "Adjusted blending = " + Util.printCoordinates( blending ) );
 			System.out.println( "Adjusted border = " + Util.printCoordinates( border ) );
 			final RandomAccessibleInterval< FloatType > transformedBlending = TransformWeight.transformBlending( inputImg, border, blending, model, bb );
@@ -96,7 +95,7 @@ public class TestWeights
 			final double[] sigma2 = FusionTools.defaultContentBasedSigma2.clone();
 			System.out.println( "Default sigma1 = " + Util.printCoordinates( sigma1 ) );
 			System.out.println( "Default sigma2 = " + Util.printCoordinates( sigma2 ) );
-			FusionHelper.adjustContentBased( spimData.getSequenceDescription().getViewDescription( viewId ), sigma1, sigma2, downsampling );
+			FusionTools.adjustContentBased( spimData.getSequenceDescription().getViewDescription( viewId ), sigma1, sigma2, downsampling );
 			System.out.println( "Adjusted sigma1 = " + Util.printCoordinates( sigma1 ) );
 			System.out.println( "Adjusted sigma2 = " + Util.printCoordinates( sigma2 ) );
 

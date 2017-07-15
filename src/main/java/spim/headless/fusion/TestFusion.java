@@ -20,7 +20,6 @@ import simulation.imgloader.SimulatedBeadsImgLoader;
 import spim.fiji.spimdata.SpimData2;
 import spim.headless.boundingbox.TestBoundingBox;
 import spim.process.export.DisplayImage;
-import spim.process.fusion.FusionHelper;
 import spim.process.fusion.FusionTools;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
 import spim.process.fusion.transformed.TransformView;
@@ -79,7 +78,7 @@ public class TestFusion
 			final float[] blending = FusionTools.defaultBlendingRange.clone();
 			final float[] border = FusionTools.defaultBlendingBorder.clone();
 
-			FusionHelper.adjustBlending( spimData.getSequenceDescription().getViewDescription( viewId ), blending, border );
+			FusionTools.adjustBlending( spimData.getSequenceDescription().getViewDescription( viewId ), blending, border );
 
 			if ( !Double.isNaN( downsampling ) )
 			{
@@ -113,7 +112,7 @@ public class TestFusion
 
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Reserving memory for fused image and copying, size = " + Util.printCoordinates( size ) );
 
-		final RandomAccessibleInterval< FloatType > fusedImg = FusionHelper.copyImg( virtual, new ImagePlusImgFactory<>(), true );
+		final RandomAccessibleInterval< FloatType > fusedImg = FusionTools.copyImg( virtual, new ImagePlusImgFactory<>(), true );
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Finished fusion process." );
 
