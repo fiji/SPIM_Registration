@@ -27,13 +27,13 @@ import spim.fiji.spimdata.SpimData2;
 import spim.process.deconvolution.normalization.NormalizingRandomAccessibleInterval;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.FusionHelper.ImgDataType;
+import spim.process.fusion.FusionTools;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
 import spim.process.fusion.transformed.TransformView;
 import spim.process.fusion.transformed.TransformVirtual;
 import spim.process.fusion.transformed.TransformWeight;
 import spim.process.fusion.transformed.weightcombination.CombineWeightsRandomAccessibleInterval;
 import spim.process.fusion.transformed.weightcombination.CombineWeightsRandomAccessibleInterval.CombineType;
-import spim.process.fusion.weightedavg.ProcessFusion;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class ProcessInputImages< V extends ViewId >
@@ -109,8 +109,8 @@ public class ProcessInputImages< V extends ViewId >
 				groups,
 				bb,
 				downsampling,
-				useWeightsFusion ? ProcessFusion.defaultBlendingRange.clone() : null,
-				useWeightsFusion ? ProcessFusion.defaultBlendingBorder.clone() : null,
+				useWeightsFusion ? FusionTools.defaultBlendingRange.clone() : null,
+				useWeightsFusion ? FusionTools.defaultBlendingBorder.clone() : null,
 				useWeightsDecon ? new float[]{ defaultBlendingRangeNumber, defaultBlendingRangeNumber, defaultBlendingRangeNumber } : null,
 				useWeightsDecon ? new float[]{ defaultBlendingBorderNumber, defaultBlendingBorderNumber, defaultBlendingBorderNumber } : null );
 	}

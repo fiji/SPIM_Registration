@@ -4,9 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import bdv.util.ConstantRandomAccessible;
-import ij.IJ;
 import ij.ImagePlus;
-import ij.gui.ProgressBar;
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.ImgLoader;
@@ -25,10 +23,15 @@ import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
 import spim.process.fusion.transformed.TransformView;
 import spim.process.fusion.transformed.TransformVirtual;
 import spim.process.fusion.transformed.TransformWeight;
-import spim.process.fusion.weightedavg.ProcessFusion;
 
 public class FusionTools
 {
+	public static float[] defaultBlendingRange = new float[]{ 40, 40, 40 };
+	public static float[] defaultBlendingBorder = new float[]{ 0, 0, 0 };
+
+	public static double[] defaultContentBasedSigma1 = new double[]{ 20, 20, 20 };
+	public static double[] defaultContentBasedSigma2 = new double[]{ 40, 40, 40 };
+
 	public static RandomAccessibleInterval< FloatType > fuseVirtual(
 			final SpimData spimData,
 			final Collection< ? extends ViewId > views,
@@ -71,8 +74,8 @@ public class FusionTools
 
 			if ( useBlending )
 			{
-				final float[] blending = ProcessFusion.defaultBlendingRange.clone();
-				final float[] border = ProcessFusion.defaultBlendingBorder.clone();
+				final float[] blending = defaultBlendingRange.clone();
+				final float[] border = defaultBlendingBorder.clone();
 
 				FusionHelper.adjustBlending( spimData.getSequenceDescription().getViewDescription( viewId ), blending, border );
 

@@ -18,18 +18,19 @@ import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.complex.ComplexFloatType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.process.export.DisplayImage;
 import spim.process.fusion.FusionHelper;
+import spim.process.fusion.FusionTools;
 import spim.process.fusion.transformed.TransformView;
 import spim.process.fusion.transformed.TransformVirtual;
 import spim.process.fusion.transformed.TransformWeight;
 import spim.process.fusion.transformed.weightcombination.CombineWeightsRandomAccessibleInterval;
 import spim.process.fusion.transformed.weightcombination.CombineWeightsRandomAccessibleInterval.CombineType;
-import spim.process.fusion.weightedavg.ProcessFusion;
 
 public class TestWeights
 {
@@ -82,14 +83,22 @@ public class TestWeights
 			final RandomAccessibleInterval inputImg = TransformView.openDownsampled( imgloader, viewId, model );
 			final RandomAccessibleInterval transformedInput = TransformView.transformView( inputImg, model, bb, 0, 1 );
 
-			final float[] blending = ProcessFusion.defaultBlendingRange.clone();
-			final float[] border = ProcessFusion.defaultBlendingBorder.clone();
+			final float[] blending = FusionTools.defaultBlendingRange.clone();
+			final float[] border = FusionTools.defaultBlendingBorder.clone();
+			System.out.println( "Default blending = " + Util.printCoordinates( blending ) );
+			System.out.println( "Default border = " + Util.printCoordinates( border ) );
 			FusionHelper.adjustBlending( spimData.getSequenceDescription().getViewDescription( viewId ), blending, border );
+			System.out.println( "Adjusted blending = " + Util.printCoordinates( blending ) );
+			System.out.println( "Adjusted border = " + Util.printCoordinates( border ) );
 			final RandomAccessibleInterval< FloatType > transformedBlending = TransformWeight.transformBlending( inputImg, border, blending, model, bb );
 
-			final double[] sigma1 = ProcessFusion.defaultContentBasedSigma1.clone();
-			final double[] sigma2 = ProcessFusion.defaultContentBasedSigma2.clone();
-			FusionHelper.adjustContentBased( spimData.getSequenceDescription().getViewDescription( viewId ), sigma1, sigma2 );
+			final double[] sigma1 = FusionTools.defaultContentBasedSigma1.clone();
+			final double[] sigma2 = FusionTools.defaultContentBasedSigma2.clone();
+			System.out.println( "Default sigma1 = " + Util.printCoordinates( sigma1 ) );
+			System.out.println( "Default sigma2 = " + Util.printCoordinates( sigma2 ) );
+			FusionHelper.adjustContentBased( spimData.getSequenceDescription().getViewDescription( viewId ), sigma1, sigma2, downsampling );
+			System.out.println( "Adjusted sigma1 = " + Util.printCoordinates( sigma1 ) );
+			System.out.println( "Adjusted sigma2 = " + Util.printCoordinates( sigma2 ) );
 
 			final RandomAccessibleInterval< FloatType > transformedContentBased = TransformWeight.transformContentBased(
 					inputImg,

@@ -40,7 +40,6 @@ import net.imglib2.view.Views;
 import spim.Threads;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
-import spim.process.fusion.weightedavg.ProcessFusion;
 
 public class FusionHelper
 {
@@ -59,29 +58,29 @@ public class FusionHelper
 		if ( voxelSize == null )
 			voxelSize = new FinalVoxelDimensions( "px", new double[]{ 1, 1, 1 } );
 
-		if ( ProcessFusion.defaultAdjustBlendingForAnisotropy )
+		for ( int d = 0; d < blending.length; ++d )
 		{
-			for ( int d = 0; d < blending.length; ++d )
-			{
-				blending[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
-				border[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
-			}
+			blending[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
+			border[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
 		}
 	}
 
-	public static void adjustContentBased( final BasicViewDescription< ? extends BasicViewSetup > vd, final double[] sigma1, final double[] sigma2 )
+	public static void adjustContentBased( final BasicViewDescription< ? extends BasicViewSetup > vd, final double[] sigma1, final double[] sigma2, final double downsampling )
 	{
-		final float minRes = (float)getMinRes( vd );
+		final double minRes = getMinRes( vd );
 		VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSize( vd.getViewSetup() );
 		if ( voxelSize == null )
 			voxelSize = new FinalVoxelDimensions( "px", new double[]{ 1, 1, 1 } );
 
-		if ( ProcessFusion.defaultAdjustContentBasedSigmaForAnisotropy )
+		for ( int d = 0; d < sigma1.length; ++d )
 		{
-			for ( int d = 0; d < sigma1.length; ++d )
+			sigma1[ d ] /= voxelSize.dimension( d ) / minRes;
+			sigma2[ d ] /= voxelSize.dimension( d ) / minRes;
+
+			if ( !Double.isNaN( downsampling ) )
 			{
-				sigma1[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
-				sigma2[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
+				sigma1[ d ] /= downsampling;
+				sigma2[ d ] /= downsampling;
 			}
 		}
 	}
