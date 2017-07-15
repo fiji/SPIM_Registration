@@ -19,6 +19,7 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.Interval;
 import net.imglib2.util.Intervals;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
@@ -72,6 +73,7 @@ public class FusionGUI
 	protected double downsampling = defaultDownsampling;
 	protected boolean useBlending = defaultUseBlending;
 	protected boolean useContentBased = defaultUseContentBased;
+	protected int imgExport = defaultImgExportAlgorithm;
 
 	static
 	{
@@ -115,6 +117,8 @@ public class FusionGUI
 		// get all bounding boxes and two extra ones
 		this.allBoxes = BoundingBoxTools.getAllBoundingBoxes( spimData, views, true );
 	}
+
+	public Interval getBoundingBox() { return allBoxes.get( boundingBox ); }
 
 	public boolean queryDetails()
 	{
@@ -171,18 +175,17 @@ public class FusionGUI
 
 		if ( gd.wasCanceled() )
 			return false;
-/*
-		bb = allBoxes.get( defaultBB = gd.getNextChoiceIndex() );
-		downsampling = defaultDownsampling = gd.getNextNumber();
-		int caching = defaultCache = gd.getNextChoiceIndex();
 
-		if ( caching == 0 )
-			imgType = ImgDataType.VIRTUAL;
-		else if ( caching == 1 )
-			imgType = ImgDataType.CACHED;
-		else
-			imgType = ImgDataType.PRECOMPUTED;
-	*/
+		boundingBox = defaultBB = gd.getNextChoiceIndex();
+		downsampling = defaultDownsampling = gd.getNextNumber();
+		pixelType = defaultPixelType = gd.getNextChoiceIndex();
+		interpolation = defaultInterpolation = gd.getNextChoiceIndex();
+		cacheType = defaultCache = gd.getNextChoiceIndex();
+		useBlending = defaultUseBlending = gd.getNextBoolean();
+		useContentBased = defaultUseContentBased = gd.getNextBoolean();
+		splittingType = defaultSplittingType = gd.getNextChoiceIndex();
+		imgExport = defaultImgExportAlgorithm = gd.getNextChoiceIndex();
+
 		return true;
 	}
 
@@ -192,7 +195,6 @@ public class FusionGUI
 			return true;
 
 		// TODO: check for Davids virtual implementation of the normal imgloader
-
 		return false;
 	}
 

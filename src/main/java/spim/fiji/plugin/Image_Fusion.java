@@ -1,15 +1,18 @@
 package spim.fiji.plugin;
 
+import java.util.Date;
 import java.util.List;
 
 import ij.ImageJ;
 import ij.plugin.PlugIn;
+import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.fusion.FusionGUI;
 import spim.fiji.plugin.queryXML.GenericLoadParseQueryXML;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 /**
  * Plugin to fuse images using transformations from the SpimData object
@@ -40,9 +43,23 @@ public class Image_Fusion implements PlugIn
 		if ( !fusion.queryDetails() )
 			return false;
 
-		// TODO: process
+		final List< Group< ViewDescription > > groups = fusion.getFusionGroups();
+		int i = 0;
+
+		for ( final Group< ViewDescription > group : groups )
+		{
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Fusing group " + (++i) + "/" + groups.size() + " (group=" + group + ")" );
+		}
 
 		return true;
+	}
+
+	public static void fuseGroup(
+			final SpimData2 spimData,
+			final Group< ViewDescription > group
+			)
+	{
+		
 	}
 
 	public static void main( String[] args )

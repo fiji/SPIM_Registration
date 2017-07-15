@@ -133,17 +133,7 @@ public class ManageFusionDialogListeners
 			fusedSizeMB = 2 * Math.round( fusedSizeMB / Math.max( 1, Math.pow( fusedSizeMB, 0.3 ) ) );
 
 		return inputImagesMB + processingMB + fusedSizeMB;
-		/*
-		if ( type == WeightedAvgFusionType.FUSEDATA && sequentialViews.getSelectedIndex() == 0 )
-			return fusedSizeMB + (getMaxNumViewsPerTimepoint() * (avgPixels/ ( 1024*1024 )) * bytePerPixel);
-		else if ( type == WeightedAvgFusionType.FUSEDATA )
-			return fusedSizeMB + ((sequentialViews.getSelectedIndex()) * (avgPixels/ ( 1024*1024 )) * bytePerPixel);
-		else
-			return fusedSizeMB + (avgPixels/ ( 1024*1024 )) * bytePerPixel;
-		*/
 	}
-
-
 
 	protected static long numPixels( final int[] min, final int[] max, final double downsampling )
 	{
