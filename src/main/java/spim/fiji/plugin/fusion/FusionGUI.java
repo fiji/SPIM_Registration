@@ -5,14 +5,14 @@ import java.awt.Choice;
 import java.awt.Label;
 import java.awt.TextField;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 
 import ij.gui.GenericDialog;
+import mpicbg.spim.data.generic.base.Entity;
 import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.MultiResolutionImgLoader;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
@@ -20,8 +20,6 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.util.Intervals;
-import spim.fiji.plugin.boundingbox.BoundingBoxGUI;
-import spim.fiji.plugin.boundingbox.BoundingBoxGUI.ManageListeners;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
@@ -34,6 +32,7 @@ import spim.process.export.ExportSpimData2TIFF;
 import spim.process.export.ImgExport;
 import spim.process.export.Save3dTIFF;
 import spim.process.fusion.FusionHelper;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class FusionGUI
 {
@@ -50,7 +49,12 @@ public class FusionGUI
 	public static String[] pixelTypes = new String[]{ "32-bit floating point", "16-bit unsigned integer" };
 	public static int defaultPixelType = 0;
 
-	public static String[] splittingTypes = new String[]{ "Each timepoint & channel", "All views together", "Each view", "Specify in more detail ..." };
+	public static String[] splittingTypes = new String[]{
+			"Each timepoint & channel",
+			"Each timepoint, channel & illumination",
+			"All views together",
+			"Each view" };
+
 	public static int defaultSplittingType = 0;
 
 	public static boolean defaultUseBlending = true;
@@ -133,7 +137,7 @@ public class FusionGUI
 		gd.addChoice( "Pixel_type", pixelTypes, pixelTypes[ defaultPixelType ] );
 		gd.addChoice( "Interpolation", interpolationTypes, interpolationTypes[ defaultInterpolation ] );
 		gd.addChoice( "Image ", FusionHelper.imgDataTypeChoice, FusionHelper.imgDataTypeChoice[ defaultCache ] );
-		gd.addMessage( "For saving at TIFF use virtual, for saving as HDF5 use Cached", GUIHelper.smallStatusFont, GUIHelper.neutral );
+		gd.addMessage( "We advise to use use VIRTUAL for saving at TIFF, and CACHED for saving as HDF5 if memory is low", GUIHelper.smallStatusFont, GUIHelper.neutral );
 		gd.addMessage( "" );
 
 		gd.addCheckbox( "Blend images smoothly", defaultUseBlending );
@@ -190,6 +194,56 @@ public class FusionGUI
 		// TODO: check for Davids virtual implementation of the normal imgloader
 
 		return false;
+	}
+
+	public List< Group< ViewDescription > > getFusionGroups()
+	{
+		final ArrayList< ViewDescription > vds = SpimData2.getAllViewDescriptionsSorted( this.spimData, this.views );
+		final List< Group< ViewDescription > > grouped;
+	
+		if ( this.splittingType < 2 ) // "Each timepoint & channel" or "Each timepoint, channel & illumination"
+		{
+			final HashSet< Class< ? extends Entity > > groupingFactors = new HashSet<>();
+
+			groupingFactors.add( TimePoint.class );
+			groupingFactors.add( Channel.class );
+
+			if ( this.splittingType == 1 ) // "Each timepoint, channel & illumination"
+				groupingFactors.add( Illumination.class );
+
+			grouped = Group.splitBy( vds, groupingFactors );
+		}
+		else if ( this.splittingType == 2 ) // "All views together"
+		{
+			final Group< ViewDescription > allViews = new Group<>( vds );
+			grouped = new ArrayList<>();
+			grouped.add( allViews );
+		}
+		else
+		{
+			grouped = new ArrayList<>();
+			for ( final ViewDescription vd : vds )
+				grouped.add( new Group<>( vd ) );
+		}
+
+		return grouped;
+	}
+
+	public long maxNumInputPixelsPerInputGroup()
+	{
+		long maxNumPixels = 0;
+
+		for ( final Group< ViewDescription > group : getFusionGroups() )
+		{
+			long numpixels = 0;
+
+			for ( final ViewDescription vd : group )
+				numpixels += Intervals.numElements( vd.getViewSetup().getSize() );
+
+			maxNumPixels = Math.max( maxNumPixels, numpixels );
+		}
+
+		return maxNumPixels;
 	}
 
 	protected long computeAvgImageSize()

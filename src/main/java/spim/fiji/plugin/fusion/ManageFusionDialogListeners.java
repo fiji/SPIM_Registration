@@ -10,7 +10,6 @@ import java.awt.event.TextEvent;
 import java.awt.event.TextListener;
 
 import ij.gui.GenericDialog;
-import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 
@@ -61,6 +60,9 @@ public class ManageFusionDialogListeners
 
 		this.splitChoice.addItemListener( new ItemListener() { @Override
 			public void itemStateChanged(ItemEvent e) { update(); } });
+
+		this.contentbasedCheckbox.addItemListener( new ItemListener() { @Override
+			public void itemStateChanged(ItemEvent e) { update(); } });
 	}
 	
 	public void update()
@@ -101,29 +103,36 @@ public class ManageFusionDialogListeners
 				Math.round( (max[ 2 ] - min[ 2 ] + 1)/fusion.downsampling ) + " pixels @ " + FusionGUI.pixelTypes[ fusion.pixelType ] );
 	}
 
-	public long totalRAM( final long fusedSizeMB, final int bytePerPixel )
+	public long totalRAM( long fusedSizeMB, final int bytePerPixel )
 	{
 		// do we need to load the image data fully?
-		long inputImages = 0;
+		long inputImagesMB = 0;
 
-		long processing = 0;
-
-		long overhead = 0;
+		long maxNumPixelsInput = fusion.maxNumInputPixelsPerInputGroup();
 
 		if ( fusion.isImgLoaderVirtual() )
 		{
-			return fusedSizeMB + 100;
+			// either 50% of the RAM or 5% of the downsampled input
+			inputImagesMB = Math.min(
+					Runtime.getRuntime().maxMemory() / ( 1024*1024*2 ),
+					( ( ( maxNumPixelsInput / Math.round( fusion.downsampling * 1024*1024 ) ) * bytePerPixel ) / 100 ) );
 		}
 		else
 		{
-			// count input data
-			for ( final ViewId viewId : fusion.views )
-			{
-				
-			}
-
-			return fusedSizeMB + 100000;
+			inputImagesMB = ( maxNumPixelsInput / ( 1024*1024 ) ) * bytePerPixel;
 		}
+
+		long processingMB = 0;
+
+		if ( fusion.useContentBased )
+			processingMB = ( maxNumPixelsInput / ( 1024*1024 ) ) * 4;
+
+		if ( fusion.cacheType == 0 ) // Virtual
+			fusedSizeMB /= Math.max( 1, Math.round( Math.pow( fusedSizeMB, 0.3 ) ) );
+		else if ( fusion.cacheType == 1 ) // Cached
+			fusedSizeMB = 2 * Math.round( fusedSizeMB / Math.max( 1, Math.pow( fusedSizeMB, 0.3 ) ) );
+
+		return inputImagesMB + processingMB + fusedSizeMB;
 		/*
 		if ( type == WeightedAvgFusionType.FUSEDATA && sequentialViews.getSelectedIndex() == 0 )
 			return fusedSizeMB + (getMaxNumViewsPerTimepoint() * (avgPixels/ ( 1024*1024 )) * bytePerPixel);
@@ -133,6 +142,8 @@ public class ManageFusionDialogListeners
 			return fusedSizeMB + (avgPixels/ ( 1024*1024 )) * bytePerPixel;
 		*/
 	}
+
+
 
 	protected static long numPixels( final int[] min, final int[] max, final double downsampling )
 	{
