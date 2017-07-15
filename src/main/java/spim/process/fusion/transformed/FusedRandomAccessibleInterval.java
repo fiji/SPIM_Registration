@@ -5,6 +5,7 @@ import java.util.List;
 import net.imglib2.Interval;
 import net.imglib2.Positionable;
 import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealPositionable;
 import net.imglib2.type.numeric.real.FloatType;
@@ -14,13 +15,13 @@ public class FusedRandomAccessibleInterval implements RandomAccessibleInterval< 
 	final int n;
 
 	final Interval interval;
-	final List< RandomAccessibleInterval< FloatType > > images;
-	final List< RandomAccessibleInterval< FloatType > > weights;
+	final List< ? extends RandomAccessible< FloatType > > images;
+	final List< ? extends RandomAccessible< FloatType > > weights;
 
 	public FusedRandomAccessibleInterval(
 			final Interval interval,
-			final List< RandomAccessibleInterval< FloatType > > images,
-			final List< RandomAccessibleInterval< FloatType > > weights )
+			final List< ? extends RandomAccessible< FloatType > > images,
+			final List< ? extends RandomAccessible< FloatType > > weights )
 	{
 		this.n = interval.numDimensions();
 		this.interval = interval;
@@ -34,13 +35,13 @@ public class FusedRandomAccessibleInterval implements RandomAccessibleInterval< 
 
 	public FusedRandomAccessibleInterval(
 			final Interval interval,
-			final List< RandomAccessibleInterval< FloatType > > images )
+			final List< ? extends RandomAccessible< FloatType > > images )
 	{
 		this( interval, images, null );
 	}
 
-	public List< RandomAccessibleInterval< FloatType > > getImages() { return images; }
-	public List< RandomAccessibleInterval< FloatType > > getWeights() { return weights; }
+	public List< ? extends RandomAccessible< FloatType > > getImages() { return images; }
+	public List< ? extends RandomAccessible< FloatType > > getWeights() { return weights; }
 
 	@Override
 	public int numDimensions()

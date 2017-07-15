@@ -5,14 +5,14 @@ import java.util.List;
 import net.imglib2.AbstractLocalizableInt;
 import net.imglib2.Localizable;
 import net.imglib2.RandomAccess;
-import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.RandomAccessible;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 
 public class FusedRandomAccess extends AbstractLocalizableInt implements RandomAccess< FloatType >
 {
-	final List< RandomAccessibleInterval< FloatType > > images;
-	final List< RandomAccessibleInterval< FloatType > > weights;
+	final List< ? extends RandomAccessible< FloatType > > images;
+	final List< ? extends RandomAccessible< FloatType > > weights;
 
 	final int numImages;
 	final RandomAccess< ? extends RealType< ? > >[] i, w;
@@ -21,8 +21,8 @@ public class FusedRandomAccess extends AbstractLocalizableInt implements RandomA
 
 	public FusedRandomAccess(
 			final int n,
-			final List< RandomAccessibleInterval< FloatType > > images,
-			final List< RandomAccessibleInterval< FloatType > > weights )
+			final List< ? extends RandomAccessible< FloatType > > images,
+			final List< ? extends RandomAccessible< FloatType > > weights )
 	{
 		super( n );
 
