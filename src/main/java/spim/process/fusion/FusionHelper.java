@@ -69,6 +69,23 @@ public class FusionHelper
 		}
 	}
 
+	public static void adjustContentBased( final BasicViewDescription< ? extends BasicViewSetup > vd, final double[] sigma1, final double[] sigma2 )
+	{
+		final float minRes = (float)getMinRes( vd );
+		VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSize( vd.getViewSetup() );
+		if ( voxelSize == null )
+			voxelSize = new FinalVoxelDimensions( "px", new double[]{ 1, 1, 1 } );
+
+		if ( ProcessFusion.defaultAdjustContentBasedSigmaForAnisotropy )
+		{
+			for ( int d = 0; d < sigma1.length; ++d )
+			{
+				sigma1[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
+				sigma2[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
+			}
+		}
+	}
+
 	public static double getMinRes( final BasicViewDescription< ? extends BasicViewSetup > desc )
 	{
 		final VoxelDimensions size = ViewSetupUtils.getVoxelSize( desc.getViewSetup() );

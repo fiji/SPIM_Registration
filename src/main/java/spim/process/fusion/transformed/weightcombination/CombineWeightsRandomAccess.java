@@ -1,25 +1,25 @@
-package spim.process.fusion.transformed;
+package spim.process.fusion.transformed.weightcombination;
 
 import java.util.List;
 
 import net.imglib2.AbstractLocalizableInt;
 import net.imglib2.Localizable;
 import net.imglib2.RandomAccess;
-import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.RandomAccessible;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 
-public class FusedWeightsRandomAccess extends AbstractLocalizableInt implements RandomAccess< FloatType >
+public abstract class CombineWeightsRandomAccess extends AbstractLocalizableInt implements RandomAccess< FloatType >
 {
-	final List< RandomAccessibleInterval< FloatType > > weights;
+	final List< ? extends RandomAccessible< FloatType > > weights;
 	final int numImages;
 	final RandomAccess< ? extends RealType< ? > >[] w;
 
 	final FloatType value = new FloatType();
 
-	public FusedWeightsRandomAccess(
+	public CombineWeightsRandomAccess(
 			final int n,
-			final List< RandomAccessibleInterval< FloatType > > weights )
+			final List< ? extends RandomAccessible< FloatType > > weights )
 	{
 		super( n );
 
@@ -32,34 +32,13 @@ public class FusedWeightsRandomAccess extends AbstractLocalizableInt implements 
 	}
 
 	@Override
-	public FloatType get()
-	{
-		double sumW = 0;
-
-		for ( int j = 0; j < numImages; ++j )
-		{
-			final double weight = w[ j ].get().getRealDouble();
-			sumW += weight;
-		}
-
-		value.set( (float)sumW );
-
-		return value;
-	}
-
-	@Override
-	public FusedWeightsRandomAccess copy()
+	public CombineWeightsRandomAccess copy()
 	{
 		return copyRandomAccess();
 	}
 
 	@Override
-	public FusedWeightsRandomAccess copyRandomAccess()
-	{
-		final FusedWeightsRandomAccess r = new FusedWeightsRandomAccess( n, weights );
-		r.setPosition( this );
-		return r;
-	}
+	public abstract CombineWeightsRandomAccess copyRandomAccess();
 
 	@Override
 	public void fwd( final int d )

@@ -28,12 +28,12 @@ import spim.process.deconvolution.normalization.NormalizingRandomAccessibleInter
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.FusionHelper.ImgDataType;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
-import spim.process.fusion.transformed.FusedWeightsRandomAccessibleInterval;
 import spim.process.fusion.transformed.TransformView;
 import spim.process.fusion.transformed.TransformVirtual;
 import spim.process.fusion.transformed.TransformWeight;
+import spim.process.fusion.transformed.weightcombination.CombineWeightsRandomAccessibleInterval;
+import spim.process.fusion.transformed.weightcombination.CombineWeightsRandomAccessibleInterval.CombineType;
 import spim.process.fusion.weightedavg.ProcessFusion;
-import spim.process.fusion.weightedavg.ProcessVirtual;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class ProcessInputImages< V extends ViewId >
@@ -294,7 +294,7 @@ public class ProcessInputImages< V extends ViewId >
 			final RandomAccessibleInterval< FloatType > img = new FusedRandomAccessibleInterval( new FinalInterval( dim ), images, weightsFusion );
 
 			// the weights used for deconvolution per group
-			final RandomAccessibleInterval< FloatType > weight = new FusedWeightsRandomAccessibleInterval( new FinalInterval( dim ), weightsDecon );
+			final RandomAccessibleInterval< FloatType > weight = new CombineWeightsRandomAccessibleInterval( new FinalInterval( dim ), weightsDecon, CombineType.SUM );
 
 			tImgs.put( group, img );
 			tWeights.put( group, weight );

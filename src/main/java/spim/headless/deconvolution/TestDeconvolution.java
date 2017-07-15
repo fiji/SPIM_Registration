@@ -33,7 +33,8 @@ import spim.process.deconvolution.ProcessInputImages;
 import spim.process.export.DisplayImage;
 import spim.process.fusion.FusionHelper.ImgDataType;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
-import spim.process.fusion.transformed.FusedWeightsRandomAccessibleInterval;
+import spim.process.fusion.transformed.weightcombination.CombineWeightsRandomAccessibleInterval;
+import spim.process.fusion.transformed.weightcombination.CombineWeightsRandomAccessibleInterval.CombineType;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 import spim.process.psf.PSFCombination;
 import spim.process.psf.PSFExtraction;
@@ -221,9 +222,10 @@ public class TestDeconvolution
 				fusion.getDownsampledBoundingBox().dimensions( dim );
 	
 				DisplayImage.getImagePlusInstance(
-						new FusedWeightsRandomAccessibleInterval(
+						new CombineWeightsRandomAccessibleInterval(
 								new FinalInterval( dim ),
-								((FusedRandomAccessibleInterval)fusion.getImages().get( group )).getWeights() ),
+								((FusedRandomAccessibleInterval)fusion.getImages().get( group )).getWeights(),
+								CombineType.SUM ),
 						true,
 						"g=" + i + " weightsFusion",
 						0, 1 ).show();
