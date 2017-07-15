@@ -8,10 +8,13 @@ import ij.plugin.PlugIn;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.fusion.FusionGUI;
 import spim.fiji.plugin.queryXML.GenericLoadParseQueryXML;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
+import spim.process.fusion.FusionTools;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 /**
@@ -49,6 +52,28 @@ public class Image_Fusion implements PlugIn
 		for ( final Group< ViewDescription > group : groups )
 		{
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Fusing group " + (++i) + "/" + groups.size() + " (group=" + group + ")" );
+
+			/*
+	public int getPixelType() { return pixelType; }
+	public int getCacheType() { return cacheType; }
+
+			 */
+			final RandomAccessibleInterval< FloatType > virtual =
+				FusionTools.fuseVirtual(
+					spimData,
+					views,
+					fusion.useBlending(),
+					fusion.useContentBased(),
+					fusion.getInterpolation(),
+					fusion.getBoundingBox(),
+					fusion.getDownsampling() );
+
+			if ( fusion.getPixelType() == 1 ) // 16 bit
+			{
+				
+			}
+	
+			
 		}
 
 		return true;

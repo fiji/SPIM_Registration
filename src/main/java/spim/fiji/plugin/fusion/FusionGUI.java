@@ -17,13 +17,11 @@ import mpicbg.spim.data.sequence.MultiResolutionImgLoader;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Interval;
 import net.imglib2.util.Intervals;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.ViewSetupUtils;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.process.boundingbox.BoundingBoxTools;
 import spim.process.export.AppendSpimData2;
@@ -65,7 +63,7 @@ public class FusionGUI
 	public final static String[] imgExportDescriptions;
 	public static int defaultImgExportAlgorithm = 0;
 
-	protected int interpolation = 1;
+	protected int interpolation = defaultInterpolation;
 	protected int boundingBox = defaultBB;
 	protected int pixelType = defaultPixelType;
 	protected int cacheType = defaultCache;
@@ -93,9 +91,6 @@ public class FusionGUI
 
 	final protected SpimData2 spimData;
 	final List< ViewId > views;
-
-	final List< TimePoint > timepointsToProcess;
-	final List< Channel > channelsToProcess;
 	final List< BoundingBox > allBoxes;
 
 	public FusionGUI( final SpimData2 spimData, final List< ViewId > views )
@@ -108,17 +103,18 @@ public class FusionGUI
 		final List< ViewId > removed = SpimData2.filterMissingViews( spimData, views );
 		if ( removed.size() > 0 ) IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Removed " +  removed.size() + " views because they are not present." );
 
-		// which timepoints are part of the fusion
-		this.timepointsToProcess = SpimData2.getAllTimePointsSorted( spimData, views );
-
-		// which channels are part of the fusion
-		this.channelsToProcess = SpimData2.getAllChannelsSorted( spimData, views );
-
 		// get all bounding boxes and two extra ones
 		this.allBoxes = BoundingBoxTools.getAllBoundingBoxes( spimData, views, true );
 	}
 
 	public Interval getBoundingBox() { return allBoxes.get( boundingBox ); }
+	public int getInterpolation() { return interpolation; }
+	public int getPixelType() { return pixelType; }
+	public int getCacheType() { return cacheType; }
+	public double getDownsampling() { return downsampling; }
+	public boolean useBlending() { return useBlending; }
+	public boolean useContentBased() { return useContentBased; }
+	public ImgExport getExporter() { return staticImgExportAlgorithms.get( imgExport ).newInstance(); }
 
 	public boolean queryDetails()
 	{
@@ -246,53 +242,5 @@ public class FusionGUI
 		}
 
 		return maxNumPixels;
-	}
-
-	protected long computeAvgImageSize()
-	{
-		long avgSize = 0;
-		int countImgs = 0;
-
-		for ( final ViewId viewId : views  )
-		{
-			final ViewDescription desc = spimData.getSequenceDescription().getViewDescription( viewId );
-
-			if ( desc.isPresent() )
-			{
-				final ViewSetup viewSetup = desc.getViewSetup();
-				final long numPixel = Intervals.numElements( ViewSetupUtils.getSizeOrLoad( viewSetup, desc.getTimePoint(), spimData.getSequenceDescription().getImgLoader() ) );
-
-				avgSize += numPixel;
-				++countImgs;
-			}
-		}
-		
-		return avgSize / countImgs;
-	}
-
-	/*
-	 * @return - max num views per fused image
-	 */
-	protected int computeMaxNumViews()
-	{
-		int maxViews = 0;
-		
-		for ( final TimePoint t : timepointsToProcess )
-			for ( final Channel c : channelsToProcess )
-			{
-				int numViews = 0;
-
-				for ( final ViewId viewId : views )
-				{
-					final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( viewId );
-					
-					if ( vd.isPresent() && vd.getTimePointId() == t.getId() && vd.getViewSetup().getChannel().getId() == c.getId() )
-						++numViews;
-				}
-				
-				maxViews = Math.max( maxViews, numViews );
-			}
-		
-		return maxViews;
 	}
 }
