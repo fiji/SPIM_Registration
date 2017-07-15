@@ -29,6 +29,9 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 	public static int[] cellDim = new int[]{ 100, 100, 1 };
 	public static int maxCacheSize = 100000;
 
+	public static int defaultInterpolation = 1;
+	public static boolean defaultUseBlending = true;
+
 	private static final long serialVersionUID = -4895470813542722644L;
 
 	ExplorerWindow< ?, ? > panel = null;
@@ -157,7 +160,7 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 				public void run()
 				{
 					IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Fusing " + views.size() + ", downsampling=" + downsampling + ", caching strategy=" + imgType );
-					FusionTools.display( FusionTools.fuseVirtual( spimData, views, true, bb, downsampling ), imgType ).show();
+					FusionTools.display( FusionTools.fuseVirtual( spimData, views, defaultUseBlending, false, defaultInterpolation, bb, downsampling ), imgType ).show();
 				}
 			} ).start();
 		}

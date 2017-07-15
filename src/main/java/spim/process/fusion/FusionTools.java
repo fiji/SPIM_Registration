@@ -11,7 +11,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import bdv.util.ConstantRandomAccessible;
 import ij.IJ;
 import ij.ImagePlus;
 import mpicbg.spim.data.SpimData;
@@ -40,10 +39,12 @@ import net.imglib2.cache.img.ReadOnlyCachedCellImgOptions;
 import net.imglib2.cache.img.SingleCellArrayImg;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
+import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.img.imageplus.ImagePlusImgFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.complex.ComplexFloatType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import spim.Threads;
@@ -55,6 +56,8 @@ import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
 import spim.process.fusion.transformed.TransformView;
 import spim.process.fusion.transformed.TransformVirtual;
 import spim.process.fusion.transformed.TransformWeight;
+import spim.process.fusion.transformed.weightcombination.CombineWeightsRandomAccessibleInterval;
+import spim.process.fusion.transformed.weightcombination.CombineWeightsRandomAccessibleInterval.CombineType;
 
 public class FusionTools
 {
@@ -71,6 +74,8 @@ public class FusionTools
 			final SpimData spimData,
 			final Collection< ? extends ViewId > views,
 			final boolean useBlending,
+			final boolean useContentBased,
+			final int interpolation,
 			final Interval boundingBox,
 			final double downsampling )
 	{
@@ -85,7 +90,12 @@ public class FusionTools
 		bb.dimensions( dim );
 
 		final ArrayList< RandomAccessibleInterval< FloatType > > images = new ArrayList<>();
-		final ArrayList< RandomAccessibleInterval< FloatType > > weights = new ArrayList<>();
+		final ArrayList< RandomAccessibleInterval< FloatType > > weights;
+
+		if ( useBlending || useContentBased )
+			weights = new ArrayList<>();
+		else
+			weights = null;
 
 		for ( final ViewId viewId : views )
 		{
@@ -105,23 +115,58 @@ public class FusionTools
 			// input image as reference
 			final RandomAccessibleInterval inputImg = TransformView.openDownsampled( imgloader, viewId, model );
 
-			images.add( TransformView.transformView( inputImg, model, bb, 0, 1 ) );
+			images.add( TransformView.transformView( inputImg, model, bb, 0, interpolation ) );
 
-			if ( useBlending )
+			// add all (or no) weighting schemes
+
+			if ( useBlending || useContentBased )
 			{
-				final float[] blending = defaultBlendingRange.clone();
-				final float[] border = defaultBlendingBorder.clone();
+				RandomAccessibleInterval< FloatType > transformedBlending = null, transformedContentBased = null;
 
-				adjustBlending( spimData.getSequenceDescription().getViewDescription( viewId ), blending, border );
+				// instantiate blending if necessary
+				if ( useBlending )
+				{
+					final float[] blending = defaultBlendingRange.clone();
+					final float[] border = defaultBlendingBorder.clone();
+	
+					adjustBlending( spimData.getSequenceDescription().getViewDescription( viewId ), blending, border );
+	
+					transformedBlending = TransformWeight.transformBlending( inputImg, border, blending, model, bb );
+				}
+	
+				// instantiate content based if necessary
+				if ( useContentBased )
+				{
+					final double[] sigma1 = FusionTools.defaultContentBasedSigma1.clone();
+					final double[] sigma2 = FusionTools.defaultContentBasedSigma2.clone();
+	
+					adjustContentBased( spimData.getSequenceDescription().getViewDescription( viewId ), sigma1, sigma2, downsampling );
+	
+					transformedContentBased = TransformWeight.transformContentBased( inputImg, new CellImgFactory< ComplexFloatType >(), sigma1, sigma2, model, bb );
+				}
 
-				weights.add( TransformWeight.transformBlending( inputImg, border, blending, model, bb ) );
+				if ( useContentBased && useBlending )
+				{
+					weights.add( new CombineWeightsRandomAccessibleInterval(
+									new FinalInterval( transformedBlending ),
+									transformedBlending,
+									transformedContentBased,
+									CombineType.MUL ) );
+
+				}
+				else if ( useBlending )
+				{
+					weights.add( transformedBlending );
+				}
+				else if ( useContentBased )
+				{
+					weights.add( transformedContentBased );
+				}
+				//else // not necessary anymore, can tolerant weights == null
+				//{
+					//weights.add( Views.interval( new ConstantRandomAccessible< FloatType >( new FloatType( 1 ), 3 ), new FinalInterval( dim ) ) );
+				//}
 			}
-			else
-			{
-				weights.add( Views.interval( new ConstantRandomAccessible< FloatType >( new FloatType( 1 ), 3 ), new FinalInterval( dim ) ) );
-			}
-
-			//images.add( TransformWeight.transformBlending( inputImg, border, blending, model, bb ) );
 		}
 
 		return new FusedRandomAccessibleInterval( new FinalInterval( dim ), images, weights );

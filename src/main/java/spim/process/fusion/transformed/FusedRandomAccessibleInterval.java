@@ -25,7 +25,18 @@ public class FusedRandomAccessibleInterval implements RandomAccessibleInterval< 
 		this.n = interval.numDimensions();
 		this.interval = interval;
 		this.images = images;
-		this.weights = weights;
+
+		if ( weights.size() == 0 )
+			this.weights = null;
+		else
+			this.weights = weights;
+	}
+
+	public FusedRandomAccessibleInterval(
+			final Interval interval,
+			final List< RandomAccessibleInterval< FloatType > > images )
+	{
+		this( interval, images, null );
 	}
 
 	public List< RandomAccessibleInterval< FloatType > > getImages() { return images; }
@@ -40,7 +51,10 @@ public class FusedRandomAccessibleInterval implements RandomAccessibleInterval< 
 	@Override
 	public RandomAccess< FloatType > randomAccess()
 	{
-		return new FusedRandomAccess( n, images, weights );
+		if ( weights == null )
+			return new FusedRandomAccessNoWeights( n, images );
+		else
+			return new FusedRandomAccess( n, images, weights );
 	}
 
 	@Override
