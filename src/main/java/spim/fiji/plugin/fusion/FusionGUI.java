@@ -24,13 +24,14 @@ import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.process.boundingbox.BoundingBoxTools;
-import spim.process.export.AppendSpimData2;
+import spim.process.export.AppendSpimData2HDF5;
 import spim.process.export.DisplayImage;
 import spim.process.export.ExportSpimData2HDF5;
 import spim.process.export.ExportSpimData2TIFF;
 import spim.process.export.ImgExport;
 import spim.process.export.Save3dTIFF;
 import spim.process.fusion.FusionTools;
+import spim.process.fusion.transformed.TransformVirtual;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class FusionGUI
@@ -81,7 +82,7 @@ public class FusionGUI
 		staticImgExportAlgorithms.add( new Save3dTIFF( null ) );
 		staticImgExportAlgorithms.add( new ExportSpimData2TIFF() );
 		staticImgExportAlgorithms.add( new ExportSpimData2HDF5() );
-		staticImgExportAlgorithms.add( new AppendSpimData2() );
+		staticImgExportAlgorithms.add( new AppendSpimData2HDF5() );
 
 		imgExportDescriptions = new String[ staticImgExportAlgorithms.size() ];
 
@@ -107,13 +108,23 @@ public class FusionGUI
 		this.allBoxes = BoundingBoxTools.getAllBoundingBoxes( spimData, views, true );
 	}
 
+	public SpimData2 getSpimData() { return spimData; }
+	public List< ViewId > getViews() { return views; }
 	public Interval getBoundingBox() { return allBoxes.get( boundingBox ); }
+	public Interval getDownsampledBoundingBox()
+	{
+		if ( !Double.isNaN( downsampling ) )
+			return TransformVirtual.scaleBoundingBox( getBoundingBox(), 1.0 / downsampling );
+		else
+			return getBoundingBox();
+	}
 	public int getInterpolation() { return interpolation; }
 	public int getPixelType() { return pixelType; }
 	public int getCacheType() { return cacheType; }
-	public double getDownsampling() { return downsampling; }
+	public double getDownsampling(){ return downsampling; }
 	public boolean useBlending() { return useBlending; }
 	public boolean useContentBased() { return useContentBased; }
+	public int getSplittingType() { return splittingType; }
 	public ImgExport getExporter() { return staticImgExportAlgorithms.get( imgExport ).newInstance(); }
 
 	public boolean queryDetails()

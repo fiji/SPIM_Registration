@@ -1,11 +1,8 @@
 package spim.process.export;
 
-import java.util.List;
-
 import ij.ImagePlus;
-import ij.gui.GenericDialog;
-import mpicbg.spim.data.sequence.TimePoint;
-import mpicbg.spim.data.sequence.ViewSetup;
+import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.exception.ImgLibException;
@@ -13,58 +10,62 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.img.imageplus.ImagePlusImg;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import spim.fiji.spimdata.SpimData2;
+import spim.fiji.plugin.fusion.FusionGUI;
 import spim.process.fusion.FusionTools;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
-public class DisplayImage implements ImgExportTitle
+public class DisplayImage implements ImgExport
 {
 	final boolean virtualDisplay;
-	ImgTitler imgTitler = new DefaultImgTitler();
 
 	public DisplayImage() { this( false ); }
 	public DisplayImage( final boolean virtualDisplay ) { this.virtualDisplay = virtualDisplay; }
 
-	public < T extends RealType< T > & NativeType< T > > void exportImage( final RandomAccessibleInterval< T > img, final String title )
+	public < T extends RealType< T > & NativeType< T > > void exportImage( final RandomAccessibleInterval< T > img )
 	{
-		final ImgTitler current = this.getImgTitler();
-		this.setImgTitler( new FixedNameImgTitler( title ) );
-
-		exportImage( img, null, 1.0, null, null );
-
-		this.setImgTitler( current );
+		exportImage( img, null, 1.0, "Image", null );
 	}
 
-	public < T extends RealType< T > & NativeType< T > > void exportImage( final RandomAccessibleInterval< T > img, final Interval bb, final double downsampling, final String title )
+	public < T extends RealType< T > & NativeType< T > > void exportImage( final RandomAccessibleInterval< T > img, final String title )
 	{
-		final ImgTitler current = this.getImgTitler();
-		this.setImgTitler( new FixedNameImgTitler( title ) );
-
-		exportImage( img, bb, downsampling, null, null );
-
-		this.setImgTitler( current );
+		exportImage( img, null, 1.0, title, null );
 	}
 
 	@Override
-	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval< T > img, final Interval bb, final double downsampling, final TimePoint tp, final ViewSetup vs )
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage(
+			final RandomAccessibleInterval< T > img,
+			final Interval bb,
+			final double downsampling,
+			final String title,
+			final Group< ? extends ViewId > fusionGroup )
 	{
-		return exportImage( img, bb, downsampling, tp, vs, Double.NaN, Double.NaN );
+		return exportImage( img, bb, downsampling, title, fusionGroup, Double.NaN, Double.NaN );
 	}
 
-	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval<T> img, final Interval bb, final double downsampling, final TimePoint tp, final ViewSetup vs, final double min, final double max )
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage(
+			final RandomAccessibleInterval<T> img,
+			final Interval bb,
+			final double downsampling,
+			final String title,
+			final Group< ? extends ViewId > fusionGroup,
+			final double min,
+			final double max )
 	{
 		// do nothing in case the image is null
 		if ( img == null )
 			return false;
-		
-		// determine min and max
-		final float[] minmax;
-		
-		if ( Double.isNaN( min ) || Double.isNaN( max ) )
-			minmax = FusionTools.minMax( img );
-		else
-			minmax = new float[]{ (float)min, (float)max };
 
-		ImagePlus imp = getImagePlusInstance( img, virtualDisplay, getImgTitler().getImageTitle( tp, vs ), minmax[ 0 ], minmax[ 1 ] );
+		// determine min and max
+		final double[] minmax;
+
+		if ( Double.isNaN( min ) || Double.isNaN( max ) )
+			minmax = FusionTools.minMaxApprox( img );
+		else
+			minmax = new double[]{ (float)min, (float)max };
+
+		IOFunctions.println( "Approximate min=" + minmax[ 0 ] + ", max=" + minmax[ 1 ] );
+
+		ImagePlus imp = getImagePlusInstance( img, virtualDisplay, title, minmax[ 0 ], minmax[ 1 ] );
 
 		if ( bb != null )
 		{
@@ -109,28 +110,13 @@ public class DisplayImage implements ImgExportTitle
 	}
 
 	@Override
-	public boolean queryParameters( final SpimData2 spimData, final boolean is16bit ) { return true; }
-
-	@Override
-	public void queryAdditionalParameters( final GenericDialog gd, final SpimData2 spimData ) {}
-
-	@Override
-	public boolean parseAdditionalParameters( final GenericDialog gd, final SpimData2 spimData ) { return true; }
+	public boolean queryParameters( final FusionGUI fusion ) { return true; }
 
 	@Override
 	public ImgExport newInstance() { return new DisplayImage(); }
 
 	@Override
 	public String getDescription() { return "Display using ImageJ"; }
-
-	@Override
-	public void setImgTitler( final ImgTitler imgTitler ) { this.imgTitler = imgTitler; }
-
-	@Override
-	public ImgTitler getImgTitler() { return imgTitler; }
-
-	@Override
-	public void setXMLData( final List< TimePoint > timepointsToProcess, final List< ViewSetup > newViewSetups ) {}
 
 	@Override
 	public boolean finish()

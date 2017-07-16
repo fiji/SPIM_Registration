@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.Vector;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -32,6 +33,7 @@ import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.cache.img.CellLoader;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgFactory;
@@ -43,6 +45,7 @@ import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.img.imageplus.ImagePlusImgFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
+import net.imglib2.type.Type;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.complex.ComplexFloatType;
 import net.imglib2.type.numeric.real.FloatType;
@@ -249,7 +252,7 @@ public class FusionTools
 		if ( imgType == ImgDataType.CACHED )
 			img = cacheRandomAccessibleInterval( input, maxCacheSize, new FloatType(), cellDim );
 		else if ( imgType == ImgDataType.PRECOMPUTED )
-			img = copyImg( input, new ImagePlusImgFactory<>(), true );
+			img = copyImg( input, new ImagePlusImgFactory<>(), new FloatType(), true );
 		else
 			img = input;
 
@@ -392,24 +395,32 @@ public class FusionTools
 		return translateIfNecessary( input, factory.create( dim, type, loader ) );
 	}
 
-	public static RandomAccessibleInterval< FloatType > copyImg( final RandomAccessibleInterval< FloatType > input, final ImgFactory< FloatType > factory  )
+	public static < T extends Type< T > > RandomAccessibleInterval< T > copyImg( final RandomAccessibleInterval< T > input, final ImgFactory< T > factory, final T type  )
 	{
-		return copyImg( input, factory, false );
+		return copyImg( input, factory, type, false );
 	}
 
-	public static RandomAccessibleInterval< FloatType > copyImg( final RandomAccessibleInterval< FloatType > input, final ImgFactory< FloatType > factory, final boolean showProgress  )
+	public static < T extends Type< T > > RandomAccessibleInterval< T > copyImg(
+			final RandomAccessibleInterval< T > input,
+			final ImgFactory< T > factory,
+			final T type,
+			final boolean showProgress  )
 	{
-		return translateIfNecessary( input, copyImgNoTranslation( input, factory, showProgress ) );
+		return translateIfNecessary( input, copyImgNoTranslation( input, factory, type, showProgress ) );
 	}
 
-	public static Img< FloatType > copyImgNoTranslation( final RandomAccessibleInterval< FloatType > input, final ImgFactory< FloatType > factory  )
+	public static < T extends Type< T > > Img< T > copyImgNoTranslation( final RandomAccessibleInterval< T > input, final ImgFactory< T > factory, final T type )
 	{
-		return copyImgNoTranslation( input, factory, false );
+		return copyImgNoTranslation( input, factory, type, false );
 	}
 
-	public static Img< FloatType > copyImgNoTranslation( final RandomAccessibleInterval< FloatType > input, final ImgFactory< FloatType > factory, final boolean showProgress  )
+	public static < T extends Type< T > > Img< T > copyImgNoTranslation(
+			final RandomAccessibleInterval< T > input,
+			final ImgFactory< T > factory,
+			final T type,
+			final boolean showProgress  )
 	{
-		final RandomAccessibleInterval< FloatType > in;
+		final RandomAccessibleInterval< T > in;
 
 		if ( Views.isZeroMin( input ) )
 			in = input;
@@ -419,7 +430,7 @@ public class FusionTools
 		final long[] dim = new long[ in.numDimensions() ];
 		in.dimensions( dim );
 
-		final Img< FloatType > tImg = factory.create( dim, new FloatType() );
+		final Img< T > tImg = factory.create( dim, type );
 
 		// copy the virtual construct into an actual image
 		copyImg( in, tImg, showProgress );
@@ -447,7 +458,7 @@ public class FusionTools
 		copyImg( input, output, false );
 	}
 
-	public static void copyImg( final RandomAccessibleInterval< FloatType > input, final RandomAccessibleInterval< FloatType > output, final boolean showProgress )
+	public static < T extends Type< T > > void copyImg( final RandomAccessibleInterval< T > input, final RandomAccessibleInterval< T > output, final boolean showProgress )
 	{
 		final int nThreads = Threads.numThreads();
 		final int nPortions = nThreads * 4;
@@ -504,19 +515,19 @@ public class FusionTools
 	 * @param source
 	 * @param target
 	 */
-	public static final void copyImg(
+	public static final < T extends Type< T > > void copyImg(
 			final long start,
 			final long loopSize,
-			final RandomAccessibleInterval< FloatType > source,
-			final RandomAccessibleInterval< FloatType > target )
+			final RandomAccessibleInterval< T > source,
+			final RandomAccessibleInterval< T > target )
 	{
-		final IterableInterval< FloatType > sourceIterable = Views.iterable( source );
-		final IterableInterval< FloatType > targetIterable = Views.iterable( target );
+		final IterableInterval< T > sourceIterable = Views.iterable( source );
+		final IterableInterval< T > targetIterable = Views.iterable( target );
 
 		if ( sourceIterable.iterationOrder().equals( targetIterable.iterationOrder() ) )
 		{
-			final Cursor< FloatType > cursorSource = sourceIterable.cursor();
-			final Cursor< FloatType > cursorTarget = targetIterable.cursor();
+			final Cursor< T > cursorSource = sourceIterable.cursor();
+			final Cursor< T > cursorTarget = targetIterable.cursor();
 	
 			cursorSource.jumpFwd( start );
 			cursorTarget.jumpFwd( start );
@@ -526,8 +537,8 @@ public class FusionTools
 		}
 		else
 		{
-			final RandomAccess< FloatType > raSource = source.randomAccess();
-			final Cursor< FloatType > cursorTarget = targetIterable.localizingCursor();
+			final RandomAccess< T > raSource = source.randomAccess();
+			final Cursor< T > cursorTarget = targetIterable.localizingCursor();
 
 			cursorTarget.jumpFwd( start );
 
@@ -605,6 +616,38 @@ public class FusionTools
 		taskExecutor.shutdown();
 		
 		return new float[]{ min, max };
+	}
+
+	public static < T extends RealType< T > > double[] minMaxApprox( final RandomAccessibleInterval< T > img )
+	{
+		return minMaxApprox( img, 1000 );
+	}
+	
+	public static < T extends RealType< T > > double[] minMaxApprox( final RandomAccessibleInterval< T > img, final int numPixels )
+	{
+		return minMaxApprox( img, new Random( 3535 ), numPixels );
+	}
+
+	public static < T extends RealType< T > > double[] minMaxApprox( final RandomAccessibleInterval< T > img, final Random rnd, final int numPixels )
+	{
+		final RandomAccess< T > ra = img.randomAccess();
+
+		// run threads and combine results
+		double min = Double.MAX_VALUE;
+		double max = -Double.MAX_VALUE;
+
+		for ( int i = 0; i < numPixels; ++i )
+		{
+			for ( int d = 0; d < img.numDimensions(); ++d )
+				ra.setPosition( rnd.nextInt( (int)img.dimension( d ) ) + (int)img.min( d ), d );
+
+			final double v = ra.get().getRealDouble();
+
+			min = Math.min( min, v );
+			max = Math.max( max, v );
+		}
+
+		return new double[]{ min, max };
 	}
 
 	/**

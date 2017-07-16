@@ -1,15 +1,12 @@
 package spim.process.export;
 
-import java.util.List;
-
-import ij.gui.GenericDialog;
-import mpicbg.spim.data.sequence.TimePoint;
-import mpicbg.spim.data.sequence.ViewSetup;
+import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import spim.fiji.spimdata.SpimData2;
+import spim.fiji.plugin.fusion.FusionGUI;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public interface ImgExport
 {
@@ -20,20 +17,23 @@ public interface ImgExport
 	 */
 	public boolean finish();
 
-	public void setXMLData( final List< TimePoint > timepointsToProcess, final List< ViewSetup > newViewSetups );
-
 	/**
 	 * Exports the image (min and max intensity will be computed)
 	 * 
 	 * @param img - Note, in rare cases this can be null (i.e. do nothing)
 	 * @param bb - the bounding box used to fuse this image
 	 * @param downsampling - how much it was downsampled
-	 * @param tp - the current (new) timepoint
-	 * @param vs - the current (new) viewsetup
+	 * @param title - the name of the image
+	 * @param fusionGroup - which views are part of this fusion
 	 * @param <T> pixel type
 	 * @return success? true or false
 	 */
-	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval< T > img, final Interval bb, final double downsampling, final TimePoint tp, final ViewSetup vs );
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage(
+			final RandomAccessibleInterval< T > img,
+			final Interval bb,
+			final double downsampling,
+			final String title,
+			final Group< ? extends ViewId > fusionGroup );
 	
 	/**
 	 * Exports the image using a predefined min/max
@@ -41,34 +41,30 @@ public interface ImgExport
 	 * @param img - Note, in rare cases this can be null (i.e. do nothing)
 	 * @param bb - the bounding box used to fuse this image
 	 * @param downsampling - how much it was downsampled
-	 * @param tp - the current (new) timepoint
-	 * @param vs - the current (new) viewsetup
+	 * @param title - the name of the image
+	 * @param fusionGroup - which views are part of this fusion
 	 * @param min - define min intensity of this image
 	 * @param max - define max intensity of this image
 	 * @param <T> pixel type
 	 * @return success? true or false
 	 */
-	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval< T > img, final Interval bb, final double downsampling, final TimePoint tp, final ViewSetup vs, final double min, final double max );
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage(
+			final RandomAccessibleInterval< T > img,
+			final Interval bb,
+			final double downsampling,
+			final String title,
+			final Group< ? extends ViewId > fusionGroup,
+			final double min,
+			final double max );
 	
 	/*
-	 * Query the necessary parameters for the fusion (new dialog has to be made)
+	 * Query the necessary parameters for the fusion (new dialog can be made)
 	 * 
 	 * @return success? true or false
 	 */
-	public abstract boolean queryParameters( final SpimData2 spimData, final boolean is16bit );
-	
-	/*
-	 * Query additional parameters within the bounding box dialog
-	 */
-	public abstract void queryAdditionalParameters( final GenericDialog gd, final SpimData2 spimData );
+	public abstract boolean queryParameters( final FusionGUI fusion );
 
-	/*
-	 * Parse the additional parameters added before within the bounding box dialog
-	 * @param gd
-	 * @return
-	 */
-	public abstract boolean parseAdditionalParameters( final GenericDialog gd, final SpimData2 spimData );
-	
+
 	public abstract ImgExport newInstance();
 	
 	/**

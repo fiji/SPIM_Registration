@@ -8,14 +8,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import ij.gui.GenericDialog;
 import mpicbg.spim.data.SpimDataException;
+import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.registration.ViewTransform;
 import mpicbg.spim.data.registration.ViewTransformAffine;
+import mpicbg.spim.data.sequence.Angle;
+import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.FinalVoxelDimensions;
+import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.MissingViews;
 import mpicbg.spim.data.sequence.SequenceDescription;
+import mpicbg.spim.data.sequence.Tile;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.TimePoints;
 import mpicbg.spim.data.sequence.TimePointsPattern;
@@ -25,49 +30,70 @@ import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.util.Pair;
+import net.imglib2.util.Util;
+import net.imglib2.util.ValuePair;
+import spim.fiji.plugin.fusion.FusionGUI;
 import spim.fiji.plugin.resave.Resave_TIFF;
 import spim.fiji.plugin.resave.Resave_TIFF.Parameters;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBoxes;
-import spim.fiji.spimdata.imgloaders.StackImgLoaderIJ;
+import spim.fiji.spimdata.imgloaders.FileMapImgLoaderLOCI;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.fiji.spimdata.stitchingresults.StitchingResults;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class ExportSpimData2TIFF implements ImgExport
 {
+	File path;
 	List< TimePoint > newTimepoints;
 	List< ViewSetup > newViewSetups;
+	FusionGUI fusion;
+	HashMap<BasicViewDescription< ? >, Pair<File, Pair<Integer, Integer>>> fileMap;
 
 	Parameters params;
 	Save3dTIFF saver;
-	SpimData2 spimData;
+	SpimData2 newSpimData;
 
-	public static class FileNamePattern
+	@Override
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage(
+			final RandomAccessibleInterval<T> img,
+			final Interval bb,
+			final double downsampling,
+			final String title,
+			final Group< ? extends ViewId > fusionGroup )
 	{
-		public int layoutTP = 0, layoutChannels = 0, layoutIllum = 0, layoutAngles = 0, layoutTiles = 0;
-		public String fileNamePattern;
+		return exportImage( img, bb, downsampling, title, fusionGroup, Double.NaN, Double.NaN );
 	}
 
 	@Override
-	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval<T> img, final Interval bb, final double downsampling, final TimePoint tp, final ViewSetup vs )
-	{
-		return exportImage( img, bb, downsampling, tp, vs, Double.NaN, Double.NaN );
-	}
-
-	@Override
-	public < T extends RealType< T > & NativeType< T > > boolean exportImage( final RandomAccessibleInterval<T> img, final Interval bb, final double downsampling, final TimePoint tp, final ViewSetup vs, final double min, final double max )
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage(
+			final RandomAccessibleInterval<T> img,
+			final Interval bb,
+			final double downsampling,
+			final String title,
+			final Group< ? extends ViewId > fusionGroup,
+			final double min,
+			final double max )
 	{
 		// write the image
-		if ( !this.saver.exportImage( img, bb, downsampling, tp, vs, min, max ) )
+		if ( !this.saver.exportImage( img, bb, downsampling, title, fusionGroup, min, max ) )
 			return false;
 
+		final ViewId newViewId = identifyNewViewId( newTimepoints, newViewSetups, fusionGroup, fusion );
+		final ViewDescription newVD = newSpimData.getSequenceDescription().getViewDescription( newViewId );
+
+		// populate HashMap for the ImgLoader
+		fileMap.put( newVD, new ValuePair< File, Pair<Integer,Integer> >( new File( this.path, title ), new ValuePair<>( newViewId.getTimePointId(), newViewId.getViewSetupId() ) ) );
+
 		// update the registrations
-		final ViewRegistration vr = spimData.getViewRegistrations().getViewRegistration( new ViewId( tp.getId(), vs.getId() ) );
+		final ViewRegistration vr = newSpimData.getViewRegistrations().getViewRegistration( newViewId );
 		
 		final double scale = downsampling;
 		final AffineTransform3D m = new AffineTransform3D();
@@ -85,11 +111,16 @@ public class ExportSpimData2TIFF implements ImgExport
 	@Override
 	public boolean finish()
 	{
+		final FileMapImgLoaderLOCI imgLoader = new FileMapImgLoaderLOCI(
+				fileMap, new CellImgFactory<>(), newSpimData.getSequenceDescription() );
+
+		newSpimData.getSequenceDescription().setImgLoader( imgLoader );
+
 		XmlIoSpimData2 io = new XmlIoSpimData2( "" );
 
 		try
 		{
-			io.save( spimData, new File( params.getXMLFile() ).getAbsolutePath() );
+			io.save( newSpimData, new File( params.getXMLFile() ).getAbsolutePath() );
 			
 			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Saved xml '" + io.lastFileName() + "'." );
 
@@ -105,21 +136,8 @@ public class ExportSpimData2TIFF implements ImgExport
 	}
 
 	@Override
-	public void setXMLData ( final List< TimePoint > newTimepoints, final List< ViewSetup > newViewSetups )
+	public boolean queryParameters( final FusionGUI fusion )
 	{
-		this.newTimepoints = newTimepoints;
-		this.newViewSetups = newViewSetups;
-	}
-
-	@Override
-	public boolean queryParameters( final SpimData2 spimData, final boolean is16bit )
-	{
-		if ( newTimepoints == null || newViewSetups == null )
-		{
-			IOFunctions.println( "new timepoints and new viewsetup list not set yet ... cannot continue" );
-			return false;
-		}
-
 		if ( Resave_TIFF.defaultPath == null )
 			Resave_TIFF.defaultPath = "";
 		
@@ -128,19 +146,19 @@ public class ExportSpimData2TIFF implements ImgExport
 		if ( this.params == null )
 			return false;
 
-		this.saver = new Save3dTIFF( new File( this.params.getXMLFile() ).getParent(), this.params.compress() );
-		this.saver.setImgTitler( new XMLTIFFImgTitler( newTimepoints, newViewSetups ) );
+		this.path = new File( new File( this.params.getXMLFile() ).getParent() );
+		this.saver = new Save3dTIFF( this.path.toString(), this.params.compress() );
 
-		this.spimData = createSpimData2( newTimepoints, newViewSetups, params );
+		// define new timepoints and viewsetups
+		final Pair< List< TimePoint >, List< ViewSetup > > newStructure = defineNewViewSetups( fusion );
+		this.newTimepoints = newStructure.getA();
+		this.newViewSetups = newStructure.getB();
+
+		this.fusion = fusion; // we need it later to find the right new ViewId for a FusionGroup
+		this.newSpimData = createSpimData2( newTimepoints, newViewSetups, params );
 
 		return true;
 	}
-
-	@Override
-	public void queryAdditionalParameters( final GenericDialog gd, final SpimData2 spimData ) {}
-
-	@Override
-	public boolean parseAdditionalParameters( final GenericDialog gd, final SpimData2 spimData ) { return true; }
 
 	@Override
 	public ImgExport newInstance() { return new ExportSpimData2TIFF(); }
@@ -148,74 +166,153 @@ public class ExportSpimData2TIFF implements ImgExport
 	@Override
 	public String getDescription() { return "Save as new XML Project (TIFF)"; }
 
+	public static ViewId identifyNewViewId(
+			final List< TimePoint > newTimepoints,
+			final List< ViewSetup > newViewSetups,
+			final Group< ? extends ViewId > fusionGroup,
+			final FusionGUI fusion )
+	{
+		if ( fusion.getSplittingType() == 0 ) // "Each timepoint & channel"
+		{
+			final ViewDescription old = fusion.getSpimData().getSequenceDescription().getViewDescription( fusionGroup.iterator().next() );
+
+			TimePoint tpNew = old.getTimePoint(); // stays the same
+			ViewSetup vsNew = null;
+
+			final int oc = old.getViewSetup().getChannel().getId();
+
+			for ( final ViewSetup vs : newViewSetups )
+				if ( vs.getChannel().getId() == oc )
+					vsNew = vs;
+
+			return new ViewId( tpNew.getId(), vsNew.getId() );
+		}
+		else if ( fusion.getSplittingType() == 1 ) // "Each timepoint, channel & illumination"
+		{
+			final ViewDescription old = fusion.getSpimData().getSequenceDescription().getViewDescription( fusionGroup.iterator().next() );
+
+			TimePoint tpNew = old.getTimePoint(); // stays the same
+			ViewSetup vsNew = null;
+
+			final int oc = old.getViewSetup().getChannel().getId();
+			final int oi = old.getViewSetup().getIllumination().getId();
+	
+			for ( final ViewSetup vs : newViewSetups )
+				if ( vs.getChannel().getId() == oc && vs.getIllumination().getId() == oi )
+					vsNew = vs;
+
+			return new ViewId( tpNew.getId(), vsNew.getId() );
+		}
+		else if ( fusion.getSplittingType() == 2 ) // "All views together"
+		{
+			return new ViewId( 0, 0 );
+		}
+		else if ( fusion.getSplittingType() == 3 ) // "Each view" 
+		{
+			return fusion.getSpimData().getSequenceDescription().getViewDescription( fusionGroup.iterator().next() );
+		}
+		else
+		{
+			throw new RuntimeException( "SplittingType " + fusion.getSplittingType() + " unknown." );
+		}
+	}
+
+	public static Pair< List< TimePoint >, List< ViewSetup > > defineNewViewSetups( final FusionGUI fusion )
+	{
+		final List< ViewSetup > newViewSetups = new ArrayList<>();
+		final List< TimePoint > newTimepoints;
+
+		int newViewSetupId = 0;
+
+		if ( fusion.getSplittingType() < 2 ) // "Each timepoint & channel" or "Each timepoint, channel & illumination"
+		{
+			newTimepoints = SpimData2.getAllTimePointsSorted( fusion.getSpimData(), fusion.getViews() );
+
+			final List< Channel > channels = SpimData2.getAllChannelsSorted( fusion.getSpimData(), fusion.getViews() );
+
+			if ( fusion.getSplittingType() == 0 )// "Each timepoint & channel"
+			{
+				for ( final Channel c : channels )
+					newViewSetups.add(
+						new ViewSetup(
+							newViewSetupId++,
+							c.getName(),
+							fusion.getDownsampledBoundingBox(),
+							new FinalVoxelDimensions( "px", Util.getArrayFromValue( fusion.getDownsampling(), 3 ) ),
+							new Tile( 0 ),
+							c,
+							new Angle( 0 ),
+							new Illumination( 0 ) ) );
+			}
+			else // "Each timepoint, channel & illumination"
+			{
+				final List< Illumination > illums = SpimData2.getAllIlluminationsSorted( fusion.getSpimData(), fusion.getViews() );
+
+				for ( int c = 0; c < channels.size(); ++c )
+					for ( int i = 0; i < illums.size(); ++i )
+							newViewSetups.add(
+								new ViewSetup(
+									newViewSetupId++,
+									channels.get( c ).getName() + "_" + illums.get( i ).getName(),
+									fusion.getDownsampledBoundingBox(),
+									new FinalVoxelDimensions( "px", Util.getArrayFromValue( fusion.getDownsampling(), 3 ) ),
+									new Tile( 0 ),
+									channels.get( c ),
+									new Angle( 0 ),
+									illums.get( i ) ) );
+			}
+		}
+		else if ( fusion.getSplittingType() == 2 ) // "All views together"
+		{
+			newTimepoints = new ArrayList<>();
+			newTimepoints.add( new TimePoint( 0 ) );
+
+			newViewSetups.add(
+					new ViewSetup(
+							0,
+							"Fused",
+							fusion.getDownsampledBoundingBox(),
+							new FinalVoxelDimensions( "px", Util.getArrayFromValue( fusion.getDownsampling(), 3 ) ),
+							new Tile( 0 ),
+							new Channel( 0 ),
+							new Angle( 0 ),
+							new Illumination( 0 ) ) );
+		}
+		else if ( fusion.getSplittingType() == 3 ) // "Each view"
+		{
+			newTimepoints = new ArrayList<>();
+			for ( final TimePoint tp : SpimData2.getAllTimePointsSorted( fusion.getSpimData(), fusion.getViews() ) )
+				newTimepoints.add( tp );
+
+			for ( final ViewSetup vs : SpimData2.getAllViewSetupsSorted( fusion.getSpimData(), fusion.getViews() ) )
+			{
+				newViewSetups.add(
+						new ViewSetup(
+								vs.getId(),
+								vs.getName(),
+								fusion.getDownsampledBoundingBox(),
+								new FinalVoxelDimensions( "px", Util.getArrayFromValue( fusion.getDownsampling(), 3 ) ),
+								vs.getTile(),
+								vs.getChannel(),
+								vs.getAngle(),
+								vs.getIllumination() ) );
+			}
+		}
+		else
+		{
+			throw new RuntimeException( "SplittingType " + fusion.getSplittingType() + " unknown." );
+		}
+
+		return new ValuePair< List< TimePoint >, List< ViewSetup > >( newTimepoints, newViewSetups );
+	}
+
 	protected SpimData2 createSpimData2(
 			final List< TimePoint > timepointsToProcess,
 			final List< ViewSetup > viewSetupsToProcess,
 			final Parameters params )
 	{
-		final FileNamePattern fnp = getFileNamePattern( timepointsToProcess, viewSetupsToProcess, params.compress() );
-
 		// Assemble a new SpimData object containing the subset of viewsetups and timepoints
-		final SpimData2 newSpimData = assembleSpimData2( timepointsToProcess, viewSetupsToProcess, new File( params.getXMLFile() ).getParentFile() );
-
-		final StackImgLoaderIJ imgLoader = new StackImgLoaderIJ(
-				new File( params.getXMLFile() ).getParentFile(),
-				fnp.fileNamePattern, params.getImgFactory(),
-				fnp.layoutTP, fnp.layoutChannels, fnp.layoutIllum, fnp.layoutAngles, fnp.layoutTiles, null );
-		newSpimData.getSequenceDescription().setImgLoader( imgLoader );
-
-		return newSpimData;
-	}
-
-	public static FileNamePattern getFileNamePattern(
-			final List< TimePoint > timepoints,
-			final List< ViewSetup > viewSetups,
-			final boolean compress )
-	{
-		final FileNamePattern fnp = new FileNamePattern();
-		fnp.layoutTP = 0;
-		fnp.layoutChannels = 0;
-		fnp.layoutIllum = 0;
-		fnp.layoutAngles = 0;
-		fnp.layoutTiles = 0;
-		fnp.fileNamePattern = "img";
-
-		if ( timepoints.size() > 1 )
-		{
-			fnp.fileNamePattern += "_TL{t}";
-			fnp.layoutTP = 1;
-		}
-		
-		if ( XMLTIFFImgTitler.getAllChannels( viewSetups ).size() > 1 )
-		{
-			fnp.fileNamePattern += "_Ch{c}";
-			fnp.layoutChannels = 1;
-		}
-		
-		if ( XMLTIFFImgTitler.getAllIlluminations( viewSetups ).size() > 1 )
-		{
-			fnp.fileNamePattern += "_Ill{i}";
-			fnp.layoutIllum = 1;
-		}
-		
-		if ( XMLTIFFImgTitler.getAllAngles( viewSetups ).size() > 1 )
-		{
-			fnp.fileNamePattern += "_Angle{a}";
-			fnp.layoutAngles = 1;
-		}
-		
-		if ( XMLTIFFImgTitler.getAllTiles( viewSetups ).size() > 1 )
-		{
-			fnp.fileNamePattern += "_Tile{x}";
-			fnp.layoutTiles = 1;
-		}
-
-		fnp.fileNamePattern += ".tif";
-
-		if ( compress )
-			fnp.fileNamePattern += ".zip";
-
-		return fnp;
+		return assembleSpimData2( timepointsToProcess, viewSetupsToProcess, new File( params.getXMLFile() ).getParentFile() );
 	}
 
 	/**

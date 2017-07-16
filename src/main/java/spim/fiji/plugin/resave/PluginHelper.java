@@ -42,6 +42,27 @@ public class PluginHelper
 		dialog.add( panel );
 	}
 
+	public static void addSaveAsDirectoryField( final GenericDialogPlus dialog, final String label, final String defaultPath, final int columns) {
+		dialog.addStringField( label, defaultPath, columns );
+
+		final TextField text = ( TextField ) dialog.getStringFields().lastElement();
+		final GridBagLayout layout = ( GridBagLayout ) dialog.getLayout();
+		final GridBagConstraints constraints = layout.getConstraints( text );
+
+		final Button button = new Button( "Browse..." );
+		final ChooseDirectoryListener listener = new ChooseDirectoryListener( text );
+		button.addActionListener( listener );
+		button.addKeyListener( dialog );
+
+		final Panel panel = new Panel();
+		panel.setLayout( new FlowLayout( FlowLayout.LEFT, 0, 0 ) );
+		panel.add( text );
+		panel.add( button );
+
+		layout.setConstraints( panel, constraints );
+		dialog.add( panel );
+	}
+
 	public static class ChooseXmlFileListener implements ActionListener
 	{
 		TextField text;
@@ -93,6 +114,52 @@ public class PluginHelper
 				String f = fc.getSelectedFile().getAbsolutePath();
 				if ( ! f.endsWith( ".xml" ) )
 					f += ".xml";
+				text.setText( f );
+			}
+		}
+	}
+
+	public static class ChooseDirectoryListener implements ActionListener
+	{
+		TextField text;
+
+		public ChooseDirectoryListener( final TextField text )
+		{
+			this.text = text;
+		}
+
+		@Override
+		public void actionPerformed( final ActionEvent e )
+		{
+			File directory = new File( text.getText() );
+			while ( directory != null && !directory.exists() )
+				directory = directory.getParentFile();
+
+			final JFileChooser fc = new JFileChooser( directory );
+			fc.setFileFilter( new FileFilter()
+			{
+				@Override
+				public String getDescription()
+				{
+					return "directories";
+				}
+
+				@Override
+				public boolean accept( final File f )
+				{
+					if ( f.isDirectory() && f.exists() )
+						return true;
+					else
+						return false;
+				}
+			} );
+
+			fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+
+			final int returnVal = fc.showSaveDialog( null );
+			if ( returnVal == JFileChooser.APPROVE_OPTION )
+			{
+				String f = fc.getSelectedFile().getAbsolutePath();
 				text.setText( f );
 			}
 		}

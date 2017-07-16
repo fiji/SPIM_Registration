@@ -192,7 +192,7 @@ public class ProcessInputImages< V extends ViewId >
 			if ( type == ImgDataType.CACHED )
 				img = FusionTools.cacheRandomAccessibleInterval( img, maxCacheSize, new FloatType(), cellDim );
 			else if ( type == ImgDataType.PRECOMPUTED )
-				img = FusionTools.copyImg( img, factory );
+				img = FusionTools.copyImg( img, factory, new FloatType() );
 
 			images.put( group, img );
 		}
