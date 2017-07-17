@@ -1,5 +1,7 @@
 package spim.process.export;
 
+import java.util.Date;
+
 import ij.ImagePlus;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
@@ -18,7 +20,7 @@ public class DisplayImage implements ImgExport
 {
 	final boolean virtualDisplay;
 
-	public DisplayImage() { this( false ); }
+	public DisplayImage() { this( true ); }
 	public DisplayImage( final boolean virtualDisplay ) { this.virtualDisplay = virtualDisplay; }
 
 	public < T extends RealType< T > & NativeType< T > > void exportImage( final RandomAccessibleInterval< T > img )
@@ -56,6 +58,31 @@ public class DisplayImage implements ImgExport
 			return false;
 
 		// determine min and max
+		final double[] minmax = getFusionMinMax( img, min, max );
+
+		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Approximate min=" + minmax[ 0 ] + ", max=" + minmax[ 1 ] );
+
+		ImagePlus imp = getImagePlusInstance( img, virtualDisplay, title, minmax[ 0 ], minmax[ 1 ] );
+
+		if ( bb != null )
+		{
+			imp.getCalibration().xOrigin = -(bb.min( 0 ) / downsampling);
+			imp.getCalibration().yOrigin = -(bb.min( 1 ) / downsampling);
+			imp.getCalibration().zOrigin = -(bb.min( 2 ) / downsampling);
+			imp.getCalibration().pixelWidth = imp.getCalibration().pixelHeight = imp.getCalibration().pixelDepth = downsampling;
+		}
+
+		imp.updateAndDraw();
+		imp.show();
+
+		return true;
+	}
+
+	public static < T extends RealType< T > > double[] getFusionMinMax(
+			final RandomAccessibleInterval<T> img,
+			final double min,
+			final double max )
+	{
 		final double[] minmax;
 
 		if ( Double.isNaN( min ) || Double.isNaN( max ) )
@@ -73,22 +100,7 @@ public class DisplayImage implements ImgExport
 		else
 			minmax = new double[]{ (float)min, (float)max };
 
-		IOFunctions.println( "Approximate min=" + minmax[ 0 ] + ", max=" + minmax[ 1 ] );
-
-		ImagePlus imp = getImagePlusInstance( img, virtualDisplay, title, minmax[ 0 ], minmax[ 1 ] );
-
-		if ( bb != null )
-		{
-			imp.getCalibration().xOrigin = -(bb.min( 0 ) / downsampling);
-			imp.getCalibration().yOrigin = -(bb.min( 1 ) / downsampling);
-			imp.getCalibration().zOrigin = -(bb.min( 2 ) / downsampling);
-			imp.getCalibration().pixelWidth = imp.getCalibration().pixelHeight = imp.getCalibration().pixelDepth = downsampling;
-		}
-
-		imp.updateAndDraw();
-		imp.show();
-
-		return true;
+		return minmax;
 	}
 
 	@SuppressWarnings("unchecked")
