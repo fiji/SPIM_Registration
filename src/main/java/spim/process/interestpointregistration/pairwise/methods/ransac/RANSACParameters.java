@@ -9,7 +9,7 @@ public class RANSACParameters
 {
 	public static float max_epsilon = 5;
 	public static float min_inlier_ratio = 0.1f;
-	public static int num_iterations = 1000;
+	public static int num_iterations = 10000;
 	public static float min_inlier_factor = 3f;
 	
 	protected float maxEpsilon, minInlierRatio, minInlierFactor;
