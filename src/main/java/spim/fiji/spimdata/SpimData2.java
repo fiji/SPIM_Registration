@@ -514,6 +514,7 @@ public class SpimData2 extends SpimData
 	 *
 	 * @param data - the spimdata object
 	 * @param viewIds - the views
+	 * @param <V> - something extending ViewId
 	 * @return those who were removed
 	 */
 	public static < V extends ViewId > List< V > filterMissingViews( final AbstractSpimData< ? > data, final Collection< V > viewIds )

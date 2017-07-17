@@ -39,10 +39,11 @@ public class CombineWeightsRandomAccessibleInterval implements RandomAccessibleI
 	}
 
 	/**
-	 * Combines N randomaccessibles in a defined interval by multiplication or average
+	 * Combines two randomaccessibles in a defined interval by multiplication or average
 	 * 
 	 * @param interval - the Interval for combining
-	 * @param weights - the weights
+	 * @param weight1 - the first weight image
+	 * @param weight2 - the second weight image
 	 * @param combineType - how to combine them
 	 */
 	public CombineWeightsRandomAccessibleInterval(
