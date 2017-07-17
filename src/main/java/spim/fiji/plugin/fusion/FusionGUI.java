@@ -217,7 +217,7 @@ public class FusionGUI
 	{
 		final ArrayList< ViewDescription > vds = SpimData2.getAllViewDescriptionsSorted( this.spimData, this.views );
 		final List< Group< ViewDescription > > grouped;
-	
+
 		if ( this.splittingType < 2 ) // "Each timepoint & channel" or "Each timepoint, channel & illumination"
 		{
 			final HashSet< Class< ? extends Entity > > groupingFactors = new HashSet<>();
@@ -236,7 +236,7 @@ public class FusionGUI
 			grouped = new ArrayList<>();
 			grouped.add( allViews );
 		}
-		else
+		else // "All views"
 		{
 			grouped = new ArrayList<>();
 			for ( final ViewDescription vd : vds )

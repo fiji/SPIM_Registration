@@ -136,10 +136,29 @@ public class Image_Fusion implements PlugIn
 		else // Precomputed
 			processedOutput = FusionTools.copyImg( output, new ImagePlusImgFactory< T >(), type, true );
 
+		final String title = getTitle( fusion, group );
+
 		if ( minmax == null )
-			return exporter.exportImage( processedOutput, fusion.getBoundingBox(), fusion.getDownsampling(), group.toString(), group );
+			return exporter.exportImage( processedOutput, fusion.getBoundingBox(), fusion.getDownsampling(), title, group );
 		else
-			return exporter.exportImage( processedOutput, fusion.getBoundingBox(), fusion.getDownsampling(), group.toString(), group, minmax[ 0 ], minmax[ 1 ] );
+			return exporter.exportImage( processedOutput, fusion.getBoundingBox(), fusion.getDownsampling(), title, group, minmax[ 0 ], minmax[ 1 ] );
+	}
+
+	public static String getTitle( final FusionGUI fusion, final Group< ViewDescription > group )
+	{
+		String title;
+		final ViewDescription vd0 = group.iterator().next();
+
+		if ( fusion.getSplittingType() == 0 ) // "Each timepoint & channel"
+			title = "fused_tp_" + vd0.getTimePointId() + "_ch_" + vd0.getViewSetup().getChannel().getId();
+		else if ( fusion.getSplittingType() == 1 ) // "Each timepoint, channel & illumination"
+			title = "fused_tp_" + vd0.getTimePointId() + "_ch_" + vd0.getViewSetup().getChannel().getId() + "_illum_" + vd0.getViewSetup().getIllumination().getId();
+		else if ( fusion.getSplittingType() == 2 ) // "All views together"
+			title = "fused";
+		else // "All views"
+			title = "fused_tp_" + vd0.getTimePointId() + "_vs_" + vd0.getViewSetupId();
+
+		return title;
 	}
 
 	public static void main( String[] args )
