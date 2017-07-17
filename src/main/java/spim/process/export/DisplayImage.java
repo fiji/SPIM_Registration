@@ -60,6 +60,16 @@ public class DisplayImage implements ImgExport
 
 		if ( Double.isNaN( min ) || Double.isNaN( max ) )
 			minmax = FusionTools.minMaxApprox( img );
+		else if ( min == 0 && max == 65535 )
+		{
+			// 16 bit input was assumed, little hack in case it was 8-bit
+			minmax = FusionTools.minMaxApprox( img );
+			if ( minmax[ 1 ] <= 255 )
+			{
+				minmax[ 0 ] = 0;
+				minmax[ 1 ] = 255;
+			}
+		}
 		else
 			minmax = new double[]{ (float)min, (float)max };
 

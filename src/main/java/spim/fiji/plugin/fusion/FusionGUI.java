@@ -205,6 +205,14 @@ public class FusionGUI
 		return false;
 	}
 
+	public boolean isMultiResolution()
+	{
+		if ( MultiResolutionImgLoader.class.isInstance( spimData.getSequenceDescription().getImgLoader() ) )
+			return true;
+		else
+			return false;
+	}
+
 	public List< Group< ViewDescription > > getFusionGroups()
 	{
 		final ArrayList< ViewDescription > vds = SpimData2.getAllViewDescriptionsSorted( this.spimData, this.views );
