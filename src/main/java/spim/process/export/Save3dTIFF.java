@@ -1,24 +1,27 @@
 package spim.process.export;
 
+import java.io.BufferedOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Date;
 
 import fiji.util.gui.GenericDialogPlus;
 import ij.ImagePlus;
+import ij.VirtualStack;
+import ij.io.FileInfo;
 import ij.io.FileSaver;
+import ij.io.TiffEncoder;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.exception.ImgLibException;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.img.imageplus.ImagePlusImg;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import spim.fiji.plugin.fusion.FusionGUI;
 import spim.fiji.plugin.resave.PluginHelper;
 import spim.fiji.plugin.resave.Resave_TIFF;
-import spim.process.fusion.FusionTools;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class Save3dTIFF implements ImgExport
@@ -52,7 +55,6 @@ public class Save3dTIFF implements ImgExport
 		return exportImage( img, bb, 1.0, title, fusionGroup, Double.NaN, Double.NaN );
 	}
 
-	@SuppressWarnings("unchecked")
 	public <T extends RealType<T> & NativeType<T>> boolean exportImage(
 			final RandomAccessibleInterval<T> img,
 			final Interval bb,
@@ -67,21 +69,9 @@ public class Save3dTIFF implements ImgExport
 			return false;
 		
 		// determine min and max
-		final double[] minmax;
-		
-		if ( Double.isNaN( min ) || Double.isNaN( max ) )
-			minmax = FusionTools.minMaxApprox( img );
-		else
-			minmax = new double[]{ min, max };
+		final double[] minmax = DisplayImage.getFusionMinMax( img, min, max );
 
-		ImagePlus imp = null;
-
-		// TODO: DO NOT DUPLICATE!!!!!!!!
-		if ( img instanceof ImagePlusImg )
-			try { imp = ((ImagePlusImg<T, ?>)img).getImagePlus(); } catch (ImgLibException e) {}
-
-		if ( imp == null )
-			imp = ImageJFunctions.wrap( img, title ).duplicate();
+		final ImagePlus imp = DisplayImage.getImagePlusInstance( img, true, title, min, max );
 
 		imp.setTitle( title );
 
@@ -109,13 +99,55 @@ public class Save3dTIFF implements ImgExport
 		if ( compress )
 		{
 			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Saving file " + fileName + ".zip" );
-			return new FileSaver( imp ).saveAsZip( fileName );
+			boolean success = new FileSaver( imp ).saveAsZip( fileName );
+
+			if ( success )
+				IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Saved file " + fileName + ".zip" );
+			else
+				IOFunctions.println( new Date( System.currentTimeMillis() ) + ": FAILED saving file " + fileName + ".zip" );
+
+			return success;
 		}
 		else
 		{
 			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Saving file " + fileName );
-			return new FileSaver( imp ).saveAsTiffStack( fileName );
+			boolean success = saveTiffStack( imp, fileName ); //new FileSaver( imp ).saveAsTiffStack( fileName );
+
+			if ( success )
+				IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Saved file " + fileName + ".zip" );
+			else
+				IOFunctions.println( new Date( System.currentTimeMillis() ) + ": FAILED saving file " + fileName + ".zip" );
+
+			return success;
 		}
+	}
+
+	/*
+	 * Reimplementation from ImageJ FileSaver class. Necessary since it traverses the entire virtual stack once to collect some
+	 * slice labels, which takes forever in this case.
+	 */
+	public static boolean saveTiffStack( final ImagePlus imp, final String path )
+	{
+		FileInfo fi = imp.getFileInfo();
+		boolean virtualStack = imp.getStack().isVirtual();
+		if (virtualStack)
+			fi.virtualStack = (VirtualStack)imp.getStack();
+		fi.info = imp.getInfoProperty();
+		fi.description = new FileSaver( imp ).getDescriptionString();
+		DataOutputStream out = null;
+		try {
+			TiffEncoder file = new TiffEncoder(fi);
+			out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(path)));
+			file.write(out);
+			out.close();
+		} catch (IOException e) {
+			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": ERROR: Cannot save file '"+ path + "':" + e );
+			return false;
+		} finally {
+			if (out!=null)
+				try {out.close();} catch (IOException e) {}
+		}
+		return true;
 	}
 
 	@Override
