@@ -114,9 +114,9 @@ public class Save3dTIFF implements ImgExport
 			boolean success = saveTiffStack( imp, fileName ); //new FileSaver( imp ).saveAsTiffStack( fileName );
 
 			if ( success )
-				IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Saved file " + fileName + ".zip" );
+				IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Saved file " + fileName  );
 			else
-				IOFunctions.println( new Date( System.currentTimeMillis() ) + ": FAILED saving file " + fileName + ".zip" );
+				IOFunctions.println( new Date( System.currentTimeMillis() ) + ": FAILED saving file " + fileName );
 
 			return success;
 		}
