@@ -193,6 +193,20 @@ public class FusionGUI
 		splittingType = defaultSplittingType = gd.getNextChoiceIndex();
 		imgExport = defaultImgExportAlgorithm = gd.getNextChoiceIndex();
 
+		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Selected Fusion Parameters: " );
+		IOFunctions.println( "Downsampling: " + getDownsampling() );
+		IOFunctions.println( "BoundingBox: " + getBoundingBox() );
+		IOFunctions.println( "DownsampledBoundingBox: " + getDownsampledBoundingBox() );
+		IOFunctions.println( "PixelType: " + pixelTypes[ getPixelType() ] );
+		IOFunctions.println( "Interpolation: " + interpolationTypes[ getInterpolation() ] );
+		IOFunctions.println( "CacheType: " + FusionTools.imgDataTypeChoice[ getCacheType() ] );
+		IOFunctions.println( "Blending: " + useBlending );
+		IOFunctions.println( "Content-based: " + useContentBased );
+		IOFunctions.println( "Split by: " + splittingTypes[ getSplittingType() ] );
+		IOFunctions.println( "Image Export: " + imgExportDescriptions[ imgExport ] );
+		IOFunctions.println( "ImgLoader.isVirtual(): " + isImgLoaderVirtual() );
+		IOFunctions.println( "ImgLoader.isMultiResolution(): " + isMultiResolution() );
+
 		return true;
 	}
 
