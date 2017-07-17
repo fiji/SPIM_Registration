@@ -57,6 +57,7 @@ import spim.fiji.spimdata.explorer.popup.DetectInterestPointsPopup;
 import spim.fiji.spimdata.explorer.popup.DisplayFusedImagesPopup;
 import spim.fiji.spimdata.explorer.popup.DisplayRawImagesPopup;
 import spim.fiji.spimdata.explorer.popup.ExplorerWindowSetable;
+import spim.fiji.spimdata.explorer.popup.FusionPopup;
 import spim.fiji.spimdata.explorer.popup.InterestPointsExplorerPopup;
 import spim.fiji.spimdata.explorer.popup.LabelPopUp;
 import spim.fiji.spimdata.explorer.popup.MaxProjectPopup;
@@ -642,6 +643,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		popups.add( new LabelPopUp( " Processing" ) );
 		popups.add( new DetectInterestPointsPopup() );
 		popups.add( new RegisterInterestPointsPopup() );
+		popups.add( new FusionPopup() );
 		popups.add( new Separator() );
 
 		popups.add( new LabelPopUp( " Calibration/Transformations" ) );
