@@ -160,7 +160,12 @@ public class PluginHelper
 			if ( returnVal == JFileChooser.APPROVE_OPTION )
 			{
 				String f = fc.getSelectedFile().getAbsolutePath();
-				text.setText( f );
+				File ff = new File( f );
+				if ( ff.exists() && ff.isDirectory() )
+					text.setText( f );
+				else
+					text.setText( ff.getParentFile().toString() );
+				
 			}
 		}
 	}
