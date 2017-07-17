@@ -76,6 +76,7 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.imgloaders.FileMapImgLoaderLOCI;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.fiji.spimdata.pointspreadfunctions.PointSpreadFunctions;
 import spim.fiji.spimdata.stitchingresults.StitchingResults;
 
 public class FileListDatasetDefinition implements MultiViewDatasetDefinition
@@ -559,7 +560,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		final ViewInterestPoints viewInterestPoints = new ViewInterestPoints();
 		viewInterestPoints.createViewInterestPoints( sd.getViewDescriptions() );
 		
-		SpimData2 data = new SpimData2( new File("/Users/david/Desktop"), sd, vrs, viewInterestPoints, new BoundingBoxes(), new StitchingResults() );
+		SpimData2 data = new SpimData2( new File("/Users/david/Desktop"), sd, vrs, viewInterestPoints, new BoundingBoxes(), new PointSpreadFunctions(), new StitchingResults() );
 		return data;
 	}
 	

@@ -431,8 +431,10 @@ public class Resave_TIFF implements PlugIn
 						filesToCopy.add( ipl.getFile().getName() );
 				}
 			}
-		
+
 		final ViewInterestPoints viewsInterestPoints = new ViewInterestPoints( newInterestPoints );
+
+		//TODO: copy PSFs
 
 		final SpimData2 newSpimData = new SpimData2(
 				basePath,
@@ -440,6 +442,7 @@ public class Resave_TIFF implements PlugIn
 				viewRegistrations,
 				viewsInterestPoints,
 				spimData.getBoundingBoxes(),
+				spimData.getPointSpreadFunctions(),
 				spimData.getStitchingResults());
 
 		return newSpimData;

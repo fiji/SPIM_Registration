@@ -25,6 +25,7 @@ import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.process.export.DisplayImage;
+import spim.process.interestpointdetection.InterestPointTools;
 
 public class Visualize_Detections implements PlugIn
 {
@@ -70,7 +71,7 @@ public class Visualize_Detections implements PlugIn
 		// build up the dialog
 		final GenericDialog gd = new GenericDialog( "Choose segmentations to display" );
 
-		final String[] labels = Interest_Point_Registration.getAllInterestPointLabels( spimData, viewIds );
+		final String[] labels = InterestPointTools.getAllInterestPointLabels( spimData, viewIds );
 
 		if ( labels.length == 0 )
 		{
@@ -84,7 +85,7 @@ public class Visualize_Detections implements PlugIn
 			Interest_Point_Registration.defaultLabel = -1;
 
 			for ( int i = 0; i < labels.length; ++i )
-				if ( !labels[ i ].contains( Interest_Point_Registration.warningLabel ) )
+				if ( !labels[ i ].contains( InterestPointTools.warningLabel ) )
 				{
 					Interest_Point_Registration.defaultLabel = i;
 					break;
@@ -107,12 +108,7 @@ public class Visualize_Detections implements PlugIn
 			return null;
 		
 		// assemble which label has been selected
-		final int choice = Interest_Point_Registration.defaultLabel = gd.getNextChoiceIndex();
-
-		String label = labels[ choice ];
-
-		if ( label.contains( Interest_Point_Registration.warningLabel ) )
-			label = label.substring( 0, label.indexOf( Interest_Point_Registration.warningLabel ) );
+		final String label = InterestPointTools.getSelectedLabel( labels, Interest_Point_Registration.defaultLabel = gd.getNextChoiceIndex() );
 
 		IOFunctions.println( "displaying label: '" + label + "'" );
 		

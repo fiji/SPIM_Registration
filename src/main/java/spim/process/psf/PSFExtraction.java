@@ -33,6 +33,7 @@ import spim.process.fusion.FusionTools;
 public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 {
 	final ArrayImg< T, ? > psf;
+	final boolean hadDetections;
 
 	public PSFExtraction(
 			final RealRandomAccessible< T > img,
@@ -42,10 +43,20 @@ public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 			final boolean multithreaded )
 	{
 		psf = new ArrayImgFactory< T >().create( size, type );
-		if ( multithreaded )
-			extractPSFMultiThreaded( img, locations, psf );
+
+		if ( locations.size() == 0 )
+		{
+			hadDetections = false;
+		}
 		else
-			extractPSFLocal( img, locations, psf );
+		{
+			hadDetections = true;
+
+			if ( multithreaded )
+				extractPSFMultiThreaded( img, locations, psf );
+			else
+				extractPSFLocal( img, locations, psf );
+		}
 	}
 
 	public PSFExtraction(
@@ -139,6 +150,7 @@ public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 		return points;
 	}
 
+	public boolean hadDetections() { return hadDetections; }
 	public ArrayImg< T, ? > getPSF() { return psf; }
 	public ArrayImg< T, ? > getTransformedNormalizedPSF( final AffineTransform3D model )
 	{

@@ -12,7 +12,15 @@ import javax.swing.SwingUtilities;
 import bdv.export.ProgressWriter;
 import bdv.export.ProgressWriterConsole;
 import ij.IJ;
+import ij.ImagePlus;
+import ij.io.Opener;
+import ij.process.ImageProcessor;
 import mpicbg.models.AffineModel3D;
+import net.imglib2.Cursor;
+import net.imglib2.img.Img;
+import net.imglib2.img.ImgFactory;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import spim.fiji.plugin.resave.ProgressWriterIJ;
 
@@ -24,6 +32,70 @@ public class IOFunctions
 	protected IOFunctions() { }
 	
 	public static boolean printIJLog = true;
+
+	public static Img< FloatType > openAs32Bit( final File file )
+	{
+		return openAs32Bit( file, new ArrayImgFactory< FloatType >() );
+	}
+
+	public static Img< FloatType > openAs32Bit( final File file, final ImgFactory< FloatType > factory )
+	{
+		if ( !file.exists() )
+			throw new RuntimeException( "File '" + file.getAbsolutePath() + "' does not exisit." );
+
+		final ImagePlus imp = new Opener().openImage( file.getAbsolutePath() );
+
+		if ( imp == null )
+			throw new RuntimeException( "File '" + file.getAbsolutePath() + "' coult not be opened." );
+
+		final Img< FloatType > img;
+
+		if ( imp.getStack().getSize() == 1 )
+		{
+			// 2d
+			img = factory.create( new int[]{ imp.getWidth(), imp.getHeight() }, new FloatType() );
+			final ImageProcessor ip = imp.getProcessor();
+
+			final Cursor< FloatType > c = img.localizingCursor();
+			
+			while ( c.hasNext() )
+			{
+				c.fwd();
+
+				final int x = c.getIntPosition( 0 );
+				final int y = c.getIntPosition( 1 );
+
+				c.get().set( ip.getf( x, y ) );
+			}
+
+		}
+		else
+		{
+			// >2d
+			img = factory.create( new int[]{ imp.getWidth(), imp.getHeight(), imp.getStack().getSize() }, new FloatType() );
+
+			final Cursor< FloatType > c = img.localizingCursor();
+
+			// for efficiency reasons
+			final ArrayList< ImageProcessor > ips = new ArrayList< ImageProcessor >();
+
+			for ( int z = 0; z < imp.getStack().getSize(); ++z )
+				ips.add( imp.getStack().getProcessor( z + 1 ) );
+
+			while ( c.hasNext() )
+			{
+				c.fwd();
+
+				final int x = c.getIntPosition( 0 );
+				final int y = c.getIntPosition( 1 );
+				final int z = c.getIntPosition( 2 );
+
+				c.get().set( ips.get( z ).getf( x, y ) );
+			}
+		}
+
+		return img;
+	}
 
 	public static void printlnTS() { printlnTS( "" ); }
 	public static void printlnTS( final Object object) { printlnTS( object.toString() ); }

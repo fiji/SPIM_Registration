@@ -46,6 +46,7 @@ import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.imgloaders.FileMapImgLoaderLOCI;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.fiji.spimdata.pointspreadfunctions.PointSpreadFunctions;
 import spim.fiji.spimdata.stitchingresults.StitchingResults;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
@@ -368,6 +369,7 @@ public class ExportSpimData2TIFF implements ImgExport
 				viewRegistrations,
 				viewsInterestPoints,
 				new BoundingBoxes(),
+				new PointSpreadFunctions(),
 				new StitchingResults());
 
 		return newSpimData;

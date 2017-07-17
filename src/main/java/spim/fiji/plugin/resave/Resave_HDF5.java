@@ -232,12 +232,15 @@ public class Resave_HDF5 implements PlugIn
 
 		final ViewInterestPoints viewsInterestPoints = new ViewInterestPoints( newInterestPoints );
 
+		//TODO: copy PSFs
+
 		final SpimData2 newSpimData = new SpimData2(
 				oldSpimData.getBasePath(),
 				sequenceDescription,
 				viewRegistrations,
 				viewsInterestPoints,
 				oldSpimData.getBoundingBoxes(),
+				oldSpimData.getPointSpreadFunctions(),
 				oldSpimData.getStitchingResults());
 
 		return newSpimData;
