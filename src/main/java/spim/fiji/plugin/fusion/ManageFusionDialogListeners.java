@@ -67,12 +67,14 @@ public class ManageFusionDialogListeners
 	
 	public void update()
 	{
+		/*
 		System.out.println( boundingBoxChoice.getSelectedItem() );
 		System.out.println( downsampleField.getText() );
 		System.out.println( pixelTypeChoice.getSelectedItem() );
 		System.out.println( cachingChoice.getSelectedItem() );
 		System.out.println( contentbasedCheckbox.getState() );
 		System.out.println( splitChoice.getSelectedItem() );
+		*/
 
 		fusion.boundingBox = boundingBoxChoice.getSelectedIndex();
 		fusion.downsampling = Integer.parseInt( downsampleField.getText() );
@@ -128,7 +130,12 @@ public class ManageFusionDialogListeners
 		long processingMB = 0;
 
 		if ( fusion.useContentBased )
-			processingMB = ( maxNumPixelsInput / ( 1024*1024 ) ) * 4;
+		{
+			if ( fusion.isMultiResolution() )
+				processingMB = ( maxNumPixelsInput / ( 1024*1024 ) ) * 4;
+			else
+				processingMB = ( maxNumPixelsInput / Math.round( inputDownSampling * 1024*1024 ) ) * 4;
+		}
 
 		if ( fusion.cacheType == 0 ) // Virtual
 			fusedSizeMB /= Math.max( 1, Math.round( Math.pow( fusedSizeMB, 0.3 ) ) );
