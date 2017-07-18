@@ -4,10 +4,12 @@ import java.io.File;
 
 import ij.ImagePlus;
 import ij.io.FileSaver;
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.numeric.real.FloatType;
+import spim.fiji.spimdata.SpimData2;
 import spim.process.export.DisplayImage;
 
 public class PointSpreadFunction
@@ -25,6 +27,11 @@ public class PointSpreadFunction
 		this.file = file;
 		this.img = img.copy(); // avoid changes to the PSF
 		this.modified = true; // not initialized from disc, needs to be saved
+	}
+
+	public PointSpreadFunction( final SpimData2 spimData, final ViewId viewId, final Img< FloatType > img  )
+	{
+		this( spimData.getBasePath(), PointSpreadFunction.createPSFFileName( viewId ), img );
 	}
 
 	public PointSpreadFunction( final File xmlBasePath, final String file )
@@ -64,5 +71,10 @@ public class PointSpreadFunction
 
 		final ImagePlus imp = DisplayImage.getImagePlusInstance( img, false, file, 0, 1 );
 		return new FileSaver( imp ).saveAsTiffStack( new File( dir, file ).toString() );
+	}
+
+	public static String createPSFFileName( final ViewId viewId )
+	{
+		return "psf_t" + viewId.getTimePointId() + "_v" + viewId.getViewSetupId() + ".tif";
 	}
 }
