@@ -13,7 +13,6 @@ import java.util.Collections;
 import org.jdom2.Element;
 
 import mpicbg.spim.data.SpimDataException;
-import mpicbg.spim.data.XmlHelpers;
 import mpicbg.spim.data.generic.base.XmlIoSingleton;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
@@ -47,9 +46,10 @@ public class XmlIoPointSpreadFunctions extends XmlIoSingleton< PointSpreadFuncti
 
 		for ( final Element psfElement : allPSFs.getChildren( PSF_TAG ) )
 		{
-			final String file = psfElement.getAttributeValue( PSF_FILE_TAG );
-			final int tpId = XmlHelpers.getInt( psfElement, PSF_TIMEPOINT_ATTRIBUTE_NAME );
-			final int vsId = XmlHelpers.getInt( psfElement, PSF_SETUP_ATTRIBUTE_NAME );
+			final int tpId = Integer.parseInt( psfElement.getAttributeValue( PSF_TIMEPOINT_ATTRIBUTE_NAME ) );
+			final int vsId = Integer.parseInt( psfElement.getAttributeValue( PSF_SETUP_ATTRIBUTE_NAME ) );
+
+			final String file = psfElement.getChildText( PSF_FILE_TAG );
 
 			pointSpreadFunctions.addPSF( new ViewId( tpId, vsId ), new PointSpreadFunction( basePath, file ) );
 		}
@@ -61,9 +61,10 @@ public class XmlIoPointSpreadFunctions extends XmlIoSingleton< PointSpreadFuncti
 	{
 		final Element elem = new Element( PSF_TAG );
 
-		elem.setAttribute( PSF_FILE_TAG, psf.getFile() );
-		elem.addContent( XmlHelpers.intElement( PSF_TIMEPOINT_ATTRIBUTE_NAME, viewId.getTimePointId() ) );
-		elem.addContent( XmlHelpers.intElement( PSF_SETUP_ATTRIBUTE_NAME, viewId.getViewSetupId() ) );
+		elem.setAttribute( PSF_TIMEPOINT_ATTRIBUTE_NAME, Integer.toString( viewId.getTimePointId() ) );
+		elem.setAttribute( PSF_SETUP_ATTRIBUTE_NAME, Integer.toString( viewId.getViewSetupId() ) );
+
+		elem.addContent( new Element( PSF_FILE_TAG ).addContent( psf.getFile() ) );
 
 		if ( psf.isModified() )
 			if ( !psf.save() )
