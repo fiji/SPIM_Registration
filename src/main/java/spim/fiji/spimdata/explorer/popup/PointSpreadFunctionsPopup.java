@@ -111,18 +111,19 @@ public class PointSpreadFunctionsPopup extends JMenu implements ExplorerWindowSe
 
 		// display
 		final JMenuItem displayAverage = new JMenuItem( PSF_View.displayChoices[ 0 ] ); //"Averaged PSF",
-		final JMenuItem displayTransformedAverage = new JMenuItem( PSF_View.displayChoices[ 0 ] ); //"Averaged transformed PSF",
-		final JMenuItem displayMaxAverage = new JMenuItem( PSF_View.displayChoices[ 0 ] ); //"Maximum Projection of averaged PSF",
-		final JMenuItem displayMaxTransformedAverage = new JMenuItem( PSF_View.displayChoices[ 0 ] ); //"Maximum Projection of averaged transformed PSF" };
+		final JMenuItem displayTransformedAverage = new JMenuItem( PSF_View.displayChoices[ 1 ] ); //"Averaged transformed PSF",
+		final JMenuItem displayMaxAverage = new JMenuItem( PSF_View.displayChoices[ 2 ] ); //"Maximum Projection of averaged PSF",
+		final JMenuItem displayMaxTransformedAverage = new JMenuItem( PSF_View.displayChoices[ 3 ] ); //"Maximum Projection of averaged transformed PSF" };
 
 		displayAverage.addActionListener( new DisplayPSF( 0 ) );
 		displayTransformedAverage.addActionListener( new DisplayPSF( 1 ) );
 		displayMaxAverage.addActionListener( new DisplayPSF( 2 ) );
 		displayMaxTransformedAverage.addActionListener( new DisplayPSF( 3 ) );
 
-		display.add( averageDisplay );
-		display.add( averageAssign );
-		display.add( averageAssignAndDisplay );
+		display.add( displayAverage );
+		display.add( displayTransformedAverage );
+		display.add( displayMaxAverage );
+		display.add( displayMaxTransformedAverage );
 
 		this.add( display );
 	}
