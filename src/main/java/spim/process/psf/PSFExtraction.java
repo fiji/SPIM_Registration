@@ -334,7 +334,7 @@ public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 	 * @param <T> pixel type
 	 * @return the transformed psf which has odd sizes and where the center of the psf is also the center of the transformed psf
 	 */
-	protected static < T extends RealType< T > & NativeType< T > > ArrayImg< T, ? > transformPSF(
+	public static < T extends RealType< T > & NativeType< T > > ArrayImg< T, ? > transformPSF(
 			final RandomAccessibleInterval< T > psf,
 			final AffineTransform3D model )
 	{
@@ -420,7 +420,7 @@ public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 		return transformed;
 	}
 
-	private static < T extends RealType< T > > void normalize( final IterableInterval< T > img )
+	public static < T extends RealType< T > > void normalize( final IterableInterval< T > img )
 	{
 		double min = Double.MAX_VALUE;
 		double max = -Double.MAX_VALUE;

@@ -3,7 +3,6 @@ package spim.fiji.spimdata.explorer.popup;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.List;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -12,8 +11,8 @@ import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
-import spim.fiji.spimdata.explorer.GroupedRowWindow;
 
 public class RemoveTransformationPopup extends JMenu implements ExplorerWindowSetable
 {
@@ -63,7 +62,11 @@ public class RemoveTransformationPopup extends JMenu implements ExplorerWindowSe
 				return;
 			}
 
-			final List< ViewId > viewIds = ApplyTransformationPopup.getSelectedViews( panel );
+			final ArrayList< ViewId > viewIds = new ArrayList<>();
+			viewIds.addAll( ApplyTransformationPopup.getSelectedViews( panel ) );
+
+			// filter not present ViewIds
+			SpimData2.filterMissingViews( panel.getSpimData(), viewIds );
 
 			final ViewRegistrations vr = panel.getSpimData().getViewRegistrations();
 			for ( final ViewId viewId : viewIds )

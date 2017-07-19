@@ -24,6 +24,11 @@ public class PSFCombination
 	{
 		final Img< T > avg = computeAverageImage( imgs, imgFactory, true );
 
+		return computeMaxProjectionPSF( avg );
+	}
+
+	public static < T extends RealType< T > > Img< T > computeMaxProjectionPSF( final Img< T > avg )
+	{
 		int minDim = -1;
 		long minDimSize = Long.MAX_VALUE;
 

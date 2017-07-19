@@ -41,7 +41,7 @@ public class FusionPopup extends JMenuItem implements ExplorerWindowSetable
 
 	public FusionPopup()
 	{
-		super( "Image Fusion/Deconvolution ..." );
+		super( "Image Fusion ..." );
 
 		this.addActionListener( new MyActionListener() );
 	}

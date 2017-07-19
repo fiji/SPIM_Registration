@@ -17,6 +17,7 @@ import mpicbg.spim.io.IOFunctions;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.plugin.apply.ApplyParameters;
+import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
 import spim.fiji.spimdata.explorer.GroupedRowWindow;
 
@@ -75,10 +76,14 @@ public class ApplyTransformationPopup extends JMenuItem implements ExplorerWindo
 				@Override
 				public void run()
 				{
-					final List< ViewId > viewIds = getSelectedViews( panel );
-
 					final SpimData data = (SpimData)panel.getSpimData();
-		
+
+					final ArrayList< ViewId > viewIds = new ArrayList<>();
+					viewIds.addAll( ApplyTransformationPopup.getSelectedViews( panel ) );
+
+					// filter not present ViewIds
+					SpimData2.filterMissingViews( panel.getSpimData(), viewIds );
+
 					final Apply_Transformation t = new Apply_Transformation();
 		
 					final ApplyParameters params = t.queryParams( data, viewIds );

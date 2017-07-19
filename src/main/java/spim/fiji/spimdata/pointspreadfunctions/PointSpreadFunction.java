@@ -25,7 +25,10 @@ public class PointSpreadFunction
 	{
 		this.xmlBasePath = xmlBasePath;
 		this.file = file;
-		this.img = img.copy(); // avoid changes to the PSF
+
+		if ( img != null )
+			this.img = img.copy(); // avoid changes to the PSF if an actual image is provided
+
 		this.modified = true; // not initialized from disc, needs to be saved
 	}
 
