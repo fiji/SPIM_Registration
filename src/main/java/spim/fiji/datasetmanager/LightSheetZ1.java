@@ -169,18 +169,18 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 				final Tile tile = viewDescription.getViewSetup().getAttribute( Tile.class );
 
 				if (tile.hasLocation()){
-					final double shiftX = tile.getLocation()[0] / voxelSize.dimension( 0 );
-					final double shiftY = tile.getLocation()[1] / voxelSize.dimension( 1 );
-					final double shiftZ = tile.getLocation()[2] / voxelSize.dimension( 2 );
+					final double shiftX = tile.getLocation()[0] / voxelSize.dimension( 0 ) * calX;
+					final double shiftY = tile.getLocation()[1] / voxelSize.dimension( 1 ) * calY;
+					final double shiftZ = tile.getLocation()[2] / voxelSize.dimension( 2 ) * calZ;
 					
 					final AffineTransform3D m2 = new AffineTransform3D();
 					m2.set( 1.0f, 0.0f, 0.0f, shiftX, 
 						   0.0f, 1.0f, 0.0f, shiftY,
 						   0.0f, 0.0f, 1.0f, shiftZ );
 					final ViewTransform vt2 = new ViewTransformAffine( "Translation", m2 );
-					viewRegistration.concatenateTransform( vt2 );
+					viewRegistration.preconcatenateTransform( vt2 );
 				}
-				
+
 				viewRegistrationList.put( viewRegistration, viewRegistration );
 			}
 		
