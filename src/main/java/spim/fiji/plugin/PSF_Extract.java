@@ -20,8 +20,6 @@ import spim.process.psf.PSFExtraction;
 
 public class PSF_Extract implements PlugIn
 {
-	public static String[] displayPSFChoice = new String[]{ "Do not show PSFs", "Show MIP of combined PSF's", "Show combined PSF's", "Show individual PSF's", "Show combined PSF's (original scale)", "Show individual PSF's (original scale)" };
-
 	public static int defaultLabel = -1;
 	public static boolean defaultCorresponding = true;
 	public static int defaultPSFSizeX = 19;
