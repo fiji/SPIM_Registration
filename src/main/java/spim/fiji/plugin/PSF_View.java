@@ -62,8 +62,14 @@ public class PSF_View implements PlugIn
 		if ( gd.wasCanceled() )
 			return false;
 
-		final int choice = defaultDisplayChoice = gd.getNextChoiceIndex();
+		return display( spimData, viewIds, defaultDisplayChoice = gd.getNextChoiceIndex() );
+	}
 
+	public static boolean display(
+			final SpimData2 spimData,
+			final Collection< ? extends ViewId > viewIds,
+			final int choice )
+	{
 		if ( choice == 0 )
 		{
 			DisplayImage.getImagePlusInstance( PSF_Average.averagePSF( spimData, viewIds ), false, "Averaged PSF", 0, 1 ).show();

@@ -63,12 +63,18 @@ public class PSF_Average implements PlugIn
 		if ( gd.wasCanceled() )
 			return false;
 
-		final int choice = defaultAveraging = gd.getNextChoiceIndex();
+		return average( spimData, viewIds, defaultAveraging = gd.getNextChoiceIndex() );
+	}
 
+	public static boolean average(
+			final SpimData2 spimData,
+			final Collection< ? extends ViewId > viewIds,
+			final int choice )
+	{
 		final Img< FloatType > avgPSF = averagePSF( spimData, viewIds );
 
 		if ( choice == 0 || choice == 2 )
-			DisplayImage.getImagePlusInstance( avgPSF, false, "averaged PSF", Double.NaN, Double.NaN );
+			DisplayImage.getImagePlusInstance( avgPSF, false, "Averaged PSF", Double.NaN, Double.NaN ).show();
 
 		if ( choice == 1 || choice == 2 )
 		{
