@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import ij.gui.GenericDialog;
+import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.generic.base.Entity;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
@@ -210,7 +211,9 @@ public class FusionGUI
 		return true;
 	}
 
-	public boolean isImgLoaderVirtual()
+	public boolean isImgLoaderVirtual() { return isImgLoaderVirtual( spimData ); }
+
+	public static boolean isImgLoaderVirtual( final SpimData spimData )
 	{
 		if ( MultiResolutionImgLoader.class.isInstance( spimData.getSequenceDescription().getImgLoader() ) )
 			return true;
@@ -219,7 +222,9 @@ public class FusionGUI
 		return false;
 	}
 
-	public boolean isMultiResolution()
+	public boolean isMultiResolution() { return isMultiResolution( spimData ); }
+
+	public static boolean isMultiResolution( final SpimData spimData )
 	{
 		if ( MultiResolutionImgLoader.class.isInstance( spimData.getSequenceDescription().getImgLoader() ) )
 			return true;
