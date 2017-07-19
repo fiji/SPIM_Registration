@@ -2,7 +2,7 @@ package spim.fiji.spimdata.explorer.popup;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
+import java.util.ArrayList;
 
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -14,6 +14,7 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.Max_Project;
+import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
 
 public class MaxProjectPopup extends JMenuItem implements ExplorerWindowSetable
@@ -48,7 +49,11 @@ public class MaxProjectPopup extends JMenuItem implements ExplorerWindowSetable
 				return;
 			}
 
-			final List< ViewId > viewIds = ApplyTransformationPopup.getSelectedViews( panel );
+			final ArrayList< ViewId > viewIds = new ArrayList<>();
+			viewIds.addAll( ApplyTransformationPopup.getSelectedViews( panel ) );
+
+			// filter not present ViewIds
+			SpimData2.filterMissingViews( panel.getSpimData(), viewIds );
 
 			if ( SpimData.class.isInstance( panel.getSpimData() ) )
 				Max_Project.maxProject( (SpimData)panel.getSpimData(), viewIds, new FloatType() );

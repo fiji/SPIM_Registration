@@ -3,7 +3,7 @@ package spim.fiji.spimdata.explorer.popup;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -11,6 +11,8 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
+import bdv.export.ExportMipmapInfo;
+import bdv.export.ProgressWriter;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.sequence.ViewId;
@@ -28,12 +30,8 @@ import spim.fiji.plugin.resave.Resave_TIFF.Parameters;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
 import spim.fiji.spimdata.explorer.FilteredAndGroupedExplorerPanel;
-import spim.fiji.spimdata.explorer.GroupedRowWindow;
-import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 import spim.fiji.spimdata.imgloaders.AbstractImgFactoryImgLoader;
 import spim.fiji.spimdata.imgloaders.MicroManagerImgLoader;
-import bdv.export.ExportMipmapInfo;
-import bdv.export.ProgressWriter;
 
 public class ResavePopup extends JMenu implements ExplorerWindowSetable
 {
@@ -114,7 +112,7 @@ public class ResavePopup extends JMenu implements ExplorerWindowSetable
 						question =
 							"You have only selected " + viewIds.size() + " of " +
 							data.getSequenceDescription().getViewDescriptions().size() + " views for export.\n" +
-							"(the rest will not be visible in the new dataset)\n";
+							"(the rest will not be visible in the new dataset - except they are missing)\n";
 						
 						final int  choice = JOptionPane.showConfirmDialog( null,
 								question + "Note: this will first save the current state of the open XML.\n"
@@ -134,7 +132,7 @@ public class ResavePopup extends JMenu implements ExplorerWindowSetable
 					// all views in SpimData have been selected, ask user for confirmation before starting resave.
 					else
 					{
-						question = "Resaving all views of the current dataset.\n";
+						question = "Resaving all (except missing) views of the current dataset.\n";
 
 					if ( JOptionPane.showConfirmDialog( null,
 							question + "Note: this will first save the current state of the open XML. Proceed?",
@@ -143,7 +141,10 @@ public class ResavePopup extends JMenu implements ExplorerWindowSetable
 						return;
 					}
 
-					
+					// filter not present ViewIds
+					final List< ViewId > removed = SpimData2.filterMissingViews( panel.getSpimData(), viewIds );
+					if ( removed.size() > 0 ) IOFunctions.println( "(" + new Date( System.currentTimeMillis()) + "): Removed " + removed.size() + " missing views from the list before saving." );
+
 					final ProgressWriter progressWriter = new ProgressWriterIJ();
 					progressWriter.out().println( "Resaving " + viewIds.size() + " views " + types[ index ] );
 

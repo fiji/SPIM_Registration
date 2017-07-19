@@ -3,7 +3,6 @@ package spim.fiji.spimdata.explorer.popup;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.JMenuItem;
@@ -15,7 +14,6 @@ import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.Define_Bounding_Box;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
-import spim.fiji.spimdata.explorer.GroupedRowWindow;
 
 public class BoundingBoxPopup extends JMenuItem implements ExplorerWindowSetable
 {
@@ -59,7 +57,11 @@ public class BoundingBoxPopup extends JMenuItem implements ExplorerWindowSetable
 				@Override
 				public void run()
 				{
-					final List< ViewId > viewIds = ApplyTransformationPopup.getSelectedViews( panel );
+					final ArrayList< ViewId > viewIds = new ArrayList<>();
+					viewIds.addAll( ApplyTransformationPopup.getSelectedViews( panel ) );
+
+					// filter not present ViewIds
+					SpimData2.filterMissingViews( panel.getSpimData(), viewIds );
 
 					if ( new Define_Bounding_Box().defineBoundingBox( (SpimData2)panel.getSpimData(), viewIds ) != null )
 					{
