@@ -124,9 +124,11 @@ public class DisplayImage implements ImgExport
 				imp = ImageJFunctions.wrap( img, title ).duplicate();
 		}
 
+		final double[] minmax = getFusionMinMax( img, min, max );
+
 		imp.setTitle( title );
 		imp.setDimensions( 1, (int)img.dimension( 2 ), 1 );
-		imp.setDisplayRange( min, max );
+		imp.setDisplayRange( minmax[ 0 ], minmax[ 1 ] );
 
 		return imp;
 	}
