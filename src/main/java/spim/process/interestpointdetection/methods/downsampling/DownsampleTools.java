@@ -5,9 +5,11 @@ import static mpicbg.spim.data.generic.sequence.ImgLoaderHints.LOAD_COMPLETELY;
 import java.util.Date;
 import java.util.List;
 
+import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.MultiResolutionImgLoader;
 import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessibleInterval;
@@ -21,6 +23,43 @@ public class DownsampleTools
 {
 	protected static final int[] ds = { 1, 2, 4, 8 };
 
+	public static String[] availableDownsamplings( final AbstractSpimData< ? > data, final ViewId viewId )
+	{
+		final String[] dsStrings;
+
+		if (MultiResolutionImgLoader.class.isInstance( data.getSequenceDescription().getImgLoader() ))
+		{
+			final MultiResolutionImgLoader mrImgLoader = (MultiResolutionImgLoader) data.getSequenceDescription().getImgLoader();
+			final double[][] mipmapResolutions = mrImgLoader.getSetupImgLoader( viewId.getViewSetupId()).getMipmapResolutions();
+			dsStrings = new String[mipmapResolutions.length];
+			
+			for (int i = 0; i<mipmapResolutions.length; i++)
+			{
+				final String fx = ((Long)Math.round( mipmapResolutions[i][0] )).toString(); 
+				final String fy = ((Long)Math.round( mipmapResolutions[i][1] )).toString(); 
+				final String fz = ((Long)Math.round( mipmapResolutions[i][2] )).toString();
+				final String dsString = String.join( ", ", fx, fy, fz );
+				dsStrings[i] = dsString;
+			}
+		}
+		else
+		{
+			dsStrings = new String[]{ "1, 1, 1" };
+		}
+
+		return dsStrings;
+	}
+
+	public static long[] parseDownsampleChoice( final String dsChoice )
+	{
+		final long[] downSamplingFactors = new long[ 3 ];
+		final String[] choiceSplit = dsChoice.split( ", " );
+		downSamplingFactors[0] = Long.parseLong( choiceSplit[0] );
+		downSamplingFactors[1] = Long.parseLong( choiceSplit[1] );
+		downSamplingFactors[2] = Long.parseLong( choiceSplit[2] );
+		
+		return downSamplingFactors;
+	}
 	public static void correctForDownsampling( final List< InterestPoint > ips, final AffineTransform3D t )
 	{
 		IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Correcting coordinates for downsampling using AffineTransform: " + t );
