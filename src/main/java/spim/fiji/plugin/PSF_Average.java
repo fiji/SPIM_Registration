@@ -74,7 +74,7 @@ public class PSF_Average implements PlugIn
 		final Img< FloatType > avgPSF = averagePSF( spimData, viewIds );
 
 		if ( choice == 0 || choice == 2 )
-			DisplayImage.getImagePlusInstance( avgPSF, false, "Averaged PSF", Double.NaN, Double.NaN ).show();
+			DisplayImage.getImagePlusInstance( avgPSF, false, "Averaged PSF", 0, 1 ).show();
 
 		if ( choice == 1 || choice == 2 )
 		{
