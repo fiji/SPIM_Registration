@@ -25,6 +25,7 @@ import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.imgloaders.AbstractImgFactoryImgLoader;
 import spim.process.export.DisplayImage;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class Display_View implements PlugIn
 {
@@ -100,7 +101,7 @@ public class Display_View implements PlugIn
 
 		// get the corresponding viewid
 		final ViewId viewId = SpimData2.getViewId( result.getData().getSequenceDescription(), tp, channel, angle, illumination, tile );
-		final String name = name( result.getData().getSequenceDescription().getViewDescription( viewId ) );
+		final String name = Group.pvid( viewId );
 
 		// this happens only if a viewsetup is not present in any timepoint
 		// (e.g. after appending fusion to a dataset)
@@ -123,16 +124,6 @@ public class Display_View implements PlugIn
 		
 		// display it
 		display( result.getData(), viewId, pixelType, name );
-	}
-
-	public static String name( final ViewDescription vd )
-	{
-		final Angle angle = vd.getViewSetup().getAngle();
-		final Channel channel = vd.getViewSetup().getChannel();
-		final Illumination illumination = vd.getViewSetup().getIllumination();
-		final TimePoint tp = vd.getTimePoint();
-
-		return "angle: " + angle.getName() + " channel: " + channel.getName() + " illum: " + illumination.getName() + " timepoint: " + tp.getName();
 	}
 
 	public static void display( final AbstractSpimData< ? > spimData, final ViewId viewId, final int pixelType, final String name )

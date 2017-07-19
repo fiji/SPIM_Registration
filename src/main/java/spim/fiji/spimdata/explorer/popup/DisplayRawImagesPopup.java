@@ -2,15 +2,13 @@ package spim.fiji.spimdata.explorer.popup;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
+import java.util.ArrayList;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
-import mpicbg.spim.data.generic.sequence.BasicViewDescription;
-import mpicbg.spim.data.generic.sequence.BasicViewSetup;
-import mpicbg.spim.data.sequence.ViewDescription;
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.Display_View;
 import spim.fiji.spimdata.SpimData2;
@@ -68,13 +66,18 @@ public class DisplayRawImagesPopup extends JMenu implements ExplorerWindowSetabl
 				@Override
 				public void run()
 				{
-					final List< BasicViewDescription< ? extends BasicViewSetup > > vds = panel.selectedRows();
+					final ArrayList< ViewId > views = new ArrayList<>();
+					views.addAll( ApplyTransformationPopup.getSelectedViews( panel ) );
+
+					// filter not present ViewIds
+					SpimData2.filterMissingViews( panel.getSpimData(), views );
+
 
 					if (
-						vds.size() > askWhenMoreThan &&
+						views.size() > askWhenMoreThan &&
 						JOptionPane.showConfirmDialog(
 							null,
-							"Are you sure to display " + vds.size() + " views?",
+							"Are you sure to display " + views.size() + " views?",
 							"Warning",
 							JOptionPane.YES_NO_OPTION ) == JOptionPane.NO_OPTION )
 						return;
@@ -83,21 +86,16 @@ public class DisplayRawImagesPopup extends JMenu implements ExplorerWindowSetabl
 							"Opening as" + ( as16bit ? " 16 bit" : "32 bit" ) + " using " +
 							panel.getSpimData().getSequenceDescription().getImgLoader().getClass().getSimpleName() );
 
-					for ( final BasicViewDescription< ? > vd : panel.selectedRows() )
+					for ( final ViewId view : views )
 					{
-						IOFunctions.println( "Loading timepoint: " + vd.getTimePointId() + " ViewSetup: " + vd.getViewSetupId() );
+						IOFunctions.println( "Loading timepoint: " + view.getTimePointId() + " ViewSetup: " + view.getViewSetupId() );
 		
-						final String name;
-		
-						if ( SpimData2.class.isInstance( panel.getSpimData() ) )
-							name = Display_View.name( (ViewDescription)vd );
-						else
-							name = "Timepoint: " + vd.getTimePointId() + " ViewSetup: " + vd.getViewSetupId();
+						final String name = "Timepoint: " + view.getTimePointId() + " ViewSetup: " + view.getViewSetupId();
 			
 						if ( as16bit )
-							Display_View.display( panel.getSpimData(), vd, 1, name );
+							Display_View.display( panel.getSpimData(), view, 1, name );
 						else
-							Display_View.display( panel.getSpimData(), vd, 0, name );
+							Display_View.display( panel.getSpimData(), view, 0, name );
 					}
 				}
 			} ).start();
