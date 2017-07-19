@@ -1,5 +1,7 @@
 package spim.process.interestpointregistration;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -7,11 +9,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.AbstractModel;
 import mpicbg.models.Affine3D;
+import mpicbg.models.AffineModel3D;
 import mpicbg.models.Model;
 import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
+import mpicbg.models.RigidModel3D;
 import mpicbg.models.Tile;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewTransform;
@@ -26,9 +31,171 @@ import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
+import spim.vecmath.Matrix4f;
+import spim.vecmath.Quat4f;
+import spim.vecmath.Transform3D;
+import spim.vecmath.Vector3d;
+import spim.vecmath.Vector3f;
 
 public class TransformationTools
 {
+	public static NumberFormat f = new DecimalFormat("#.####");
+
+	/**
+	 * WARNING: This fails on older MACs, in this case remove: 
+	 * 
+	 * Check if Apple's out-dated Java 3D version 1.3 is installed in System/Library/Java/Extensions/ on your Mac. 
+	 * Remove all Java 3D 1.3 related files including vecmath.jar (jar, jnilib), they are useless.
+	 * 
+	 * @param model - the model
+	 * @return - String description of rot. axis
+	 */
+	public static String getRotationAxis( final RigidModel3D model )
+	{
+		try
+		{
+			final Matrix4f matrix = new Matrix4f();
+			getTransform3D( model ).get( matrix );
+			final Quat4f qu = new Quat4f();
+			qu.set( matrix );
+			
+			final Vector3f n = new Vector3f(qu.getX(),qu.getY(), qu.getZ());
+			n.normalize();
+			
+			return "Approx. axis: " + n + ", approx. angle: " + Math.toDegrees( Math.acos( qu.getW() ) * 2 );
+		}
+		catch ( Exception e )
+		{
+			return "Check if Apple's out-dated Java 3D version 1.3 is installed in System/Library/Java/Extensions/ on your Mac." +
+					"Remove all Java 3D 1.3 related files including vecmath.jar (jar, jnilib), they are useless.";
+		}
+	}
+
+	public static void getScaling( final Affine3D< ? > affine, final double[] scale ) { getScaling( getTransform3D( affine ), scale ); }
+	public static void getScaling( final AffineGet affine, final double[] scale ) { getScaling( getTransform3D( affine ), scale ); }
+
+	public static String getScaling( final Affine3D< ? > affine ) { return getScaling( getTransform3D( affine ) ); }
+
+	public static String getScaling( final AffineGet affine ) { return getScaling( getTransform3D( affine ) ); }
+
+	public static String getScaling( final Transform3D t )
+	{
+		final Vector3d v = new Vector3d();
+		t.getScale( v );
+		return "Scaling: " + f.format( v.x ) + ", " + f.format( v.y ) + ", " + f.format( v.z );
+	}
+
+	public static void getScaling( final Transform3D t, double[] scale )
+	{
+		final Vector3d v = new Vector3d();
+		t.getScale( v );
+		scale[ 0 ] = v.x;
+		scale[ 1 ] = v.y;
+		scale[ 2 ] = v.z;
+	}
+
+	public static Transform3D getTransform3D( final Affine3D< ? > affine )
+	{
+		final double[][] m = new double[ 3 ][ 4 ];
+		((Affine3D<?>)affine).toMatrix( m );
+
+		final Transform3D transform = new Transform3D();
+		final double[] m2 = new double[ 16 ];
+		transform.get( m2 );
+		
+		m2[ 0 ] = m[0][0];
+		m2[ 1 ] = m[0][1];
+		m2[ 2 ] = m[0][2];
+		m2[ 3 ] = m[0][3];
+
+		m2[ 4 ] = m[1][0];
+		m2[ 5 ] = m[1][1];
+		m2[ 6 ] = m[1][2];
+		m2[ 7 ] = m[1][3];
+
+		m2[ 8 ] = m[2][0];
+		m2[ 9 ] = m[2][1];
+		m2[ 10] = m[2][2];
+		m2[ 11] = m[2][3];
+
+		transform.set( m2 );
+
+		return transform;
+	}
+
+	public static Transform3D getTransform3D( final AffineGet affine )
+	{
+		final double[] m = affine.getRowPackedCopy();
+
+		final Transform3D transform = new Transform3D();
+		final double[] m2 = new double[ 16 ];
+		transform.get( m2 );
+		
+		m2[ 0 ] = m[ 0 ];
+		m2[ 1 ] = m[ 1 ];
+		m2[ 2 ] = m[ 2 ];
+		m2[ 3 ] = m[ 3 ];
+
+		m2[ 4 ] = m[ 4 ];
+		m2[ 5 ] = m[ 5 ];
+		m2[ 6 ] = m[ 6 ];
+		m2[ 7 ] = m[ 7 ];
+
+		m2[ 8 ] = m[ 8 ];
+		m2[ 9 ] = m[ 9 ];
+		m2[ 10] = m[ 10];
+		m2[ 11] = m[ 11];
+
+		transform.set( m2 );
+
+		return transform;
+	}
+
+	public static <M extends AbstractAffineModel3D<M>> Transform3D getTransform3D( final M model )
+	{
+		final Transform3D transform = new Transform3D();
+		final double[] m = model.getMatrix( null );
+
+		final double[] m2 = new double[ 16 ];
+		transform.get( m2 );
+
+		for ( int i = 0; i < m.length; ++i )
+			m2[ i ] = m[ i ];
+
+		transform.set( m2 );
+
+		return transform;
+	}
+
+	public static String printAffine3D( final Affine3D< ? > model )
+	{
+		final double[][] m = new double[ 3 ][ 4 ];
+		model.toMatrix( m );
+		
+		return
+			"(" + f.format( m[0][0] ) + ", " + f.format( m[0][1] ) + ", " + f.format( m[0][2] ) + ", " + f.format( m[0][3] ) + ")," +
+			"(" + f.format( m[1][0] ) + ", " + f.format( m[1][1] ) + ", " + f.format( m[1][2] ) + ", " + f.format( m[1][3] ) + ")," +
+			"(" + f.format( m[2][0] ) + ", " + f.format( m[2][1] ) + ", " + f.format( m[2][2] ) + ", " + f.format( m[2][3] ) + ")";
+	}
+
+	public static String printAffine3D( final AffineGet model )
+	{
+		final double[] m = model.getRowPackedCopy();
+
+		return
+			"(" + f.format( m[ 0 ] ) + ", " + f.format( m[ 1 ] ) + ", " + f.format( m[ 2 ] ) + ", " + f.format( m[ 3 ] ) + ")," +
+			"(" + f.format( m[ 4 ] ) + ", " + f.format( m[ 5 ] ) + ", " + f.format( m[ 6 ] ) + ", " + f.format( m[ 7 ] ) + ")," +
+			"(" + f.format( m[ 8 ] ) + ", " + f.format( m[ 9 ] ) + ", " + f.format( m[ 10 ] )+ ", " + f.format( m[ 11 ] )+ ")";
+	}
+
+	public static AffineModel3D getModel( final AffineGet affine )
+	{
+		final double[] m = affine.getRowPackedCopy();
+		final AffineModel3D model = new AffineModel3D();
+		model.set( m[ 0 ], m[ 1 ], m[ 2 ], m[ 3 ], m[ 4 ], m[ 5 ], m[ 6 ], m[ 7 ], m[ 8 ], m[ 9 ], m[ 10 ], m[ 11 ] );
+		return model;
+	}
+
 	/**
 	 * 
 	 * @param size - size of view which is used to map back
@@ -99,8 +266,6 @@ public class TransformationTools
 			mapBack.set( m[0][0], m[0][1], m[0][2], + m[0][3],
 						m[1][0], m[1][1], m[1][2], m[1][3], 
 						m[2][0], m[2][1], m[2][2], m[2][3] );
-
-			IOFunctions.println( "Model for mapping back: " + mapBack + "\n" );
 
 			return mapBack;
 		}
