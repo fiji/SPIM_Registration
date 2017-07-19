@@ -64,13 +64,23 @@ public class MissingViewsTableModelDecorator < AS extends AbstractSpimData< ? > 
 			return decorated.getValueAt( rowIndex, columnIndex );
 		else
 		{
-			List< BasicViewDescription< ? > > vds = getElements().get( rowIndex );
-			ArrayList< String > present = new ArrayList<>();
-			for (BasicViewDescription< ? > vd : vds)
-				present.add( Boolean.toString( vd.isPresent() ));
-			return String.join( ", ", present.toArray( new String[0] ) );
+			final List< BasicViewDescription< ? > > vds = getElements().get( rowIndex );
+
+			if ( vds.size() == 1 )
+			{
+				return Boolean.toString( vds.get( 0 ).isPresent() );
+			}
+			else
+			{
+				int present = 0;
+
+				for ( final BasicViewDescription< ? > vd : vds )
+					if ( vd.isPresent() )
+						++present;
+
+				return present + "/" + vds.size();
+			}
 		}
-		
 	}
 
 	@Override
