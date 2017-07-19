@@ -218,8 +218,6 @@ public class TransformationTools
 		}
 		else
 		{
-			IOFunctions.println( "Mapping back to reference frame using a " + mapBackModel.getClass().getSimpleName() );
-
 			long w = size.dimension( 0 );
 			long h = size.dimension( 1 );
 

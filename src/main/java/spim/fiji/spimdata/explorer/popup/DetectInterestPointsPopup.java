@@ -2,7 +2,6 @@ package spim.fiji.spimdata.explorer.popup;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JMenuItem;
@@ -12,7 +11,6 @@ import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.Interest_Point_Detection;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
-import spim.fiji.spimdata.explorer.GroupedRowWindow;
 
 public class DetectInterestPointsPopup extends JMenuItem implements ExplorerWindowSetable
 {
@@ -58,8 +56,15 @@ public class DetectInterestPointsPopup extends JMenuItem implements ExplorerWind
 				{
 					final List< ViewId > viewIds = ApplyTransformationPopup.getSelectedViews( panel );
 
+					// by default the registration suggests what is selected in the dialog
+					Interest_Point_Detection.defaultGroupTiles = panel.tilesGrouped();
+					Interest_Point_Detection.defaultGroupIllums = panel.illumsGrouped();
+					Interest_Point_Detection.currentPanel = panel;
+
 					if ( new Interest_Point_Detection().detectInterestPoints( (SpimData2)panel.getSpimData(), viewIds ) )
 						panel.updateContent(); // update interestpoint panel if available
+
+					Interest_Point_Detection.currentPanel = null;
 				}
 			}).start();
 		}

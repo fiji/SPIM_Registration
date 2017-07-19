@@ -49,7 +49,9 @@ public abstract class InterestPointDetectionGUI
 	public abstract boolean queryParameters(
 			final boolean defineAnisotropy,
 			final boolean setMinMax,
-			final boolean limitDetections );
+			final boolean limitDetections,
+			final boolean groupTiles,
+			final boolean groupIllums );
 
 	/*
 	 * @param spimData

@@ -3,7 +3,9 @@ package spim.process.fusion;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Vector;
 import java.util.concurrent.Callable;
@@ -33,7 +35,6 @@ import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccess;
-import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.cache.img.CellLoader;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgFactory;
@@ -82,6 +83,33 @@ public class FusionTools
 			final Interval boundingBox,
 			final double downsampling )
 	{
+		final ImgLoader imgLoader = spimData.getSequenceDescription().getImgLoader();
+
+		final HashMap< ViewId, AffineTransform3D > registrations = new HashMap<>();
+
+		for ( final ViewId viewId : views )
+		{
+			final ViewRegistration vr = spimData.getViewRegistrations().getViewRegistration( viewId );
+			vr.updateModel();
+			registrations.put( viewId, vr.getModel() );
+		}
+
+		final Map< ViewId, ViewDescription > viewDescriptions = spimData.getSequenceDescription().getViewDescriptions();
+
+		return fuseVirtual( imgLoader, registrations, viewDescriptions, views, useBlending, useContentBased, interpolation, boundingBox, downsampling );
+	}
+
+	public static RandomAccessibleInterval< FloatType > fuseVirtual(
+			final ImgLoader imgloader,
+			final Map< ViewId, AffineTransform3D > registrations,
+			final Map< ViewId, ViewDescription > viewDescriptions,
+			final Collection< ? extends ViewId > views,
+			final boolean useBlending,
+			final boolean useContentBased,
+			final int interpolation,
+			final Interval boundingBox,
+			final double downsampling )
+	{
 		final Interval bb;
 
 		if ( !Double.isNaN( downsampling ) )
@@ -102,10 +130,7 @@ public class FusionTools
 
 		for ( final ViewId viewId : views )
 		{
-			final ImgLoader imgloader = spimData.getSequenceDescription().getImgLoader();
-			final ViewRegistration vr = spimData.getViewRegistrations().getViewRegistration( viewId );
-			vr.updateModel();
-			AffineTransform3D model = vr.getModel();
+			AffineTransform3D model = registrations.get( viewId );
 
 			if ( !Double.isNaN( downsampling ) )
 			{
@@ -132,7 +157,7 @@ public class FusionTools
 					final float[] blending = defaultBlendingRange.clone();
 					final float[] border = defaultBlendingBorder.clone();
 	
-					adjustBlending( spimData.getSequenceDescription().getViewDescription( viewId ), blending, border );
+					adjustBlending( viewDescriptions.get( viewId ), blending, border );
 	
 					transformedBlending = TransformWeight.transformBlending( inputImg, border, blending, model, bb );
 				}
@@ -143,7 +168,7 @@ public class FusionTools
 					final double[] sigma1 = FusionTools.defaultContentBasedSigma1.clone();
 					final double[] sigma2 = FusionTools.defaultContentBasedSigma2.clone();
 	
-					adjustContentBased( spimData.getSequenceDescription().getViewDescription( viewId ), sigma1, sigma2, downsampling );
+					adjustContentBased( viewDescriptions.get( viewId ), sigma1, sigma2, downsampling );
 	
 					transformedContentBased = TransformWeight.transformContentBased( inputImg, new CellImgFactory< ComplexFloatType >(), sigma1, sigma2, model, bb );
 				}

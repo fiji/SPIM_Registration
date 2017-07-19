@@ -1,14 +1,20 @@
 package spim.fiji.plugin.interestpointdetection;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import ij.gui.GenericDialog;
+import mpicbg.spim.data.generic.base.Entity;
+import mpicbg.spim.data.sequence.Illumination;
+import mpicbg.spim.data.sequence.Tile;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.interestpointdetection.InterestPointTools;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 {
@@ -30,6 +36,7 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 	public static double defaultImageSigmaZ = 0.5;
 
 	public static int defaultViewChoice = 0;
+	public static int defaultGroupChoice = 0;
 
 	public static double defaultAdditionalSigmaX = 0.0;
 	public static double defaultAdditionalSigmaY = 0.0;
@@ -50,6 +57,9 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 	// downsampleXYIndex == -1 : a bit more then z-resolution
 	protected int localization, downsampleXYIndex, downsampleZ;
 
+	public static boolean useAverageMapBack = false;
+	boolean groupTiles, groupIllums;
+
 	public DifferenceOfGUI( final SpimData2 spimData, final List< ViewId > viewIdsToProcess )
 	{
 		super( spimData, viewIdsToProcess );
@@ -59,9 +69,18 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 	protected abstract boolean queryAdditionalParameters( final GenericDialog gd );
 
 	@Override
-	public boolean queryParameters( final boolean defineAnisotropy, final boolean setMinMax, final boolean limitDetections )
+	public boolean queryParameters(
+			final boolean defineAnisotropy,
+			final boolean setMinMax,
+			final boolean limitDetections,
+			final boolean groupTiles,
+			final boolean groupIllums )
 	{
+		this.groupTiles = groupTiles;
+		this.groupIllums = groupIllums;
+
 		final GenericDialog gd = new GenericDialog( getDescription() );
+
 		gd.addChoice( "Subpixel_localization", localizationChoice, localizationChoice[ defaultLocalization ] );
 		gd.addChoice( "Interest_point_specification", brightnessChoice, brightnessChoice[ defaultBrightness ] );
 
@@ -212,6 +231,89 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 		final ViewId viewId = views.get( defaultViewChoice = gd.getNextChoiceIndex() );
 
 		return viewId;
+	}
+
+	protected List< Group< ViewDescription > > getGroups()
+	{
+		final ArrayList< ViewDescription > vds = new ArrayList<>();
+
+		for ( final ViewId viewId : viewIdsToProcess )
+			vds.add( spimData.getSequenceDescription().getViewDescription( viewId ) );
+
+		final HashSet< Class< ? extends Entity > > groupingFactor = new HashSet<>();
+		String end = "";
+
+		if ( groupTiles )
+		{
+			groupingFactor.add( Tile.class );
+			end = "tile";
+		}
+
+		if ( groupIllums )
+		{
+			groupingFactor.add( Illumination.class );
+			if ( end.length() > 0 )
+				end += ", illumination";
+			else
+				end = "illumination";
+		}
+
+		final List< Group< ViewDescription > > groups = Group.combineBy( vds, groupingFactor );
+
+		IOFunctions.println( "Identified: " + groups.size() + " groups when grouping by " + end + "." );
+		int i = 0;
+		for ( final Group< ViewDescription > group : groups )
+			IOFunctions.println( end + "-Group " + (i++) + ":" + group );
+
+		return groups;
+	}
+
+	protected String nameForGroup( final Group< ViewDescription > group )
+	{
+		final ViewDescription vd1 = group.iterator().next();
+
+		String name =
+				"TP=" + vd1.getTimePointId() +
+				" Angle=" + vd1.getViewSetup().getAngle().getName() +
+				" Channel=" + vd1.getViewSetup().getChannel().getName();
+
+		if ( !groupIllums )
+			name += " Illum=" + vd1.getViewSetup().getChannel().getName();
+
+		if ( !groupTiles )
+			name += " Tile=" + vd1.getViewSetup().getTile().getName();
+
+		return name;
+	}
+
+	/*
+	 * Figure out which view to use for the interactive preview
+	 * 
+	 * @param dialogHeader
+	 * @param text
+	 * @return
+	 */
+	protected Group< ViewDescription > getGroupSelection( final String dialogHeader, final String text, final List< Group< ViewDescription > > groups )
+	{
+		final String[] groupChoice = new String[ groups.size() ];
+
+		for ( int i = 0; i < groups.size(); ++i )
+			groupChoice[ i ] = nameForGroup( groups.get( i ) );
+
+		if ( defaultGroupChoice >= groups.size() )
+			defaultGroupChoice = 0;
+
+		final GenericDialog gd = new GenericDialog( dialogHeader );
+
+		gd.addMessage( text );
+		gd.addChoice( "Group", groupChoice, groupChoice[ defaultGroupChoice ] );
+		
+		gd.showDialog();
+		
+		if ( gd.wasCanceled() )
+			return null;
+
+		return groups.get( defaultGroupChoice = gd.getNextChoiceIndex() );
 	}
 
 	protected abstract boolean setDefaultValues( final int brightness );

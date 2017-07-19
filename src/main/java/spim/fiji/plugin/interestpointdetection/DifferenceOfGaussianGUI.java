@@ -1,30 +1,39 @@
 package spim.fiji.plugin.interestpointdetection;
 
-import ij.ImagePlus;
-import ij.gui.GenericDialog;
-
+import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
+import ij.ImagePlus;
+import ij.gui.GenericDialog;
+import mpicbg.models.RigidModel3D;
+import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.segmentation.InteractiveDoG;
+import net.imglib2.Dimensions;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.realtransform.AffineTransform3D;
+import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.util.GenericDialogAppender;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.explorer.popup.DisplayFusedImagesPopup;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.cuda.CUDADevice;
 import spim.process.cuda.CUDASeparableConvolution;
 import spim.process.cuda.CUDATools;
 import spim.process.cuda.NativeLibraryTools;
+import spim.process.fusion.FusionTools;
+import spim.process.fusion.FusionTools.ImgDataType;
 import spim.process.interestpointdetection.methods.dog.DoG;
 import spim.process.interestpointdetection.methods.dog.DoGParameters;
 import spim.process.interestpointdetection.methods.downsampling.DownsampleTools;
+import spim.process.interestpointregistration.TransformationTools;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class DifferenceOfGaussianGUI extends DifferenceOfGUI implements GenericDialogAppender
@@ -181,51 +190,125 @@ public class DifferenceOfGaussianGUI extends DifferenceOfGUI implements GenericD
 	@Override
 	protected boolean setInteractiveValues()
 	{
-		final ViewId view = getViewSelection( "Interactive Difference-of-Gaussian", "Please select view to use" );
-		
-		if ( view == null )
-			return false;
-		
-		final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( view.getTimePointId(), view.getViewSetupId() );
-		
-		if ( !viewDescription.isPresent() )
+		RandomAccessibleInterval< FloatType > img;
+		final String title;
+
+		if ( !groupIllums && !groupTiles )
 		{
-			IOFunctions.println( "You defined the view you selected as not present at this timepoint." );
-			IOFunctions.println( "timepoint: " + viewDescription.getTimePoint().getName() + 
-								 " angle: " + viewDescription.getViewSetup().getAngle().getName() + 
-								 " channel: " + viewDescription.getViewSetup().getChannel().getName() + 
-								 " illum: " + viewDescription.getViewSetup().getIllumination().getName() );
-			return false;
+			final ViewId view = getViewSelection( "Interactive Difference-of-Gaussian", "Please select view to use" );
+			
+			if ( view == null )
+				return false;
+	
+			final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( view.getTimePointId(), view.getViewSetupId() );
+	
+			// downsampleXY == 0 : a bit less then z-resolution
+			// downsampleXY == -1 : a bit more then z-resolution
+			final int downsampleXY;
+	
+			if ( downsampleXYIndex < 1 )
+				downsampleXY = DownsampleTools.downsampleFactor( downsampleXYIndex, downsampleZ, viewDescription.getViewSetup().getVoxelSize() );
+			else
+				downsampleXY = downsampleXYIndex;
+
+			img = DownsampleTools.openAndDownsample(
+				spimData.getSequenceDescription().getImgLoader(),
+				viewDescription,
+				new AffineTransform3D(),
+				downsampleXY,
+				downsampleZ );
+
+			if ( img == null )
+			{
+				IOFunctions.println( "View not found: " + viewDescription );
+				return false;
+			}
+
+			title = "tp: " + viewDescription.getTimePoint().getName() + " viewSetup: " + viewDescription.getViewSetupId();
 		}
-
-		// downsampleXY == 0 : a bit less then z-resolution
-		// downsampleXY == -1 : a bit more then z-resolution
-		final int downsampleXY;
-
-		if ( downsampleXYIndex < 1 )
-			downsampleXY = DownsampleTools.downsampleFactor( downsampleXYIndex, downsampleZ, viewDescription.getViewSetup().getVoxelSize() );
 		else
-			downsampleXY = downsampleXYIndex;
-
-		RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > img =
-				DownsampleTools.openAndDownsample(
-						spimData.getSequenceDescription().getImgLoader(),
-						viewDescription,
-						new AffineTransform3D(),
-						downsampleXY,
-						downsampleZ );
-
-		if ( img == null )
 		{
-			IOFunctions.println( "View not found: " + viewDescription );
+			final List< Group< ViewDescription > > groups = getGroups();
+			final Group< ViewDescription > group = getGroupSelection( "Interactive Difference-of-Gaussian", "Please select grouped views to use", groups );
+
+			if ( group == null )
+				return false;
+
+			// use the first view that comes along to determine downsampling
+
+			// downsampleXY == 0 : a bit less then z-resolution
+			// downsampleXY == -1 : a bit more then z-resolution
+			final int downsampleXY;
+
+			final ViewDescription randomView = group.iterator().next();
+
+			if ( downsampleXYIndex < 1 )
+				downsampleXY = DownsampleTools.downsampleFactor( downsampleXYIndex, downsampleZ, randomView.getViewSetup().getVoxelSize() );
+			else
+				downsampleXY = downsampleXYIndex;
+
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() )  + "): Desired downsampling in XY " + downsampleXY + "x ..." );
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() )  + "): Desired downsampling in Z " + downsampleZ + "x ..." );
+
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() )  + "): Identifying corresponding scaling of fused dataset using view " + Group.pvid( randomView ) );
+
+			final NumberFormat f = TransformationTools.f;
+
+			final Dimensions dim = spimData.getSequenceDescription().getViewDescription( randomView ).getViewSetup().getSize();
+			final ViewRegistration vr = spimData.getViewRegistrations().getViewRegistration( randomView );
+			vr.updateModel();
+			final AffineTransform3D transform = vr.getModel().copy();
+
+			System.out.println( "Original: " + TransformationTools.printAffine3D( transform ) );
+
+			// mapping back the image first to the origin using a rigid model
+			final AffineTransform3D mapBack = TransformationTools.computeMapBackModel(
+					dim,
+					new AffineTransform3D(), // identity
+					TransformationTools.getModel( transform ), // current model
+					new RigidModel3D() ); // what to use
+
+			System.out.println( "MapBack: " + TransformationTools.printAffine3D( mapBack ) );
+
+			final AffineTransform3D atOrigin = transform.preConcatenate( mapBack );
+
+			System.out.println( "At origin: " + TransformationTools.printAffine3D( atOrigin ) );
+
+			// there seems to be a bug in Transform3D, it does mix up the y/z dimensions sometimes
+			// TransformationTools.getScaling( atOrigin, scale );
+
+			// the scale is approximately now the diagonal entries in the matrix
+			final double[] scale = new double[ 3 ];
+			scale[ 0 ] = atOrigin.get( 0, 0 );
+			scale[ 1 ] = atOrigin.get( 1, 1 );
+			scale[ 2 ] = atOrigin.get( 2, 2 );
+
+			IOFunctions.println( "View is currently scaled by: ( " + f.format( scale[ 0 ] ) + ", " + f.format( scale[ 1 ] ) + ", " + f.format( scale[ 2 ] ) + ")" );
+
+			final double[] targetDS = new double[ 3 ];
+			targetDS[ 0 ] = ( 1.0 / downsampleXY ) / ( ( scale[ 0 ] + scale[ 1 ] ) / 2.0 );
+			targetDS[ 1 ] = ( 1.0 / downsampleXY ) / ( ( scale[ 0 ] + scale[ 1 ] ) / 2.0 );
+			targetDS[ 2 ] = ( 1.0 / downsampleZ ) / scale[ 2 ];
+
+			IOFunctions.println( "Fused image must be downsampled by: ( " + f.format( 1.0/targetDS[ 0 ] ) + ", " + f.format( 1.0/targetDS[ 1 ] ) + ", " + f.format( 1.0/targetDS[ 2 ] ) + ") after applying mapback." );
+
+			
+			//FusionTools.fuseVirtual( spimData, views, DisplayFusedImagesPopup.defaultUseBlending, false, DisplayFusedImagesPopup.defaultInterpolation, bb, downsampling );
+
+			img = null;
+
+			title = nameForGroup( group );
+
 			return false;
 		}
+
+
 
 		final ImagePlus imp = ImageJFunctions.wrapFloat( img, "" ).duplicate();
 		imp.resetDisplayRange();
 		img = null;
 		imp.setDimensions( 1, imp.getStackSize(), 1 );
-		imp.setTitle( "tp: " + viewDescription.getTimePoint().getName() + " viewSetup: " + viewDescription.getViewSetupId() );		
+		imp.setTitle( title );
 		imp.show();
 		imp.setSlice( imp.getStackSize() / 2 );
 		imp.setRoi( 0, 0, imp.getWidth()/3, imp.getHeight()/3 );
