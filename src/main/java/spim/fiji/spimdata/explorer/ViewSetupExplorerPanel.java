@@ -154,7 +154,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		tableModel.setColumnClasses( FilteredAndGroupedTableModel.defaultColumnClassesMV() );
 
 		tableModel.addGroupingFactor( Tile.class );
-		//tableModel.addGroupingFactor( Illumination.class );
+		tableModel.addGroupingFactor( Illumination.class );
 
 		table = new JTable();
 		table.setModel( tableModel );
