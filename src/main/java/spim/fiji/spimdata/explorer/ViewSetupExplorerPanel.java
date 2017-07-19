@@ -1,6 +1,7 @@
 package spim.fiji.spimdata.explorer;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -28,6 +29,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
 
 import bdv.BigDataViewer;
 import bdv.img.hdf5.Hdf5ImageLoader;
@@ -160,13 +162,23 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		table.setModel( tableModel );
 		table.setSurrendersFocusOnKeystroke( true );
 		table.setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
-		
+
 		final DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
 		centerRenderer.setHorizontalAlignment( JLabel.CENTER );
 		
 		// center all columns
 		for ( int column = 0; column < tableModel.getColumnCount(); ++column )
-			table.getColumnModel().getColumn( column ).setCellRenderer( centerRenderer );
+		{
+			if ( tableModel.getColumnName( column ).equals( "PSF" ) )
+			{
+				table.getColumnModel().getColumn( column ).setCellRenderer( new CheckBoxRenderer() );
+				table.getColumnModel().getColumn( column ).setPreferredWidth( 20 );
+			}
+			else
+			{
+				table.getColumnModel().getColumn( column ).setCellRenderer( centerRenderer );
+			}
+		}
 
 		// add listener to which row is selected
 		table.getSelectionModel().addListSelectionListener( getSelectionListener() );
@@ -627,6 +639,43 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 					appleKeyDown = true;
 			}
 		});
+	}
+
+	private static class CheckBoxRenderer extends JCheckBox implements TableCellRenderer
+	{
+		private static final long serialVersionUID = 1L;
+
+		public CheckBoxRenderer()
+		{
+			super();
+			this.setHorizontalAlignment( JLabel.CENTER );
+		}
+
+		@Override
+		public Component getTableCellRendererComponent(
+			final JTable table,
+			final Object value,
+			final boolean isSelected,
+			final boolean hasFocus,
+			final int row,
+			final int col )
+		{
+			boolean v = (boolean)value;
+			this.setSelected( v );
+
+			if (isSelected)
+			{
+				setForeground( table.getSelectionForeground() );
+				setBackground( table.getSelectionBackground() );
+			}
+			else
+			{
+				setForeground( table.getForeground() );
+				setBackground( table.getBackground() );
+			}
+
+			return this;
+		}
 	}
 
 	public ArrayList< ExplorerWindowSetable > initPopups()
