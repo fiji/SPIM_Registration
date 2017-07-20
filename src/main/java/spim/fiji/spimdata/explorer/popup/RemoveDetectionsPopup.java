@@ -40,10 +40,6 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
-import spim.fiji.plugin.Interactive_Remove_Detections;
-import spim.fiji.plugin.ThinOut_Detections;
-import spim.fiji.plugin.removedetections.InteractiveProjections;
-import spim.fiji.plugin.thinout.ChannelProcessThinOut;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
@@ -51,6 +47,7 @@ import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
+import spim.process.interestpointremoval.InteractiveProjections;
 
 public class RemoveDetectionsPopup extends JMenu implements ExplorerWindowSetable
 {

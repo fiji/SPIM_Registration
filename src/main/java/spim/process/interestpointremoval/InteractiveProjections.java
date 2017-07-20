@@ -19,7 +19,7 @@
  * <http://www.gnu.org/licenses/gpl-2.0.html>.
  * #L%
  */
-package spim.fiji.plugin.removedetections;
+package spim.process.interestpointremoval;
 
 import java.awt.Button;
 import java.awt.Color;
@@ -52,7 +52,6 @@ import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.process.interestpointregistration.TransformationTools;
 import spim.process.psf.PSFCombination;
-import spim.process.psf.PSFExtraction;
 
 public class InteractiveProjections
 {
