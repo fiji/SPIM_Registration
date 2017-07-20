@@ -164,7 +164,8 @@ public class DownsampleTools
 			final ViewDescription vd,
 			final AffineTransform3D t,
 			final int downsampleXY,
-			final int downsampleZ  )
+			final int downsampleZ,
+			final boolean openCompletely )
 	{
 		IOFunctions.println(
 				"(" + new Date(System.currentTimeMillis()) + "): "
@@ -217,11 +218,17 @@ public class DownsampleTools
 					"Using precomputed Multiresolution Images [" + fx + "x" + fy + "x" + fz + "], " +
 					"Remaining downsampling [" + dsx + "x" + dsy + "x" + dsz + "]" );
 
-			input = mrImgLoader.getSetupImgLoader( vd.getViewSetupId() ).getFloatImage( vd.getTimePointId(), bestLevel, false, LOAD_COMPLETELY );
+			if ( openCompletely )
+				input = mrImgLoader.getSetupImgLoader( vd.getViewSetupId() ).getFloatImage( vd.getTimePointId(), bestLevel, false, LOAD_COMPLETELY );
+			else
+				input = mrImgLoader.getSetupImgLoader( vd.getViewSetupId() ).getFloatImage( vd.getTimePointId(), bestLevel, false );
 		}
 		else
 		{
-			input = imgLoader.getSetupImgLoader( vd.getViewSetupId() ).getFloatImage( vd.getTimePointId(), false, LOAD_COMPLETELY );
+			if ( openCompletely )
+				input = imgLoader.getSetupImgLoader( vd.getViewSetupId() ).getFloatImage( vd.getTimePointId(), false, LOAD_COMPLETELY );
+			else
+				input = imgLoader.getSetupImgLoader( vd.getViewSetupId() ).getFloatImage( vd.getTimePointId(), false );
 			t.identity();
 		}
 
