@@ -41,6 +41,54 @@ public class TransformationTools
 {
 	public static NumberFormat f = new DecimalFormat("#.####");
 
+	public static AffineTransform3D averageTransforms( final Collection< ? extends AffineGet > models )
+	{
+		if ( models == null || models.size() == 0 )
+			return null;
+
+		final double[] sum = new double[ 12 ];
+		
+		for ( AffineGet m : models )
+		{
+			final double[] tmp = m.getRowPackedCopy();
+			for ( int i = 0; i < sum.length; ++i )
+				sum[ i ] += tmp[ i ];
+		}
+
+		for ( int i = 0; i < sum.length; ++i )
+			sum[ i ] /= (double)models.size();
+
+		final AffineTransform3D affine = new AffineTransform3D();
+		affine.set(
+				sum[ 0 ], sum[ 1 ], sum[ 2 ], sum[ 3 ],
+				sum[ 4 ], sum[ 5 ], sum[ 6 ], sum[ 7 ],
+				sum[ 8 ], sum[ 9 ], sum[ 10 ], sum[ 11 ] );
+
+		return affine;
+	}
+
+	public static double[] averageVectors( final Collection< double[] > vectors )
+	{
+		if ( vectors == null || vectors.size() == 0 )
+			return null;
+
+		if ( vectors.size() == 1 )
+			return vectors.iterator().next();
+
+		final double[] sum = new double[ vectors.iterator().next().length ];
+		
+		for ( final double[] tmp : vectors )
+		{
+			for ( int i = 0; i < sum.length; ++i )
+				sum[ i ] += tmp[ i ];
+		}
+
+		for ( int i = 0; i < sum.length; ++i )
+			sum[ i ] /= (double)vectors.size();
+
+		return sum;
+	}
+
 	/**
 	 * WARNING: This fails on older MACs, in this case remove: 
 	 * 
@@ -173,8 +221,8 @@ public class TransformationTools
 		model.toMatrix( m );
 		
 		return
-			"(" + f.format( m[0][0] ) + ", " + f.format( m[0][1] ) + ", " + f.format( m[0][2] ) + ", " + f.format( m[0][3] ) + ")," +
-			"(" + f.format( m[1][0] ) + ", " + f.format( m[1][1] ) + ", " + f.format( m[1][2] ) + ", " + f.format( m[1][3] ) + ")," +
+			"(" + f.format( m[0][0] ) + ", " + f.format( m[0][1] ) + ", " + f.format( m[0][2] ) + ", " + f.format( m[0][3] ) + "), " +
+			"(" + f.format( m[1][0] ) + ", " + f.format( m[1][1] ) + ", " + f.format( m[1][2] ) + ", " + f.format( m[1][3] ) + "), " +
 			"(" + f.format( m[2][0] ) + ", " + f.format( m[2][1] ) + ", " + f.format( m[2][2] ) + ", " + f.format( m[2][3] ) + ")";
 	}
 
@@ -183,8 +231,8 @@ public class TransformationTools
 		final double[] m = model.getRowPackedCopy();
 
 		return
-			"(" + f.format( m[ 0 ] ) + ", " + f.format( m[ 1 ] ) + ", " + f.format( m[ 2 ] ) + ", " + f.format( m[ 3 ] ) + ")," +
-			"(" + f.format( m[ 4 ] ) + ", " + f.format( m[ 5 ] ) + ", " + f.format( m[ 6 ] ) + ", " + f.format( m[ 7 ] ) + ")," +
+			"(" + f.format( m[ 0 ] ) + ", " + f.format( m[ 1 ] ) + ", " + f.format( m[ 2 ] ) + ", " + f.format( m[ 3 ] ) + "), " +
+			"(" + f.format( m[ 4 ] ) + ", " + f.format( m[ 5 ] ) + ", " + f.format( m[ 6 ] ) + ", " + f.format( m[ 7 ] ) + "), " +
 			"(" + f.format( m[ 8 ] ) + ", " + f.format( m[ 9 ] ) + ", " + f.format( m[ 10 ] )+ ", " + f.format( m[ 11 ] )+ ")";
 	}
 
@@ -398,35 +446,6 @@ public class TransformationTools
 			list.loadInterestPoints();
 
 		return list.getInterestPointsCopy();
-	}
-
-	public static < M extends Model< M > > AffineTransform3D averageTransform(
-			final Collection< AffineTransform3D > models )
-	{
-		final double[] sum = new double[ 12 ];
-
-		for ( final AffineTransform3D t : models )
-		{
-			System.out.println( t );
-			final double[] tmp = t.getRowPackedCopy();
-
-			for ( int i = 0; i < sum.length; ++i )
-				sum[ i ] += tmp[ i ];
-		}
-
-		for ( int i = 0; i < sum.length; ++i )
-			sum[ i ] /= (double)models.size();
-
-		final AffineTransform3D affine = new AffineTransform3D();
-
-		affine.set(
-				sum[ 0 ], sum[ 1 ], sum[ 2 ], sum[ 3 ],
-				sum[ 4 ], sum[ 5 ], sum[ 6 ], sum[ 7 ],
-				sum[ 8 ], sum[ 9 ], sum[ 10 ], sum[ 11 ] );
-
-		System.out.println( affine );
-
-		return affine;
 	}
 
 	public static List< CorrespondingInterestPoints > loadCorrespondingInterestPoints( final InterestPointList list )
