@@ -128,30 +128,33 @@ public class Interest_Point_Registration implements PlugIn
 
 	public boolean register(
 			final SpimData2 data,
-			final List< ViewId > viewIds )
+			final Collection< ? extends ViewId > viewCollection )
 	{
-		return register( data, viewIds, "", null, false );
+		return register( data, viewCollection, "", null, false );
 	}
 
 	public boolean register(
 			final SpimData2 data,
-			final List< ViewId > viewIds,
+			final Collection< ? extends ViewId > viewCollection,
 			final String xmlFileName,
 			final boolean saveXML )
 	{
-		return register( data, viewIds, "", xmlFileName, saveXML );
+		return register( data, viewCollection, "", xmlFileName, saveXML );
 	}
 
 	public boolean register(
 			final SpimData2 data,
-			final List< ViewId > viewIds,
+			final Collection< ? extends ViewId > viewCollection,
 			final String clusterExtension,
 			final String xmlFileName,
 			final boolean saveXML )
 	{
 		// filter not present ViewIds
-		List< ViewId > removed = SpimData2.filterMissingViews( data, viewIds );
-		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Removed " +  removed.size() + " views because they are not present." );
+		final ArrayList< ViewId > viewIds = new ArrayList<>();
+		viewIds.addAll( viewCollection );
+
+		List< ViewId > removed  = SpimData2.filterMissingViews( data, viewIds );
+		if ( removed.size() > 0 ) IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Removed " +  removed.size() + " views because they are not present." );
 
 		// which timepoints are part of the 
 		final List< TimePoint > timepointToProcess = SpimData2.getAllTimePointsSorted( data, viewIds );
