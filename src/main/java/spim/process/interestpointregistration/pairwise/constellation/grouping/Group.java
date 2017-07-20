@@ -488,18 +488,23 @@ public class Group< V > implements Iterable< V >
 	public static String pvid( final ViewId viewId ) { return "tpId=" + viewId.getTimePointId() + " setupId=" + viewId.getViewSetupId(); }
 	public static String pvids( final ViewId viewId ) { return viewId.getTimePointId() + "-" + viewId.getViewSetupId(); }
 	@SuppressWarnings("unchecked")
-	public static String gvids( final Group< ? > group )
+	public static String gvids( final Collection< ? > group )
 	{
 		String groupS = "";
 
-		if ( ViewId.class.isInstance( group.getViews().iterator().next() ) )
-			for ( final ViewId a : getViewsSorted( (Set<ViewId>)(group.getViews()) ) )
+		if ( ViewId.class.isInstance( group.iterator().next() ) )
+			for ( final ViewId a : getViewsSorted( (Collection<ViewId>)(group) ) )
 				groupS += pvids( a ) + " ";
 		else
-			for ( final Object a : group.getViews() )
+			for ( final Object a : group )
 				groupS += a + " ";
 
 		return groupS.trim();
+	}
+
+	public static String gvids( final Group< ? > group )
+	{
+		return gvids( group.getViews() );
 	}
 
 	public static void main( String[] args )
