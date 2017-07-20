@@ -107,7 +107,14 @@ public class DownsampleTools
 
 	public static RandomAccessibleInterval< FloatType > openAtLowestLevel(
 			final ImgLoader imgLoader,
-			final ViewDescription vd,
+			final ViewId vd  )
+	{
+		return openAtLowestLevel( imgLoader, vd, null );
+	}
+
+	public static RandomAccessibleInterval< FloatType > openAtLowestLevel(
+			final ImgLoader imgLoader,
+			final ViewId vd,
 			final AffineTransform3D t )
 	{
 		final RandomAccessibleInterval< FloatType > input;
@@ -137,14 +144,16 @@ public class DownsampleTools
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Loading level " + Util.printCoordinates( mipmapResolutions[ bestLevel ] ) );
 
 			input = mrImgLoader.getSetupImgLoader( vd.getViewSetupId() ).getFloatImage( vd.getTimePointId(), bestLevel, false );
-			t.set( mrImgLoader.getSetupImgLoader( vd.getViewSetupId() ).getMipmapTransforms()[ bestLevel ] );
+			if ( t != null )
+				t.set( mrImgLoader.getSetupImgLoader( vd.getViewSetupId() ).getMipmapTransforms()[ bestLevel ] );
 		}
 		else
 		{
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Loading full-resolution images :( " );
 
 			input = imgLoader.getSetupImgLoader( vd.getViewSetupId() ).getFloatImage( vd.getTimePointId(), false );
-			t.identity();
+			if ( t != null )
+				t.identity();
 		}
 
 		return input;
