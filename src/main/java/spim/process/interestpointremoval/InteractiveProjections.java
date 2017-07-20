@@ -44,13 +44,13 @@ import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
-import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.process.export.DisplayImage;
 import spim.process.interestpointregistration.TransformationTools;
 import spim.process.psf.PSFCombination;
 
@@ -194,7 +194,7 @@ public class InteractiveProjections
 
 	protected ImagePlus showProjection( final Img< FloatType > img )
 	{
-		final ImagePlus imp = ImageJFunctions.wrapFloat( img, "Max Projection" );
+		final ImagePlus imp = DisplayImage.getImagePlusInstance( img, false, "Max Projection", Double.NaN, Double.NaN );
 		imp.show();
 		return imp;
 	}
