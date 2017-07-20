@@ -179,7 +179,10 @@ public class Interest_Point_Detection implements PlugIn
 		// the interest point detection should query its parameters
 		if ( !ipd.queryParameters( defineAnisotropy, setMinMax, limitDetections, groupTiles, groupIllums ) )
 			return false;
-		
+
+		// if grouped, we need to get the min/max intensity for all groups
+		ipd.preprocess();
+
 		// now extract all the detections
 		for ( final TimePoint tp : SpimData2.getAllTimePointsSorted( data, viewIds ) )
 		{
