@@ -74,6 +74,34 @@ public class FusionTools
 	public static double[] defaultContentBasedSigma1 = new double[]{ 20, 20, 20 };
 	public static double[] defaultContentBasedSigma2 = new double[]{ 40, 40, 40 };
 
+	public static long numPixels( final Interval bb, final double downsampling )
+	{
+		final long[] min = new long[ bb.numDimensions() ];
+		final long[] max = new long[ bb.numDimensions() ];
+
+		bb.min( min );
+		bb.max( max );
+
+		return numPixels( min, max, downsampling );
+	}
+
+	public static long numPixels( final long[] min, final long[] max, final double downsampling )
+	{
+		final double ds;
+
+		if ( Double.isNaN( downsampling ) )
+			ds = 1;
+		else
+			ds = downsampling;
+
+		long numpixels = 1;
+
+		for ( int d = 0; d < min.length; ++d )
+			numpixels *= Math.round( (max[ d ] - min[ d ])/ds );
+
+		return numpixels;
+	}
+
 	public static RandomAccessibleInterval< FloatType > fuseVirtual(
 			final SpimData spimData,
 			final Collection< ? extends ViewId > views,

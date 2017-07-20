@@ -12,6 +12,7 @@ import java.awt.event.TextListener;
 import ij.gui.GenericDialog;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
+import spim.process.fusion.FusionTools;
 
 public class ManageFusionDialogListeners
 {
@@ -84,9 +85,7 @@ public class ManageFusionDialogListeners
 		fusion.splittingType = splitChoice.getSelectedIndex();
 
 		final BoundingBox bb = fusion.allBoxes.get( fusion.boundingBox );
-		final int[] min = bb.getMin();
-		final int[] max = bb.getMax();
-		final long numPixels = numPixels( min, max, fusion.downsampling );
+		final long numPixels = FusionTools.numPixels( bb, fusion.downsampling );
 
 		final int bytePerPixel;
 		if ( fusion.pixelType == 1 )
@@ -98,6 +97,9 @@ public class ManageFusionDialogListeners
 
 		label1.setText( "Fused image: " + megabytes + " MB, required total memory ~" + totalRAM( megabytes, bytePerPixel ) +  " MB" );
 		label1.setForeground( GUIHelper.good );
+
+		final int[] min = bb.getMin();
+		final int[] max = bb.getMax();
 
 		label2.setText( "Dimensions: " + 
 				Math.round( (max[ 0 ] - min[ 0 ] + 1)/fusion.downsampling ) + " x " + 
@@ -143,15 +145,5 @@ public class ManageFusionDialogListeners
 			fusedSizeMB = 2 * Math.round( fusedSizeMB / Math.max( 1, Math.pow( fusedSizeMB, 0.3 ) ) );
 
 		return inputImagesMB + processingMB + fusedSizeMB;
-	}
-
-	protected static long numPixels( final int[] min, final int[] max, final double downsampling )
-	{
-		long numpixels = 1;
-		
-		for ( int d = 0; d < min.length; ++d )
-			numpixels *= Math.round( (max[ d ] - min[ d ])/downsampling );
-		
-		return numpixels;
 	}
 }
