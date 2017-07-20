@@ -110,7 +110,7 @@ public class RemoveDetectionsPopup extends JMenu implements ExplorerWindowSetabl
 
 		this.add( showDistanceHist );
 
-		//byDistance.addActionListener( new MyActionListener( 0 ) );
+		byDistance.addActionListener( new ThinOutListener() );
 		this.add( byDistance );
 
 		interactivelyXY.addActionListener( new InteractiveListener( 1 ) );
@@ -170,6 +170,38 @@ public class RemoveDetectionsPopup extends JMenu implements ExplorerWindowSetabl
 		}
 	}
 
+	public class ThinOutListener implements ActionListener
+	{
+		@Override
+		public void actionPerformed( final ActionEvent e )
+		{
+			if ( panel == null )
+			{
+				IOFunctions.println( "Panel not set for " + this.getClass().getSimpleName() );
+				return;
+			}
+
+			final SpimData2 spimData = (SpimData2)panel.getSpimData();
+
+			final ArrayList< ViewId > views = new ArrayList<>();
+			views.addAll( ApplyTransformationPopup.getSelectedViews( panel ) );
+
+			// filter not present ViewIds
+			SpimData2.filterMissingViews( spimData, views );
+
+			new Thread( new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					if ( ThinOut_Detections.thinOut( spimData, views ) )
+						panel.updateContent(); // update interestpoint panel if available
+				}
+			} ).start();
+
+		}
+	}
+
 	public class InteractiveListener implements ActionListener
 	{
 		final int index;
@@ -196,32 +228,6 @@ public class RemoveDetectionsPopup extends JMenu implements ExplorerWindowSetabl
 			// filter not present ViewIds
 			SpimData2.filterMissingViews( panel.getSpimData(), views );
 
-			/*
-
-			if ( index == 0 )
-			{
-				final List< ViewId > viewIds = panel.selectedRowsViewId();
-				final SpimData2 data = (SpimData2)panel.getSpimData();
-
-				// ask which channels have the objects we are searching for
-				final List< ChannelProcessThinOut > channels = ThinOut_Detections.getChannelsAndLabels( data, viewIds );
-
-				if ( channels == null )
-					return;
-
-				// get the actual min/max thresholds for cutting out
-				if ( !ThinOut_Detections.getThinOutThresholds( data, viewIds, channels ) )
-					return;
-
-				// thin out detections and save the new interestpoint files
-				if ( !ThinOut_Detections.thinOut( data, viewIds, channels, false ) )
-					return;
-
-				panel.updateContent(); // update interestpoint panel if available
-
-				return;
-			}
-			*/
 			if ( views.size() != 1 )
 			{
 				JOptionPane.showMessageDialog( null, "Interactive Removal of Detections only supports a single view at a time." );
@@ -249,7 +255,6 @@ public class RemoveDetectionsPopup extends JMenu implements ExplorerWindowSetabl
 					panel.updateContent(); // update interestpoint panel if available
 				}
 			} ).start();
-
 		}
 	}
 
