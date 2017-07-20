@@ -24,10 +24,8 @@ package spim.fiji.spimdata.explorer.popup;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -36,15 +34,13 @@ import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 
 import ij.gui.GenericDialog;
-import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
+import spim.fiji.plugin.ThinOut_Detections;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
-import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.process.interestpointdetection.InterestPointTools;
@@ -99,7 +95,7 @@ public class RemoveDetectionsPopup extends JMenu implements ExplorerWindowSetabl
 					for ( int i = 0; i < labels.length; ++i )
 					{
 						JMenuItem item = new JMenuItem( labels[ i ] );
-						item.addActionListener( new HistogramListener( spimData, views, InterestPointTools.getSelectedLabel( labels, i ) ) );
+						item.addActionListener( new HistogramListener( spimData, views, InterestPointTools.getSelectedLabel( labels, i ), i ) );
 						showDistanceHist.add( item );
 					}
 				}
@@ -138,12 +134,14 @@ public class RemoveDetectionsPopup extends JMenu implements ExplorerWindowSetabl
 		final SpimData2 spimData;
 		final ArrayList< ViewId > views;
 		final String label;
+		final int i;
 
-		public HistogramListener( final SpimData2 spimData, final ArrayList< ViewId > views, final String label )
+		public HistogramListener( final SpimData2 spimData, final ArrayList< ViewId > views, final String label, final int i )
 		{
 			this.spimData = spimData;
 			this.views = views;
 			this.label = label;
+			this.i = i;
 		}
 
 		@Override
@@ -162,6 +160,9 @@ public class RemoveDetectionsPopup extends JMenu implements ExplorerWindowSetabl
 						title = Group.gvids( views );
 					else
 						title = views.size() + " views";
+
+					// suggest to thin out this one when calling the plugin
+					ThinOut_Detections.defaultLabel = i;
 
 					DistanceHistogram.plotHistogram( spimData, views, label, title );
 				}
@@ -232,45 +233,23 @@ public class RemoveDetectionsPopup extends JMenu implements ExplorerWindowSetabl
 			if ( labels == null )
 				return;
 
-			final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( views.get( 0 ) );
-			final ViewInterestPoints interestPoints = spimData.getViewInterestPoints();
-			final ViewInterestPointLists lists = interestPoints.getViewInterestPointLists( vd );
-			final String label = labels.getA();
-			final String newLabel = labels.getB();
-
-			final InteractiveProjections ip = new InteractiveProjections( spimData, vd, label, newLabel, 2 - (index - 1) );
-
-			ip.runWhenDone( new Thread( new Runnable()
+			new Thread( new Runnable()
 			{
 				@Override
 				public void run()
 				{
-					if ( ip.wasCanceled() )
-						return;
+					final InteractiveProjections ip = InteractiveProjections.removeInteractively( spimData, views.get( 0 ), index - 1, labels.getA(), labels.getB() );
 
-					final List< InterestPoint > ipList = ip.getInterestPointList();
-
-					if ( ipList.size() == 0 )
+					do
 					{
-						IOFunctions.println( "No detections remaining. Quitting." );
-						return;
+						try { Thread.sleep( 100 ); } catch ( InterruptedException e ) {}
 					}
-
-					// add new label
-					final InterestPointList newIpl = new InterestPointList(
-							lists.getInterestPointList( label ).getBaseDir(),
-							new File(
-									lists.getInterestPointList( label ).getFile().getParentFile(),
-									"tpId_" + vd.getTimePointId() + "_viewSetupId_" + vd.getViewSetupId() + "." + newLabel ) );
-
-					newIpl.setInterestPoints( ipList );
-					newIpl.setParameters( "manually removed detections from '" +label + "'" );
-
-					lists.addInterestPointList( newLabel, newIpl );
+					while ( ip.isRunning() );
 
 					panel.updateContent(); // update interestpoint panel if available
 				}
-			}) );
+			} ).start();
+
 		}
 	}
 

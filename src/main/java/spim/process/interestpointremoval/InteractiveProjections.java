@@ -29,6 +29,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -279,4 +280,45 @@ public class InteractiveProjections
 		}
 	}
 
+	public static InteractiveProjections removeInteractively( final SpimData2 spimData, final ViewId viewId, final int dim, final String label, final String newLabel )
+	{
+		final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( viewId );
+		final ViewInterestPoints interestPoints = spimData.getViewInterestPoints();
+		final ViewInterestPointLists lists = interestPoints.getViewInterestPointLists( vd );
+
+		final InteractiveProjections ip = new InteractiveProjections( spimData, vd, label, newLabel, 2 - dim );
+
+		ip.runWhenDone( new Thread( new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				if ( ip.wasCanceled() )
+					return;
+
+				final List< InterestPoint > ipList = ip.getInterestPointList();
+
+				if ( ipList.size() == 0 )
+				{
+					IOFunctions.println( "No detections remaining. Quitting." );
+					return;
+				}
+
+				// add new label
+				final InterestPointList newIpl = new InterestPointList(
+						lists.getInterestPointList( label ).getBaseDir(),
+						new File(
+								lists.getInterestPointList( label ).getFile().getParentFile(),
+								"tpId_" + vd.getTimePointId() + "_viewSetupId_" + vd.getViewSetupId() + "." + newLabel ) );
+
+				newIpl.setInterestPoints( ipList );
+				newIpl.setCorrespondingInterestPoints( new ArrayList<>() );
+				newIpl.setParameters( "manually removed detections from '" +label + "'" );
+
+				lists.addInterestPointList( newLabel, newIpl );
+			}
+		}) );
+
+		return ip;
+	}
 }
