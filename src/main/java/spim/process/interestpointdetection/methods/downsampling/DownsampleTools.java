@@ -17,6 +17,7 @@ import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Util;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 
 public class DownsampleTools
@@ -104,6 +105,51 @@ public class DownsampleTools
 		return (int)Math.round( exp2 );
 	}
 
+	public static RandomAccessibleInterval< FloatType > openAtLowestLevel(
+			final ImgLoader imgLoader,
+			final ViewDescription vd,
+			final AffineTransform3D t )
+	{
+		final RandomAccessibleInterval< FloatType > input;
+
+		if ( MultiResolutionImgLoader.class.isInstance( imgLoader ) )
+		{
+			final MultiResolutionImgLoader mrImgLoader = ( MultiResolutionImgLoader ) imgLoader;
+			final double[][] mipmapResolutions = mrImgLoader.getSetupImgLoader( vd.getViewSetupId() ).getMipmapResolutions();
+
+			int maxMul = Integer.MIN_VALUE;
+			int bestLevel = -1;
+
+			for ( int i = 0; i < mipmapResolutions.length; ++i )
+			{
+				int mul = 1;
+
+				for ( int d = 0; d < mipmapResolutions[ i ].length; ++d )
+					mul *= mipmapResolutions[ i ][ d ];
+
+				if ( mul > maxMul )
+				{
+					maxMul = mul;
+					bestLevel = i;
+				}
+			}
+
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Loading level " + Util.printCoordinates( mipmapResolutions[ bestLevel ] ) );
+
+			input = mrImgLoader.getSetupImgLoader( vd.getViewSetupId() ).getFloatImage( vd.getTimePointId(), bestLevel, false );
+			t.set( mrImgLoader.getSetupImgLoader( vd.getViewSetupId() ).getMipmapTransforms()[ bestLevel ] );
+		}
+		else
+		{
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Loading full-resolution images :( " );
+
+			input = imgLoader.getSetupImgLoader( vd.getViewSetupId() ).getFloatImage( vd.getTimePointId(), false );
+			t.identity();
+		}
+
+		return input;
+	}
+
 	/**
 	 * 
 	 * @param imgLoader the imgloader
@@ -114,7 +160,7 @@ public class DownsampleTools
 	 * @return opened image
 	 */
 	public static RandomAccessibleInterval< FloatType > openAndDownsample(
-			ImgLoader imgLoader,
+			final ImgLoader imgLoader,
 			final ViewDescription vd,
 			final AffineTransform3D t,
 			final int downsampleXY,
