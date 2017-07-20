@@ -152,19 +152,10 @@ public class RemoveDetectionsPopup extends JMenu implements ExplorerWindowSetabl
 				@Override
 				public void run()
 				{
-					String title;
-
-					if ( views.size() == 1 )
-						title = Group.pvid( views.get( 0 ) );
-					else if ( views.size() < 5 )
-						title = Group.gvids( views );
-					else
-						title = views.size() + " views";
-
 					// suggest to thin out this one when calling the plugin
 					ThinOut_Detections.defaultLabel = i;
 
-					DistanceHistogram.plotHistogram( spimData, views, label, title );
+					DistanceHistogram.plotHistogram( spimData, views, label, DistanceHistogram.getHistogramTitle( views ) );
 				}
 			} ).start();
 		}
@@ -258,7 +249,7 @@ public class RemoveDetectionsPopup extends JMenu implements ExplorerWindowSetabl
 		}
 	}
 
-	public static Pair< String, String > queryLabelAndNewLabel( final SpimData2 spimData, final ViewId vd )
+	private static Pair< String, String > queryLabelAndNewLabel( final SpimData2 spimData, final ViewId vd )
 	{
 		final ViewInterestPoints interestPoints = spimData.getViewInterestPoints();
 		final ViewInterestPointLists lists = interestPoints.getViewInterestPointLists( vd );

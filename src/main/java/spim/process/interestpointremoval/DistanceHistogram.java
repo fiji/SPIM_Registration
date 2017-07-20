@@ -20,6 +20,7 @@ import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.process.interestpointregistration.TransformationTools;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 import spim.process.interestpointremoval.histogram.Histogram;
 
 public class DistanceHistogram
@@ -105,4 +106,17 @@ public class DistanceHistogram
 		return h;
 	}
 
+	public static String getHistogramTitle( final Collection< ? extends ViewId > views )
+	{
+		String title;
+
+		if ( views.size() == 1 )
+			title = Group.pvid( views.iterator().next() );
+		else if ( views.size() < 5 )
+			title = Group.gvids( views );
+		else
+			title = views.size() + " views";
+
+		return title;
+	}
 }
