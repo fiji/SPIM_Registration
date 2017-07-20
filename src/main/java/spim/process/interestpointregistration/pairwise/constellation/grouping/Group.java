@@ -16,6 +16,7 @@ import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
@@ -87,11 +88,28 @@ public class Group< V > implements Iterable< V >
 	@Override
 	public String toString() { return gvids( this ); }
 
-	public static < V extends ViewId > List< V > getViewsSorted( final Set< V > views )
+	public static < V extends ViewId > List< V > getViewsSorted( final Collection< V > views )
 	{
 		final ArrayList< V > sorted = new ArrayList<>();
 		sorted.addAll( views );
 		Collections.sort( sorted );
+		return sorted;
+	}
+
+	public static < V extends ViewId > ArrayList< Group< V > > getGroupsSorted( final Collection< Group< V > > groups )
+	{
+		final ArrayList< Group< V > > sorted = new ArrayList<>();
+		sorted.addAll( groups );
+
+		Collections.sort( sorted, new Comparator< Group< V > >()
+		{
+			@Override
+			public int compare( final Group< V > o1, final Group< V > o2 )
+			{
+				return Group.getViewsSorted( o1.getViews() ).get( 0 ).compareTo( Group.getViewsSorted( o2.getViews() ).get( 0 ) );
+			}
+		} );
+
 		return sorted;
 	}
 
