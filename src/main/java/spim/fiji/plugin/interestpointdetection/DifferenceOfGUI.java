@@ -10,6 +10,7 @@ import java.util.Map;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.gui.GUI;
 import ij.gui.GenericDialog;
 import mpicbg.models.RigidModel3D;
 import mpicbg.spim.data.generic.base.Entity;
@@ -153,6 +154,12 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 
 		gd.addChoice( "Subpixel_localization", localizationChoice, localizationChoice[ defaultLocalization ] );
 		gd.addChoice( "Interest_point_specification", brightnessChoice, brightnessChoice[ defaultBrightness ] );
+
+		final String[] ds = DownsampleTools.availableDownsamplings( spimData, viewIdsToProcess.get( 0 ) );
+		String out = "(" + ds[ 0 ].replaceAll( " ", "" ) + ")";
+		for ( int i = 1; i < ds.length; ++i )
+			out += ", (" + ds[ i ].replaceAll( " ", "" ) + ")";
+		gd.addMessage( "Precomputed Resolutions:       " + out, GUIHelper.smallStatusFont );
 
 		gd.addChoice( "Downsample_XY", downsampleChoiceXY, downsampleChoiceXY[ defaultDownsampleXYIndex ] );
 		gd.addChoice( "Downsample_Z", downsampleChoiceZ, downsampleChoiceZ[ defaultDownsampleZIndex ] );
