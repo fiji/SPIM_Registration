@@ -5,6 +5,7 @@ import static mpicbg.spim.data.generic.sequence.ImgLoaderHints.LOAD_COMPLETELY;
 import java.util.Date;
 import java.util.List;
 
+import bdv.img.hdf5.Hdf5ImageLoader;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.MultiResolutionImgLoader;
@@ -105,16 +106,16 @@ public class DownsampleTools
 		return (int)Math.round( exp2 );
 	}
 
-	public static RandomAccessibleInterval< FloatType > openAtLowestLevel(
+	public static RandomAccessibleInterval< FloatType > openAtLowestLevelFloat(
 			final ImgLoader imgLoader,
-			final ViewId vd  )
+			final ViewId view )
 	{
-		return openAtLowestLevel( imgLoader, vd, null );
+		return openAtLowestLevelFloat( imgLoader, view, null );
 	}
 
-	public static RandomAccessibleInterval< FloatType > openAtLowestLevel(
+	public static RandomAccessibleInterval< FloatType > openAtLowestLevelFloat(
 			final ImgLoader imgLoader,
-			final ViewId vd,
+			final ViewId view,
 			final AffineTransform3D t )
 	{
 		final RandomAccessibleInterval< FloatType > input;
@@ -122,41 +123,87 @@ public class DownsampleTools
 		if ( MultiResolutionImgLoader.class.isInstance( imgLoader ) )
 		{
 			final MultiResolutionImgLoader mrImgLoader = ( MultiResolutionImgLoader ) imgLoader;
-			final double[][] mipmapResolutions = mrImgLoader.getSetupImgLoader( vd.getViewSetupId() ).getMipmapResolutions();
-
-			int maxMul = Integer.MIN_VALUE;
-			int bestLevel = -1;
-
-			for ( int i = 0; i < mipmapResolutions.length; ++i )
-			{
-				int mul = 1;
-
-				for ( int d = 0; d < mipmapResolutions[ i ].length; ++d )
-					mul *= mipmapResolutions[ i ][ d ];
-
-				if ( mul > maxMul )
-				{
-					maxMul = mul;
-					bestLevel = i;
-				}
-			}
+			final double[][] mipmapResolutions = mrImgLoader.getSetupImgLoader( view.getViewSetupId() ).getMipmapResolutions();
+			final int bestLevel = findLowestResolutionLevel( mrImgLoader, view );
 
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Loading level " + Util.printCoordinates( mipmapResolutions[ bestLevel ] ) );
 
-			input = mrImgLoader.getSetupImgLoader( vd.getViewSetupId() ).getFloatImage( vd.getTimePointId(), bestLevel, false );
+			input = mrImgLoader.getSetupImgLoader( view.getViewSetupId() ).getFloatImage( view.getTimePointId(), bestLevel, false );
 			if ( t != null )
-				t.set( mrImgLoader.getSetupImgLoader( vd.getViewSetupId() ).getMipmapTransforms()[ bestLevel ] );
+				t.set( mrImgLoader.getSetupImgLoader( view.getViewSetupId() ).getMipmapTransforms()[ bestLevel ] );
 		}
 		else
 		{
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Loading full-resolution images :( " );
 
-			input = imgLoader.getSetupImgLoader( vd.getViewSetupId() ).getFloatImage( vd.getTimePointId(), false );
+			input = imgLoader.getSetupImgLoader( view.getViewSetupId() ).getFloatImage( view.getTimePointId(), false );
 			if ( t != null )
 				t.identity();
 		}
 
 		return input;
+	}
+
+	public static RandomAccessibleInterval openAtLowestLevel(
+			final ImgLoader imgLoader,
+			final ViewId view )
+	{
+		return openAtLowestLevel( imgLoader, view, null );
+	}
+
+	public static RandomAccessibleInterval openAtLowestLevel(
+			final ImgLoader imgLoader,
+			final ViewId view,
+			final AffineTransform3D t )
+	{
+		final RandomAccessibleInterval input;
+
+		if ( MultiResolutionImgLoader.class.isInstance( imgLoader ) )
+		{
+			final MultiResolutionImgLoader mrImgLoader = ( MultiResolutionImgLoader ) imgLoader;
+			final double[][] mipmapResolutions = mrImgLoader.getSetupImgLoader( view.getViewSetupId() ).getMipmapResolutions();
+			final int bestLevel = findLowestResolutionLevel( mrImgLoader, view );
+
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Loading level " + Util.printCoordinates( mipmapResolutions[ bestLevel ] ) );
+
+			input = mrImgLoader.getSetupImgLoader( view.getViewSetupId() ).getImage( view.getTimePointId(), bestLevel );
+			if ( t != null )
+				t.set( mrImgLoader.getSetupImgLoader( view.getViewSetupId() ).getMipmapTransforms()[ bestLevel ] );
+		}
+		else
+		{
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Loading full-resolution images :( " );
+
+			input = imgLoader.getSetupImgLoader( view.getViewSetupId() ).getImage( view.getTimePointId() );
+			if ( t != null )
+				t.identity();
+		}
+
+		return input;
+	}
+
+	public static int findLowestResolutionLevel( final MultiResolutionImgLoader mrImgLoader, final ViewId view )
+	{
+		final double[][] mipmapResolutions = mrImgLoader.getSetupImgLoader( view.getViewSetupId() ).getMipmapResolutions();
+
+		int maxMul = Integer.MIN_VALUE;
+		int bestLevel = -1;
+
+		for ( int i = 0; i < mipmapResolutions.length; ++i )
+		{
+			int mul = 1;
+
+			for ( int d = 0; d < mipmapResolutions[ i ].length; ++d )
+				mul *= mipmapResolutions[ i ][ d ];
+
+			if ( mul > maxMul )
+			{
+				maxMul = mul;
+				bestLevel = i;
+			}
+		}
+
+		return bestLevel;
 	}
 
 	/**
