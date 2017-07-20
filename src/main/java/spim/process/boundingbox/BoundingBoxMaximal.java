@@ -7,12 +7,12 @@ import java.util.HashMap;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
-import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Dimensions;
 import net.imglib2.FinalRealInterval;
+import net.imglib2.realtransform.AffineTransform3D;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
@@ -22,7 +22,7 @@ public class BoundingBoxMaximal implements BoundingBoxEstimation
 {
 	final Collection< ViewId > views;
 	final HashMap< ViewId, Dimensions > dimensions;
-	final HashMap< ViewId, ViewRegistration > registrations;
+	final HashMap< ViewId, AffineTransform3D > registrations;
 
 	public BoundingBoxMaximal(
 			final Collection< ? extends ViewId > views,
@@ -39,17 +39,23 @@ public class BoundingBoxMaximal implements BoundingBoxEstimation
 		{
 			final BasicViewDescription< ? > vd = data.getSequenceDescription().getViewDescriptions().get( viewId );
 			dimensions.put( viewId, ViewSetupUtils.getSizeOrLoad( vd.getViewSetup(), vd.getTimePoint(), data.getSequenceDescription().getImgLoader() ) );
-			registrations.put( viewId, data.getViewRegistrations().getViewRegistration( vd ) );
+
+			data.getViewRegistrations().getViewRegistration( vd ).updateModel();
+			registrations.put( viewId, data.getViewRegistrations().getViewRegistration( vd ).getModel() );
 		}
 	}
 
 	public BoundingBoxMaximal(
 			final Collection< ? extends ViewId > views,
-			final HashMap< ViewId, Dimensions > dimensions,
-			final HashMap< ViewId, ViewRegistration > registrations )
+			final HashMap< ? extends ViewId, Dimensions > dimensions,
+			final HashMap< ? extends ViewId, AffineTransform3D > registrations )
 	{
-		this.dimensions = dimensions;
-		this.registrations = registrations;
+		this.dimensions = new HashMap<>();
+		this.dimensions.putAll( dimensions );
+
+		this.registrations = new HashMap<>();
+		this.registrations.putAll( registrations );
+
 		this.views = new ArrayList<>();
 		this.views.addAll( views );
 	}
@@ -103,7 +109,7 @@ public class BoundingBoxMaximal implements BoundingBoxEstimation
 	public static void computeMaxBoundingBoxDimensions(
 			final Collection< ViewId > viewIds,
 			final HashMap< ViewId, Dimensions > dimensions,
-			final HashMap< ViewId, ViewRegistration > registrations,
+			final HashMap< ViewId, AffineTransform3D > registrations,
 			final double[] minBB, final double[] maxBB )
 	{
 		for ( int d = 0; d < minBB.length; ++d )
@@ -132,10 +138,8 @@ public class BoundingBoxMaximal implements BoundingBoxEstimation
 					size.dimension( 0 ) - 1,
 					size.dimension( 1 ) - 1,
 					size.dimension( 2 ) - 1 };
-			
-			final ViewRegistration r = registrations.get( viewId );
-			r.updateModel();
-			final FinalRealInterval interval = r.getModel().estimateBounds( new FinalRealInterval( min, max ) );
+
+			final FinalRealInterval interval = registrations.get( viewId ).estimateBounds( new FinalRealInterval( min, max ) );
 			
 			for ( int d = 0; d < minBB.length; ++d )
 			{
