@@ -24,18 +24,22 @@ package spim.fiji.spimdata.explorer.popup;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
+import ij.gui.GenericDialog;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.ImgLib2Temp.Pair;
+import spim.fiji.ImgLib2Temp.ValuePair;
 import spim.fiji.plugin.Interactive_Remove_Detections;
 import spim.fiji.plugin.ThinOut_Detections;
 import spim.fiji.plugin.removedetections.InteractiveProjections;
@@ -46,12 +50,16 @@ import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class RemoveDetectionsPopup extends JMenu implements ExplorerWindowSetable
 {
 	private static final long serialVersionUID = 1L;
 
 	ExplorerWindow< ?, ? > panel = null;
+
+	public static int defaultLabel = 0;
+	public static String defaultNewLabel = "Manually removed";
 
 	public RemoveDetectionsPopup()
 	{
@@ -131,21 +139,25 @@ public class RemoveDetectionsPopup extends JMenu implements ExplorerWindowSetabl
 			}
 			else
 			{
-				final List< BasicViewDescription< ? extends BasicViewSetup > > vds = panel.selectedRows();
+				final ArrayList< ViewId > views = new ArrayList<>();
+				views.addAll( ApplyTransformationPopup.getSelectedViews( panel ) );
 
-				if ( vds.size() != 1 )
+				// filter not present ViewIds
+				SpimData2.filterMissingViews( panel.getSpimData(), views );
+
+				if ( views.size() != 1 )
 				{
 					JOptionPane.showMessageDialog( null, "Interactive Removal of Detections only supports a single view at a time." );
 					return;
 				}
 
-				final Pair< String, String > labels = Interactive_Remove_Detections.queryLabelAndNewLabel( (SpimData2)panel.getSpimData(), (ViewDescription)vds.get( 0 ) );
+				final Pair< String, String > labels = queryLabelAndNewLabel( (SpimData2)panel.getSpimData(), views.get( 0 ) );
 
 				if ( labels == null )
 					return;
 
 				final SpimData2 spimData = (SpimData2)panel.getSpimData();
-				final ViewDescription vd = (ViewDescription)vds.get( 0 );
+				final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( views.get( 0 ) );
 				final ViewInterestPoints interestPoints = spimData.getViewInterestPoints();
 				final ViewInterestPointLists lists = interestPoints.getViewInterestPointLists( vd );
 				final String label = labels.getA();
@@ -188,5 +200,42 @@ public class RemoveDetectionsPopup extends JMenu implements ExplorerWindowSetabl
 				return;
 			}
 		}
+	}
+
+	public static Pair< String, String > queryLabelAndNewLabel( final SpimData2 spimData, final ViewId vd )
+	{
+		final ViewInterestPoints interestPoints = spimData.getViewInterestPoints();
+		final ViewInterestPointLists lists = interestPoints.getViewInterestPointLists( vd );
+
+		if ( lists.getHashMap().keySet().size() == 0 )
+		{
+			IOFunctions.println( "No interest points available for view: " + Group.pvid( vd ) );
+			return null;
+		}
+
+		final String[] labels = new String[ lists.getHashMap().keySet().size() ];
+
+		int i = 0;
+		for ( final String label : lists.getHashMap().keySet() )
+			labels[ i++ ] = label;
+
+		if ( defaultLabel >= labels.length )
+			defaultLabel = 0;
+
+		Arrays.sort( labels );
+
+		final GenericDialog gd = new GenericDialog( "Select Interest Points To Remove" );
+
+		gd.addChoice( "Interest_Point_Label", labels, labels[ defaultLabel ]);
+		gd.addStringField( "New_Label", defaultNewLabel, 20 );
+
+		gd.showDialog();
+		if ( gd.wasCanceled() )
+			return null;
+
+		final String label = labels[ defaultLabel = gd.getNextChoiceIndex() ];
+		final String newLabel = gd.getNextString();
+
+		return new ValuePair< String, String >( label, newLabel );
 	}
 }
