@@ -21,6 +21,7 @@
  */
 package spim.fiji.spimdata.explorer.popup;
 
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -31,10 +32,10 @@ import java.util.List;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
 
 import ij.gui.GenericDialog;
-import mpicbg.spim.data.generic.sequence.BasicViewDescription;
-import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
@@ -46,7 +47,9 @@ import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.process.interestpointdetection.InterestPointTools;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
+import spim.process.interestpointremoval.DistanceHistogram;
 import spim.process.interestpointremoval.InteractiveProjections;
 
 public class RemoveDetectionsPopup extends JMenu implements ExplorerWindowSetable
@@ -62,17 +65,61 @@ public class RemoveDetectionsPopup extends JMenu implements ExplorerWindowSetabl
 	{
 		super( "Remove Interest Points" );
 
+		final JMenu showDistanceHist = new JMenu( "Show Distance Histogram" );
 		final JMenuItem byDistance = new JMenuItem( "By Distance ..." );
 		final JMenuItem interactivelyXY = new JMenuItem( "Interactively (XY Projection) ..." );
 		final JMenuItem interactivelyXZ = new JMenuItem( "Interactively (XZ Projection) ..." );
 		final JMenuItem interactivelyYZ = new JMenuItem( "Interactively (YZ Projection) ..." );
 
-		byDistance.addActionListener( new MyActionListener( 0 ) );
-		interactivelyXY.addActionListener( new MyActionListener( 1 ) );
-		interactivelyXZ.addActionListener( new MyActionListener( 2 ) );
-		interactivelyYZ.addActionListener( new MyActionListener( 3 ) );
+		showDistanceHist.addMenuListener( new MenuListener()
+		{
+			@Override
+			public void menuSelected( MenuEvent e )
+			{
+				showDistanceHist.removeAll();
 
+				final SpimData2 spimData = (SpimData2)panel.getSpimData();
+
+				final ArrayList< ViewId > views = new ArrayList<>();
+				views.addAll( ApplyTransformationPopup.getSelectedViews( panel ) );
+
+				// filter not present ViewIds
+				SpimData2.filterMissingViews( panel.getSpimData(), views );
+
+				final String[] labels = InterestPointTools.getAllInterestPointLabels( spimData, views );
+
+				if ( labels.length == 0 )
+				{
+					JMenuItem item = new JMenuItem( "No interest points found" );
+					item.setForeground( Color.GRAY );
+					showDistanceHist.add( item );
+				}
+				else
+				{
+					for ( int i = 0; i < labels.length; ++i )
+					{
+						JMenuItem item = new JMenuItem( labels[ i ] );
+						item.addActionListener( new HistogramListener( spimData, views, InterestPointTools.getSelectedLabel( labels, i ) ) );
+						showDistanceHist.add( item );
+					}
+				}
+			}
+
+			@Override
+			public void menuDeselected( MenuEvent e ) {}
+
+			@Override
+			public void menuCanceled( MenuEvent e ) {}
+		} );
+
+		this.add( showDistanceHist );
+
+		//byDistance.addActionListener( new MyActionListener( 0 ) );
 		this.add( byDistance );
+
+		interactivelyXY.addActionListener( new InteractiveListener( 1 ) );
+		interactivelyXZ.addActionListener( new InteractiveListener( 2 ) );
+		interactivelyYZ.addActionListener( new InteractiveListener( 3 ) );
 		this.add( interactivelyXY );
 		this.add( interactivelyXZ );
 		this.add( interactivelyYZ );
@@ -86,11 +133,47 @@ public class RemoveDetectionsPopup extends JMenu implements ExplorerWindowSetabl
 		return this;
 	}
 
-	public class MyActionListener implements ActionListener
+	public class HistogramListener implements ActionListener
+	{
+		final SpimData2 spimData;
+		final ArrayList< ViewId > views;
+		final String label;
+
+		public HistogramListener( final SpimData2 spimData, final ArrayList< ViewId > views, final String label )
+		{
+			this.spimData = spimData;
+			this.views = views;
+			this.label = label;
+		}
+
+		@Override
+		public void actionPerformed( final ActionEvent e )
+		{
+			new Thread( new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					String title;
+
+					if ( views.size() == 1 )
+						title = Group.pvid( views.get( 0 ) );
+					else if ( views.size() < 5 )
+						title = Group.gvids( views );
+					else
+						title = views.size() + " views";
+
+					DistanceHistogram.plotHistogram( spimData, views, label, title );
+				}
+			} ).start();
+		}
+	}
+
+	public class InteractiveListener implements ActionListener
 	{
 		final int index;
 
-		public MyActionListener( final int index )
+		public InteractiveListener( final int index )
 		{
 			this.index = index;
 		}
@@ -104,12 +187,15 @@ public class RemoveDetectionsPopup extends JMenu implements ExplorerWindowSetabl
 				return;
 			}
 
-			if ( !SpimData2.class.isInstance( panel.getSpimData() ) )
-			{
-				IOFunctions.println( "Only supported for SpimData2 objects: " + this.getClass().getSimpleName() );
-				return;
-			}
+			final SpimData2 spimData = (SpimData2)panel.getSpimData();
 
+			final ArrayList< ViewId > views = new ArrayList<>();
+			views.addAll( ApplyTransformationPopup.getSelectedViews( panel ) );
+
+			// filter not present ViewIds
+			SpimData2.filterMissingViews( panel.getSpimData(), views );
+
+			/*
 
 			if ( index == 0 )
 			{
@@ -134,68 +220,57 @@ public class RemoveDetectionsPopup extends JMenu implements ExplorerWindowSetabl
 
 				return;
 			}
-			else
+			*/
+			if ( views.size() != 1 )
 			{
-				final ArrayList< ViewId > views = new ArrayList<>();
-				views.addAll( ApplyTransformationPopup.getSelectedViews( panel ) );
-
-				// filter not present ViewIds
-				SpimData2.filterMissingViews( panel.getSpimData(), views );
-
-				if ( views.size() != 1 )
-				{
-					JOptionPane.showMessageDialog( null, "Interactive Removal of Detections only supports a single view at a time." );
-					return;
-				}
-
-				final Pair< String, String > labels = queryLabelAndNewLabel( (SpimData2)panel.getSpimData(), views.get( 0 ) );
-
-				if ( labels == null )
-					return;
-
-				final SpimData2 spimData = (SpimData2)panel.getSpimData();
-				final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( views.get( 0 ) );
-				final ViewInterestPoints interestPoints = spimData.getViewInterestPoints();
-				final ViewInterestPointLists lists = interestPoints.getViewInterestPointLists( vd );
-				final String label = labels.getA();
-				final String newLabel = labels.getB();
-
-				final InteractiveProjections ip = new InteractiveProjections( spimData, vd, label, newLabel, 2 - (index - 1) );
-
-				ip.runWhenDone( new Thread( new Runnable()
-				{
-					@Override
-					public void run()
-					{
-						if ( ip.wasCanceled() )
-							return;
-
-						final List< InterestPoint > ipList = ip.getInterestPointList();
-
-						if ( ipList.size() == 0 )
-						{
-							IOFunctions.println( "No detections remaining. Quitting." );
-							return;
-						}
-
-						// add new label
-						final InterestPointList newIpl = new InterestPointList(
-								lists.getInterestPointList( label ).getBaseDir(),
-								new File(
-										lists.getInterestPointList( label ).getFile().getParentFile(),
-										"tpId_" + vd.getTimePointId() + "_viewSetupId_" + vd.getViewSetupId() + "." + newLabel ) );
-
-						newIpl.setInterestPoints( ipList );
-						newIpl.setParameters( "manually removed detections from '" +label + "'" );
-
-						lists.addInterestPointList( newLabel, newIpl );
-
-						panel.updateContent(); // update interestpoint panel if available
-					}
-				}) );
-
+				JOptionPane.showMessageDialog( null, "Interactive Removal of Detections only supports a single view at a time." );
 				return;
 			}
+
+			final Pair< String, String > labels = queryLabelAndNewLabel( (SpimData2)panel.getSpimData(), views.get( 0 ) );
+
+			if ( labels == null )
+				return;
+
+			final ViewDescription vd = spimData.getSequenceDescription().getViewDescription( views.get( 0 ) );
+			final ViewInterestPoints interestPoints = spimData.getViewInterestPoints();
+			final ViewInterestPointLists lists = interestPoints.getViewInterestPointLists( vd );
+			final String label = labels.getA();
+			final String newLabel = labels.getB();
+
+			final InteractiveProjections ip = new InteractiveProjections( spimData, vd, label, newLabel, 2 - (index - 1) );
+
+			ip.runWhenDone( new Thread( new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					if ( ip.wasCanceled() )
+						return;
+
+					final List< InterestPoint > ipList = ip.getInterestPointList();
+
+					if ( ipList.size() == 0 )
+					{
+						IOFunctions.println( "No detections remaining. Quitting." );
+						return;
+					}
+
+					// add new label
+					final InterestPointList newIpl = new InterestPointList(
+							lists.getInterestPointList( label ).getBaseDir(),
+							new File(
+									lists.getInterestPointList( label ).getFile().getParentFile(),
+									"tpId_" + vd.getTimePointId() + "_viewSetupId_" + vd.getViewSetupId() + "." + newLabel ) );
+
+					newIpl.setInterestPoints( ipList );
+					newIpl.setParameters( "manually removed detections from '" +label + "'" );
+
+					lists.addInterestPointList( newLabel, newIpl );
+
+					panel.updateContent(); // update interestpoint panel if available
+				}
+			}) );
 		}
 	}
 

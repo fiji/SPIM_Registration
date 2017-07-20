@@ -66,6 +66,7 @@ import spim.fiji.spimdata.explorer.popup.MaxProjectPopup;
 import spim.fiji.spimdata.explorer.popup.PointSpreadFunctionsPopup;
 import spim.fiji.spimdata.explorer.popup.RegisterInterestPointsPopup;
 import spim.fiji.spimdata.explorer.popup.RegistrationExplorerPopup;
+import spim.fiji.spimdata.explorer.popup.RemoveDetectionsPopup;
 import spim.fiji.spimdata.explorer.popup.RemoveTransformationPopup;
 import spim.fiji.spimdata.explorer.popup.ReorientSamplePopup;
 import spim.fiji.spimdata.explorer.popup.ResavePopup;
@@ -708,6 +709,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 
 		popups.add( new LabelPopUp( " Interest Points" ) );
 		popups.add( new InterestPointsExplorerPopup() );
+		popups.add( new RemoveDetectionsPopup() );
 		popups.add( new VisualizeDetectionsPopup() );
 		popups.add( new Separator() );
 
