@@ -136,7 +136,6 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			// add empty preview
 			addMessageAsJLabel(previewFiles( new ArrayList<>()), gdp,  GUIHelper.smallStatusFont);
 
-			//Label lab = (Label)gdp.getComponent( 5 );
 			JLabel lab = (JLabel)gdp.getComponent( 5 );
 			TextField num = (TextField)gdp.getComponent( 4 ); 
 			Panel pan = (Panel)gdp.getComponent( 2 );
@@ -144,7 +143,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 
 			num.addTextListener( new TextListener()
 			{
-				
+
 				@Override
 				public void textValueChanged(TextEvent e)
 				{
@@ -173,10 +172,10 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 					String path = ((TextField)pan.getComponent( 0 )).getText();
 					if (path.endsWith( File.separator ))
 						path = path.substring( 0, path.length() - File.separator.length() );
-					
+
 					if(new File(path).isDirectory())
 						path = String.join( File.separator, path, "*" );
-					
+
 					lab.setText( previewFiles( getFilesFromPattern(path , Long.parseLong( num.getText() ) * KB_FACTOR)));
 					lab.setSize( lab.getPreferredSize() );
 					gdp.setSize( gdp.getPreferredSize() );
@@ -186,25 +185,22 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			
 			GUIHelper.addScrollBars( gdp );			
 			gdp.showDialog();
-			
-			
-			
-			
+
 			if (gdp.wasCanceled())
 				return new ArrayList<>();
-			
+
 			String fileInput = gdp.getNextString();
-			
+
 			if (fileInput.endsWith( File.separator ))
 				fileInput = fileInput.substring( 0, fileInput.length() - File.separator.length() );
-			
+
 			if(new File(fileInput).isDirectory())
 				fileInput = String.join( File.separator, fileInput, "*" );
-			
+
 			List<File> files = getFilesFromPattern( fileInput, (long) gdp.getNextNumber() * KB_FACTOR );
-			
+
 			files.forEach(f -> System.out.println( "Including file " + f + " in dataset." ));
-			
+
 			return files;
 		}
 
