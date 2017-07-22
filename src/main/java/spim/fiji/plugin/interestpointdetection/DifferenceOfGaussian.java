@@ -264,9 +264,10 @@ public class DifferenceOfGaussian extends DifferenceOf implements GenericDialogA
 		img = null;
 		imp.setDimensions( 1, imp.getStackSize(), 1 );
 		imp.setTitle( "tp: " + viewDescription.getTimePoint().getName() + " viewSetup: " + viewDescription.getViewSetupId() );		
-		imp.show();		
+		imp.show();
 		imp.setSlice( imp.getStackSize() / 2 );
-		imp.setRoi( 0, 0, imp.getWidth()/3, imp.getHeight()/3 );		
+		imp.resetDisplayRange();
+		imp.setRoi( 0, 0, imp.getWidth()/3, imp.getHeight()/3 );
 
 		final InteractiveDoG idog = new InteractiveDoG( imp );
 		final int channelId = channel.getId();
