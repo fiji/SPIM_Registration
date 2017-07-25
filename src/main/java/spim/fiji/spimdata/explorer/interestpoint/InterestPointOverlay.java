@@ -4,20 +4,21 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.util.Collection;
+import java.util.HashMap;
 
 import net.imglib2.RealLocalizable;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.ui.OverlayRenderer;
 import net.imglib2.ui.TransformListener;
 import bdv.viewer.ViewerPanel;
+import mpicbg.spim.data.sequence.ViewId;
 
 public class InterestPointOverlay implements OverlayRenderer, TransformListener< AffineTransform3D >
 {
 	public static interface InterestPointSource
 	{
-		public Collection< ? extends RealLocalizable > getLocalCoordinates( final int timepointIndex );
-
-		public void getLocalToGlobalTransform( final int timepointIndex, AffineTransform3D transform );
+		public HashMap< ? extends ViewId, ? extends Collection< ? extends RealLocalizable > > getLocalCoordinates( final int timepointIndex );
+		public void getLocalToGlobalTransform( final ViewId viewId, final int timepointIndex, final AffineTransform3D transform );
 	}
 
 	private final Collection< ? extends InterestPointSource > interestPointSources;
@@ -73,19 +74,24 @@ public class InterestPointOverlay implements OverlayRenderer, TransformListener<
 
 		for ( final InterestPointSource pointSource : interestPointSources )
 		{
-			pointSource.getLocalToGlobalTransform( t, transform );
-			transform.preConcatenate( viewerTransform );
+			final HashMap< ? extends ViewId, ? extends Collection< ? extends RealLocalizable > > coordinates = pointSource.getLocalCoordinates( t );
 
-			for ( final RealLocalizable p : pointSource.getLocalCoordinates( t ) )
+			for ( final ViewId viewId : coordinates.keySet() )
 			{
-				p.localize( lPos );
-				transform.apply( lPos, gPos );
-				final double size = getPointSize( gPos );
-				final int x = ( int ) ( gPos[ 0 ] - 0.5 * size );
-				final int y = ( int ) ( gPos[ 1 ] - 0.5 * size );
-				final int w = ( int ) size;
-				graphics.setColor( getColor( gPos ) );
-				graphics.fillOval( x, y, w, w );
+				pointSource.getLocalToGlobalTransform( viewId, t, transform );
+				transform.preConcatenate( viewerTransform );
+	
+				for ( final RealLocalizable p : coordinates.get( viewId ) )
+				{
+					p.localize( lPos );
+					transform.apply( lPos, gPos );
+					final double size = getPointSize( gPos );
+					final int x = ( int ) ( gPos[ 0 ] - 0.5 * size );
+					final int y = ( int ) ( gPos[ 1 ] - 0.5 * size );
+					final int w = ( int ) size;
+					graphics.setColor( getColor( gPos ) );
+					graphics.fillOval( x, y, w, w );
+				}
 			}
 		}
 	}

@@ -2,6 +2,7 @@ package spim.process.interestpointdetection;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -51,36 +52,7 @@ public class InterestPointTools
 			final List< ViewId > viewIdsToProcess )
 	{
 		final ViewInterestPoints interestPoints = spimData.getViewInterestPoints();
-		final HashMap< String, Integer > labels = new HashMap< String, Integer >();
-		
-		int countViewDescriptions = 0;
-
-		for ( final ViewId viewId : viewIdsToProcess )
-		{
-			// get the viewdescription
-			final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
-					viewId.getTimePointId(), viewId.getViewSetupId() );
-
-			// check if the view is present
-			if ( !viewDescription.isPresent() )
-				continue;
-			
-			// which lists of interest points are available
-			final ViewInterestPointLists lists = interestPoints.getViewInterestPointLists( viewId );
-			
-			for ( final String label : lists.getHashMap().keySet() )
-			{
-				int count = 1;
-
-				if ( labels.containsKey( label ) )
-					count += labels.get( label );
-
-				labels.put( label, count );
-			}
-
-			// are they available in all viewdescriptions?
-			++countViewDescriptions;
-		}
+		final HashMap< String, Integer > labels = getAllInterestPointMap( interestPoints, viewIdsToProcess );
 
 		final String[] allLabels = new String[ labels.keySet().size() ];
 
@@ -90,13 +62,39 @@ public class InterestPointTools
 		{
 			allLabels[ i ] = label;
 
-			if ( labels.get( label ) != countViewDescriptions )
-				allLabels[ i ] += warningLabel + labels.get( label ) + "/" + countViewDescriptions + " Views!)";
+			if ( labels.get( label ) != viewIdsToProcess.size() )
+				allLabels[ i ] += warningLabel + labels.get( label ) + "/" + viewIdsToProcess.size() + " Views!)";
 
 			++i;
 		}
 
 		return allLabels;
+	}
+
+	public static HashMap< String, Integer > getAllInterestPointMap( final ViewInterestPoints interestPoints, final Collection< ? extends ViewId > views )
+	{
+		final HashMap< String, Integer > labels = new HashMap< String, Integer >();
+
+		for ( final ViewId viewId : views )
+		{
+			// which lists of interest points are available
+			final ViewInterestPointLists lists = interestPoints.getViewInterestPointLists( viewId );
+
+			if ( lists == null )
+				continue;
+
+			for ( final String label : lists.getHashMap().keySet() )
+			{
+				int count = 1;
+
+				if ( labels.containsKey( label ) )
+					count += labels.get( label );
+
+				labels.put( label, count );
+			}
+		}
+
+		return labels;
 	}
 
 	/**

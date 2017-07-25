@@ -12,6 +12,7 @@ import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.swing.JLabel;
@@ -25,16 +26,17 @@ import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableCellRenderer;
 
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
+import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
 import spim.fiji.spimdata.explorer.FilteredAndGroupedExplorer;
-import spim.fiji.spimdata.explorer.ViewSetupExplorer;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.process.interestpointdetection.InterestPointTools;
 
 public class InterestPointExplorerPanel extends JPanel
 {
@@ -62,15 +64,22 @@ public class InterestPointExplorerPanel extends JPanel
 	public InterestPointTableModel getTableModel() { return tableModel; }
 	public JTable getTable() { return table; }
 	
-	public void updateViewDescription( final BasicViewDescription< ? > vd, final boolean isFirst )
+	public void updateViewDescription( final List< BasicViewDescription< ? extends BasicViewSetup > > viewDescriptionsUnfiltered, final boolean isFirst )
 	{
-		if ( vd != null && label != null )
-			this.label.setText("View Description --- Timepoint: " + vd.getTimePointId() + ", View Setup Id: " + vd.getViewSetupId() );
+		final ArrayList< BasicViewDescription< ? extends BasicViewSetup > > viewDescriptions = new ArrayList<>();
 
-		if ( vd == null )
-			this.label.setText( "No or multiple View Descriptions selected");
+		for ( final BasicViewDescription< ? extends BasicViewSetup > vd : viewDescriptionsUnfiltered )
+			if ( vd.isPresent() )
+				viewDescriptions.add( vd );
 
-		tableModel.updateViewDescription( vd, isFirst );
+		if ( viewDescriptions.size() == 1 && label != null )
+			this.label.setText("View Description --- Timepoint: " + viewDescriptions.get( 0 ).getTimePointId() + ", View Setup Id: " + viewDescriptions.get( 0 ).getViewSetupId() );
+		else if ( viewDescriptions == null || viewDescriptions.size() == 0 )
+			this.label.setText( "No View Descriptions selected");
+		else
+			this.label.setText( viewDescriptions.size() + " View Descriptions selected");
+
+		tableModel.updateViewDescription( viewDescriptions, isFirst );
 
 		if ( table.getSelectedRowCount() == 0 )
 			table.getSelectionModel().setSelectionInterval( 0, 0 );
@@ -106,7 +115,8 @@ public class InterestPointExplorerPanel extends JPanel
 		table.getColumnModel().getColumn( 1 ).setPreferredWidth( 5 );
 		table.getColumnModel().getColumn( 2 ).setPreferredWidth( 20 );
 		table.getColumnModel().getColumn( 3 ).setPreferredWidth( 25 );
-		table.getColumnModel().getColumn( 4 ).setPreferredWidth( 400 );
+		table.getColumnModel().getColumn( 4 ).setPreferredWidth( 30 );
+		table.getColumnModel().getColumn( 5 ).setPreferredWidth( 400 );
 
 		table.addMouseListener( new MouseListener()
 		{
@@ -172,93 +182,96 @@ public class InterestPointExplorerPanel extends JPanel
 			return;
 		}
 
-		final BasicViewDescription< ? > vd = tableModel.getCurrentViewDescription();
-
-		if ( vd == null )
-		{
-			JOptionPane.showMessageDialog( table, "No active viewdescription." );
-			return;
-		}
-
-		final int[] selectedRows = table.getSelectedRows();
-		Arrays.sort( selectedRows );
-
+		final List< BasicViewDescription< ? > > vds = tableModel.getCurrentViewDescriptions();
 		final ViewInterestPoints vip = tableModel.getViewInterestPoints();
+		final HashMap< String, Integer > labels = InterestPointTools.getAllInterestPointMap( vip, vds );
 
-		for ( int rowIndex = selectedRows.length - 1; rowIndex >= 0; rowIndex--)
+		for ( final BasicViewDescription< ? > vd : vds )
 		{
-			final int row = selectedRows[ rowIndex ];
-
-			final String label = InterestPointTableModel.label( vip, vd, row );
-
-			IOFunctions.println( "Removing label '' for timepoint_id " + vd.getTimePointId() + " viewsetup_id " + vd.getViewSetupId() + " -- Parsing through all correspondences to remove any links to this interest point list." );
-
-			final List< CorrespondingInterestPoints > correspondencesList = getCorrespondingInterestPoints( vip, vd, label );
-
-			// sort by timepointid, setupid, and detectionid 
-			Collections.sort( correspondencesList );
-
-			ViewId lastViewIdCorr = null;
-			//String lastLabelCorr = null;
-			List< CorrespondingInterestPoints > cList = null;
-			int size = 0;
-
-			for ( final CorrespondingInterestPoints pair : correspondencesList )
+			if ( vd == null )
 			{
-				// the next corresponding detection
-				final ViewId viewIdCorr = pair.getCorrespondingViewId();
-				final String labelCorr = pair.getCorrespodingLabel();
-				final int idCorr = pair.getCorrespondingDetectionId();
-
-				// is it a new viewId? The load correspondence list for it
-				if ( lastViewIdCorr == null || !lastViewIdCorr.equals( viewIdCorr ) )
-				{
-					// but first remember the previous list for saving
-					if ( lastViewIdCorr != null )
-					{
-						IOFunctions.println( "Correspondences: " + size + " >>> " + cList.size() );
-						//this.save.add( new ValuePair< InterestPointList, ViewId >(
-						//				vip.getViewInterestPointLists( lastViewIdCorr ).getInterestPointList( lastLabelCorr ),
-						//				lastViewIdCorr ) );
-					}
-
-					// remove in the new one
-					IOFunctions.println( "Removing correspondences in timepointid=" + viewIdCorr.getTimePointId() + ", viewid=" + viewIdCorr.getViewSetupId() );
-					lastViewIdCorr = viewIdCorr;
-					//lastLabelCorr = labelCorr;
-					cList = getCorrespondingInterestPoints( vip, viewIdCorr, labelCorr );
-					size = cList.size();
-				}
-
-				// find the counterpart in the list that corresponds with pair.getDetectionId() and vd
-				for ( int i = 0; i < cList.size(); ++i )
-				{
-					final CorrespondingInterestPoints cc = cList.get( i );
-					
-					if ( cc.getDetectionId() == idCorr && cc.getCorrespondingDetectionId() == pair.getDetectionId() && cc.getCorrespondingViewId().equals( vd ) )
-					{
-						// remove it here
-						cList.remove( i );
-						break;
-					}
-				}
+				JOptionPane.showMessageDialog( table, "No active viewdescription." );
+				return;
 			}
+	
+			final int[] selectedRows = table.getSelectedRows();
+			Arrays.sort( selectedRows );
 
-			// remember the list for saving
-			if ( lastViewIdCorr != null )
+			for ( int rowIndex = selectedRows.length - 1; rowIndex >= 0; rowIndex--)
 			{
-				IOFunctions.println( "Correspondences: " + size + " >>> " + cList.size() );
-				//this.save.add( new ValuePair< InterestPointList, ViewId >(
-				//				vip.getViewInterestPointLists( lastViewIdCorr ).getInterestPointList( lastLabelCorr ),
-				//				lastViewIdCorr ) );
+				final int row = selectedRows[ rowIndex ];
+	
+				final String label = InterestPointTableModel.label( labels, row );
+	
+				IOFunctions.println( "Removing label '' for timepoint_id " + vd.getTimePointId() + " viewsetup_id " + vd.getViewSetupId() + " -- Parsing through all correspondences to remove any links to this interest point list." );
+	
+				final List< CorrespondingInterestPoints > correspondencesList = getCorrespondingInterestPoints( vip, vd, label );
+	
+				// sort by timepointid, setupid, and detectionid 
+				Collections.sort( correspondencesList );
+	
+				ViewId lastViewIdCorr = null;
+				//String lastLabelCorr = null;
+				List< CorrespondingInterestPoints > cList = null;
+				int size = 0;
+	
+				for ( final CorrespondingInterestPoints pair : correspondencesList )
+				{
+					// the next corresponding detection
+					final ViewId viewIdCorr = pair.getCorrespondingViewId();
+					final String labelCorr = pair.getCorrespodingLabel();
+					final int idCorr = pair.getCorrespondingDetectionId();
+	
+					// is it a new viewId? The load correspondence list for it
+					if ( lastViewIdCorr == null || !lastViewIdCorr.equals( viewIdCorr ) )
+					{
+						// but first remember the previous list for saving
+						if ( lastViewIdCorr != null )
+						{
+							IOFunctions.println( "Correspondences: " + size + " >>> " + cList.size() );
+							//this.save.add( new ValuePair< InterestPointList, ViewId >(
+							//				vip.getViewInterestPointLists( lastViewIdCorr ).getInterestPointList( lastLabelCorr ),
+							//				lastViewIdCorr ) );
+						}
+	
+						// remove in the new one
+						IOFunctions.println( "Removing correspondences in timepointid=" + viewIdCorr.getTimePointId() + ", viewid=" + viewIdCorr.getViewSetupId() );
+						lastViewIdCorr = viewIdCorr;
+						//lastLabelCorr = labelCorr;
+						cList = getCorrespondingInterestPoints( vip, viewIdCorr, labelCorr );
+						size = cList.size();
+					}
+	
+					// find the counterpart in the list that corresponds with pair.getDetectionId() and vd
+					for ( int i = 0; i < cList.size(); ++i )
+					{
+						final CorrespondingInterestPoints cc = cList.get( i );
+						
+						if ( cc.getDetectionId() == idCorr && cc.getCorrespondingDetectionId() == pair.getDetectionId() && cc.getCorrespondingViewId().equals( vd ) )
+						{
+							// remove it here
+							cList.remove( i );
+							break;
+						}
+					}
+				}
+	
+				// remember the list for saving
+				if ( lastViewIdCorr != null )
+				{
+					IOFunctions.println( "Correspondences: " + size + " >>> " + cList.size() );
+					//this.save.add( new ValuePair< InterestPointList, ViewId >(
+					//				vip.getViewInterestPointLists( lastViewIdCorr ).getInterestPointList( lastLabelCorr ),
+					//				lastViewIdCorr ) );
+				}
+	
+				// remember to deleted the files
+				this.delete.add( new ValuePair< InterestPointList, ViewId >(
+						vip.getViewInterestPointLists( vd ).getInterestPointList( label ),
+						vd ) );
+	
+				vip.getViewInterestPointLists( vd ).getHashMap().remove( label );
 			}
-
-			// remember to deleted the files
-			this.delete.add( new ValuePair< InterestPointList, ViewId >(
-					vip.getViewInterestPointLists( vd ).getInterestPointList( label ),
-					vd ) );
-
-			vip.getViewInterestPointLists( vd ).getHashMap().remove( label );
 		}
 
 		// reset selection
@@ -268,7 +281,7 @@ public class InterestPointExplorerPanel extends JPanel
 		tableModel.fireTableDataChanged();
 	}
 
-	public List< InterestPoint > getInterestPoints( final ViewInterestPoints vip, final ViewId v, final String label )
+	public static List< InterestPoint > getInterestPoints( final ViewInterestPoints vip, final ViewId v, final String label )
 	{
 		final InterestPointList ipList = vip.getViewInterestPointLists( v ).getInterestPointList( label );
 
@@ -278,7 +291,7 @@ public class InterestPointExplorerPanel extends JPanel
 		return ipList.getInterestPointsCopy();
 	}
 
-	public List< CorrespondingInterestPoints > getCorrespondingInterestPoints( final ViewInterestPoints vip, final ViewId v, final String label )
+	public static List< CorrespondingInterestPoints > getCorrespondingInterestPoints( final ViewInterestPoints vip, final ViewId v, final String label )
 	{
 		final InterestPointList ipList = vip.getViewInterestPointLists( v ).getInterestPointList( label );
 
