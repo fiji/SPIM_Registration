@@ -7,10 +7,12 @@ import ij.io.FileSaver;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.export.DisplayImage;
+import spim.process.fusion.FusionTools;
 
 public class PointSpreadFunction
 {
@@ -59,6 +61,33 @@ public class PointSpreadFunction
 			img = IOFunctions.openAs32Bit( new File( new File( xmlBasePath, subDir ), file ), new ArrayImgFactory<>() );
 
 		return img.copy();
+	}
+
+	// this is required for CUDA stuff
+	@SuppressWarnings("unchecked")
+	public ArrayImg< FloatType, ? > getPSFCopyArrayImg()
+	{
+		final ArrayImg< FloatType, ? > arrayImg;
+
+		if ( img == null )
+		{
+			img = arrayImg = IOFunctions.openAs32BitArrayImg( new File( new File( xmlBasePath, subDir ), file ) );
+		}
+		else if ( ArrayImg.class.isInstance( img ) )
+		{
+			arrayImg = (ArrayImg< FloatType, ? >)img;
+		}
+		else
+		{
+			final long[] size = new long[ img.numDimensions() ];
+			img.dimensions( size );
+
+			arrayImg = new ArrayImgFactory< FloatType >().create( size, new FloatType() );
+
+			FusionTools.copyImg( img, arrayImg );
+		}
+
+		return arrayImg;
 	}
 
 	public boolean save()
