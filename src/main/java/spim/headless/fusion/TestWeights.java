@@ -30,6 +30,7 @@ import spim.process.fusion.transformed.TransformVirtual;
 import spim.process.fusion.transformed.TransformWeight;
 import spim.process.fusion.transformed.weightcombination.CombineWeightsRandomAccessibleInterval;
 import spim.process.fusion.transformed.weightcombination.CombineWeightsRandomAccessibleInterval.CombineType;
+import spim.process.interestpointdetection.methods.downsampling.DownsampleTools;
 
 public class TestWeights
 {
@@ -79,7 +80,7 @@ public class TestWeights
 			// this modifies the model so it maps from a smaller image to the global coordinate space,
 			// which applies for the image itself as well as the weights since they also use the smaller
 			// input image as reference
-			final RandomAccessibleInterval inputImg = TransformView.openDownsampled( imgloader, viewId, model );
+			final RandomAccessibleInterval inputImg = DownsampleTools.openDownsampled( imgloader, viewId, model );
 			final RandomAccessibleInterval transformedInput = TransformView.transformView( inputImg, model, bb, 0, 1 );
 
 			final float[] blending = FusionTools.defaultBlendingRange.clone();

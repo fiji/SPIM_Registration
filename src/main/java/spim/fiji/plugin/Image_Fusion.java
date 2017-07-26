@@ -62,10 +62,7 @@ public class Image_Fusion implements PlugIn
 		{
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Fusing group " + (++i) + "/" + groups.size() + " (group=" + group + ")" );
 
-			double downsampling = fusion.getDownsampling();
-
-			if ( downsampling == 1.0 )
-				downsampling = Double.NaN;
+			final double downsampling = fusion.getDownsampling();
 
 			final RandomAccessibleInterval< FloatType > virtual =
 				FusionTools.fuseVirtual(

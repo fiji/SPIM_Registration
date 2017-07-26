@@ -33,6 +33,7 @@ import spim.process.export.ImgExport;
 import spim.process.export.Save3dTIFF;
 import spim.process.fusion.FusionTools;
 import spim.process.fusion.transformed.TransformVirtual;
+import spim.process.interestpointdetection.methods.downsampling.DownsampleTools;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class FusionGUI
@@ -186,6 +187,10 @@ public class FusionGUI
 
 		boundingBox = defaultBB = gd.getNextChoiceIndex();
 		downsampling = defaultDownsampling = gd.getNextNumber();
+
+		if ( downsampling == 1.0 )
+			downsampling = Double.NaN;
+
 		pixelType = defaultPixelType = gd.getNextChoiceIndex();
 		interpolation = defaultInterpolation = gd.getNextChoiceIndex();
 		cacheType = defaultCache = gd.getNextChoiceIndex();
@@ -195,7 +200,7 @@ public class FusionGUI
 		imgExport = defaultImgExportAlgorithm = gd.getNextChoiceIndex();
 
 		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Selected Fusion Parameters: " );
-		IOFunctions.println( "Downsampling: " + getDownsampling() );
+		IOFunctions.println( "Downsampling: " + DownsampleTools.printDownsampling( getDownsampling() ) );
 		IOFunctions.println( "BoundingBox: " + getBoundingBox() );
 		IOFunctions.println( "DownsampledBoundingBox: " + getDownsampledBoundingBox() );
 		IOFunctions.println( "PixelType: " + pixelTypes[ getPixelType() ] );
