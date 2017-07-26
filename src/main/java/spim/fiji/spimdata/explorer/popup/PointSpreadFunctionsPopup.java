@@ -13,6 +13,7 @@ import javax.swing.event.MenuListener;
 
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import spim.fiji.plugin.PSF_Assign;
 import spim.fiji.plugin.PSF_Average;
 import spim.fiji.plugin.PSF_Extract;
@@ -20,6 +21,7 @@ import spim.fiji.plugin.PSF_View;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
 import spim.fiji.spimdata.pointspreadfunctions.PointSpreadFunction;
+import spim.process.export.DisplayImage;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class PointSpreadFunctionsPopup extends JMenu implements ExplorerWindowSetable
@@ -110,16 +112,19 @@ public class PointSpreadFunctionsPopup extends JMenu implements ExplorerWindowSe
 		this.add( average );
 
 		// display
+		final JMenuItem displayRaw = new JMenuItem( "Raw PSF for each view" ); //"Averaged PSF",
 		final JMenuItem displayAverage = new JMenuItem( PSF_View.displayChoices[ 0 ] ); //"Averaged PSF",
 		final JMenuItem displayTransformedAverage = new JMenuItem( PSF_View.displayChoices[ 1 ] ); //"Averaged transformed PSF",
 		final JMenuItem displayMaxAverage = new JMenuItem( PSF_View.displayChoices[ 2 ] ); //"Maximum Projection of averaged PSF",
 		final JMenuItem displayMaxTransformedAverage = new JMenuItem( PSF_View.displayChoices[ 3 ] ); //"Maximum Projection of averaged transformed PSF" };
 
+		displayRaw.addActionListener( new DisplayPSF( -1 ) );
 		displayAverage.addActionListener( new DisplayPSF( 0 ) );
 		displayTransformedAverage.addActionListener( new DisplayPSF( 1 ) );
 		displayMaxAverage.addActionListener( new DisplayPSF( 2 ) );
 		displayMaxTransformedAverage.addActionListener( new DisplayPSF( 3 ) );
 
+		display.add( displayRaw );
 		display.add( displayAverage );
 		display.add( displayTransformedAverage );
 		display.add( displayMaxAverage );
@@ -156,8 +161,22 @@ public class PointSpreadFunctionsPopup extends JMenu implements ExplorerWindowSe
 					// filter not present ViewIds
 					SpimData2.filterMissingViews( spimData, views );
 
-					if ( PSF_View.display( spimData, views, choice ) )
-						panel.updateContent(); // update panel
+					if ( choice == -1 )
+					{
+						for ( final ViewId v : views )
+						{
+							DisplayImage.getImagePlusInstance(
+								spimData.getPointSpreadFunctions().getPointSpreadFunctions().get( v ).getPSFCopy(),
+								false,
+								"PSF " + Group.pvid( v ),
+								Double.NaN,
+								Double.NaN ).show();;
+						}
+					}
+					else
+					{
+						PSF_View.display( spimData, views, choice );
+					}
 				}
 			} ).start();
 		}

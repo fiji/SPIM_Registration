@@ -67,8 +67,12 @@ public class XmlIoPointSpreadFunctions extends XmlIoSingleton< PointSpreadFuncti
 		elem.addContent( new Element( PSF_FILE_TAG ).addContent( psf.getFile() ) );
 
 		if ( psf.isModified() )
+		{
 			if ( !psf.save() )
 				IOFunctions.println( "ERROR: Could not save PSF '" + psf.getFile() + "'" );
+			else
+				IOFunctions.println( "Saved PSF '" + psf.getFile() + "'" );
+		}
 
 		return elem;
 	}

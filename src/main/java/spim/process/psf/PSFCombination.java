@@ -97,7 +97,7 @@ public class PSFCombination
 				psfCursor.localize( loc );
 
 				for ( int d = 0; d < numDimensions; ++d )
-					loc[ d ] = psfCenter[ d ] - loc[ d ] + avgCenter[ d ];
+					loc[ d ] = avgCenter[ d ] - ( psfCenter[ d ] - loc[ d ] );
 
 				avgCursor.setPosition( loc );
 				avgCursor.get().add( psfCursor.get() );
