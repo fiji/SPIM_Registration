@@ -22,6 +22,7 @@ public class PSF_Extract implements PlugIn
 {
 	public static int defaultLabel = -1;
 	public static boolean defaultCorresponding = true;
+	public static boolean defaultRemoveMinIntensity = true;
 	public static int defaultPSFSizeX = 19;
 	public static int defaultPSFSizeY = 19;
 	public static int defaultPSFSizeZ = 25;
@@ -81,6 +82,10 @@ public class PSF_Extract implements PlugIn
 
 		gd.addMessage( "" );
 
+		gd.addCheckbox( "Remove_min_intensity_projections_from_PSF", defaultRemoveMinIntensity );
+
+		gd.addMessage( "" );
+
 		gd.addSlider( "PSF_size_X (px)", 9, 100, defaultPSFSizeX );
 		gd.addSlider( "PSF_size_Y (px)", 9, 100, defaultPSFSizeY );
 		gd.addSlider( "PSF_size_Z (px)", 9, 100, defaultPSFSizeZ );
@@ -93,6 +98,7 @@ public class PSF_Extract implements PlugIn
 
 		final String label = InterestPointTools.getSelectedLabel( labels, defaultLabel = gd.getNextChoiceIndex() );
 		final boolean corresponding = defaultCorresponding = gd.getNextBoolean();
+		final boolean removeMinIntensity = defaultRemoveMinIntensity = gd.getNextBoolean();
 		int psfSizeX = defaultPSFSizeX = (int)Math.round( gd.getNextNumber() );
 		int psfSizeY = defaultPSFSizeY = (int)Math.round( gd.getNextNumber() );
 		int psfSizeZ = defaultPSFSizeZ = (int)Math.round( gd.getNextNumber() );
@@ -110,6 +116,7 @@ public class PSF_Extract implements PlugIn
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Selected options for PSF extraction: " );
 		IOFunctions.println( "Interest point label: " + label );
 		IOFunctions.println( "Using corresponding interest points: " + corresponding );
+		IOFunctions.println( "Removing min intensity projections from PSF: " + removeMinIntensity );
 		IOFunctions.println( "PSF size X (pixels in input image calibration): " + psfSizeX );
 		IOFunctions.println( "PSF size Y (pixels in input image calibration): " + psfSizeY );
 		IOFunctions.println( "PSF size Z (pixels in input image calibration): " + psfSizeZ );
@@ -125,6 +132,10 @@ public class PSF_Extract implements PlugIn
 			if ( psf.hadDetections() )
 			{
 				++count;
+
+				if ( removeMinIntensity )
+					psf.removeMinProjections();
+
 				spimData.getPointSpreadFunctions().addPSF( viewId, new PointSpreadFunction( spimData, viewId, psf.getPSF() ) );
 			}
 		}
