@@ -73,7 +73,12 @@ public class PointSpreadFunction
 				return false;
 
 		final ImagePlus imp = DisplayImage.getImagePlusInstance( img, false, file, 0, 1 );
-		return new FileSaver( imp ).saveAsTiffStack( new File( dir, file ).toString() );
+		final boolean success = new FileSaver( imp ).saveAsTiffStack( new File( dir, file ).toString() );
+
+		if ( success )
+			modified = false;
+
+		return success;
 	}
 
 	public static String createPSFFileName( final ViewId viewId )
