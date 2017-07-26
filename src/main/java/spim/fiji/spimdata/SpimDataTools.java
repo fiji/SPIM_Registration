@@ -38,9 +38,18 @@ public class SpimDataTools {
 	}
 
 	public static List<BasicViewDescription<?>> getFilteredViewDescriptions(AbstractSequenceDescription<?, ?, ?> seq,
-			Map<Class<? extends Entity>, List<? extends Entity>> filters) {
+			Map<Class<? extends Entity>, List<? extends Entity>> filters )
+	{
+		return getFilteredViewDescriptions( seq, filters, true );
+	}
+	public static List<BasicViewDescription<?>> getFilteredViewDescriptions(AbstractSequenceDescription<?, ?, ?> seq,
+			Map<Class<? extends Entity>, List<? extends Entity>> filters, final boolean filterMissing) {
 		ArrayList<BasicViewDescription<?>> res = new ArrayList<>();
 		for (BasicViewDescription<?> vd : seq.getViewDescriptions().values()) {
+
+			if (filterMissing && seq.getMissingViews().getMissingViews().contains( vd ))
+				continue;
+
 			boolean matches = true;
 			for (Class<? extends Entity> cl : filters.keySet()) {
 
