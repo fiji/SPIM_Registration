@@ -19,6 +19,7 @@ import mpicbg.models.AffineModel3D;
 import net.imglib2.Cursor;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
+import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
@@ -36,6 +37,12 @@ public class IOFunctions
 	public static Img< FloatType > openAs32Bit( final File file )
 	{
 		return openAs32Bit( file, new ArrayImgFactory< FloatType >() );
+	}
+
+	@SuppressWarnings("unchecked")
+	public static ArrayImg< FloatType, ? > openAs32BitArrayImg( final File file )
+	{
+		return (ArrayImg< FloatType, ? >)openAs32Bit( file, new ArrayImgFactory< FloatType >() );
 	}
 
 	public static Img< FloatType > openAs32Bit( final File file, final ImgFactory< FloatType > factory )
