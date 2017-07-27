@@ -154,12 +154,15 @@ public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 	public ArrayImg< T, ? > getPSF() { return psf; }
 	public ArrayImg< T, ? > getTransformedNormalizedPSF( final AffineTransform3D model )
 	{
-		final ArrayImg< T, ? > psfCopy = psf.copy();
+		return getTransformedNormalizedPSF( psf.copy(), model );
+	}
 
+	public static < T extends RealType< T > & NativeType< T > > ArrayImg< T, ? > getTransformedNormalizedPSF( final ArrayImg< T, ? > psf, final AffineTransform3D model )
+	{
 		// normalize PSF
-		normalize( psfCopy );
+		normalize( psf );
 
-		return transformPSF( psfCopy, model );
+		return transformPSF( psf, model );
 	}
 
 	public void removeMinProjections()
