@@ -11,8 +11,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import ij.CompositeImage;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.process.LUT;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.Dimensions;
@@ -167,6 +169,7 @@ public class MVDeconvolution
 					tmp.setTitle( "debug view" );
 					this.ci = new CompositeImage( tmp, CompositeImage.COMPOSITE );
 					this.ci.setDimensions( 1, (int)this.psi.dimension( 2 ), 1 );
+					this.ci.setDisplayMode( IJ.GRAYSCALE );
 					this.ci.show();
 				}
 				else if ( stack.getSize() == this.psi.dimension( 2 ) )
@@ -178,6 +181,7 @@ public class MVDeconvolution
 
 					this.ci = new CompositeImage( new ImagePlus( "debug view", this.stack ), CompositeImage.COMPOSITE );
 					this.ci.setDimensions( 1, (int)this.psi.dimension( 2 ), 2 );
+					this.ci.setDisplayMode( IJ.GRAYSCALE );
 					this.ci.show();
 				}
 				else
