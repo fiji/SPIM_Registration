@@ -80,7 +80,7 @@ public class TestDeconvolution
 
 		IOFunctions.println( BoundingBox.getBoundingBoxDescription( boundingBox ) );
 
-		final double osemSpeedUp = 3.0;
+		final double osemSpeedUp = 1.0;
 		final double downsampling = 2.0;
 
 		final ProcessInputImages< V > fusion = new ProcessInputImages<>(
@@ -103,7 +103,7 @@ public class TestDeconvolution
 		fusion.deVirtualizeNormalizedWeights( ImgDataType.CACHED );
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Displaying " );
-		displayDebug( fusion );
+		//displayDebug( fusion );
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Loading, grouping, and transforming PSF's " );
 
@@ -137,10 +137,8 @@ public class TestDeconvolution
 		final Img< FloatType > avgPSF = PSFCombination.computeAverageImage( psfs.values(), new ArrayImgFactory< FloatType >(), true );
 		final Img< FloatType > maxAvgPSF = PSFCombination.computeMaxAverageTransformedPSF( psfs.values(), new ArrayImgFactory< FloatType >() );
 
-		DisplayImage.getImagePlusInstance( Views.rotate( avgPSF, 0, 2 ), false, "avgPSF", 0, 1 ).show();
+		//DisplayImage.getImagePlusInstance( Views.rotate( avgPSF, 0, 2 ), false, "avgPSF", 0, 1 ).show();
 		DisplayImage.getImagePlusInstance( maxAvgPSF, false, "maxAvgPSF", 0, 1 ).show();
-
-		SimpleMultiThreading.threadHaltUnClean();
 
 		final ImgFactory< FloatType > factory = new ArrayImgFactory<>();
 		final ImgFactory< FloatType > computeFactory = new ArrayImgFactory<>();
@@ -154,13 +152,15 @@ public class TestDeconvolution
 		deviceList.add( new CUDADevice( -1, "CPU", Runtime.getRuntime().maxMemory(), Runtime.getRuntime().freeMemory(), 0, 0 ) );
 		final boolean useCUDA = false;
 		final boolean useBlocks = true;
-		final int[] blockSize = new int[]{ 512, 512, 512 };
+		final int[] blockSize = new int[]{ 256, 256, 256 };
 		final boolean saveMemory = false;
 		final PSFTYPE iterationType = PSFTYPE.INDEPENDENT;
 		final int numIterations = 10;
 
 		try
 		{
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): PSI & TMP image factory: " + factory.getClass().getSimpleName() );
+
 			final MVDeconInput deconvolutionData = new MVDeconInput( factory );
 			
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Block & FFT image factory: " + computeFactory.getClass().getSimpleName() );

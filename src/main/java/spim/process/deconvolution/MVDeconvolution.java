@@ -49,7 +49,7 @@ public class MVDeconvolution
 	final public static float minValueImg = 1f; // mininal value for the input image (as it is not normalized)
 	final static private float minValue = 0.0001f; // minimal value for the deconvolved image
 
-	final static private boolean debugHeavy = true;
+	final static private boolean debugHeavy = false;
 	final static private int debugHeavyView = -1;
 	final static private int debugHeavyIteration = 0;
 
