@@ -269,7 +269,7 @@ public class ProcessInputImages< V extends ViewId >
 				}
 				else
 				{
-					weightsFusion.add( Views.interval( new ConstantRandomAccessible< FloatType >( new FloatType( 1 ), bb.numDimensions() ), bb ) );
+					weightsFusion.add( Views.interval( new ConstantRandomAccessible< FloatType >( new FloatType( 1 ), bb.numDimensions() ), new FinalInterval( dim ) ) );
 				}
 
 				if ( blendingRangeDecon != null && blendingBorderDecon != null )
@@ -286,7 +286,7 @@ public class ProcessInputImages< V extends ViewId >
 				}
 				else
 				{
-					weightsDecon.add( Views.interval( new ConstantRandomAccessible< FloatType >( new FloatType( 1 ), bb.numDimensions() ), bb ) );
+					weightsDecon.add( Views.interval( new ConstantRandomAccessible< FloatType >( new FloatType( 1 ), bb.numDimensions() ), new FinalInterval( dim ) ) );
 				}
 			}
 
