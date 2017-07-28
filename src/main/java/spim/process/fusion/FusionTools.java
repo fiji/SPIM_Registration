@@ -545,6 +545,13 @@ public class FusionTools
 	{
 		final ExecutorService taskExecutor = Executors.newFixedThreadPool( nThreads );
 
+		execTasks( tasks, Executors.newFixedThreadPool( nThreads ), jobDescription );
+
+		taskExecutor.shutdown();
+	}
+
+	public static final void execTasks( final ArrayList< Callable< Void > > tasks, final ExecutorService taskExecutor, final String jobDescription )
+	{
 		try
 		{
 			// invokeAll() returns when all tasks are complete
@@ -556,10 +563,7 @@ public class FusionTools
 			e.printStackTrace();
 			return;
 		}
-
-		taskExecutor.shutdown();
 	}
-
 
 	/*
 	 * One thread of a method to compute the quotient between two images of the multiview deconvolution
