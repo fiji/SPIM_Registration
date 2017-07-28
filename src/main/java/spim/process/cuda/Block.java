@@ -88,15 +88,8 @@ public class Block
 		this.taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
 	}
 
-	public long[] getBlockSize()
-	{
-		final long[] dim = new long[ blockSize.length ];
-
-		for ( int d = 0; d < dim.length; ++d )
-			dim[ d ] = blockSize[ d ];
-
-		return dim;
-	}
+	public long[] getBlockSize() { return blockSize.clone(); }
+	public long[] getEffectiveSize() { return effectiveSize.clone(); }
 
 	@Override
 	public void finalize() { taskExecutor.shutdown(); }
