@@ -43,7 +43,13 @@ public class ApplyTransformationPopup extends JMenuItem implements ExplorerWindo
 	}
 
 	public static final List< ViewId > getSelectedViews(
-			final ExplorerWindow< ? extends AbstractSpimData< ? extends AbstractSequenceDescription< ?, ?, ? > >, ? > panel )
+			final ExplorerWindow< ? extends AbstractSpimData< ? extends AbstractSequenceDescription< ?, ?, ? > >, ? > panel)
+	{
+		return getSelectedViews( panel, true );
+	}
+	public static final List< ViewId > getSelectedViews(
+			final ExplorerWindow< ? extends AbstractSpimData< ? extends AbstractSequenceDescription< ?, ?, ? > >, ? > panel,
+			final boolean filterMissing)
 	{
 		final List< ViewId > viewIds = new ArrayList<>();
 		if (GroupedRowWindow.class.isInstance( panel ))
@@ -51,6 +57,8 @@ public class ApplyTransformationPopup extends JMenuItem implements ExplorerWindo
 		else
 			viewIds.addAll(panel.selectedRowsViewId());
 
+		if (filterMissing)
+			SpimData2.filterMissingViews( panel.getSpimData(), viewIds );
 		return viewIds;
 	}
 
