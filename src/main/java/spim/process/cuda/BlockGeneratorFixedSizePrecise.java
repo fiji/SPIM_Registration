@@ -60,7 +60,7 @@ public class BlockGeneratorFixedSizePrecise implements BlockGenerator< Block >
 		System.out.println( "kernelSize " + Util.printCoordinates( kernelSize ) );
 		System.out.println( "blockSize " + Util.printCoordinates( blockSize ) );
 		System.out.println( "numBlocks " + Util.printCoordinates( numBlocks ) );
-		IOFunctions.println( "effectiveSize of blocks" + Util.printCoordinates( effectiveSizeGeneral ) );
+		System.out.println( "effectiveSize of blocks" + Util.printCoordinates( effectiveSizeGeneral ) );
 		System.out.println( "effectiveLocalOffset " + Util.printCoordinates( effectiveLocalOffset ) );
 				
 		// now we instantiate the individual blocks iterating over all dimensions
