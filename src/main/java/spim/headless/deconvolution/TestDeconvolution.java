@@ -7,7 +7,6 @@ import java.util.HashMap;
 
 import ij.IJ;
 import ij.ImageJ;
-import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
@@ -20,7 +19,6 @@ import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.view.Views;
 import simulation.imgloader.SimulatedBeadsImgLoader;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
@@ -57,6 +55,7 @@ public class TestDeconvolution
 		// load drosophila
 		spimData = new XmlIoSpimData2( "" ).load( "/Users/spreibi/Documents/Microscopy/SPIM/HisYFP-SPIM/dataset.xml" );
 		groups = selectViews( spimData.getSequenceDescription().getViewDescriptions().values() );
+		groups = oneGroupPerView( spimData.getSequenceDescription().getViewDescriptions().values() );
 
 		testDeconvolution( spimData, groups, "My Bounding Box1" );
 	}
@@ -80,8 +79,8 @@ public class TestDeconvolution
 
 		IOFunctions.println( BoundingBox.getBoundingBoxDescription( boundingBox ) );
 
-		final double osemSpeedUp = 1.0;
-		final double downsampling = 2.0;
+		final double osemSpeedUp = 2.0;
+		final double downsampling = Double.NaN;
 
 		final ProcessInputImages< V > fusion = new ProcessInputImages<>(
 				spimData,
@@ -256,6 +255,16 @@ public class TestDeconvolution
 				true,
 				"sum of all normed weights",
 				0, 1 ).show();
+	}
+
+	public static ArrayList< Group< ViewDescription > > oneGroupPerView( final Collection< ViewDescription > views )
+	{
+		final ArrayList< Group< ViewDescription > > groups = new ArrayList<>();
+
+		for ( final ViewDescription vd : views )
+			groups.add( new Group<>( vd ) );
+
+		return groups;
 	}
 
 	public static ArrayList< Group< ViewDescription > > selectViews( final Collection< ViewDescription > views )
