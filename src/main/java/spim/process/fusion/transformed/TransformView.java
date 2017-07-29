@@ -60,6 +60,41 @@ public class TransformView
 
 		return Views.interval( virtual, new FinalInterval( size ) );
 	}
+
+	/**
+	 * Creates a virtual construct that transforms and sets the offset to zero, it is infinite though with outofboundszero
+	 * 
+	 * Note: we do not use a general outofbounds strategy so that when using linear interpolation there are no
+	 *       half-correct pixels at the interface between image/background and so that we can clearly know which
+	 *       parts are from image data and where there is no data
+	 * 
+	 * @param input - the input image
+	 * @param transform - the affine transformation
+	 * @param offset - which point to set to (0,0...0)
+	 * @param minValue - the minimal value inside the image
+	 * @param outsideValue - the value that is returned if it does not intersect with the input image
+	 * @param interpolation - 0=nearest neighbor, 1=linear interpolation
+	 * @param <T> - type
+	 * @return transformed image
+	 */
+	public static < T extends RealType< T > > RandomAccessible< FloatType > transformView(
+			final RandomAccessibleInterval< T > input,
+			final AffineTransform3D transform,
+			final long[] offset,
+			final float minValue,
+			final float outsideValue,
+			final int interpolation )
+	{
+		final TransformedInputRandomAccessible< T > virtual = new TransformedInputRandomAccessible< T >( input, transform, true, minValue, new FloatType( outsideValue ), offset );
+
+		if ( interpolation == 0 )
+			virtual.setNearestNeighborInterpolation();
+		else
+			virtual.setLinearInterpolation();
+
+		return virtual;
+	}
+
 	/**
 	 * Creates a virtual construct that transforms and zero-mins.
 	 * 
