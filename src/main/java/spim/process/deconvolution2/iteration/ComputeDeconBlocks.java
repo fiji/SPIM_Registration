@@ -17,6 +17,8 @@ import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.RealSum;
 import net.imglib2.util.Util;
@@ -104,11 +106,6 @@ public class ComputeDeconBlocks
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): ERROR! Computing average FAILED, is NaN, setting it to: " + avg );
 		}
 
-		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting image to average intensity: " + avg );
-
-		for ( final FloatType t : psi )
-			t.set( (float)avg );
-
 		// run the deconvolution
 		while ( it < numIterations )
 		{
@@ -153,6 +150,14 @@ public class ComputeDeconBlocks
 				}
 			}
 
+			if ( it == 0 )
+			{
+				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting image to average intensity: " + avg );
+
+				for ( final FloatType t : psi )
+					t.set( (float)avg );
+			}
+
 			runNextIteration();
 		}
 
@@ -166,11 +171,14 @@ public class ComputeDeconBlocks
 	{
 		++it;
 
+		int v = 0;
+
 		for ( final DeconView view : views.getViews() )
 		{
 			final AtomicInteger ai = new AtomicInteger();
 			final Thread[] threads = new Thread[ computeBlockThreads.size() ];
 
+			final int viewNum = v;
 			final int numBlocks = view.getNumBlocks();
 
 			final IterationStatistics[] stats = new IterationStatistics[ numBlocks ];
@@ -192,6 +200,7 @@ public class ComputeDeconBlocks
 						while ( ( blockId = ai.getAndIncrement() ) < numBlocks )
 						{
 							final Block blockStruct = view.getBlocks()[ blockId ];
+							System.out.println( " block " + blockId + ", " + Util.printInterval( blockStruct ) );
 
 							long time = System.currentTimeMillis();
 							blockStruct.copyBlock( Views.extendMirrorSingle( psi ), blockPsiImg );
@@ -202,9 +211,9 @@ public class ComputeDeconBlocks
 									view,
 									blockStruct,
 									blockPsiImg,
-									Views.interval( Views.extendZero( view.getImage() ), blockStruct ),//imgBlock,
-									Views.interval( Views.extendZero( view.getWeight() ), blockStruct ),//weightBlock,
-									max[ blockId ],
+									Views.zeroMin( Views.interval( Views.extendZero( view.getImage() ), blockStruct ) ),//imgBlock,
+									Views.zeroMin( Views.interval( Views.extendZero( view.getWeight() ), blockStruct ) ),//weightBlock,
+									max[ viewNum ],
 									view.getPSF().getKernel1(),
 									view.getPSF().getKernel2() );
 							System.out.println( " block " + blockId + ", thread (" + (threadId+1) + "/" + threads.length + "), (CPU): compute " + (System.currentTimeMillis() - time) );
@@ -212,19 +221,21 @@ public class ComputeDeconBlocks
 							time = System.currentTimeMillis();
 							blockStruct.pasteBlock( psi, blockPsiImg );
 							System.out.println( " block " + blockId + ", thread (" + (threadId+1) + "/" + threads.length + "), (CPU): paste " + (System.currentTimeMillis() - time) );
-
-							// accumulate the results from the individual threads
-							IterationStatistics is = new IterationStatistics();
-
-							for ( int i = 0; i < stats.length; ++i )
-							{
-								is.sumChange += stats[ i ].sumChange;
-								is.maxChange = Math.max( is.maxChange, stats[ i ].maxChange );
-							}
-
-							IOFunctions.println( "iteration: " + it + ", view: " + view + " --- sum change: " + is.sumChange + " --- max change per pixel: " + is.maxChange );
-
 						}
+
+						// accumulate the results from the individual threads
+						IterationStatistics is = new IterationStatistics();
+
+						for ( int i = 0; i < stats.length; ++i )
+						{
+							System.out.println( stats );
+							is.sumChange += stats[ i ].sumChange;
+							is.maxChange = Math.max( is.maxChange, stats[ i ].maxChange );
+						}
+
+						ImageJFunctions.show( psi );
+						IOFunctions.println( "iteration: " + it + ", view: " + view + " --- sum change: " + is.sumChange + " --- max change per pixel: " + is.maxChange );
+						SimpleMultiThreading.threadHaltUnClean();
 					}
 				});
 			}
@@ -241,6 +252,8 @@ public class ComputeDeconBlocks
 			{
 				throw new RuntimeException(ie);
 			}
+
+			++v;
 		}
 	}
 
