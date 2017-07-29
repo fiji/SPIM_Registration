@@ -14,7 +14,6 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import mpicbg.spim.io.IOFunctions;
-import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
@@ -165,6 +164,8 @@ public class ComputeDeconBlocks
 
 	public void runNextIteration()
 	{
+		++it;
+
 		for ( final DeconView view : views.getViews() )
 		{
 			final AtomicInteger ai = new AtomicInteger();
@@ -211,6 +212,17 @@ public class ComputeDeconBlocks
 							time = System.currentTimeMillis();
 							blockStruct.pasteBlock( psi, blockPsiImg );
 							System.out.println( " block " + blockId + ", thread (" + (threadId+1) + "/" + threads.length + "), (CPU): paste " + (System.currentTimeMillis() - time) );
+
+							// accumulate the results from the individual threads
+							IterationStatistics is = new IterationStatistics();
+
+							for ( int i = 0; i < stats.length; ++i )
+							{
+								is.sumChange += stats[ i ].sumChange;
+								is.maxChange = Math.max( is.maxChange, stats[ i ].maxChange );
+							}
+
+							IOFunctions.println( "iteration: " + it + ", view: " + view + " --- sum change: " + is.sumChange + " --- max change per pixel: " + is.maxChange );
 
 						}
 					}
