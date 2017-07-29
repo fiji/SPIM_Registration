@@ -1,6 +1,7 @@
 package spim.process.cuda;
 
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
 
 import net.imglib2.iterator.LocalizingZeroMinIntervalIterator;
 import net.imglib2.util.Util;
@@ -14,9 +15,20 @@ import net.imglib2.util.Util;
 public class BlockGeneratorVariableSizePrecise implements BlockGenerator< Block >
 {
 	final long[] numBlocks;
+	final ExecutorService service;
 
-	public BlockGeneratorVariableSizePrecise( final long[] numBlocksDim )
+	public BlockGeneratorVariableSizePrecise(
+			final ExecutorService service,
+			final long[] numBlocksDim )
 	{
+		this.service = service;
+		this.numBlocks = numBlocksDim;
+	}
+
+	public BlockGeneratorVariableSizePrecise(
+			final long[] numBlocksDim )
+	{
+		this.service = null;
 		this.numBlocks = numBlocksDim;
 	}
 
@@ -67,7 +79,7 @@ public class BlockGeneratorVariableSizePrecise implements BlockGenerator< Block 
 				}
 			}
 
-			blockList.add( new Block( blockSize, offset, effectiveSize, effectiveOffset, effectiveLocalOffset, true ) );
+			blockList.add( new Block( service, blockSize, offset, effectiveSize, effectiveOffset, effectiveLocalOffset, true ) );
 			System.out.println( "block " + Util.printCoordinates( currentBlock ) + " offset: " + Util.printCoordinates( offset ) + " effectiveOffset: " + Util.printCoordinates( effectiveOffset ) + " effectiveLocalOffset: " + Util.printCoordinates( effectiveLocalOffset ) + " effectiveSize: " + Util.printCoordinates( effectiveSize )  + " blocksize: " + Util.printCoordinates( blockSize ) );
 		}
 		

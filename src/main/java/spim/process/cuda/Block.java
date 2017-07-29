@@ -7,6 +7,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.AbstractInterval;
 import net.imglib2.Cursor;
 import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccess;
@@ -23,7 +24,7 @@ import spim.Threads;
 import spim.process.fusion.FusionTools;
 import spim.process.fusion.ImagePortion;
 
-public class Block 
+public class Block extends AbstractInterval
 {
 	/**
 	 * the number of dimensions of this block
@@ -62,8 +63,10 @@ public class Block
 
 	final Vector< ImagePortion > portions;
 	final ExecutorService taskExecutor;
+	final boolean executorServiceProvided;
 
 	public Block(
+			final ExecutorService service,
 			final long[] blockSize,
 			final long[] offset,
 			final long[] effectiveSize,
@@ -71,6 +74,7 @@ public class Block
 			final long[] effectiveLocalOffset,
 			final boolean isPrecise )
 	{
+		super( offset, max( offset, blockSize ) );
 		this.numDimensions = blockSize.length;
 		this.blockSize = blockSize.clone();
 		this.offset = offset.clone();
@@ -85,14 +89,28 @@ public class Block
 
 		// split up into many parts for multithreading
 		this.portions = FusionTools.divideIntoPortions( n, Threads.numThreads() * 2 );
-		this.taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
+
+		if ( service == null )
+		{
+			this.taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
+			this.executorServiceProvided = false;
+		}
+		else
+		{
+			this.taskExecutor = service;
+			this.executorServiceProvided = true;
+		}
 	}
 
 	public long[] getBlockSize() { return blockSize.clone(); }
 	public long[] getEffectiveSize() { return effectiveSize.clone(); }
 
 	@Override
-	public void finalize() { taskExecutor.shutdown(); }
+	public void finalize()
+	{
+		if ( !executorServiceProvided )
+			taskExecutor.shutdown();
+	}
 
 	/**
 	 * @return - if the blocks that cover an area/volume/... are precise, i.e. if they are identical to performing the convolution on the entire image. Non-precise blocks do not need an outofbounds, they will not query data from outside of the blocked area.
@@ -354,6 +372,16 @@ public class Block
 	{
 		for ( int x = 0; x < count; ++x )
 			targetArray[ iTarget++ ] = blockArray[ iBlock++ ];
+	}
+
+	public static final long[] max( final long[] min, final long[] size )
+	{
+		final long[] max = new long[ min.length ];
+
+		for ( int d = 0; d < min.length; ++d )
+			max[ d ] = min[ d ] + size[ d ] - 1;
+
+		return max;
 	}
 
 	public static void main( String[] args )
