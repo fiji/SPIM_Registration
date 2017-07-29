@@ -73,7 +73,7 @@ public class ComputeDeconBlocks
 	{
 		this.computeBlockFactory = computeBlockFactory;
 		this.views = views;
-		this.max = new float[ views.getPSIDimensions().numDimensions() ];
+		this.max = new float[ views.getViews().size() ];
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Deconvolved image factory: " + psiFactory.getClass().getSimpleName() );
 
@@ -228,14 +228,11 @@ public class ComputeDeconBlocks
 
 						for ( int i = 0; i < stats.length; ++i )
 						{
-							System.out.println( stats );
 							is.sumChange += stats[ i ].sumChange;
 							is.maxChange = Math.max( is.maxChange, stats[ i ].maxChange );
 						}
 
-						ImageJFunctions.show( psi );
 						IOFunctions.println( "iteration: " + it + ", view: " + view + " --- sum change: " + is.sumChange + " --- max change per pixel: " + is.maxChange );
-						SimpleMultiThreading.threadHaltUnClean();
 					}
 				});
 			}
@@ -255,6 +252,10 @@ public class ComputeDeconBlocks
 
 			++v;
 		}
+
+		ImageJFunctions.show( psi );
+		SimpleMultiThreading.threadHaltUnClean();
+
 	}
 
 	protected static final double fuseFirstIteration( final Img< FloatType > psi, final List< DeconView > views, final ExecutorService service, final float[] max )
