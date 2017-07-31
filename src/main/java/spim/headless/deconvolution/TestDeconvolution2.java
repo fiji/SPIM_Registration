@@ -175,7 +175,9 @@ public class TestDeconvolution2
 					blockSize,
 					blockFactory );
 
-			new ComputeDeconBlocks( views, numIterations, cptf, psiFactory );
+			final Img< FloatType > decon = new ComputeDeconBlocks( views, numIterations, cptf, psiFactory ).getPSI();
+
+			DisplayImage.getImagePlusInstance( decon, false, "Deconvolved", Double.NaN, Double.NaN ).show();
 
 			service.shutdown();
 		}

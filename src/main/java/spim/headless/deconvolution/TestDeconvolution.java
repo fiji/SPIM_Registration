@@ -80,7 +80,7 @@ public class TestDeconvolution
 		IOFunctions.println( BoundingBox.getBoundingBoxDescription( boundingBox ) );
 
 		final double osemSpeedUp = 2.0;
-		final double downsampling = Double.NaN;
+		final double downsampling = 2.0;
 
 		final ProcessInputImages< V > fusion = new ProcessInputImages<>(
 				spimData,
