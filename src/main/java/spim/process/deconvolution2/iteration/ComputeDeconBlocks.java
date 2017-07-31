@@ -167,9 +167,13 @@ public class ComputeDeconBlocks
 		IOFunctions.println( "DONE (" + new Date(System.currentTimeMillis()) + ")." );
 	}
 
+	public Img< FloatType > getPSI() { return psi; }
+
 	public void runNextIteration()
 	{
 		++it;
+
+		IOFunctions.println( "iteration: " + it + " (" + new Date(System.currentTimeMillis()) + ")" );
 
 		int v = 0;
 
@@ -252,10 +256,6 @@ public class ComputeDeconBlocks
 
 			++v;
 		}
-
-		ImageJFunctions.show( psi );
-		SimpleMultiThreading.threadHaltUnClean();
-
 	}
 
 	protected static final double fuseFirstIteration( final Img< FloatType > psi, final List< DeconView > views, final ExecutorService service, final float[] max )
