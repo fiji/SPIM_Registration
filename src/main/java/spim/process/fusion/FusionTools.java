@@ -514,6 +514,11 @@ public class FusionTools
 
 	public static < T extends Type< T > > void copyImg( final RandomAccessibleInterval< T > input, final RandomAccessibleInterval< T > output, final boolean showProgress )
 	{
+		copyImg( input, output, showProgress, null );
+	}
+
+	public static < T extends Type< T > > void copyImg( final RandomAccessibleInterval< T > input, final RandomAccessibleInterval< T > output, final boolean showProgress, final ExecutorService service )
+	{
 		final int nThreads = Threads.numThreads();
 		final int nPortions = nThreads * 4;
 		final Vector< ImagePortion > portions = divideIntoPortions( Views.iterable( input ).size(), nPortions );
@@ -538,7 +543,10 @@ public class FusionTools
 			});
 		}
 
-		execTasks( tasks, nThreads, "copy image" );
+		if ( service == null )
+			execTasks( tasks, nThreads, "copy image" );
+		else
+			execTasks( tasks, service, "copy image" );
 	}
 
 	public static final void execTasks( final ArrayList< Callable< Void > > tasks, final int nThreads, final String jobDescription )
