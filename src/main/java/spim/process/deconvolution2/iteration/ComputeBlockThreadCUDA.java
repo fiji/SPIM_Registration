@@ -13,6 +13,7 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import spim.Threads;
 import spim.process.cuda.Block;
+import spim.process.cuda.CUDADevice;
 import spim.process.cuda.CUDAFourierConvolution;
 import spim.process.cuda.CUDATools;
 import spim.process.deconvolution2.DeconView;
@@ -28,7 +29,7 @@ public class ComputeBlockThreadCUDA extends ComputeBlockThreadAbstract
 	final ArrayImg< FloatType, ? > tmp1, tmp2;
 	final float lambda;
 
-	final int cudaDeviceId;
+	final CUDADevice cudaDevice;
 	final CUDAFourierConvolution cuda;
 
 	public ComputeBlockThreadCUDA(
@@ -38,11 +39,11 @@ public class ComputeBlockThreadCUDA extends ComputeBlockThreadAbstract
 			final int id,
 			final int[] blockSize,
 			final CUDAFourierConvolution cuda,
-			final int cudaDeviceId )
+			final CUDADevice cudaDevice )
 	{
 		super( minValue, blockSize, id );
 
-		this.cudaDeviceId = cudaDeviceId;
+		this.cudaDevice = cudaDevice;
 		this.cuda = cuda;
 		this.tmp1 = new ArrayImgFactory< FloatType >().create( Util.int2long( blockSize ), new FloatType() );
 		this.tmp2 = new ArrayImgFactory< FloatType >().create( Util.int2long( blockSize ), new FloatType() );
@@ -170,9 +171,9 @@ public class ComputeBlockThreadCUDA extends ComputeBlockThreadAbstract
 		cuda.convolution3DfftCUDAInPlace(
 				blockF, CUDATools.getCUDACoordinates( CUDAOutput.getImgSizeInt( tmp1 ) ),
 				kernel1F, CUDATools.getCUDACoordinates( CUDAOutput.getImgSizeInt( kernel1 ) ),
-				cudaDeviceId );
+				cudaDevice.getDeviceId() );
 
-		System.out.println( " block " + id + "(CUDA " + cudaDeviceId + "): compute " + (System.currentTimeMillis() - time) );
+		System.out.println( " block " + id + "(CUDA " + cudaDevice.getDeviceId() + "): compute " + (System.currentTimeMillis() - time) );
 	}
 
 	public void convolve2(
@@ -190,6 +191,6 @@ public class ComputeBlockThreadCUDA extends ComputeBlockThreadAbstract
 		cuda.convolution3DfftCUDAInPlace(
 				blockF, CUDATools.getCUDACoordinates( CUDAOutput.getImgSizeInt( tmp2 ) ),
 				kernel2F, CUDATools.getCUDACoordinates( CUDAOutput.getImgSizeInt( kernel2 ) ),
-				cudaDeviceId );
+				cudaDevice.getDeviceId() );
 	}
 }
