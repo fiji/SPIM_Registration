@@ -6,10 +6,12 @@ import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JFrame;
 
+import bdv.BigDataViewer;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
@@ -19,10 +21,8 @@ import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.FilteredAndGroupedExplorer;
 import spim.fiji.spimdata.explorer.SelectedViewDescriptionListener;
-import spim.fiji.spimdata.explorer.ViewSetupExplorer;
 import spim.fiji.spimdata.explorer.popup.BasicBDVPopup;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
-import bdv.BigDataViewer;
 
 public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstractSpimData< ?, AS > >
 	implements SelectedViewDescriptionListener< AS >
@@ -69,13 +69,16 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 	public JFrame frame() { return frame; }
 
 	@Override
-	public void selectedViewDescriptions( final List<List< BasicViewDescription< ? extends BasicViewSetup >> > viewDescriptions )
+	public void selectedViewDescriptions( final List< List< BasicViewDescription< ? extends BasicViewSetup > > > viewDescriptions )
 	{
-		// TODO: display multiple selected
-		if (viewDescriptions.size() != 1)
-			panel.updateViewDescription( null, false );
-		
-		panel.updateViewDescription( viewDescriptions.iterator().next().iterator().next(), false );
+		final ArrayList< BasicViewDescription< ? extends BasicViewSetup > > fullList = new ArrayList<>();
+
+		for ( final List< BasicViewDescription< ? extends BasicViewSetup > > list : viewDescriptions )
+			for ( final BasicViewDescription< ? extends BasicViewSetup > vd : list )
+				if ( vd.isPresent() )
+					fullList.add( vd );
+
+		panel.updateViewDescription( fullList, false );
 	}
 
 	@Override

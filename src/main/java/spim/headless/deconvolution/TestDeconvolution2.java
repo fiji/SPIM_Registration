@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.concurrent.ExecutorService;
 
 import ij.IJ;
 import ij.ImageJ;
@@ -13,7 +14,6 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImg;
@@ -24,12 +24,13 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.fiji.spimdata.pointspreadfunctions.PointSpreadFunction;
-import spim.process.cuda.CUDADevice;
-import spim.process.deconvolution.MVDeconFFT;
-import spim.process.deconvolution.MVDeconFFT.PSFTYPE;
-import spim.process.deconvolution.MVDeconInput;
-import spim.process.deconvolution.MVDeconvolution;
 import spim.process.deconvolution.ProcessInputImages;
+import spim.process.deconvolution2.DeconView;
+import spim.process.deconvolution2.DeconViewPSF.PSFTYPE;
+import spim.process.deconvolution2.DeconViews;
+import spim.process.deconvolution2.iteration.ComputeBlockThreadCPUFactory;
+import spim.process.deconvolution2.iteration.ComputeBlockThreadFactory;
+import spim.process.deconvolution2.iteration.ComputeDeconBlocks;
 import spim.process.export.DisplayImage;
 import spim.process.fusion.FusionTools.ImgDataType;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
@@ -39,7 +40,7 @@ import spim.process.interestpointregistration.pairwise.constellation.grouping.Gr
 import spim.process.psf.PSFCombination;
 import spim.process.psf.PSFExtraction;
 
-public class TestDeconvolution
+public class TestDeconvolution2
 {
 	public static void main( String[] args ) throws SpimDataException
 	{
@@ -139,14 +140,57 @@ public class TestDeconvolution
 		//DisplayImage.getImagePlusInstance( Views.rotate( avgPSF, 0, 2 ), false, "avgPSF", 0, 1 ).show();
 		DisplayImage.getImagePlusInstance( maxAvgPSF, false, "maxAvgPSF", 0, 1 ).show();
 
-		final ImgFactory< FloatType > factory = new ArrayImgFactory<>();
-		final ImgFactory< FloatType > computeFactory = new ArrayImgFactory<>();
-		final boolean useTikhonov = true;
-		double lambda = 0.0006;
+		final ImgFactory< FloatType > blockFactory = new ArrayImgFactory<>();
+		final ImgFactory< FloatType > psiFactory = new ArrayImgFactory<>();
+		final int[] blockSize = new int[]{ 256, 256, 256 };
+		final int numIterations = 10;
+		final float lambda = 0.0006f;
+		final float minValue = ComputeDeconBlocks.minValue;
+		final PSFTYPE psfType = PSFTYPE.INDEPENDENT;
 
-		/**
-		 * 0 ... n == CUDA device i
-		 */
+		// one common ExecutorService for all
+		final ExecutorService service = DeconViews.createExecutorService();
+
+		try
+		{
+			final ArrayList< DeconView > deconViews = new ArrayList<>();
+
+			for ( final Group< V > group : fusion.getGroups() )
+			{
+				deconViews.add( new DeconView(
+						service,
+						fusion.getImages().get( group ),
+						fusion.getNormalizedWeights().get( group ),
+						psfs.get( group ),
+						psfType,
+						blockSize,
+						blockFactory ) );
+			}
+
+			final DeconViews views = new DeconViews( deconViews, service );
+			final ComputeBlockThreadFactory cptf = new ComputeBlockThreadCPUFactory(
+					views.getExecutorService(),
+					minValue,
+					lambda,
+					blockSize,
+					blockFactory );
+
+			final Img< FloatType > decon = new ComputeDeconBlocks( views, numIterations, cptf, psiFactory ).getPSI();
+
+			DisplayImage.getImagePlusInstance( decon, false, "Deconvolved", Double.NaN, Double.NaN ).show();
+
+			service.shutdown();
+		}
+		catch ( OutOfMemoryError oome )
+		{
+			IJ.log( "Out of Memory" );
+			IJ.error("Multi-View Deconvolution", "Out of memory.  Check \"Edit > Options > Memory & Threads\"");
+
+			service.shutdown();
+
+			return;
+		}
+		/*
 		final ArrayList< CUDADevice > deviceList = new ArrayList<>();
 		deviceList.add( new CUDADevice( -1, "CPU", Runtime.getRuntime().maxMemory(), Runtime.getRuntime().freeMemory(), 0, 0 ) );
 		final boolean useCUDA = false;
@@ -204,6 +248,7 @@ public class TestDeconvolution
 			IJ.error("Multi-View Registration", "Out of memory.  Check \"Edit > Options > Memory & Threads\"");
 			return;
 		}
+		*/
 	}
 
 	public static < V extends ViewId > void displayDebug( final ProcessInputImages< V > fusion )

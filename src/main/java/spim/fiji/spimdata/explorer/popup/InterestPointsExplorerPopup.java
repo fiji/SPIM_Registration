@@ -2,10 +2,15 @@ package spim.fiji.spimdata.explorer.popup;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JMenuItem;
 
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
+import mpicbg.spim.data.generic.sequence.BasicViewDescription;
+import mpicbg.spim.data.generic.sequence.BasicViewSetup;
+import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
@@ -61,8 +66,14 @@ public class InterestPointsExplorerPopup extends JMenuItem implements ExplorerWi
 					{
 						ipe = instanceFor( (ViewSetupExplorerPanel)panel );
 
+						final SpimData2 data = (SpimData2)panel.getSpimData();
+						final List< BasicViewDescription< ? extends BasicViewSetup > > list = new ArrayList<>();
+
+						for ( final ViewId viewId : ApplyTransformationPopup.getSelectedViews( panel ) )
+							list.add( data.getSequenceDescription().getViewDescription( viewId ) );
+						;
 						if ( panel.selectedRows().size() == 1 )
-							ipe.panel().updateViewDescription( panel.selectedRows().iterator().next(), true );
+							ipe.panel().updateViewDescription( list, true );
 					}
 					else
 					{

@@ -13,11 +13,13 @@ public class MVDeconInput
 	final private ImgFactory< FloatType > imgFactory;
 
 	/**
-	 * the imgfactory used for PSI and the temporary images
-	 * @param imgFactory ImgFactory to use
+	 * @param imgFactory ImgFactory to use for PSI and the temporary images
 	 */
 	public MVDeconInput( final ImgFactory< FloatType > imgFactory ) { this.imgFactory = imgFactory; }
 
+	/**
+	 * @return the imgfactory for output and temporary images
+	 */
 	public ImgFactory< FloatType > imgFactory() { return imgFactory; }
 
 	public void add( final MVDeconFFT view )

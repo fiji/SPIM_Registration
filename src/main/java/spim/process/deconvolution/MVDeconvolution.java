@@ -11,8 +11,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import ij.CompositeImage;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.process.LUT;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.Dimensions;
@@ -49,7 +51,7 @@ public class MVDeconvolution
 	final public static float minValueImg = 1f; // mininal value for the input image (as it is not normalized)
 	final static private float minValue = 0.0001f; // minimal value for the deconvolved image
 
-	final static private boolean debugHeavy = true;
+	final static private boolean debugHeavy = false;
 	final static private int debugHeavyView = -1;
 	final static private int debugHeavyIteration = 0;
 
@@ -167,6 +169,7 @@ public class MVDeconvolution
 					tmp.setTitle( "debug view" );
 					this.ci = new CompositeImage( tmp, CompositeImage.COMPOSITE );
 					this.ci.setDimensions( 1, (int)this.psi.dimension( 2 ), 1 );
+					this.ci.setDisplayMode( IJ.GRAYSCALE );
 					this.ci.show();
 				}
 				else if ( stack.getSize() == this.psi.dimension( 2 ) )
@@ -178,6 +181,7 @@ public class MVDeconvolution
 
 					this.ci = new CompositeImage( new ImagePlus( "debug view", this.stack ), CompositeImage.COMPOSITE );
 					this.ci.setDimensions( 1, (int)this.psi.dimension( 2 ), 2 );
+					this.ci.setDisplayMode( IJ.GRAYSCALE );
 					this.ci.show();
 				}
 				else

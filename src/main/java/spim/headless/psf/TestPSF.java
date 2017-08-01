@@ -58,6 +58,8 @@ public class TestPSF
 		{
 			final PSFExtraction< FloatType > psf = new PSFExtraction< FloatType >( spimData, viewId, label, true, new FloatType(), new long[]{ 19, 19, 25 } );
 
+			psf.removeMinProjections();
+
 			spimData.getViewRegistrations().getViewRegistration( viewId ).updateModel();
 			psfs.put( viewId, psf.getTransformedNormalizedPSF( spimData.getViewRegistrations().getViewRegistration( viewId ).getModel() ) );
 

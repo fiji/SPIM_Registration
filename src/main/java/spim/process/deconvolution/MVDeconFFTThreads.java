@@ -41,7 +41,7 @@ public class MVDeconFFTThreads
 		// ratio outside of the deconvolved space (psi) is 1
 		blockStruct.copyBlock( Views.extendValue( image, new FloatType( 1.0f ) ), block );
 
-		fftConvolution2.setImg( block, block );
+		fftConvolution2.setImg( block );
 		fftConvolution2.setOutput( block );
 		fftConvolution2.convolve();
 		

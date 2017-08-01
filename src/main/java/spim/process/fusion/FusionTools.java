@@ -62,6 +62,7 @@ import spim.process.fusion.transformed.TransformVirtual;
 import spim.process.fusion.transformed.TransformWeight;
 import spim.process.fusion.transformed.weightcombination.CombineWeightsRandomAccessibleInterval;
 import spim.process.fusion.transformed.weightcombination.CombineWeightsRandomAccessibleInterval.CombineType;
+import spim.process.interestpointdetection.methods.downsampling.DownsampleTools;
 
 public class FusionTools
 {
@@ -169,7 +170,7 @@ public class FusionTools
 			// this modifies the model so it maps from a smaller image to the global coordinate space,
 			// which applies for the image itself as well as the weights since they also use the smaller
 			// input image as reference
-			final RandomAccessibleInterval inputImg = TransformView.openDownsampled( imgloader, viewId, model );
+			final RandomAccessibleInterval inputImg = DownsampleTools.openDownsampled( imgloader, viewId, model );
 
 			images.add( TransformView.transformView( inputImg, model, bb, 0, interpolation ) );
 
@@ -513,6 +514,11 @@ public class FusionTools
 
 	public static < T extends Type< T > > void copyImg( final RandomAccessibleInterval< T > input, final RandomAccessibleInterval< T > output, final boolean showProgress )
 	{
+		copyImg( input, output, showProgress, null );
+	}
+
+	public static < T extends Type< T > > void copyImg( final RandomAccessibleInterval< T > input, final RandomAccessibleInterval< T > output, final boolean showProgress, final ExecutorService service )
+	{
 		final int nThreads = Threads.numThreads();
 		final int nPortions = nThreads * 4;
 		final Vector< ImagePortion > portions = divideIntoPortions( Views.iterable( input ).size(), nPortions );
@@ -537,13 +543,23 @@ public class FusionTools
 			});
 		}
 
-		execTasks( tasks, nThreads, "copy image" );
+		if ( service == null )
+			execTasks( tasks, nThreads, "copy image" );
+		else
+			execTasks( tasks, service, "copy image" );
 	}
 
 	public static final void execTasks( final ArrayList< Callable< Void > > tasks, final int nThreads, final String jobDescription )
 	{
 		final ExecutorService taskExecutor = Executors.newFixedThreadPool( nThreads );
 
+		execTasks( tasks, Executors.newFixedThreadPool( nThreads ), jobDescription );
+
+		taskExecutor.shutdown();
+	}
+
+	public static final void execTasks( final ArrayList< Callable< Void > > tasks, final ExecutorService taskExecutor, final String jobDescription )
+	{
 		try
 		{
 			// invokeAll() returns when all tasks are complete
@@ -555,10 +571,7 @@ public class FusionTools
 			e.printStackTrace();
 			return;
 		}
-
-		taskExecutor.shutdown();
 	}
-
 
 	/*
 	 * One thread of a method to compute the quotient between two images of the multiview deconvolution

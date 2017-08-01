@@ -21,6 +21,7 @@ import spim.fiji.spimdata.explorer.ExplorerWindow;
 import spim.process.boundingbox.BoundingBoxTools;
 import spim.process.fusion.FusionTools;
 import spim.process.fusion.FusionTools.ImgDataType;
+import spim.process.interestpointdetection.methods.downsampling.DownsampleTools;
 
 public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSetable
 {
@@ -159,7 +160,7 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 				@Override
 				public void run()
 				{
-					IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Fusing " + views.size() + ", downsampling=" + downsampling + ", caching strategy=" + imgType );
+					IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Fusing " + views.size() + ", downsampling=" + DownsampleTools.printDownsampling( downsampling ) + ", caching strategy=" + imgType );
 					FusionTools.display( FusionTools.fuseVirtual( spimData, views, defaultUseBlending, false, defaultInterpolation, bb, downsampling ), imgType ).show();
 				}
 			} ).start();
