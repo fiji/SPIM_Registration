@@ -14,8 +14,7 @@ import net.imglib2.util.Pair;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import spim.Threads;
-import spim.process.deconvolution.Mirror;
-import spim.process.deconvolution.normalization.AdjustInput;
+import spim.process.deconvolution2.normalization.AdjustInput;
 
 /**
  * Handles the PSF for a specific view for the deconvolution

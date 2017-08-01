@@ -24,10 +24,10 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.fiji.spimdata.pointspreadfunctions.PointSpreadFunction;
-import spim.process.deconvolution.ProcessInputImages;
 import spim.process.deconvolution2.DeconView;
 import spim.process.deconvolution2.DeconViewPSF.PSFTYPE;
 import spim.process.deconvolution2.DeconViews;
+import spim.process.deconvolution2.ProcessInputImages;
 import spim.process.deconvolution2.iteration.ComputeBlockThreadCPUFactory;
 import spim.process.deconvolution2.iteration.ComputeBlockThreadFactory;
 import spim.process.deconvolution2.iteration.ComputeDeconBlocks;
@@ -81,7 +81,7 @@ public class TestDeconvolution2
 		IOFunctions.println( BoundingBox.getBoundingBoxDescription( boundingBox ) );
 
 		final double osemSpeedUp = 2.0;
-		final double downsampling = 2.0;
+		final double downsampling = Double.NaN;
 
 		final ProcessInputImages< V > fusion = new ProcessInputImages<>(
 				spimData,
@@ -143,7 +143,7 @@ public class TestDeconvolution2
 		final ImgFactory< FloatType > blockFactory = new ArrayImgFactory<>();
 		final ImgFactory< FloatType > psiFactory = new ArrayImgFactory<>();
 		final int[] blockSize = new int[]{ 256, 256, 256 };
-		final int numIterations = 10;
+		final int numIterations = 1;
 		final float lambda = 0.0006f;
 		final float minValue = ComputeDeconBlocks.minValue;
 		final PSFTYPE psfType = PSFTYPE.INDEPENDENT;

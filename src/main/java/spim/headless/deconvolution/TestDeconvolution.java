@@ -27,9 +27,9 @@ import spim.fiji.spimdata.pointspreadfunctions.PointSpreadFunction;
 import spim.process.cuda.CUDADevice;
 import spim.process.deconvolution.MVDeconFFT;
 import spim.process.deconvolution.MVDeconFFT.PSFTYPE;
+import spim.process.deconvolution2.ProcessInputImages;
 import spim.process.deconvolution.MVDeconInput;
 import spim.process.deconvolution.MVDeconvolution;
-import spim.process.deconvolution.ProcessInputImages;
 import spim.process.export.DisplayImage;
 import spim.process.fusion.FusionTools.ImgDataType;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
@@ -80,7 +80,7 @@ public class TestDeconvolution
 		IOFunctions.println( BoundingBox.getBoundingBoxDescription( boundingBox ) );
 
 		final double osemSpeedUp = 2.0;
-		final double downsampling = 2.0;
+		final double downsampling = Double.NaN;
 
 		final ProcessInputImages< V > fusion = new ProcessInputImages<>(
 				spimData,

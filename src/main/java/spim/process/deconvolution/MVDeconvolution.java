@@ -33,6 +33,7 @@ import spim.Threads;
 import spim.fiji.ImgLib2Temp.Triple;
 import spim.fiji.spimdata.imgloaders.LegacyStackImgLoaderIJ;
 import spim.process.deconvolution.MVDeconFFT.PSFTYPE;
+import spim.process.deconvolution2.FirstIteration;
 import spim.process.export.DisplayImage;
 import spim.process.fusion.FusionTools;
 import spim.process.fusion.ImagePortion;

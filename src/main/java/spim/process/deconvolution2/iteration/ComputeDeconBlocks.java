@@ -13,10 +13,12 @@ import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
+import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.RealSum;
 import net.imglib2.util.Util;
@@ -24,9 +26,9 @@ import net.imglib2.view.Views;
 import spim.Threads;
 import spim.fiji.ImgLib2Temp.Triple;
 import spim.process.cuda.Block;
-import spim.process.deconvolution.FirstIteration;
 import spim.process.deconvolution2.DeconView;
 import spim.process.deconvolution2.DeconViews;
+import spim.process.deconvolution2.FirstIteration;
 import spim.process.deconvolution2.iteration.ComputeBlockThread.IterationStatistics;
 import spim.process.export.DisplayImage;
 import spim.process.fusion.FusionTools;
@@ -199,6 +201,9 @@ public class ComputeDeconBlocks
 
 						int blockId;
 
+						// TODO: just write back blocks once they are not interfering
+						view.getNonInterferingBlocks();
+
 						while ( ( blockId = ai.getAndIncrement() ) < numBlocks )
 						{
 							final Block blockStruct = view.getBlocks()[ blockId ];
@@ -223,6 +228,8 @@ public class ComputeDeconBlocks
 							time = System.currentTimeMillis();
 							blockStruct.pasteBlock( psi, blockPsiImg );
 							System.out.println( " block " + blockId + ", thread (" + (threadId+1) + "/" + threads.length + "), (CPU): paste " + (System.currentTimeMillis() - time) );
+
+							DisplayImage.getImagePlusInstance( psi, false, it + ", blockId: " + blockId, Double.NaN, Double.NaN ).show();;
 						}
 
 						// accumulate the results from the individual threads
@@ -234,6 +241,7 @@ public class ComputeDeconBlocks
 							is.maxChange = Math.max( is.maxChange, stats[ i ].maxChange );
 						}
 
+						DisplayImage.getImagePlusInstance( psi, false, it + ", view: " + view, Double.NaN, Double.NaN ).show();;
 						IOFunctions.println( "iteration: " + it + ", view: " + view + " --- sum change: " + is.sumChange + " --- max change per pixel: " + is.maxChange );
 					}
 				});
@@ -252,6 +260,7 @@ public class ComputeDeconBlocks
 				throw new RuntimeException(ie);
 			}
 
+			SimpleMultiThreading.threadHaltUnClean();
 			++v;
 		}
 	}

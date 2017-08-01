@@ -1,4 +1,4 @@
-package spim.process.deconvolution;
+package spim.process.deconvolution2;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,7 +24,8 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import spim.fiji.spimdata.SpimData2;
-import spim.process.deconvolution.normalization.NormalizingRandomAccessibleInterval;
+import spim.process.deconvolution.MVDeconvolution;
+import spim.process.deconvolution2.normalization.NormalizingRandomAccessibleInterval;
 import spim.process.fusion.FusionTools;
 import spim.process.fusion.FusionTools.ImgDataType;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;

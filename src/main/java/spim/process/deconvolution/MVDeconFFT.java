@@ -21,7 +21,8 @@ import spim.Threads;
 import spim.process.cuda.Block;
 import spim.process.cuda.BlockGeneratorFixedSizePrecise;
 import spim.process.cuda.CUDAFourierConvolution;
-import spim.process.deconvolution.normalization.AdjustInput;
+import spim.process.deconvolution2.Mirror;
+import spim.process.deconvolution2.normalization.AdjustInput;
 
 public class MVDeconFFT
 {
