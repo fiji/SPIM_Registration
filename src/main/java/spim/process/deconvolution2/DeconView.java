@@ -1,5 +1,6 @@
 package spim.process.deconvolution2;
 
+import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 
 import bdv.util.ConstantRandomAccessible;
@@ -14,6 +15,7 @@ import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import spim.process.cuda.Block;
 import spim.process.cuda.BlockGeneratorFixedSizePrecise;
+import spim.process.cuda.BlockSorter;
 import spim.process.deconvolution2.DeconViewPSF.PSFTYPE;
 
 /**
@@ -35,6 +37,7 @@ public class DeconView
 	final int[] blockSize, deviceList;
 	final int device0, numDevices;
 	final Block[] blocks;
+	final ArrayList< Block[] > nonInterferingBlocks;
 
 	public DeconView(
 			final ExecutorService service,
@@ -141,71 +144,30 @@ public class DeconView
 
 		this.blockSize = new int[ n ];
 
-		if ( isBlockTooBigForImage() && !this.useCUDA ) // use just one big block
-		{
-			// define the blocksize so that it is one single block
-			for ( int d = 0; d < this.blockSize.length; ++d )
-				this.blockSize[ d ] = (int)image.dimension( d ) + (int)kernel.dimension( d ) - 1;
+		// define the blocksize so that it is one single block
+		for ( int d = 0; d < this.blockSize.length; ++d )
+			this.blockSize[ d ] = blockSize[ d ];
 
-			final long[] imgSize = new long[ n ];
-			final long[] kernelSize = new long[ n ];
+		final long[] imgSize = new long[ n ];
+		final long[] kernelSize = new long[ n ];
 
-			image.dimensions( imgSize );
-			kernel.dimensions( kernelSize );
+		image.dimensions( imgSize );
+		kernel.dimensions( kernelSize );
 
-			final BlockGeneratorFixedSizePrecise blockGenerator = new BlockGeneratorFixedSizePrecise( service, Util.int2long( this.blockSize ) );
-			this.blocks = blockGenerator.divideIntoBlocks( imgSize, kernelSize );
+		final BlockGeneratorFixedSizePrecise blockGenerator = new BlockGeneratorFixedSizePrecise( service, Util.int2long( this.blockSize ) );
+		this.blocks = blockGenerator.divideIntoBlocks( imgSize, kernelSize );
 
-			IOFunctions.println( "Number of blocks: " + this.blocks.length + " (1 single block for CUDA processing), dim=" + Util.printCoordinates( this.blockSize ) );
-		}
-		else
-		{
-			// define the blocksize so that it is one single block
-			for ( int d = 0; d < this.blockSize.length; ++d )
-				this.blockSize[ d ] = blockSize[ d ];
+		IOFunctions.println( "Number of blocks: " + this.blocks.length + ", dim=" + Util.printCoordinates( this.blockSize ) );
+		IOFunctions.println( "Effective size of each block (due to kernel size) " + Util.printCoordinates( this.blocks[ 0 ].getEffectiveSize() ) );
 
-			final long[] imgSize = new long[ n ];
-			final long[] kernelSize = new long[ n ];
-
-			image.dimensions( imgSize );
-			kernel.dimensions( kernelSize );
-
-			final BlockGeneratorFixedSizePrecise blockGenerator = new BlockGeneratorFixedSizePrecise( service, Util.int2long( this.blockSize ) );
-			this.blocks = blockGenerator.divideIntoBlocks( imgSize, kernelSize );
-
-			IOFunctions.println( "Number of blocks: " + this.blocks.length + ", dim=" + Util.printCoordinates( this.blockSize ) );
-			IOFunctions.println( "Effective size of each block (due to kernel size) " + Util.printCoordinates( this.blocks[ 0 ].getEffectiveSize() ) );
-		}
+		this.nonInterferingBlocks = BlockSorter.sortBlocksBySmallestFootprint( blocks, new FinalInterval( image ) );
 	}
 
 	public RandomAccessibleInterval< FloatType > getImage() { return image; }
 	public RandomAccessibleInterval< FloatType > getWeight() { return weight; }
 	public DeconViewPSF getPSF() { return psf; }
 	public int[] getBlockSize() { return blockSize; }
-	public Block[] getBlocks() { return blocks; }
+	public Block[] getBlocks1() { return blocks; }
+	public ArrayList< Block[] > getNonInterferingBlocks() { return nonInterferingBlocks; }
 	public int getNumBlocks() { return blocks.length; }
-
-	public boolean isBlockTooBigForImage()
-	{
-		final int[] maxSize = maxBlockSize();
-
-		for ( int d = 0; d < n; ++d )
-			if ( this.blockSize[ d ] < maxSize[ d ] )
-				return false;
-
-		return true;
-	}
-
-	/**
-	 * @return - the maximal size a block should have (image + kernel/2)
-	 */
-	public int[] maxBlockSize()
-	{
-		final int[] maxSize = new int[ n ];
-
-		for ( int d = 0; d < n; ++d )
-			maxSize[ d ] = (int)image.dimension( d ) + (int)this.psf.getKernel1().dimension( d ) - 1;
-
-		return maxSize;
-	}
 }
