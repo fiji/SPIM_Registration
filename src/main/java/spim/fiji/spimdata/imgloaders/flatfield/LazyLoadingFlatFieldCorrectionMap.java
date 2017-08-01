@@ -1,6 +1,7 @@
 package spim.fiji.spimdata.imgloaders.flatfield;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
 
 import ij.IJ;
@@ -9,15 +10,21 @@ import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
 
 public abstract class LazyLoadingFlatFieldCorrectionMap<IL extends ImgLoader> implements FlatfieldCorrectionWrappedImgLoader< IL >
 {
 	
-	private Map< File, RandomAccessibleInterval< ? extends RealType<?> > > raiMap;
+	private Map< File, RandomAccessibleInterval< FloatType > > raiMap;
 	private Map<ViewId, Pair<File, File>> fileMap;
+	
+	public LazyLoadingFlatFieldCorrectionMap()
+	{
+		raiMap = new HashMap<>();
+		fileMap = new HashMap<>();
+	}
 	
 	@Override
 	public void setBrightImage(ViewId vId, File imgFile)
@@ -39,7 +46,7 @@ public abstract class LazyLoadingFlatFieldCorrectionMap<IL extends ImgLoader> im
 		fileMap.put( vId, new ValuePair< File, File >( oldPair.getA(), imgFile ) );
 	}
 	
-	protected RandomAccessibleInterval< ? extends RealType<?> > getBrightImg(ViewId vId)
+	protected RandomAccessibleInterval< FloatType > getBrightImg(ViewId vId)
 	{
 		if (!fileMap.containsKey( vId ))
 			return null;
@@ -53,7 +60,7 @@ public abstract class LazyLoadingFlatFieldCorrectionMap<IL extends ImgLoader> im
 		return raiMap.get( fileToLoad );
 	}
 
-	protected RandomAccessibleInterval< ? extends RealType<?> > getDarkImg(ViewId vId)
+	protected RandomAccessibleInterval< FloatType > getDarkImg(ViewId vId)
 	{
 		if (!fileMap.containsKey( vId ))
 			return null;
@@ -73,9 +80,19 @@ public abstract class LazyLoadingFlatFieldCorrectionMap<IL extends ImgLoader> im
 			return;
 		
 		final ImagePlus imp = IJ.openImage( file.getAbsolutePath() );
-		final RandomAccessibleInterval< ? extends RealType<?> > img = ImageJFunctions.wrapReal( imp ).copy();
+		final RandomAccessibleInterval< FloatType > img = ImageJFunctions.convertFloat( imp ).copy();
 		
 		raiMap.put( file, img );
+	}
+	
+	public static void main(String[] args)
+	{
+		DefaultFlatfieldCorrectionWrappedImgLoader testImgLoader = new DefaultFlatfieldCorrectionWrappedImgLoader( null );
+		testImgLoader.setBrightImage( new ViewId(0,0), new File("/Users/David/Desktop/ell2.tif" ));
+		RandomAccessibleInterval< FloatType > brightImg = testImgLoader.getBrightImg( new ViewId( 0, 0 ) );
+		
+		ImageJFunctions.show( brightImg );
+		
 	}
 	
 
