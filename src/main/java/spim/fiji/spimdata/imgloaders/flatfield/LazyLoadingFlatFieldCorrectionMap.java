@@ -17,8 +17,8 @@ import net.imglib2.util.ValuePair;
 public abstract class LazyLoadingFlatFieldCorrectionMap<IL extends ImgLoader> implements FlatfieldCorrectionWrappedImgLoader< IL >
 {
 	
-	private Map< File, RandomAccessibleInterval< FloatType > > raiMap;
-	private Map<ViewId, Pair<File, File>> fileMap;
+	protected final Map< File, RandomAccessibleInterval< FloatType > > raiMap;
+	protected final Map<ViewId, Pair<File, File>> fileMap;
 	
 	public LazyLoadingFlatFieldCorrectionMap()
 	{
