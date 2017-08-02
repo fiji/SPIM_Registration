@@ -1,11 +1,9 @@
 package spim.fiji.spimdata.imgloaders.flatfield;
 
 import java.io.File;
+import java.util.Arrays;
 
-import bdv.util.BdvFunctions;
 import ij.ImageJ;
-import mpicbg.spim.data.SpimData;
-import mpicbg.spim.data.XmlIoSpimData;
 import mpicbg.spim.data.generic.sequence.ImgLoaderHint;
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.SequenceDescription;
@@ -24,21 +22,28 @@ import net.imglib2.view.Views;
 import spim.fiji.plugin.queryXML.GenericLoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
-import spim.fiji.spimdata.imgloaders.XmlIoFileListImgLoaderLOCI;
 import spim.process.fusion.FusionTools;
 
-public class DefaultFlatfieldCorrectionWrappedImgLoader extends LazyLoadingFlatFieldCorrectionMap< ImgLoader > implements ImgLoader
+public class DefaultFlatfieldCorrectionWrappedImgLoader extends LazyLoadingFlatFieldCorrectionMap< ImgLoader >
+		implements ImgLoader
 {
 	private ImgLoader wrappedImgLoader;
 	private boolean active;
-	
+	private final boolean cacheResult;
+
 	public DefaultFlatfieldCorrectionWrappedImgLoader(ImgLoader wrappedImgLoader)
+	{
+		this( wrappedImgLoader, true );
+	}
+
+	public DefaultFlatfieldCorrectionWrappedImgLoader(ImgLoader wrappedImgLoader, boolean cacheResult)
 	{
 		super();
 		this.wrappedImgLoader = wrappedImgLoader;
 		this.active = true;
+		this.cacheResult = cacheResult;
 	}
-	
+
 	@Override
 	public ImgLoader getWrappedImgLoder()
 	{
@@ -50,23 +55,24 @@ public class DefaultFlatfieldCorrectionWrappedImgLoader extends LazyLoadingFlatF
 	{
 		this.active = active;
 	}
-	
+
 	@Override
 	public boolean isActive()
 	{
 		return active;
 	}
-	
+
 	@Override
 	public SetupImgLoader< ? > getSetupImgLoader(int setupId)
 	{
-		return new DefaultFlatfieldCorrectionWrappedSetupImgLoader<>(setupId);
+		return new DefaultFlatfieldCorrectionWrappedSetupImgLoader<>( setupId );
 	}
-	
-	class DefaultFlatfieldCorrectionWrappedSetupImgLoader <T extends RealType< T > & NativeType< T >> implements SetupImgLoader< T >
+
+	class DefaultFlatfieldCorrectionWrappedSetupImgLoader<T extends RealType< T > & NativeType< T >>
+			implements SetupImgLoader< T >
 	{
 		private final int setupId;
-		
+
 		DefaultFlatfieldCorrectionWrappedSetupImgLoader(int setupId)
 		{
 			this.setupId = setupId;
@@ -75,57 +81,113 @@ public class DefaultFlatfieldCorrectionWrappedImgLoader extends LazyLoadingFlatF
 		@Override
 		public RandomAccessibleInterval< T > getImage(int timepointId, ImgLoaderHint... hints)
 		{
-			// TODO: cache?
-			
-			final RandomAccessibleInterval< T > rai = FlatFieldCorrectedRandomAccessibleIntervals.create(  
-					(RandomAccessibleInterval< T >) wrappedImgLoader.getSetupImgLoader( setupId ).getImage( timepointId, hints ),
-					getBrightImg( new ViewId(timepointId, setupId) ),
+			@SuppressWarnings("unchecked")
+			final RandomAccessibleInterval< T > rai = FlatFieldCorrectedRandomAccessibleIntervals.create(
+					(RandomAccessibleInterval< T >) wrappedImgLoader.getSetupImgLoader( setupId ).getImage( timepointId,
+							hints ),
+					getBrightImg( new ViewId( timepointId, setupId ) ),
 					getDarkImg( new ViewId( timepointId, setupId ) ) );
-			
-			return FusionTools.cacheRandomAccessibleInterval( rai, Long.MAX_VALUE, Views.iterable( rai ).firstElement().createVariable());
-		}
 
-		
+			if ( cacheResult )
+			{
+				final int[] cellSize = new int[rai.numDimensions()];
+				Arrays.fill( cellSize, 1 );
+				for ( int d = 0; d < rai.numDimensions() - 1; d++ )
+					cellSize[d] = (int) rai.dimension( d );
+				return FusionTools.cacheRandomAccessibleInterval( rai, Long.MAX_VALUE,
+						Views.iterable( rai ).firstElement().createVariable(), cellSize );
+			}
+			else
+				return rai;
+
+		}
 
 		@Override
 		public RandomAccessibleInterval< FloatType > getFloatImage(int timepointId, boolean normalize,
 				ImgLoaderHint... hints)
 		{
-			final RandomAccessibleInterval< FloatType > rai = FlatFieldCorrectedRandomAccessibleIntervals.create(  
-					(RandomAccessibleInterval< T >) wrappedImgLoader.getSetupImgLoader( setupId ).getImage( timepointId, hints ),
-					getBrightImg( new ViewId(timepointId, setupId) ),
-					getDarkImg( new ViewId( timepointId, setupId ) ),
-					new FloatType());
+			@SuppressWarnings("unchecked")
+			final RandomAccessibleInterval< FloatType > rai = FlatFieldCorrectedRandomAccessibleIntervals.create(
+					(RandomAccessibleInterval< T >) wrappedImgLoader.getSetupImgLoader( setupId ).getImage( timepointId,
+							hints ),
+					getBrightImg( new ViewId( timepointId, setupId ) ),
+					getDarkImg( new ViewId( timepointId, setupId ) ), new FloatType() );
 
-			// TODO: respect normalize
-			// TODO: good cell dimensions (planes?)
-			return FusionTools.cacheRandomAccessibleInterval( rai, Long.MAX_VALUE, new FloatType(), 10);
+			if ( normalize )
+			{
+				final VirtuallyNormalizedRandomAccessibleInterval< FloatType > raiNormalized = new VirtuallyNormalizedRandomAccessibleInterval<>(
+						rai );
+				if ( cacheResult )
+				{
+					final int[] cellSize = new int[raiNormalized.numDimensions()];
+					Arrays.fill( cellSize, 1 );
+					for ( int d = 0; d < raiNormalized.numDimensions() - 1; d++ )
+						cellSize[d] = (int) raiNormalized.dimension( d );
+					return FusionTools.cacheRandomAccessibleInterval( raiNormalized, Long.MAX_VALUE,
+							Views.iterable( rai ).firstElement().createVariable(), cellSize );
+				}
+				else
+					return raiNormalized;
+			}
+			else
+			{
+				if ( cacheResult )
+				{
+					final int[] cellSize = new int[rai.numDimensions()];
+					Arrays.fill( cellSize, 1 );
+					for ( int d = 0; d < rai.numDimensions() - 1; d++ )
+						cellSize[d] = (int) rai.dimension( d );
+					return FusionTools.cacheRandomAccessibleInterval( rai, Long.MAX_VALUE,
+							Views.iterable( rai ).firstElement().createVariable(), cellSize );
+				}
+				else
+					return rai;
+			}
 		}
 
 		@Override
-		public T getImageType() { return (T) wrappedImgLoader.getSetupImgLoader( setupId ).getImageType(); }
+		public T getImageType()
+		{
+			@SuppressWarnings("unchecked")
+			final T res = (T) wrappedImgLoader.getSetupImgLoader( setupId ).getImageType();
+			return res;
+		}
 
 		@Override
-		public Dimensions getImageSize(int timepointId) { return wrappedImgLoader.getSetupImgLoader( setupId ).getImageSize( timepointId ); }
+		public Dimensions getImageSize(int timepointId)
+		{
+			return wrappedImgLoader.getSetupImgLoader( setupId ).getImageSize( timepointId );
+		}
 
 		@Override
-		public VoxelDimensions getVoxelSize(int timepointId) { return wrappedImgLoader.getSetupImgLoader( setupId ).getVoxelSize( timepointId ); }
+		public VoxelDimensions getVoxelSize(int timepointId)
+		{
+			return wrappedImgLoader.getSetupImgLoader( setupId ).getVoxelSize( timepointId );
+		}
 	}
-	
+
 	public static void main(String[] args)
 	{
-		GenericLoadParseQueryXML< SpimData2, SequenceDescription, ViewSetup, ViewDescription, ImgLoader, XmlIoSpimData2 > lpq = new GenericLoadParseQueryXML<>( new XmlIoSpimData2("") );
+		GenericLoadParseQueryXML< SpimData2, SequenceDescription, ViewSetup, ViewDescription, ImgLoader, XmlIoSpimData2 > lpq = new GenericLoadParseQueryXML<>(
+				new XmlIoSpimData2( "" ) );
 		lpq.queryXML();
 		SpimData2 data = lpq.getData();
-		
+
 		ImgLoader il = data.getSequenceDescription().getImgLoader();
-		DefaultFlatfieldCorrectionWrappedImgLoader ffcil = new DefaultFlatfieldCorrectionWrappedImgLoader(il);
-		ffcil.setDarkImage( new ViewId(0,0), new File("/Users/david/desktop/ff.tif") );
-		
+		DefaultFlatfieldCorrectionWrappedImgLoader ffcil = new DefaultFlatfieldCorrectionWrappedImgLoader( il );
+		ffcil.setDarkImage( new ViewId( 0, 0 ), new File( "/Users/david/desktop/ff.tif" ) );
+
+		data.getSequenceDescription().setImgLoader( ffcil );
+
 		new ImageJ();
-		BdvFunctions.show( ffcil.getSetupImgLoader( 0 ).getFloatImage( 0, false ), "BDV");
-		
-		
+
+		RandomAccessibleInterval< FloatType > image = data.getSequenceDescription().getImgLoader()
+				.getSetupImgLoader( 0 ).getFloatImage( 0, false );
+
+		RandomAccessibleInterval< FloatType > downsampleBlock = MultiResolutionFlatfieldCorrectionWrappedImgLoader
+				.downsampleHDF5( image, new int[] { 3, 3, 2 } );
+		ImageJFunctions.show( downsampleBlock, "" );
+
 	}
 
 }
