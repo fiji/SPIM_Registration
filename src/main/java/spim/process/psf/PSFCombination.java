@@ -3,7 +3,6 @@ package spim.process.psf;
 import java.util.Collection;
 import java.util.List;
 
-import ij.IJ;
 import net.imglib2.Cursor;
 import net.imglib2.Interval;
 import net.imglib2.IterableInterval;
@@ -13,7 +12,6 @@ import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.type.Type;
 import net.imglib2.type.numeric.RealType;
-import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 
 public class PSFCombination
@@ -62,10 +60,10 @@ public class PSFCombination
 			maxSize = computeMaxDimTransformedPSF( imgs );
 		else
 			maxSize = computeMinDimTransformedPSF( imgs );
-		
+
 		final int numDimensions = maxSize.length;
-		
-		IJ.log( "maxSize: " + Util.printCoordinates( maxSize ) );
+
+		//IJ.log( "maxSize: " + Util.printCoordinates( maxSize ) );
 
 		Img< T > avgPSF = imgFactory.create( maxSize, Views.iterable( imgs.iterator().next() ).firstElement() );
 
