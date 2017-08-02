@@ -1,5 +1,6 @@
 package spim.process.deconvolution;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import net.imglib2.algorithm.fft2.FFTConvolution;
@@ -94,7 +95,7 @@ public class MVDeconFFTThreads
 	}
 
 	final protected static Thread getCUDAThread1(
-			final AtomicInteger ai, final ImgFactory< FloatType > blockFactory, final Block[] blocks, final int[] blockSize,
+			final AtomicInteger ai, final ImgFactory< FloatType > blockFactory, final List< Block > blocks, final int[] blockSize,
 			final Img< FloatType > image, final Img< FloatType > result, final int deviceId, final Img< FloatType > kernel1 )
 	{
 		final Thread cudaThread1 = new Thread( new Runnable()
@@ -105,8 +106,8 @@ public class MVDeconFFTThreads
 
 				int i;
 
-				while ( ( i = ai.getAndIncrement() ) < blocks.length )
-					convolve1BlockCUDA( blocks[ i ], deviceId, image, result, block, kernel1, i );
+				while ( ( i = ai.getAndIncrement() ) < blocks.size() )
+					convolve1BlockCUDA( blocks.get( i ), deviceId, image, result, block, kernel1, i );
 			}
 		});
 		
@@ -114,7 +115,7 @@ public class MVDeconFFTThreads
 	}
 
 	final protected static Thread getCUDAThread2(
-			final AtomicInteger ai, final ImgFactory< FloatType > blockFactory, final Block[] blocks, final int[] blockSize,
+			final AtomicInteger ai, final ImgFactory< FloatType > blockFactory, final List< Block > blocks, final int[] blockSize,
 			final Img< FloatType > image, final Img< FloatType > result, final int deviceId, final Img< FloatType > kernel2 )
 	{
 		final Thread cudaThread2 = new Thread( new Runnable()
@@ -125,8 +126,8 @@ public class MVDeconFFTThreads
 
 				int i;
 
-				while ( ( i = ai.getAndIncrement() ) < blocks.length )
-					convolve2BlockCUDA( blocks[ i ], deviceId, image, result, block, kernel2 );
+				while ( ( i = ai.getAndIncrement() ) < blocks.size() )
+					convolve2BlockCUDA( blocks.get( i ), deviceId, image, result, block, kernel2 );
 			}
 		});
 		

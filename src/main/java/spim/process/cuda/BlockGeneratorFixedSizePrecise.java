@@ -34,7 +34,7 @@ public class BlockGeneratorFixedSizePrecise implements BlockGenerator< Block >
 	 * @param kernelSize - the size of the kernel (has to be odd!)
 	 * @return array of blocks
 	 */
-	public Block[] divideIntoBlocks( final long[] imgSize, final long[] kernelSize )
+	public ArrayList< Block > divideIntoBlocks( final long[] imgSize, final long[] kernelSize )
 	{
 		final int numDimensions = imgSize.length;
 		
@@ -104,12 +104,8 @@ public class BlockGeneratorFixedSizePrecise implements BlockGenerator< Block >
 			blockList.add( new Block( service, blockSize, offset, effectiveSize, effectiveOffset, effectiveLocalOffset, true ) );
 			//System.out.println( "block " + Util.printCoordinates( currentBlock ) + " effectiveOffset: " + Util.printCoordinates( effectiveOffset ) + " effectiveSize: " + Util.printCoordinates( effectiveSize )  + " offset: " + Util.printCoordinates( offset ) + " inside: " + inside );
 		}
-		
-		final Block[] blocks = new Block[ blockList.size() ];
-		for ( int i = 0; i < blockList.size(); ++i )
-			blocks[ i ] = blockList.get( i );
-			
-		return blocks;
+
+		return blockList;
 	}
 
 }

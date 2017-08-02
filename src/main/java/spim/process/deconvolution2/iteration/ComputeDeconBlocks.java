@@ -2,6 +2,7 @@ package spim.process.deconvolution2.iteration;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.Callable;
@@ -20,8 +21,10 @@ import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Pair;
 import net.imglib2.util.RealSum;
 import net.imglib2.util.Util;
+import net.imglib2.util.ValuePair;
 import net.imglib2.view.Views;
 import spim.Threads;
 import spim.fiji.ImgLib2Temp.Triple;
@@ -183,83 +186,120 @@ public class ComputeDeconBlocks
 			final Thread[] threads = new Thread[ computeBlockThreads.size() ];
 
 			final int viewNum = v;
-			final int numBlocks = view.getNumBlocks();
+			final int totalNumBlocks = view.getNumBlocks();
+			final IterationStatistics[] stats = new IterationStatistics[ totalNumBlocks ];
 
-			final IterationStatistics[] stats = new IterationStatistics[ numBlocks ];
+			final HashMap< Integer, Img< FloatType > > blockThreadPsiImg = new HashMap<>();
 
-			for ( int t = 0; t < computeBlockThreads.size(); ++t )
+			// create the temporary psi images for each blockThread
+			for ( int threadId = 0; threadId < computeBlockThreads.size(); ++threadId )
 			{
-				final int threadId = t;
+				final ComputeBlockThread blockThread = computeBlockThreads.get( threadId );
+				blockThreadPsiImg.put( threadId, blockThread.getBlockFactory().create( Util.int2long( blockThread.getBlockSize() ), new FloatType() ) );
+			}
 
-				threads[ threadId ] = new Thread( new Runnable()
+			// keep thelast blocks to be written back to the global psi image once it is not overlapping anymore
+			final Vector< Pair< Pair< Integer, Block >, Img< FloatType > > > previousBlockWritebackQueue = new Vector<>();
+			final Vector< Pair< Pair< Integer, Block >, Img< FloatType > > > currentBlockWritebackQueue = new Vector<>();
+
+			int batch = 0;
+			for ( final List< Block > blocksBatch : view.getNonInterferingBlocks() )
+			{
+				final int numBlocksBatch = blocksBatch.size();
+				System.out.println( "Processing " + numBlocksBatch + " blocks from batch " + (++batch) + "/" + view.getNonInterferingBlocks().size() );
+
+				for ( int t = 0; t < computeBlockThreads.size(); ++t )
 				{
-					public void run()
+					final int threadId = t;
+	
+					threads[ threadId ] = new Thread( new Runnable()
 					{
-						// one ComputeBlockThread creates a temporary image for I/O, valid throughout the whole cycle
-						final ComputeBlockThread blockThread = computeBlockThreads.get( threadId );
-						final Img< FloatType > blockPsiImg = blockThread.getBlockFactory().create( Util.int2long( blockThread.getBlockSize() ), new FloatType() );
-
-						int blockId;
-
-						// TODO: just write back blocks once they are not interfering
-						view.getNonInterferingBlocks();
-
-						while ( ( blockId = ai.getAndIncrement() ) < numBlocks )
+						public void run()
 						{
-							final Block blockStruct = view.getBlocks()[ blockId ];
-							System.out.println( " block " + blockId + ", " + Util.printInterval( blockStruct ) );
-
-							long time = System.currentTimeMillis();
-							blockStruct.copyBlock( Views.extendMirrorSingle( psi ), blockPsiImg );
-							System.out.println( " block " + blockId + ", thread (" + (threadId+1) + "/" + threads.length + "), (CPU): copy " + (System.currentTimeMillis() - time) );
-
-							time = System.currentTimeMillis();
-							stats[ blockId ] = blockThread.runIteration(
-									view,
-									blockStruct,
-									blockPsiImg,
-									Views.zeroMin( Views.interval( Views.extendZero( view.getImage() ), blockStruct ) ),//imgBlock,
-									Views.zeroMin( Views.interval( Views.extendZero( view.getWeight() ), blockStruct ) ),//weightBlock,
-									max[ viewNum ],
-									view.getPSF().getKernel1(),
-									view.getPSF().getKernel2() );
-							System.out.println( " block " + blockId + ", thread (" + (threadId+1) + "/" + threads.length + "), (CPU): compute " + (System.currentTimeMillis() - time) );
-
-							time = System.currentTimeMillis();
-							blockStruct.pasteBlock( psi, blockPsiImg );
-							System.out.println( " block " + blockId + ", thread (" + (threadId+1) + "/" + threads.length + "), (CPU): paste " + (System.currentTimeMillis() - time) );
-
-							DisplayImage.getImagePlusInstance( psi, false, it + ", blockId: " + blockId, Double.NaN, Double.NaN ).show();;
-						}
-
-						// accumulate the results from the individual threads
-						IterationStatistics is = new IterationStatistics();
-
-						for ( int i = 0; i < stats.length; ++i )
-						{
-							is.sumChange += stats[ i ].sumChange;
-							is.maxChange = Math.max( is.maxChange, stats[ i ].maxChange );
-						}
-
-						DisplayImage.getImagePlusInstance( psi, false, it + ", view: " + view, Double.NaN, Double.NaN ).show();;
-						IOFunctions.println( "iteration: " + it + ", view: " + view + " --- sum change: " + is.sumChange + " --- max change per pixel: " + is.maxChange );
-					}
-				});
-			}
+							// one ComputeBlockThread creates a temporary image for I/O, valid throughout the whole cycle
+							final ComputeBlockThread blockThread = computeBlockThreads.get( threadId );
+							final Img< FloatType > blockPsiImg = blockThreadPsiImg.get( threadId );
 	
-			for ( int ithread = 0; ithread < threads.length; ++ithread )
-				threads[ ithread ].start();
+							int blockId;
+
+							while ( ( blockId = ai.getAndIncrement() ) < numBlocksBatch )
+							{
+								final Block blockStruct = blocksBatch.get( blockId );
+								System.out.println( " block " + blockId + ", " + Util.printInterval( blockStruct ) );
+
+								long time = System.currentTimeMillis();
+								blockStruct.copyBlock( Views.extendMirrorSingle( psi ), blockPsiImg );
+								System.out.println( " block " + blockId + ", thread (" + (threadId+1) + "/" + threads.length + "), (CPU): copy " + (System.currentTimeMillis() - time) );
 	
-			try
-			{
+								time = System.currentTimeMillis();
+								stats[ blockId ] = blockThread.runIteration(
+										view,
+										blockStruct,
+										blockPsiImg,
+										Views.zeroMin( Views.interval( Views.extendZero( view.getImage() ), blockStruct ) ),//imgBlock,
+										Views.zeroMin( Views.interval( Views.extendZero( view.getWeight() ), blockStruct ) ),//weightBlock,
+										max[ viewNum ],
+										view.getPSF().getKernel1(),
+										view.getPSF().getKernel2() );
+								System.out.println( " block " + blockId + ", thread (" + (threadId+1) + "/" + threads.length + "), (CPU): compute " + (System.currentTimeMillis() - time) );
+	
+								time = System.currentTimeMillis();
+								if ( totalNumBlocks == 1 )
+								{
+									blockStruct.pasteBlock( psi, blockPsiImg );
+									System.out.println( " block " + blockId + ", thread (" + (threadId+1) + "/" + threads.length + "), (CPU): paste " + (System.currentTimeMillis() - time) );
+								}
+								else
+								{
+									// copy to the writequeue
+									final Img< FloatType > tmp = blockPsiImg.factory().create( blockPsiImg, new FloatType() );
+									FusionTools.copyImg( blockPsiImg, tmp, false, views.getExecutorService() );
+									currentBlockWritebackQueue.add( new ValuePair<>( new ValuePair<>( blockId, blockStruct ), tmp ) );
+									System.out.println( " block " + blockId + ", thread (" + (threadId+1) + "/" + threads.length + "), (CPU): saving for later pasting " + (System.currentTimeMillis() - time) );
+								}
+	
+								//DisplayImage.getImagePlusInstance( psi, false, it + ", blockId: " + blockId, Double.NaN, Double.NaN ).show();;
+							}
+	
+							// accumulate the results from the individual threads
+							final IterationStatistics is = new IterationStatistics();
+	
+							for ( int i = 0; i < stats.length; ++i )
+							{
+								is.sumChange += stats[ i ].sumChange;
+								is.maxChange = Math.max( is.maxChange, stats[ i ].maxChange );
+							}
+	
+							DisplayImage.getImagePlusInstance( psi, false, it + ", view: " + view, Double.NaN, Double.NaN ).show();;
+							IOFunctions.println( "iteration: " + it + ", view: " + view + " --- sum change: " + is.sumChange + " --- max change per pixel: " + is.maxChange );
+						}
+					});
+				}
+		
 				for ( int ithread = 0; ithread < threads.length; ++ithread )
-					threads[ ithread ].join();
-			}
-			catch ( InterruptedException ie )
-			{
-				throw new RuntimeException(ie);
+					threads[ ithread ].start();
+		
+				try
+				{
+					for ( int ithread = 0; ithread < threads.length; ++ithread )
+						threads[ ithread ].join();
+				}
+				catch ( InterruptedException ie ) { throw new RuntimeException(ie); }
+
+				// write back previous list of blocks
+				for ( final Pair< Pair< Integer, Block >, Img< FloatType > > writeBackBlock : previousBlockWritebackQueue )
+				{
+					long time = System.currentTimeMillis();
+					writeBackBlock.getA().getB().pasteBlock( psi, writeBackBlock.getB() );
+					System.out.println( " block " + writeBackBlock.getA().getA() + ", (CPU): paste " + (System.currentTimeMillis() - time) );
+				}
+
+				previousBlockWritebackQueue.clear();
+				previousBlockWritebackQueue.addAll( currentBlockWritebackQueue );
+				currentBlockWritebackQueue.clear();
 			}
 
+			DisplayImage.getImagePlusInstance( psi, false, it + " ", Double.NaN, Double.NaN ).show();
 			SimpleMultiThreading.threadHaltUnClean();
 			++v;
 		}

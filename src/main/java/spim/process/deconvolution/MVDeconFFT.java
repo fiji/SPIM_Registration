@@ -1,6 +1,7 @@
 package spim.process.deconvolution;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -44,7 +45,7 @@ public class MVDeconFFT
 	final boolean useBlocks, useCUDA, useCPU;
 	final int[] blockSize, deviceList;
 	final int device0, numDevices;
-	final Block[] blocks;
+	final List< Block > blocks;
 	final boolean saveMemory;
 
 	// the imgfactory used to instantiate the blocks and compute the FFTs, must be ArrayImg for CUDA
@@ -119,7 +120,7 @@ public class MVDeconFFT
 			final BlockGeneratorFixedSizePrecise blockGenerator = new BlockGeneratorFixedSizePrecise( Util.int2long( this.blockSize ) );
 			this.blocks = blockGenerator.divideIntoBlocks( imgSize, kernelSize );
 
-			IOFunctions.println( "Number of blocks: " + this.blocks.length );
+			IOFunctions.println( "Number of blocks: " + this.blocks.size() );
 		}
 		else if ( this.useCUDA ) // and no blocks, i.e. one big block
 		{
@@ -140,7 +141,7 @@ public class MVDeconFFT
 			final BlockGeneratorFixedSizePrecise blockGenerator = new BlockGeneratorFixedSizePrecise( Util.int2long( this.blockSize ) );
 			this.blocks = blockGenerator.divideIntoBlocks( imgSize, kernelSize );
 
-			IOFunctions.println( "Number of blocks: " + this.blocks.length + " (1 single block for CUDA processing)." );
+			IOFunctions.println( "Number of blocks: " + this.blocks.size() + " (1 single block for CUDA processing)." );
 
 		}
 		else
@@ -377,8 +378,8 @@ public class MVDeconFFT
 					this.fftConvolution1.setKeepImgFFT( false );
 				}
 
-				for ( int i = 0; i < blocks.length; ++i )
-					MVDeconFFTThreads.convolve1BlockCPU( blocks[ i ], image, result, block, fftConvolution1, i );
+				for ( int i = 0; i < blocks.size(); ++i )
+					MVDeconFFTThreads.convolve1BlockCPU( blocks.get( i ), image, result, block, fftConvolution1, i );
 
 				if ( saveMemory )
 				{
@@ -418,8 +419,8 @@ public class MVDeconFFT
 		{
 			final Img< FloatType > block = blockFactory.create( blockSize, new FloatType() );
 
-			for ( int i = 0; i < blocks.length; ++i )
-				MVDeconFFTThreads.convolve1BlockCUDA( blocks[ i ], device0, image, result, block, kernel1, i );
+			for ( int i = 0; i < blocks.size(); ++i )
+				MVDeconFFTThreads.convolve1BlockCUDA( blocks.get( i ), device0, image, result, block, kernel1, i );
 
 			return;
 		}
@@ -469,8 +470,8 @@ public class MVDeconFFT
 					this.fftConvolution2.setKeepImgFFT( false );
 				}
 
-				for ( int i = 0; i < blocks.length; ++i )
-					MVDeconFFTThreads.convolve2BlockCPU( blocks[ i ], image, result, block, fftConvolution2 );
+				for ( int i = 0; i < blocks.size(); ++i )
+					MVDeconFFTThreads.convolve2BlockCPU( blocks.get( i ), image, result, block, fftConvolution2 );
 
 				if ( saveMemory )
 				{
@@ -507,8 +508,8 @@ public class MVDeconFFT
 		{
 			final Img< FloatType > block = blockFactory.create( blockSize, new FloatType() );
 
-			for ( int i = 0; i < blocks.length; ++i )
-				MVDeconFFTThreads.convolve2BlockCUDA( blocks[ i ], device0, image, result, block, kernel2 );
+			for ( int i = 0; i < blocks.size(); ++i )
+				MVDeconFFTThreads.convolve2BlockCUDA( blocks.get( i ), device0, image, result, block, kernel2 );
 
 			return;
 		}

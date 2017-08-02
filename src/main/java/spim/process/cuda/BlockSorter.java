@@ -1,7 +1,10 @@
 package spim.process.cuda;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Interval;
@@ -26,30 +29,26 @@ public class BlockSorter
 	 * @param psi
 	 * @return
 	 */
-	public static ArrayList< Block[] > sortBlocksBySmallestFootprint( final Block[] blocks, final Interval psi )
+	public static List< List< Block > > sortBlocksBySmallestFootprint( final List< Block > blocks, final Interval psi, final int minRequiredBlocks )
 	{
 		final int n = psi.numDimensions();
 
-		final long[] effectiveBlockSize = blocks[ 0 ].getEffectiveSize();
+		final long[] effectiveBlockSize = blocks.get( 0 ).getEffectiveSize();
 		final int[] numBlocks = new int[ n ];
 
 		for ( int d = 0; d < n; ++d )
 		{
 			final long dim = psi.dimension( d );
-			numBlocks[ d ] = (int)( dim / blocks[ 0 ].getEffectiveSize()[ d ] );
+			numBlocks[ d ] = (int)( dim / blocks.get( 0 ).getEffectiveSize()[ d ] );
 
 			// if the modulo is not 0 we need one more that is only partially useful
-			if ( dim % blocks[ 0 ].getEffectiveSize()[ d ] != 0 )
+			if ( dim % blocks.get( 0 ).getEffectiveSize()[ d ] != 0 )
 				++numBlocks[ d ];
 		}
-
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Number of blocks in each dimension: " + Util.printCoordinates( numBlocks ) );
 
-		final long[] minOffset = new long[ n ];
-		blocks[ 0 ].min( minOffset );
-
-		int minDim = -1;
-		long minDimSize = Long.MAX_VALUE;
+		final HashMap< Long, Integer > numBlocksDimToDim = new HashMap<>();
+		final ArrayList< Long > numBlocksDim = new ArrayList<>();
 
 		for ( int d = 0; d < n; ++d )
 		{
@@ -59,41 +58,57 @@ public class BlockSorter
 				if ( e != d )
 					size *= numBlocks[ e ];
 
-			if ( size < minDimSize )
-			{
-				minDimSize = size;
-				minDim = d;
-			}
+			numBlocksDim.add( size );
+			numBlocksDimToDim.put( size, d );
 		}
 
-		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Minimum sum of blocksize memory (" + minDimSize + " blocks) when progressing in dimension: " + minDim );
+		// we look for the smallest dimension in which the number of blocks it at least "minRequiredBlocks"
+		Collections.sort( numBlocksDim );
 
-		final ArrayList< Block[] > noninterferingBlocks = new ArrayList<>();
+		int minDim = -1;
+		long minDimSize = Long.MAX_VALUE;
+
+		for ( int i = 0; i < n && minDim == -1; ++i )
+			if ( numBlocksDim.get( i ) >= minRequiredBlocks || ( i == n-1 && minDim == -1 ) )
+			{
+				// if this dimension fullfills the requirement or is the last (and biggest one) and nothing before did
+				minDimSize = numBlocksDim.get( i );
+				minDim = numBlocksDimToDim.get( minDimSize );
+			}
+
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Min memory (" + minDimSize + " blocks) progressing in dim=" + minDim + ", assuming a min #blocks=" + minRequiredBlocks );
+
+		final List< List< Block > > noninterferingBlocks = new ArrayList<>();
+
+		final long[] minOffset = new long[ n ];
+		blocks.get( 0 ).min( minOffset );
 
 		int sum = 0;
 
 		// go layer by layer
 		for ( int i = 0; i < numBlocks[ minDim ]; ++i )
 		{
-			final Block[] newBlocks = new Block[ (int)minDimSize ];
-			int j = 0;
+			final ArrayList< Block > newBlocks = new ArrayList<>();
 			long offset = minOffset[ minDim ] + i * effectiveBlockSize[ minDim ];
 
 			for ( final Block block : blocks )
 			{
 				if ( block.min( minDim ) == offset )
 				{
-					newBlocks[ j++ ] = block;
+					newBlocks.add( block );
 					++sum;
-					System.out.println( Util.printInterval( block ) );
+					
 				}
-				System.out.println();
 			}
 
 			noninterferingBlocks.add( newBlocks );
+
+			for ( final Block block : newBlocks )
+				System.out.println( Util.printInterval( block ) );
+			System.out.println();
 		}
 
-		if ( sum != blocks.length )
+		if ( sum != blocks.size() )
 		{
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): ERROR, could not sort blocks, something is wrong, must keep them all. This is not good." );
 			noninterferingBlocks.clear();

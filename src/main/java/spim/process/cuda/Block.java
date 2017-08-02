@@ -1,6 +1,7 @@
 package spim.process.cuda;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -399,7 +400,7 @@ public class Block extends AbstractInterval
 		final long[] kernelSize = new long[]{ 16, 32 };
 
 		final BlockGeneratorFixedSizePrecise blockGenerator = new BlockGeneratorFixedSizePrecise( blockSize );
-		final Block[] blocks = blockGenerator.divideIntoBlocks( imgSize, kernelSize );
+		final List< Block > blocks = blockGenerator.divideIntoBlocks( imgSize, kernelSize );
 
 		int i = 0;
 

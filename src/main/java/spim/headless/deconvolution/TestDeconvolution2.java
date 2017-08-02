@@ -18,6 +18,7 @@ import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import simulation.imgloader.SimulatedBeadsImgLoader;
 import spim.fiji.spimdata.SpimData2;
@@ -153,6 +154,13 @@ public class TestDeconvolution2
 
 		try
 		{
+			final ComputeBlockThreadFactory cptf = new ComputeBlockThreadCPUFactory(
+					service,
+					minValue,
+					lambda,
+					blockSize,
+					blockFactory );
+
 			final ArrayList< DeconView > deconViews = new ArrayList<>();
 
 			for ( final Group< V > group : fusion.getGroups() )
@@ -164,16 +172,10 @@ public class TestDeconvolution2
 						psfs.get( group ),
 						psfType,
 						blockSize,
-						blockFactory ) );
+						cptf.numParallelBlocks() ) );
 			}
 
 			final DeconViews views = new DeconViews( deconViews, service );
-			final ComputeBlockThreadFactory cptf = new ComputeBlockThreadCPUFactory(
-					views.getExecutorService(),
-					minValue,
-					lambda,
-					blockSize,
-					blockFactory );
 
 			final Img< FloatType > decon = new ComputeDeconBlocks( views, numIterations, cptf, psiFactory ).getPSI();
 
