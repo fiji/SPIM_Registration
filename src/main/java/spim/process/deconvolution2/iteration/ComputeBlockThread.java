@@ -1,7 +1,7 @@
 package spim.process.deconvolution2.iteration;
 
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.img.ImgFactory;
+import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImg;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.process.cuda.Block;
@@ -33,16 +33,17 @@ public interface ComputeBlockThread
 	public int getId();
 
 	/**
-	 * @return which ImgFactory to use in order to provide the copied psiBlock
+	 * contains the deconvolved image at the current iteration, copied into a block from outside (outofbounds is mirror)
+	 *
+	 * @return the Img to use in order to provide the copied psiBlock
 	 */
-	public ImgFactory< FloatType > getBlockFactory();
+	public Img< FloatType > getPsiBlockTmp();
 
 	/**
 	 * run an iteration on the block
 	 *
 	 * @param view - the input view
 	 * @param block - the Block instance
-	 * @param psiBlock - the deconvolved image at the current iteration, copied into a block (outofbounds is mirror)
 	 * @param imgBlock - the input image as block (virtual, outofbounds is zero)
 	 * @param weightBlock - the weights for this image (virtual, outofbounds is zero)
 	 * @param maxIntensityView - the maximum intensity of the view
@@ -53,7 +54,6 @@ public interface ComputeBlockThread
 	public IterationStatistics runIteration(
 			final DeconView view,
 			final Block block,
-			final RandomAccessibleInterval< FloatType > psiBlock, // out of bounds is mirror
 			final RandomAccessibleInterval< FloatType > imgBlock, // out of bounds is ZERO
 			final RandomAccessibleInterval< FloatType > weightBlock,
 			final float maxIntensityView,

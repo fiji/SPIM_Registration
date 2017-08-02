@@ -148,6 +148,7 @@ public class TestDeconvolution2
 		final float lambda = 0.0006f;
 		final float minValue = ComputeDeconBlocks.minValue;
 		final PSFTYPE psfType = PSFTYPE.INDEPENDENT;
+		final boolean filterBlocksForContent = false;
 
 		// one common ExecutorService for all
 		final ExecutorService service = DeconViews.createExecutorService();
@@ -172,7 +173,8 @@ public class TestDeconvolution2
 						psfs.get( group ),
 						psfType,
 						blockSize,
-						cptf.numParallelBlocks() ) );
+						cptf.numParallelBlocks(),
+						filterBlocksForContent ) );
 			}
 
 			final DeconViews views = new DeconViews( deconViews, service );

@@ -64,7 +64,6 @@ public class ComputeBlockThreadCPU extends ComputeBlockThreadAbstract
 	public IterationStatistics runIteration(
 			final DeconView view,
 			final Block block,
-			final RandomAccessibleInterval< FloatType > psiBlock,
 			final RandomAccessibleInterval< FloatType > imgBlock,
 			final RandomAccessibleInterval< FloatType > weightBlock,
 			final float maxIntensityView,
@@ -75,7 +74,7 @@ public class ComputeBlockThreadCPU extends ComputeBlockThreadAbstract
 		// convolve psi (current guess of the image) with the PSF of the current view
 		// [psi >> tmp1]
 		//
-		convolve1( psiBlock, kernel1, view.getPSF().getKernel1FFT(), tmp1 );
+		convolve1( psiBlockTmp, kernel1, view.getPSF().getKernel1FFT(), tmp1 );
 
 		//
 		// compute quotient img/psiBlurred
@@ -128,7 +127,7 @@ public class ComputeBlockThreadCPU extends ComputeBlockThreadAbstract
 					DeconvolutionMethods.computeFinalValues(
 							portion.getStartPosition(),
 							portion.getLoopSize(),
-							psiBlock,
+							psiBlockTmp,
 							tmp2,
 							weightBlock,
 							lambda,

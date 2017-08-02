@@ -3,20 +3,29 @@ package spim.process.deconvolution2;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Vector;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 import bdv.util.ConstantRandomAccessible;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.Cursor;
 import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.array.ArrayImg;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Pair;
 import net.imglib2.util.Util;
+import net.imglib2.util.ValuePair;
 import net.imglib2.view.Views;
+import spim.Threads;
 import spim.process.cuda.Block;
 import spim.process.cuda.BlockGeneratorFixedSizePrecise;
 import spim.process.cuda.BlockSorter;
 import spim.process.deconvolution2.DeconViewPSF.PSFTYPE;
+import spim.process.fusion.FusionTools;
+import spim.process.fusion.ImagePortion;
 
 /**
  * One view for the multiview deconvolution, contains image, weight, and PSFs
@@ -57,7 +66,7 @@ public class DeconView
 			final RandomAccessibleInterval< FloatType > weight,
 			final ArrayImg< FloatType, ? > kernel )
 	{
-		this( service, image, weight, kernel, PSFTYPE.INDEPENDENT, defaultBlockSize, 1 );
+		this( service, image, weight, kernel, PSFTYPE.INDEPENDENT, defaultBlockSize, 1, true );
 	}
 
 	public DeconView(
@@ -67,18 +76,7 @@ public class DeconView
 			final ArrayImg< FloatType, ? > kernel,
 			final int[] blockSize )
 	{
-		this( service, image, weight, kernel, PSFTYPE.INDEPENDENT, blockSize, 1 );
-	}
-
-	public DeconView(
-			final ExecutorService service,
-			final RandomAccessibleInterval< FloatType > image,
-			final RandomAccessibleInterval< FloatType > weight,
-			final ArrayImg< FloatType, ? > kernel,
-			final PSFTYPE psfType,
-			final int[] blockSize )
-	{
-		this( service, image, weight, kernel, psfType, blockSize, 1 );
+		this( service, image, weight, kernel, PSFTYPE.INDEPENDENT, blockSize, 1, true );
 	}
 
 	public DeconView(
@@ -88,7 +86,20 @@ public class DeconView
 			final ArrayImg< FloatType, ? > kernel,
 			final PSFTYPE psfType,
 			final int[] blockSize,
-			final int minRequiredBlocks )
+			final boolean filterBlocksForContent )
+	{
+		this( service, image, weight, kernel, psfType, blockSize, 1, filterBlocksForContent );
+	}
+
+	public DeconView(
+			final ExecutorService service,
+			final RandomAccessibleInterval< FloatType > image,
+			final RandomAccessibleInterval< FloatType > weight,
+			final ArrayImg< FloatType, ? > kernel,
+			final PSFTYPE psfType,
+			final int[] blockSize,
+			final int minRequiredBlocks,
+			final boolean filterBlocksForContent )
 	{
 		this.n = image.numDimensions();
 		this.psf = new DeconViewPSF( kernel, psfType );
@@ -120,10 +131,16 @@ public class DeconView
 
 		this.numBlocks = blocks.size();
 
-		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Number of blocks: " + numBlocks + ", dim=" + Util.printCoordinates( this.blockSize ) );
-		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Effective size of each block (due to kernel size) " + Util.printCoordinates( blocks.get( 0 ).getEffectiveSize() ) );
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Number of blocks: " + numBlocks + ", dim=" + Util.printCoordinates( this.blockSize ) + ", Effective size of each block (due to kernel size) " + Util.printCoordinates( blocks.get( 0 ).getEffectiveSize() ) );
 
 		this.nonInterferingBlocks = BlockSorter.sortBlocksBySmallestFootprint( blocks, new FinalInterval( image ), minRequiredBlocks );
+
+		if ( filterBlocksForContent )
+		{
+			final Pair< Integer, Integer > removed = filterBlocksForContent( nonInterferingBlocks, weight, service );
+
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Removed " + removed.getA() + " blocks, " + removed.getB() + " entire batches" );
+		}
 	}
 
 	public RandomAccessibleInterval< FloatType > getImage() { return image; }
@@ -133,23 +150,75 @@ public class DeconView
 	public List< List< Block > > getNonInterferingBlocks() { return nonInterferingBlocks; }
 	public int getNumBlocks() { return numBlocks; }
 
-	public static void filterBlocksForContent( final ArrayList< Block[] > blocksList )
+	public static Pair< Integer, Integer > filterBlocksForContent( final List< List< Block > > blocksList, final RandomAccessibleInterval< FloatType > weight, final ExecutorService service )
 	{
-		final ArrayList< Block[] > newBlocksList = new ArrayList<>();
+		int removeBlocks = 0;
+		int removeBlockBatch = 0;
 
-		for ( final Block[] blocks : blocksList )
+		for ( int j = blocksList.size() - 1; j >= 0; --j )
 		{
-			final ArrayList< Block > newBlocks = new ArrayList<>();
-		
+			final List< Block > blocks = blocksList.get( j );
+
+			for ( int i = blocks.size() - 1; i >= 0; --i )
+			{
+				if ( !blockContainsContent( blocks.get( i ), weight, service ) )
+				{
+					blocks.remove( i );
+					++removeBlocks;
+				}
+			}
+
+			if ( blocks.size() == 0 )
+			{
+				blocksList.remove( j );
+				++removeBlockBatch;
+			}
 		}
+
+		return new ValuePair<>( removeBlocks, removeBlockBatch );
 	}
 
-	public static boolean blockContainsContent( final Block blockStruct, final RandomAccessibleInterval< FloatType > weight )
+	public static boolean blockContainsContent( final Block blockStruct, final RandomAccessibleInterval< FloatType > weight, final ExecutorService service )
 	{
-		for ( final FloatType t : Views.iterable( Views.interval( Views.extendZero( weight ), blockStruct ) ) )
-			if ( t.get() != 0.0 )
-				return true;
+		final int nThreads = Threads.numThreads();
+		final int nPortions = nThreads * 4;
+		final Vector< ImagePortion > portions = FusionTools.divideIntoPortions( Views.iterable( weight ).size(), nPortions );
+		final ArrayList< Callable< Boolean > > tasks = new ArrayList<>();
 
-		return false;
+		for ( final ImagePortion portion : portions )
+		{
+			tasks.add( new Callable< Boolean >()
+			{
+				@Override
+				public Boolean call() throws Exception
+				{
+					final Cursor< FloatType > c = Views.iterable( Views.interval( Views.extendZero( weight ), blockStruct ) ).cursor();
+			
+					c.jumpFwd( portion.getStartPosition() );
+			
+					for ( long l = 0; l < portion.getLoopSize(); ++l )
+						if ( c.next().get() != 0.0 )
+							return true;
+
+					return false;
+				}
+			});
+		}
+
+		try
+		{
+			// invokeAll() returns when all tasks are complete
+			for ( final Future< Boolean > results : service.invokeAll( tasks ) )
+				if ( results.get() == true )
+					return true;
+
+			return false;
+		}
+		catch ( final Exception e )
+		{
+			IOFunctions.println( "Failed to identify if block contains data: " + e );
+			e.printStackTrace();
+			return true;
+		}
 	}
 }

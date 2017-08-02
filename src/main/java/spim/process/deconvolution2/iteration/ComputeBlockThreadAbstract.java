@@ -1,15 +1,17 @@
 package spim.process.deconvolution2.iteration;
 
+import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Util;
 
 public abstract class ComputeBlockThreadAbstract implements ComputeBlockThread
 {
 	final float minValue;
 	final int id;
 	final int[] blockSize;
-	final ImgFactory< FloatType > blockFactory;
+	final public Img< FloatType > psiBlockTmp;
 
 	/**
 	 * Instantiate a block thread
@@ -24,7 +26,7 @@ public abstract class ComputeBlockThreadAbstract implements ComputeBlockThread
 			final int[] blockSize,
 			final int id )
 	{
-		this.blockFactory = blockFactory;
+		this.psiBlockTmp = blockFactory.create( Util.int2long( blockSize ), new FloatType() );
 		this.minValue = minValue;
 		this.blockSize = blockSize;
 		this.id = id;
@@ -64,8 +66,9 @@ public abstract class ComputeBlockThreadAbstract implements ComputeBlockThread
 	public int getId() { return id; }
 
 	/**
-	 * @return which ImgFactory to use in order to provide the copied psiBlock
+	 * contains the deconvolved image at the current iteration, copied into a block from outside (outofbounds is mirror)
+	 *
+	 * @return the Img to use in order to provide the copied psiBlock
 	 */
-	@Override
-	public ImgFactory< FloatType > getBlockFactory() { return blockFactory; }
+	public Img< FloatType > getPsiBlockTmp() { return psiBlockTmp; }
 }
