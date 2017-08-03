@@ -152,7 +152,7 @@ public class FilteredAndGroupedTableModel < AS extends AbstractSpimData< ? > > e
 	protected List<List< BasicViewDescription< ? extends BasicViewSetup > >> elements()
 	{
 		final List<BasicViewDescription< ? > > ungroupedElements =
-				SpimDataTools.getFilteredViewDescriptions( panel.getSpimData().getSequenceDescription(), filters);
+				SpimDataTools.getFilteredViewDescriptions( panel.getSpimData().getSequenceDescription(), filters, false);
 		final List< Group< BasicViewDescription< ? > > > elementsNew = 
 				Group.combineBy(ungroupedElements, groupingFactors);
 
