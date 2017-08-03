@@ -39,4 +39,15 @@ public class ComputeBlockThreadCUDAFactory implements ComputeBlockThreadFactory
 
 	@Override
 	public int numParallelBlocks() { return idToCudaDevice.keySet().size(); }
+
+	@Override
+	public String toString()
+	{
+		String out = "CUDA based using " + numParallelBlocks() + " devices:";
+
+		for ( int devId = 0; devId < numParallelBlocks(); ++devId )
+			out += " [" + idToCudaDevice.get( devId ) + "]";
+
+		return out;
+	}
 }

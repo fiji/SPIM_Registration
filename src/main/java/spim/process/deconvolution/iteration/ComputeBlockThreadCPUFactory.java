@@ -49,4 +49,10 @@ public class ComputeBlockThreadCPUFactory implements ComputeBlockThreadFactory
 
 	@Override
 	public int numParallelBlocks() { return 1; }
+
+	@Override
+	public String toString()
+	{
+		return "CPU based";
+	}
 }
