@@ -40,8 +40,15 @@ public class MultiViewDeconvolution
 	final public static float minValueImg = 1f; // mininal value for the input image (as it is not normalized)
 	final public static float minValue = 0.0001f; // minimal value for the deconvolved image
 
-	public static boolean debug = true;
-	public static int debugInterval = 1;
+	public static int defaultBlendingRange = 12;
+	public static int defaultBlendingBorder = -8;
+	public static int cellDim = 32;
+	public static int maxCacheSize = 10000;
+
+	// for additional smoothing of weights in areas where many views contribute less than 100%
+	public static float maxDiffRange = 0.1f;
+	public static float scalingRange = 0.05f;
+	public static boolean additionalSmoothBlending = false;
 
 	// current iteration
 	int it = 0;
@@ -61,6 +68,12 @@ public class MultiViewDeconvolution
 	// max intensities for each contributing view, ordered as in views
 	final float[] max;
 
+	final int numIterations;
+	final double avg, avgMax;
+
+	boolean debug = false;
+	int debugInterval = 1;
+
 	// for debug
 	ImageStack stack;
 	CompositeImage ci;
@@ -73,6 +86,7 @@ public class MultiViewDeconvolution
 	{
 		this.computeBlockFactory = computeBlockFactory;
 		this.views = views;
+		this.numIterations = numIterations;
 		this.max = new float[ views.getViews().size() ];
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Deconvolved image factory: " + psiFactory.getClass().getSimpleName() );
@@ -88,24 +102,33 @@ public class MultiViewDeconvolution
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Fusing image for first iteration" );
 
-		double avg = fuseFirstIteration( psi, views.getViews(), views.getExecutorService(), max );
+		double avgIntensity = fuseFirstIteration( psi, views.getViews(), views.getExecutorService(), max );
 
-		double avgMax = 0;
+		double avgMaxIntensity = 0;
 		for ( int i = 0; i < max.length; ++i )
 		{
-			avgMax += max[ i ];
+			avgMaxIntensity += max[ i ];
 			IOFunctions.println( "Max intensity in overlapping area of view " + i + ": " + max[ i ] );
 		}
-		avgMax /= (double)max.length;
+		this.avgMax = avgMaxIntensity / (double)max.length;
 
-		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Average intensity in overlapping area: " + avg );
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Average intensity in overlapping area: " + avgIntensity );
 
-		if ( Double.isNaN( avg ) )
+		if ( Double.isNaN( avgIntensity ) )
 		{
-			avg = 1.0;
-			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): ERROR! Computing average FAILED, is NaN, setting it to: " + avg );
+			avgIntensity = 1.0;
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): ERROR! Computing average FAILED, is NaN, setting it to: " + avgIntensity );
 		}
 
+		this.avg = avgIntensity;
+	}
+
+	public Img< FloatType> getPSI() { return psi; }
+	public void setDebug( final boolean debug ) { this.debug = debug; }
+	public void setDebugInterval( final int debugInterval ) { this.debugInterval = debugInterval; }
+
+	public void runIterations()
+	{
 		// run the deconvolution
 		while ( it < numIterations )
 		{
@@ -151,12 +174,7 @@ public class MultiViewDeconvolution
 			}
 
 			if ( it == 0 )
-			{
-				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting image to average intensity: " + avg );
-
-				for ( final FloatType t : psi )
-					t.set( (float)avg );
-			}
+				setPSItoAvg();
 
 			runNextIteration();
 		}
@@ -167,7 +185,13 @@ public class MultiViewDeconvolution
 		IOFunctions.println( "DONE (" + new Date(System.currentTimeMillis()) + ")." );
 	}
 
-	public Img< FloatType > getPSI() { return psi; }
+	public void setPSItoAvg()
+	{
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting image to average intensity: " + avg );
+
+		for ( final FloatType t : psi )
+			t.set( (float)avg );
+	}
 
 	public void runNextIteration()
 	{
