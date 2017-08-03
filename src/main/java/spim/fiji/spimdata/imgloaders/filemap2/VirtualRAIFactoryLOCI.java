@@ -27,7 +27,7 @@ import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import spim.fiji.spimdata.imgloaders.LegacyStackImgLoaderLOCI;
-import spim.process.fusion.FusionHelper;
+import spim.process.fusion.FusionTools;
 
 public class VirtualRAIFactoryLOCI
 {
@@ -81,27 +81,27 @@ public class VirtualRAIFactoryLOCI
 		if (pixelType == FormatTools.UINT8)
 		{
 			RandomAccessibleInterval< T > virtualImg = new VirtualRandomAccessibleIntervalLOCI< T >( reader, file, dims, series, channel, timepoint, type == null ? (T) new UnsignedByteType() : type, (t, buf, i) -> {t.setReal( (int) buf[i] & 0xff);} );
-			return FusionHelper.cacheRandomAccessibleInterval( virtualImg, Integer.MAX_VALUE, type == null ? (T) new UnsignedByteType() : type, new int[] {(int)virtualImg.dimension( 0 ), (int)virtualImg.dimension( 1 ), 1} ) ;
+			return FusionTools.cacheRandomAccessibleInterval( virtualImg, Integer.MAX_VALUE, type == null ? (T) new UnsignedByteType() : type, new int[] {(int)virtualImg.dimension( 0 ), (int)virtualImg.dimension( 1 ), 1} ) ;
 		}
 		else if (pixelType == FormatTools.UINT16)
 		{
 			RandomAccessibleInterval< T > virtualImg = new VirtualRandomAccessibleIntervalLOCI< T >( reader, file, dims, series, channel, timepoint, type == null ? (T) new UnsignedShortType() : type, (t, buf, i) -> {t.setReal( LegacyStackImgLoaderLOCI.getShortValueInt( buf, i*2, isLittleEndian ) );} );
-			return FusionHelper.cacheRandomAccessibleInterval( virtualImg, Integer.MAX_VALUE, type == null ? (T) new UnsignedShortType() : type, new int[] {(int)virtualImg.dimension( 0 ), (int)virtualImg.dimension( 1 ), 1} ) ;
+			return FusionTools.cacheRandomAccessibleInterval( virtualImg, Integer.MAX_VALUE, type == null ? (T) new UnsignedShortType() : type, new int[] {(int)virtualImg.dimension( 0 ), (int)virtualImg.dimension( 1 ), 1} ) ;
 		}
 		else if (pixelType == FormatTools.INT16)
 		{
 			RandomAccessibleInterval< T > virtualImg = new VirtualRandomAccessibleIntervalLOCI< T >( reader, file, dims, series, channel, timepoint, type == null ? (T) new ShortType() : type, (t, buf, i) -> {t.setReal( LegacyStackImgLoaderLOCI.getShortValue( buf, i*2, isLittleEndian ) );} );
-			return FusionHelper.cacheRandomAccessibleInterval( virtualImg, Integer.MAX_VALUE, type == null ? (T) new ShortType() : type, new int[] {(int)virtualImg.dimension( 0 ), (int)virtualImg.dimension( 1 ), 1} ) ;
+			return FusionTools.cacheRandomAccessibleInterval( virtualImg, Integer.MAX_VALUE, type == null ? (T) new ShortType() : type, new int[] {(int)virtualImg.dimension( 0 ), (int)virtualImg.dimension( 1 ), 1} ) ;
 		}
 		else if (pixelType == FormatTools.UINT32)
 		{
 			RandomAccessibleInterval< T > virtualImg = new VirtualRandomAccessibleIntervalLOCI< T >( reader, file, dims, series, channel, timepoint, type == null ? (T) new UnsignedIntType() : type, (t, buf, i) -> {t.setReal( LegacyStackImgLoaderLOCI.getIntValue( buf, i*4, isLittleEndian ) );} );
-			return FusionHelper.cacheRandomAccessibleInterval( virtualImg, Integer.MAX_VALUE, type == null ? (T) new UnsignedIntType() : type, new int[] {(int)virtualImg.dimension( 0 ), (int)virtualImg.dimension( 1 ), 1} ) ;
+			return FusionTools.cacheRandomAccessibleInterval( virtualImg, Integer.MAX_VALUE, type == null ? (T) new UnsignedIntType() : type, new int[] {(int)virtualImg.dimension( 0 ), (int)virtualImg.dimension( 1 ), 1} ) ;
 		}
 		else if (pixelType == FormatTools.FLOAT)
 		{
 			RandomAccessibleInterval< T > virtualImg = new VirtualRandomAccessibleIntervalLOCI< T >( reader, file, dims, series, channel, timepoint, type == null ? (T) new FloatType() : type, (t, buf, i) -> {t.setReal( LegacyStackImgLoaderLOCI.getFloatValue( buf, i*4, isLittleEndian ) );} );
-			return FusionHelper.cacheRandomAccessibleInterval( virtualImg, Integer.MAX_VALUE,  type == null ? (T) new FloatType() : type, new int[] {(int)virtualImg.dimension( 0 ), (int)virtualImg.dimension( 1 ), 1} ) ;
+			return FusionTools.cacheRandomAccessibleInterval( virtualImg, Integer.MAX_VALUE,  type == null ? (T) new FloatType() : type, new int[] {(int)virtualImg.dimension( 0 ), (int)virtualImg.dimension( 1 ), 1} ) ;
 		}
 		else
 			throw new IncompatibleTypeException( this, "cannot create virtual image for this pixel type" );
