@@ -83,8 +83,8 @@ public class TestWeights
 			final RandomAccessibleInterval inputImg = DownsampleTools.openDownsampled( imgloader, viewId, model );
 			final RandomAccessibleInterval transformedInput = TransformView.transformView( inputImg, model, bb, 0, 1 );
 
-			final float[] blending = FusionTools.defaultBlendingRange.clone();
-			final float[] border = FusionTools.defaultBlendingBorder.clone();
+			final float[] blending =  Util.getArrayFromValue( FusionTools.defaultBlendingRange, 3 );
+			final float[] border = Util.getArrayFromValue( FusionTools.defaultBlendingBorder, 3 );
 			System.out.println( "Default blending = " + Util.printCoordinates( blending ) );
 			System.out.println( "Default border = " + Util.printCoordinates( border ) );
 			FusionTools.adjustBlending( spimData.getSequenceDescription().getViewDescription( viewId ), blending, border );

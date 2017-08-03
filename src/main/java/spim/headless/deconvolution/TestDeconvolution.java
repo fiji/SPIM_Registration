@@ -87,9 +87,7 @@ public class TestDeconvolution
 				spimData,
 				groups,
 				boundingBox,
-				downsampling,
-				true,
-				true );
+				downsampling );
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Virtual Fusion of groups " );
 		fusion.fuseGroups();
@@ -98,9 +96,9 @@ public class TestDeconvolution
 		fusion.normalizeWeights( osemSpeedUp, true, 0.1f, 0.05f );
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): De-virtualization ... " );
-		fusion.deVirtualizeImages( ImgDataType.CACHED );
-		fusion.deVirtualizeUnnormalizedWeights( ImgDataType.CACHED );
-		fusion.deVirtualizeNormalizedWeights( ImgDataType.CACHED );
+		fusion.cacheImages();
+		fusion.cacheNormalizedWeights();
+		fusion.cacheUnnormalizedWeights();
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Displaying " );
 		//displayDebug( fusion );
@@ -147,6 +145,8 @@ public class TestDeconvolution
 		final float lambda = 0.0006f;
 		final PSFTYPE psfType = PSFTYPE.INDEPENDENT;
 		final boolean filterBlocksForContent = false;
+		final boolean debug = true;
+		final int debugInterval = 1;
 
 		// one common ExecutorService for all
 		final ExecutorService service = DeconViews.createExecutorService();
@@ -176,9 +176,13 @@ public class TestDeconvolution
 
 			final DeconViews views = new DeconViews( deconViews, service );
 
-			final Img< FloatType > decon = new MultiViewDeconvolution( views, numIterations, cptf, psiFactory ).getPSI();
+			final MultiViewDeconvolution decon = new MultiViewDeconvolution( views, numIterations, cptf, psiFactory );
+			decon.setDebug( debug );
+			decon.setDebugInterval( debugInterval );
+			decon.runIterations();
+			
 
-			DisplayImage.getImagePlusInstance( decon, false, "Deconvolved", Double.NaN, Double.NaN ).show();
+			DisplayImage.getImagePlusInstance( decon.getPSI(), false, "Deconvolved", Double.NaN, Double.NaN ).show();
 
 			service.shutdown();
 		}

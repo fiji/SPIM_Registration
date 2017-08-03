@@ -50,6 +50,7 @@ import net.imglib2.type.Type;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.complex.ComplexFloatType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import spim.Threads;
 import spim.fiji.spimdata.SpimData2;
@@ -69,8 +70,8 @@ public class FusionTools
 	public static enum ImgDataType { VIRTUAL, CACHED, PRECOMPUTED };
 	public static String[] imgDataTypeChoice = new String[]{ "Virtual", "Cached", "Precompute Image" };
 
-	public static float[] defaultBlendingRange = new float[]{ 40, 40, 40 };
-	public static float[] defaultBlendingBorder = new float[]{ 0, 0, 0 };
+	public static float defaultBlendingRange = 40;
+	public static float defaultBlendingBorder = 0;
 
 	public static double[] defaultContentBasedSigma1 = new double[]{ 20, 20, 20 };
 	public static double[] defaultContentBasedSigma2 = new double[]{ 40, 40, 40 };
@@ -183,8 +184,8 @@ public class FusionTools
 				// instantiate blending if necessary
 				if ( useBlending )
 				{
-					final float[] blending = defaultBlendingRange.clone();
-					final float[] border = defaultBlendingBorder.clone();
+					final float[] blending = Util.getArrayFromValue( defaultBlendingRange, 3 );
+					final float[] border = Util.getArrayFromValue( defaultBlendingBorder, 3 );
 	
 					adjustBlending( viewDescriptions.get( viewId ), blending, border );
 	

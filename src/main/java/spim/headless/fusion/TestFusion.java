@@ -76,8 +76,8 @@ public class TestFusion
 			vr.updateModel();
 			AffineTransform3D model = vr.getModel();
 
-			final float[] blending = FusionTools.defaultBlendingRange.clone();
-			final float[] border = FusionTools.defaultBlendingBorder.clone();
+			final float[] blending =  Util.getArrayFromValue( FusionTools.defaultBlendingRange, 3 );
+			final float[] border = Util.getArrayFromValue( FusionTools.defaultBlendingBorder, 3 );
 
 			FusionTools.adjustBlending( spimData.getSequenceDescription().getViewDescription( viewId ), blending, border );
 
