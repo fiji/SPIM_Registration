@@ -107,7 +107,7 @@ class VirtualRandomAccessibleIntervalLOCI<T extends RealType< T > & NativeType< 
 					rgbOffset = channel * buffer.length / reader.getSizeC();
 					
 				// pixel index (we do not care about bytesPerPixel here, byteCOnverter should take care of that)
-				final int i = (int) (rgbOffset + position[0] + position[1] * VirtualRandomAccessibleIntervalLOCI.this.dimension( 1 ) );
+				final int i = (int) (rgbOffset + position[0] + position[1] * VirtualRandomAccessibleIntervalLOCI.this.dimension( 0 ) );
 				byteConverter.accept( type, buffer, i );
 				return this.type;
 			}
