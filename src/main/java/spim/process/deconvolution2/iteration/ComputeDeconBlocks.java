@@ -17,7 +17,6 @@ import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
-import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Pair;
 import net.imglib2.util.RealSum;
@@ -181,6 +180,7 @@ public class ComputeDeconBlocks
 		for ( final DeconView view : views.getViews() )
 		{
 			final int viewNum = v;
+
 			final int totalNumBlocks = view.getNumBlocks();
 			final Vector< IterationStatistics > stats = new Vector<>();
 
@@ -225,7 +225,7 @@ public class ComputeDeconBlocks
 								long time = System.currentTimeMillis();
 								blockStruct.copyBlock( Views.extendMirrorSingle( psi ), blockThread.getPsiBlockTmp() );
 								System.out.println( " block " + blockIdOut + ", thread (" + (threadId+1) + "/" + threads.length + "), (CPU): copy " + (System.currentTimeMillis() - time) );
-	
+
 								time = System.currentTimeMillis();
 								stats.add( blockThread.runIteration(
 										view,
@@ -256,16 +256,9 @@ public class ComputeDeconBlocks
 						}
 					});
 				}
-		
-				for ( int ithread = 0; ithread < threads.length; ++ithread )
-					threads[ ithread ].start();
 
-				try
-				{
-					for ( int ithread = 0; ithread < threads.length; ++ithread )
-						threads[ ithread ].join();
-				}
-				catch ( InterruptedException ie ) { throw new RuntimeException(ie); }
+				// run the threads that process all blocks of this batch in parallel (often, this will be just one thread)
+				runBlockThreads( threads );
 
 				// write back previous list of blocks
 				writeBack( psi, previousBlockWritebackQueue );
@@ -274,8 +267,7 @@ public class ComputeDeconBlocks
 				previousBlockWritebackQueue.addAll( currentBlockWritebackQueue );
 				currentBlockWritebackQueue.clear();
 
-				DisplayImage.getImagePlusInstance( psi, false, it + ", view=" + viewNum + ", batch=" + batch, Double.NaN, Double.NaN ).show();;
-
+				//DisplayImage.getImagePlusInstance( psi, false, it + ", view=" + viewNum + ", batch=" + batch, Double.NaN, Double.NaN ).show();;
 			} // finish one block batch
 
 			// write back last list of blocks
@@ -291,11 +283,21 @@ public class ComputeDeconBlocks
 			}
 
 			IOFunctions.println( "iteration: " + it + ", view: " + viewNum + " --- sum change: " + is.sumChange + " --- max change per pixel: " + is.maxChange );
-
-			DisplayImage.getImagePlusInstance( psi, false, it + " ", Double.NaN, Double.NaN ).show();
-			SimpleMultiThreading.threadHaltUnClean();
 			++v;
 		}// finish view
+	}
+
+	protected static void runBlockThreads( final Thread[] threads )
+	{
+		for ( int ithread = 0; ithread < threads.length; ++ithread )
+			threads[ ithread ].start();
+
+		try
+		{
+			for ( int ithread = 0; ithread < threads.length; ++ithread )
+				threads[ ithread ].join();
+		}
+		catch ( InterruptedException ie ) { throw new RuntimeException(ie); }
 	}
 
 	protected static final void writeBack( final Img< FloatType > psi, final Vector< Pair< Pair< Integer, Block >, Img< FloatType > > > blockWritebackQueue )
