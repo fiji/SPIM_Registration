@@ -82,7 +82,7 @@ public class TestDeconvolution2
 		IOFunctions.println( BoundingBox.getBoundingBoxDescription( boundingBox ) );
 
 		final double osemSpeedUp = 2.0;
-		final double downsampling = Double.NaN;
+		final double downsampling = 2.0;
 
 		final ProcessInputImages< V > fusion = new ProcessInputImages<>(
 				spimData,
@@ -143,7 +143,7 @@ public class TestDeconvolution2
 
 		final ImgFactory< FloatType > blockFactory = new ArrayImgFactory<>();
 		final ImgFactory< FloatType > psiFactory = new ArrayImgFactory<>();
-		final int[] blockSize = new int[]{ 256, 256, 256 };
+		final int[] blockSize = new int[]{ 196, 196, 196 };
 		final int numIterations = 1;
 		final float lambda = 0.0006f;
 		final float minValue = ComputeDeconBlocks.minValue;

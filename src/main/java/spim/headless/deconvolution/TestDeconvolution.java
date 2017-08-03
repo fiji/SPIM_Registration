@@ -80,7 +80,7 @@ public class TestDeconvolution
 		IOFunctions.println( BoundingBox.getBoundingBoxDescription( boundingBox ) );
 
 		final double osemSpeedUp = 2.0;
-		final double downsampling = Double.NaN;
+		final double downsampling = 2.0;
 
 		final ProcessInputImages< V > fusion = new ProcessInputImages<>(
 				spimData,
@@ -151,7 +151,7 @@ public class TestDeconvolution
 		deviceList.add( new CUDADevice( -1, "CPU", Runtime.getRuntime().maxMemory(), Runtime.getRuntime().freeMemory(), 0, 0 ) );
 		final boolean useCUDA = false;
 		final boolean useBlocks = true;
-		final int[] blockSize = new int[]{ 256, 256, 256 };
+		final int[] blockSize = new int[]{ 128, 128, 128 };
 		final boolean saveMemory = false;
 		final PSFTYPE iterationType = PSFTYPE.INDEPENDENT;
 		final int numIterations = 10;
