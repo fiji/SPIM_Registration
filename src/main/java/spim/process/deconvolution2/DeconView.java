@@ -126,6 +126,10 @@ public class DeconView
 		image.dimensions( imgSize );
 		kernel.dimensions( kernelSize );
 
+		// we need double the kernel size since we convolve twice in one run
+		for ( int d = 0; d < n; ++d )
+			kernelSize[ d ] = kernelSize[ d ] * 2 - 1;
+
 		final BlockGeneratorFixedSizePrecise blockGenerator = new BlockGeneratorFixedSizePrecise( service, Util.int2long( this.blockSize ) );
 		final ArrayList< Block > blocks = blockGenerator.divideIntoBlocks( imgSize, kernelSize );
 
