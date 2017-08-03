@@ -77,6 +77,7 @@ import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.imgloaders.FileMapImgLoaderLOCI;
 import spim.fiji.spimdata.imgloaders.filemap2.FileMapImgLoaderLOCI2;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.fiji.spimdata.pointspreadfunctions.PointSpreadFunctions;
 import spim.fiji.spimdata.stitchingresults.StitchingResults;
 
 public class FileListDatasetDefinition implements MultiViewDatasetDefinition
@@ -87,7 +88,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 	static
 	{
 		fileListChoosers.add( new WildcardFileListChooser() );
-		fileListChoosers.add( new SimpleDirectoryFileListChooser() );
+		//fileListChoosers.add( new SimpleDirectoryFileListChooser() );
 	}
 	
 	private static interface FileListChooser
@@ -125,64 +126,57 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		@Override
 		public List< File > getFileList()
 		{
-						
+
 			GenericDialogPlus gdp = new GenericDialogPlus("Pick files to include");
-			
-			
+
 			addMessageAsJLabel(info, gdp);
-			
-			
+
 			gdp.addDirectoryOrFileField( "path", "/", 65);
 			gdp.addNumericField( "exclude files smaller than (KB)", 10, 0 );
-			
-			System.out.println(gdp.getComponent(0).getClass());
-			
+
 			// add empty preview
 			addMessageAsJLabel(previewFiles( new ArrayList<>()), gdp,  GUIHelper.smallStatusFont);
-			//gdp.add(new JLabel(previewFiles( new ArrayList<>())));
-			
-			//Label lab = (Label)gdp.getComponent( 5 );
+
 			JLabel lab = (JLabel)gdp.getComponent( 5 );
 			TextField num = (TextField)gdp.getComponent( 4 ); 
 			Panel pan = (Panel)gdp.getComponent( 2 );
-			
-			
+
+
 			num.addTextListener( new TextListener()
 			{
-				
+
 				@Override
 				public void textValueChanged(TextEvent e)
 				{
 					String path = ((TextField)pan.getComponent( 0 )).getText();
-					
-					
+
 					System.out.println(path);
 					if (path.endsWith( File.separator ))
 						path = path.substring( 0, path.length() - File.separator.length() );
-					
+
 					if(new File(path).isDirectory())
 						path = String.join( File.separator, path, "*" );
-					
+
 					lab.setText( previewFiles( getFilesFromPattern(path , Long.parseLong( num.getText() ) * KB_FACTOR)));
 					lab.setSize( lab.getPreferredSize() );
 					gdp.setSize( gdp.getPreferredSize() );
 					gdp.validate();
 				}
 			} );
-			
+
 			((TextField)pan.getComponent( 0 )).addTextListener( new TextListener()
 			{
-				
+
 				@Override
 				public void textValueChanged(TextEvent e)
 				{
 					String path = ((TextField)pan.getComponent( 0 )).getText();
 					if (path.endsWith( File.separator ))
 						path = path.substring( 0, path.length() - File.separator.length() );
-					
+
 					if(new File(path).isDirectory())
 						path = String.join( File.separator, path, "*" );
-					
+
 					lab.setText( previewFiles( getFilesFromPattern(path , Long.parseLong( num.getText() ) * KB_FACTOR)));
 					lab.setSize( lab.getPreferredSize() );
 					gdp.setSize( gdp.getPreferredSize() );
@@ -192,25 +186,22 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			
 			GUIHelper.addScrollBars( gdp );			
 			gdp.showDialog();
-			
-			
-			
-			
+
 			if (gdp.wasCanceled())
 				return new ArrayList<>();
-			
+
 			String fileInput = gdp.getNextString();
-			
+
 			if (fileInput.endsWith( File.separator ))
 				fileInput = fileInput.substring( 0, fileInput.length() - File.separator.length() );
-			
+
 			if(new File(fileInput).isDirectory())
 				fileInput = String.join( File.separator, fileInput, "*" );
-			
+
 			List<File> files = getFilesFromPattern( fileInput, (long) gdp.getNextNumber() * KB_FACTOR );
-			
+
 			files.forEach(f -> System.out.println( "Including file " + f + " in dataset." ));
-			
+
 			return files;
 		}
 
@@ -560,7 +551,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		final ViewInterestPoints viewInterestPoints = new ViewInterestPoints();
 		viewInterestPoints.createViewInterestPoints( sd.getViewDescriptions() );
 		
-		SpimData2 data = new SpimData2( new File("/Users/david/Desktop"), sd, vrs, viewInterestPoints, new BoundingBoxes(), new StitchingResults() );
+		SpimData2 data = new SpimData2( new File("/Users/david/Desktop"), sd, vrs, viewInterestPoints, new BoundingBoxes(), new PointSpreadFunctions(), new StitchingResults() );
 		return data;
 	}
 	
@@ -620,40 +611,41 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 	@Override
 	public SpimData2 createDataset( )
 	{
-		
-		String[] fileListChooserChoices = new String[fileListChoosers.size()];
-		for (int i = 0; i< fileListChoosers.size(); i++)
-			fileListChooserChoices[i] = fileListChoosers.get( i ).getDescription();		
-		
-		GenericDialog gd1 = new GenericDialog( "How to select files" );
-		gd1.addChoice( "file chooser", fileListChooserChoices, fileListChooserChoices[0] );
-		gd1.showDialog();
-		
-		if (gd1.wasCanceled())
-			return null;
-		
-		List<File> files = fileListChoosers.get( gd1.getNextChoiceIndex() ).getFileList();			
-		
-		
-		FileListViewDetectionState state = new FileListViewDetectionState();		
+
+		FileListChooser chooser = fileListChoosers.get( 0 );
+
+		// only ask how we want to choose files if there are multiple ways
+		if (fileListChoosers.size() > 1)
+		{
+			String[] fileListChooserChoices = new String[fileListChoosers.size()];
+			for (int i = 0; i< fileListChoosers.size(); i++)
+				fileListChooserChoices[i] = fileListChoosers.get( i ).getDescription();
+
+			GenericDialog gd1 = new GenericDialog( "How to select files" );
+			gd1.addChoice( "file chooser", fileListChooserChoices, fileListChooserChoices[0] );
+			gd1.showDialog();
+
+			if (gd1.wasCanceled())
+				return null;
+
+			chooser = fileListChoosers.get( gd1.getNextChoiceIndex() );
+		}
+
+		List<File> files = chooser.getFileList();
+
+		FileListViewDetectionState state = new FileListViewDetectionState();
 		FileListDatasetDefinitionUtil.detectViewsInFiles( files, state);
-		
-		
-		
-		
-		
+
 		Map<Class<? extends Entity>, List<Integer>> fileVariableToUse = new HashMap<>();
 		List<String> choices = new ArrayList<>();
-		
+
 		FilenamePatternDetector patternDetector = new NumericalFilenamePatternDetector();
 		patternDetector.detectPatterns( files );
 		int numVariables = patternDetector.getNumVariables();
-		
-		
-		
+
 		StringBuilder inFileSummarySB = new StringBuilder();
 		inFileSummarySB.append( "<html> <h2> Views detected in files </h2>" );
-		
+
 		// summary timepoints
 		if (state.getMultiplicityMap().get( TimePoint.class ) == CheckResult.SINGLE)
 		{
@@ -667,9 +659,9 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			if (state.getAccumulateMap( TimePoint.class ).size() > 1)
 				inFileSummarySB.append( "<p style=\"color:orange\">WARNING: Number of timepoints is not the same for all views </p>" );
 		}
-		
+
 		inFileSummarySB.append( "<br />" );
-		
+
 		// summary channel
 		if (state.getMultiplicityMap().get( Channel.class ) == CheckResult.SINGLE)
 		{
@@ -693,9 +685,9 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			int numChannels = state.getAccumulateMap( Channel.class ).size();
 			inFileSummarySB.append( "<p style=\"color:green\">" + numChannels + " Channels found within files </p>" );
 		}
-		
+
 		inFileSummarySB.append( "<br />" );
-		
+
 		// summary illum
 		if ( state.getMultiplicityMap().get( Illumination.class ) == CheckResult.SINGLE )
 		{

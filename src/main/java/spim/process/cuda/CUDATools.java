@@ -16,6 +16,16 @@ public class CUDATools
 	public static ArrayList< Boolean > deviceChoice = null;
 	public static int standardDevice = -1;
 
+	final public static int[] getCUDACoordinates( final int[] c )
+	{
+		final int[] cuda = new int[ c.length ];
+
+		for ( int d = 0; d < c.length; ++d )
+			cuda[ c.length - d - 1 ] = c[ d ];
+
+		return cuda;
+	}
+
 	/**
 	 * @param cuda the CUDAStandardFunctions
 	 * @param askForMultipleDevices true or false

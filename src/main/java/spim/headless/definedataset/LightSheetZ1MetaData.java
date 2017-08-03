@@ -26,6 +26,7 @@ import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.type.numeric.real.FloatType;
 import ome.units.quantity.Length;
+import spim.fiji.datasetmanager.StackList;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.imgloaders.LegacyLightSheetZ1ImgLoader;
 
@@ -202,6 +203,9 @@ public class LightSheetZ1MetaData
 				final int h = r.getSizeY();
 
 				Object tmp = metaData.get( "Information|Image|V|View|Offset #" + ( at+1 ) );
+				if (tmp == null)
+					tmp = r.getMetadataValue("Information|Image|V|View|Offset #" + StackList.leadingZeros( Integer.toString( at + 1 ), numDigits ) );
+
 				int angleT = (tmp != null) ? (int)Math.round( Double.parseDouble( tmp.toString() ) ) : 0;
 				if ( !anglesList.contains( angleT ) )
 					anglesList.add( angleT );

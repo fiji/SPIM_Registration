@@ -1,6 +1,7 @@
 package spim.fiji.spimdata.explorer.popup;
 
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JComponent;
@@ -19,8 +20,10 @@ import mpicbg.spim.data.registration.ViewTransformAffine;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.realtransform.AffineTransform3D;
+import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.ExplorerWindow;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class BakeManualTransformationPopup extends JMenuItem implements ExplorerWindowSetable
 {
@@ -50,7 +53,11 @@ public class BakeManualTransformationPopup extends JMenuItem implements Explorer
 			return;
 		}
 
-		final List< ViewId > viewIds = ApplyTransformationPopup.getSelectedViews( panel );
+		final ArrayList< ViewId > views = new ArrayList<>();
+		views.addAll( ApplyTransformationPopup.getSelectedViews( panel ) );
+
+		// filter not present ViewIds
+		SpimData2.filterMissingViews( panel.getSpimData(), views );
 
 		final ViewRegistrations vr = panel.getSpimData().getViewRegistrations();
 		ViewerState state = panel.bdvPopup().getBDV().getViewer().getState();
@@ -66,7 +73,7 @@ public class BakeManualTransformationPopup extends JMenuItem implements Explorer
 					AffineTransform3D manual = new AffineTransform3D();
 					transformedSource.getFixedTransform( manual );
 
-					for ( final ViewId viewId : viewIds )
+					for ( final ViewId viewId : views )
 					{
 						if ( viewId.getViewSetupId() == setupId )
 						{

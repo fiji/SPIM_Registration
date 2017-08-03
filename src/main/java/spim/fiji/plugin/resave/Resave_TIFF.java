@@ -1,10 +1,7 @@
 package spim.fiji.plugin.resave;
 
 import static mpicbg.spim.data.generic.sequence.ImgLoaderHints.LOAD_COMPLETELY;
-import fiji.util.gui.GenericDialogPlus;
-import ij.plugin.PlugIn;
 
-import java.awt.Font;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -20,6 +17,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import bdv.export.ProgressWriter;
+import fiji.util.gui.GenericDialogPlus;
+import ij.plugin.PlugIn;
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.registration.ViewRegistration;
@@ -41,7 +41,6 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
-import spim.fiji.datasetmanager.StackList;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.imgloaders.StackImgLoaderIJ;
@@ -49,12 +48,11 @@ import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.process.export.Save3dTIFF;
-import bdv.export.ProgressWriter;
 
 public class Resave_TIFF implements PlugIn
 {
 	public static String defaultPath = null;
-	public static int defaultContainer = 0;
+	public static int defaultContainer = 1;
 	public static boolean defaultCompress = false;
 
 	public static void main( final String[] args )
@@ -165,13 +163,7 @@ public class Resave_TIFF implements PlugIn
 			defaultPath = LoadParseQueryXML.defaultXMLfilename;
 
 		PluginHelper.addSaveAsFileField( gd, "Select new XML", defaultPath, 80 );
-		
-		gd.addChoice( "ImgLib2_data_container", StackList.imglib2Container, StackList.imglib2Container[ defaultContainer ] );
 		gd.addCheckbox( "Lossless compression of TIFF files (ZIP)", defaultCompress );
-		gd.addMessage( "Use ArrayImg if -ALL- input views are smaller than ~2048x2048x500 px (2^31 px), or if the\n" +
-					   "program throws an OutOfMemory exception while processing.  CellImg is slower, but more\n" +
-				       "memory efficient and supports much larger file sizes only limited by the RAM of the machine.", 
-				       new Font( Font.SANS_SERIF, Font.ITALIC, 11 ) );
 
 		gd.showDialog();
 		
@@ -185,11 +177,11 @@ public class Resave_TIFF implements PlugIn
 		if ( !params.xmlFile.endsWith( ".xml" ) )
 			params.xmlFile += ".xml";
 
-		params.compress = defaultCompress = gd.getNextBoolean();
-
 		defaultPath = LoadParseQueryXML.defaultXMLfilename = params.xmlFile;
 
-		if ( ( defaultContainer = gd.getNextChoiceIndex() ) == 0 )
+		params.compress = defaultCompress = gd.getNextBoolean();
+
+		if ( defaultContainer == 0 )
 			params.imgFactory = new ArrayImgFactory< FloatType >();
 		else
 			params.imgFactory = new CellImgFactory< FloatType >();
@@ -439,8 +431,10 @@ public class Resave_TIFF implements PlugIn
 						filesToCopy.add( ipl.getFile().getName() );
 				}
 			}
-		
+
 		final ViewInterestPoints viewsInterestPoints = new ViewInterestPoints( newInterestPoints );
+
+		//TODO: copy PSFs
 
 		final SpimData2 newSpimData = new SpimData2(
 				basePath,
@@ -448,6 +442,7 @@ public class Resave_TIFF implements PlugIn
 				viewRegistrations,
 				viewsInterestPoints,
 				spimData.getBoundingBoxes(),
+				spimData.getPointSpreadFunctions(),
 				spimData.getStitchingResults());
 
 		return newSpimData;

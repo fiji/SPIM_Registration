@@ -8,14 +8,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import spim.Threads;
-import spim.process.fusion.FusionHelper;
-import spim.process.fusion.ImagePortion;
+import mpicbg.spim.io.IOFunctions;
+import mpicbg.util.RealSum;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
 import net.imglib2.type.numeric.real.FloatType;
-import mpicbg.spim.io.IOFunctions;
-import mpicbg.util.RealSum;
+import spim.Threads;
+import spim.process.fusion.FusionTools;
+import spim.process.fusion.ImagePortion;
 
 public class AdjustInput
 {
@@ -46,7 +46,7 @@ public class AdjustInput
 		final AtomicInteger ai = new AtomicInteger( 0 );
 
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = FusionHelper.divideIntoPortions( img.size(), numPortions );
+		final Vector< ImagePortion > portions = FusionTools.divideIntoPortions( img.size(), numPortions );
 
 		// set up executor service
 		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );

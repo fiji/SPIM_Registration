@@ -13,7 +13,7 @@ import mpicbg.spim.segmentation.InteractiveIntegral;
 import mpicbg.spim.segmentation.SimplePeak;
 import net.imglib2.img.Img;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.process.fusion.FusionHelper;
+import spim.process.fusion.FusionTools;
 import spim.process.interestpointdetection.Localization;
 
 public class ProcessDOM 
@@ -56,7 +56,7 @@ public class ProcessDOM
 
 		if ( Double.isNaN( minIntensity ) || Double.isNaN( maxIntensity ) || Double.isInfinite( minIntensity ) || Double.isInfinite( maxIntensity ) || minIntensity == maxIntensity )
 		{
-			final float[] minmax = FusionHelper.minMax( imglib2img );
+			final float[] minmax = FusionTools.minMax( imglib2img );
 			min = minmax[ 0 ];
 			max = minmax[ 1 ];
 		}

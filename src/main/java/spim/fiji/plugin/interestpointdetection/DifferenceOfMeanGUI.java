@@ -1,20 +1,16 @@
 package spim.fiji.plugin.interestpointdetection;
 
-import ij.ImagePlus;
-import ij.gui.GenericDialog;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import ij.ImagePlus;
+import ij.gui.GenericDialog;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.segmentation.InteractiveIntegral;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.realtransform.AffineTransform3D;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.interestpointdetection.methods.dom.DoM;
@@ -163,50 +159,17 @@ public class DifferenceOfMeanGUI extends DifferenceOfGUI
 	@Override
 	protected boolean setInteractiveValues()
 	{
-		final ViewId view = getViewSelection( "Interactive Difference-of-Mean", "Please select view to use" );
-		
-		if ( view == null )
-			return false;
+		final ImagePlus imp;
 
-		final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( view.getTimePointId(), view.getViewSetupId() );
-
-		if ( !viewDescription.isPresent() )
-		{
-			IOFunctions.println( "You defined the view you selected as not present at this timepoint." );
-			IOFunctions.println( "timepoint: " + viewDescription.getTimePoint().getName() + 
-								 " angle: " + viewDescription.getViewSetup().getAngle().getName() + 
-								 " channel: " + viewDescription.getViewSetup().getChannel().getName() + 
-								 " illum: " + viewDescription.getViewSetup().getIllumination().getName() );
-			return false;
-		}
-
-		// downsampleXY == 0 : a bit less then z-resolution
-		// downsampleXY == -1 : a bit more then z-resolution
-		final int downsampleXY;
-
-		if ( downsampleXYIndex < 1 )
-			downsampleXY = DownsampleTools.downsampleFactor( downsampleXYIndex, downsampleZ, viewDescription.getViewSetup().getVoxelSize() );
+		if ( !groupIllums && !groupTiles )
+			imp = getImagePlusForInteractive( "Interactive Difference-of-Gaussian" );
 		else
-			downsampleXY = downsampleXYIndex;
+			imp = getGroupedImagePlusForInteractive( "Interactive Difference-of-Gaussian" );
 
-		RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > img =
-				DownsampleTools.openAndDownsample(
-						spimData.getSequenceDescription().getImgLoader(),
-						viewDescription,
-						new AffineTransform3D(),
-						downsampleXY,
-						this.downsampleZ );
-
-		if ( img == null )
-		{
-			IOFunctions.println( "View not found: " + viewDescription );
+		if ( imp == null )
 			return false;
-		}
 
-		final ImagePlus imp = ImageJFunctions.wrapFloat( img, "" ).duplicate();
-		img = null;
 		imp.setDimensions( 1, imp.getStackSize(), 1 );
-		imp.setTitle( "tp: " + viewDescription.getTimePoint().getName() + " viewSetup: " + viewDescription.getViewSetupId() );
 		imp.show();
 		imp.setSlice( imp.getStackSize() / 2 );
 		

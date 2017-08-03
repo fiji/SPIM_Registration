@@ -4,36 +4,38 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.concurrent.ExecutorService;
 
 import ij.IJ;
 import ij.ImageJ;
-import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.FinalInterval;
-import net.imglib2.exception.IncompatibleTypeException;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.view.Views;
 import simulation.imgloader.SimulatedBeadsImgLoader;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
-import spim.process.cuda.CUDADevice;
-import spim.process.deconvolution.MVDeconFFT;
-import spim.process.deconvolution.MVDeconFFT.PSFTYPE;
-import spim.process.deconvolution.MVDeconInput;
-import spim.process.deconvolution.MVDeconvolution;
-import spim.process.deconvolution.ProcessInputImages;
+import spim.fiji.spimdata.pointspreadfunctions.PointSpreadFunction;
+import spim.process.deconvolution.MultiViewDeconvolution;
+import spim.process.deconvolution.DeconView;
+import spim.process.deconvolution.DeconViews;
+import spim.process.deconvolution.DeconViewPSF.PSFTYPE;
+import spim.process.deconvolution.iteration.ComputeBlockThreadCPUFactory;
+import spim.process.deconvolution.iteration.ComputeBlockThreadFactory;
+import spim.process.deconvolution.util.ProcessInputImages;
 import spim.process.export.DisplayImage;
-import spim.process.fusion.FusionHelper.ImgDataType;
+import spim.process.fusion.FusionTools.ImgDataType;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
-import spim.process.fusion.transformed.FusedWeightsRandomAccessibleInterval;
+import spim.process.fusion.transformed.weightcombination.CombineWeightsRandomAccessibleInterval;
+import spim.process.fusion.transformed.weightcombination.CombineWeightsRandomAccessibleInterval.CombineType;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 import spim.process.psf.PSFCombination;
 import spim.process.psf.PSFExtraction;
@@ -54,6 +56,7 @@ public class TestDeconvolution
 		// load drosophila
 		spimData = new XmlIoSpimData2( "" ).load( "/Users/spreibi/Documents/Microscopy/SPIM/HisYFP-SPIM/dataset.xml" );
 		groups = selectViews( spimData.getSequenceDescription().getViewDescriptions().values() );
+		groups = oneGroupPerView( spimData.getSequenceDescription().getViewDescriptions().values() );
 
 		testDeconvolution( spimData, groups, "My Bounding Box1" );
 	}
@@ -77,13 +80,14 @@ public class TestDeconvolution
 
 		IOFunctions.println( BoundingBox.getBoundingBoxDescription( boundingBox ) );
 
-		final double osemSpeedUp = 1.0;
+		final double osemSpeedUp = 2.0;
+		final double downsampling = 2.0;
 
 		final ProcessInputImages< V > fusion = new ProcessInputImages<>(
 				spimData,
 				groups,
 				boundingBox,
-				2.0,
+				downsampling,
 				true,
 				true );
 
@@ -99,11 +103,11 @@ public class TestDeconvolution
 		fusion.deVirtualizeNormalizedWeights( ImgDataType.CACHED );
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Displaying " );
-		displayDebug( fusion );
+		//displayDebug( fusion );
 
-		SimpleMultiThreading.threadHaltUnClean();
-		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Extracting PSF's " );
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Loading, grouping, and transforming PSF's " );
 
+		final HashMap< ViewId, PointSpreadFunction > rawPSFs = spimData.getPointSpreadFunctions().getPointSpreadFunctions();
 		final HashMap< Group< V >, ArrayImg< FloatType, ? > > psfs = new HashMap<>();
 
 		for ( final Group< V > group : fusion.getGroups() )
@@ -112,13 +116,13 @@ public class TestDeconvolution
 	
 			for ( final V view : group )
 			{
-				final PSFExtraction< FloatType > extractPSF = new PSFExtraction<>( spimData, view, "beads", true, new FloatType(), new long[]{ 19, 19, 25 } );
-
-				// remove min projections in all dimensions to remove background
-				extractPSF.removeMinProjections();
+				// load PSF
+				final ArrayImg< FloatType, ? > psf = rawPSFs.get( view ).getPSFCopyArrayImg();
 
 				// remember the normalized, transformed version (including downsampling!)
-				viewPsfs.add( extractPSF.getTransformedNormalizedPSF( fusion.getDownsampledModels().get( view ) ) );
+				viewPsfs.add( PSFExtraction.getTransformedNormalizedPSF( psf, fusion.getDownsampledModels().get( view ) ) );
+
+				//DisplayImage.getImagePlusInstance( viewPsfs.get( viewPsfs.size() - 1 ), false, "psf " + Group.pvid( view ), 0, 1 ).show();
 			}
 
 			// compute the PSF for a group by averaging over the minimal size of all inputs
@@ -127,34 +131,80 @@ public class TestDeconvolution
 			// basically the same transformation (e.g. angle 0 vs 180, or before after correction of chromatic abberations)
 			psfs.put( group, (ArrayImg< FloatType, ? >)PSFCombination.computeAverageImage( viewPsfs, new ArrayImgFactory< FloatType >(), false ) );
 
-			//DisplayImage.getImagePlusInstance( psfs.get( group ), false, "psf", 0, 1 ).show();
+			//DisplayImage.getImagePlusInstance( psfs.get( group ), false, "psf " + group, 0, 1 ).show();
 		}
 
 		final Img< FloatType > avgPSF = PSFCombination.computeAverageImage( psfs.values(), new ArrayImgFactory< FloatType >(), true );
 		final Img< FloatType > maxAvgPSF = PSFCombination.computeMaxAverageTransformedPSF( psfs.values(), new ArrayImgFactory< FloatType >() );
 
-		DisplayImage.getImagePlusInstance( Views.rotate( avgPSF, 0, 2 ), false, "avgPSF", 0, 1 ).show();
+		//DisplayImage.getImagePlusInstance( Views.rotate( avgPSF, 0, 2 ), false, "avgPSF", 0, 1 ).show();
 		DisplayImage.getImagePlusInstance( maxAvgPSF, false, "maxAvgPSF", 0, 1 ).show();
 
-		final ImgFactory< FloatType > factory = new ArrayImgFactory<>();
-		final ImgFactory< FloatType > computeFactory = new ArrayImgFactory<>();
-		final boolean useTikhonov = true;
-		double lambda = 0.0006;
+		final ImgFactory< FloatType > blockFactory = new ArrayImgFactory<>();
+		final ImgFactory< FloatType > psiFactory = new ArrayImgFactory<>();
+		final int[] blockSize = new int[]{ 196, 196, 196 };
+		final int numIterations = 1;
+		final float lambda = 0.0006f;
+		final PSFTYPE psfType = PSFTYPE.INDEPENDENT;
+		final boolean filterBlocksForContent = false;
 
-		/**
-		 * 0 ... n == CUDA device i
-		 */
+		// one common ExecutorService for all
+		final ExecutorService service = DeconViews.createExecutorService();
+
+		try
+		{
+			final ComputeBlockThreadFactory cptf = new ComputeBlockThreadCPUFactory(
+					service,
+					lambda,
+					blockSize,
+					blockFactory );
+
+			final ArrayList< DeconView > deconViews = new ArrayList<>();
+
+			for ( final Group< V > group : fusion.getGroups() )
+			{
+				deconViews.add( new DeconView(
+						service,
+						fusion.getImages().get( group ),
+						fusion.getNormalizedWeights().get( group ),
+						psfs.get( group ),
+						psfType,
+						blockSize,
+						cptf.numParallelBlocks(),
+						filterBlocksForContent ) );
+			}
+
+			final DeconViews views = new DeconViews( deconViews, service );
+
+			final Img< FloatType > decon = new MultiViewDeconvolution( views, numIterations, cptf, psiFactory ).getPSI();
+
+			DisplayImage.getImagePlusInstance( decon, false, "Deconvolved", Double.NaN, Double.NaN ).show();
+
+			service.shutdown();
+		}
+		catch ( OutOfMemoryError oome )
+		{
+			IJ.log( "Out of Memory" );
+			IJ.error("Multi-View Deconvolution", "Out of memory.  Check \"Edit > Options > Memory & Threads\"");
+
+			service.shutdown();
+
+			return;
+		}
+		/*
 		final ArrayList< CUDADevice > deviceList = new ArrayList<>();
 		deviceList.add( new CUDADevice( -1, "CPU", Runtime.getRuntime().maxMemory(), Runtime.getRuntime().freeMemory(), 0, 0 ) );
 		final boolean useCUDA = false;
 		final boolean useBlocks = true;
-		final int[] blockSize = new int[]{ 512, 512, 512 };
+		final int[] blockSize = new int[]{ 256, 256, 256 };
 		final boolean saveMemory = false;
 		final PSFTYPE iterationType = PSFTYPE.INDEPENDENT;
 		final int numIterations = 10;
 
 		try
 		{
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): PSI & TMP image factory: " + factory.getClass().getSimpleName() );
+
 			final MVDeconInput deconvolutionData = new MVDeconInput( factory );
 			
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Block & FFT image factory: " + computeFactory.getClass().getSimpleName() );
@@ -199,11 +249,14 @@ public class TestDeconvolution
 			IJ.error("Multi-View Registration", "Out of memory.  Check \"Edit > Options > Memory & Threads\"");
 			return;
 		}
+		*/
 	}
 
 	public static < V extends ViewId > void displayDebug( final ProcessInputImages< V > fusion )
 	{
 		int i = 0;
+
+		final ArrayList< RandomAccessibleInterval< FloatType > > allWeightsNormed = new ArrayList<>();
 
 		for ( final Group< V > group : fusion.getGroups() )
 		{
@@ -215,15 +268,19 @@ public class TestDeconvolution
 			DisplayImage.getImagePlusInstance( fusion.getUnnormalizedWeights().get( group ), true, "g=" + i + " weightsRawDecon", 0, 2 ).show();
 			DisplayImage.getImagePlusInstance( fusion.getNormalizedWeights().get( group ), true, "g=" + i + " weightsNormDecon", 0, 2 ).show();
 
+			allWeightsNormed.add( fusion.getNormalizedWeights().get( group ) );
+
+			// might not work if caching/copying is done before calling this method
 			if ( FusedRandomAccessibleInterval.class.isInstance( fusion.getImages().get( group ) ) )
 			{
 				final long[] dim = new long[ fusion.getDownsampledBoundingBox().numDimensions() ];
 				fusion.getDownsampledBoundingBox().dimensions( dim );
 	
 				DisplayImage.getImagePlusInstance(
-						new FusedWeightsRandomAccessibleInterval(
+						new CombineWeightsRandomAccessibleInterval(
 								new FinalInterval( dim ),
-								((FusedRandomAccessibleInterval)fusion.getImages().get( group )).getWeights() ),
+								((FusedRandomAccessibleInterval)fusion.getImages().get( group )).getWeights(),
+								CombineType.SUM ),
 						true,
 						"g=" + i + " weightsFusion",
 						0, 1 ).show();
@@ -231,6 +288,29 @@ public class TestDeconvolution
 
 			++i;
 		}
+
+		// display the sum of all normed weights
+		final long[] dim = new long[ fusion.getDownsampledBoundingBox().numDimensions() ];
+		fusion.getDownsampledBoundingBox().dimensions( dim );
+
+		DisplayImage.getImagePlusInstance(
+				new CombineWeightsRandomAccessibleInterval(
+						new FinalInterval( dim ),
+						allWeightsNormed,
+						CombineType.SUM ),
+				true,
+				"sum of all normed weights",
+				0, 1 ).show();
+	}
+
+	public static ArrayList< Group< ViewDescription > > oneGroupPerView( final Collection< ViewDescription > views )
+	{
+		final ArrayList< Group< ViewDescription > > groups = new ArrayList<>();
+
+		for ( final ViewDescription vd : views )
+			groups.add( new Group<>( vd ) );
+
+		return groups;
 	}
 
 	public static ArrayList< Group< ViewDescription > > selectViews( final Collection< ViewDescription > views )

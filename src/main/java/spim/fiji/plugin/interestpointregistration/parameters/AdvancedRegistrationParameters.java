@@ -6,8 +6,9 @@ import java.util.List;
 import java.util.Set;
 
 import mpicbg.spim.data.generic.base.Entity;
+import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.Tile;
-import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
@@ -41,7 +42,12 @@ public class AdvancedRegistrationParameters
 			return new ReferenceTimepoint( views, groups, referenceTimePoint );
 	}
 
-	public HashSet< Group< ViewId > > getGroups( final SpimData2 data, final List< ViewId > views, final boolean groupTiles )
+	public HashSet< Group< ViewId > > getGroups(
+			final SpimData2 data,
+			final List< ViewId > views,
+			final boolean groupTiles,
+			final boolean groupIllums,
+			final boolean groupChannels )
 	{
 		final HashSet< Group< ViewId > > groups = new HashSet<>();
 
@@ -72,7 +78,7 @@ public class AdvancedRegistrationParameters
 		}
 
 		// combine vs split
-		if ( groupTiles )
+		if ( groupTiles || groupIllums )
 		{
 			final ArrayList< ViewDescription > vds = new ArrayList<>();
 
@@ -80,14 +86,39 @@ public class AdvancedRegistrationParameters
 				vds.add( data.getSequenceDescription().getViewDescription( viewId ) );
 	
 			final HashSet< Class< ? extends Entity > > groupingFactor = new HashSet<>();
-			groupingFactor.add( Tile.class );
+			String end = "";
+
+			if ( groupTiles )
+			{
+				groupingFactor.add( Tile.class );
+				end = "tile";
+			}
+
+			if ( groupIllums )
+			{
+				groupingFactor.add( Illumination.class );
+				if ( end.length() > 0 )
+					end += ", illumination";
+				else
+					end = "illumination";
+			}
+
+			if ( groupChannels )
+			{
+				groupingFactor.add( Channel.class );
+				if ( end.length() > 0 )
+					end += ", channel";
+				else
+					end = "channel";
+			}
+
 			final List< Group< ViewDescription > > groupsTmp = Group.combineBy( vds, groupingFactor );
 
-			IOFunctions.println( "Identified: " + groupsTmp.size() + " groups when grouping by Tiles." );
+			IOFunctions.println( "Identified: " + groupsTmp.size() + " groups when grouping by " + end + "." );
 			int i = 0;
 			for ( final Group< ViewDescription > group : groupsTmp )
 			{
-				IOFunctions.println( "Tile-Group " + (i++) + ":" + group );
+				IOFunctions.println( end + "-Group " + (i++) + ":" + group );
 				groups.add( (Group< ViewId >)(Object)group );
 			}
 		}

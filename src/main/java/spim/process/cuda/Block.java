@@ -1,12 +1,14 @@
 package spim.process.cuda;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.AbstractInterval;
 import net.imglib2.Cursor;
 import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccess;
@@ -18,13 +20,12 @@ import net.imglib2.img.basictypeaccess.array.FloatArray;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.iterator.LocalizingZeroMinIntervalIterator;
 import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import spim.Threads;
-import spim.process.fusion.FusionHelper;
+import spim.process.fusion.FusionTools;
 import spim.process.fusion.ImagePortion;
 
-public class Block 
+public class Block extends AbstractInterval
 {
 	/**
 	 * the number of dimensions of this block
@@ -63,8 +64,10 @@ public class Block
 
 	final Vector< ImagePortion > portions;
 	final ExecutorService taskExecutor;
+	final boolean executorServiceProvided;
 
 	public Block(
+			final ExecutorService service,
 			final long[] blockSize,
 			final long[] offset,
 			final long[] effectiveSize,
@@ -72,6 +75,7 @@ public class Block
 			final long[] effectiveLocalOffset,
 			final boolean isPrecise )
 	{
+		super( offset, max( offset, blockSize ) );
 		this.numDimensions = blockSize.length;
 		this.blockSize = blockSize.clone();
 		this.offset = offset.clone();
@@ -85,22 +89,29 @@ public class Block
 			n *= blockSize[ d ];
 
 		// split up into many parts for multithreading
-		this.portions = FusionHelper.divideIntoPortions( n, Threads.numThreads() * 2 );
-		this.taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
+		this.portions = FusionTools.divideIntoPortions( n, Threads.numThreads() * 2 );
+
+		if ( service == null )
+		{
+			this.taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
+			this.executorServiceProvided = false;
+		}
+		else
+		{
+			this.taskExecutor = service;
+			this.executorServiceProvided = true;
+		}
 	}
 
-	public long[] getBlockSize()
-	{
-		final long[] dim = new long[ blockSize.length ];
-
-		for ( int d = 0; d < dim.length; ++d )
-			dim[ d ] = blockSize[ d ];
-
-		return dim;
-	}
+	public long[] getBlockSize() { return blockSize.clone(); }
+	public long[] getEffectiveSize() { return effectiveSize.clone(); }
 
 	@Override
-	public void finalize() { taskExecutor.shutdown(); }
+	public void finalize()
+	{
+		if ( !executorServiceProvided )
+			taskExecutor.shutdown();
+	}
 
 	/**
 	 * @return - if the blocks that cover an area/volume/... are precise, i.e. if they are identical to performing the convolution on the entire image. Non-precise blocks do not need an outofbounds, they will not query data from outside of the blocked area.
@@ -364,6 +375,16 @@ public class Block
 			targetArray[ iTarget++ ] = blockArray[ iBlock++ ];
 	}
 
+	public static final long[] max( final long[] min, final long[] size )
+	{
+		final long[] max = new long[ min.length ];
+
+		for ( int d = 0; d < min.length; ++d )
+			max[ d ] = min[ d ] + size[ d ] - 1;
+
+		return max;
+	}
+
 	public static void main( String[] args )
 	{
 		// define the blocksize so that it is one single block
@@ -379,7 +400,7 @@ public class Block
 		final long[] kernelSize = new long[]{ 16, 32 };
 
 		final BlockGeneratorFixedSizePrecise blockGenerator = new BlockGeneratorFixedSizePrecise( blockSize );
-		final Block[] blocks = blockGenerator.divideIntoBlocks( imgSize, kernelSize );
+		final List< Block > blocks = blockGenerator.divideIntoBlocks( imgSize, kernelSize );
 
 		int i = 0;
 

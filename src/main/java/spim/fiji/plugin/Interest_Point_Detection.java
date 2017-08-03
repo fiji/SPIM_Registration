@@ -5,19 +5,23 @@ import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+import spim.fiji.plugin.fusion.FusionGUI;
 import spim.fiji.plugin.interestpointdetection.DifferenceOfGaussianGUI;
 import spim.fiji.plugin.interestpointdetection.DifferenceOfMeanGUI;
 import spim.fiji.plugin.interestpointdetection.InterestPointDetectionGUI;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.explorer.ExplorerWindow;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.interestpointdetection.InterestPointTools;
@@ -39,7 +43,11 @@ public class Interest_Point_Detection implements PlugIn
 	public static boolean defaultSetMinMax = false;
 	public static boolean defaultLimitDetections = false;
 	public static String defaultLabel = "beads";
-	
+
+	public static boolean defaultGroupTiles = true;
+	public static boolean defaultGroupIllums = true;
+	public static ExplorerWindow< ?, ? > currentPanel;
+
 	static
 	{
 		IOFunctions.printIJLog = true;
@@ -73,30 +81,33 @@ public class Interest_Point_Detection implements PlugIn
 	 */
 	public boolean detectInterestPoints(
 			final SpimData2 data,
-			final List< ViewId > viewIds )
+			final Collection< ? extends ViewId > viewCollection )
 	{
-		return detectInterestPoints( data, viewIds, "", null, false );
+		return detectInterestPoints( data, viewCollection, "", null, false );
 	}
 
 	public boolean detectInterestPoints(
 			final SpimData2 data,
-			final List< ViewId > viewIds,
+			final Collection< ? extends ViewId > viewCollection,
 			final String xmlFileName,
 			final boolean saveXML )
 	{
-		return detectInterestPoints( data, viewIds, "", xmlFileName, saveXML );
+		return detectInterestPoints( data, viewCollection, "", xmlFileName, saveXML );
 	}
 
 	public boolean detectInterestPoints(
 			final SpimData2 data,
-			final List< ViewId > viewIds,
+			final Collection< ? extends ViewId > viewCollection,
 			final String clusterExtension,
 			final String xmlFileName,
 			final boolean saveXML )
 	{
 		// filter not present ViewIds
+		final ArrayList< ViewId > viewIds = new ArrayList<>();
+		viewIds.addAll( viewCollection );
+
 		final List< ViewId > removed = SpimData2.filterMissingViews( data, viewIds );
-		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Removed " +  removed.size() + " views because they are not present." );
+		if ( removed.size() > 0 ) IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Removed " +  removed.size() + " views because they are not present." );
 
 		// the GenericDialog needs a list[] of String
 		final String[] descriptions = new String[ staticAlgorithms.size() ];
@@ -115,7 +126,28 @@ public class Interest_Point_Detection implements PlugIn
 		gd.addCheckbox( "Define_anisotropy for segmentation", defaultDefineAnisotropy );
 		gd.addCheckbox( "Set_minimal_and_maximal_intensity", defaultSetMinMax );
 		gd.addCheckbox( "Limit_amount_of_detections" , defaultLimitDetections );
-		
+
+		gd.addMessage( "" );
+
+		final HashSet< Integer > tiles = new HashSet<>();
+		for ( final ViewId viewId : viewIds )
+			tiles.add( data.getSequenceDescription().getViewDescription( viewId ).getViewSetup().getTile().getId() );
+
+		final HashSet< Integer > illums = new HashSet<>();
+		for ( final ViewId viewId : viewIds )
+			illums.add( data.getSequenceDescription().getViewDescription( viewId ).getViewSetup().getIllumination().getId() );
+
+		if ( tiles.size() > 1 )
+			gd.addCheckbox( "Group_tiles", defaultGroupTiles );
+
+		if ( illums.size() > 1 )
+			gd.addCheckbox( "Group_illuminations", defaultGroupIllums );
+
+		if ( !FusionGUI.isMultiResolution( data ) )
+			gd.addMessage( "WARNING: Grouping will be very slow since no Multiresolution Format like HDF5 is used.", GUIHelper.smallStatusFont, GUIHelper.warning );
+		else
+			gd.addMessage( "You are using a Multiresolution ImgLoader, Grouping should be ok.", GUIHelper.smallStatusFont, GUIHelper.good );
+
 		gd.addMessage( "" );
 		GUIHelper.addWebsite( gd );
 		
@@ -132,14 +164,25 @@ public class Interest_Point_Detection implements PlugIn
 		final boolean setMinMax = defaultSetMinMax = gd.getNextBoolean();
 		final boolean limitDetections = defaultLimitDetections = gd.getNextBoolean();
 
+		boolean groupTiles = false;
+		if ( tiles.size() > 1 )
+			groupTiles = defaultGroupTiles = gd.getNextBoolean();
+
+		boolean groupIllums = false;
+		if ( illums.size() > 1 )
+			groupIllums = defaultGroupIllums = gd.getNextBoolean();
+
 		final InterestPointDetectionGUI ipd = staticAlgorithms.get( algorithm ).newInstance(
 				data,
 				viewIds );
 
 		// the interest point detection should query its parameters
-		if ( !ipd.queryParameters( defineAnisotropy, setMinMax, limitDetections ) )
+		if ( !ipd.queryParameters( defineAnisotropy, setMinMax, limitDetections, groupTiles, groupIllums ) )
 			return false;
-		
+
+		// if grouped, we need to get the min/max intensity for all groups
+		ipd.preprocess();
+
 		// now extract all the detections
 		for ( final TimePoint tp : SpimData2.getAllTimePointsSorted( data, viewIds ) )
 		{
@@ -160,6 +203,9 @@ public class Interest_Point_Detection implements PlugIn
 					IOFunctions.println( "Failed to update metadata, this should not happen: " + e );
 				}
 			}
+
+			if ( currentPanel != null )
+				currentPanel.updateContent();
 
 			// save the xml
 			if ( saveXML )

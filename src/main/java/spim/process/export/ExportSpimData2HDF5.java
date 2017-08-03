@@ -13,7 +13,6 @@ import bdv.export.SubTaskProgressWriter;
 import bdv.export.WriteSequenceToHdf5;
 import bdv.img.hdf5.Hdf5ImageLoader;
 import bdv.img.hdf5.Partition;
-import ij.gui.GenericDialog;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
@@ -38,6 +37,7 @@ import net.imglib2.util.Pair;
 import net.imglib2.util.Util;
 import net.imglib2.util.ValuePair;
 import spim.Threads;
+import spim.fiji.plugin.fusion.FusionGUI;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.resave.Generic_Resave_HDF5;
 import spim.fiji.plugin.resave.Generic_Resave_HDF5.Parameters;
@@ -48,11 +48,14 @@ import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.fiji.spimdata.pointspreadfunctions.PointSpreadFunctions;
 import spim.fiji.spimdata.stitchingresults.StitchingResults;
-import spim.process.fusion.FusionHelper;
+import spim.process.fusion.FusionTools;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class ExportSpimData2HDF5 implements ImgExport
 {
+	private FusionGUI fusion;
 
 	private List< TimePoint > newTimepoints;
 
@@ -91,23 +94,14 @@ public class ExportSpimData2HDF5 implements ImgExport
 	}
 
 	@Override
-	public void setXMLData( final List< TimePoint > newTimepoints, final List< ViewSetup > newViewSetups )
+	public boolean queryParameters( final FusionGUI fusion )
 	{
-		System.out.println( "setXMLData()" );
-		this.newTimepoints = newTimepoints;
-		this.newViewSetups = newViewSetups;
-	}
+		this.fusion = fusion;
 
-	@Override
-	public boolean queryParameters( SpimData2 spimData, final boolean is16bit )
-	{
-		System.out.println( "queryParameters()" );
-
-		if ( newTimepoints == null || newViewSetups == null )
-		{
-			IOFunctions.println( "new timepoints and new viewsetup list not set yet ... cannot continue" );
-			return false;
-		}
+		// define new timepoints and viewsetups
+		final Pair< List< TimePoint >, List< ViewSetup > > newStructure = ExportSpimData2TIFF.defineNewViewSetups( fusion );
+		this.newTimepoints = newStructure.getA();
+		this.newViewSetups = newStructure.getB();
 
 		perSetupExportMipmapInfo = Resave_HDF5.proposeMipmaps( newViewSetups );
 
@@ -120,6 +114,8 @@ public class ExportSpimData2HDF5 implements ImgExport
 			if ( !new File( Generic_Resave_HDF5.lastExportPath ).exists() )
 				break;
 		}
+
+		boolean is16bit = fusion.getPixelType() == 1;
 
 		final int firstviewSetupId = newViewSetups.get( 0 ).getId();
 		params = Generic_Resave_HDF5.getParameters( perSetupExportMipmapInfo.get( firstviewSetupId ), true, getDescription(), is16bit );
@@ -190,16 +186,21 @@ public class ExportSpimData2HDF5 implements ImgExport
 		}
 
 		seq.setImgLoader( new Hdf5ImageLoader( params.getHDF5File(), hdf5Partitions, seq, false ) );
-		SpimData2 spimData = new SpimData2( basePath, seq, viewRegistrations, viewsInterestPoints, new BoundingBoxes(), new StitchingResults() );
+		SpimData2 spimData = new SpimData2( basePath, seq, viewRegistrations, viewsInterestPoints, new BoundingBoxes(), new PointSpreadFunctions(), new StitchingResults() );
 
 		return new ValuePair< SpimData2, HashMap<ViewId,Partition> >( spimData, viewIdToPartition );
 	}
 
 	@Override
-	public < T extends RealType< T > & NativeType< T >> boolean exportImage( RandomAccessibleInterval< T > img, final Interval bb, final double downsampling, TimePoint tp, ViewSetup vs )
+	public < T extends RealType< T > & NativeType< T >> boolean exportImage(
+			RandomAccessibleInterval< T > img,
+			final Interval bb,
+			final double downsampling,
+			final String title,
+			final Group< ? extends ViewId > fusionGroup )
 	{
 		System.out.println( "exportImage1()" );
-		return exportImage( img, bb, downsampling, tp, vs, Double.NaN, Double.NaN );
+		return exportImage( img, bb, downsampling, title, fusionGroup, Double.NaN, Double.NaN );
 	}
 
 	public static < T extends RealType< T > > double[] updateAndGetMinMax( final RandomAccessibleInterval< T > img, final Parameters params )
@@ -208,7 +209,7 @@ public class ExportSpimData2HDF5 implements ImgExport
 
 		if ( params == null || params.getConvertChoice() == 0 || Double.isNaN( params.getMin() ) || Double.isNaN( params.getMin() ) )
 		{
-			final float[] minmax = FusionHelper.minMax( img );
+			final float[] minmax = FusionTools.minMax( img );
 			min = minmax[ 0 ];
 			max = minmax[ 1 ];
 
@@ -244,9 +245,17 @@ public class ExportSpimData2HDF5 implements ImgExport
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
-	public < T extends RealType< T > & NativeType< T > > boolean exportImage( RandomAccessibleInterval< T > img, final Interval bb, final double downsampling, TimePoint tp, ViewSetup vs, double min, double max )
+	public < T extends RealType< T > & NativeType< T > > boolean exportImage(
+			RandomAccessibleInterval< T > img,
+			final Interval bb,
+			final double downsampling,
+			final String title,
+			final Group< ? extends ViewId > fusionGroup,
+			double min, double max )
 	{
 		System.out.println( "exportImage2()" );
+
+		final ViewId newViewId = ExportSpimData2TIFF.identifyNewViewId( newTimepoints, newViewSetups, fusionGroup, fusion );
 
 		// write the image
 		final RandomAccessibleInterval< UnsignedShortType > ushortimg;
@@ -254,15 +263,15 @@ public class ExportSpimData2HDF5 implements ImgExport
 			ushortimg = convert( img, params );
 		else
 			ushortimg = ( RandomAccessibleInterval ) img;
-		final Partition partition = viewIdToPartition.get( new ViewId( tp.getId(), vs.getId() ) );
-		final ExportMipmapInfo mipmapInfo = perSetupExportMipmapInfo.get( vs.getId() );
+		final Partition partition = viewIdToPartition.get( newViewId );
+		final ExportMipmapInfo mipmapInfo = perSetupExportMipmapInfo.get( newViewId.getViewSetupId() );
 		final boolean writeMipmapInfo = true; // TODO: remember whether we already wrote it and write only once
 		final boolean deflate = params.getDeflate();
 		final ProgressWriter progressWriter = new SubTaskProgressWriter( this.progressWriter, 0.0, 1.0 ); // TODO
-		WriteSequenceToHdf5.writeViewToHdf5PartitionFile( ushortimg, partition, tp.getId(), vs.getId(), mipmapInfo, writeMipmapInfo, deflate, null, null, Threads.numThreads(), progressWriter );
+		WriteSequenceToHdf5.writeViewToHdf5PartitionFile( ushortimg, partition, newViewId.getTimePointId(), newViewId.getViewSetupId(), mipmapInfo, writeMipmapInfo, deflate, null, null, Threads.numThreads(), progressWriter );
 		
 		// update the registrations
-		final ViewRegistration vr = spimData.getViewRegistrations().getViewRegistration( new ViewId( tp.getId(), vs.getId() ) );
+		final ViewRegistration vr = spimData.getViewRegistrations().getViewRegistration( newViewId );
 
 		final double scale = downsampling;
 		final AffineTransform3D m = new AffineTransform3D();
@@ -274,20 +283,6 @@ public class ExportSpimData2HDF5 implements ImgExport
 		vr.getTransformList().clear();
 		vr.getTransformList().add( vt );
 
-		return true;
-	}
-
-	@Override
-	public void queryAdditionalParameters( GenericDialog gd, SpimData2 spimData )
-	{
-		System.out.println( "queryAdditionalParameters()" );
-
-	}
-
-	@Override
-	public boolean parseAdditionalParameters( GenericDialog gd, SpimData2 spimData )
-	{
-		System.out.println( "parseAdditionalParameters()" );
 		return true;
 	}
 

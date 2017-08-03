@@ -1,20 +1,16 @@
 package spim.fiji.plugin.interestpointdetection;
 
-import ij.ImagePlus;
-import ij.gui.GenericDialog;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import ij.ImagePlus;
+import ij.gui.GenericDialog;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.segmentation.InteractiveDoG;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.realtransform.AffineTransform3D;
 import spim.fiji.plugin.util.GenericDialogAppender;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
@@ -88,6 +84,7 @@ public class DifferenceOfGaussianGUI extends DifferenceOfGUI implements GenericD
 		dog.maxIntensity = this.maxIntensity;
 
 		dog.sigma = this.sigma;
+		dog.threshold = this.threshold;
 		dog.findMin = this.findMin;
 		dog.findMax = this.findMax;
 
@@ -160,7 +157,7 @@ public class DifferenceOfGaussianGUI extends DifferenceOfGUI implements GenericD
 		final GenericDialog gd = new GenericDialog( "Advanced values" );
 
 		gd.addNumericField( "Sigma", defaultSigma, 5 );
-		gd.addNumericField( "Threshold", defaultThreshold, 4 );
+		gd.addNumericField( "Threshold", defaultThreshold, 5 );
 		gd.addCheckbox( "Find_minima", defaultFindMin );
 		gd.addCheckbox( "Find_maxima", defaultFindMax );
 
@@ -180,51 +177,17 @@ public class DifferenceOfGaussianGUI extends DifferenceOfGUI implements GenericD
 	@Override
 	protected boolean setInteractiveValues()
 	{
-		final ViewId view = getViewSelection( "Interactive Difference-of-Gaussian", "Please select view to use" );
-		
-		if ( view == null )
-			return false;
-		
-		final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( view.getTimePointId(), view.getViewSetupId() );
-		
-		if ( !viewDescription.isPresent() )
-		{
-			IOFunctions.println( "You defined the view you selected as not present at this timepoint." );
-			IOFunctions.println( "timepoint: " + viewDescription.getTimePoint().getName() + 
-								 " angle: " + viewDescription.getViewSetup().getAngle().getName() + 
-								 " channel: " + viewDescription.getViewSetup().getChannel().getName() + 
-								 " illum: " + viewDescription.getViewSetup().getIllumination().getName() );
-			return false;
-		}
+		final ImagePlus imp;
 
-		// downsampleXY == 0 : a bit less then z-resolution
-		// downsampleXY == -1 : a bit more then z-resolution
-		final int downsampleXY;
-
-		if ( downsampleXYIndex < 1 )
-			downsampleXY = DownsampleTools.downsampleFactor( downsampleXYIndex, downsampleZ, viewDescription.getViewSetup().getVoxelSize() );
+		if ( !groupIllums && !groupTiles )
+			imp = getImagePlusForInteractive( "Interactive Difference-of-Gaussian" );
 		else
-			downsampleXY = downsampleXYIndex;
+			imp = getGroupedImagePlusForInteractive( "Interactive Difference-of-Gaussian" );
 
-		RandomAccessibleInterval< net.imglib2.type.numeric.real.FloatType > img =
-				DownsampleTools.openAndDownsample(
-						spimData.getSequenceDescription().getImgLoader(),
-						viewDescription,
-						new AffineTransform3D(),
-						downsampleXY,
-						downsampleZ );
-
-		if ( img == null )
-		{
-			IOFunctions.println( "View not found: " + viewDescription );
+		if ( imp == null )
 			return false;
-		}
 
-		final ImagePlus imp = ImageJFunctions.wrapFloat( img, "" ).duplicate();
-		imp.resetDisplayRange();
-		img = null;
 		imp.setDimensions( 1, imp.getStackSize(), 1 );
-		imp.setTitle( "tp: " + viewDescription.getTimePoint().getName() + " viewSetup: " + viewDescription.getViewSetupId() );		
 		imp.show();
 		imp.setSlice( imp.getStackSize() / 2 );
 		imp.setRoi( 0, 0, imp.getWidth()/3, imp.getHeight()/3 );

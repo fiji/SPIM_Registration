@@ -7,9 +7,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.Affine3D;
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.IllDefinedDataPointsException;
@@ -22,14 +20,10 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
+import spim.process.interestpointregistration.TransformationTools;
 import spim.process.interestpointregistration.global.convergence.ConvergenceStrategy;
 import spim.process.interestpointregistration.global.pointmatchcreating.PointMatchCreator;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
-import spim.vecmath.Matrix4f;
-import spim.vecmath.Quat4f;
-import spim.vecmath.Transform3D;
-import spim.vecmath.Vector3d;
-import spim.vecmath.Vector3f;
 
 /**
  * 
@@ -105,12 +99,12 @@ public class GlobalOpt
 		{
 			final Tile< M > tile = map.get( viewId );
 			
-			String output = Group.pvid( viewId ) + ": " + printAffine3D( (Affine3D<?>)tile.getModel() );
+			String output = Group.pvid( viewId ) + ": " + TransformationTools.printAffine3D( (Affine3D<?>)tile.getModel() );
 			
 			if ( tile.getModel() instanceof RigidModel3D )
-				IOFunctions.println( output + ", " + getRotationAxis( (RigidModel3D)tile.getModel() ) );
+				IOFunctions.println( output + ", " + TransformationTools.getRotationAxis( (RigidModel3D)tile.getModel() ) );
 			else
-				IOFunctions.println( output + ", " + getScaling( (Affine3D<?>)tile.getModel() ) );
+				IOFunctions.println( output + ", " + TransformationTools.getScaling( (Affine3D<?>)tile.getModel() ) );
 		}
 		
 		return map;
@@ -150,103 +144,7 @@ public class GlobalOpt
 
 		return new ValuePair<>( map, groups );
 	}
-	
-	
-	/**
-	 * WARNING: This fails on older MACs, in this case remove: 
-	 * 
-	 * Check if Apple's out-dated Java 3D version 1.3 is installed in System/Library/Java/Extensions/ on your Mac. 
-	 * Remove all Java 3D 1.3 related files including vecmath.jar (jar, jnilib), they are useless.
-	 * 
-	 * @param model - the model
-	 * @return - String description of rot. axis
-	 */
-	public static String getRotationAxis( final RigidModel3D model )
-	{
-		try
-		{
-			final Matrix4f matrix = new Matrix4f();
-			getTransform3D( model ).get( matrix );
-			final Quat4f qu = new Quat4f();
-			qu.set( matrix );
-			
-			final Vector3f n = new Vector3f(qu.getX(),qu.getY(), qu.getZ());
-			n.normalize();
-			
-			return "Approx. axis: " + n + ", approx. angle: " + Math.toDegrees( Math.acos( qu.getW() ) * 2 );
-		}
-		catch ( Exception e )
-		{
-			return "Check if Apple's out-dated Java 3D version 1.3 is installed in System/Library/Java/Extensions/ on your Mac." +
-					"Remove all Java 3D 1.3 related files including vecmath.jar (jar, jnilib), they are useless.";
-		}
-	}
-	
-	public static String getScaling( final Affine3D< ? > affine )
-	{
-		final Transform3D t = getTransform3D( affine );
-		final Vector3d v = new Vector3d();
-		
-		t.getScale( v );
-		
-		return "Scaling: " + v.x + ", " + v.y + ", " + v.z;
-	}
 
-	public static Transform3D getTransform3D( final Affine3D< ? > affine )
-	{
-		final double[][] m = new double[ 3 ][ 4 ];
-		((Affine3D<?>)affine).toMatrix( m );
-
-		final Transform3D transform = new Transform3D();
-		final double[] m2 = new double[ 16 ];
-		transform.get( m2 );
-		
-		m2[ 0 ] = m[0][0];
-		m2[ 1 ] = m[0][1];
-		m2[ 2 ] = m[0][2];
-		m2[ 3 ] = m[0][3];
-
-		m2[ 4 ] = m[1][0];
-		m2[ 5 ] = m[1][1];
-		m2[ 6 ] = m[1][2];
-		m2[ 7 ] = m[1][3];
-
-		m2[ 8 ] = m[2][0];
-		m2[ 9 ] = m[2][1];
-		m2[ 10] = m[2][2];
-		m2[ 11] = m[2][3];
-
-		transform.set( m2 );
-
-		return transform;
-	}
-
-	public static <M extends AbstractAffineModel3D<M>> Transform3D getTransform3D( final M model )
-	{
-		final Transform3D transform = new Transform3D();
-		final double[] m = model.getMatrix( null );
-
-		final double[] m2 = new double[ 16 ];
-		transform.get( m2 );
-
-		for ( int i = 0; i < m.length; ++i )
-			m2[ i ] = m[ i ];
-
-		transform.set( m2 );
-
-		return transform;
-	}
-
-	public static String printAffine3D( final Affine3D< ? > model )
-	{
-		final double[][] m = new double[ 3 ][ 4 ];
-		model.toMatrix( m );
-		
-		return m[0][0] + "," + m[0][1] + "," + m[0][2] + "," + m[0][3] + "," + 
-				m[1][0] + "," + m[1][1] + "," + m[1][2] + "," + m[1][3] + "," + 
-				m[2][0] + "," + m[2][1] + "," + m[2][2] + "," + m[2][3];
-	}
-	
 	protected static < M extends Model< M > > TileConfiguration addAndFixTiles(
 			final Collection< ViewId > views,
 			final HashMap< ViewId, Tile< M > > map,

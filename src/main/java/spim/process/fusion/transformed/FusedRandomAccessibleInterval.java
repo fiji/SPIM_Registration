@@ -5,6 +5,7 @@ import java.util.List;
 import net.imglib2.Interval;
 import net.imglib2.Positionable;
 import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealPositionable;
 import net.imglib2.type.numeric.real.FloatType;
@@ -14,22 +15,33 @@ public class FusedRandomAccessibleInterval implements RandomAccessibleInterval< 
 	final int n;
 
 	final Interval interval;
-	final List< RandomAccessibleInterval< FloatType > > images;
-	final List< RandomAccessibleInterval< FloatType > > weights;
+	final List< ? extends RandomAccessible< FloatType > > images;
+	final List< ? extends RandomAccessible< FloatType > > weights;
 
 	public FusedRandomAccessibleInterval(
 			final Interval interval,
-			final List< RandomAccessibleInterval< FloatType > > images,
-			final List< RandomAccessibleInterval< FloatType > > weights )
+			final List< ? extends RandomAccessible< FloatType > > images,
+			final List< ? extends RandomAccessible< FloatType > > weights )
 	{
 		this.n = interval.numDimensions();
 		this.interval = interval;
 		this.images = images;
-		this.weights = weights;
+
+		if ( weights.size() == 0 )
+			this.weights = null;
+		else
+			this.weights = weights;
 	}
 
-	public List< RandomAccessibleInterval< FloatType > > getImages() { return images; }
-	public List< RandomAccessibleInterval< FloatType > > getWeights() { return weights; }
+	public FusedRandomAccessibleInterval(
+			final Interval interval,
+			final List< ? extends RandomAccessible< FloatType > > images )
+	{
+		this( interval, images, null );
+	}
+
+	public List< ? extends RandomAccessible< FloatType > > getImages() { return images; }
+	public List< ? extends RandomAccessible< FloatType > > getWeights() { return weights; }
 
 	@Override
 	public int numDimensions()
@@ -40,7 +52,10 @@ public class FusedRandomAccessibleInterval implements RandomAccessibleInterval< 
 	@Override
 	public RandomAccess< FloatType > randomAccess()
 	{
-		return new FusedRandomAccess( n, images, weights );
+		if ( weights == null )
+			return new FusedRandomAccessNoWeights( n, images );
+		else
+			return new FusedRandomAccess( n, images, weights );
 	}
 
 	@Override

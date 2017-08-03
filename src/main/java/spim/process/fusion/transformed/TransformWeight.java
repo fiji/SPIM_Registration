@@ -37,6 +37,14 @@ public class TransformWeight
 		return transformWeight( new BlendingRealRandomAccessible( new FinalInterval( inputImgInterval ), border, blending ), transform, boundingBox );
 	}
 
+	/**
+	 * create a transformed, rastered image
+	 *
+	 * @param rra - a real random accessible
+	 * @param transform - the affine transformation
+	 * @param boundingBox - the interval in which to create a transformed, rastered image
+	 * @return a zero-min RandomAccessibleInterval
+	 */
 	public static RandomAccessibleInterval< FloatType > transformWeight(
 			final RealRandomAccessible< FloatType > rra,
 			final AffineTransform3D transform,

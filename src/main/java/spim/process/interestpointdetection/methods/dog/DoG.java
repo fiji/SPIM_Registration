@@ -55,7 +55,8 @@ public class DoG
 								vd,
 								correctCoordinates,
 								dog.downsampleXY,
-								dog.downsampleZ );
+								dog.downsampleZ,
+								true );
 
 				final Image< FloatType > img = ImgLib2
 						.wrapFloatToImgLib1( (Img< net.imglib2.type.numeric.real.FloatType >) input );

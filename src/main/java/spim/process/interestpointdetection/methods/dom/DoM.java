@@ -60,7 +60,8 @@ public class DoM
 						vd,
 						correctCoordinates,
 						dom.downsampleXY,
-						dom.downsampleZ );
+						dom.downsampleZ,
+						true );
 
 				final Image< FloatType > img = ImgLib2.wrapFloatToImgLib1(
 						(Img< net.imglib2.type.numeric.real.FloatType >) input );

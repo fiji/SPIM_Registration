@@ -1,7 +1,5 @@
 package spim.fiji.spimdata.explorer;
 
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -13,23 +11,20 @@ import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.base.Entity;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
-import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
-import mpicbg.spim.data.registration.ViewTransform;
-import mpicbg.spim.data.sequence.ViewId;
 import spim.fiji.spimdata.SpimData2;
-import spim.fiji.spimdata.explorer.ExplorerWindow;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.fiji.spimdata.pointspreadfunctions.PointSpreadFunctions;
 
 public class MultiViewTableModelDecorator < AS extends AbstractSpimData< ? > > implements ISpimDataTableModel< AS >
 {
-	
 	private ISpimDataTableModel<AS> decorated;
 	final ArrayList< String > columnNames;
 	
-	final int registrationColumn, interestPointsColumn;
+	final int registrationColumn, interestPointsColumn, psfColumn;
 	final ViewRegistrations viewRegistrations;
 	final ViewInterestPoints viewInterestPoints;
+	final PointSpreadFunctions pointSpradFunctions;
 	
 	public MultiViewTableModelDecorator(ISpimDataTableModel<AS> decorated) {
 		this.decorated = decorated;
@@ -47,11 +42,18 @@ public class MultiViewTableModelDecorator < AS extends AbstractSpimData< ? > > i
 
 			interestPointsColumn = decorated.getColumnCount() + columnNames.size();
 			viewInterestPoints = data2.getViewInterestPoints();
+
+			columnNames.add( "PSF" );
+			psfColumn = decorated.getColumnCount() + columnNames.size();
+			pointSpradFunctions = data2.getPointSpreadFunctions();
 		}
 		else
 		{
 			viewInterestPoints = null;
 			interestPointsColumn = -1;
+
+			pointSpradFunctions = null;
+			psfColumn = -1;
 		}
 	}
 	
@@ -79,15 +81,14 @@ public class MultiViewTableModelDecorator < AS extends AbstractSpimData< ? > > i
 	public Class<?> getColumnClass(int columnIndex) {
 		if (columnIndex < decorated.getColumnCount())
 			return decorated.getColumnClass(columnIndex);
+		else if ( columnIndex == psfColumn )
+			return Boolean.class;
 		else
 			return String.class;
 	}
 
 	@Override
-	public boolean isCellEditable(int rowIndex, int columnIndex) {
-		// TODO Auto-generated method stub
-		return false;
-	}
+	public boolean isCellEditable(int rowIndex, int columnIndex) { return false; }
 
 	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
@@ -95,19 +96,95 @@ public class MultiViewTableModelDecorator < AS extends AbstractSpimData< ? > > i
 		// pass on to decorated
 		if (columnIndex < decorated.getColumnCount())
 			return decorated.getValueAt(rowIndex, columnIndex);
-		
-		final BasicViewDescription< ? extends BasicViewSetup > vd = getElements().get( rowIndex ).iterator().next();
-		
-		if (vd.isPresent())
+
+		final List< BasicViewDescription< ? > > vds = getElements().get( rowIndex );
+
+		if ( vds.size() == 1 )
 		{
-			if ( columnIndex == registrationColumn )			
+			final BasicViewDescription< ? extends BasicViewSetup > vd = vds.get( 0 );
+
+			if ( vd.isPresent() )
+			{
+				if ( columnIndex == registrationColumn )
 					return this.viewRegistrations.getViewRegistration( vd ).getTransformList().size();
-			else if ( columnIndex == interestPointsColumn && viewInterestPoints != null )
-				return viewInterestPoints.getViewInterestPointLists( vd ).getHashMap().keySet().size();
+				else if ( columnIndex == interestPointsColumn && viewInterestPoints != null )
+					return viewInterestPoints.getViewInterestPointLists( vd ).getHashMap().keySet().size();
+				else if ( columnIndex == psfColumn )
+					return pointSpradFunctions.getPointSpreadFunctions().containsKey( vd );
+			}
+
+			if ( columnIndex == psfColumn )
+				return false;
+			else
+				return "missing";
 		}
-		// TODO: handle this nicely for grouped views
-		return "missing";
-		
+		else
+		{
+			int minReg = Integer.MAX_VALUE;
+			int minIP = Integer.MAX_VALUE;
+
+			int maxReg = -Integer.MAX_VALUE;
+			int maxIP = -Integer.MAX_VALUE;
+
+			boolean hasPSF = true;
+
+			for ( final BasicViewDescription< ? > vd : vds )
+			{
+				if ( vd.isPresent() )
+				{
+					if ( columnIndex == registrationColumn )
+					{
+						final int numR = this.viewRegistrations.getViewRegistration( vd ).getTransformList().size();
+						minReg = Math.min( minReg, numR );
+						maxReg = Math.max( maxReg, numR );
+					}
+					else if ( columnIndex == interestPointsColumn )
+					{
+						if ( viewInterestPoints != null )
+						{
+							final int numIP = viewInterestPoints.getViewInterestPointLists( vd ).getHashMap().keySet().size();
+							minIP = Math.min( minIP, numIP );
+							maxIP = Math.max( maxIP, numIP );
+						}
+						else
+						{
+							minIP = maxIP = 0;
+						}
+					}
+					else if ( columnIndex == psfColumn )
+						hasPSF &= pointSpradFunctions.getPointSpreadFunctions().containsKey( vd );
+				}
+				else
+				{
+					hasPSF = false;
+				}
+			}
+
+			if ( columnIndex == registrationColumn )
+			{
+				if ( minReg == maxReg )
+					return minReg;
+				else if( minReg == Integer.MAX_VALUE )
+					return "missing";
+				else
+					return minReg + "-" + maxReg;
+			}
+			else if ( columnIndex == interestPointsColumn )
+			{
+				if ( minIP == maxIP )
+					return minIP;
+				else if( minIP == Integer.MAX_VALUE )
+					return "missing";
+				else
+					return minIP + "-" + maxIP;
+			}
+			else if ( columnIndex == psfColumn )
+			{
+				return hasPSF;
+			}
+			else
+				return "missing";
+		}
 	}
 
 	@Override

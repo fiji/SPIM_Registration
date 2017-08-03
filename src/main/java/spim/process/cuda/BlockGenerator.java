@@ -1,5 +1,7 @@
 package spim.process.cuda;
 
+import java.util.List;
+
 public interface BlockGenerator< T extends Block >
 {
 	/**
@@ -9,5 +11,5 @@ public interface BlockGenerator< T extends Block >
 	 * @param kernelSize - the size of the kernel (has to be odd!)
 	 * @return array of blocks
 	 */
-	public T[] divideIntoBlocks( final long[] imgSize, final long[] kernelSize );
+	public List< T > divideIntoBlocks( final long[] imgSize, final long[] kernelSize );
 }

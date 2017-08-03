@@ -45,6 +45,7 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.imgloaders.LightSheetZ1ImgLoader;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.fiji.spimdata.pointspreadfunctions.PointSpreadFunctions;
 import spim.fiji.spimdata.stitchingresults.StitchingResults;
 import spim.headless.definedataset.LightSheetZ1MetaData;
 
@@ -124,7 +125,7 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 		viewInterestPoints.createViewInterestPoints( sequenceDescription.getViewDescriptions() );
 
 		// finally create the SpimData itself based on the sequence description and the view registration
-		final SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints, new BoundingBoxes(), new StitchingResults() );
+		final SpimData2 spimData = new SpimData2( new File( directory ), sequenceDescription, viewRegistrations, viewInterestPoints, new BoundingBoxes(), new PointSpreadFunctions(), new StitchingResults() );
 
 		if ( meta.applyAxis() )
 			Apply_Transformation.applyAxis( spimData );
@@ -168,18 +169,18 @@ public class LightSheetZ1 implements MultiViewDatasetDefinition
 				final Tile tile = viewDescription.getViewSetup().getAttribute( Tile.class );
 
 				if (tile.hasLocation()){
-					final double shiftX = tile.getLocation()[0] / voxelSize.dimension( 0 );
-					final double shiftY = tile.getLocation()[1] / voxelSize.dimension( 1 );
-					final double shiftZ = tile.getLocation()[2] / voxelSize.dimension( 2 );
+					final double shiftX = tile.getLocation()[0] / voxelSize.dimension( 0 ) * calX;
+					final double shiftY = tile.getLocation()[1] / voxelSize.dimension( 1 ) * calY;
+					final double shiftZ = tile.getLocation()[2] / voxelSize.dimension( 2 ) * calZ;
 					
 					final AffineTransform3D m2 = new AffineTransform3D();
 					m2.set( 1.0f, 0.0f, 0.0f, shiftX, 
 						   0.0f, 1.0f, 0.0f, shiftY,
 						   0.0f, 0.0f, 1.0f, shiftZ );
 					final ViewTransform vt2 = new ViewTransformAffine( "Translation", m2 );
-					viewRegistration.concatenateTransform( vt2 );
+					viewRegistration.preconcatenateTransform( vt2 );
 				}
-				
+
 				viewRegistrationList.put( viewRegistration, viewRegistration );
 			}
 		

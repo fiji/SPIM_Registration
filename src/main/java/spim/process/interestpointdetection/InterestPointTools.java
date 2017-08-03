@@ -2,12 +2,14 @@ package spim.process.interestpointdetection;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
+import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.spimdata.SpimData2;
@@ -16,13 +18,84 @@ import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.InterestPointValue;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
+import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 
 /**
  * The type Interest point tools.
  */
 public class InterestPointTools
 {
+	public final static String warningLabel = " (WARNING: Only available for ";
+
 	public static String[] limitDetectionChoice = { "Brightest", "Around median (of those above threshold)", "Weakest (above threshold)" };	
+
+	public static String getSelectedLabel( final String[] labels, final int choice )
+	{
+		String label = labels[ choice ];
+
+		if ( label.contains( warningLabel ) )
+			label = label.substring( 0, label.indexOf( warningLabel ) );
+
+		return label;
+	}
+
+	/**
+	 * Goes through all Views and checks all available labels for interest point detection
+	 * 
+	 * @param spimData - the SpimData object
+	 * @param viewIdsToProcess - for which viewIds
+	 *
+	 * @return - labels of all interest points
+	 */
+	public static String[] getAllInterestPointLabels(
+			final SpimData2 spimData,
+			final List< ViewId > viewIdsToProcess )
+	{
+		final ViewInterestPoints interestPoints = spimData.getViewInterestPoints();
+		final HashMap< String, Integer > labels = getAllInterestPointMap( interestPoints, viewIdsToProcess );
+
+		final String[] allLabels = new String[ labels.keySet().size() ];
+
+		int i = 0;
+		
+		for ( final String label : labels.keySet() )
+		{
+			allLabels[ i ] = label;
+
+			if ( labels.get( label ) != viewIdsToProcess.size() )
+				allLabels[ i ] += warningLabel + labels.get( label ) + "/" + viewIdsToProcess.size() + " Views!)";
+
+			++i;
+		}
+
+		return allLabels;
+	}
+
+	public static HashMap< String, Integer > getAllInterestPointMap( final ViewInterestPoints interestPoints, final Collection< ? extends ViewId > views )
+	{
+		final HashMap< String, Integer > labels = new HashMap< String, Integer >();
+
+		for ( final ViewId viewId : views )
+		{
+			// which lists of interest points are available
+			final ViewInterestPointLists lists = interestPoints.getViewInterestPointLists( viewId );
+
+			if ( lists == null )
+				continue;
+
+			for ( final String label : lists.getHashMap().keySet() )
+			{
+				int count = 1;
+
+				if ( labels.containsKey( label ) )
+					count += labels.get( label );
+
+				labels.put( label, count );
+			}
+		}
+
+		return labels;
+	}
 
 	/**
 	 * Add interest points. Does not save the InteresPoints

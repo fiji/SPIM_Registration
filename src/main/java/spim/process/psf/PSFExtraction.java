@@ -28,11 +28,12 @@ import net.imglib2.view.Views;
 import spim.Threads;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.boundingbox.BoundingBoxReorientation;
-import spim.process.fusion.FusionHelper;
+import spim.process.fusion.FusionTools;
 
 public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 {
 	final ArrayImg< T, ? > psf;
+	final boolean hadDetections;
 
 	public PSFExtraction(
 			final RealRandomAccessible< T > img,
@@ -42,10 +43,20 @@ public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 			final boolean multithreaded )
 	{
 		psf = new ArrayImgFactory< T >().create( size, type );
-		if ( multithreaded )
-			extractPSFMultiThreaded( img, locations, psf );
+
+		if ( locations.size() == 0 )
+		{
+			hadDetections = false;
+		}
 		else
-			extractPSFLocal( img, locations, psf );
+		{
+			hadDetections = true;
+
+			if ( multithreaded )
+				extractPSFMultiThreaded( img, locations, psf );
+			else
+				extractPSFLocal( img, locations, psf );
+		}
 	}
 
 	public PSFExtraction(
@@ -139,15 +150,19 @@ public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 		return points;
 	}
 
+	public boolean hadDetections() { return hadDetections; }
 	public ArrayImg< T, ? > getPSF() { return psf; }
 	public ArrayImg< T, ? > getTransformedNormalizedPSF( final AffineTransform3D model )
 	{
-		final ArrayImg< T, ? > psfCopy = psf.copy();
+		return getTransformedNormalizedPSF( psf.copy(), model );
+	}
 
+	public static < T extends RealType< T > & NativeType< T > > ArrayImg< T, ? > getTransformedNormalizedPSF( final ArrayImg< T, ? > psf, final AffineTransform3D model )
+	{
 		// normalize PSF
-		normalize( psfCopy );
+		normalize( psf );
 
-		return transformPSF( psfCopy, model );
+		return transformPSF( psf, model );
 	}
 
 	public void removeMinProjections()
@@ -293,7 +308,7 @@ public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 			});
 		}
 
-		FusionHelper.execTasks( tasks, nThreads, "extract PSF's" );
+		FusionTools.execTasks( tasks, nThreads, "extract PSF's" );
 
 		final ArrayList< RandomAccess< T > > ras = new ArrayList<>();
 
@@ -322,7 +337,7 @@ public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 	 * @param <T> pixel type
 	 * @return the transformed psf which has odd sizes and where the center of the psf is also the center of the transformed psf
 	 */
-	protected static < T extends RealType< T > & NativeType< T > > ArrayImg< T, ? > transformPSF(
+	public static < T extends RealType< T > & NativeType< T > > ArrayImg< T, ? > transformPSF(
 			final RandomAccessibleInterval< T > psf,
 			final AffineTransform3D model )
 	{
@@ -408,7 +423,7 @@ public class PSFExtraction< T extends RealType< T > & NativeType< T > >
 		return transformed;
 	}
 
-	private static < T extends RealType< T > > void normalize( final IterableInterval< T > img )
+	public static < T extends RealType< T > > void normalize( final IterableInterval< T > img )
 	{
 		double min = Double.MAX_VALUE;
 		double max = -Double.MAX_VALUE;

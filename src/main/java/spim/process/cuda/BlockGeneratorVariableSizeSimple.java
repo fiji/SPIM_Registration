@@ -1,6 +1,7 @@
 package spim.process.cuda;
 
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
 
 import net.imglib2.iterator.LocalizingZeroMinIntervalIterator;
 import net.imglib2.util.Util;
@@ -14,10 +15,21 @@ import net.imglib2.util.Util;
 public class BlockGeneratorVariableSizeSimple implements BlockGenerator< Block >
 {
 	final long[] numBlocks;
+	final ExecutorService service;
 
-	public BlockGeneratorVariableSizeSimple( final long[] numBlocksDim )
+	public BlockGeneratorVariableSizeSimple(
+			final ExecutorService service,
+			final long[] numBlocksDim )
 	{
 		this.numBlocks = numBlocksDim;
+		this.service = service;
+	}
+
+	public BlockGeneratorVariableSizeSimple(
+			final long[] numBlocksDim )
+	{
+		this.numBlocks = numBlocksDim;
+		this.service = null;
 	}
 
 	/**
@@ -27,7 +39,7 @@ public class BlockGeneratorVariableSizeSimple implements BlockGenerator< Block >
 	 * @param kernelSize - the size of the kernel (has to be odd!)
 	 * @return array of blocks
 	 */
-	public Block[] divideIntoBlocks( final long[] imgSize, final long[] kernelSize )
+	public ArrayList< Block > divideIntoBlocks( final long[] imgSize, final long[] kernelSize )
 	{
 		final int numDimensions = imgSize.length;
 		
@@ -120,15 +132,11 @@ public class BlockGeneratorVariableSizeSimple implements BlockGenerator< Block >
 				}
 			}
 
-			blockList.add( new Block( blockSize, offset, effectiveSize, effectiveOffset, effectiveLocalOffset, false ) );
+			blockList.add( new Block( service, blockSize, offset, effectiveSize, effectiveOffset, effectiveLocalOffset, false ) );
 			System.out.println( "block " + Util.printCoordinates( currentBlock ) + " offset: " + Util.printCoordinates( offset ) + " effectiveOffset: " + Util.printCoordinates( effectiveOffset ) + " effectiveLocalOffset: " + Util.printCoordinates( effectiveLocalOffset ) + " effectiveSize: " + Util.printCoordinates( effectiveSize )  + " blocksize: " + Util.printCoordinates( blockSize ) );
 		}
-		
-		final Block[] blocks = new Block[ blockList.size() ];
-		for ( int i = 0; i < blockList.size(); ++i )
-			blocks[ i ] = blockList.get( i );
-			
-		return blocks;
+
+		return blockList;
 	}
 
 	public static void main( String[] args )

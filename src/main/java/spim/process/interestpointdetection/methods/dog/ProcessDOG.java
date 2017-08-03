@@ -16,7 +16,7 @@ import spim.Threads;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.cuda.CUDADevice;
 import spim.process.cuda.CUDASeparableConvolution;
-import spim.process.fusion.FusionHelper;
+import spim.process.fusion.FusionTools;
 import spim.process.interestpointdetection.Localization;
 
 public class ProcessDOG
@@ -71,7 +71,7 @@ public class ProcessDOG
 
 		if ( Double.isNaN( minIntensity ) || Double.isNaN( maxIntensity ) || Double.isInfinite( minIntensity ) || Double.isInfinite( maxIntensity ) || minIntensity == maxIntensity )
 		{
-			final float[] minmax = FusionHelper.minMax( imglib2img );
+			final float[] minmax = FusionTools.minMax( imglib2img );
 			min = minmax[ 0 ];
 			max = minmax[ 1 ];
 		}
@@ -84,7 +84,7 @@ public class ProcessDOG
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): min intensity = " + min + ", max intensity = " + max );
 
 		// normalize image
-		FusionHelper.normalizeImage( imglib2img, min, max );
+		FusionTools.normalizeImage( imglib2img, min, max );
 
 		final float k = LaPlaceFunctions.computeK( 4 );
 		final float K_MIN1_INV = LaPlaceFunctions.computeKWeight(k);

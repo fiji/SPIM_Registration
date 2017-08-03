@@ -29,6 +29,7 @@ import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.fiji.spimdata.pointspreadfunctions.PointSpreadFunctions;
 import spim.fiji.spimdata.stitchingresults.StitchingResults;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
@@ -41,6 +42,7 @@ public class SpimData2 extends SpimData
 {
 	private ViewInterestPoints viewsInterestPoints;
 	private BoundingBoxes boundingBoxes;
+	private PointSpreadFunctions pointSpreadFunctions;
 	private StitchingResults stitchingResults;
 	
 	public SpimData2(
@@ -49,12 +51,14 @@ public class SpimData2 extends SpimData
 			final ViewRegistrations viewRegistrations,
 			final ViewInterestPoints viewsInterestPoints,
 			final BoundingBoxes boundingBoxes,
+			final PointSpreadFunctions pointSpreadFunctions,
 			final StitchingResults stitchingResults)
 	{
 		super( basePath, sequenceDescription, viewRegistrations );
 
 		this.viewsInterestPoints = viewsInterestPoints;
 		this.boundingBoxes = boundingBoxes;
+		this.pointSpreadFunctions = pointSpreadFunctions;
 		this.stitchingResults = stitchingResults;
 	}
 
@@ -63,6 +67,7 @@ public class SpimData2 extends SpimData
 
 	public ViewInterestPoints getViewInterestPoints() { return viewsInterestPoints; }
 	public BoundingBoxes getBoundingBoxes() { return boundingBoxes; }
+	public PointSpreadFunctions getPointSpreadFunctions() { return pointSpreadFunctions; }
 	public StitchingResults getStitchingResults() { return stitchingResults; }
 
 	protected void setViewsInterestPoints( final ViewInterestPoints viewsInterestPoints )
@@ -74,7 +79,12 @@ public class SpimData2 extends SpimData
 	{
 		this.boundingBoxes = boundingBoxes;
 	}
-	
+
+	protected void setPointSpreadFunctions( final PointSpreadFunctions pointSpreadFunctions )
+	{
+		this.pointSpreadFunctions = pointSpreadFunctions;
+	}
+
 	protected void setStitchingResults( final StitchingResults sr )
 	{
 		this.stitchingResults = sr;
@@ -493,9 +503,10 @@ public class SpimData2 extends SpimData
 		final ViewInterestPoints vipl = new ViewInterestPoints();
 		vipl.createViewInterestPoints( data1.getSequenceDescription().getViewDescriptions() );
 		final BoundingBoxes bb = new BoundingBoxes();
+		final PointSpreadFunctions psfs = new PointSpreadFunctions();
 		final StitchingResults sr = new StitchingResults();
 
-		return new SpimData2( data1.getBasePath(), s, vr, vipl, bb, sr);
+		return new SpimData2( data1.getBasePath(), s, vr, vipl, bb, psfs, sr);
 	}
 
 	/**
@@ -503,6 +514,7 @@ public class SpimData2 extends SpimData
 	 *
 	 * @param data - the spimdata object
 	 * @param viewIds - the views
+	 * @param <V> - something extending ViewId
 	 * @return those who were removed
 	 */
 	public static < V extends ViewId > List< V > filterMissingViews( final AbstractSpimData< ? > data, final Collection< V > viewIds )

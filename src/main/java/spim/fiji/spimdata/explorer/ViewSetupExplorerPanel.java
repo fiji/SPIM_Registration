@@ -1,6 +1,7 @@
 package spim.fiji.spimdata.explorer;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -28,33 +29,27 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
 
 import bdv.BigDataViewer;
 import bdv.img.hdf5.Hdf5ImageLoader;
 import bdv.tools.InitializeViewerState;
 import bdv.tools.brightness.ConverterSetup;
-import bdv.util.Affine3DHelpers;
 import bdv.viewer.DisplayMode;
-
-import bdv.viewer.Source;
 import bdv.viewer.ViewerOptions;
-
 import bdv.viewer.VisibilityAndGrouping;
-import bdv.viewer.state.ViewerState;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
 import mpicbg.spim.data.generic.base.Entity;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
+import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.Tile;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
-import net.imglib2.Interval;
-import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.ARGBType;
-import net.imglib2.util.LinAlgHelpers;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.explorer.popup.ApplyTransformationPopup;
 import spim.fiji.spimdata.explorer.popup.BDVPopup;
@@ -64,11 +59,14 @@ import spim.fiji.spimdata.explorer.popup.DetectInterestPointsPopup;
 import spim.fiji.spimdata.explorer.popup.DisplayFusedImagesPopup;
 import spim.fiji.spimdata.explorer.popup.DisplayRawImagesPopup;
 import spim.fiji.spimdata.explorer.popup.ExplorerWindowSetable;
+import spim.fiji.spimdata.explorer.popup.FusionPopup;
 import spim.fiji.spimdata.explorer.popup.InterestPointsExplorerPopup;
 import spim.fiji.spimdata.explorer.popup.LabelPopUp;
 import spim.fiji.spimdata.explorer.popup.MaxProjectPopup;
+import spim.fiji.spimdata.explorer.popup.PointSpreadFunctionsPopup;
 import spim.fiji.spimdata.explorer.popup.RegisterInterestPointsPopup;
 import spim.fiji.spimdata.explorer.popup.RegistrationExplorerPopup;
+import spim.fiji.spimdata.explorer.popup.RemoveDetectionsPopup;
 import spim.fiji.spimdata.explorer.popup.RemoveTransformationPopup;
 import spim.fiji.spimdata.explorer.popup.ReorientSamplePopup;
 import spim.fiji.spimdata.explorer.popup.ResavePopup;
@@ -87,6 +85,30 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 	{
 		IOFunctions.printIJLog = true;
 	}
+
+	protected JCheckBox groupTilesCheckbox;
+	protected JCheckBox groupIllumsCheckbox;
+
+	@Override
+	public boolean tilesGrouped()
+	{
+		if ( groupTilesCheckbox == null || !groupTilesCheckbox.isSelected() )
+			return false;
+		else
+			return true;
+	}
+
+	@Override
+	public boolean illumsGrouped()
+	{
+		if ( groupIllumsCheckbox == null || !groupIllumsCheckbox.isSelected() )
+			return false;
+		else
+			return true;
+	}
+
+	@Override
+	public boolean channelsGrouped() { return false; }
 
 	public ViewSetupExplorerPanel( final FilteredAndGroupedExplorer< AS, X > explorer, final AS data, final String xml, final X io, boolean startBDVifHDF5 )
 	{
@@ -135,19 +157,29 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		tableModel.setColumnClasses( FilteredAndGroupedTableModel.defaultColumnClassesMV() );
 
 		tableModel.addGroupingFactor( Tile.class );
-		//tableModel.addGroupingFactor( Illumination.class );
+		tableModel.addGroupingFactor( Illumination.class );
 
 		table = new JTable();
 		table.setModel( tableModel );
 		table.setSurrendersFocusOnKeystroke( true );
 		table.setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
-		
+
 		final DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
 		centerRenderer.setHorizontalAlignment( JLabel.CENTER );
 		
 		// center all columns
 		for ( int column = 0; column < tableModel.getColumnCount(); ++column )
-			table.getColumnModel().getColumn( column ).setCellRenderer( centerRenderer );
+		{
+			if ( tableModel.getColumnName( column ).equals( "PSF" ) )
+			{
+				table.getColumnModel().getColumn( column ).setCellRenderer( new CheckBoxRenderer() );
+				table.getColumnModel().getColumn( column ).setPreferredWidth( 20 );
+			}
+			else
+			{
+				table.getColumnModel().getColumn( column ).setCellRenderer( centerRenderer );
+			}
+		}
 
 		// add listener to which row is selected
 		table.getSelectionModel().addListSelectionListener( getSelectionListener() );
@@ -217,18 +249,35 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		this.add( new JScrollPane( table ), BorderLayout.CENTER );
 		
 		final JPanel footer = new JPanel(new BorderLayout());
-		final JCheckBox groupTilesCheckbox = new JCheckBox("Group Tiles", true);
+		this.groupTilesCheckbox = new JCheckBox("Group Tiles", true);
+		this.groupIllumsCheckbox = new JCheckBox("Group Illuminations", true);
 		footer.add(groupTilesCheckbox, BorderLayout.EAST);
+		footer.add(groupIllumsCheckbox, BorderLayout.WEST);
 		this.add(footer, BorderLayout.SOUTH);
 		
 		groupTilesCheckbox.addActionListener(e -> {
 			if (groupTilesCheckbox.isSelected())
 				tableModel.addGroupingFactor(Tile.class);
 			else
+			{
 				tableModel.clearGroupingFactors();
+				if ( groupIllumsCheckbox.isSelected())
+					tableModel.addGroupingFactor(Illumination.class);
+			}
 			updateContent();
 		});
-		
+
+		groupIllumsCheckbox.addActionListener(e -> {
+			if (groupIllumsCheckbox.isSelected())
+				tableModel.addGroupingFactor(Illumination.class);
+			else
+			{
+				tableModel.clearGroupingFactors();
+				if (groupTilesCheckbox.isSelected())
+					tableModel.addGroupingFactor(Tile.class);
+			}
+			updateContent();
+		});
 
 		table.getSelectionModel().setSelectionInterval( 0, 0 );
 
@@ -593,6 +642,43 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		});
 	}
 
+	private static class CheckBoxRenderer extends JCheckBox implements TableCellRenderer
+	{
+		private static final long serialVersionUID = 1L;
+
+		public CheckBoxRenderer()
+		{
+			super();
+			this.setHorizontalAlignment( JLabel.CENTER );
+		}
+
+		@Override
+		public Component getTableCellRendererComponent(
+			final JTable table,
+			final Object value,
+			final boolean isSelected,
+			final boolean hasFocus,
+			final int row,
+			final int col )
+		{
+			boolean v = (boolean)value;
+			this.setSelected( v );
+
+			if (isSelected)
+			{
+				setForeground( table.getSelectionForeground() );
+				setBackground( table.getSelectionBackground() );
+			}
+			else
+			{
+				setForeground( table.getForeground() );
+				setBackground( table.getBackground() );
+			}
+
+			return this;
+		}
+	}
+
 	public ArrayList< ExplorerWindowSetable > initPopups()
 	{
 		final ArrayList< ExplorerWindowSetable > popups = new ArrayList< ExplorerWindowSetable >();
@@ -608,6 +694,8 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		popups.add( new LabelPopUp( " Processing" ) );
 		popups.add( new DetectInterestPointsPopup() );
 		popups.add( new RegisterInterestPointsPopup() );
+		popups.add( new FusionPopup() );
+		popups.add( new PointSpreadFunctionsPopup() );
 		popups.add( new Separator() );
 
 		popups.add( new LabelPopUp( " Calibration/Transformations" ) );
@@ -621,6 +709,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 
 		popups.add( new LabelPopUp( " Interest Points" ) );
 		popups.add( new InterestPointsExplorerPopup() );
+		popups.add( new RemoveDetectionsPopup() );
 		popups.add( new VisualizeDetectionsPopup() );
 		popups.add( new Separator() );
 

@@ -1,6 +1,7 @@
 package spim.process.cuda;
 
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
 
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.iterator.LocalizingZeroMinIntervalIterator;
@@ -9,10 +10,21 @@ import net.imglib2.util.Util;
 public class BlockGeneratorFixedSizePrecise implements BlockGenerator< Block >
 {
 	final long[] blockSize;
+	final ExecutorService service;
 
-	public BlockGeneratorFixedSizePrecise( final long[] blockSize )
+	public BlockGeneratorFixedSizePrecise(
+			final ExecutorService service,
+			final long[] blockSize )
 	{
 		this.blockSize = blockSize;
+		this.service = service;
+	}
+
+	public BlockGeneratorFixedSizePrecise(
+			final long[] blockSize )
+	{
+		this.blockSize = blockSize;
+		this.service = null;
 	}
 
 	/**
@@ -22,7 +34,7 @@ public class BlockGeneratorFixedSizePrecise implements BlockGenerator< Block >
 	 * @param kernelSize - the size of the kernel (has to be odd!)
 	 * @return array of blocks
 	 */
-	public Block[] divideIntoBlocks( final long[] imgSize, final long[] kernelSize )
+	public ArrayList< Block > divideIntoBlocks( final long[] imgSize, final long[] kernelSize )
 	{
 		final int numDimensions = imgSize.length;
 		
@@ -60,7 +72,7 @@ public class BlockGeneratorFixedSizePrecise implements BlockGenerator< Block >
 		System.out.println( "kernelSize " + Util.printCoordinates( kernelSize ) );
 		System.out.println( "blockSize " + Util.printCoordinates( blockSize ) );
 		System.out.println( "numBlocks " + Util.printCoordinates( numBlocks ) );
-		IOFunctions.println( "effectiveSize of blocks" + Util.printCoordinates( effectiveSizeGeneral ) );
+		System.out.println( "effectiveSize of blocks" + Util.printCoordinates( effectiveSizeGeneral ) );
 		System.out.println( "effectiveLocalOffset " + Util.printCoordinates( effectiveLocalOffset ) );
 				
 		// now we instantiate the individual blocks iterating over all dimensions
@@ -89,15 +101,11 @@ public class BlockGeneratorFixedSizePrecise implements BlockGenerator< Block >
 					effectiveSize[ d ] = imgSize[ d ] - effectiveOffset[ d ];
 			}
 
-			blockList.add( new Block( blockSize, offset, effectiveSize, effectiveOffset, effectiveLocalOffset, true ) );
+			blockList.add( new Block( service, blockSize, offset, effectiveSize, effectiveOffset, effectiveLocalOffset, true ) );
 			//System.out.println( "block " + Util.printCoordinates( currentBlock ) + " effectiveOffset: " + Util.printCoordinates( effectiveOffset ) + " effectiveSize: " + Util.printCoordinates( effectiveSize )  + " offset: " + Util.printCoordinates( offset ) + " inside: " + inside );
 		}
-		
-		final Block[] blocks = new Block[ blockList.size() ];
-		for ( int i = 0; i < blockList.size(); ++i )
-			blocks[ i ] = blockList.get( i );
-			
-		return blocks;
+
+		return blockList;
 	}
 
 }

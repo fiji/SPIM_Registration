@@ -5,9 +5,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
 
+import bdv.BigDataViewer;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.ViewId;
@@ -18,9 +20,8 @@ import spim.fiji.spimdata.explorer.interestpoint.InterestPointOverlay.InterestPo
 import spim.fiji.spimdata.explorer.popup.BasicBDVPopup;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
-import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
-import bdv.BigDataViewer;
+import spim.process.interestpointdetection.InterestPointTools;
 
 public class InterestPointTableModel extends AbstractTableModel implements InterestPointSource
 {
@@ -29,7 +30,7 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 	ViewInterestPoints viewInterestPoints;
 	final ArrayList< String > columnNames;
 
-	BasicViewDescription< ? > currentVD;
+	List< BasicViewDescription< ? > > currentVDs;
 	final InterestPointExplorerPanel panel;
 
 	private int selectedRow = -1;
@@ -37,7 +38,8 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 
 	final ArrayList< InterestPointSource > interestPointSources;
 	volatile InterestPointOverlay interestPointOverlay = null;
-	Collection< ? extends RealLocalizable > points = new ArrayList< RealLocalizable >();
+
+	HashMap< ViewId, List< ? extends RealLocalizable > > points = new HashMap<>();
 
 	public InterestPointTableModel( final ViewInterestPoints viewInterestPoints, final InterestPointExplorerPanel panel )
 	{
@@ -47,10 +49,11 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 		this.columnNames.add( "#Detections" );
 		this.columnNames.add( "#Corresponding" );
 		this.columnNames.add( "#Correspondences" );
+		this.columnNames.add( "Present in Views" );
 		this.columnNames.add( "Parameters" );
 
 		this.viewInterestPoints = viewInterestPoints;
-		this.currentVD = null;
+		this.currentVDs = new ArrayList<>();
 		this.panel = panel;
 
 		this.interestPointSources = new ArrayList< InterestPointSource >();
@@ -60,11 +63,11 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 
 	protected void update( final ViewInterestPoints viewInterestPoints ) { this.viewInterestPoints = viewInterestPoints; }
 	protected ViewInterestPoints getViewInterestPoints() { return viewInterestPoints; }
-	protected BasicViewDescription< ? > getCurrentViewDescription() { return currentVD; } 
+	protected List< BasicViewDescription< ? > > getCurrentViewDescriptions() { return currentVDs; } 
 	
-	protected void updateViewDescription( final BasicViewDescription< ? > vd, final boolean isFirst )
+	protected void updateViewDescription( final List< BasicViewDescription< ? > > vds, final boolean isFirst )
 	{
-		this.currentVD = vd;
+		this.currentVDs = vds;
 
 		// update everything
 		fireTableDataChanged();
@@ -85,40 +88,29 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 	
 	@Override
 	public int getRowCount()
-	{ 
-		if ( currentVD == null )
+	{
+		if ( currentVDs.size() == 0 )
 			return 1;
 		else
-			return Math.max( 1, viewInterestPoints.getViewInterestPointLists( currentVD ).getHashMap().keySet().size() );
+			return Math.max( 1, InterestPointTools.getAllInterestPointMap( viewInterestPoints, currentVDs ).keySet().size() );
 	}
 
 	@Override
 	public boolean isCellEditable( final int row, final int column )
 	{
-		if ( column == 4 )
+		if ( column == 5 )
 			return true;
 		else
 			return false;
 	}
 
 	@Override
-	public void setValueAt( final Object value, final int row, final int column )
-	{
-		if ( column == 4 )
-		{
-			final String label = label( viewInterestPoints, currentVD, row );
+	public void setValueAt( final Object value, final int row, final int column ) {}
 
-			viewInterestPoints.getViewInterestPointLists( currentVD ).getInterestPointList( label ).setParameters( value.toString() );
-
-			// do something ...
-			fireTableCellUpdated( row, column );
-		}
-	}
-
-	public static String label( final ViewInterestPoints viewInterestPoints, final BasicViewDescription< ? > vd, final int row )
+	public static String label( final HashMap< String, Integer > labelMap, final int row )
 	{
 		final ArrayList< String > labels = new ArrayList< String >();
-		labels.addAll( viewInterestPoints.getViewInterestPointLists( vd ).getHashMap().keySet() );
+		labels.addAll( labelMap.keySet() );
 		Collections.sort( labels );
 
 		if ( row >= labels.size() )
@@ -130,52 +122,92 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 	@Override
 	public Object getValueAt( final int row, final int column )
 	{
-		if ( currentVD == null )
+		if ( currentVDs == null || currentVDs.size() == 0 )
 			return column == 0 ? "No View Description selected" : "";
 
-		final HashMap< String, InterestPointList > hash = viewInterestPoints.getViewInterestPointLists( currentVD ).getHashMap();
+		final HashMap< String, Integer > labels = InterestPointTools.getAllInterestPointMap( viewInterestPoints, currentVDs );
 
-		if ( hash.keySet().size() == 0 )
+		if ( labels.keySet().size() == 0 )
 		{
 			return column == 0 ? "No interest points segmented" : "";
 		}
 		else
 		{
-			final String label = label( viewInterestPoints, currentVD, row );
+			final String label = label( labels, row );
 
 			if ( column == 0 )
 				return label;
 			else if ( column == 1 )
-				return numDetections( viewInterestPoints, currentVD, label );
+				return numDetections( viewInterestPoints, currentVDs, label );
 			else if ( column == 2 )
-				return numCorresponding( viewInterestPoints, currentVD, label );
+				return numCorresponding( viewInterestPoints, currentVDs, label );
 			else if ( column == 3 )
-				return numCorrespondences( viewInterestPoints, currentVD, label );
+				return numCorrespondences( viewInterestPoints, currentVDs, label );
 			else if ( column == 4 )
-				return hash.get( label ).getParameters();
+				return findNumPresent( labels, currentVDs, label );
+			else if ( column == 5 )
+				return getParameters( viewInterestPoints, currentVDs, label );
 			else
 				return -1;
 		}
 	}
 
-	protected int numCorresponding( final ViewInterestPoints vip, final ViewId v, final String label )
+	protected String getParameters( final ViewInterestPoints vip, final List< ? extends ViewId > views, final String label )
 	{
-		final HashSet< Integer > cips = new HashSet< Integer >();
+		final String parameters = vip.getViewInterestPointLists( views.get( 0 ) ).getInterestPointList( label ).getParameters();
 
-		for ( final CorrespondingInterestPoints c : panel.getCorrespondingInterestPoints( vip, v, label ) )
-			cips.add( c.getDetectionId() );
+		for ( final ViewId v : views )
+			if ( !vip.getViewInterestPointLists( v ).getInterestPointList( label ).getParameters().equals( parameters ) )
+			{
+				return "Different types of parameters used for detection, cannot display.";
+			}
 
-		return cips.size();
+		return parameters;
 	}
 
-	protected int numCorrespondences( final ViewInterestPoints vip, final ViewId v, final String label )
+	protected int numCorresponding( final ViewInterestPoints vip, final List< ? extends ViewId > views, final String label )
 	{
-		return panel.getCorrespondingInterestPoints( vip, v, label ).size();
+		int sum = 0;
+
+		for ( final ViewId v : views )
+		{
+			final HashSet< Integer > cips = new HashSet< Integer >();
+	
+			for ( final CorrespondingInterestPoints c : InterestPointExplorerPanel.getCorrespondingInterestPoints( vip, v, label ) )
+				cips.add( c.getDetectionId() );
+	
+			sum += cips.size();
+		}
+
+		return sum;
 	}
 
-	protected int numDetections( final ViewInterestPoints vip, final ViewId v, final String label )
+	protected String findNumPresent( final HashMap< String, Integer > labels, final List< ? extends ViewId > views, final String label )
 	{
-		return panel.getInterestPoints( vip, v, label ).size();
+		final int num = labels.get( label );
+		final int total = views.size();
+
+		return num + "/" + total;
+	}
+
+	protected int numCorrespondences( final ViewInterestPoints vip, final List< ? extends ViewId > views, final String label )
+	{
+		int sum = 0;
+
+		for ( final ViewId v : views )
+			sum += InterestPointExplorerPanel.getCorrespondingInterestPoints( vip, v, label ).size();
+
+		return sum;
+	}
+
+	protected int numDetections( final ViewInterestPoints vip, final List< ? extends ViewId > views, final String label )
+	{
+		int sum = 0;
+
+		for ( final ViewId v : views )
+			sum += InterestPointExplorerPanel.getInterestPoints( vip, v, label ).size();
+
+		return sum;
 	}
 
 	@Override
@@ -196,35 +228,41 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 	{
 		final BasicBDVPopup bdvPopup = panel.viewSetupExplorer.getPanel().bdvPopup();
 
-		if ( currentVD != null && bdvPopup.bdvRunning() && row >= 0 && row < getRowCount() && col >= 1 && col <= 2  )
+		if ( currentVDs != null && currentVDs.size() != 0 && bdvPopup.bdvRunning() && row >= 0 && row < getRowCount() && col >= 1 && col <= 2  )
 		{
 			this.selectedRow = row;
 			this.selectedCol = col;
 
-			final String label = label( viewInterestPoints, currentVD, row );
+			final String label = label( InterestPointTools.getAllInterestPointMap( viewInterestPoints, currentVDs ), row );
 
 			if ( label == null )
 			{
 				this.selectedRow = this.selectedCol = -1;
-				this.points = new ArrayList< RealLocalizable >();
+				this.points = new HashMap<>();
 			}
 			else if ( col == 1 )
 			{
-				points = panel.getInterestPoints( viewInterestPoints, currentVD, label );
+				this.points = new HashMap<>();
+
+				for ( final ViewId v : currentVDs )
+					this.points.put( v, InterestPointExplorerPanel.getInterestPoints( viewInterestPoints, v, label ) );
 			}
 			else //if ( col == 2 )
 			{
-				final HashMap< Integer, InterestPoint > map = new HashMap< Integer, InterestPoint >();
-				
-				for ( final InterestPoint ip : panel.getInterestPoints( viewInterestPoints, currentVD, label ) )
-					map.put( ip.getId(), ip );
+				for ( final ViewId v : currentVDs )
+				{
+					final HashMap< Integer, InterestPoint > map = new HashMap< Integer, InterestPoint >();
+					
+					for ( final InterestPoint ip : InterestPointExplorerPanel.getInterestPoints( viewInterestPoints, v, label ) )
+						map.put( ip.getId(), ip );
+	
+					final ArrayList< InterestPoint > tmp = new ArrayList< InterestPoint >();
+	
+					for ( final CorrespondingInterestPoints ip : InterestPointExplorerPanel.getCorrespondingInterestPoints( viewInterestPoints, v, label ) )
+						tmp.add( map.get( ip.getDetectionId() ) );
 
-				final ArrayList< InterestPoint > tmp = new ArrayList< InterestPoint >();
-
-				for ( final CorrespondingInterestPoints ip : panel.getCorrespondingInterestPoints( viewInterestPoints, currentVD, label ) )
-					tmp.add( map.get( ip.getDetectionId() ) );
-
-				points = tmp;
+					points.put( v, tmp );
+				}
 			}
 
 			if ( interestPointOverlay == null )
@@ -239,7 +277,7 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 		else
 		{
 			this.selectedRow = this.selectedCol = -1;
-			this.points = new ArrayList< RealLocalizable >();
+			this.points = new HashMap<>();
 		}
 
 		if ( bdvPopup.bdvRunning() )
@@ -249,21 +287,38 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 	public int getSelectedRow() { return selectedRow; }
 	public int getSelectedCol() { return selectedCol; }
 
-	@Override
-	public Collection< ? extends RealLocalizable > getLocalCoordinates( final int timepointIndex )
+	public List< BasicViewDescription< ? > > filteredViewIdsCurrentTimepoint( final int timepointIndex )
 	{
-		if ( currentVD != null && timepointIndex == ViewSetupExplorerPanel.getBDVTimePointIndex( currentVD.getTimePoint(), panel.viewSetupExplorer.getSpimData() ) )
-			return points;
-		else
-			return new ArrayList< RealLocalizable >();
+		final ArrayList< BasicViewDescription< ? > > currentlyVisible = new ArrayList<>();
+
+		for ( final BasicViewDescription< ? > viewId : currentVDs )
+			if ( timepointIndex == ViewSetupExplorerPanel.getBDVTimePointIndex( viewId.getTimePoint(), panel.viewSetupExplorer.getSpimData() ) )
+				currentlyVisible.add( viewId );
+
+		return currentlyVisible;
 	}
 
 	@Override
-	public void getLocalToGlobalTransform( final int timepointIndex, final AffineTransform3D transform )
+	public HashMap< ? extends ViewId, ? extends Collection< ? extends RealLocalizable > > getLocalCoordinates( final int timepointIndex )
 	{
-		if ( currentVD != null )
+		final HashMap< ViewId, List< ? extends RealLocalizable > > coords = new HashMap<>();
+		final List< BasicViewDescription< ? > > currentlyVisible = filteredViewIdsCurrentTimepoint( timepointIndex );
+
+		if ( currentlyVisible == null || currentlyVisible.size() == 0 )
+			return coords;
+
+		for ( final ViewId viewId : currentlyVisible )
+			coords.put( viewId, points.get( viewId ) );
+
+		return coords;
+	}
+
+	@Override
+	public void getLocalToGlobalTransform( final ViewId viewId, final int timepointIndex, final AffineTransform3D transform )
+	{
+		if ( currentVDs != null )
 		{
-			final ViewRegistration vr = panel.viewSetupExplorer.getSpimData().getViewRegistrations().getViewRegistration( currentVD );
+			final ViewRegistration vr = panel.viewSetupExplorer.getSpimData().getViewRegistrations().getViewRegistration( viewId );
 			vr.updateModel();
 			transform.set( vr.getModel() );
 		}

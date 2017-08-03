@@ -127,15 +127,15 @@ public class DifferenceOfGaussianCUDA extends DifferenceOfGaussianNewPeakFinder
 			else
 				generator = new BlockGeneratorVariableSizeSimple( numBlocksDim );
 
-			final Block[] blocks = generator.divideIntoBlocks( getImgSize( img ), getKernelSize( sigma ) );
+			final List< Block > blocks = generator.divideIntoBlocks( getImgSize( img ), getKernelSize( sigma ) );
 
-			if ( !accurate && blocks.length == 1 && ArrayImg.class.isInstance( img ) )
+			if ( !accurate && blocks.size() == 1 && ArrayImg.class.isInstance( img ) )
 			{
 				IOFunctions.println( "Conovlving image as one single block." );
 				long time = System.currentTimeMillis();
 
 				// copy the only directly into the result
-				blocks[ 0 ].copyBlock( img, result );
+				blocks.get( 0 ).copyBlock( img, result );
 				long copy = System.currentTimeMillis();
 				IOFunctions.println( "Copying data took " + ( copy - time ) + "ms" );
 

@@ -2,11 +2,12 @@ package spim.process.boundingbox;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import mpicbg.spim.data.sequence.ViewId;
-import mpicbg.spim.io.IOFunctions;
+import net.imglib2.Dimensions;
+import net.imglib2.realtransform.AffineTransform3D;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 
@@ -15,10 +16,18 @@ public class BoundingBoxTools
 	public static < V extends ViewId > BoundingBox maximalBoundingBox( final SpimData2 spimData, final Collection< V > viewIds, final String title )
 	{
 		// filter not present ViewIds
-		final List< V > removed = SpimData2.filterMissingViews( spimData, viewIds );
-		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Removed " +  removed.size() + " views because they are not present." );
+		SpimData2.filterMissingViews( spimData, viewIds );
 
 		return new BoundingBoxMaximal( viewIds, spimData ).estimate( title );
+	}
+
+	public static BoundingBox maximalBoundingBox(
+			final Collection< ? extends ViewId > views,
+			final HashMap< ? extends ViewId, Dimensions > dimensions,
+			final HashMap< ? extends ViewId, AffineTransform3D > registrations,
+			final String title )
+	{
+		return new BoundingBoxMaximal( views, dimensions, registrations ).estimate( title );
 	}
 
 	public static List< BoundingBox > getAllBoundingBoxes( final SpimData2 spimData, final Collection< ViewId > currentlySelected, final boolean addBoundingBoxForAllViews )

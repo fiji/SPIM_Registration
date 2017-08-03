@@ -22,7 +22,6 @@ import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.TimePoints;
-import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Dimensions;
@@ -50,7 +49,7 @@ import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
-import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
+import spim.process.interestpointdetection.InterestPointTools;
 import spim.process.interestpointregistration.TransformationTools;
 import spim.process.interestpointregistration.global.GlobalOpt;
 import spim.process.interestpointregistration.global.convergence.ConvergenceStrategy;
@@ -74,8 +73,6 @@ public class Interest_Point_Registration implements PlugIn
 {
 	public static ArrayList< PairwiseGUI > staticPairwiseAlgorithms = new ArrayList< PairwiseGUI >();
 
-	public final static String warningLabel = " (WARNING: Only available for ";
-
 	static
 	{
 		IOFunctions.printIJLog = true;
@@ -90,6 +87,9 @@ public class Interest_Point_Registration implements PlugIn
 	public static int defaultRegistrationType = 0;
 	public static int defaultOverlapType = 1;
 	public static int defaultLabel = -1;
+	public static boolean defaultGroupTiles = true;
+	public static boolean defaultGroupIllums = true;
+	public static boolean defaultGroupChannels = true;
 
 	// advanced dialog
 	public static int defaultRange = 5;
@@ -128,30 +128,33 @@ public class Interest_Point_Registration implements PlugIn
 
 	public boolean register(
 			final SpimData2 data,
-			final List< ViewId > viewIds )
+			final Collection< ? extends ViewId > viewCollection )
 	{
-		return register( data, viewIds, "", null, false );
+		return register( data, viewCollection, "", null, false );
 	}
 
 	public boolean register(
 			final SpimData2 data,
-			final List< ViewId > viewIds,
+			final Collection< ? extends ViewId > viewCollection,
 			final String xmlFileName,
 			final boolean saveXML )
 	{
-		return register( data, viewIds, "", xmlFileName, saveXML );
+		return register( data, viewCollection, "", xmlFileName, saveXML );
 	}
 
 	public boolean register(
 			final SpimData2 data,
-			final List< ViewId > viewIds,
+			final Collection< ? extends ViewId > viewCollection,
 			final String clusterExtension,
 			final String xmlFileName,
 			final boolean saveXML )
 	{
 		// filter not present ViewIds
-		List< ViewId > removed = SpimData2.filterMissingViews( data, viewIds );
-		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Removed " +  removed.size() + " views because they are not present." );
+		final ArrayList< ViewId > viewIds = new ArrayList<>();
+		viewIds.addAll( viewCollection );
+
+		List< ViewId > removed  = SpimData2.filterMissingViews( data, viewIds );
+		if ( removed.size() > 0 ) IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Removed " +  removed.size() + " views because they are not present." );
 
 		// which timepoints are part of the 
 		final List< TimePoint > timepointToProcess = SpimData2.getAllTimePointsSorted( data, viewIds );
@@ -174,7 +177,7 @@ public class Interest_Point_Registration implements PlugIn
 			return false;
 
 		// identify groups/subsets
-		final Set< Group< ViewId > > groups = arp.getGroups( data, viewIds, brp.groupTiles );
+		final Set< Group< ViewId > > groups = arp.getGroups( data, viewIds, brp.groupTiles, brp.groupIllums, brp.groupChannels );
 		final PairwiseSetup< ViewId > setup = arp.pairwiseSetupInstance( brp.registrationType, viewIds, groups );
 		identifySubsets( setup, brp.getOverlapDetection( data ) );
 
@@ -564,11 +567,11 @@ public class Interest_Point_Registration implements PlugIn
 		gd.addChoice( "Registration_in_between_views", BasicRegistrationParameters.overlapChoices, BasicRegistrationParameters.overlapChoices[ defaultOverlapType ] );
 
 		// check which channels and labels are available and build the choices
-		final String[] labels = getAllInterestPointLabels( data, viewIds );
+		final String[] labels = InterestPointTools.getAllInterestPointLabels( data, viewIds );
 
 		if ( labels.length == 0 )
 		{
-			IOFunctions.printErr( "No interest points available, stopping. Please run Interest Ppint Detection first" );
+			IOFunctions.printErr( "No interest points available, stopping. Please run Interest Point Detection first" );
 			return null;
 		}
 
@@ -578,7 +581,7 @@ public class Interest_Point_Registration implements PlugIn
 			defaultLabel = -1;
 
 			for ( int i = 0; i < labels.length; ++i )
-				if ( !labels[ i ].contains( warningLabel ) )
+				if ( !labels[ i ].contains( InterestPointTools.warningLabel ) )
 				{
 					defaultLabel = i;
 					break;
@@ -594,8 +597,22 @@ public class Interest_Point_Registration implements PlugIn
 		for ( final ViewId viewId : viewIds )
 			tiles.add( data.getSequenceDescription().getViewDescription( viewId ).getViewSetup().getTile().getId() );
 
+		final HashSet< Integer > illums = new HashSet<>();
+		for ( final ViewId viewId : viewIds )
+			illums.add( data.getSequenceDescription().getViewDescription( viewId ).getViewSetup().getIllumination().getId() );
+
+		final HashSet< Integer > channels = new HashSet<>();
+		for ( final ViewId viewId : viewIds )
+			channels.add( data.getSequenceDescription().getViewDescription( viewId ).getViewSetup().getChannel().getId() );
+
 		if ( tiles.size() > 1 )
-			gd.addCheckbox( "Group_tiles", true );
+			gd.addCheckbox( "Group_tiles", defaultGroupTiles );
+
+		if ( illums.size() > 1 )
+			gd.addCheckbox( "Group_illuminations", defaultGroupIllums );
+
+		if ( channels.size() > 1 )
+			gd.addCheckbox( "Group_channels", defaultGroupChannels );
 
 		// assemble the last registration names of all viewsetups involved
 		final HashMap< String, Integer > names = GUIHelper.assembleRegistrationNames( data, viewIds );
@@ -651,16 +668,19 @@ public class Interest_Point_Registration implements PlugIn
 		}
 
 		// assemble which label has been selected
-		final int choice = defaultLabel = gd.getNextChoiceIndex();
-
-		String label = labels[ choice ];
-
-		if ( label.contains( warningLabel ) )
-			label = label.substring( 0, label.indexOf( warningLabel ) );
+		final String label = InterestPointTools.getSelectedLabel( labels, defaultLabel = gd.getNextChoiceIndex() );
 
 		boolean groupTiles = false;
 		if ( tiles.size() > 1 )
-			groupTiles = gd.getNextBoolean();
+			groupTiles = defaultGroupTiles = gd.getNextBoolean();
+
+		boolean groupIllums = false;
+		if ( illums.size() > 1 )
+			groupIllums = defaultGroupIllums = gd.getNextBoolean();
+
+		boolean groupChannels = false;
+		if ( channels.size() > 1 )
+			groupChannels = defaultGroupChannels = gd.getNextBoolean();
 
 		final PairwiseGUI pwr = staticPairwiseAlgorithms.get( algorithm ).newInstance();
 
@@ -673,6 +693,8 @@ public class Interest_Point_Registration implements PlugIn
 		brp.overlapType = overlapType;
 		brp.labelMap = new HashMap<>();
 		brp.groupTiles = groupTiles;
+		brp.groupIllums = groupIllums;
+		brp.groupChannels = groupChannels;
 
 		for ( final ViewId viewId : viewIds )
 			brp.labelMap.put( viewId, label );
@@ -1038,66 +1060,6 @@ public class Interest_Point_Registration implements PlugIn
 			tps[ t ] = timepoints.getTimePointsOrdered().get( t ).getName();
 
 		return tps;
-	}
-
-	/*
-	 * Goes through all Views and checks all available labels for interest point detection
-	 * 
-	 * @param spimData
-	 * @param doWhat - the text for not doing anything with this channel
-	 * @return
-	 */
-	public static String[] getAllInterestPointLabels(
-			final SpimData2 spimData,
-			final List< ViewId > viewIdsToProcess )
-	{
-		final ViewInterestPoints interestPoints = spimData.getViewInterestPoints();
-		final HashMap< String, Integer > labels = new HashMap< String, Integer >();
-		
-		int countViewDescriptions = 0;
-
-		for ( final ViewId viewId : viewIdsToProcess )
-		{
-			// get the viewdescription
-			final ViewDescription viewDescription = spimData.getSequenceDescription().getViewDescription( 
-					viewId.getTimePointId(), viewId.getViewSetupId() );
-
-			// check if the view is present
-			if ( !viewDescription.isPresent() )
-				continue;
-			
-			// which lists of interest points are available
-			final ViewInterestPointLists lists = interestPoints.getViewInterestPointLists( viewId );
-			
-			for ( final String label : lists.getHashMap().keySet() )
-			{
-				int count = 1;
-
-				if ( labels.containsKey( label ) )
-					count += labels.get( label );
-
-				labels.put( label, count );
-			}
-
-			// are they available in all viewdescriptions?
-			++countViewDescriptions;
-		}
-
-		final String[] allLabels = new String[ labels.keySet().size() ];
-
-		int i = 0;
-		
-		for ( final String label : labels.keySet() )
-		{
-			allLabels[ i ] = label;
-
-			if ( labels.get( label ) != countViewDescriptions )
-				allLabels[ i ] += warningLabel + labels.get( label ) + "/" + countViewDescriptions + " Views!)";
-
-			++i;
-		}
-
-		return allLabels;
 	}
 
 	/*

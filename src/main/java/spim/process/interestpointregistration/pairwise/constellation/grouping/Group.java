@@ -87,11 +87,28 @@ public class Group< V > implements Iterable< V >
 	@Override
 	public String toString() { return gvids( this ); }
 
-	public static < V extends ViewId > List< V > getViewsSorted( final Set< V > views )
+	public static < V extends ViewId > List< V > getViewsSorted( final Collection< V > views )
 	{
 		final ArrayList< V > sorted = new ArrayList<>();
 		sorted.addAll( views );
 		Collections.sort( sorted );
+		return sorted;
+	}
+
+	public static < V extends ViewId > ArrayList< Group< V > > getGroupsSorted( final Collection< Group< V > > groups )
+	{
+		final ArrayList< Group< V > > sorted = new ArrayList<>();
+		sorted.addAll( groups );
+
+		Collections.sort( sorted, new Comparator< Group< V > >()
+		{
+			@Override
+			public int compare( final Group< V > o1, final Group< V > o2 )
+			{
+				return Group.getViewsSorted( o1.getViews() ).get( 0 ).compareTo( Group.getViewsSorted( o2.getViews() ).get( 0 ) );
+			}
+		} );
+
 		return sorted;
 	}
 
@@ -471,18 +488,23 @@ public class Group< V > implements Iterable< V >
 	public static String pvid( final ViewId viewId ) { return "tpId=" + viewId.getTimePointId() + " setupId=" + viewId.getViewSetupId(); }
 	public static String pvids( final ViewId viewId ) { return viewId.getTimePointId() + "-" + viewId.getViewSetupId(); }
 	@SuppressWarnings("unchecked")
-	public static String gvids( final Group< ? > group )
+	public static String gvids( final Collection< ? > group )
 	{
 		String groupS = "";
 
-		if ( ViewId.class.isInstance( group.getViews().iterator().next() ) )
-			for ( final ViewId a : getViewsSorted( (Set<ViewId>)(group.getViews()) ) )
+		if ( ViewId.class.isInstance( group.iterator().next() ) )
+			for ( final ViewId a : getViewsSorted( (Collection<ViewId>)(group) ) )
 				groupS += pvids( a ) + " ";
 		else
-			for ( final Object a : group.getViews() )
+			for ( final Object a : group )
 				groupS += a + " ";
 
 		return groupS.trim();
+	}
+
+	public static String gvids( final Group< ? > group )
+	{
+		return gvids( group.getViews() );
 	}
 
 	public static void main( String[] args )

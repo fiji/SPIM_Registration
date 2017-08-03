@@ -20,6 +20,8 @@ import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.boundingbox.XmlIoBoundingBoxes;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.fiji.spimdata.interestpoints.XmlIoViewInterestPoints;
+import spim.fiji.spimdata.pointspreadfunctions.PointSpreadFunctions;
+import spim.fiji.spimdata.pointspreadfunctions.XmlIoPointSpreadFunctions;
 import spim.fiji.spimdata.stitchingresults.StitchingResults;
 import spim.fiji.spimdata.stitchingresults.XmlIoStitchingResults;
 
@@ -27,6 +29,7 @@ public class XmlIoSpimData2 extends XmlIoAbstractSpimData< SequenceDescription, 
 {
 	final XmlIoViewInterestPoints xmlViewsInterestPoints;
 	final XmlIoBoundingBoxes xmlBoundingBoxes;
+	final XmlIoPointSpreadFunctions xmlPointSpreadFunctions;
 	final XmlIoStitchingResults xmlStitchingResults;
 
 	String clusterExt, lastFileName;
@@ -41,7 +44,10 @@ public class XmlIoSpimData2 extends XmlIoAbstractSpimData< SequenceDescription, 
 
 		this.xmlBoundingBoxes = new XmlIoBoundingBoxes();
 		this.handledTags.add( xmlBoundingBoxes.getTag() );
-		
+
+		this.xmlPointSpreadFunctions = new XmlIoPointSpreadFunctions();
+		this.handledTags.add( xmlPointSpreadFunctions.getTag() );
+
 		this.xmlStitchingResults = new XmlIoStitchingResults();
 		this.handledTags.add( xmlStitchingResults.getTag() );
 
@@ -150,8 +156,15 @@ public class XmlIoSpimData2 extends XmlIoAbstractSpimData< SequenceDescription, 
 		else
 			boundingBoxes = xmlBoundingBoxes.fromXml( elem );
 		spimData.setBoundingBoxes( boundingBoxes );
-		
-		
+
+		final PointSpreadFunctions psfs;
+		elem = root.getChild( xmlPointSpreadFunctions.getTag() );
+		if ( elem == null )
+			psfs = new PointSpreadFunctions();
+		else
+			psfs = xmlPointSpreadFunctions.fromXml( elem, spimData.getBasePath() );
+		spimData.setPointSpreadFunctions( psfs );
+
 		final StitchingResults stitchingResults;
 		elem = root.getChild( xmlStitchingResults.getTag() );
 		if ( elem == null )
@@ -170,6 +183,7 @@ public class XmlIoSpimData2 extends XmlIoAbstractSpimData< SequenceDescription, 
 
 		root.addContent( xmlViewsInterestPoints.toXml( spimData.getViewInterestPoints() ) );
 		root.addContent( xmlBoundingBoxes.toXml( spimData.getBoundingBoxes() ) );
+		root.addContent( xmlPointSpreadFunctions.toXml( spimData.getPointSpreadFunctions() ) );
 		root.addContent( xmlStitchingResults.toXml( spimData.getStitchingResults() ) );
 
 		return root;
