@@ -131,11 +131,7 @@ public class FusionGUI
 
 	public boolean queryDetails()
 	{
-		final String[] choices = new String[ allBoxes.size() ];
-
-		int i = 0;
-		for ( final BoundingBox b : allBoxes )
-			choices[ i++ ] = b.getTitle() + " [" + b.dimension( 0 ) + "x" + b.dimension( 1 ) + "x" + b.dimension( 2 ) + "px]";
+		final String[] choices = FusionGUI.getBoundingBoxChoices( allBoxes );
 
 		if ( defaultBB >= choices.length )
 			defaultBB = 0;
@@ -237,24 +233,35 @@ public class FusionGUI
 			return false;
 	}
 
-	public List< Group< ViewDescription > > getFusionGroups()
+	public static String[] getBoundingBoxChoices( final List< BoundingBox > allBoxes )
 	{
-		final ArrayList< ViewDescription > vds = SpimData2.getAllViewDescriptionsSorted( this.spimData, this.views );
+		final String[] choices = new String[ allBoxes.size() ];
+
+		int i = 0;
+		for ( final BoundingBox b : allBoxes )
+			choices[ i++ ] = b.getTitle() + " [" + b.dimension( 0 ) + "x" + b.dimension( 1 ) + "x" + b.dimension( 2 ) + "px]";
+
+		return choices;
+	}
+
+	public static List< Group< ViewDescription > > getFusionGroups( final SpimData2 spimData, final List< ViewId > views, final int splittingType )
+	{
+		final ArrayList< ViewDescription > vds = SpimData2.getAllViewDescriptionsSorted( spimData, views );
 		final List< Group< ViewDescription > > grouped;
 
-		if ( this.splittingType < 2 ) // "Each timepoint & channel" or "Each timepoint, channel & illumination"
+		if ( splittingType < 2 ) // "Each timepoint & channel" or "Each timepoint, channel & illumination"
 		{
 			final HashSet< Class< ? extends Entity > > groupingFactors = new HashSet<>();
 
 			groupingFactors.add( TimePoint.class );
 			groupingFactors.add( Channel.class );
 
-			if ( this.splittingType == 1 ) // "Each timepoint, channel & illumination"
+			if ( splittingType == 1 ) // "Each timepoint, channel & illumination"
 				groupingFactors.add( Illumination.class );
 
 			grouped = Group.splitBy( vds, groupingFactors );
 		}
-		else if ( this.splittingType == 2 ) // "All views together"
+		else if ( splittingType == 2 ) // "All views together"
 		{
 			final Group< ViewDescription > allViews = new Group<>( vds );
 			grouped = new ArrayList<>();
@@ -270,11 +277,11 @@ public class FusionGUI
 		return grouped;
 	}
 
-	public long maxNumInputPixelsPerInputGroup()
+	public static long maxNumInputPixelsPerInputGroup( final SpimData2 spimData, final List< ViewId > views, final int splittingType )
 	{
 		long maxNumPixels = 0;
 
-		for ( final Group< ViewDescription > group : getFusionGroups() )
+		for ( final Group< ViewDescription > group : getFusionGroups( spimData, views, splittingType ) )
 		{
 			long numpixels = 0;
 

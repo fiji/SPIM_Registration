@@ -55,7 +55,7 @@ public class Image_Fusion implements PlugIn
 		if ( !fusion.queryDetails() )
 			return false;
 
-		final List< Group< ViewDescription > > groups = fusion.getFusionGroups();
+		final List< Group< ViewDescription > > groups = FusionGUI.getFusionGroups( fusion.getSpimData(), fusion.getViews(), fusion.getSplittingType() );
 		int i = 0;
 
 		for ( final Group< ViewDescription > group : groups )

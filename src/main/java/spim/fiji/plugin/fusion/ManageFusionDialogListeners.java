@@ -112,7 +112,7 @@ public class ManageFusionDialogListeners
 		// do we need to load the image data fully?
 		long inputImagesMB = 0;
 
-		long maxNumPixelsInput = fusion.maxNumInputPixelsPerInputGroup();
+		long maxNumPixelsInput = FusionGUI.maxNumInputPixelsPerInputGroup( fusion.getSpimData(), fusion.getViews(), fusion.getSplittingType() );
 
 		// assume he have to load 50% higher resolved data
 		double inputDownSampling = fusion.isMultiResolution() ? fusion.downsampling / 1.5 : 1.0;
