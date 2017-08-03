@@ -11,14 +11,16 @@ public abstract class ComputeBlockThreadAbstract implements ComputeBlockThread
 	final float minValue;
 	final int id;
 	final int[] blockSize;
-	final public Img< FloatType > psiBlockTmp;
+	final Img< FloatType > psiBlockTmp;
+	final ImgFactory< FloatType > blockFactory;
 
 	/**
 	 * Instantiate a block thread
-	 * 
+	 *
+	 * @param blockFactory - which ImgFactory to use for the copy of the deconvolved image
 	 * @param minValue - the minimum value inside the deconvolved image
 	 * @param blockSize - the block size in which we process
-	 * @param id - the unique id of this thread, >= 0, starting at 0 and increasing by 1 each thread
+	 * @param id - the unique id of this thread, greater or equal to 0, starting at 0 and increasing by 1 each thread
 	 */
 	public ComputeBlockThreadAbstract(
 			final ImgFactory< FloatType > blockFactory,
@@ -26,6 +28,7 @@ public abstract class ComputeBlockThreadAbstract implements ComputeBlockThread
 			final int[] blockSize,
 			final int id )
 	{
+		this.blockFactory = blockFactory;
 		this.psiBlockTmp = blockFactory.create( Util.int2long( blockSize ), new FloatType() );
 		this.minValue = minValue;
 		this.blockSize = blockSize;
@@ -37,7 +40,7 @@ public abstract class ComputeBlockThreadAbstract implements ComputeBlockThread
 	 * 
 	 * @param minValue - the minimum value inside the deconvolved image
 	 * @param blockSize - the block size in which we process
-	 * @param id - the unique id of this thread, >= 0, starting at 0 and increasing by 1 each thread
+	 * @param id - the unique id of this thread, greater or equal to 0, starting at 0 and increasing by 1 each thread
 	 */
 	public ComputeBlockThreadAbstract(
 			final float minValue,
@@ -60,7 +63,7 @@ public abstract class ComputeBlockThreadAbstract implements ComputeBlockThread
 	public float getMinValue() { return minValue; }
 
 	/**
-	 * @return the unique id of this thread, >= 0
+	 * @return the unique id of this thread, greater or equal to 0
 	 */
 	@Override
 	public int getId() { return id; }

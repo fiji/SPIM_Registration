@@ -25,9 +25,10 @@ public class BlockSorter
 	 * - all blocks have the same dimensions, tightly stacked next to each other
 	 * - only the effective blocksize of the last blocks in each dimension can be smaller
 	 * 
-	 * @param blocks
-	 * @param psi
-	 * @return
+	 * @param blocks - a list of blocks according to the assumptions above
+	 * @param psi - the size of the underlying, blocked image
+	 * @param minRequiredBlocks - the minimum number of blocks in a batch to iterate effectively (if 1, memory usage will be maximal)
+	 * @return - a list of block-lists. The N'th one can be written back once the N+1's is processed
 	 */
 	public static List< List< Block > > sortBlocksBySmallestFootprint( final List< Block > blocks, final Interval psi, final int minRequiredBlocks )
 	{

@@ -484,7 +484,7 @@ public class FFTConvolution< R extends RealType< R > >
 	 * Sets the FFT image as computed, be very careful with this method, if any parameters of the FFT are wrong, this will fail
 	 * WARNING: if you do not set keepImgFFT, this image will be modified during convolution
 	 * 
-	 * @param fftKernel - the FFT of the image
+	 * @param fftImg - the FFT of the image
 	 */
 	public void setImgFFT( final Img< ComplexFloatType > fftImg )
 	{

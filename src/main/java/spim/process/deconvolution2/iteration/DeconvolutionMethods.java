@@ -12,10 +12,10 @@ public class DeconvolutionMethods
 	/**
 	 * One thread of a method to compute the quotient between two images of the multiview deconvolution
 	 * 
-	 * @param start
-	 * @param loopSize
-	 * @param psiBlurred
-	 * @param observedImg
+	 * @param start - the start position in pixels for this thread
+	 * @param loopSize - how many consecutive pixels to process
+	 * @param psiBlurred - the blurred psi input
+	 * @param observedImg - the observed image
 	 */
 	protected static final void computeQuotient(
 			final long start,
@@ -71,9 +71,8 @@ public class DeconvolutionMethods
 		}
 	}
 
-	/**
+	/*
 	 * One thread of a method to compute the final values of one iteration of the multiview deconvolution
-	 * 
 	 */
 	protected static final void computeFinalValues(
 			final long start,

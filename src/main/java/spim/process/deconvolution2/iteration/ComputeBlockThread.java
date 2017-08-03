@@ -28,7 +28,7 @@ public interface ComputeBlockThread
 	public float getMinValue();
 
 	/**
-	 * @return the unique id of this thread, >= 0, starting at 0 and increasing by 1 each thread
+	 * @return the unique id of this thread, greater or equal to 0, starting at 0 and increasing by 1 each thread
 	 */
 	public int getId();
 

@@ -37,7 +37,7 @@ public class ComputeBlockThreadCPU extends ComputeBlockThreadAbstract
 			final int[] blockSize,
 			final ImgFactory< FloatType > blockFactory )
 	{
-		super( minValue, blockSize, id );
+		super( blockFactory, minValue, blockSize, id );
 
 		this.tmp1 = blockFactory.create( blockSize, new FloatType() );
 		this.tmp2 = blockFactory.create( blockSize, new FloatType() );
