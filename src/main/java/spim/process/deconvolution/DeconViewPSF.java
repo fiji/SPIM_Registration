@@ -1,4 +1,4 @@
-package spim.process.deconvolution2;
+package spim.process.deconvolution;
 
 import java.util.concurrent.ExecutorService;
 
@@ -14,7 +14,9 @@ import net.imglib2.util.Pair;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import spim.Threads;
-import spim.process.deconvolution2.normalization.AdjustInput;
+import spim.process.deconvolution.normalization.AdjustInput;
+import spim.process.deconvolution.util.FFTConvolution;
+import spim.process.deconvolution.util.Mirror;
 
 /**
  * Handles the PSF for a specific view for the deconvolution

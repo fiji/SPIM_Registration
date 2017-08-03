@@ -1,4 +1,4 @@
-package spim.process.deconvolution2;
+package spim.process.deconvolution.util;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,8 +24,8 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import spim.fiji.spimdata.SpimData2;
-import spim.process.deconvolution.MVDeconvolution;
-import spim.process.deconvolution2.normalization.NormalizingRandomAccessibleInterval;
+import spim.process.deconvolution.MultiViewDeconvolution;
+import spim.process.deconvolution.normalization.NormalizingRandomAccessibleInterval;
 import spim.process.fusion.FusionTools;
 import spim.process.fusion.FusionTools.ImgDataType;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
@@ -254,7 +254,7 @@ public class ProcessInputImages< V extends ViewId >
 				// which applies for the image itself as well as the weights since they also use the smaller
 				// input image as reference
 				final RandomAccessibleInterval inputImg = DownsampleTools.openDownsampled( imgloader, viewId, model );
-				images.add( TransformView.transformView( inputImg, model, bb, MVDeconvolution.minValueImg, 0, 1 ) );
+				images.add( TransformView.transformView( inputImg, model, bb, MultiViewDeconvolution.minValueImg, MultiViewDeconvolution.outsideValueImg, 1 ) );
 
 				if ( blendingRangeFusion != null && blendingBorderFusion != null )
 				{

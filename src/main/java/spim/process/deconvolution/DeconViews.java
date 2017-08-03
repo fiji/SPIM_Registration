@@ -1,4 +1,4 @@
-package spim.process.deconvolution2;
+package spim.process.deconvolution;
 
 import java.util.ArrayList;
 import java.util.Collection;

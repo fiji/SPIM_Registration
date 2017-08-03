@@ -1,4 +1,4 @@
-package spim.process.deconvolution2;
+package spim.process.deconvolution.util;
 /*
  * #%L
  * ImgLib2: a general-purpose, multidimensional image processing library.

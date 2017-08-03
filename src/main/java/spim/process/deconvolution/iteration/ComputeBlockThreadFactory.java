@@ -1,4 +1,4 @@
-package spim.process.deconvolution2.iteration;
+package spim.process.deconvolution.iteration;
 
 public interface ComputeBlockThreadFactory
 {

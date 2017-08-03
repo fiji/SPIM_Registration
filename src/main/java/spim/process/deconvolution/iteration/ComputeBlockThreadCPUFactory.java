@@ -1,9 +1,10 @@
-package spim.process.deconvolution2.iteration;
+package spim.process.deconvolution.iteration;
 
 import java.util.concurrent.ExecutorService;
 
 import net.imglib2.img.ImgFactory;
 import net.imglib2.type.numeric.real.FloatType;
+import spim.process.deconvolution.MultiViewDeconvolution;
 
 public class ComputeBlockThreadCPUFactory implements ComputeBlockThreadFactory
 {
@@ -12,7 +13,7 @@ public class ComputeBlockThreadCPUFactory implements ComputeBlockThreadFactory
 	final float lambda;
 	final int[] blockSize;
 	final ImgFactory< FloatType > blockFactory;
-	
+
 	public ComputeBlockThreadCPUFactory(
 			final ExecutorService service,
 			final float minValue,
@@ -22,6 +23,19 @@ public class ComputeBlockThreadCPUFactory implements ComputeBlockThreadFactory
 	{
 		this.service = service;
 		this.minValue = minValue;
+		this.lambda = lambda;
+		this.blockSize = blockSize.clone();
+		this.blockFactory = blockFactory;
+	}
+
+	public ComputeBlockThreadCPUFactory(
+			final ExecutorService service,
+			final float lambda,
+			final int[] blockSize,
+			final ImgFactory< FloatType > blockFactory )
+	{
+		this.service = service;
+		this.minValue = MultiViewDeconvolution.minValue;
 		this.lambda = lambda;
 		this.blockSize = blockSize.clone();
 		this.blockFactory = blockFactory;

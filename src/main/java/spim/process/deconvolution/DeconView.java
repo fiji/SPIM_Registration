@@ -1,4 +1,4 @@
-package spim.process.deconvolution2;
+package spim.process.deconvolution;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -23,7 +23,7 @@ import spim.Threads;
 import spim.process.cuda.Block;
 import spim.process.cuda.BlockGeneratorFixedSizePrecise;
 import spim.process.cuda.BlockSorter;
-import spim.process.deconvolution2.DeconViewPSF.PSFTYPE;
+import spim.process.deconvolution.DeconViewPSF.PSFTYPE;
 import spim.process.fusion.FusionTools;
 import spim.process.fusion.ImagePortion;
 

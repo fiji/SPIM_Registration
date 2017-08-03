@@ -1,4 +1,4 @@
-package spim.process.deconvolution2.normalization;
+package spim.process.deconvolution.normalization;
 
 import java.util.ArrayList;
 

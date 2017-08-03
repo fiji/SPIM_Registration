@@ -1,11 +1,11 @@
-package spim.process.deconvolution2.iteration;
+package spim.process.deconvolution.iteration;
 
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImg;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.process.cuda.Block;
-import spim.process.deconvolution2.DeconView;
+import spim.process.deconvolution.DeconView;
 
 /**
  * Executes one Lucy-Richardson iteration on one specifc block.

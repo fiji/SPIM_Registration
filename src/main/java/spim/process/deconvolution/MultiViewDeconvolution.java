@@ -1,4 +1,4 @@
-package spim.process.deconvolution2.iteration;
+package spim.process.deconvolution;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -26,15 +26,15 @@ import net.imglib2.view.Views;
 import spim.Threads;
 import spim.fiji.ImgLib2Temp.Triple;
 import spim.process.cuda.Block;
-import spim.process.deconvolution2.DeconView;
-import spim.process.deconvolution2.DeconViews;
-import spim.process.deconvolution2.FirstIteration;
-import spim.process.deconvolution2.iteration.ComputeBlockThread.IterationStatistics;
+import spim.process.deconvolution.iteration.ComputeBlockThread;
+import spim.process.deconvolution.iteration.ComputeBlockThreadFactory;
+import spim.process.deconvolution.iteration.ComputeBlockThread.IterationStatistics;
+import spim.process.deconvolution.util.FirstIteration;
 import spim.process.export.DisplayImage;
 import spim.process.fusion.FusionTools;
 import spim.process.fusion.ImagePortion;
 
-public class ComputeDeconBlocks
+public class MultiViewDeconvolution
 {
 	final public static float outsideValueImg = 0f; // the value the input image has if there is no data at this pixel
 	final public static float minValueImg = 1f; // mininal value for the input image (as it is not normalized)
@@ -65,7 +65,7 @@ public class ComputeDeconBlocks
 	ImageStack stack;
 	CompositeImage ci;
 
-	public ComputeDeconBlocks(
+	public MultiViewDeconvolution(
 			final DeconViews views,
 			final int numIterations,
 			final ComputeBlockThreadFactory computeBlockFactory,
