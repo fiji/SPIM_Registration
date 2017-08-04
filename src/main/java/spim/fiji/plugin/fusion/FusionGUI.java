@@ -15,11 +15,16 @@ import mpicbg.spim.data.generic.base.Entity;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.MultiResolutionImgLoader;
+import mpicbg.spim.data.sequence.SetupImgLoader;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Interval;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Intervals;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
@@ -292,5 +297,18 @@ public class FusionGUI
 		}
 
 		return maxNumPixels;
+	}
+
+	public static int inputBytePerPixel( final ViewId viewId, final SpimData2 spimData )
+	{
+		SetupImgLoader< ? > loader = spimData.getSequenceDescription().getImgLoader().getSetupImgLoader( viewId.getViewSetupId() );
+		Object type = loader.getImageType();
+
+		if ( UnsignedByteType.class.isInstance( type ) )
+			return 1;
+		else if ( UnsignedShortType.class.isInstance( type ) )
+			return 2;
+		else
+			return 4;
 	}
 }
