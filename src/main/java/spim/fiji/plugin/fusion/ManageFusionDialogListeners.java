@@ -117,16 +117,18 @@ public class ManageFusionDialogListeners
 		// assume he have to load 50% higher resolved data
 		double inputDownSampling = fusion.isMultiResolution() ? fusion.downsampling / 1.5 : 1.0;
 
+		final int inputBytePerPixel = FusionGUI.inputBytePerPixel( fusion.views.get( 0 ), fusion.spimData );
+
 		if ( fusion.isImgLoaderVirtual() )
 		{
 			// either 50% of the RAM or 5% of the downsampled input
 			inputImagesMB = Math.min(
 					Runtime.getRuntime().maxMemory() / ( 1024*1024*2 ),
-					( ( ( maxNumPixelsInput / Math.round( inputDownSampling * 1024*1024 ) ) * bytePerPixel ) / 100 ) );
+					( ( ( maxNumPixelsInput / Math.round( inputDownSampling * 1024*1024 ) ) * inputBytePerPixel ) / 20 ) );
 		}
 		else
 		{
-			inputImagesMB = Math.round( maxNumPixelsInput / ( inputDownSampling * 1024*1024 ) ) * bytePerPixel;
+			inputImagesMB = Math.round( maxNumPixelsInput / ( inputDownSampling * 1024*1024 ) ) * inputBytePerPixel;
 		}
 
 		long processingMB = 0;
