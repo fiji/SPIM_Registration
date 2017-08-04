@@ -17,6 +17,8 @@ import ij.io.Opener;
 import ij.process.ImageProcessor;
 import mpicbg.models.AffineModel3D;
 import net.imglib2.Cursor;
+import net.imglib2.FinalRealInterval;
+import net.imglib2.RealInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImg;
@@ -341,5 +343,32 @@ public class IOFunctions
 		}
 		
 		return model;
-	}	
+	}
+
+	public static String printRealInterval( final RealInterval interval )
+	{
+		String out = "(Interval empty)";
+
+		if ( interval == null || interval.numDimensions() == 0 )
+			return out;
+
+		out = "[" + interval.realMin( 0 );
+
+		for ( int i = 1; i < interval.numDimensions(); i++ )
+			out += ", " + interval.realMin( i );
+
+		out += "] -> [" + interval.realMax( 0 );
+
+		for ( int i = 1; i < interval.numDimensions(); i++ )
+			out += ", " + interval.realMax( i );
+
+		out += "], dimensions (" + ( interval.realMax( 0 ) - interval.realMin( 0 ) );
+
+		for ( int i = 1; i < interval.numDimensions(); i++ )
+			out += ", " + ( interval.realMax( i ) - interval.realMin( i ) );
+
+		out += ")";
+
+		return out;
+	}
 }
