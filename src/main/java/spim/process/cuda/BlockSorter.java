@@ -46,7 +46,8 @@ public class BlockSorter
 			if ( dim % blocks.get( 0 ).getEffectiveSize()[ d ] != 0 )
 				++numBlocks[ d ];
 		}
-		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Number of blocks in each dimension: " + Util.printCoordinates( numBlocks ) );
+
+		System.out.println( "(" + new Date(System.currentTimeMillis()) + "): Number of blocks in each dimension: " + Util.printCoordinates( numBlocks ) );
 
 		final HashMap< Long, Integer > numBlocksDimToDim = new HashMap<>();
 		final ArrayList< Long > numBlocksDim = new ArrayList<>();
@@ -77,7 +78,7 @@ public class BlockSorter
 				minDim = numBlocksDimToDim.get( minDimSize );
 			}
 
-		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Min memory (" + minDimSize + " blocks) progressing in dim=" + minDim + ", assuming a min #blocks=" + minRequiredBlocks );
+		System.out.println( "(" + new Date(System.currentTimeMillis()) + "): Min memory (" + minDimSize + " blocks) progressing in dim=" + minDim + ", assuming a min #blocks=" + minRequiredBlocks );
 
 		final List< List< Block > > noninterferingBlocks = new ArrayList<>();
 
