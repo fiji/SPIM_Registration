@@ -83,7 +83,7 @@ public class TestDeconvolution
 
 		IOFunctions.println( BoundingBox.getBoundingBoxDescription( boundingBox ) );
 
-		final double osemSpeedUp = 2.0;
+		final double osemSpeedUp = 1.0;
 		final double downsampling = 2.0;
 
 		final ProcessInputImages< V > fusion = new ProcessInputImages<>(
@@ -96,7 +96,7 @@ public class TestDeconvolution
 		fusion.fuseGroups();
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Normalizing weights ... " );
-		fusion.normalizeWeights( osemSpeedUp, true, MultiViewDeconvolution.maxDiffRange, MultiViewDeconvolution.scalingRange );
+		fusion.normalizeWeights( osemSpeedUp, false, MultiViewDeconvolution.maxDiffRange, MultiViewDeconvolution.scalingRange );
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): De-virtualization ... " );
 		fusion.cacheImages();
@@ -119,11 +119,11 @@ public class TestDeconvolution
 
 		final ImgFactory< FloatType > blockFactory = new ArrayImgFactory<>();
 		final ImgFactory< FloatType > psiFactory = new ArrayImgFactory<>();
-		final int[] blockSize = new int[]{ 196, 196, 196 };
+		final int[] blockSize = new int[]{ 256, 256, 256 };
 		final int numIterations = 1;
 		final float lambda = 0.0006f;
 		final PSFTYPE psfType = PSFTYPE.INDEPENDENT;
-		final boolean filterBlocksForContent = false;
+		final boolean filterBlocksForContent = true;
 		final boolean debug = true;
 		final int debugInterval = 1;
 
