@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 import ij.IJ;
@@ -24,12 +25,14 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.fiji.spimdata.pointspreadfunctions.PointSpreadFunction;
+import spim.fiji.spimdata.pointspreadfunctions.PointSpreadFunctions;
 import spim.process.deconvolution.MultiViewDeconvolution;
 import spim.process.deconvolution.DeconView;
 import spim.process.deconvolution.DeconViews;
 import spim.process.deconvolution.DeconViewPSF.PSFTYPE;
 import spim.process.deconvolution.iteration.ComputeBlockThreadCPUFactory;
 import spim.process.deconvolution.iteration.ComputeBlockThreadFactory;
+import spim.process.deconvolution.util.PSFPreparation;
 import spim.process.deconvolution.util.ProcessInputImages;
 import spim.process.export.DisplayImage;
 import spim.process.fusion.FusionTools.ImgDataType;
@@ -93,7 +96,7 @@ public class TestDeconvolution
 		fusion.fuseGroups();
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Normalizing weights ... " );
-		fusion.normalizeWeights( osemSpeedUp, true, 0.1f, 0.05f );
+		fusion.normalizeWeights( osemSpeedUp, true, MultiViewDeconvolution.maxDiffRange, MultiViewDeconvolution.scalingRange );
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): De-virtualization ... " );
 		fusion.cacheImages();
@@ -105,37 +108,13 @@ public class TestDeconvolution
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Loading, grouping, and transforming PSF's " );
 
-		final HashMap< ViewId, PointSpreadFunction > rawPSFs = spimData.getPointSpreadFunctions().getPointSpreadFunctions();
-		final HashMap< Group< V >, ArrayImg< FloatType, ? > > psfs = new HashMap<>();
+		final HashMap< Group< V >, ArrayImg< FloatType, ? > > psfs =
+				PSFPreparation.loadGroupTransformPSFs( spimData.getPointSpreadFunctions(), fusion );
 
-		for ( final Group< V > group : fusion.getGroups() )
-		{
-			final ArrayList< Img< FloatType > > viewPsfs = new ArrayList<>();
-	
-			for ( final V view : group )
-			{
-				// load PSF
-				final ArrayImg< FloatType, ? > psf = rawPSFs.get( view ).getPSFCopyArrayImg();
-
-				// remember the normalized, transformed version (including downsampling!)
-				viewPsfs.add( PSFExtraction.getTransformedNormalizedPSF( psf, fusion.getDownsampledModels().get( view ) ) );
-
-				//DisplayImage.getImagePlusInstance( viewPsfs.get( viewPsfs.size() - 1 ), false, "psf " + Group.pvid( view ), 0, 1 ).show();
-			}
-
-			// compute the PSF for a group by averaging over the minimal size of all inputs
-			// the sizes can be different if the transformations are not tranlations but affine.
-			// they should, however, not differ significantly but only combine views that have
-			// basically the same transformation (e.g. angle 0 vs 180, or before after correction of chromatic abberations)
-			psfs.put( group, (ArrayImg< FloatType, ? >)PSFCombination.computeAverageImage( viewPsfs, new ArrayImgFactory< FloatType >(), false ) );
-
-			//DisplayImage.getImagePlusInstance( psfs.get( group ), false, "psf " + group, 0, 1 ).show();
-		}
-
-		final Img< FloatType > avgPSF = PSFCombination.computeAverageImage( psfs.values(), new ArrayImgFactory< FloatType >(), true );
-		final Img< FloatType > maxAvgPSF = PSFCombination.computeMaxAverageTransformedPSF( psfs.values(), new ArrayImgFactory< FloatType >() );
-
+		//final Img< FloatType > avgPSF = PSFCombination.computeAverageImage( psfs.values(), new ArrayImgFactory< FloatType >(), true );
 		//DisplayImage.getImagePlusInstance( Views.rotate( avgPSF, 0, 2 ), false, "avgPSF", 0, 1 ).show();
+
+		final Img< FloatType > maxAvgPSF = PSFCombination.computeMaxAverageTransformedPSF( psfs.values(), new ArrayImgFactory< FloatType >() );
 		DisplayImage.getImagePlusInstance( maxAvgPSF, false, "maxAvgPSF", 0, 1 ).show();
 
 		final ImgFactory< FloatType > blockFactory = new ArrayImgFactory<>();
@@ -195,65 +174,6 @@ public class TestDeconvolution
 
 			return;
 		}
-		/*
-		final ArrayList< CUDADevice > deviceList = new ArrayList<>();
-		deviceList.add( new CUDADevice( -1, "CPU", Runtime.getRuntime().maxMemory(), Runtime.getRuntime().freeMemory(), 0, 0 ) );
-		final boolean useCUDA = false;
-		final boolean useBlocks = true;
-		final int[] blockSize = new int[]{ 256, 256, 256 };
-		final boolean saveMemory = false;
-		final PSFTYPE iterationType = PSFTYPE.INDEPENDENT;
-		final int numIterations = 10;
-
-		try
-		{
-			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): PSI & TMP image factory: " + factory.getClass().getSimpleName() );
-
-			final MVDeconInput deconvolutionData = new MVDeconInput( factory );
-			
-			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Block & FFT image factory: " + computeFactory.getClass().getSimpleName() );
-
-			for ( final Group< V > group : fusion.getGroups() )
-			{
-				// device list for CPU or CUDA processing
-				final int[] devList = new int[ deviceList.size() ];
-				for ( int i = 0; i < devList.length; ++i )
-					devList[ i ] = deviceList.get( i ).getDeviceId();
-
-				deconvolutionData.add( new MVDeconFFT(
-						fusion.getImages().get( group ),
-						fusion.getNormalizedWeights().get( group ),
-						psfs.get( group ),
-						computeFactory, devList, useBlocks, blockSize, saveMemory ) );
-			}
-
-			if ( !useTikhonov )
-				lambda = 0;
-
-			final Img< FloatType > deconvolved;
-
-			try
-			{
-				deconvolved = new MVDeconvolution( deconvolutionData, iterationType, numIterations, lambda, osemSpeedUp, "deconvolved" ).getPsi();
-			} 
-			catch (IncompatibleTypeException e)
-			{
-				IOFunctions.println( "Failed to initialize deconvolution: " + e );
-				e.printStackTrace();
-				return;
-			}
-
-			// export the final image
-			DisplayImage.getImagePlusInstance( deconvolved, true, "deconvolved", 0, 1 ).show();
-
-		}
-		catch ( OutOfMemoryError oome )
-		{
-			IJ.log( "Out of Memory" );
-			IJ.error("Multi-View Registration", "Out of memory.  Check \"Edit > Options > Memory & Threads\"");
-			return;
-		}
-		*/
 	}
 
 	public static < V extends ViewId > void displayDebug( final ProcessInputImages< V > fusion )

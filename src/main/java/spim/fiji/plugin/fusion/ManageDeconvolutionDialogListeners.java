@@ -113,14 +113,23 @@ public class ManageDeconvolutionDialogListeners
 		final long totalRAM = totalRAM( megabytes, bytePerPixel );
 		final long maxRAM = Runtime.getRuntime().maxMemory() / (1024*1024);
 
-		label1.setText( "Deconvolved image: " + megabytes + " MB, required total RAM ~" + totalRAM + " MB" );
+		if ( totalRAM == -1 )
+		{
+			label1.setText( "Deconvolved image: " + megabytes + " MB, total RAM unknown (depends on blocksize)" );
 
-		if ( maxRAM > totalRAM * 1.25 )
-			label1.setForeground( GUIHelper.good );
-		else if ( maxRAM > totalRAM )
 			label1.setForeground( GUIHelper.warning );
+		}
 		else
-			label1.setForeground( GUIHelper.error );
+		{
+			label1.setText( "Deconvolved image: " + megabytes + " MB, required total RAM ~" + totalRAM + "MB" );
+
+			if ( maxRAM > totalRAM * 1.25 )
+				label1.setForeground( GUIHelper.good );
+			else if ( maxRAM > totalRAM )
+				label1.setForeground( GUIHelper.warning );
+			else
+				label1.setForeground( GUIHelper.error );
+		}
 
 		final int[] min = bb.getMin();
 		final int[] max = bb.getMax();
@@ -201,7 +210,7 @@ public class ManageDeconvolutionDialogListeners
 		else if ( decon.blockSizeIndex == 3 )
 			blockPixels = Util.pow( 1024, 3 );
 		else if ( decon.blockSizeIndex == 4 )
-			blockPixels = Util.pow( 1024, 3 );
+			return -1; // unknown
 		else
 			blockPixels = decon.maxBlock[ 0 ] * decon.maxBlock[ 1 ] * decon.maxBlock[ 2 ];
 

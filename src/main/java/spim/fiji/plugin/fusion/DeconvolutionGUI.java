@@ -6,18 +6,21 @@ import java.awt.TextField;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 import ij.gui.GenericDialog;
+import mpicbg.spim.data.generic.base.Entity;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
+import mpicbg.spim.data.sequence.Illumination;
+import mpicbg.spim.data.sequence.Tile;
+import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
-import net.imglib2.FinalInterval;
 import net.imglib2.FinalRealInterval;
 import net.imglib2.Interval;
-import net.imglib2.RealInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
@@ -33,6 +36,7 @@ import spim.process.cuda.CUDADevice;
 import spim.process.cuda.CUDAFourierConvolution;
 import spim.process.cuda.CUDATools;
 import spim.process.cuda.NativeLibraryTools;
+import spim.process.deconvolution.DeconViewPSF.PSFTYPE;
 import spim.process.deconvolution.MultiViewDeconvolution;
 import spim.process.deconvolution.iteration.ComputeBlockThreadCPUFactory;
 import spim.process.deconvolution.iteration.ComputeBlockThreadCUDAFactory;
@@ -44,11 +48,12 @@ import spim.process.export.ExportSpimData2TIFF;
 import spim.process.export.ImgExport;
 import spim.process.export.Save3dTIFF;
 import spim.process.fusion.FusionTools;
+import spim.process.fusion.FusionTools.ImgDataType;
 import spim.process.fusion.transformed.TransformVirtual;
 import spim.process.interestpointdetection.methods.downsampling.DownsampleTools;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
-public class DeconvolutionGUI
+public class DeconvolutionGUI implements FusionExportInterface
 {
 	public final static ArrayList< ImgExport > staticImgExportAlgorithms = new ArrayList< ImgExport >();
 	public final static String[] imgExportDescriptions;
@@ -116,11 +121,12 @@ public class DeconvolutionGUI
 	public static int defaultCacheMaxNumBlocks = MultiViewDeconvolution.maxCacheSize;
 	public static int defaultPsiCopyBlockSize = MultiViewDeconvolution.cellDim * 2;
 	public static int defaultComputeOnIndex = 0;
-	public static ImgFactory< FloatType > defaultBlockFactory = new ArrayImgFactory<>();
 	public static boolean defaultAdjustBlending = false;
 	public static float defaultBlendingRange = MultiViewDeconvolution.defaultBlendingRange;
 	public static float defaultBlendingBorder = MultiViewDeconvolution.defaultBlendingBorder;
 	public static boolean defaultAdditionalSmoothBlending = MultiViewDeconvolution.additionalSmoothBlending;
+	public static boolean defaultGroupTiles = true;
+	public static boolean defaultGroupIllums = true;
 	public static int defaultSplittingType = 0;
 	public static int defaultImgExportAlgorithm = 0;
 
@@ -142,14 +148,16 @@ public class DeconvolutionGUI
 	protected int cacheMaxNumBlocks = defaultCacheMaxNumBlocks;
 	protected int psiCopyBlockSize = defaultPsiCopyBlockSize;
 	protected int computeOnIndex = defaultComputeOnIndex;
-	protected ImgFactory< FloatType > psiFactory = defaultBlockFactory;
-	protected ImgFactory< FloatType > copyFactory = defaultBlockFactory;
-	protected ImgFactory< FloatType > blockFactory = defaultBlockFactory;
+	protected ImgFactory< FloatType > psiFactory = null;
+	protected ImgFactory< FloatType > copyFactory = null;
+	protected ImgFactory< FloatType > blockFactory = new ArrayImgFactory<>();
 	protected ComputeBlockThreadFactory computeFactory = null;
 	protected boolean adjustBlending = defaultAdjustBlending;
 	protected float blendingRange = defaultBlendingRange;
 	protected float blendingBorder = defaultBlendingBorder;
 	protected boolean additionalSmoothBlending = defaultAdditionalSmoothBlending;
+	protected boolean groupTiles = defaultGroupTiles;
+	protected boolean groupIllums = defaultGroupIllums;
 	protected int splittingType = defaultSplittingType;
 	protected int imgExport = defaultImgExportAlgorithm;
 	protected long[] maxBlock = null;
@@ -194,9 +202,15 @@ public class DeconvolutionGUI
 		}
 	}
 
+	@Override
 	public SpimData2 getSpimData() { return spimData; }
+
+	@Override
 	public List< ViewId > getViews() { return views; }
-	public Interval getBoundingBox() { return allBoxes.get( boundingBox ); }
+
+	public BoundingBox getBoundingBox() { return allBoxes.get( boundingBox ); }
+
+	@Override
 	public Interval getDownsampledBoundingBox()
 	{
 		if ( !Double.isNaN( downsampling ) )
@@ -205,16 +219,24 @@ public class DeconvolutionGUI
 			return getBoundingBox();
 	}
 
+	@Override
+	public int getPixelType() { return 0; }
+
+	@Override
 	public double getDownsampling(){ return downsampling; }
-	public int getInputImgCacheType() { return cacheTypeInputImg; }
-	public int getWeightCacheType() { return cacheTypeWeights; }
-	public int getPSFType() { return psfType; }
+
+	@Override
+	public int getSplittingType() { return splittingType; }
+
+	public ImgDataType getInputImgCacheType() { return ImgDataType.values()[ cacheTypeInputImg ]; }
+	public ImgDataType getWeightCacheType() { return ImgDataType.values()[ cacheTypeWeights ]; }
+	public PSFTYPE getPSFType() { return PSFTYPE.values()[ psfType ]; }
 	public double getOSEMSpeedUp() { return osemSpeedup; }
 	public int getNumIterations() { return numIterations; }
 	public boolean getDebugMode() { return debugMode; }
 	public int getDebugInterval() { return debugInterval; }
 	public boolean getUseTikhonov() { return useTikhonov; }
-	public double getLambda() { return lambda; }
+	public float getLambda() { return useTikhonov ? (float)lambda : 0.0f; }
 	public int[] getComputeBlockSize() { return blockSize; }
 	public int getCacheBlockSize() { return cacheBlockSize; }
 	public int getCacheMaxNumBlocks(){ return cacheMaxNumBlocks; }
@@ -222,11 +244,12 @@ public class DeconvolutionGUI
 	public ImgFactory< FloatType > getBlockFactory() { return blockFactory; }
 	public ImgFactory< FloatType > getPsiFactory() { return psiFactory; }
 	public ImgFactory< FloatType > getCopyFactory() { return copyFactory; }
-	public ComputeBlockThreadFactory getComputeBlockFactory() { return computeFactory; }
+	public ComputeBlockThreadFactory getComputeBlockThreadFactory() { return computeFactory; }
 	public float getBlendingRange() { return blendingRange; }
 	public float getBlendingBorder() { return blendingBorder; }
 	public boolean getAdditionalSmoothBlending() { return additionalSmoothBlending; }
-	public int getSplittingType() { return splittingType; }
+	public boolean groupTiles() { return groupTiles; }
+	public boolean groupIllums() { return groupIllums; }
 	public ImgExport getExporter() { return staticImgExportAlgorithms.get( imgExport ).newInstance(); }
 
 	public boolean queryDetails()
@@ -270,7 +293,7 @@ public class DeconvolutionGUI
 		blockChoice = (Choice)gd.getChoices().lastElement();
 		gd.addChoice( "Compute_on", computationOnChoice, computationOnChoice[ defaultComputeOnIndex ] );
 		computeOnChoice = (Choice)gd.getChoices().lastElement();
-		gd.addCheckbox( "Adjust_blending parameters", defaultAdjustBlending );
+		gd.addCheckbox( "Adjust_blending & grouping parameters", defaultAdjustBlending );
 
 		gd.addMessage( "" );
 
@@ -332,34 +355,36 @@ public class DeconvolutionGUI
 		psiFactory = new CellImgFactory<>( psiCopyBlockSize );
 		copyFactory = new CellImgFactory<>( psiCopyBlockSize );
 
+		if ( !getBlendingAndGrouping() )
+			return false;
+
 		if ( !getComputeDevice() )
 			return false;
 
-		if ( !getBlending() )
-			return false;
-
 		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Selected (MultiView)Deconvolution Parameters: " );
-		IOFunctions.println( "BoundingBox: " + getBoundingBox() );
+		IOFunctions.println( "Bounding Box: " + getBoundingBox() );
 		IOFunctions.println( "Downsampling: " + DownsampleTools.printDownsampling( getDownsampling() ) );
-		IOFunctions.println( "DownsampledBoundingBox: " + getDownsampledBoundingBox() );
-		IOFunctions.println( "InputImageCacheType: " + FusionTools.imgDataTypeChoice[ getInputImgCacheType() ] );
-		IOFunctions.println( "WeightCacheType: " + FusionTools.imgDataTypeChoice[ getWeightCacheType() ] );
-		IOFunctions.println( "PSFType: " + psfTypeString[ psfType ] );
+		IOFunctions.println( "Downsampled Bounding Box: " + getDownsampledBoundingBox() );
+		IOFunctions.println( "Input Image Cache Type: " + FusionTools.imgDataTypeChoice[ getInputImgCacheType().ordinal() ] );
+		IOFunctions.println( "Weight Cache Type: " + FusionTools.imgDataTypeChoice[ getWeightCacheType().ordinal() ] );
+		IOFunctions.println( "PSF Type: " + psfTypeString[ getPSFType().ordinal() ] );
 		IOFunctions.println( "OSEMSpeedup: " + osemSpeedup );
-		IOFunctions.println( "NumIterations: " + numIterations );
-		IOFunctions.println( "DebugMode: " + debugMode );
+		IOFunctions.println( "Num Iterations: " + numIterations );
+		IOFunctions.println( "Debug Mode: " + debugMode );
 		if ( debugMode ) IOFunctions.println( "DebugInterval: " + debugInterval );
-		IOFunctions.println( "useTikhonov: " + useTikhonov );
+		IOFunctions.println( "use Tikhonov: " + useTikhonov );
 		if ( useTikhonov ) IOFunctions.println( "Tikhonov Lambda: " + lambda );
-		IOFunctions.println( "ComputeBlockSize: " + Util.printCoordinates( blockSize ) );
-		IOFunctions.println( "CacheBlockSize: " + cacheBlockSize );
-		IOFunctions.println( "CacheMaxNumBlock: " + cacheMaxNumBlocks );
-		IOFunctions.println( "Deconvolved/CopyBlockSize: " + psiCopyBlockSize );
-		IOFunctions.println( "ComputeOn: " + computationOnChoice[ computeOnIndex ] );
-		IOFunctions.println( "ComputeBlockFactory: " + computeFactory.getClass().getSimpleName() + ": " + computeFactory );
-		IOFunctions.println( "BlendingRange: " + blendingRange );
-		IOFunctions.println( "BlendingBorder: " + blendingBorder );
-		IOFunctions.println( "AdditionalSmoothBlending: " + additionalSmoothBlending );
+		IOFunctions.println( "Compute block size: " + Util.printCoordinates( blockSize ) );
+		IOFunctions.println( "Cache block size: " + cacheBlockSize );
+		IOFunctions.println( "Cache max num blocks: " + cacheMaxNumBlocks );
+		IOFunctions.println( "Deconvolved/Copy block size: " + psiCopyBlockSize );
+		IOFunctions.println( "Compute on: " + computationOnChoice[ computeOnIndex ] );
+		IOFunctions.println( "ComputeBlockThread Factory: " + computeFactory.getClass().getSimpleName() + ": " + computeFactory );
+		IOFunctions.println( "Blending range: " + blendingRange );
+		IOFunctions.println( "Blending border: " + blendingBorder );
+		IOFunctions.println( "Additional smooth blending: " + additionalSmoothBlending );
+		IOFunctions.println( "Group tiles: " + groupTiles );
+		IOFunctions.println( "Group illums: " + groupIllums );
 		IOFunctions.println( "Split by: " + splittingTypes[ getSplittingType() ] );
 		IOFunctions.println( "Image Export: " + imgExportDescriptions[ imgExport ] );
 		IOFunctions.println( "ImgLoader.isVirtual(): " + isImgLoaderVirtual() );
@@ -370,6 +395,27 @@ public class DeconvolutionGUI
 
 	public boolean isImgLoaderVirtual() { return FusionGUI.isImgLoaderVirtual( spimData ); }
 	public boolean isMultiResolution() { return FusionGUI.isMultiResolution( spimData ); }
+
+	public List< Group< ViewDescription > > getFusionGroups()
+	{
+		return FusionGUI.getFusionGroups( getSpimData(), getViews(), getSplittingType() );
+	}
+
+	public List< Group< ViewDescription > > getDeconvolutionGrouping( final Group< ViewDescription > group )
+	{
+		final HashSet< Class< ? extends Entity > > groupingFactors = new HashSet<>();
+
+		if ( groupTiles )
+			groupingFactors.add( Tile.class );
+
+		if ( groupIllums )
+			groupingFactors.add( Illumination.class );
+
+		final ArrayList< ViewDescription > list = new ArrayList<>();
+		list.addAll( group.getViews() );
+
+		return Group.combineBy( list, groupingFactors );
+	}
 
 	public HashMap< ViewId, PointSpreadFunction > getPSFs()
 	{
@@ -478,7 +524,7 @@ public class DeconvolutionGUI
 	{
 		if ( computeOnIndex == 0 )
 		{
-			this.computeFactory = new ComputeBlockThreadCPUFactory( service, MultiViewDeconvolution.minValue, (float)lambda, blockSize, blockFactory );
+			this.computeFactory = new ComputeBlockThreadCPUFactory( service, MultiViewDeconvolution.minValue, getLambda(), blockSize, blockFactory );
 		}
 		else if ( computeOnIndex == 1 )
 		{
@@ -504,7 +550,7 @@ public class DeconvolutionGUI
 			for ( int devId = 0; devId < selectedDevices.size(); ++devId )
 				idToCudaDevice.put( devId, selectedDevices.get( devId ) );
 
-			this.computeFactory = new ComputeBlockThreadCUDAFactory( service, MultiViewDeconvolution.minValue, (float)lambda, blockSize, cuda, idToCudaDevice );
+			this.computeFactory = new ComputeBlockThreadCUDAFactory( service, MultiViewDeconvolution.minValue, getLambda(), blockSize, cuda, idToCudaDevice );
 		}
 		else
 		{
@@ -514,11 +560,11 @@ public class DeconvolutionGUI
 		return true;
 	}
 
-	protected boolean getBlending()
+	protected boolean getBlendingAndGrouping()
 	{
 		if ( adjustBlending )
 		{
-			final GenericDialog gd = new GenericDialog( "Adjust blending parameters" );
+			final GenericDialog gd = new GenericDialog( "Adjust blending & grouping parameters" );
 
 			gd.addSlider( "Blending_boundary (pixels)", -50, 50, defaultBlendingBorder );
 			gd.addSlider( "Blending_range (pixels)", 0, 100, defaultBlendingRange );
@@ -532,7 +578,14 @@ public class DeconvolutionGUI
 						   "it should typically correspond to half the size of the extracted PSF.\n" +
 						   "A negative boundary value means that the deconvolution will make an educated guess even on pixels that were not\n" +
 						   "directly imaged,based on the fact that parts of their signal is visible due to the size of the PSF", GUIHelper.smallStatusFont );
-			
+
+			gd.addMessage( "" );
+
+			if ( splittingType <= 2 )
+				gd.addCheckbox( "Group_tiles into one view", defaultGroupTiles );
+			if ( splittingType == 0 || splittingType == 2 )
+				gd.addCheckbox( "Group_illuminations into one view", defaultGroupIllums );
+
 			gd.showDialog();
 
 			if ( gd.wasCanceled() )
@@ -541,6 +594,16 @@ public class DeconvolutionGUI
 			blendingBorder = defaultBlendingBorder = (float)gd.getNextNumber();
 			blendingRange = defaultBlendingRange = (float)gd.getNextNumber();
 			additionalSmoothBlending = defaultAdditionalSmoothBlending = gd.getNextBoolean();
+
+			if ( splittingType <= 2 )
+				groupTiles = defaultGroupTiles = gd.getNextBoolean();
+			else
+				groupTiles = false;
+
+			if ( splittingType == 0 || splittingType == 2 )
+				groupIllums = defaultGroupIllums = gd.getNextBoolean();
+			else
+				groupIllums = false;
 		}
 
 		return true;

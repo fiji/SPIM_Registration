@@ -21,10 +21,8 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Interval;
-import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
-import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Intervals;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
@@ -41,7 +39,7 @@ import spim.process.fusion.transformed.TransformVirtual;
 import spim.process.interestpointdetection.methods.downsampling.DownsampleTools;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
-public class FusionGUI
+public class FusionGUI implements FusionExportInterface
 {
 	public static int defaultCache = 2;
 	public static int[] cellDim = new int[]{ 10, 10, 10 };
@@ -115,9 +113,15 @@ public class FusionGUI
 		this.allBoxes = BoundingBoxTools.getAllBoundingBoxes( spimData, views, true );
 	}
 
+	@Override
 	public SpimData2 getSpimData() { return spimData; }
+
+	@Override
 	public List< ViewId > getViews() { return views; }
+
 	public Interval getBoundingBox() { return allBoxes.get( boundingBox ); }
+
+	@Override
 	public Interval getDownsampledBoundingBox()
 	{
 		if ( !Double.isNaN( downsampling ) )
@@ -126,12 +130,22 @@ public class FusionGUI
 			return getBoundingBox();
 	}
 	public int getInterpolation() { return interpolation; }
+
+	@Override
 	public int getPixelType() { return pixelType; }
+
 	public int getCacheType() { return cacheType; }
+	@Override
+
 	public double getDownsampling(){ return downsampling; }
+
 	public boolean useBlending() { return useBlending; }
+
 	public boolean useContentBased() { return useContentBased; }
+
+	@Override
 	public int getSplittingType() { return splittingType; }
+
 	public ImgExport getExporter() { return staticImgExportAlgorithms.get( imgExport ).newInstance(); }
 
 	public boolean queryDetails()
@@ -247,6 +261,11 @@ public class FusionGUI
 			choices[ i++ ] = b.getTitle() + " [" + b.dimension( 0 ) + "x" + b.dimension( 1 ) + "x" + b.dimension( 2 ) + "px]";
 
 		return choices;
+	}
+
+	public List< Group< ViewDescription > > getFusionGroups()
+	{
+		return getFusionGroups( getSpimData(), getViews(), getSplittingType() );
 	}
 
 	public static List< Group< ViewDescription > > getFusionGroups( final SpimData2 spimData, final List< ViewId > views, final int splittingType )
