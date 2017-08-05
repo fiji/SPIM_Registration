@@ -55,6 +55,7 @@ import spim.fiji.spimdata.explorer.popup.ApplyTransformationPopup;
 import spim.fiji.spimdata.explorer.popup.BDVPopup;
 import spim.fiji.spimdata.explorer.popup.BakeManualTransformationPopup;
 import spim.fiji.spimdata.explorer.popup.BoundingBoxPopup;
+import spim.fiji.spimdata.explorer.popup.DeconvolutionPopup;
 import spim.fiji.spimdata.explorer.popup.DetectInterestPointsPopup;
 import spim.fiji.spimdata.explorer.popup.DisplayFusedImagesPopup;
 import spim.fiji.spimdata.explorer.popup.DisplayRawImagesPopup;
@@ -696,6 +697,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		popups.add( new RegisterInterestPointsPopup() );
 		popups.add( new FusionPopup() );
 		popups.add( new PointSpreadFunctionsPopup() );
+		popups.add( new DeconvolutionPopup() );
 		popups.add( new Separator() );
 
 		popups.add( new LabelPopUp( " Calibration/Transformations" ) );
