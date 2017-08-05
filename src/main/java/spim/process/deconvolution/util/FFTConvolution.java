@@ -504,7 +504,7 @@ public class FFTConvolution< R extends RealType< R > >
 
 		// compute the FFT of the kernel if it does not exist yet
 		if ( fftKernel == null )
-			computeKernelFFT( fftIntervals.getB(), min, max, complexConjugate, kernel, fftFactory, service );
+			fftKernel = computeKernelFFT( fftIntervals.getB(), min, max, complexConjugate, kernel, fftFactory, service );
 
 		computeConvolution( fftImg, fftKernel, output, keepImgFFT, service );
 	}
