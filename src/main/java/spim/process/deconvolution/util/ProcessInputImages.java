@@ -89,7 +89,7 @@ public class ProcessInputImages< V extends ViewId >
 			final double downsampling )
 	{
 		this(
-				spimData, groups, bb, Double.NaN,
+				spimData, groups, bb, downsampling,
 				true, FusionTools.defaultBlendingRange, FusionTools.defaultBlendingBorder,
 				true, MultiViewDeconvolution.defaultBlendingRange, MultiViewDeconvolution.defaultBlendingBorder );
 	}
