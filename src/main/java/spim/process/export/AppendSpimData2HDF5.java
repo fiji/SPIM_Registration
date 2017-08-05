@@ -41,7 +41,7 @@ import net.imglib2.util.Pair;
 import net.imglib2.util.Util;
 import net.imglib2.util.ValuePair;
 import spim.Threads;
-import spim.fiji.plugin.fusion.FusionGUI;
+import spim.fiji.plugin.fusion.FusionExportInterface;
 import spim.fiji.plugin.resave.Generic_Resave_HDF5;
 import spim.fiji.plugin.resave.Generic_Resave_HDF5.Parameters;
 import spim.fiji.plugin.resave.ProgressWriterIJ;
@@ -54,7 +54,7 @@ public class AppendSpimData2HDF5 implements ImgExport
 {
 	public static String defaultPath = null;
 
-	private FusionGUI fusion;
+	private FusionExportInterface fusion;
 
 	private List< TimePoint > newTimepoints;
 
@@ -80,7 +80,7 @@ public class AppendSpimData2HDF5 implements ImgExport
 	}
 
 	@Override
-	public boolean queryParameters( final FusionGUI fusion )
+	public boolean queryParameters( final FusionExportInterface fusion )
 	{
 		System.out.println( "queryParameters()" );
 
@@ -220,7 +220,7 @@ public class AppendSpimData2HDF5 implements ImgExport
 		return "Append to current XML Project (HDF5)";
 	}
 
-	public static Pair< List< TimePoint >, List< ViewSetup > > defineNewViewSetups( final FusionGUI fusion )
+	public static Pair< List< TimePoint >, List< ViewSetup > > defineNewViewSetups( final FusionExportInterface fusion )
 	{
 		final List< ViewSetup > newViewSetups = new ArrayList<>();
 		final List< TimePoint > newTimepoints;

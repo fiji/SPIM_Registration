@@ -19,7 +19,7 @@ import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import spim.fiji.plugin.fusion.FusionGUI;
+import spim.fiji.plugin.fusion.FusionExportInterface;
 import spim.fiji.plugin.resave.PluginHelper;
 import spim.fiji.plugin.resave.Resave_TIFF;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
@@ -151,7 +151,7 @@ public class Save3dTIFF implements ImgExport
 	}
 
 	@Override
-	public boolean queryParameters( final FusionGUI fusion )
+	public boolean queryParameters( final FusionExportInterface fusion )
 	{
 		final GenericDialogPlus gd = new GenericDialogPlus( "Save fused images as 3D TIFF" );
 

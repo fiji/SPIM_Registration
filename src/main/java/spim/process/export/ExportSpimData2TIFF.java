@@ -37,7 +37,7 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Pair;
 import net.imglib2.util.Util;
 import net.imglib2.util.ValuePair;
-import spim.fiji.plugin.fusion.FusionGUI;
+import spim.fiji.plugin.fusion.FusionExportInterface;
 import spim.fiji.plugin.resave.Resave_TIFF;
 import spim.fiji.plugin.resave.Resave_TIFF.Parameters;
 import spim.fiji.spimdata.SpimData2;
@@ -55,7 +55,7 @@ public class ExportSpimData2TIFF implements ImgExport
 	File path;
 	List< TimePoint > newTimepoints;
 	List< ViewSetup > newViewSetups;
-	FusionGUI fusion;
+	FusionExportInterface fusion;
 	HashMap<BasicViewDescription< ? >, Pair<File, Pair<Integer, Integer>>> fileMap;
 
 	Parameters params;
@@ -137,7 +137,7 @@ public class ExportSpimData2TIFF implements ImgExport
 	}
 
 	@Override
-	public boolean queryParameters( final FusionGUI fusion )
+	public boolean queryParameters( final FusionExportInterface fusion )
 	{
 		if ( Resave_TIFF.defaultPath == null )
 			Resave_TIFF.defaultPath = "";
@@ -171,7 +171,7 @@ public class ExportSpimData2TIFF implements ImgExport
 			final List< TimePoint > newTimepoints,
 			final List< ViewSetup > newViewSetups,
 			final Group< ? extends ViewId > fusionGroup,
-			final FusionGUI fusion )
+			final FusionExportInterface fusion )
 	{
 		if ( fusion.getSplittingType() == 0 ) // "Each timepoint & channel"
 		{
@@ -218,7 +218,7 @@ public class ExportSpimData2TIFF implements ImgExport
 		}
 	}
 
-	public static Pair< List< TimePoint >, List< ViewSetup > > defineNewViewSetups( final FusionGUI fusion )
+	public static Pair< List< TimePoint >, List< ViewSetup > > defineNewViewSetups( final FusionExportInterface fusion )
 	{
 		final List< ViewSetup > newViewSetups = new ArrayList<>();
 		final List< TimePoint > newTimepoints;

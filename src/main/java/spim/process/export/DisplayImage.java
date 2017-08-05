@@ -12,7 +12,7 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.img.imageplus.ImagePlusImg;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import spim.fiji.plugin.fusion.FusionGUI;
+import spim.fiji.plugin.fusion.FusionExportInterface;
 import spim.process.fusion.FusionTools;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
@@ -134,7 +134,7 @@ public class DisplayImage implements ImgExport
 	}
 
 	@Override
-	public boolean queryParameters( final FusionGUI fusion ) { return true; }
+	public boolean queryParameters( final FusionExportInterface fusion ) { return true; }
 
 	@Override
 	public ImgExport newInstance() { return new DisplayImage(); }

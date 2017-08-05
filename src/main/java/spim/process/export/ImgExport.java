@@ -5,7 +5,7 @@ import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import spim.fiji.plugin.fusion.FusionGUI;
+import spim.fiji.plugin.fusion.FusionExportInterface;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public interface ImgExport
@@ -62,7 +62,7 @@ public interface ImgExport
 	 * 
 	 * @return success? true or false
 	 */
-	public abstract boolean queryParameters( final FusionGUI fusion );
+	public abstract boolean queryParameters( final FusionExportInterface fusion );
 
 
 	public abstract ImgExport newInstance();
