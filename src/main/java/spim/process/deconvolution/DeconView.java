@@ -12,8 +12,11 @@ import bdv.util.ConstantRandomAccessible;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.FinalInterval;
+import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.array.ArrayImg;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Pair;
 import net.imglib2.util.Util;
@@ -154,7 +157,8 @@ public class DeconView
 		{
 			final Pair< Integer, Integer > removed = filterBlocksForContent( nonInterferingBlocks, weight, service );
 
-			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Removed " + removed.getA() + " blocks, " + removed.getB() + " entire batches" );
+			if ( removed.getA() > 0 )
+				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Removed " + removed.getA() + " blocks, " + removed.getB() + " entire batches" );
 		}
 	}
 
@@ -193,11 +197,14 @@ public class DeconView
 		return new ValuePair<>( removeBlocks, removeBlockBatch );
 	}
 
+	//public static boolean debug = false;
+
 	public static boolean blockContainsContent( final Block blockStruct, final RandomAccessibleInterval< FloatType > weight, final ExecutorService service )
 	{
-		final int nThreads = Threads.numThreads();
-		final int nPortions = nThreads * 4;
-		final Vector< ImagePortion > portions = FusionTools.divideIntoPortions( Views.iterable( weight ).size(), nPortions );
+		final IterableInterval< FloatType > toTest = Views.iterable( Views.interval( Views.extendZero( weight ), blockStruct ) );
+
+		final int nPortions = Threads.numThreads() * 4;
+		final Vector< ImagePortion > portions = FusionTools.divideIntoPortions( toTest.size(), nPortions );
 		final ArrayList< Callable< Boolean > > tasks = new ArrayList<>();
 
 		for ( final ImagePortion portion : portions )
@@ -207,10 +214,10 @@ public class DeconView
 				@Override
 				public Boolean call() throws Exception
 				{
-					final Cursor< FloatType > c = Views.iterable( Views.interval( Views.extendZero( weight ), blockStruct ) ).cursor();
-			
+					final Cursor< FloatType > c = toTest.cursor();
+
 					c.jumpFwd( portion.getStartPosition() );
-			
+
 					for ( long l = 0; l < portion.getLoopSize(); ++l )
 						if ( c.next().get() != 0.0 )
 							return true;
