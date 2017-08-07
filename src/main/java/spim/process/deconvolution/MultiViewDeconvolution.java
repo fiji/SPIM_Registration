@@ -104,6 +104,8 @@ public class MultiViewDeconvolution
 
 		double avgIntensity = fuseFirstIteration( psi, views.getViews(), views.getExecutorService(), max );
 
+		avgIntensity = 21.36;
+
 		double avgMaxIntensity = 0;
 		for ( int i = 0; i < max.length; ++i )
 		{
@@ -291,11 +293,13 @@ public class MultiViewDeconvolution
 				previousBlockWritebackQueue.addAll( currentBlockWritebackQueue );
 				currentBlockWritebackQueue.clear();
 
-				//DisplayImage.getImagePlusInstance( psi, false, it + ", view=" + viewNum + ", batch=" + batch, Double.NaN, Double.NaN ).show();;
 			} // finish one block batch
 
 			// write back last list of blocks
 			writeBack( psi, previousBlockWritebackQueue );
+
+			// TODO: for every update correct intensities with until now applied weights at each pixel before computing the quotient?
+			//DisplayImage.getImagePlusInstance( psi, false, it + ", view=" + viewNum, Double.NaN, Double.NaN ).show();;
 
 			// accumulate the results from the individual blocks
 			final IterationStatistics is = new IterationStatistics();

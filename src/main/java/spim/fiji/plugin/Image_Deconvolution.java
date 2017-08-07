@@ -96,7 +96,7 @@ public class Image_Deconvolution implements PlugIn
 					FusionTools.defaultBlendingBorder,
 					true,
 					decon.getBlendingRange(),
-					decon.getBlendingBorder() );
+					decon.getBlendingBorder() / ( Double.isNaN( downsampling ) ? 1.0f : (float)downsampling ) );
 
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Fusion of 'virtual views' " );
 			fusion.fuseGroups();
