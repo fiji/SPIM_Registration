@@ -10,9 +10,7 @@ import java.util.Map;
 
 import ij.IJ;
 import ij.ImagePlus;
-import ij.gui.GUI;
 import ij.gui.GenericDialog;
-import mpicbg.models.RigidModel3D;
 import mpicbg.spim.data.generic.base.Entity;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.Illumination;
@@ -26,6 +24,7 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.imageplus.ImagePlusImgFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Pair;
 import net.imglib2.util.Util;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
@@ -520,37 +519,14 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 			vr.updateModel();
 			final AffineTransform3D transform = vr.getModel().copy();
 
-			System.out.println( "Original: " + TransformationTools.printAffine3D( transform ) );
-
-			// mapping back the image first to the origin using a rigid model
-			final AffineTransform3D mapBack = TransformationTools.computeMapBackModel(
-					dim,
-					new AffineTransform3D(), // identity
-					TransformationTools.getModel( transform ), // current model
-					new RigidModel3D() ); // what to use
-
-			// reset translation
-			mapBack.set( 0.0, 0, 3 );
-			mapBack.set( 0.0, 1, 3 );
-			mapBack.set( 0.0, 2, 3 );
-
-			System.out.println( "MapBack: " + TransformationTools.printAffine3D( mapBack ) );
-
-			final AffineTransform3D atOrigin = transform.preConcatenate( mapBack );
-
-			System.out.println( "At origin: " + TransformationTools.printAffine3D( atOrigin ) );
-
-			// there seems to be a bug in Transform3D, it does mix up the y/z dimensions sometimes
-			// TransformationTools.getScaling( atOrigin, scale );
-
-			// the scale is approximately now the diagonal entries in the matrix
-			final double[] scale = new double[]{ atOrigin.get( 0, 0 ), atOrigin.get( 1, 1 ), atOrigin.get( 2, 2 ) };
+			final Pair< double[], AffineTransform3D > scaling = TransformationTools.scaling( dim, transform );
+			final double[] scale = scaling.getA();
 
 			IOFunctions.println( "View " + Group.pvid( viewId ) + " is currently scaled by: (" +
 					f.format( scale[ 0 ] ) + ", " + f.format( scale[ 1 ] ) + ", " + f.format( scale[ 2 ] ) + ")" );
 
 			scales.add( scale );
-			mapBackModels.add( mapBack );
+			mapBackModels.add( scaling.getB() );
 		}
 
 		final AffineTransform3D mapBack;

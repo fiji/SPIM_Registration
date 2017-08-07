@@ -26,6 +26,8 @@ import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Dimensions;
 import net.imglib2.realtransform.AffineGet;
 import net.imglib2.realtransform.AffineTransform3D;
+import net.imglib2.util.Pair;
+import net.imglib2.util.ValuePair;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
@@ -40,6 +42,34 @@ import spim.vecmath.Vector3f;
 public class TransformationTools
 {
 	public static NumberFormat f = new DecimalFormat("#.####");
+
+	public static Pair< double[], AffineTransform3D > scaling( final Dimensions dim, final AffineTransform3D transformationModel )
+	{
+		final AffineTransform3D transform = transformationModel.copy();
+
+		final AffineTransform3D mapBack = TransformationTools.computeMapBackModel(
+				dim,
+				new AffineTransform3D(), // identity
+				TransformationTools.getModel( transform ), // current model
+				new RigidModel3D() ); // what to use
+
+		// reset translation
+		mapBack.set( 0.0, 0, 3 );
+		mapBack.set( 0.0, 1, 3 );
+		mapBack.set( 0.0, 2, 3 );
+
+		System.out.println( "MapBack: " + TransformationTools.printAffine3D( mapBack ) );
+
+		final AffineTransform3D atOrigin = transform.preConcatenate( mapBack );
+
+		System.out.println( "At origin: " + TransformationTools.printAffine3D( atOrigin ) );
+
+		// there seems to be a bug in Transform3D, it does mix up the y/z dimensions sometimes
+		// TransformationTools.getScaling( atOrigin, scale );
+
+		// the scale is approximately now the diagonal entries in the matrix
+		return new ValuePair<>( new double[]{ atOrigin.get( 0, 0 ), atOrigin.get( 1, 1 ), atOrigin.get( 2, 2 ) }, mapBack );
+	}
 
 	public static AffineTransform3D averageTransforms( final Collection< ? extends AffineGet > models )
 	{
