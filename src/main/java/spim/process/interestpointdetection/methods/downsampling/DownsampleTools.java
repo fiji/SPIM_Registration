@@ -35,8 +35,27 @@ public class DownsampleTools
 	 */
 	public static RandomAccessibleInterval openDownsampled( final BasicImgLoader imgLoader, final ViewId viewId, final AffineTransform3D m )
 	{
+		return openDownsampled( imgLoader, viewId, m, null );
+	}
+
+	/**
+	 * Opens the image at an appropriate resolution for the provided transformation and concatenates an extra transform 
+	 * 
+	 * @param imgLoader - the img loader
+	 * @param viewId - the view id
+	 * @param m - WILL BE MODIFIED IF OPENED DOWNSAMPLED
+	 * @param usedDownsampleFactors - which downsample factors were used to open the image (important for weights etc)
+	 * @return - opened image
+	 */
+	public static RandomAccessibleInterval openDownsampled( final BasicImgLoader imgLoader, final ViewId viewId, final AffineTransform3D m, final double[] usedDownsampleFactors )
+	{
 		// have to go from input to output
 		// https://github.com/bigdataviewer/bigdataviewer-core/blob/master/src/main/java/bdv/util/MipmapTransforms.java
+
+		// pre-init downsample factors
+		if ( usedDownsampleFactors != null )
+			for ( int d = 0; d < usedDownsampleFactors.length; ++d )
+				usedDownsampleFactors[ d ] = 1.0;
 
 		if ( MultiResolutionImgLoader.class.isInstance( imgLoader ) )
 		{
@@ -94,6 +113,10 @@ public class DownsampleTools
 			m.concatenate( mrImgLoader.getSetupImgLoader( viewId.getViewSetupId() ).getMipmapTransforms()[ bestLevel ] );
 
 			System.out.println( "Choosing resolution level: " + mipmapResolutions[ bestLevel ][ 0 ] + " x " + mipmapResolutions[ bestLevel ][ 1 ] + " x " + mipmapResolutions[ bestLevel ][ 2 ] );
+
+			if ( usedDownsampleFactors != null && usedDownsampleFactors.length == mipmapResolutions[ bestLevel ].length )
+				for ( int d = 0; d < usedDownsampleFactors.length; ++d )
+					usedDownsampleFactors[ d ] = mipmapResolutions[ bestLevel ][ d ];
 
 			return mrImgLoader.getSetupImgLoader( viewId.getViewSetupId() ).getImage( viewId.getTimePointId(), bestLevel );
 		}
