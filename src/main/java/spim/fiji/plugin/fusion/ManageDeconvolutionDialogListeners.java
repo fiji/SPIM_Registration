@@ -147,7 +147,7 @@ public class ManageDeconvolutionDialogListeners
 		bb.dimensions( size );
 
 		for ( int d = 0; d < size.length; ++d )
-			size[ d ] += decon.maxDimPSF[ d ];
+			size[ d ] += decon.maxDimPSF[ d ]*2;
 
 		return size;
 	}
