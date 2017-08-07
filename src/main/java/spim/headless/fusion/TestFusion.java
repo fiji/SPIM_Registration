@@ -76,11 +76,6 @@ public class TestFusion
 			vr.updateModel();
 			AffineTransform3D model = vr.getModel();
 
-			final float[] blending =  Util.getArrayFromValue( FusionTools.defaultBlendingRange, 3 );
-			final float[] border = Util.getArrayFromValue( FusionTools.defaultBlendingBorder, 3 );
-
-			FusionTools.adjustBlending( spimData.getSequenceDescription().getViewDescription( viewId ), blending, border );
-
 			if ( !Double.isNaN( downsampling ) )
 			{
 				model = model.copy();
@@ -91,6 +86,12 @@ public class TestFusion
 			// which applies for the image itself as well as the weights since they also use the smaller
 			// input image as reference
 			final RandomAccessibleInterval inputImg = DownsampleTools.openDownsampled( imgloader, viewId, model );
+
+			final float[] blending =  Util.getArrayFromValue( FusionTools.defaultBlendingRange, 3 );
+			final float[] border = Util.getArrayFromValue( FusionTools.defaultBlendingBorder, 3 );
+
+			// adjust both for z-scaling (anisotropy), downsampling, and registrations itself
+			FusionTools.adjustBlending( spimData.getSequenceDescription().getViewDescription( viewId ), blending, border, model );
 
 			images.add( TransformView.transformView( inputImg, model, bb, 0, 1 ) );
 			weights.add( TransformWeight.transformBlending( inputImg, border, blending, model, bb ) );

@@ -1,5 +1,6 @@
 package spim.process.fusion;
 
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -22,7 +23,6 @@ import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
-import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.TimePoint;
@@ -64,6 +64,8 @@ import spim.process.fusion.transformed.TransformWeight;
 import spim.process.fusion.transformed.weightcombination.CombineWeightsRandomAccessibleInterval;
 import spim.process.fusion.transformed.weightcombination.CombineWeightsRandomAccessibleInterval.CombineType;
 import spim.process.interestpointdetection.methods.downsampling.DownsampleTools;
+import spim.process.interestpointregistration.TransformationTools;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class FusionTools
 {
@@ -73,8 +75,8 @@ public class FusionTools
 	public static float defaultBlendingRange = 40;
 	public static float defaultBlendingBorder = 0;
 
-	public static double[] defaultContentBasedSigma1 = new double[]{ 20, 20, 20 };
-	public static double[] defaultContentBasedSigma2 = new double[]{ 40, 40, 40 };
+	public static double defaultContentBasedSigma1 = 20;
+	public static double defaultContentBasedSigma2 = 40;
 
 	public static long numPixels( final Interval bb, final double downsampling )
 	{
@@ -186,8 +188,9 @@ public class FusionTools
 				{
 					final float[] blending = Util.getArrayFromValue( defaultBlendingRange, 3 );
 					final float[] border = Util.getArrayFromValue( defaultBlendingBorder, 3 );
-	
-					adjustBlending( viewDescriptions.get( viewId ), blending, border );
+
+					// adjust both for z-scaling (anisotropy), downsampling, and registrations itself
+					adjustBlending( viewDescriptions.get( viewId ), blending, border, model );
 	
 					transformedBlending = TransformWeight.transformBlending( inputImg, border, blending, model, bb );
 				}
@@ -195,11 +198,12 @@ public class FusionTools
 				// instantiate content based if necessary
 				if ( useContentBased )
 				{
-					final double[] sigma1 = FusionTools.defaultContentBasedSigma1.clone();
-					final double[] sigma2 = FusionTools.defaultContentBasedSigma2.clone();
-	
-					adjustContentBased( viewDescriptions.get( viewId ), sigma1, sigma2, downsampling );
-	
+					final double[] sigma1 = Util.getArrayFromValue( defaultContentBasedSigma1, 3 );
+					final double[] sigma2 = Util.getArrayFromValue( defaultContentBasedSigma2, 3 );
+
+					// adjust both for z-scaling (anisotropy), downsampling, and registrations itself
+					adjustContentBased( viewDescriptions.get( viewId ), sigma1, sigma2, model );
+
 					transformedContentBased = TransformWeight.transformContentBased( inputImg, new CellImgFactory< ComplexFloatType >(), sigma1, sigma2, model, bb );
 				}
 
@@ -319,37 +323,46 @@ public class FusionTools
 		return DisplayImage.getImagePlusInstance( img, true, title, min, max );
 	}
 
-	public static void adjustBlending( final BasicViewDescription< ? extends BasicViewSetup > vd, final float[] blending, final float[] border )
+	/**
+	 * Compute how much blending in the input has to be done so the target values blending and border are achieved in the fused image
+	 *
+	 * @param vd - which view
+	 * @param blending - the target blending range
+	 * @param border - the target blending border
+	 * @param transformationModel - the transformation model used to map from the (downsampled) input to the output
+	 */
+	public static void adjustBlending( final BasicViewDescription< ? extends BasicViewSetup > vd, final float[] blending, final float[] border, final AffineTransform3D transformationModel )
 	{
-		final float minRes = (float)getMinRes( vd );
-		VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSize( vd.getViewSetup() );
-		if ( voxelSize == null )
-			voxelSize = new FinalVoxelDimensions( "px", new double[]{ 1, 1, 1 } );
+		final double[] scale = TransformationTools.scaling( vd.getViewSetup().getSize(), transformationModel ).getA();
+
+		final NumberFormat f = TransformationTools.f;
+
+		System.out.println( "View " + Group.pvid( vd ) + " is currently scaled by: (" +
+				f.format( scale[ 0 ] ) + ", " + f.format( scale[ 1 ] ) + ", " + f.format( scale[ 2 ] ) + ")" );
 
 		for ( int d = 0; d < blending.length; ++d )
 		{
-			blending[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
-			border[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
+			blending[ d ] /= ( float )scale[ d ];
+			border[ d ] /= ( float )scale[ d ];
 		}
 	}
 
-	public static void adjustContentBased( final BasicViewDescription< ? extends BasicViewSetup > vd, final double[] sigma1, final double[] sigma2, final double downsampling )
+	/**
+	 * Compute how much sigma in the input has to be applied so the target values of sigma1 and 2 are achieved in the fused image
+	 *
+	 * @param vd - which view
+	 * @param blending - the target blending range
+	 * @param border - the target blending border
+	 * @param transformationModel - the transformation model used to map from the (downsampled) input to the output
+	 */
+	public static void adjustContentBased( final BasicViewDescription< ? extends BasicViewSetup > vd, final double[] sigma1, final double[] sigma2, final AffineTransform3D transformationModel )
 	{
-		final double minRes = getMinRes( vd );
-		VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSize( vd.getViewSetup() );
-		if ( voxelSize == null )
-			voxelSize = new FinalVoxelDimensions( "px", new double[]{ 1, 1, 1 } );
+		final double[] scale = TransformationTools.scaling( vd.getViewSetup().getSize(), transformationModel ).getA();
 
 		for ( int d = 0; d < sigma1.length; ++d )
 		{
-			sigma1[ d ] /= voxelSize.dimension( d ) / minRes;
-			sigma2[ d ] /= voxelSize.dimension( d ) / minRes;
-
-			if ( !Double.isNaN( downsampling ) )
-			{
-				sigma1[ d ] /= downsampling;
-				sigma2[ d ] /= downsampling;
-			}
+			sigma1[ d ] /= ( float )scale[ d ];
+			sigma2[ d ] /= ( float )scale[ d ];
 		}
 	}
 

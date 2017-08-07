@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import bdv.util.ConstantRandomAccessible;
 import ij.ImageJ;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.registration.ViewRegistration;
@@ -19,7 +18,6 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.complex.ComplexFloatType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
-import net.imglib2.view.Views;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
@@ -87,16 +85,18 @@ public class TestWeights
 			final float[] border = Util.getArrayFromValue( FusionTools.defaultBlendingBorder, 3 );
 			System.out.println( "Default blending = " + Util.printCoordinates( blending ) );
 			System.out.println( "Default border = " + Util.printCoordinates( border ) );
-			FusionTools.adjustBlending( spimData.getSequenceDescription().getViewDescription( viewId ), blending, border );
+			// adjust both for z-scaling (anisotropy), downsampling, and registrations itself
+			FusionTools.adjustBlending( spimData.getSequenceDescription().getViewDescription( viewId ), blending, border, model );
 			System.out.println( "Adjusted blending = " + Util.printCoordinates( blending ) );
 			System.out.println( "Adjusted border = " + Util.printCoordinates( border ) );
 			final RandomAccessibleInterval< FloatType > transformedBlending = TransformWeight.transformBlending( inputImg, border, blending, model, bb );
 
-			final double[] sigma1 = FusionTools.defaultContentBasedSigma1.clone();
-			final double[] sigma2 = FusionTools.defaultContentBasedSigma2.clone();
+			final double[] sigma1 = Util.getArrayFromValue( FusionTools.defaultContentBasedSigma1, 3 );
+			final double[] sigma2 = Util.getArrayFromValue( FusionTools.defaultContentBasedSigma2, 3 );
 			System.out.println( "Default sigma1 = " + Util.printCoordinates( sigma1 ) );
 			System.out.println( "Default sigma2 = " + Util.printCoordinates( sigma2 ) );
-			FusionTools.adjustContentBased( spimData.getSequenceDescription().getViewDescription( viewId ), sigma1, sigma2, downsampling );
+			// adjust both for z-scaling (anisotropy), downsampling, and registrations itself
+			FusionTools.adjustContentBased( spimData.getSequenceDescription().getViewDescription( viewId ), sigma1, sigma2, model );
 			System.out.println( "Adjusted sigma1 = " + Util.printCoordinates( sigma1 ) );
 			System.out.println( "Adjusted sigma2 = " + Util.printCoordinates( sigma2 ) );
 

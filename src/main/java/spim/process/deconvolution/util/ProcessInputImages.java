@@ -287,8 +287,11 @@ public class ProcessInputImages< V extends ViewId >
 				// this modifies the model so it maps from a smaller image to the global coordinate space,
 				// which applies for the image itself as well as the weights since they also use the smaller
 				// input image as reference
-				final RandomAccessibleInterval inputImg = DownsampleTools.openDownsampled( imgloader, viewId, model );
+				final double[] ds = new double[ 3 ];
+				final RandomAccessibleInterval inputImg = DownsampleTools.openDownsampled( imgloader, viewId, model, ds );
 				images.add( TransformView.transformView( inputImg, model, bb, MultiViewDeconvolution.minValueImg, MultiViewDeconvolution.outsideValueImg, 1 ) );
+
+				System.out.println( "Used downsampling: " + Util.printCoordinates( ds ) );
 
 				if ( blendingRangeFusion != null && blendingBorderFusion != null )
 				{
@@ -297,8 +300,8 @@ public class ProcessInputImages< V extends ViewId >
 					final float[] rangeFusion = blendingRangeFusion.clone();
 					final float[] borderFusion = blendingBorderFusion.clone();
 
-					// adjust both for z-scaling (anisotropy)
-					FusionTools.adjustBlending( spimData.getSequenceDescription().getViewDescriptions().get( viewId ), rangeFusion, borderFusion );
+					// adjust both for z-scaling (anisotropy), downsampling, and registrations itself
+					FusionTools.adjustBlending( spimData.getSequenceDescription().getViewDescriptions().get( viewId ), rangeFusion, borderFusion, model );
 
 					weightsFusion.add( TransformWeight.transformBlending( inputImg, borderFusion, rangeFusion, model, bb ) );
 				}
@@ -314,8 +317,15 @@ public class ProcessInputImages< V extends ViewId >
 					final float[] rangeDecon = blendingRangeDecon.clone();
 					final float[] borderDecon = blendingBorderDecon.clone();
 
-					// adjust both for z-scaling (anisotropy)
-					FusionTools.adjustBlending( spimData.getSequenceDescription().getViewDescriptions().get( viewId ), rangeDecon, borderDecon );
+					System.out.println( Util.printCoordinates( rangeDecon ) );
+					System.out.println( Util.printCoordinates( borderDecon ) );
+
+					// adjust both for z-scaling (anisotropy), downsampling, and registrations itself
+					FusionTools.adjustBlending( spimData.getSequenceDescription().getViewDescriptions().get( viewId ), rangeDecon, borderDecon, model );
+
+					System.out.println( Util.printCoordinates( rangeDecon ) );
+					System.out.println( Util.printCoordinates( borderDecon ) );
+					System.out.println();
 
 					weightsDecon.add( TransformWeight.transformBlending( inputImg, borderDecon, rangeDecon, model, bb ) );
 				}
