@@ -17,6 +17,7 @@ import mpicbg.spim.io.IOFunctions;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
+import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Pair;
 import net.imglib2.util.RealSum;
@@ -103,8 +104,6 @@ public class MultiViewDeconvolution
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Fusing image for first iteration" );
 
 		double avgIntensity = fuseFirstIteration( psi, views.getViews(), views.getExecutorService(), max );
-
-		avgIntensity = 21.36;
 
 		double avgMaxIntensity = 0;
 		for ( int i = 0; i < max.length; ++i )
@@ -297,9 +296,6 @@ public class MultiViewDeconvolution
 
 			// write back last list of blocks
 			writeBack( psi, previousBlockWritebackQueue );
-
-			// TODO: for every update correct intensities with until now applied weights at each pixel before computing the quotient?
-			//DisplayImage.getImagePlusInstance( psi, false, it + ", view=" + viewNum, Double.NaN, Double.NaN ).show();;
 
 			// accumulate the results from the individual blocks
 			final IterationStatistics is = new IterationStatistics();

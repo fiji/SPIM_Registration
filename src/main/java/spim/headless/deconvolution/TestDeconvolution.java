@@ -9,6 +9,7 @@ import java.util.concurrent.ExecutorService;
 
 import ij.IJ;
 import ij.ImageJ;
+import ij.ImagePlus;
 import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
@@ -19,6 +20,7 @@ import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import simulation.imgloader.SimulatedBeadsImgLoader;
 import spim.fiji.spimdata.SpimData2;
@@ -35,6 +37,7 @@ import spim.process.deconvolution.iteration.ComputeBlockThreadFactory;
 import spim.process.deconvolution.util.PSFPreparation;
 import spim.process.deconvolution.util.ProcessInputImages;
 import spim.process.export.DisplayImage;
+import spim.process.fusion.FusionTools;
 import spim.process.fusion.FusionTools.ImgDataType;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
 import spim.process.fusion.transformed.weightcombination.CombineWeightsRandomAccessibleInterval;
@@ -61,7 +64,15 @@ public class TestDeconvolution
 		groups = selectViews( spimData.getSequenceDescription().getViewDescriptions().values() );
 		groups = oneGroupPerView( spimData.getSequenceDescription().getViewDescriptions().values() );
 
-		testDeconvolution( spimData, groups, "My Bounding Box1" );
+		/*
+		final ArrayList< ViewDescription > two = new ArrayList<>();
+		two.add( spimData.getSequenceDescription().getViewDescriptions().get( new ViewId( 0,0 ) ) );
+		two.add( spimData.getSequenceDescription().getViewDescriptions().get( new ViewId( 0,1 ) ) );
+		groups = oneGroupPerView( two );
+		*/
+		testDeconvolution( spimData, groups, "My Bounding Box1111" );
+		// for bounding box1111 test 128,128,128 vs 256,256,256 (no blocks), there are differences at the edges
+		// 
 	}
 
 	public static < V extends ViewId > void testDeconvolution(
@@ -84,13 +95,19 @@ public class TestDeconvolution
 		IOFunctions.println( BoundingBox.getBoundingBoxDescription( boundingBox ) );
 
 		final double osemSpeedUp = 1.0;
-		final double downsampling = 2.0;
+		final double downsampling = 3.0;
 
 		final ProcessInputImages< V > fusion = new ProcessInputImages<>(
 				spimData,
 				groups,
 				boundingBox,
-				downsampling );
+				downsampling,
+				true,
+				FusionTools.defaultBlendingRange,
+				FusionTools.defaultBlendingBorder,
+				true,
+				MultiViewDeconvolution.defaultBlendingRange,
+				MultiViewDeconvolution.defaultBlendingBorder / ( Double.isNaN( downsampling ) ? 1.0f : (float)downsampling ) );
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Virtual Fusion of groups " );
 		fusion.fuseGroups();
@@ -105,6 +122,7 @@ public class TestDeconvolution
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Displaying " );
 		//displayDebug( fusion );
+		//SimpleMultiThreading.threadHaltUnClean();
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Loading, grouping, and transforming PSF's " );
 
@@ -161,7 +179,12 @@ public class TestDeconvolution
 			decon.runIterations();
 			
 
-			DisplayImage.getImagePlusInstance( decon.getPSI(), false, "Deconvolved", Double.NaN, Double.NaN ).show();
+			ImagePlus imp = DisplayImage.getImagePlusInstance( decon.getPSI(), false, "Deconvolved", Double.NaN, Double.NaN );
+			imp.getCalibration().xOrigin = -(boundingBox.min( 0 ) / downsampling);
+			imp.getCalibration().yOrigin = -(boundingBox.min( 1 ) / downsampling);
+			imp.getCalibration().zOrigin = -(boundingBox.min( 2 ) / downsampling);
+			imp.getCalibration().pixelWidth = imp.getCalibration().pixelHeight = imp.getCalibration().pixelDepth = downsampling;
+			imp.show();
 
 			service.shutdown();
 		}
