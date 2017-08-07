@@ -58,11 +58,11 @@ public class TransformationTools
 		mapBack.set( 0.0, 1, 3 );
 		mapBack.set( 0.0, 2, 3 );
 
-		System.out.println( "MapBack: " + TransformationTools.printAffine3D( mapBack ) );
+		//System.out.println( "MapBack: " + TransformationTools.printAffine3D( mapBack ) );
 
 		final AffineTransform3D atOrigin = transform.preConcatenate( mapBack );
 
-		System.out.println( "At origin: " + TransformationTools.printAffine3D( atOrigin ) );
+		//System.out.println( "At origin: " + TransformationTools.printAffine3D( atOrigin ) );
 
 		// there seems to be a bug in Transform3D, it does mix up the y/z dimensions sometimes
 		// TransformationTools.getScaling( atOrigin, scale );
