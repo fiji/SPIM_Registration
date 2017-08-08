@@ -19,8 +19,8 @@ public interface FusionExportInterface
 	int getPixelType();
 
 	/**
-	 * 0 == "Each timepoint & channel",
-	 * 1 == "Each timepoint, channel & illumination",
+	 * 0 == "Each timepoint &amp; channel",
+	 * 1 == "Each timepoint, channel &amp; illumination",
 	 * 2 == "All views together",
 	 * 3 == "Each view"
 	 * 

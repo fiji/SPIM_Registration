@@ -47,7 +47,7 @@ public class SpimDataTools {
 		ArrayList<BasicViewDescription<?>> res = new ArrayList<>();
 		for (BasicViewDescription<?> vd : seq.getViewDescriptions().values()) {
 
-			if (filterMissing && seq.getMissingViews().getMissingViews().contains( vd ))
+			if (filterMissing && seq.getMissingViews() != null && seq.getMissingViews().getMissingViews().contains( vd ))
 				continue;
 
 			boolean matches = true;
