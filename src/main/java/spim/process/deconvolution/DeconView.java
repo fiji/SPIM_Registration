@@ -135,18 +135,28 @@ public class DeconView
 
 		final ArrayList< Block > blocks = blockGenerator.divideIntoBlocks( imgSize, kernelSize );
 
-		this.numBlocks = blocks.size();
-
-		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Number of blocks: " + numBlocks + ", dim=" + Util.printCoordinates( this.blockSize ) + ", Effective size of each block (due to kernel size) " + Util.printCoordinates( blocks.get( 0 ).getEffectiveSize() ) );
-
-		this.nonInterferingBlocks = BlockSorter.sortBlocksBySmallestFootprint( blocks, new FinalInterval( image ), minRequiredBlocks );
-
-		if ( filterBlocksForContent )
+		if ( blocks == null )
 		{
-			final Pair< Integer, Integer > removed = filterBlocksForContent( nonInterferingBlocks, weight, service );
+			this.numBlocks = -1;
+			this.nonInterferingBlocks = null;
 
-			if ( removed.getA() > 0 )
-				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Removed " + removed.getA() + " blocks, " + removed.getB() + " entire batches" );
+			return;
+		}
+		else
+		{
+			this.numBlocks = blocks.size();
+
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Number of blocks: " + numBlocks + ", dim=" + Util.printCoordinates( this.blockSize ) + ", Effective size of each block (due to kernel size) " + Util.printCoordinates( blocks.get( 0 ).getEffectiveSize() ) );
+
+			this.nonInterferingBlocks = BlockSorter.sortBlocksBySmallestFootprint( blocks, new FinalInterval( image ), minRequiredBlocks );
+
+			if ( filterBlocksForContent )
+			{
+				final Pair< Integer, Integer > removed = filterBlocksForContent( nonInterferingBlocks, weight, service );
+
+				if ( removed.getA() > 0 )
+					IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Removed " + removed.getA() + " blocks, " + removed.getB() + " entire batches" );
+			}
 		}
 	}
 

@@ -174,6 +174,9 @@ public class Image_Deconvolution implements PlugIn
 							blockSize,
 							cptf.numParallelBlocks(),
 							filterBlocksForContent ) );
+
+					if ( deconViews.get( deconViews.size() - 1 ).getNumBlocks() <= 0 )
+						return false;
 				}
 
 				final DeconViews views = new DeconViews( deconViews, service );
