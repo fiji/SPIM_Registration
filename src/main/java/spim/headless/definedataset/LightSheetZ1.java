@@ -9,6 +9,7 @@ import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.ImgLoader;
+import mpicbg.spim.data.sequence.MissingViews;
 import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.TimePoints;
@@ -197,8 +198,8 @@ public class LightSheetZ1 extends DefineDataSet
 			imgFactory = new CellImgFactory< FloatType >( 256 );
 		}
 
-		// Set imgLoader and missingViews null
-		final SequenceDescription sequenceDescription = new SequenceDescription( new TimePoints( timepoints ), viewSetups, null, null );
+		// Set imgLoader null and create empty MissingViews
+		final SequenceDescription sequenceDescription = new SequenceDescription( new TimePoints( timepoints ), viewSetups, null, new MissingViews( new ArrayList<>() ) );
 
 		final ImgLoader imgLoader = new LightSheetZ1ImgLoader( cziFile, imgFactory, sequenceDescription );
 		sequenceDescription.setImgLoader( imgLoader );
