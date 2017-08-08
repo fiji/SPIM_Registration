@@ -37,6 +37,7 @@ import spim.process.deconvolution.iteration.ComputeBlockThreadFactory;
 import spim.process.deconvolution.iteration.PsiInitialization;
 import spim.process.deconvolution.iteration.PsiInitializationAvgApprox;
 import spim.process.deconvolution.iteration.PsiInitializationAvgPrecise;
+import spim.process.deconvolution.iteration.PsiInitializationBlurredFused;
 import spim.process.deconvolution.util.PSFPreparation;
 import spim.process.deconvolution.util.ProcessInputImages;
 import spim.process.export.DisplayImage;
@@ -73,7 +74,7 @@ public class TestDeconvolution
 		two.add( spimData.getSequenceDescription().getViewDescriptions().get( new ViewId( 0,1 ) ) );
 		groups = oneGroupPerView( two );
 		*/
-		testDeconvolution( spimData, groups, "My Bounding Box1111" );
+		testDeconvolution( spimData, groups, "My Bounding Box111" );
 		// for bounding box1111 test 128,128,128 vs 256,256,256 (no blocks), there are differences at the edges
 		// 
 	}
@@ -140,7 +141,7 @@ public class TestDeconvolution
 
 		final ImgFactory< FloatType > blockFactory = new ArrayImgFactory<>();
 		final ImgFactory< FloatType > psiFactory = new ArrayImgFactory<>();
-		final int[] blockSize = new int[]{ 128, 128, 128 };
+		final int[] blockSize = new int[]{ 128, 256, 256 };
 		final int numIterations = 1;
 		final float lambda = 0.0006f;
 		final PSFTYPE psfType = PSFTYPE.INDEPENDENT;
@@ -162,10 +163,13 @@ public class TestDeconvolution
 
 			final PsiInitialization psiInit;
 
+			psiInit = new PsiInitializationBlurredFused();
+			/*
 			if ( preciseAverage )
 				psiInit = new PsiInitializationAvgPrecise();
 			else
 				psiInit = new PsiInitializationAvgApprox();
+			*/
 
 			if ( filterBlocksForContent )
 				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting up blocks for deconvolution and testing for empty ones that can be dropped." );
@@ -185,6 +189,9 @@ public class TestDeconvolution
 						blockSize,
 						cptf.numParallelBlocks(),
 						filterBlocksForContent ) );
+
+				if ( deconViews.get( deconViews.size() - 1 ).getNumBlocks() <= 0 )
+					return;
 			}
 
 			final DeconViews views = new DeconViews( deconViews, service );
