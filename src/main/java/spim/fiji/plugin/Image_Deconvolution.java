@@ -25,6 +25,9 @@ import spim.process.deconvolution.DeconViewPSF.PSFTYPE;
 import spim.process.deconvolution.DeconViews;
 import spim.process.deconvolution.MultiViewDeconvolution;
 import spim.process.deconvolution.iteration.ComputeBlockThreadFactory;
+import spim.process.deconvolution.iteration.PsiInitialization;
+import spim.process.deconvolution.iteration.PsiInitializationAvgApprox;
+import spim.process.deconvolution.iteration.PsiInitializationAvgPrecise;
 import spim.process.deconvolution.util.PSFPreparation;
 import spim.process.deconvolution.util.ProcessInputImages;
 import spim.process.export.ImgExport;
@@ -138,6 +141,7 @@ public class Image_Deconvolution implements PlugIn
 			final int[] blockSize = decon.getComputeBlockSize();
 			final int numIterations = decon.getNumIterations();
 			final PSFTYPE psfType = decon.getPSFType();
+			final boolean preciseAverage = false;
 			final boolean filterBlocksForContent = true;
 			final boolean debug = decon.getDebugMode();
 			final int debugInterval = decon.getDebugInterval();
@@ -145,6 +149,18 @@ public class Image_Deconvolution implements PlugIn
 
 			try
 			{
+				final PsiInitialization psiInit;
+
+				if ( preciseAverage )
+					psiInit = new PsiInitializationAvgPrecise();
+				else
+					psiInit = new PsiInitializationAvgApprox();
+
+				if ( filterBlocksForContent )
+					IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting up blocks for deconvolution and testing for empty ones that can be dropped." );
+				else
+					IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting up blocks for deconvolution." );
+
 				final ArrayList< DeconView > deconViews = new ArrayList<>();
 
 				for ( final Group< ViewDescription > virtualView : fusion.getGroups() )
@@ -162,7 +178,7 @@ public class Image_Deconvolution implements PlugIn
 
 				final DeconViews views = new DeconViews( deconViews, service );
 
-				final MultiViewDeconvolution mvDecon = new MultiViewDeconvolution( views, numIterations, cptf, psiFactory );
+				final MultiViewDeconvolution mvDecon = new MultiViewDeconvolution( views, numIterations, psiInit, cptf, psiFactory );
 				mvDecon.setDebug( debug );
 				mvDecon.setDebugInterval( debugInterval );
 				mvDecon.runIterations();

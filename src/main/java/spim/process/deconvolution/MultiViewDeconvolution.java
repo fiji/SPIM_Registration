@@ -4,9 +4,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Vector;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import ij.CompositeImage;
@@ -14,26 +11,20 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import mpicbg.spim.io.IOFunctions;
-import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
-import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Pair;
-import net.imglib2.util.RealSum;
 import net.imglib2.util.Util;
 import net.imglib2.util.ValuePair;
 import net.imglib2.view.Views;
-import spim.Threads;
-import spim.fiji.ImgLib2Temp.Triple;
 import spim.process.cuda.Block;
 import spim.process.deconvolution.iteration.ComputeBlockThread;
-import spim.process.deconvolution.iteration.ComputeBlockThreadFactory;
 import spim.process.deconvolution.iteration.ComputeBlockThread.IterationStatistics;
-import spim.process.deconvolution.util.FirstIteration;
+import spim.process.deconvolution.iteration.ComputeBlockThreadFactory;
+import spim.process.deconvolution.iteration.PsiInitialization;
 import spim.process.export.DisplayImage;
 import spim.process.fusion.FusionTools;
-import spim.process.fusion.ImagePortion;
 
 public class MultiViewDeconvolution
 {
@@ -70,7 +61,7 @@ public class MultiViewDeconvolution
 	final float[] max;
 
 	final int numIterations;
-	final double avg, avgMax;
+	final double avgMax;
 
 	boolean debug = false;
 	int debugInterval = 1;
@@ -82,13 +73,13 @@ public class MultiViewDeconvolution
 	public MultiViewDeconvolution(
 			final DeconViews views,
 			final int numIterations,
+			final PsiInitialization psiInit,
 			final ComputeBlockThreadFactory computeBlockFactory,
 			final ImgFactory< FloatType > psiFactory )
 	{
 		this.computeBlockFactory = computeBlockFactory;
 		this.views = views;
 		this.numIterations = numIterations;
-		this.max = new float[ views.getViews().size() ];
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Deconvolved image factory: " + psiFactory.getClass().getSimpleName() );
 
@@ -101,9 +92,10 @@ public class MultiViewDeconvolution
 		for ( int i = 0; i < computeBlockFactory.numParallelBlocks(); ++i )
 			computeBlockThreads.add( computeBlockFactory.create( i ) );
 
-		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Fusing image for first iteration" );
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Inititalizing PSI image using '" + psiInit.getClass().getSimpleName() + "'" );
 
-		double avgIntensity = fuseFirstIteration( psi, views.getViews(), views.getExecutorService(), max );
+		psiInit.runInitialization( psi, views.getViews(), views.getExecutorService() );
+		this.max = psiInit.getMax();
 
 		double avgMaxIntensity = 0;
 		for ( int i = 0; i < max.length; ++i )
@@ -112,19 +104,9 @@ public class MultiViewDeconvolution
 			IOFunctions.println( "Max intensity in overlapping area of view " + i + ": " + max[ i ] );
 		}
 		this.avgMax = avgMaxIntensity / (double)max.length;
-
-		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Average intensity in overlapping area: " + avgIntensity );
-
-		if ( Double.isNaN( avgIntensity ) )
-		{
-			avgIntensity = 1.0;
-			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): ERROR! Computing average FAILED, is NaN, setting it to: " + avgIntensity );
-		}
-
-		this.avg = avgIntensity;
 	}
 
-	public Img< FloatType> getPSI() { return psi; }
+	public Img< FloatType > getPSI() { return psi; }
 	public void setDebug( final boolean debug ) { this.debug = debug; }
 	public void setDebugInterval( final int debugInterval ) { this.debugInterval = debugInterval; }
 
@@ -174,9 +156,6 @@ public class MultiViewDeconvolution
 				}
 			}
 
-			if ( it == 0 )
-				setPSItoAvg();
-
 			runNextIteration();
 		}
 
@@ -184,14 +163,6 @@ public class MultiViewDeconvolution
 		// maskNeverUpdatedPixels( tmp1, views.getViews() );
 
 		IOFunctions.println( "DONE (" + new Date(System.currentTimeMillis()) + ")." );
-	}
-
-	public void setPSItoAvg()
-	{
-		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting image to average intensity: " + avg );
-
-		for ( final FloatType t : psi )
-			t.set( (float)avg );
 	}
 
 	public void runNextIteration()
@@ -333,50 +304,4 @@ public class MultiViewDeconvolution
 			System.out.println( " block " + writeBackBlock.getA().getA() + ", (CPU): paste " + (System.currentTimeMillis() - time) );
 		}
 	}
-
-	protected static final double fuseFirstIteration( final Img< FloatType > psi, final List< DeconView > views, final ExecutorService service, final float[] max )
-	{
-		final int nThreads = Threads.numThreads();
-		final int nPortions = nThreads * 20;
-
-		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = FusionTools.divideIntoPortions( psi.size(), nPortions );
-		final ArrayList< Callable< Triple< RealSum, Long, float[] > > > tasks = new ArrayList< Callable< Triple< RealSum, Long, float[] > > >();
-
-		final ArrayList< RandomAccessibleInterval< FloatType > > imgs = new ArrayList< RandomAccessibleInterval< FloatType > >();
-
-		for ( final DeconView mvdecon : views )
-			imgs.add( mvdecon.getImage() );
-
-		for ( final ImagePortion portion : portions )
-			tasks.add( new FirstIteration( portion, psi, imgs ) );
-
-		final RealSum s = new RealSum();
-		long count = 0;
-
-		try
-		{
-			// invokeAll() returns when all tasks are complete
-			final List< Future< Triple< RealSum, Long, float[] > > > imgIntensities = service.invokeAll( tasks );
-
-			for ( final Future< Triple< RealSum, Long, float[] >  > future : imgIntensities )
-			{
-				s.add( future.get().getA().getSum() );
-				count += future.get().getB().longValue();
-
-				if ( max != null )
-					for ( int i = 0; i < max.length; ++i )
-						max[ i ] = Math.max( max[ i ], future.get().getC()[ i ] );
-			}
-		}
-		catch ( final Exception e )
-		{
-			IOFunctions.println( "Failed to fuse initial iteration: " + e );
-			e.printStackTrace();
-			return -1;
-		}
-
-		return s.getSum() / (double)count;
-	}
-
 }

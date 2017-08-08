@@ -34,6 +34,9 @@ import spim.process.deconvolution.DeconViews;
 import spim.process.deconvolution.DeconViewPSF.PSFTYPE;
 import spim.process.deconvolution.iteration.ComputeBlockThreadCPUFactory;
 import spim.process.deconvolution.iteration.ComputeBlockThreadFactory;
+import spim.process.deconvolution.iteration.PsiInitialization;
+import spim.process.deconvolution.iteration.PsiInitializationAvgApprox;
+import spim.process.deconvolution.iteration.PsiInitializationAvgPrecise;
 import spim.process.deconvolution.util.PSFPreparation;
 import spim.process.deconvolution.util.ProcessInputImages;
 import spim.process.export.DisplayImage;
@@ -137,11 +140,12 @@ public class TestDeconvolution
 
 		final ImgFactory< FloatType > blockFactory = new ArrayImgFactory<>();
 		final ImgFactory< FloatType > psiFactory = new ArrayImgFactory<>();
-		final int[] blockSize = new int[]{ 256, 256, 256 };
+		final int[] blockSize = new int[]{ 128, 128, 128 };
 		final int numIterations = 1;
 		final float lambda = 0.0006f;
 		final PSFTYPE psfType = PSFTYPE.INDEPENDENT;
 		final boolean filterBlocksForContent = true;
+		final boolean preciseAverage = false;
 		final boolean debug = true;
 		final int debugInterval = 1;
 
@@ -155,6 +159,18 @@ public class TestDeconvolution
 					lambda,
 					blockSize,
 					blockFactory );
+
+			final PsiInitialization psiInit;
+
+			if ( preciseAverage )
+				psiInit = new PsiInitializationAvgPrecise();
+			else
+				psiInit = new PsiInitializationAvgApprox();
+
+			if ( filterBlocksForContent )
+				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting up blocks for deconvolution and testing for empty ones that can be dropped." );
+			else
+				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting up blocks for deconvolution." );
 
 			final ArrayList< DeconView > deconViews = new ArrayList<>();
 
@@ -173,7 +189,7 @@ public class TestDeconvolution
 
 			final DeconViews views = new DeconViews( deconViews, service );
 
-			final MultiViewDeconvolution decon = new MultiViewDeconvolution( views, numIterations, cptf, psiFactory );
+			final MultiViewDeconvolution decon = new MultiViewDeconvolution( views, numIterations, psiInit, cptf, psiFactory );
 			decon.setDebug( debug );
 			decon.setDebugInterval( debugInterval );
 			decon.runIterations();

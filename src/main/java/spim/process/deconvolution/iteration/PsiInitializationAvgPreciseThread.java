@@ -1,4 +1,4 @@
-package spim.process.deconvolution.util;
+package spim.process.deconvolution.iteration;
 
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
@@ -19,7 +19,7 @@ import spim.process.fusion.ImagePortion;
  *
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  */
-public class FirstIteration implements Callable< Triple< RealSum, Long, float[] > >
+public class PsiInitializationAvgPreciseThread implements Callable< Triple< RealSum, Long, float[] > >
 {
 	final ImagePortion portion;
 	final RandomAccessibleInterval< FloatType > psi;
@@ -32,7 +32,7 @@ public class FirstIteration implements Callable< Triple< RealSum, Long, float[] 
 
 	boolean compatibleIteration;
 
-	public FirstIteration(
+	public PsiInitializationAvgPreciseThread(
 			final ImagePortion portion,
 			final RandomAccessibleInterval< FloatType > psi,
 			final ArrayList< RandomAccessibleInterval< FloatType > > imgs )

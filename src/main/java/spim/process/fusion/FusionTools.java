@@ -50,6 +50,7 @@ import net.imglib2.type.Type;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.complex.ComplexFloatType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.RealSum;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import spim.Threads;
@@ -728,6 +729,30 @@ public class FusionTools
 		}
 
 		return new double[]{ min, max };
+	}
+
+	public static < T extends RealType< T > > double[] minMaxAvgApprox( final RandomAccessibleInterval< T > img, final Random rnd, final int numPixels )
+	{
+		final RandomAccess< T > ra = img.randomAccess();
+
+		// run threads and combine results
+		double min = Double.MAX_VALUE;
+		double max = -Double.MAX_VALUE;
+		final RealSum realSum = new RealSum( numPixels );
+
+		for ( int i = 0; i < numPixels; ++i )
+		{
+			for ( int d = 0; d < img.numDimensions(); ++d )
+				ra.setPosition( rnd.nextInt( (int)img.dimension( d ) ) + (int)img.min( d ), d );
+
+			final double v = ra.get().getRealDouble();
+
+			min = Math.min( min, v );
+			max = Math.max( max, v );
+			realSum.add( v );
+		}
+
+		return new double[]{ min, max, realSum.getSum() / (double)numPixels };
 	}
 
 	/**
