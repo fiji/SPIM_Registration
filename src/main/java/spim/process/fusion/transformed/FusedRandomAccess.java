@@ -14,10 +14,10 @@ public class FusedRandomAccess extends AbstractLocalizableInt implements RandomA
 	final List< ? extends RandomAccessible< FloatType > > images;
 	final List< ? extends RandomAccessible< FloatType > > weights;
 
-	final int numImages;
-	final RandomAccess< ? extends RealType< ? > >[] i, w;
+	final protected int numImages;
+	final protected RandomAccess< ? extends RealType< ? > >[] i, w;
 
-	final FloatType value = new FloatType();
+	final protected FloatType value = new FloatType();
 
 	public FusedRandomAccess(
 			final int n,

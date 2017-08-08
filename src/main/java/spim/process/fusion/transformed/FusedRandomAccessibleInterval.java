@@ -40,6 +40,7 @@ public class FusedRandomAccessibleInterval implements RandomAccessibleInterval< 
 		this( interval, images, null );
 	}
 
+	public Interval getInterval() { return interval; }
 	public List< ? extends RandomAccessible< FloatType > > getImages() { return images; }
 	public List< ? extends RandomAccessible< FloatType > > getWeights() { return weights; }
 
