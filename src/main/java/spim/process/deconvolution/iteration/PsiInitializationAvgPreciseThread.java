@@ -62,9 +62,6 @@ public class PsiInitializationAvgPreciseThread implements Callable< Triple< Real
 	@Override
 	public Triple< RealSum, Long, float[] > call()
 	{
-		final Cursor< FloatType > psiCursor = psiIterable.localizingCursor();
-		psiCursor.jumpFwd( portion.getStartPosition() );
-
 		final int m = iterableImgs.size();
 		long count = 0;
 
@@ -84,11 +81,14 @@ public class PsiInitializationAvgPreciseThread implements Callable< Triple< Real
 			}
 
 			for ( int j = 0; j < portion.getLoopSize(); ++j )
-				if ( compatibleLoop( psiCursor, cursorImgs, max, realSum, m ) > 0 )
+				if ( compatibleLoop( cursorImgs, max, realSum, m ) > 0 )
 					++count;
 		}
 		else
 		{
+			final Cursor< FloatType > psiCursor = psiIterable.localizingCursor();
+			psiCursor.jumpFwd( portion.getStartPosition() );
+
 			final ArrayList< RandomAccess< FloatType > > randomAccessImgs = new ArrayList< RandomAccess< FloatType > >();
 
 			for ( final RandomAccessibleInterval< FloatType > img : imgs )
@@ -103,7 +103,6 @@ public class PsiInitializationAvgPreciseThread implements Callable< Triple< Real
 	}
 
 	private static final int compatibleLoop(
-			final Cursor< FloatType > psiCursor,
 			final ArrayList< Cursor< FloatType > > cursorImgs,
 			final float[] max,
 			final RealSum realSum,
@@ -128,11 +127,6 @@ public class PsiInitializationAvgPreciseThread implements Callable< Triple< Real
 		{
 			final double i = sum / count;
 			realSum.add( i );
-			psiCursor.next().set( count ); // has data from n views (to be replaced with average intensity later)
-		}
-		else
-		{
-			psiCursor.next().set( 0 ); // no data  (to be replaced with average intensity later)
 		}
 
 		return count;
@@ -145,7 +139,7 @@ public class PsiInitializationAvgPreciseThread implements Callable< Triple< Real
 			final RealSum realSum,
 			final int m )
 	{
-		final FloatType p = psiCursor.next();
+		psiCursor.fwd();
 		double sum = 0;
 		int count = 0;
 
@@ -168,11 +162,6 @@ public class PsiInitializationAvgPreciseThread implements Callable< Triple< Real
 		{
 			final double i = sum / count;
 			realSum.add( i );
-			p.set( count ); // has data from n views (to be replaced with average intensity later)
-		}
-		else
-		{
-			p.set( 0 ); // no data  (to be replaced with average intensity later)
 		}
 
 		return count;
