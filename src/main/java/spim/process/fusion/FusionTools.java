@@ -558,6 +558,9 @@ public class FusionTools
 			});
 		}
 
+		if ( showProgress )
+			IJ.showProgress( 0.0 );
+
 		if ( service == null )
 			execTasks( tasks, nThreads, "copy image" );
 		else
