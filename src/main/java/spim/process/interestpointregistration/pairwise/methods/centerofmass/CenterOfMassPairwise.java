@@ -22,7 +22,7 @@ public class CenterOfMassPairwise< I extends InterestPoint > implements MatcherP
 	@Override
 	public PairwiseResult< I > match( final List< I > listAIn, final List< I > listBIn )
 	{
-		final PairwiseResult< I > result = new PairwiseResult< I >();
+		final PairwiseResult< I > result = new PairwiseResult< I >( false ); // these are bogus correspondences
 
 		if ( listAIn == null || listBIn == null || listAIn.size() < 1 || listBIn.size() < 1 )
 		{
@@ -51,7 +51,7 @@ public class CenterOfMassPairwise< I extends InterestPoint > implements MatcherP
 		final ArrayList< PointMatchGeneric< I > > inliers = new ArrayList< PointMatchGeneric< I > >();
 
 		// TODO: is this good?
-		inliers.add( new PointMatchGeneric< I >( (I)listAIn.get( 0 ).newInstance( 0, centerA ), (I)listAIn.get( 0 ).newInstance( 0, centerB ) ) );
+		inliers.add( new PointMatchGeneric< I >( (I)listAIn.get( 0 ).newInstance( 0, centerA ), (I)listBIn.get( 0 ).newInstance( 0, centerB ) ) );
 
 		result.setCandidates( inliers );
 		result.setInliers( inliers, 0 );
