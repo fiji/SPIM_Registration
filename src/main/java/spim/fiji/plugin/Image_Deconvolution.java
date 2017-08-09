@@ -74,26 +74,26 @@ public class Image_Deconvolution implements PlugIn
 		if ( !decon.queryDetails() )
 			return false;
 
-		final List< Group< ViewDescription > > deconGroups = decon.getFusionGroups();
+		final List< Group< ViewDescription > > deconGroupBatches = decon.getFusionGroups();
 		int i = 0;
 
-		for ( final Group< ViewDescription > deconGroup : deconGroups )
+		for ( final Group< ViewDescription > deconGroup : deconGroupBatches )
 		{
-			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Deconvolving group " + (++i) + "/" + deconGroups.size() + " (group=" + deconGroup + ")" );
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Deconvolving group " + (++i) + "/" + deconGroupBatches.size() + " (group=" + deconGroup + ")" );
 
-			final List< Group< ViewDescription > > deconSubGroups = decon.getDeconvolutionGrouping( deconGroup );
+			final List< Group< ViewDescription > > deconVirtualViews = Group.getGroupsSorted( decon.getDeconvolutionGrouping( deconGroup ) );
 
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): This group contains the following 'virtual views':" );
 
-			for ( final Group< ViewDescription > subGroup : deconSubGroups )
-				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): " + subGroup );
+			for ( final Group< ViewDescription > virtualView : deconVirtualViews )
+				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): " + Group.gvids( Group.getViewsSorted( virtualView.getViews() ) ) );
 
 			final Interval bb = decon.getBoundingBox();
 			final double downsampling = decon.getDownsampling();
 
 			final ProcessInputImages< ViewDescription > fusion = new ProcessInputImages<>(
 					spimData,
-					deconSubGroups,
+					deconVirtualViews,
 					bb,
 					downsampling,
 					true,
@@ -167,9 +167,9 @@ public class Image_Deconvolution implements PlugIn
 
 				final ArrayList< DeconView > deconViews = new ArrayList<>();
 
-				for ( final Group< ViewDescription > virtualView : fusion.getGroups() )
+				for ( final Group< ViewDescription > virtualView : Group.getGroupsSorted( fusion.getGroups() ) )
 				{
-					deconViews.add( new DeconView(
+					final DeconView view = new DeconView(
 							service,
 							fusion.getImages().get( virtualView ),
 							fusion.getNormalizedWeights().get( virtualView ),
@@ -177,10 +177,15 @@ public class Image_Deconvolution implements PlugIn
 							psfType,
 							blockSize,
 							cptf.numParallelBlocks(),
-							filterBlocksForContent ) );
+							filterBlocksForContent );
 
-					if ( deconViews.get( deconViews.size() - 1 ).getNumBlocks() <= 0 )
+					if ( view.getNumBlocks() <= 0 )
 						return false;
+
+					view.setTitle( Group.gvids( virtualView ) );
+					deconViews.add( view );
+
+					IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Added " + view );
 				}
 
 				final DeconViews views = new DeconViews( deconViews, service );

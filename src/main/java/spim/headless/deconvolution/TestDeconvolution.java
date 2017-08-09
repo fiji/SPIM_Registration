@@ -174,7 +174,7 @@ public class TestDeconvolution
 
 			for ( final Group< V > group : fusion.getGroups() )
 			{
-				deconViews.add( new DeconView(
+				final DeconView view = new DeconView(
 						service,
 						fusion.getImages().get( group ),
 						fusion.getNormalizedWeights().get( group ),
@@ -182,10 +182,15 @@ public class TestDeconvolution
 						psfType,
 						blockSize,
 						cptf.numParallelBlocks(),
-						filterBlocksForContent ) );
+						filterBlocksForContent );
 
-				if ( deconViews.get( deconViews.size() - 1 ).getNumBlocks() <= 0 )
+				if ( view.getNumBlocks() <= 0 )
 					return;
+
+				view.setTitle( Group.gvids( group ) );
+				deconViews.add( view );
+
+				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Added " + view );
 			}
 
 			final DeconViews views = new DeconViews( deconViews, service );

@@ -277,7 +277,11 @@ public class MultiViewDeconvolution
 				is.maxChange = Math.max( is.maxChange, stats.get( i ).maxChange );
 			}
 
-			IOFunctions.println( "iteration: " + it + ", view: " + viewNum + " --- sum change: " + is.sumChange + " --- max change per pixel: " + is.maxChange );
+			if ( view.getTitle() != null )
+				IOFunctions.println( "iteration: " + it + ", view: " + viewNum + " [" + view + "] --- sum change: " + is.sumChange + " --- max change per pixel: " + is.maxChange );
+			else
+				IOFunctions.println( "iteration: " + it + ", view: " + viewNum + " --- sum change: " + is.sumChange + " --- max change per pixel: " + is.maxChange );
+
 			++v;
 		}// finish view
 	}

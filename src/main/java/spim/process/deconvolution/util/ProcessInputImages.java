@@ -102,7 +102,7 @@ public class ProcessInputImages< V extends ViewId >
 		this( spimData, groups, bb, Double.NaN );
 	}
 
-	public Collection< Group< V > > getGroups() { return groups; }
+	public ArrayList< Group< V > > getGroups() { return groups; }
 	public Interval getBoundingBox() { return bb; }
 	public Interval getDownsampledBoundingBox() { return downsampledBB; }
 	public HashMap< V, AffineTransform3D > getDownsampledModels() { return models; }

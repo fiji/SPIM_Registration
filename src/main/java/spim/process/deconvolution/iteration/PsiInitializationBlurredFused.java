@@ -53,7 +53,7 @@ public class PsiInitializationBlurredFused implements PsiInitialization
 
 		final FusedNonZeroRandomAccessibleInterval fused = new FusedNonZeroRandomAccessibleInterval( new FinalInterval( psi ), images, weights );
 
-		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Fusing psi" );
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Fusing estimate of deconvolved image ..." );
 
 		FusionTools.copyImg( fused, psi, true, service );
 

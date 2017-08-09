@@ -45,6 +45,8 @@ public class DeconView
 	final int[] blockSize;
 	final List< List< Block > > nonInterferingBlocks;
 
+	String title = null;
+
 	public DeconView(
 			final ExecutorService service,
 			final RandomAccessibleInterval< FloatType > image,
@@ -160,6 +162,8 @@ public class DeconView
 		}
 	}
 
+	public void setTitle( final String title ) { this.title = title; }
+	public String getTitle() { return this.title; }
 	public RandomAccessibleInterval< FloatType > getImage() { return image; }
 	public RandomAccessibleInterval< FloatType > getWeight() { return weight; }
 	public DeconViewPSF getPSF() { return psf; }
@@ -167,6 +171,14 @@ public class DeconView
 	public List< List< Block > > getNonInterferingBlocks() { return nonInterferingBlocks; }
 	public int getNumBlocks() { return numBlocks; }
 
+	@Override
+	public String toString()
+	{
+		if ( title == null )
+			return super.toString();
+		else
+			return getTitle();
+	}
 	public static Pair< Integer, Integer > filterBlocksForContent( final List< List< Block > > blocksList, final RandomAccessibleInterval< FloatType > weight, final ExecutorService service )
 	{
 		int removeBlocks = 0;
@@ -194,8 +206,6 @@ public class DeconView
 
 		return new ValuePair<>( removeBlocks, removeBlockBatch );
 	}
-
-	//public static boolean debug = false;
 
 	public static boolean blockContainsContent( final Block blockStruct, final RandomAccessibleInterval< FloatType > weight, final ExecutorService service )
 	{
