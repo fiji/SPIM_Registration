@@ -18,10 +18,14 @@ import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
 import mpicbg.models.RigidModel3D;
 import mpicbg.models.Tile;
+import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewTransform;
 import mpicbg.spim.data.registration.ViewTransformAffine;
+import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.ViewSetup;
+import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Dimensions;
 import net.imglib2.realtransform.AffineGet;
@@ -531,5 +535,40 @@ public class TransformationTools
 		final ViewTransform vt = new ViewTransformAffine( modelDescription, t );
 		vr.preconcatenateTransform( vt );
 		vr.updateModel();
+	}
+
+	public static double getAverageAnisotropyFactor( final SpimData spimData, final Collection< ? extends ViewId > views )
+	{
+		final SequenceDescription seq = spimData.getSequenceDescription();
+
+		double avgFactor = 0;
+		int count = 0;
+
+		for ( final ViewId vd : views )
+		{
+			final ViewSetup vs = seq.getViewSetups().get( vd.getViewSetupId() );
+
+			final VoxelDimensions vx = vs.getVoxelSize();
+
+			if ( vx != null )
+			{
+				final double x = vx.dimension( 0 );
+				final double y = vx.dimension( 1 );
+				final double z = vx.dimension( 2 );
+
+				if ( x == y )
+				{
+					avgFactor += z / x;
+					++count;
+				}
+			}
+		}
+
+		if ( count > 0 )
+			avgFactor /= (double)count;
+		else
+			avgFactor = 1.0;
+
+		return avgFactor;
 	}
 }
