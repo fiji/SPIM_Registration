@@ -371,7 +371,7 @@ public class DownsampleTools
 	public static RandomAccessibleInterval< FloatType > openAndDownsample(
 			final ImgLoader imgLoader,
 			final ViewDescription vd,
-			final AffineTransform3D t,
+			final AffineTransform3D mipMapTransform,
 			final int downsampleXY,
 			final int downsampleZ,
 			final boolean openCompletely )
@@ -416,7 +416,7 @@ public class DownsampleTools
 			final int fy = (int)Math.round( mipmapResolutions[ bestLevel ][ 1 ] );
 			final int fz = (int)Math.round( mipmapResolutions[ bestLevel ][ 2 ] );
 
-			t.set( mrImgLoader.getSetupImgLoader( vd.getViewSetupId() ).getMipmapTransforms()[ bestLevel ] );
+			mipMapTransform.set( mrImgLoader.getSetupImgLoader( vd.getViewSetupId() ).getMipmapTransforms()[ bestLevel ] );
 
 			dsx /= fx;
 			dsy /= fy;
@@ -438,21 +438,25 @@ public class DownsampleTools
 				input = imgLoader.getSetupImgLoader( vd.getViewSetupId() ).getFloatImage( vd.getTimePointId(), false, LOAD_COMPLETELY );
 			else
 				input = imgLoader.getSetupImgLoader( vd.getViewSetupId() ).getFloatImage( vd.getTimePointId(), false );
-			t.identity();
+
+			mipMapTransform.identity();
 		}
 
 		final ImgFactory< net.imglib2.type.numeric.real.FloatType > f = ((Img<net.imglib2.type.numeric.real.FloatType>)input).factory();
 
-		// fix scaling
-		t.set( t.get( 0, 0 ) * dsx, 0, 0 );
-		t.set( t.get( 1, 1 ) * dsy, 1, 1 );
-		t.set( t.get( 2, 2 ) * dsz, 2, 2 );
+		// the additional downsampling (performed below)
+		final AffineTransform3D additonalDS = new AffineTransform3D();
+		additonalDS.set( dsx, 0.0, 0.0, 0.0, 0.0, dsy, 0.0, 0.0, 0.0, 0.0, dsz, 0.0 );
 
-		// fix translation
-		t.set( t.get( 0, 3 ) * dsx, 0, 3 );
-		t.set( t.get( 1, 3 ) * dsy, 1, 3 );
-		t.set( t.get( 2, 3 ) * dsz, 2, 3 );
-		
+		// we need to concatenate since when correcting for the downsampling we first multiply by whatever
+		// the manual downsampling did, and just then by the scaling+offset of the HDF5
+		//
+		// Here is an example of what happens (note that the 0.5 pixel shift is not changed)
+		// HDF5 MipMap Transform   (2.0, 0.0, 0.0, 0.5, 0.0, 2.0, 0.0, 0.5, 0.0, 0.0, 2.0, 0.5)
+		// Additional Downsampling (4.0, 0.0, 0.0, 0.0, 0.0, 4.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0)
+		// Resulting model         (8.0, 0.0, 0.0, 0.5, 0.0, 8.0, 0.0, 0.5, 0.0, 0.0, 4.0, 0.5)
+		mipMapTransform.concatenate( additonalDS );
+
 		for ( ;dsx > 1; dsx /= 2 )
 			input = Downsample.simple2x( input, f, new boolean[]{ true, false, false } );
 
