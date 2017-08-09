@@ -143,10 +143,13 @@ public class Interest_Point_Detection implements PlugIn
 		if ( illums.size() > 1 )
 			gd.addCheckbox( "Group_illuminations", defaultGroupIllums );
 
-		if ( !FusionGUI.isMultiResolution( data ) )
-			gd.addMessage( "WARNING: Grouping will be very slow since no Multiresolution Format like HDF5 is used.", GUIHelper.smallStatusFont, GUIHelper.warning );
-		else
-			gd.addMessage( "You are using a Multiresolution ImgLoader, Grouping should be ok.", GUIHelper.smallStatusFont, GUIHelper.good );
+		if ( tiles.size() > 1 || illums.size() > 1 )
+		{
+			if ( !FusionGUI.isMultiResolution( data ) )
+				gd.addMessage( "WARNING: Grouping will be very slow since no Multiresolution Format like HDF5 is used.", GUIHelper.smallStatusFont, GUIHelper.warning );
+			else
+				gd.addMessage( "You are using a Multiresolution ImgLoader, Grouping should be ok.", GUIHelper.smallStatusFont, GUIHelper.good );
+		}
 
 		gd.addMessage( "" );
 		GUIHelper.addWebsite( gd );
