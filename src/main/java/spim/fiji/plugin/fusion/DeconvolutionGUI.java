@@ -41,6 +41,7 @@ import spim.process.deconvolution.MultiViewDeconvolution;
 import spim.process.deconvolution.iteration.ComputeBlockThreadCPUFactory;
 import spim.process.deconvolution.iteration.ComputeBlockThreadCUDAFactory;
 import spim.process.deconvolution.iteration.ComputeBlockThreadFactory;
+import spim.process.deconvolution.iteration.PsiInitialization.PsiInit;
 import spim.process.export.AppendSpimData2HDF5;
 import spim.process.export.DisplayImage;
 import spim.process.export.ExportSpimData2HDF5;
@@ -92,11 +93,16 @@ public class DeconvolutionGUI implements FusionExportInterface
 			"specify maximal blocksize manually",
 			"one block (??????x??????x??????) for the entire image" };
 
-	public static String[] psfTypeString = new String[]{
+	public static String[] psfTypeChoice = new String[]{
 		"Efficient Bayesian - Optimization II (very fast, imprecise)", 
 		"Efficient Bayesian - Optimization I (fast, precise)", 
 		"Efficient Bayesian (less fast, more precise)", 
 		"Independent (slow, very precise)" };
+
+	public static String[] psiInitChoice = new String[]{
+			"Blurred, fused image (suggested, higher compute effort)",
+			"Average intensity (higer compute effort)",
+			"Approximated average intensity (fast option)", };
 
 	public static String[] splittingTypes = new String[]{
 			"Each timepoint & channel",
@@ -109,6 +115,7 @@ public class DeconvolutionGUI implements FusionExportInterface
 	public static int defaultWeightCacheType = 1;
 	public static double defaultDownsampling = 1.0;
 	public static int defaultPSFType = 1;
+	public static int defaultPsiInit = 0;
 	public static double defaultOsemSpeedup = 1;
 	public static int defaultNumIterations = 10;
 	public static boolean defaultDebugMode = false;
@@ -117,6 +124,7 @@ public class DeconvolutionGUI implements FusionExportInterface
 	public static double defaultLambda = 0.006;
 	public static int defaultBlockSizeIndex = 1;
 	public static int defaultBlockSizeX = 384, defaultBlockSizeY = 384, defaultBlockSizeZ = 384;
+	public static boolean defaultTestEmptyBlocks = true;
 	public static int defaultCacheBlockSize = MultiViewDeconvolution.cellDim;
 	public static int defaultCacheMaxNumBlocks = MultiViewDeconvolution.maxCacheSize;
 	public static int defaultPsiCopyBlockSize = MultiViewDeconvolution.cellDim * 2;
@@ -136,6 +144,7 @@ public class DeconvolutionGUI implements FusionExportInterface
 	protected int cacheTypeInputImg = defaultInputImgCacheType;
 	protected int cacheTypeWeights = defaultWeightCacheType;
 	protected int psfType = defaultPSFType;
+	protected int psiInit = defaultPsiInit;
 	protected double osemSpeedup = defaultOsemSpeedup;
 	protected int numIterations = defaultNumIterations;
 	protected boolean debugMode = defaultDebugMode;
@@ -144,6 +153,7 @@ public class DeconvolutionGUI implements FusionExportInterface
 	protected double lambda = defaultLambda;
 	protected int blockSizeIndex = defaultBlockSizeIndex;
 	protected int[] blockSize = new int[]{ defaultBlockSizeX, defaultBlockSizeY, defaultBlockSizeZ };
+	protected boolean testEmptyBlocks = defaultTestEmptyBlocks;
 	protected int cacheBlockSize = defaultCacheBlockSize;
 	protected int cacheMaxNumBlocks = defaultCacheMaxNumBlocks;
 	protected int psiCopyBlockSize = defaultPsiCopyBlockSize;
@@ -231,6 +241,7 @@ public class DeconvolutionGUI implements FusionExportInterface
 	public ImgDataType getInputImgCacheType() { return ImgDataType.values()[ cacheTypeInputImg ]; }
 	public ImgDataType getWeightCacheType() { return ImgDataType.values()[ cacheTypeWeights ]; }
 	public PSFTYPE getPSFType() { return PSFTYPE.values()[ psfType ]; }
+	public PsiInit getPsiInitType() { return PsiInit.values()[ psiInit ]; }
 	public double getOSEMSpeedUp() { return osemSpeedup; }
 	public int getNumIterations() { return numIterations; }
 	public boolean getDebugMode() { return debugMode; }
@@ -238,6 +249,7 @@ public class DeconvolutionGUI implements FusionExportInterface
 	public boolean getUseTikhonov() { return useTikhonov; }
 	public float getLambda() { return useTikhonov ? (float)lambda : 0.0f; }
 	public int[] getComputeBlockSize() { return blockSize; }
+	public boolean testEmptyBlocks() { return testEmptyBlocks; }
 	public int getCacheBlockSize() { return cacheBlockSize; }
 	public int getCacheMaxNumBlocks(){ return cacheMaxNumBlocks; }
 	public int getPsiCopyBlockSize() { return psiCopyBlockSize; }
@@ -280,7 +292,8 @@ public class DeconvolutionGUI implements FusionExportInterface
 
 		gd.addMessage( "" );
 
-		gd.addChoice( "Type_of_iteration", psfTypeString, psfTypeString[ defaultPSFType ] );
+		gd.addChoice( "Type_of_iteration", psfTypeChoice, psfTypeChoice[ defaultPSFType ] );
+		gd.addChoice( "Initialize_with", psiInitChoice, psiInitChoice[ defaultPsiInit ] );
 		gd.addNumericField( "OSEM_acceleration", defaultOsemSpeedup, 1 );
 		gd.addNumericField( "Number_of_iterations", defaultNumIterations, 0 );
 		gd.addCheckbox( "Debug_mode", defaultDebugMode );
@@ -335,6 +348,7 @@ public class DeconvolutionGUI implements FusionExportInterface
 		cacheTypeInputImg = defaultInputImgCacheType = gd.getNextChoiceIndex();
 		cacheTypeWeights = defaultWeightCacheType = gd.getNextChoiceIndex();
 		psfType = defaultPSFType = gd.getNextChoiceIndex();
+		psiInit = defaultPsiInit = gd.getNextChoiceIndex();
 		osemSpeedup = defaultOsemSpeedup = gd.getNextNumber();
 		numIterations = defaultNumIterations = (int)Math.round( gd.getNextNumber() );
 		debugMode = defaultDebugMode = gd.getNextBoolean();
@@ -367,7 +381,8 @@ public class DeconvolutionGUI implements FusionExportInterface
 		IOFunctions.println( "Downsampled Bounding Box: " + getDownsampledBoundingBox() );
 		IOFunctions.println( "Input Image Cache Type: " + FusionTools.imgDataTypeChoice[ getInputImgCacheType().ordinal() ] );
 		IOFunctions.println( "Weight Cache Type: " + FusionTools.imgDataTypeChoice[ getWeightCacheType().ordinal() ] );
-		IOFunctions.println( "PSF Type: " + psfTypeString[ getPSFType().ordinal() ] );
+		IOFunctions.println( "PSF Type: " + psfTypeChoice[ getPSFType().ordinal() ] );
+		IOFunctions.println( "Psi Init: " + psiInitChoice[ getPsiInitType().ordinal() ] );
 		IOFunctions.println( "OSEMSpeedup: " + osemSpeedup );
 		IOFunctions.println( "Num Iterations: " + numIterations );
 		IOFunctions.println( "Debug Mode: " + debugMode );
@@ -375,6 +390,7 @@ public class DeconvolutionGUI implements FusionExportInterface
 		IOFunctions.println( "use Tikhonov: " + useTikhonov );
 		if ( useTikhonov ) IOFunctions.println( "Tikhonov Lambda: " + lambda );
 		IOFunctions.println( "Compute block size: " + Util.printCoordinates( blockSize ) );
+		IOFunctions.println( "Test for empty blocks: " + testEmptyBlocks );
 		IOFunctions.println( "Cache block size: " + cacheBlockSize );
 		IOFunctions.println( "Cache max num blocks: " + cacheMaxNumBlocks );
 		IOFunctions.println( "Deconvolved/Copy block size: " + psiCopyBlockSize );
@@ -480,7 +496,13 @@ public class DeconvolutionGUI implements FusionExportInterface
 			gd.addNumericField( "Compute_blocksize_y", defaultBlockSizeY, 0 );
 			gd.addNumericField( "Compute_blocksize_z", defaultBlockSizeZ, 0 );
 
-			gd.addMessage( "Note: block sizes shouldn't be smaller than 128 pixels", GUIHelper.smallStatusFont );
+			gd.addMessage( "Note: block sizes shouldn't be smaller than 128 pixels since it might result in a\n"
+					+ "too small or even negative effective blocksize (blocksize-2*kernelsize)", GUIHelper.smallStatusFont );
+			gd.addMessage( "" );
+
+			gd.addCheckbox( "Remove_empty_blocks", defaultTestEmptyBlocks );
+			gd.addMessage( "Note: if selected, all blocks of each virtual input view are scanned to test\n"
+					+ "if some of them are entirely empty. This takes some time, but if some are, it saves a lot.", GUIHelper.smallStatusFont );
 			gd.addMessage( "" );
 
 			gd.addNumericField( "Deconvolved_image_block_size", defaultPsiCopyBlockSize, 0 );
@@ -503,6 +525,8 @@ public class DeconvolutionGUI implements FusionExportInterface
 					defaultBlockSizeX = Math.max( 1, (int)Math.round( gd.getNextNumber() ) ),
 					defaultBlockSizeY = Math.max( 1, (int)Math.round( gd.getNextNumber() ) ),
 					defaultBlockSizeZ = Math.max( 1, (int)Math.round( gd.getNextNumber() ) ) };
+
+			this.testEmptyBlocks = defaultTestEmptyBlocks = gd.getNextBoolean();
 
 			this.psiCopyBlockSize = defaultPsiCopyBlockSize = Math.max( 1, (int)Math.round( gd.getNextNumber() ) );
 
@@ -572,12 +596,16 @@ public class DeconvolutionGUI implements FusionExportInterface
 
 			gd.addMessage( "" );
 
-			gd.addMessage( "Note: both sizes are in local coordinates of the input views. Increase one or both of those values if stripy artifacts\n" +
-						   "are visible in the deconvolution result, or choose additional smooth blending as an option\n" +
-						   "The boundary pixels describe a range of pixels at the edge of each input view that are discarded because of the PSF size,\n" +
-						   "it should typically correspond to half the size of the extracted PSF.\n" +
-						   "A negative boundary value means that the deconvolution will make an educated guess even on pixels that were not\n" +
-						   "directly imaged,based on the fact that parts of their signal is visible due to the size of the PSF", GUIHelper.smallStatusFont );
+			gd.addMessage( "Note: both sizes are in coordinates of the deconvolved image. If you experience stripy artifacts, try to\n" +
+						   " - increase the blending boundary\n" +
+						   " - increase the blending range\n" +
+						   " - make sure you use \"Blurred, fused image\" as initialization for the deconvolved image (main dialog)\n" +
+						   " - enable \"Additional smooth blending\" \n" +
+						   "The blending range is independent of the downsampling. The blending boundary will be adjusted for downsampling,\n" +
+						   "please choose it relative to the PSF size (<50%). The boundary pixels describe a range of pixels at the edge of\n" +
+						   "each input that are discarded. A negative blending boundary value means that the deconvolution will make an\n" + 
+						   "educated guess even for pixels that were not imaged, based on the fact that parts of their signal is visible due\n" +
+						   "to the PSF", GUIHelper.smallStatusFont );
 
 			gd.addMessage( "" );
 

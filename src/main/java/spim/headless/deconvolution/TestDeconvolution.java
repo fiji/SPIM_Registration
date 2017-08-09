@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 import ij.IJ;
@@ -20,21 +19,19 @@ import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.array.ArrayImgFactory;
-import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.FloatType;
 import simulation.imgloader.SimulatedBeadsImgLoader;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
-import spim.fiji.spimdata.pointspreadfunctions.PointSpreadFunction;
-import spim.fiji.spimdata.pointspreadfunctions.PointSpreadFunctions;
-import spim.process.deconvolution.MultiViewDeconvolution;
 import spim.process.deconvolution.DeconView;
-import spim.process.deconvolution.DeconViews;
 import spim.process.deconvolution.DeconViewPSF.PSFTYPE;
+import spim.process.deconvolution.DeconViews;
+import spim.process.deconvolution.MultiViewDeconvolution;
 import spim.process.deconvolution.iteration.ComputeBlockThreadCPUFactory;
 import spim.process.deconvolution.iteration.ComputeBlockThreadFactory;
 import spim.process.deconvolution.iteration.PsiInitialization;
+import spim.process.deconvolution.iteration.PsiInitialization.PsiInit;
 import spim.process.deconvolution.iteration.PsiInitializationAvgApprox;
 import spim.process.deconvolution.iteration.PsiInitializationAvgPrecise;
 import spim.process.deconvolution.iteration.PsiInitializationBlurredFused;
@@ -42,13 +39,11 @@ import spim.process.deconvolution.util.PSFPreparation;
 import spim.process.deconvolution.util.ProcessInputImages;
 import spim.process.export.DisplayImage;
 import spim.process.fusion.FusionTools;
-import spim.process.fusion.FusionTools.ImgDataType;
 import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
 import spim.process.fusion.transformed.weightcombination.CombineWeightsRandomAccessibleInterval;
 import spim.process.fusion.transformed.weightcombination.CombineWeightsRandomAccessibleInterval.CombineType;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 import spim.process.psf.PSFCombination;
-import spim.process.psf.PSFExtraction;
 
 public class TestDeconvolution
 {
@@ -146,7 +141,7 @@ public class TestDeconvolution
 		final float lambda = 0.0006f;
 		final PSFTYPE psfType = PSFTYPE.INDEPENDENT;
 		final boolean filterBlocksForContent = true;
-		final boolean preciseAverage = false;
+		final PsiInit psiInitType = PsiInit.FUSED_BLURRED;
 		final boolean debug = true;
 		final int debugInterval = 1;
 
@@ -163,13 +158,12 @@ public class TestDeconvolution
 
 			final PsiInitialization psiInit;
 
-			psiInit = new PsiInitializationBlurredFused();
-			/*
-			if ( preciseAverage )
+			if ( psiInitType == PsiInit.FUSED_BLURRED )
+				psiInit = new PsiInitializationBlurredFused();
+			else if ( psiInitType == PsiInit.AVG )
 				psiInit = new PsiInitializationAvgPrecise();
 			else
 				psiInit = new PsiInitializationAvgApprox();
-			*/
 
 			if ( filterBlocksForContent )
 				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Setting up blocks for deconvolution and testing for empty ones that can be dropped." );

@@ -26,8 +26,10 @@ import spim.process.deconvolution.DeconViews;
 import spim.process.deconvolution.MultiViewDeconvolution;
 import spim.process.deconvolution.iteration.ComputeBlockThreadFactory;
 import spim.process.deconvolution.iteration.PsiInitialization;
+import spim.process.deconvolution.iteration.PsiInitialization.PsiInit;
 import spim.process.deconvolution.iteration.PsiInitializationAvgApprox;
 import spim.process.deconvolution.iteration.PsiInitializationAvgPrecise;
+import spim.process.deconvolution.iteration.PsiInitializationBlurredFused;
 import spim.process.deconvolution.util.PSFPreparation;
 import spim.process.deconvolution.util.ProcessInputImages;
 import spim.process.export.ImgExport;
@@ -141,8 +143,8 @@ public class Image_Deconvolution implements PlugIn
 			final int[] blockSize = decon.getComputeBlockSize();
 			final int numIterations = decon.getNumIterations();
 			final PSFTYPE psfType = decon.getPSFType();
-			final boolean preciseAverage = false;
-			final boolean filterBlocksForContent = true;
+			final PsiInit psiInitType = decon.getPsiInitType();
+			final boolean filterBlocksForContent = decon.testEmptyBlocks();
 			final boolean debug = decon.getDebugMode();
 			final int debugInterval = decon.getDebugInterval();
 			final ComputeBlockThreadFactory cptf = decon.getComputeBlockThreadFactory();
@@ -151,7 +153,9 @@ public class Image_Deconvolution implements PlugIn
 			{
 				final PsiInitialization psiInit;
 
-				if ( preciseAverage )
+				if ( psiInitType == PsiInit.FUSED_BLURRED )
+					psiInit = new PsiInitializationBlurredFused();
+				else if ( psiInitType == PsiInit.AVG )
 					psiInit = new PsiInitializationAvgPrecise();
 				else
 					psiInit = new PsiInitializationAvgApprox();
