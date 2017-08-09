@@ -362,7 +362,7 @@ public class DownsampleTools
 	 * 
 	 * @param imgLoader the imgloader
 	 * @param vd the view description
-	 * @param t - will be filled if downsampling is performed, otherwise identity transform
+	 * @param mipMapTransform - will be filled if downsampling is performed, otherwise identity transform
 	 * @param downsampleXY - specify which downsampling (e.g. 1,2,4,8 )
 	 * @param downsampleZ - specify which downsampling (e.g. 1,2,4,8 )
 	 * @param openCompletely - whether to try to open the file entirely
