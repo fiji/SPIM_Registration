@@ -328,8 +328,8 @@ public class FusionTools
 	 * Compute how much blending in the input has to be done so the target values blending and border are achieved in the fused image
 	 *
 	 * @param vd - which view
-	 * @param blending - the target blending range
-	 * @param border - the target blending border
+	 * @param blending - the target blending range, e.g. 40
+	 * @param border - the target blending border, e.g. 0
 	 * @param transformationModel - the transformation model used to map from the (downsampled) input to the output
 	 */
 	public static void adjustBlending( final BasicViewDescription< ? extends BasicViewSetup > vd, final float[] blending, final float[] border, final AffineTransform3D transformationModel )
@@ -352,8 +352,8 @@ public class FusionTools
 	 * Compute how much sigma in the input has to be applied so the target values of sigma1 and 2 are achieved in the fused image
 	 *
 	 * @param vd - which view
-	 * @param blending - the target blending range
-	 * @param border - the target blending border
+	 * @param sigma1 - the target sigma1 for entropy approximation, e.g. 20
+	 * @param sigma2 - the target sigma2 for entropy approximation, e.g. 40
 	 * @param transformationModel - the transformation model used to map from the (downsampled) input to the output
 	 */
 	public static void adjustContentBased( final BasicViewDescription< ? extends BasicViewSetup > vd, final double[] sigma1, final double[] sigma2, final AffineTransform3D transformationModel )
