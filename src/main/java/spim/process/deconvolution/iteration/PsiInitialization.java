@@ -9,6 +9,8 @@ import spim.process.deconvolution.DeconView;
 
 public interface PsiInitialization
 {
+	public enum PsiInit { FUSED_BLURRED, AVG, APPROX_AVG };
+
 	public boolean runInitialization( final Img< FloatType > psi, final List< DeconView > views, final ExecutorService service );
 
 	/**
