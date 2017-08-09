@@ -19,10 +19,12 @@ public class ManageFusionDialogListeners
 	final GenericDialog gd;
 	final TextField downsampleField;
 	final Choice boundingBoxChoice, pixelTypeChoice, cachingChoice, splitChoice;
-	final Checkbox contentbasedCheckbox;
+	final Checkbox contentbasedCheckbox, anisoCheckbox;
 	final Label label1;
 	final Label label2;
 	final FusionGUI fusion;
+
+	double anisoF;
 
 	public ManageFusionDialogListeners(
 			final GenericDialog gd,
@@ -31,6 +33,7 @@ public class ManageFusionDialogListeners
 			final Choice pixelTypeChoice,
 			final Choice cachingChoice,
 			final Checkbox contentbasedCheckbox,
+			final Checkbox anisoCheckbox,
 			final Choice splitChoice,
 			final Label label1,
 			final Label label2,
@@ -42,6 +45,7 @@ public class ManageFusionDialogListeners
 		this.pixelTypeChoice = pixelTypeChoice;
 		this.cachingChoice = cachingChoice;
 		this.contentbasedCheckbox = contentbasedCheckbox;
+		this.anisoCheckbox = anisoCheckbox;
 		this.splitChoice = splitChoice;
 		this.label1 = label1;
 		this.label2 = label2;
@@ -64,28 +68,45 @@ public class ManageFusionDialogListeners
 
 		this.contentbasedCheckbox.addItemListener( new ItemListener() { @Override
 			public void itemStateChanged(ItemEvent e) { update(); } });
-	}
+
+		if ( this.anisoCheckbox != null )
+		{
+			System.out.println( "Add" );
+			this.anisoF = fusion.getAnisotropyFactor();
+			this.anisoCheckbox.addItemListener( new ItemListener() { @Override
+				public void itemStateChanged(ItemEvent e) { update(); } });
+		}
+		else
+		{
+			System.out.println( "null" );
+		}
+}
 	
 	public void update()
 	{
-		/*
-		System.out.println( boundingBoxChoice.getSelectedItem() );
-		System.out.println( downsampleField.getText() );
-		System.out.println( pixelTypeChoice.getSelectedItem() );
-		System.out.println( cachingChoice.getSelectedItem() );
-		System.out.println( contentbasedCheckbox.getState() );
-		System.out.println( splitChoice.getSelectedItem() );
-		*/
-
 		fusion.boundingBox = boundingBoxChoice.getSelectedIndex();
 		fusion.downsampling = Integer.parseInt( downsampleField.getText() );
 		fusion.pixelType = pixelTypeChoice.getSelectedIndex();
 		fusion.cacheType = cachingChoice.getSelectedIndex();
 		fusion.useContentBased = contentbasedCheckbox.getState();
 		fusion.splittingType = splitChoice.getSelectedIndex();
+		if ( anisoCheckbox != null )
+		{
+			fusion.preserveAnisotropy = anisoCheckbox.getState();
+			
+			if ( fusion.preserveAnisotropy )
+				this.anisoF = fusion.getAnisotropyFactor();
+			else
+				this.anisoF = 1.0;
+		}
+		else
+		{
+			this.anisoF = 1.0;
+			fusion.preserveAnisotropy = false;
+		}
 
 		final BoundingBox bb = fusion.allBoxes.get( fusion.boundingBox );
-		final long numPixels = FusionTools.numPixels( bb, fusion.downsampling );
+		final long numPixels = Math.round( FusionTools.numPixels( bb, fusion.downsampling ) / anisoF );
 
 		final int bytePerPixel;
 		if ( fusion.pixelType == 1 )
@@ -98,13 +119,19 @@ public class ManageFusionDialogListeners
 		label1.setText( "Fused image: " + megabytes + " MB, required total memory ~" + totalRAM( megabytes, bytePerPixel ) +  " MB" );
 		label1.setForeground( GUIHelper.good );
 
-		final int[] min = bb.getMin();
-		final int[] max = bb.getMax();
+		final int[] min = bb.getMin().clone();
+		final int[] max = bb.getMax().clone();
+
+		if ( fusion.preserveAnisotropy )
+		{
+			min[ 2 ] = (int)Math.round( Math.floor( min[ 2 ] / anisoF ) );
+			max[ 2 ] = (int)Math.round( Math.ceil( max[ 2 ] / anisoF ) );
+		}
 
 		label2.setText( "Dimensions: " + 
 				Math.round( (max[ 0 ] - min[ 0 ] + 1)/fusion.downsampling ) + " x " + 
 				Math.round( (max[ 1 ] - min[ 1 ] + 1)/fusion.downsampling ) + " x " + 
-				Math.round( (max[ 2 ] - min[ 2 ] + 1)/fusion.downsampling ) + " pixels @ " + FusionGUI.pixelTypes[ fusion.pixelType ] );
+				Math.round( (max[ 2 ] - min[ 2 ] + 1)/(fusion.downsampling ) ) + " pixels @ " + FusionGUI.pixelTypes[ fusion.pixelType ] );
 	}
 
 	public long totalRAM( long fusedSizeMB, final int bytePerPixel )

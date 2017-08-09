@@ -37,6 +37,7 @@ import spim.process.export.Save3dTIFF;
 import spim.process.fusion.FusionTools;
 import spim.process.fusion.transformed.TransformVirtual;
 import spim.process.interestpointdetection.methods.downsampling.DownsampleTools;
+import spim.process.interestpointregistration.TransformationTools;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class FusionGUI implements FusionExportInterface
@@ -64,6 +65,7 @@ public class FusionGUI implements FusionExportInterface
 
 	public static boolean defaultUseBlending = true;
 	public static boolean defaultUseContentBased = false;
+	public static boolean defaultPreserveAnisotropy = false;
 
 	public final static ArrayList< ImgExport > staticImgExportAlgorithms = new ArrayList< ImgExport >();
 	public final static String[] imgExportDescriptions;
@@ -77,6 +79,8 @@ public class FusionGUI implements FusionExportInterface
 	protected double downsampling = defaultDownsampling;
 	protected boolean useBlending = defaultUseBlending;
 	protected boolean useContentBased = defaultUseContentBased;
+	protected boolean preserveAnisotropy = defaultPreserveAnisotropy;
+	protected double avgAnisoF = 1.0;
 	protected int imgExport = defaultImgExportAlgorithm;
 
 	static
@@ -111,6 +115,9 @@ public class FusionGUI implements FusionExportInterface
 
 		// get all bounding boxes and two extra ones
 		this.allBoxes = BoundingBoxTools.getAllBoundingBoxes( spimData, views, true );
+
+		// average anisotropy of input views
+		this.avgAnisoF = TransformationTools.getAverageAnisotropyFactor( spimData, views );
 	}
 
 	@Override
@@ -120,6 +127,7 @@ public class FusionGUI implements FusionExportInterface
 	public List< ViewId > getViews() { return views; }
 
 	public Interval getBoundingBox() { return allBoxes.get( boundingBox ); }
+	public void setBoundingBox( final Interval bb ) { this.allBoxes.set( boundingBox, new BoundingBox( bb ) ); }
 
 	@Override
 	public Interval getDownsampledBoundingBox()
@@ -143,6 +151,10 @@ public class FusionGUI implements FusionExportInterface
 
 	public boolean useContentBased() { return useContentBased; }
 
+	public boolean preserveAnisotropy() { return preserveAnisotropy; }
+
+	public double getAnisotropyFactor() { return avgAnisoF; }
+
 	@Override
 	public int getSplittingType() { return splittingType; }
 
@@ -165,11 +177,21 @@ public class FusionGUI implements FusionExportInterface
 		gd.addChoice( "Pixel_type", pixelTypes, pixelTypes[ defaultPixelType ] );
 		gd.addChoice( "Interpolation", interpolationTypes, interpolationTypes[ defaultInterpolation ] );
 		gd.addChoice( "Image ", FusionTools.imgDataTypeChoice, FusionTools.imgDataTypeChoice[ defaultCache ] );
-		gd.addMessage( "We advise to use use VIRTUAL for saving at TIFF, and CACHED for saving as HDF5 if memory is low", GUIHelper.smallStatusFont, GUIHelper.neutral );
+		gd.addMessage( "We advise using VIRTUAL for saving at TIFF, and CACHED for saving as HDF5 if memory is low", GUIHelper.smallStatusFont, GUIHelper.neutral );
 		gd.addMessage( "" );
 
 		gd.addCheckbox( "Blend images smoothly", defaultUseBlending );
 		gd.addCheckbox( "Use content based fusion (warning, huge memory requirements)", defaultUseContentBased );
+
+		gd.addMessage( "" );
+
+		if ( avgAnisoF > 1.0 )
+		{
+			gd.addCheckbox( "Preserve_original data anisotropy (shrink image " + TransformationTools.f.format( avgAnisoF ) + " times in z) ", defaultPreserveAnisotropy );
+			gd.addMessage(
+					"WARNING: Enabling this means to 'shrink' the dataset in z the same way the input\n" +
+					"images were scaled. Only use this if this is not a multiview dataset.", GUIHelper.smallStatusFont, GUIHelper.warning );
+		}
 
 		gd.addMessage( "" );
 
@@ -188,6 +210,7 @@ public class FusionGUI implements FusionExportInterface
 				(Choice)gd.getChoices().get( 1 ),
 				(Choice)gd.getChoices().get( 3 ),
 				(Checkbox)gd.getCheckboxes().get( 1 ),
+				avgAnisoF > 1.0 ? (Checkbox)gd.getCheckboxes().get( 2 ) : null,
 				(Choice)gd.getChoices().get( 4 ),
 				label1,
 				label2,
@@ -211,6 +234,10 @@ public class FusionGUI implements FusionExportInterface
 		cacheType = defaultCache = gd.getNextChoiceIndex();
 		useBlending = defaultUseBlending = gd.getNextBoolean();
 		useContentBased = defaultUseContentBased = gd.getNextBoolean();
+		if ( avgAnisoF > 1.0 )
+			preserveAnisotropy = defaultPreserveAnisotropy = gd.getNextBoolean();
+		else
+			preserveAnisotropy = defaultPreserveAnisotropy = false;
 		splittingType = defaultSplittingType = gd.getNextChoiceIndex();
 		imgExport = defaultImgExportAlgorithm = gd.getNextChoiceIndex();
 
@@ -223,6 +250,8 @@ public class FusionGUI implements FusionExportInterface
 		IOFunctions.println( "CacheType: " + FusionTools.imgDataTypeChoice[ getCacheType() ] );
 		IOFunctions.println( "Blending: " + useBlending );
 		IOFunctions.println( "Content-based: " + useContentBased );
+		IOFunctions.println( "Preserve Anisotropy: " + preserveAnisotropy );
+		IOFunctions.println( "Anisotropy: " + avgAnisoF );
 		IOFunctions.println( "Split by: " + splittingTypes[ getSplittingType() ] );
 		IOFunctions.println( "Image Export: " + imgExportDescriptions[ imgExport ] );
 		IOFunctions.println( "ImgLoader.isVirtual(): " + isImgLoaderVirtual() );

@@ -24,6 +24,20 @@ public class BoundingBox implements Interval, Comparable< BoundingBox >
 		this.title = "DefaultBoundingBox";
 	}
 
+	public BoundingBox( final Interval interval )
+	{
+		this.min = new int[ interval.numDimensions() ];
+		this.max = new int[ interval.numDimensions() ];
+
+		for ( int d = 0; d < interval.numDimensions(); ++d )
+		{
+			min[ d ] = (int)interval.min( d );
+			max[ d ] = (int)interval.max( d );
+		}
+
+		this.title = "DefaultBoundingBox";
+	}
+
 	public void setTitle( final String title ) { this.title = title; }
 	public String getTitle() { return title; }
 
