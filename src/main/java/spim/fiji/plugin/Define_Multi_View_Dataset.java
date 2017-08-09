@@ -34,8 +34,8 @@ import java.awt.event.ItemEvent;
 import java.util.ArrayList;
 
 import mpicbg.spim.io.IOFunctions;
-import spim.fiji.ImgLib2Temp.Pair;
-import spim.fiji.ImgLib2Temp.ValuePair;
+import net.imglib2.util.Pair;
+import net.imglib2.util.ValuePair;
 import spim.fiji.datasetmanager.DHM;
 import spim.fiji.datasetmanager.LightSheetZ1;
 import spim.fiji.datasetmanager.MicroManager;

@@ -43,7 +43,7 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
-import spim.fiji.ImgLib2Temp.Pair;
+import net.imglib2.util.Pair;
 import spim.fiji.datasetmanager.MicroManager;
 
 public class LegacyMicroManagerImgLoader extends AbstractImgLoader

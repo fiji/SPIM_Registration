@@ -65,8 +65,8 @@ import mpicbg.spim.io.IOFunctions;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.util.Util;
-import spim.fiji.ImgLib2Temp.Pair;
-import spim.fiji.ImgLib2Temp.ValuePair;
+import net.imglib2.util.Pair;
+import net.imglib2.util.ValuePair;
 
 /**
  * Adapted version from the MicroManager codebase that supports the new diSPIM related tags

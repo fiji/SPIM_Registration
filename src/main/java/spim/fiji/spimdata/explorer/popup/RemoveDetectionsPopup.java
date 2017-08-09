@@ -35,7 +35,7 @@ import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
-import spim.fiji.ImgLib2Temp.Pair;
+import net.imglib2.util.Pair;
 import spim.fiji.plugin.Interactive_Remove_Detections;
 import spim.fiji.plugin.ThinOut_Detections;
 import spim.fiji.plugin.removedetections.InteractiveProjections;

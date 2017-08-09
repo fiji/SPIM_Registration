@@ -24,8 +24,8 @@ package spim.process.interestpointregistration;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 
-import spim.fiji.ImgLib2Temp.Pair;
-import spim.fiji.ImgLib2Temp.ValuePair;
+import net.imglib2.util.Pair;
+import net.imglib2.util.ValuePair;
 import mpicbg.models.Model;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.PointMatch;

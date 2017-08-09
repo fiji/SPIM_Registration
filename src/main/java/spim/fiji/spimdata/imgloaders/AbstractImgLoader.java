@@ -35,8 +35,8 @@ import net.imglib2.FinalDimensions;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
-import spim.fiji.ImgLib2Temp.Pair;
-import spim.fiji.ImgLib2Temp.ValuePair;
+import net.imglib2.util.Pair;
+import net.imglib2.util.ValuePair;
 
 public abstract class AbstractImgLoader implements LegacyImgLoader< UnsignedShortType >
 {

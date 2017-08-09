@@ -35,8 +35,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import spim.fiji.ImgLib2Temp.ValuePair;
-import spim.fiji.ImgLib2Temp.Pair;
+import net.imglib2.util.ValuePair;
+import net.imglib2.util.Pair;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.TextFileAccess;
 

@@ -53,7 +53,7 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import spim.Threads;
-import spim.fiji.ImgLib2Temp.Pair;
+import net.imglib2.util.Pair;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
 import spim.fiji.spimdata.imgloaders.LegacyStackImgLoaderIJ;

@@ -49,7 +49,7 @@ import net.imglib2.util.RealSum;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import spim.Threads;
-import spim.fiji.ImgLib2Temp.Pair;
+import net.imglib2.util.Pair;
 import spim.fiji.spimdata.imgloaders.LegacyStackImgLoaderIJ;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.ImagePortion;

@@ -34,7 +34,7 @@ import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
-import spim.fiji.ImgLib2Temp.Pair;
+import net.imglib2.util.Pair;
 import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.plugin.apply.ApplyParameters;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;

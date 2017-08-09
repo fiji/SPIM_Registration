@@ -39,7 +39,7 @@ import mpicbg.spim.io.IOFunctions;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.type.numeric.real.FloatType;
-import spim.fiji.ImgLib2Temp.Pair;
+import net.imglib2.util.Pair;
 import spim.fiji.plugin.resave.Generic_Resave_HDF5;
 import spim.fiji.plugin.resave.ProgressWriterIJ;
 import spim.fiji.plugin.resave.Resave_HDF5;

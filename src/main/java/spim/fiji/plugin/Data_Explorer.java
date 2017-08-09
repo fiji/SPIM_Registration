@@ -27,7 +27,7 @@ import ij.plugin.PlugIn;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import spim.fiji.ImgLib2Temp.Pair;
+import net.imglib2.util.Pair;
 import spim.fiji.plugin.queryXML.GenericLoadParseQueryXML;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
