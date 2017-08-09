@@ -13,6 +13,7 @@ import net.imglib2.img.imageplus.ImagePlusImg;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import spim.fiji.plugin.fusion.FusionExportInterface;
+import spim.process.deconvolution.DeconViews;
 import spim.process.fusion.FusionTools;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
@@ -119,9 +120,9 @@ public class DisplayImage implements ImgExport
 		if ( imp == null )
 		{
 			if ( virtualDisplay )
-				imp = ImageJFunctions.wrap( img, title );
+				imp = ImageJFunctions.wrap( img, title, DeconViews.createExecutorService() );
 			else
-				imp = ImageJFunctions.wrap( img, title ).duplicate();
+				imp = ImageJFunctions.wrap( img, title, DeconViews.createExecutorService() ).duplicate();
 		}
 
 		final double[] minmax = getFusionMinMax( img, min, max );
