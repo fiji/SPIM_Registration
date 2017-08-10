@@ -8,7 +8,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import ij.IJ;
 import loci.formats.FormatException;
@@ -336,6 +338,51 @@ public class LegacyFileMapImgLoaderLOCI extends AbstractImgFactoryImgLoader
 	public HashMap< BasicViewDescription< ? >, Pair< File, Pair< Integer, Integer > > > getFileMap()
 	{
 		return fileMap;
+	}
+
+	/**
+	 * for every file in the dataset file list check if the z-size is equal for every series.
+	 * @param spimData the dataset
+	 * @param loader the associated loader
+	 * @return true if z-sizes are equal in every file, false if they differ inside any file
+	 */
+	public static boolean isZSizeEqualInEveryFile(final SpimData2 spimData, final FileMapImgLoaderLOCI loader)
+	{
+		// for every file: collect a vd for every series
+		final Map< File, Map< Integer, BasicViewDescription< ? > > > invertedMap = new HashMap<>();
+		loader.getFileMap().entrySet().forEach( e -> {
+
+			// ignore missing views
+			if (!e.getKey().isPresent())
+				return;
+
+			final File invKey = e.getValue().getA();
+			if (!invertedMap.containsKey( invKey ))
+				invertedMap.put( invKey, new HashMap<>() );
+
+			final Integer series = e.getValue().getB().getA();
+			final BasicViewDescription< ? > vd = e.getKey();
+
+			invertedMap.get( invKey ).put( series, vd );
+		});
+
+		// filter all files that do no have equal z-size for all series
+		final List< Entry< File, Map< Integer, BasicViewDescription< ? > > > > mapFiltered = invertedMap.entrySet().stream().filter( e -> {
+			final Map< Integer, BasicViewDescription< ? > > seriesMap = e.getValue();
+
+			Long zSize = null;
+			for (Integer series : seriesMap.keySet())
+			{
+				if (zSize == null)
+					zSize = seriesMap.get( series ).getViewSetup().getSize().dimension( 2 );
+				if (zSize != seriesMap.get( series ).getViewSetup().getSize().dimension( 2 ))
+					return false;
+			}
+			return true;
+		}).collect( Collectors.toList() );
+
+		// we did not filter out any file -> all files have equally sized series
+		return mapFiltered.size() == invertedMap.size();
 	}
 
 	/**
