@@ -2,11 +2,15 @@ package spim.fiji.spimdata.imgloaders;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import ij.IJ;
 import loci.formats.FormatException;
@@ -20,11 +24,18 @@ import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
+import mpicbg.spim.data.sequence.ImgLoader;
+import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.Tile;
 import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Cursor;
+import net.imglib2.Dimensions;
+import net.imglib2.FinalDimensions;
+import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
@@ -34,7 +45,10 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Pair;
+import net.imglib2.util.ValuePair;
+import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
+import spim.fiji.spimdata.SpimData2;
 
 
 public class LegacyFileMapImgLoaderLOCI extends AbstractImgFactoryImgLoader
@@ -324,6 +338,137 @@ public class LegacyFileMapImgLoaderLOCI extends AbstractImgFactoryImgLoader
 	public HashMap< BasicViewDescription< ? >, Pair< File, Pair< Integer, Integer > > > getFileMap()
 	{
 		return fileMap;
+	}
+
+	/**
+	 * for every file in the dataset file list check if the z-size is equal for every series.
+	 * @param spimData the dataset
+	 * @param loader the associated loader
+	 * @return true if z-sizes are equal in every file, false if they differ inside any file
+	 */
+	public static boolean isZSizeEqualInEveryFile(final SpimData2 spimData, final FileMapImgLoaderLOCI loader)
+	{
+		// for every file: collect a vd for every series
+		final Map< File, Map< Integer, BasicViewDescription< ? > > > invertedMap = new HashMap<>();
+		loader.getFileMap().entrySet().forEach( e -> {
+
+			// ignore missing views
+			if (!e.getKey().isPresent())
+				return;
+
+			final File invKey = e.getValue().getA();
+			if (!invertedMap.containsKey( invKey ))
+				invertedMap.put( invKey, new HashMap<>() );
+
+			final Integer series = e.getValue().getB().getA();
+			final BasicViewDescription< ? > vd = e.getKey();
+
+			invertedMap.get( invKey ).put( series, vd );
+		});
+
+		// filter all files that do no have equal z-size for all series
+		final List< Entry< File, Map< Integer, BasicViewDescription< ? > > > > mapFiltered = invertedMap.entrySet().stream().filter( e -> {
+			final Map< Integer, BasicViewDescription< ? > > seriesMap = e.getValue();
+
+			Long zSize = null;
+			for (Integer series : seriesMap.keySet())
+			{
+				if (zSize == null)
+					zSize = seriesMap.get( series ).getViewSetup().getSize().dimension( 2 );
+				if (zSize != seriesMap.get( series ).getViewSetup().getSize().dimension( 2 ))
+					return false;
+			}
+			return true;
+		}).collect( Collectors.toList() );
+
+		// we did not filter out any file -> all files have equally sized series
+		return mapFiltered.size() == invertedMap.size();
+	}
+
+	/**
+	 * check if views in spimData contain zero-valued planes at the end of the z-axis.
+	 * re-set ViewSetup dimensions to ignore the zero-volume
+	 * (use this to fix "the BioFormats bug")
+	 * @param spimData the SpimData to correct
+	 * @param loader the imgLoader to use
+	 */
+	public static <T extends RealType< T > & NativeType< T >> void checkAndRemoveZeroVolume(final SpimData2 spimData, final FileMapImgLoaderLOCI loader)
+	{
+		// collect vds for every (file, series) combo
+		final Map< Pair< File, Integer >, List< BasicViewDescription< ViewSetup > > > invertedMap = new HashMap<>();
+		loader.getFileMap().entrySet().forEach( e -> {
+
+			// ignore if we cannot cast to ViewSetup
+			if (!ViewSetup.class.isInstance( e.getKey().getViewSetup() ) )
+				return;
+
+			// ignore missing views
+			if (!e.getKey().isPresent())
+				return;
+
+			final Pair< File, Integer > invKey = new ValuePair<>( e.getValue().getA(), e.getValue().getB().getA() );
+			if (!invertedMap.containsKey( invKey ))
+				invertedMap.put( invKey, new ArrayList<>() );
+
+			@SuppressWarnings("unchecked")
+			final BasicViewDescription< ViewSetup > vd = (BasicViewDescription< ViewSetup >) e.getKey();
+			invertedMap.get( invKey ).add( vd );
+		});
+
+		// collect corrected dimensions
+		final Map< Pair< File, Integer >, Dimensions > dimensionMap = new HashMap<>();
+		invertedMap.entrySet().forEach( e -> {
+
+			final BasicViewDescription< ViewSetup > firstVD = e.getValue().iterator().next();
+			final RandomAccessibleInterval< FloatType > img = loader.getSetupImgLoader( firstVD.getViewSetupId() ).getFloatImage( firstVD.getTimePointId(), false );
+			final Dimensions sizeOld = firstVD.getViewSetup().getSize();
+
+			long max = getMaxNonzero( img, 2 );
+			dimensionMap.put( e.getKey(), new FinalDimensions( new long[] {sizeOld.dimension( 0 ), sizeOld.dimension( 1 ), max + 1} ) );
+		});
+
+		// correct dimensions for all views
+		invertedMap.entrySet().forEach( e -> {
+			final Dimensions newDims = dimensionMap.get( e.getKey() );
+			e.getValue().forEach( vd -> {
+				vd.getViewSetup().setSize( newDims );
+			});
+		});
+
+	}
+
+	/**
+	 * get the highest index in dimension dim where a hyperslice of img in that dimension contains nonzero values.
+	 * NB: the result is in local image coordinates (i.e. we zero-min the input)
+	 * @param img the input image
+	 * @param dim the dimension along which to check
+	 * @return the highest index with nonzero pixels
+	 */
+	public static <T extends RealType< T >> long getMaxNonzero(RandomAccessibleInterval< T > img, int dim)
+	{
+		final RandomAccessibleInterval< T > imgLocal = Views.isZeroMin( img ) ? img :Views.zeroMin( img );
+		long i = imgLocal.dimension( dim ) - 1;
+		for (; i >= 0; i--)
+		{
+			if (isNonezero( Views.hyperSlice( imgLocal, dim, i ) ))
+				return i;
+		}
+		return 0l;
+	}
+
+	/**
+	 * check whether any pixel in slice is nonzero.
+	 * NB: we do a raw floating point comparison here, so we might get false results if the image was
+	 * operated on in any way due to numerical inaccuracies.
+	 * @param slice the input image
+	 * @return true if slice has nonzero entries else false
+	 */
+	public static <T extends RealType< T >> boolean isNonezero(IterableInterval< T > slice)
+	{
+		for (T val : slice)
+			if (val.getRealDouble() != 0.0)
+				return true;
+		return false;
 	}
 
 }

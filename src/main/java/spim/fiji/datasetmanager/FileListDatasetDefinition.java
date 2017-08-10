@@ -75,6 +75,7 @@ import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.imgloaders.FileMapImgLoaderLOCI;
+import spim.fiji.spimdata.imgloaders.LegacyFileMapImgLoaderLOCI;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.fiji.spimdata.pointspreadfunctions.PointSpreadFunctions;
 import spim.fiji.spimdata.stitchingresults.StitchingResults;
@@ -844,7 +845,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 				state);
 		
 		SpimData2 data = buildSpimData( state );
-		
+
 		//TODO: with translated tiles, we also have to take the center of rotation into account
 		//Apply_Transformation.applyAxis( data );
 		
@@ -893,8 +894,18 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		}
 		
 		gdSave.addDirectoryField( "dataset save path", prefixPath.getAbsolutePath(), 55 );		
-		
-		
+
+		// check if all stack sizes are the same (in each file)
+		final boolean zSizeEqualInEveryFile = LegacyFileMapImgLoaderLOCI.isZSizeEqualInEveryFile( data, (FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() );
+
+		// notify user if all stacks are equally size (in every file)
+		if (zSizeEqualInEveryFile)
+			addMessageAsJLabel( "<html><p style=\"color:orange\">WARNING: all stacks have the same size, this might be caused by a bug"
+					+ " in BioFormats. </br> Please re-check stack sizes if necessary.</p></html>", gdSave );
+
+		// default choice for size re-check: do it if all stacks are the same size
+		gdSave.addCheckbox( "check_stack_sizes", zSizeEqualInEveryFile );
+
 		gdSave.addCheckbox( "resave as HDF5", false );
 		
 		gdSave.showDialog();
@@ -910,7 +921,13 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		
 		File chosenPath = new File( gdSave.getNextString());
 		data.setBasePath( chosenPath );
-		
+
+		// check and correct stack sizes (the "BioFormats bug")
+		// TODO: remove once the bug is fixed upstream
+		final boolean checkSize = gdSave.getNextBoolean();
+		if (checkSize)
+			LegacyFileMapImgLoaderLOCI.checkAndRemoveZeroVolume( data, (FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() );
+
 		boolean resaveAsHDF5 = gdSave.getNextBoolean();
 		
 		
