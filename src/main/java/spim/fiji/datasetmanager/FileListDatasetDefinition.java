@@ -895,8 +895,16 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		
 		gdSave.addDirectoryField( "dataset save path", prefixPath.getAbsolutePath(), 55 );		
 
-		// TODO: only display this option if all stack sizes are the same (in each file)
-		gdSave.addCheckbox( "check_stack_sizes", true );
+		// check if all stack sizes are the same (in each file)
+		final boolean zSizeEqualInEveryFile = LegacyFileMapImgLoaderLOCI.isZSizeEqualInEveryFile( data, (FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() );
+
+		// notify user if all stacks are equally size (in every file)
+		if (zSizeEqualInEveryFile)
+			addMessageAsJLabel( "<html><p style=\"color:orange\">WARNING: all stacks have the same size, this might be caused by a bug"
+					+ " in BioFormats. </br> Please re-check stack sizes if necessary.</p></html>", gdSave );
+
+		// default choice for size re-check: do it if all stacks are the same size
+		gdSave.addCheckbox( "check_stack_sizes", zSizeEqualInEveryFile );
 
 		gdSave.addCheckbox( "resave as HDF5", false );
 		
