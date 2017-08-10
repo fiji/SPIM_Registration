@@ -14,14 +14,17 @@ import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.RealLocalizable;
+import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.realtransform.AffineTransform3D;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 import spim.fiji.spimdata.explorer.interestpoint.InterestPointOverlay.InterestPointSource;
 import spim.fiji.spimdata.explorer.popup.BasicBDVPopup;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
+import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.process.interestpointdetection.InterestPointTools;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class InterestPointTableModel extends AbstractTableModel implements InterestPointSource
 {
@@ -65,22 +68,14 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 	protected ViewInterestPoints getViewInterestPoints() { return viewInterestPoints; }
 	protected List< BasicViewDescription< ? > > getCurrentViewDescriptions() { return currentVDs; } 
 	
-	protected void updateViewDescription( final List< BasicViewDescription< ? > > vds, final boolean isFirst )
+	protected void updateViewDescription( final List< BasicViewDescription< ? > > vds )
 	{
 		this.currentVDs = vds;
 
 		// update everything
 		fireTableDataChanged();
 
-		if ( isFirst )
-		{
-			// by default show the detections of the first entry if available
-			setSelected( 0, 1 );
-		}
-		else
-		{
-			setSelected( selectedRow, selectedCol );
-		}
+		setSelected( selectedRow, selectedCol );
 	}
 
 	@Override
@@ -134,6 +129,9 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 		else
 		{
 			final String label = label( labels, row );
+
+			System.out.println( row + " " + column + " currentVds: " + currentVDs.size() );
+			//SimpleMultiThreading.threadWait( 100 );
 
 			if ( column == 0 )
 				return label;
@@ -251,15 +249,29 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 			{
 				for ( final ViewId v : currentVDs )
 				{
+					System.out.println( Group.pvid( v ) );
 					final HashMap< Integer, InterestPoint > map = new HashMap< Integer, InterestPoint >();
+					
+					final InterestPointList ipList = viewInterestPoints.getViewInterestPointLists( v ).getInterestPointList( label );
+					System.out.println( "iplist: " + ipList.getFile() );
+					System.out.println( InterestPointExplorerPanel.getInterestPoints( viewInterestPoints, v, label ).size() );
 					
 					for ( final InterestPoint ip : InterestPointExplorerPanel.getInterestPoints( viewInterestPoints, v, label ) )
 						map.put( ip.getId(), ip );
-	
+
+					System.out.println( map.keySet().size() );
+
 					final ArrayList< InterestPoint > tmp = new ArrayList< InterestPoint >();
 	
 					for ( final CorrespondingInterestPoints ip : InterestPointExplorerPanel.getCorrespondingInterestPoints( viewInterestPoints, v, label ) )
+					{
 						tmp.add( map.get( ip.getDetectionId() ) );
+						
+						if ( map.get( ip.getDetectionId() ) == null )
+						{
+							System.out.println( "null for " + ip.getDetectionId() );
+						}
+					}
 
 					points.put( v, tmp );
 				}
@@ -267,6 +279,7 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 
 			if ( interestPointOverlay == null )
 			{
+				System.out.println( "init interestPointOverlay, sources=" + interestPointSources.size() );
 				final BigDataViewer bdv = bdvPopup.getBDV();
 				interestPointOverlay = new InterestPointOverlay( bdv.getViewer(), interestPointSources );
 				bdv.getViewer().addRenderTransformListener( interestPointOverlay );
@@ -308,7 +321,8 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 			return coords;
 
 		for ( final ViewId viewId : currentlyVisible )
-			coords.put( viewId, points.get( viewId ) );
+			if ( points.containsKey( viewId ) )
+				coords.put( viewId, points.get( viewId ) );
 
 		return coords;
 	}

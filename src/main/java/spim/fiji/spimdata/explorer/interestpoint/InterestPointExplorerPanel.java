@@ -64,7 +64,7 @@ public class InterestPointExplorerPanel extends JPanel
 	public InterestPointTableModel getTableModel() { return tableModel; }
 	public JTable getTable() { return table; }
 	
-	public void updateViewDescription( final List< BasicViewDescription< ? extends BasicViewSetup > > viewDescriptionsUnfiltered, final boolean isFirst )
+	public void updateViewDescription( final List< BasicViewDescription< ? extends BasicViewSetup > > viewDescriptionsUnfiltered )
 	{
 		final ArrayList< BasicViewDescription< ? extends BasicViewSetup > > viewDescriptions = new ArrayList<>();
 
@@ -79,7 +79,7 @@ public class InterestPointExplorerPanel extends JPanel
 		else
 			this.label.setText( viewDescriptions.size() + " View Descriptions selected");
 
-		tableModel.updateViewDescription( viewDescriptions, isFirst );
+		tableModel.updateViewDescription( viewDescriptions );
 
 		if ( table.getSelectedRowCount() == 0 )
 			table.getSelectionModel().setSelectionInterval( 0, 0 );
