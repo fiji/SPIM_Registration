@@ -19,7 +19,6 @@ import spim.fiji.spimdata.XmlIoSpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.interestpointdetection.methods.dog.DoG;
 import spim.process.interestpointdetection.methods.dog.DoGParameters;
-import spim.process.interestpointregistration.TransformationTools;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class VerifyDownsamplingCorrection
@@ -74,10 +73,10 @@ public class VerifyDownsamplingCorrection
 		for ( final ViewId viewId : sdTiff.getSequenceDescription().getViewDescriptions().values() )
 		{
 			final List< InterestPoint > ipListTiff =
-					TransformationTools.loadInterestPoints( sdTiff.getViewInterestPoints().getViewInterestPointLists( viewId ).getInterestPointList( label ) );
+					sdTiff.getViewInterestPoints().getViewInterestPointLists( viewId ).getInterestPointList( label ).getInterestPointsCopy();
 
 			final List< InterestPoint > ipListHdf5 =
-					TransformationTools.loadInterestPoints( sdHdf5.getViewInterestPoints().getViewInterestPointLists( viewId ).getInterestPointList( label ) );
+					sdHdf5.getViewInterestPoints().getViewInterestPointLists( viewId ).getInterestPointList( label ).getInterestPointsCopy();
 
 			statistics( viewId, ipListTiff, ipListHdf5 );
 		}

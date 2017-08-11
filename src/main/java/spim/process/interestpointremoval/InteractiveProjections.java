@@ -51,7 +51,6 @@ import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.process.export.DisplayImage;
-import spim.process.interestpointregistration.TransformationTools;
 import spim.process.psf.PSFCombination;
 
 public class InteractiveProjections
@@ -79,7 +78,7 @@ public class InteractiveProjections
 		this.imp = showProjection( maxProj );
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + ": Loading & drawing interest points ..." );
-		this.ipList = loadInterestPoints( spimData, vd, label );
+		this.ipList = spimData.getViewInterestPoints().getViewInterestPointLists( vd ).getInterestPointList( label ).getInterestPointsCopy();
 		drawProjectedInterestPoints( imp, ipList, projectionDim );
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + ": " + ipList.size() + " points displayed ... " );
@@ -176,20 +175,6 @@ public class InteractiveProjections
 			return 2;
 		else
 			return 2;
-	}
-
-	protected List< InterestPoint > loadInterestPoints( final SpimData2 spimData, final ViewId id, final String label )
-	{
-		final ViewInterestPoints interestPoints = spimData.getViewInterestPoints();
-		final ViewInterestPointLists lists = interestPoints.getViewInterestPointLists( id );
-		final InterestPointList list = lists.getInterestPointList( label );
-
-		final ArrayList< InterestPoint > newList = new ArrayList< InterestPoint >();
-
-		for ( final InterestPoint p : TransformationTools.loadInterestPoints( list ) )
-			newList.add( new InterestPoint( p.getId(), p.getL().clone() ) );
-
-		return newList;
 	}
 
 	protected ImagePlus showProjection( final Img< FloatType > img )

@@ -396,16 +396,16 @@ public class TransformationTools
 			final Map< V, String > labelMap,
 			final boolean transform )
 	{
-		final List< InterestPoint > list = loadInterestPoints( interestpoints.get( viewId ).getInterestPointList( labelMap.get( viewId ) ) );
+		final List< InterestPoint > list = interestpoints.get( viewId ).getInterestPointList( labelMap.get( viewId ) ).getInterestPointsCopy();
 
-		if ( list == null )
+		if ( list.size() == 0 )
 		{
 			if ( ViewId.class.isInstance( viewId  ))
-				IOFunctions.println( "WARNING: no interestpoints could be loaded for " + Group.pvid( (ViewId)viewId ) + ", label '" + labelMap.get( viewId ) + "'" );
+				IOFunctions.println( "WARNING: no interestpoints available for " + Group.pvid( (ViewId)viewId ) + ", label '" + labelMap.get( viewId ) + "'" );
 			else
-				IOFunctions.println( "WARNING: no interestpoints could be loaded for " + viewId + ", label '" + labelMap.get( viewId ) + "'" );
+				IOFunctions.println( "WARNING: no interestpoints available for " + viewId + ", label '" + labelMap.get( viewId ) + "'" );
 
-			return new ArrayList<>();
+			return list;
 		}
 		else if ( transform )
 		{
@@ -437,7 +437,7 @@ public class TransformationTools
 			final boolean transform )
 	{
 		final InterestPointList ipList = interestpoints.get( viewId ).getInterestPointList( labelMap.get( viewId ) );
-		final List< InterestPoint > allPoints = loadInterestPoints( ipList );
+		final List< InterestPoint > allPoints = ipList.getInterestPointsCopy();
 		final ArrayList< InterestPoint > corrPoints = new ArrayList<>();
 
 		if ( allPoints == null )
@@ -453,7 +453,7 @@ public class TransformationTools
 		// keep only those interest points who have correspondences
 		final HashSet< Integer > idSet = new HashSet<>();
 
-		for ( final CorrespondingInterestPoints cip : loadCorrespondingInterestPoints( ipList ) )
+		for ( final CorrespondingInterestPoints cip : ipList.getCorrespondingInterestPointsCopy() )
 			idSet.add( cip.getDetectionId() );
 
 		for ( final InterestPoint ip : allPoints )
@@ -469,25 +469,6 @@ public class TransformationTools
 		{
 			return corrPoints;
 		}
-	}
-
-	public static List< InterestPoint > loadInterestPoints( final InterestPointList list )
-	{
-		if ( list == null )
-			return null;
-
-		if ( !list.hasInterestPoints() )
-			list.loadInterestPoints();
-
-		return list.getInterestPointsCopy();
-	}
-
-	public static List< CorrespondingInterestPoints > loadCorrespondingInterestPoints( final InterestPointList list )
-	{
-		if ( !list.hasCorrespondingInterestPoints() )
-			list.loadCorrespondingInterestPoints();
-
-		return list.getCorrespondingInterestPointsCopy();
 	}
 
 	public static <V> AffineTransform3D getTransform( final V viewId, final Map< V, ViewRegistration > registrations )

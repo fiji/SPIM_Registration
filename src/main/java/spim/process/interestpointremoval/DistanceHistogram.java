@@ -19,7 +19,6 @@ import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
-import spim.process.interestpointregistration.TransformationTools;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 import spim.process.interestpointremoval.histogram.Histogram;
 
@@ -72,7 +71,7 @@ public class DistanceHistogram
 			// assemble the list of points
 			final List< RealPoint > list = new ArrayList< RealPoint >();
 
-			for ( final InterestPoint ip : TransformationTools.loadInterestPoints( ipl ) )// ipl.getInterestPoints() )
+			for ( final InterestPoint ip : ipl.getInterestPointsCopy() )
 			{
 				list.add ( new RealPoint(
 						ip.getL()[ 0 ] * voxelSize.dimension( 0 ),

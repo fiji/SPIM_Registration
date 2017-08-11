@@ -168,17 +168,8 @@ public class MatcherPairwiseTools
 			final InterestPointList listA,
 			final InterestPointList listB )
 	{
-		final List< CorrespondingInterestPoints > corrListA, corrListB;
-
-		if ( listA.hasCorrespondingInterestPoints() )
-			corrListA = listA.getCorrespondingInterestPointsCopy();
-		else
-			corrListA = new ArrayList<>();
-
-		if ( listB.hasCorrespondingInterestPoints() )
-			corrListB = listA.getCorrespondingInterestPointsCopy();
-		else
-			corrListB = new ArrayList<>();
+		final List< CorrespondingInterestPoints > corrListA = listA.getCorrespondingInterestPointsCopy();
+		final List< CorrespondingInterestPoints > corrListB = listB.getCorrespondingInterestPointsCopy();
 
 		for ( final PointMatchGeneric< I > pm : correspondences )
 		{

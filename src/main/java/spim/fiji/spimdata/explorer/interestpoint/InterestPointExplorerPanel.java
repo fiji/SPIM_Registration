@@ -283,22 +283,12 @@ public class InterestPointExplorerPanel extends JPanel
 
 	public static List< InterestPoint > getInterestPoints( final ViewInterestPoints vip, final ViewId v, final String label )
 	{
-		final InterestPointList ipList = vip.getViewInterestPointLists( v ).getInterestPointList( label );
-
-		if ( !ipList.hasInterestPoints() )
-			ipList.loadInterestPoints();
-
-		return ipList.getInterestPointsCopy();
+		return vip.getViewInterestPointLists( v ).getInterestPointList( label ).getInterestPointsCopy();
 	}
 
 	public static List< CorrespondingInterestPoints > getCorrespondingInterestPoints( final ViewInterestPoints vip, final ViewId v, final String label )
 	{
-		final InterestPointList ipList = vip.getViewInterestPointLists( v ).getInterestPointList( label );
-
-		if ( !ipList.hasCorrespondingInterestPoints() )
-			ipList.loadCorrespondingInterestPoints();
-
-		return ipList.getCorrespondingInterestPointsCopy();
+		return vip.getViewInterestPointLists( v ).getInterestPointList( label ).getCorrespondingInterestPointsCopy();
 	}
 
 	protected void addPopupMenu( final JTable table )
