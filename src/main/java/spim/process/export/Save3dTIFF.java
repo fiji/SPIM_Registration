@@ -71,22 +71,10 @@ public class Save3dTIFF implements ImgExport
 		// determine min and max
 		final double[] minmax = DisplayImage.getFusionMinMax( img, min, max );
 
-		final ImagePlus imp = DisplayImage.getImagePlusInstance( img, true, title, min, max );
+		final ImagePlus imp = DisplayImage.getImagePlusInstance( img, true, title, minmax[ 0 ], minmax[ 1 ] );
 
-		imp.setTitle( title );
+		DisplayImage.setCalibration( imp, bb, downsampling );
 
-		if ( bb != null )
-		{
-			imp.getCalibration().xOrigin = -(bb.min( 0 ) / downsampling);
-			imp.getCalibration().yOrigin = -(bb.min( 1 ) / downsampling);
-			imp.getCalibration().zOrigin = -(bb.min( 2 ) / downsampling);
-			imp.getCalibration().pixelWidth = imp.getCalibration().pixelHeight = imp.getCalibration().pixelDepth = downsampling;
-		}
-		
-		imp.setDimensions( 1, (int)img.dimension( 2 ), 1 );
-		
-		imp.setDisplayRange( minmax[ 0 ], minmax[ 1 ] );
-		
 		imp.updateAndDraw();
 
 		final String fileName;
