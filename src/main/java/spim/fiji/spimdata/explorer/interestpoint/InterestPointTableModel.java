@@ -41,7 +41,7 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 	final ArrayList< InterestPointSource > interestPointSources;
 	volatile InterestPointOverlay interestPointOverlay = null;
 
-	HashMap< ViewId, List< ? extends RealLocalizable > > points = new HashMap<>();
+	HashMap< ViewId, Collection< ? extends RealLocalizable > > points = new HashMap<>();
 
 	public InterestPointTableModel( final ViewInterestPoints viewInterestPoints, final InterestPointExplorerPanel panel )
 	{
@@ -128,9 +128,6 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 		else
 		{
 			final String label = label( labels, row );
-
-			System.out.println( row + " " + column + " currentVds: " + currentVDs.size() );
-			//SimpleMultiThreading.threadWait( 100 );
 
 			if ( column == 0 )
 				return label;
@@ -250,27 +247,16 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 				{
 					System.out.println( Group.pvid( v ) );
 					final HashMap< Integer, InterestPoint > map = new HashMap< Integer, InterestPoint >();
-					
+
 					final InterestPointList ipList = viewInterestPoints.getViewInterestPointLists( v ).getInterestPointList( label );
-					System.out.println( "iplist: " + ipList.getFile() );
-					System.out.println( viewInterestPoints.getViewInterestPointLists( v ).getInterestPointList( label ).getInterestPointsCopy().size() );
-					
+
 					for ( final InterestPoint ip : ipList.getInterestPointsCopy() )
 						map.put( ip.getId(), ip );
 
-					System.out.println( map.keySet().size() );
-
-					final ArrayList< InterestPoint > tmp = new ArrayList< InterestPoint >();
+					final Collection< InterestPoint > tmp = new HashSet<>();
 	
 					for ( final CorrespondingInterestPoints ip : ipList.getCorrespondingInterestPointsCopy() )
-					{
 						tmp.add( map.get( ip.getDetectionId() ) );
-						
-						if ( map.get( ip.getDetectionId() ) == null )
-						{
-							System.out.println( "null for " + ip.getDetectionId() );
-						}
-					}
 
 					points.put( v, tmp );
 				}
@@ -278,7 +264,6 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 
 			if ( interestPointOverlay == null )
 			{
-				System.out.println( "init interestPointOverlay, sources=" + interestPointSources.size() );
 				final BigDataViewer bdv = bdvPopup.getBDV();
 				interestPointOverlay = new InterestPointOverlay( bdv.getViewer(), interestPointSources );
 				bdv.getViewer().addRenderTransformListener( interestPointOverlay );
@@ -313,7 +298,7 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 	@Override
 	public HashMap< ? extends ViewId, ? extends Collection< ? extends RealLocalizable > > getLocalCoordinates( final int timepointIndex )
 	{
-		final HashMap< ViewId, List< ? extends RealLocalizable > > coords = new HashMap<>();
+		final HashMap< ViewId, Collection< ? extends RealLocalizable > > coords = new HashMap<>();
 		final List< BasicViewDescription< ? > > currentlyVisible = filteredViewIdsCurrentTimepoint( timepointIndex );
 
 		if ( currentlyVisible == null || currentlyVisible.size() == 0 )

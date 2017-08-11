@@ -76,21 +76,14 @@ public class InterestPointOverlay implements OverlayRenderer, TransformListener<
 		{
 			final HashMap< ? extends ViewId, ? extends Collection< ? extends RealLocalizable > > coordinates = pointSource.getLocalCoordinates( t );
 
-			System.out.println( coordinates.keySet().size() );
-			
 			for ( final ViewId viewId : coordinates.keySet() )
 			{
 				pointSource.getLocalToGlobalTransform( viewId, t, transform );
 				transform.preConcatenate( viewerTransform );
 
-				System.out.println( coordinates.get( viewId ).size() );
-
 				for ( final RealLocalizable p : coordinates.get( viewId ) )
 				{
-					if ( coordinates.get( viewId ).size() == 578)
-						System.out.println( p );
-					
-					p.localize( lPos ); // TODO: null here
+					p.localize( lPos );
 					transform.apply( lPos, gPos );
 					final double size = getPointSize( gPos );
 					final int x = ( int ) ( gPos[ 0 ] - 0.5 * size );
