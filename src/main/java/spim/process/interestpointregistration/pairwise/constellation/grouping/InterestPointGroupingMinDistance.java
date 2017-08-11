@@ -44,6 +44,10 @@ public class InterestPointGroupingMinDistance< V extends ViewId > extends Intere
 	{
 		final ArrayList< GroupedInterestPoint< V > > grouped = InterestPointGroupingAll.mergeAll( toMerge );
 
+		// nothing to do if there is no or one point in there
+		if ( grouped.size() <= 1 )
+			return grouped;
+
 		// pseudo-random shuffling to not give an advantage due to the order the views are in
 		Collections.shuffle( grouped, new Random( 234 ) );
 
