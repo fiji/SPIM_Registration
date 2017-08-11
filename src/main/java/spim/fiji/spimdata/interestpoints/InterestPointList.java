@@ -69,7 +69,7 @@ public class InterestPointList
 	public synchronized List< CorrespondingInterestPoints > getCorrespondingInterestPointsCopy()
 	{
 		if ( this.correspondingInterestPoints == null )
-			return null;
+			loadCorrespondences();
 
 		final ArrayList< CorrespondingInterestPoints > list = new ArrayList< CorrespondingInterestPoints >();
 
