@@ -14,7 +14,6 @@ import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.RealLocalizable;
-import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.realtransform.AffineTransform3D;
 import spim.fiji.spimdata.explorer.ViewSetupExplorerPanel;
 import spim.fiji.spimdata.explorer.interestpoint.InterestPointOverlay.InterestPointSource;
@@ -171,7 +170,7 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 		{
 			final HashSet< Integer > cips = new HashSet< Integer >();
 	
-			for ( final CorrespondingInterestPoints c : InterestPointExplorerPanel.getCorrespondingInterestPoints( vip, v, label ) )
+			for ( final CorrespondingInterestPoints c : vip.getViewInterestPointLists( v ).getInterestPointList( label ).getCorrespondingInterestPointsCopy() )
 				cips.add( c.getDetectionId() );
 	
 			sum += cips.size();
@@ -193,7 +192,7 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 		int sum = 0;
 
 		for ( final ViewId v : views )
-			sum += InterestPointExplorerPanel.getCorrespondingInterestPoints( vip, v, label ).size();
+			sum += vip.getViewInterestPointLists( v ).getInterestPointList( label ).getCorrespondingInterestPointsCopy().size();
 
 		return sum;
 	}
@@ -203,7 +202,7 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 		int sum = 0;
 
 		for ( final ViewId v : views )
-			sum += InterestPointExplorerPanel.getInterestPoints( vip, v, label ).size();
+			sum += vip.getViewInterestPointLists( v ).getInterestPointList( label ).getInterestPointsCopy().size();
 
 		return sum;
 	}
@@ -243,7 +242,7 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 				this.points = new HashMap<>();
 
 				for ( final ViewId v : currentVDs )
-					this.points.put( v, InterestPointExplorerPanel.getInterestPoints( viewInterestPoints, v, label ) );
+					this.points.put( v, viewInterestPoints.getViewInterestPointLists( v ).getInterestPointList( label ).getInterestPointsCopy() );
 			}
 			else //if ( col == 2 )
 			{
@@ -254,16 +253,16 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 					
 					final InterestPointList ipList = viewInterestPoints.getViewInterestPointLists( v ).getInterestPointList( label );
 					System.out.println( "iplist: " + ipList.getFile() );
-					System.out.println( InterestPointExplorerPanel.getInterestPoints( viewInterestPoints, v, label ).size() );
+					System.out.println( viewInterestPoints.getViewInterestPointLists( v ).getInterestPointList( label ).getInterestPointsCopy().size() );
 					
-					for ( final InterestPoint ip : InterestPointExplorerPanel.getInterestPoints( viewInterestPoints, v, label ) )
+					for ( final InterestPoint ip : ipList.getInterestPointsCopy() )
 						map.put( ip.getId(), ip );
 
 					System.out.println( map.keySet().size() );
 
 					final ArrayList< InterestPoint > tmp = new ArrayList< InterestPoint >();
 	
-					for ( final CorrespondingInterestPoints ip : InterestPointExplorerPanel.getCorrespondingInterestPoints( viewInterestPoints, v, label ) )
+					for ( final CorrespondingInterestPoints ip : ipList.getCorrespondingInterestPointsCopy() )
 					{
 						tmp.add( map.get( ip.getDetectionId() ) );
 						

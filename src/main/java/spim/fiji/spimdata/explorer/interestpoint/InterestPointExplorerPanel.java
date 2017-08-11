@@ -33,7 +33,6 @@ import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
 import spim.fiji.spimdata.explorer.FilteredAndGroupedExplorer;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
-import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.process.interestpointdetection.InterestPointTools;
@@ -205,8 +204,9 @@ public class InterestPointExplorerPanel extends JPanel
 	
 				IOFunctions.println( "Removing label '' for timepoint_id " + vd.getTimePointId() + " viewsetup_id " + vd.getViewSetupId() + " -- Parsing through all correspondences to remove any links to this interest point list." );
 	
-				final List< CorrespondingInterestPoints > correspondencesList = getCorrespondingInterestPoints( vip, vd, label );
-	
+				final List< CorrespondingInterestPoints > correspondencesList =
+						vip.getViewInterestPointLists( vd ).getInterestPointList( label ).getCorrespondingInterestPointsCopy();
+
 				// sort by timepointid, setupid, and detectionid 
 				Collections.sort( correspondencesList );
 	
@@ -238,7 +238,7 @@ public class InterestPointExplorerPanel extends JPanel
 						IOFunctions.println( "Removing correspondences in timepointid=" + viewIdCorr.getTimePointId() + ", viewid=" + viewIdCorr.getViewSetupId() );
 						lastViewIdCorr = viewIdCorr;
 						//lastLabelCorr = labelCorr;
-						cList = getCorrespondingInterestPoints( vip, viewIdCorr, labelCorr );
+						cList = vip.getViewInterestPointLists( viewIdCorr ).getInterestPointList( labelCorr ).getCorrespondingInterestPointsCopy();
 						size = cList.size();
 					}
 	
@@ -279,16 +279,6 @@ public class InterestPointExplorerPanel extends JPanel
 
 		// update everything
 		tableModel.fireTableDataChanged();
-	}
-
-	public static List< InterestPoint > getInterestPoints( final ViewInterestPoints vip, final ViewId v, final String label )
-	{
-		return vip.getViewInterestPointLists( v ).getInterestPointList( label ).getInterestPointsCopy();
-	}
-
-	public static List< CorrespondingInterestPoints > getCorrespondingInterestPoints( final ViewInterestPoints vip, final ViewId v, final String label )
-	{
-		return vip.getViewInterestPointLists( v ).getInterestPointList( label ).getCorrespondingInterestPointsCopy();
 	}
 
 	protected void addPopupMenu( final JTable table )
