@@ -106,19 +106,6 @@ public class InterestPointList
 		this.modifiedInterestPoints = true;
 	}
 
-	public int getNumInterestPoints()
-	{
-		if ( interestPoints == null )
-			return -1;
-		else return interestPoints.size();
-	}
-	public int getNumCorrespondingInterestPoints()
-	{
-		if ( correspondingInterestPoints == null )
-			return -1;
-		else return correspondingInterestPoints.size();
-	}
-
 	public String getInterestPointsExt() { return ".ip.txt"; }
 	public String getCorrespondencesExt() { return ".corr.txt"; }
 
