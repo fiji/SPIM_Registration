@@ -98,7 +98,7 @@ public class ThinOut
 			vipl.addInterestPointList( top.getNewLabel(), newIpl );
 
 			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": TP=" + vd.getTimePointId() + " ViewSetup=" + vd.getViewSetupId() + 
-					", Detections: " + oldIpl.getNumInterestPoints() + " >>> " + newIpl.getNumInterestPoints() );
+					", Detections: " + oldIpl.getInterestPointsCopy().size() + " >>> " + newIpl.getInterestPointsCopy().size() );
 		}
 
 			return true;
