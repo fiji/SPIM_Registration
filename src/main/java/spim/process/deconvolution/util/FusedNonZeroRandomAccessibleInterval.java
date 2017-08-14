@@ -1,7 +1,7 @@
 package spim.process.deconvolution.util;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 
 import net.imglib2.Interval;
 import net.imglib2.RandomAccess;
@@ -11,7 +11,7 @@ import spim.process.fusion.transformed.FusedRandomAccessibleInterval;
 
 public class FusedNonZeroRandomAccessibleInterval extends FusedRandomAccessibleInterval
 {
-	final ArrayList< FusedNonZeroRandomAccess > accesses;
+	final Vector< FusedNonZeroRandomAccess > accesses;
 
 	public FusedNonZeroRandomAccessibleInterval(
 			final Interval interval,
@@ -20,10 +20,10 @@ public class FusedNonZeroRandomAccessibleInterval extends FusedRandomAccessibleI
 	{
 		super( interval, images, weights );
 
-		this.accesses = new ArrayList<>();
+		this.accesses = new Vector<>();
 	}
 
-	public ArrayList< FusedNonZeroRandomAccess > getAllAccesses() { return accesses; }
+	public Vector< FusedNonZeroRandomAccess > getAllAccesses() { return accesses; }
 
 	@Override
 	public RandomAccess< FloatType > randomAccess()
