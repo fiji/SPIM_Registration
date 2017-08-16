@@ -534,9 +534,18 @@ public class FusionTools
 
 	public static < T extends Type< T > > void copyImg( final RandomAccessibleInterval< T > input, final RandomAccessibleInterval< T > output, final boolean showProgress, final ExecutorService service )
 	{
+		final long numPixels = Views.iterable( input ).size();
 		final int nThreads = Threads.numThreads();
-		final int nPortions = nThreads * 4;
-		final Vector< ImagePortion > portions = divideIntoPortions( Views.iterable( input ).size(), nPortions );
+		final int nPortions;
+
+		if ( numPixels <= nThreads )
+			nPortions = (int)numPixels;
+		else
+			nPortions = Math.max( nThreads, (int)( numPixels / ( 64l*64l*64l ) ) );
+
+		System.out.println( "nPortions for copy:" + nPortions );
+
+		final Vector< ImagePortion > portions = divideIntoPortions( numPixels, nPortions );
 		final ArrayList< Callable< Void > > tasks = new ArrayList< Callable< Void > >();
 
 		final AtomicInteger progress = new AtomicInteger( 0 );
@@ -559,7 +568,7 @@ public class FusionTools
 		}
 
 		if ( showProgress )
-			IJ.showProgress( 0.0 );
+			IJ.showProgress( 0.01 );
 
 		if ( service == null )
 			execTasks( tasks, nThreads, "copy image" );
@@ -841,13 +850,23 @@ public class FusionTools
 	}
 
 
-	public static final Vector<ImagePortion> divideIntoPortions( final long imageSize, final int numPortions )
+	public static final Vector<ImagePortion> divideIntoPortions( final long imageSize, int numPortions )
 	{
-		final long threadChunkSize = imageSize / numPortions;
-		final long threadChunkMod = imageSize % numPortions;
-		
 		final Vector<ImagePortion> portions = new Vector<ImagePortion>();
-		
+
+		if ( imageSize == 0 )
+			return portions;
+
+		long threadChunkSize = imageSize / numPortions;
+
+		while ( threadChunkSize == 0 )
+		{
+			--numPortions;
+			threadChunkSize = imageSize / numPortions;
+		}
+
+		long threadChunkMod = imageSize % numPortions;
+
 		for ( int portionID = 0; portionID < numPortions; ++portionID )
 		{
 			// move to the starting position of the current thread
