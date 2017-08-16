@@ -199,7 +199,8 @@ public class InterestPointTableModel extends AbstractTableModel implements Inter
 		int sum = 0;
 
 		for ( final ViewId v : views )
-			sum += vip.getViewInterestPointLists( v ).getInterestPointList( label ).getInterestPointsCopy().size();
+			if ( vip.getViewInterestPointLists( v ).getHashMap().containsKey( label ) )
+				sum += vip.getViewInterestPointLists( v ).getInterestPointList( label ).getInterestPointsCopy().size();
 
 		return sum;
 	}
