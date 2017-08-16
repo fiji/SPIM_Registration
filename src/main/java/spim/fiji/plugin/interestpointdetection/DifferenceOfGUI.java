@@ -454,7 +454,10 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Wrapping ImagePlus around input image ... " );
 
-		return DisplayImage.getImagePlusInstance( img, false, "tp: " + viewDescription.getTimePoint().getName() + " viewSetup: " + viewDescription.getViewSetupId(), Double.NaN, Double.NaN );
+		if ( Double.isNaN( minIntensity ) || Double.isNaN( maxIntensity ) )
+			return DisplayImage.getImagePlusInstance( img, false, "tp: " + viewDescription.getTimePoint().getName() + " viewSetup: " + viewDescription.getViewSetupId(), Double.NaN, Double.NaN );
+		else
+			return DisplayImage.getImagePlusInstance( img, false, "tp: " + viewDescription.getTimePoint().getName() + " viewSetup: " + viewDescription.getViewSetupId(), minIntensity, maxIntensity );
 	}
 
 	protected ImagePlus getGroupedImagePlusForInteractive( final String dialogHeader )
