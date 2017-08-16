@@ -72,7 +72,8 @@ public class TransformationTools
 		// TransformationTools.getScaling( atOrigin, scale );
 
 		// the scale is approximately now the diagonal entries in the matrix
-		return new ValuePair<>( new double[]{ atOrigin.get( 0, 0 ), atOrigin.get( 1, 1 ), atOrigin.get( 2, 2 ) }, mapBack );
+		// and we are only interested in the absolute value since it could be mirrored, in which case the scaling is negative
+		return new ValuePair<>( new double[]{ Math.abs( atOrigin.get( 0, 0 ) ), Math.abs( atOrigin.get( 1, 1 ) ), Math.abs( atOrigin.get( 2, 2 ) ) }, mapBack );
 	}
 
 	public static AffineTransform3D averageTransforms( final Collection< ? extends AffineGet > models )
