@@ -254,7 +254,7 @@ public class MultiViewDeconvolution
 				}
 
 				// run the threads that process all blocks of this batch in parallel (often, this will be just one thread)
-				runBlockThreads( threads );
+				FusionTools.runThreads( threads );
 
 				// write back previous list of blocks
 				writeBack( psi, previousBlockWritebackQueue );
@@ -284,19 +284,6 @@ public class MultiViewDeconvolution
 
 			++v;
 		}// finish view
-	}
-
-	protected static void runBlockThreads( final Thread[] threads )
-	{
-		for ( int ithread = 0; ithread < threads.length; ++ithread )
-			threads[ ithread ].start();
-
-		try
-		{
-			for ( int ithread = 0; ithread < threads.length; ++ithread )
-				threads[ ithread ].join();
-		}
-		catch ( InterruptedException ie ) { throw new RuntimeException(ie); }
 	}
 
 	protected static final void writeBack( final Img< FloatType > psi, final Vector< Pair< Pair< Integer, Block >, Img< FloatType > > > blockWritebackQueue )

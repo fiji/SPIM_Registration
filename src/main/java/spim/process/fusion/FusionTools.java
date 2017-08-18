@@ -865,4 +865,17 @@ public class FusionTools
 		
 		return portions;
 	}
+
+	public static void runThreads( final Thread[] threads )
+	{
+		for ( int ithread = 0; ithread < threads.length; ++ithread )
+			threads[ ithread ].start();
+
+		try
+		{
+			for ( int ithread = 0; ithread < threads.length; ++ithread )
+				threads[ ithread ].join();
+		}
+		catch ( InterruptedException ie ) { throw new RuntimeException(ie); }
+	}
 }
