@@ -191,6 +191,8 @@ public class Image_Deconvolution implements PlugIn
 				final DeconViews views = new DeconViews( deconViews, service );
 
 				final MultiViewDeconvolution mvDecon = new MultiViewDeconvolution( views, numIterations, psiInit, cptf, psiFactory );
+				if ( !mvDecon.initWasSuccessful() )
+					return false;
 				mvDecon.setDebug( debug );
 				mvDecon.setDebugInterval( debugInterval );
 				mvDecon.runIterations();
