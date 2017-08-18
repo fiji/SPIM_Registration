@@ -26,6 +26,7 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Pair;
 import net.imglib2.util.Util;
+import spim.fiji.plugin.fusion.FusionGUI;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
@@ -68,6 +69,7 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 
 	public static double defaultMinIntensity = 0.0;
 	public static double defaultMaxIntensity = 65535.0;
+	public static boolean defaultSameMinMax = false;
 
 	public static int defaultMaxDetections = 3000;
 	public static int defaultMaxDetectionsTypeIndex = 0;
@@ -82,7 +84,8 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 	protected int localization, downsampleXYIndex, downsampleZ;
 
 	public static boolean useAverageMapBack = true;
-	boolean groupTiles, groupIllums;
+
+	boolean groupTiles, groupIllums, sameMinMax;
 	public static int defaultFuseFrom = 0;
 	public static int defaultFuseTo = 100;
 	protected int fuseFrom = 0, fuseTo = 100;
@@ -104,12 +107,12 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 	@Override
 	public void preprocess()
 	{
-		if ( groupIllums || groupTiles )
+		if ( sameMinMax || groupIllums || groupTiles )
 		{
 			// we set the min & max intensity for all individual views
 			if ( Double.isNaN( minIntensity ) || Double.isNaN( maxIntensity ) )
 			{
-				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Min & Max intensity not set manually or through interactive mode, determining it approximately at lowest resolution levels ... " );
+				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Determining it approximate Min & Max for all views at lowest resolution levels ... " );
 
 				IJ.showProgress( 0 );
 
@@ -124,7 +127,7 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 					final double[] minmax = FusionTools.minMaxApprox( DownsampleTools.openAtLowestLevel( imgLoader, view ) );
 					min = Math.min( min, minmax[ 0 ] );
 					max = Math.max( max, minmax[ 1 ] );
-	
+
 					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): View " + Group.pvid( view ) + ", Min=" + minmax[ 0 ] + " max=" + minmax[ 1 ] );
 
 					IJ.showProgress( (double)++count / viewIdsToProcess.size() );
@@ -167,6 +170,12 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 		{
 			gd.addNumericField( "Minimal_intensity", defaultMinIntensity, 1 );
 			gd.addNumericField( "Maximal_intensity", defaultMaxIntensity, 1 );
+		}
+		else
+		{
+			if ( !FusionGUI.isMultiResolution( spimData ) )
+				gd.addMessage( "Warning: You are not using multiresolution image data, this could take!", GUIHelper.smallStatusFont, GUIHelper.warning );
+			gd.addCheckbox( "Use_same_min & max intensity for all views", defaultSameMinMax );
 		}
 
 		if ( defineAnisotropy )
@@ -226,10 +235,12 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 		{
 			minIntensity = defaultMinIntensity = gd.getNextNumber();
 			maxIntensity = defaultMaxIntensity = gd.getNextNumber();
+			sameMinMax = false;
 		}
 		else
 		{
 			minIntensity = maxIntensity = Double.NaN;
+			sameMinMax = defaultSameMinMax = gd.getNextBoolean();
 		}
 
 		if ( brightness <= 3 )
@@ -452,9 +463,18 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 			return null;
 		}
 
+		if ( sameMinMax )
+		{
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Determining same Min & Max for all views... " );
+			preprocess();
+		}
+
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Wrapping ImagePlus around input image ... " );
 
-		return DisplayImage.getImagePlusInstance( img, false, "tp: " + viewDescription.getTimePoint().getName() + " viewSetup: " + viewDescription.getViewSetupId(), Double.NaN, Double.NaN );
+		if ( Double.isNaN( minIntensity ) || Double.isNaN( maxIntensity ) )
+			return DisplayImage.getImagePlusInstance( img, false, "tp: " + viewDescription.getTimePoint().getName() + " viewSetup: " + viewDescription.getViewSetupId(), Double.NaN, Double.NaN );
+		else
+			return DisplayImage.getImagePlusInstance( img, false, "tp: " + viewDescription.getTimePoint().getName() + " viewSetup: " + viewDescription.getViewSetupId(), minIntensity, maxIntensity );
 	}
 
 	protected ImagePlus getGroupedImagePlusForInteractive( final String dialogHeader )

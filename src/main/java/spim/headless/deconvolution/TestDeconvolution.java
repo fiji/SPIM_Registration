@@ -196,6 +196,8 @@ public class TestDeconvolution
 			final DeconViews views = new DeconViews( deconViews, service );
 
 			final MultiViewDeconvolution decon = new MultiViewDeconvolution( views, numIterations, psiInit, cptf, psiFactory );
+			if ( !decon.initWasSuccessful() )
+				return;
 			decon.setDebug( debug );
 			decon.setDebugInterval( debugInterval );
 			decon.runIterations();

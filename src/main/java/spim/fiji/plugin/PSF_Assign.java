@@ -73,6 +73,7 @@ public class PSF_Assign implements PlugIn
 
 		gd.addChoice( "Type of PSF assignment", assignTypeChoices, assignTypeChoices[ defaultAssignType ] );
 
+		gd.showDialog();
 		if ( gd.wasCanceled() )
 			return false;
 
@@ -113,7 +114,7 @@ public class PSF_Assign implements PlugIn
 		{
 			final GenericDialogPlus gd1 = new GenericDialogPlus( "Assign new PSF to views" );
 
-			PluginHelper.addSaveAsFileField( gd1, "Specify PSF file", defaultPSFPath, 200 );
+			gd1.addFileField( "Specify PSF file", defaultPSFPath, 200 );
 			gd1.addMessage( "Note: File dimensions must be odd, with the center of the PSF in the middle", GUIHelper.mediumstatusfont );
 
 			gd1.showDialog();
@@ -371,7 +372,7 @@ public class PSF_Assign implements PlugIn
 			return null;
 		}
 
-		if ( img.dimension( 0 ) % 2 == 1 || img.dimension( 1 ) % 2 == 1 || img.dimension( 2 ) % 2 == 1 )
+		if ( img.dimension( 0 ) % 2 != 1 || img.dimension( 1 ) % 2 != 1 || img.dimension( 2 ) % 2 != 1 )
 		{
 			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Image dimensions are not odd, but dim=" + Util.printInterval( new FinalInterval( img ) ) );
 			return null;

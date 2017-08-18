@@ -70,6 +70,12 @@ public class PsiInitializationBlurredFused implements PsiInitialization
 			count += ra.numContributingPixels();
 		}
 
+		if ( count == 0 )
+		{
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): ERROR! None of the views covers the deconvolved area, did you set the bounding box right? Exiting." );
+			return false;
+		}
+
 		avg = s.getSum() / (double)count;
 
 		if ( Double.isNaN( avg ) )

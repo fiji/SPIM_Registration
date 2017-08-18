@@ -94,24 +94,35 @@ public class MultiViewDeconvolution
 
 		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Inititalizing PSI image using '" + psiInit.getClass().getSimpleName() + "'" );
 
-		psiInit.runInitialization( psi, views.getViews(), views.getExecutorService() );
-		this.max = psiInit.getMax();
-
-		double avgMaxIntensity = 0;
-		for ( int i = 0; i < max.length; ++i )
+		if ( !psiInit.runInitialization( psi, views.getViews(), views.getExecutorService() ) )
 		{
-			avgMaxIntensity += max[ i ];
-			IOFunctions.println( "Max intensity in overlapping area of view " + i + ": " + max[ i ] );
+			this.max = null;
+			this.avgMax = 0;
 		}
-		this.avgMax = avgMaxIntensity / (double)max.length;
+		else
+		{
+			this.max = psiInit.getMax();
+	
+			double avgMaxIntensity = 0;
+			for ( int i = 0; i < max.length; ++i )
+			{
+				avgMaxIntensity += max[ i ];
+				IOFunctions.println( "Max intensity in overlapping area of view " + i + ": " + max[ i ] );
+			}
+			this.avgMax = avgMaxIntensity / (double)max.length;
+		}
 	}
 
+	public boolean initWasSuccessful() { return max != null; }
 	public Img< FloatType > getPSI() { return psi; }
 	public void setDebug( final boolean debug ) { this.debug = debug; }
 	public void setDebugInterval( final int debugInterval ) { this.debugInterval = debugInterval; }
 
 	public void runIterations()
 	{
+		if ( this.max == null )
+			return;
+
 		// run the deconvolution
 		while ( it < numIterations )
 		{
@@ -167,6 +178,9 @@ public class MultiViewDeconvolution
 
 	public void runNextIteration()
 	{
+		if ( this.max == null )
+			return;
+
 		++it;
 
 		IOFunctions.println( "iteration: " + it + " (" + new Date(System.currentTimeMillis()) + ")" );

@@ -89,7 +89,7 @@ public class Block extends AbstractInterval
 			n *= blockSize[ d ];
 
 		// split up into many parts for multithreading
-		this.portions = FusionTools.divideIntoPortions( n, Threads.numThreads() * 2 );
+		this.portions = FusionTools.divideIntoPortions( n );
 
 		if ( service == null )
 		{

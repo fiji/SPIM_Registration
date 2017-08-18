@@ -3,7 +3,6 @@ package spim.process.deconvolution.iteration;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
 
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.array.ArrayImg;
@@ -11,7 +10,6 @@ import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.basictypeaccess.array.FloatArray;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
-import spim.Threads;
 import spim.process.cuda.Block;
 import spim.process.cuda.CUDADevice;
 import spim.process.cuda.CUDAFourierConvolution;
@@ -52,13 +50,7 @@ public class ComputeBlockThreadCUDA extends ComputeBlockThreadAbstract
 		this.portions = new ArrayList<>();
 		this.lambda = lambda;
 
-		final int numThreads;
-		if ( ThreadPoolExecutor.class.isInstance( service ) )
-			numThreads = ((ThreadPoolExecutor)service).getMaximumPoolSize();
-		else
-			numThreads = Threads.numThreads();
-
-		this.portions.addAll( FusionTools.divideIntoPortions( tmp1.size(), numThreads * 2 ) );
+		this.portions.addAll( FusionTools.divideIntoPortions( tmp1.size() ) );
 	}
 
 	@Override

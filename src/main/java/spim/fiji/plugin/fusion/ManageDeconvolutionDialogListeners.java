@@ -167,7 +167,7 @@ public class ManageDeconvolutionDialogListeners
 
 		// input stuff
 		final int inputBytePerPixel = FusionGUI.inputBytePerPixel( decon.views.get( 0 ), decon.spimData );
-		final int numViews = maxNumGroups( decon.spimData, decon.views, decon.splittingType );
+		final int numViews = maxNumGroups( decon.spimData, decon.views, decon, decon.splittingType );
 
 		if ( decon.isImgLoaderVirtual() )
 		{
@@ -233,12 +233,16 @@ public class ManageDeconvolutionDialogListeners
 		return inputImagesMB + processingMB + fusedSizeMB;
 	}
 
-	public static int maxNumGroups( final SpimData2 spimData, final List< ViewId > views, final int splittingType )
+	public static int maxNumGroups( final SpimData2 spimData, final List< ViewId > views, final DeconvolutionGUI decon, final int splittingType )
 	{
 		int maxGroups = 0;
 
-		for ( final Group< ViewDescription > group : FusionGUI.getFusionGroups( spimData, views, splittingType ) )
-			maxGroups = Math.max( maxGroups, group.size() );
+		for ( final Group< ViewDescription > deconGroup : FusionGUI.getFusionGroups( spimData, views, splittingType ) )
+		{
+			final List< Group< ViewDescription > > deconVirtualViews = Group.getGroupsSorted( decon.getDeconvolutionGrouping( deconGroup ) );
+
+			maxGroups = Math.max( maxGroups, deconVirtualViews.size() );
+		}
 
 		return maxGroups;
 	}

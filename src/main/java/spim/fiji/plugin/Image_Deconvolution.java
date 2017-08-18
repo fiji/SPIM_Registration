@@ -123,8 +123,8 @@ public class Image_Deconvolution implements PlugIn
 			if ( decon.getWeightCacheType() == ImgDataType.CACHED )
 			{
 				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Caching weight images ... " );
-				fusion.cacheNormalizedWeights();
 				fusion.cacheUnnormalizedWeights();
+				fusion.cacheNormalizedWeights();
 			}
 			if ( decon.getWeightCacheType() == ImgDataType.PRECOMPUTED )
 			{
@@ -191,6 +191,8 @@ public class Image_Deconvolution implements PlugIn
 				final DeconViews views = new DeconViews( deconViews, service );
 
 				final MultiViewDeconvolution mvDecon = new MultiViewDeconvolution( views, numIterations, psiInit, cptf, psiFactory );
+				if ( !mvDecon.initWasSuccessful() )
+					return false;
 				mvDecon.setDebug( debug );
 				mvDecon.setDebugInterval( debugInterval );
 				mvDecon.runIterations();

@@ -55,9 +55,9 @@ public class Image_Fusion implements PlugIn
 
 	public static boolean fuse(
 			final SpimData2 spimData,
-			final List< ViewId > views )
+			final List< ViewId > viewsToProcess )
 	{
-		final FusionGUI fusion = new FusionGUI( spimData, views );
+		final FusionGUI fusion = new FusionGUI( spimData, viewsToProcess );
 
 		if ( !fusion.queryDetails() )
 			return false;
@@ -69,6 +69,8 @@ public class Image_Fusion implements PlugIn
 		{
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Fusing group " + (++i) + "/" + groups.size() + " (group=" + group + ")" );
 
+			for ( final ViewDescription vd : group )
+				System.out.println( Group.pvid( vd ) );
 			final Interval boundingBox;
 			final double anisoF;
 
@@ -105,7 +107,7 @@ public class Image_Fusion implements PlugIn
 			{
 				virtual = FusionTools.fuseVirtual(
 					spimData,
-					views,
+					group.getViews(),
 					fusion.useBlending(),
 					fusion.useContentBased(),
 					fusion.getInterpolation(),
@@ -118,7 +120,7 @@ public class Image_Fusion implements PlugIn
 
 				final HashMap< ViewId, AffineTransform3D > registrations = new HashMap<>();
 
-				for ( final ViewId viewId : views )
+				for ( final ViewId viewId : group.getViews() )
 				{
 					final ViewRegistration vr = spimData.getViewRegistrations().getViewRegistration( viewId );
 					vr.updateModel();
@@ -138,7 +140,7 @@ public class Image_Fusion implements PlugIn
 						imgLoader,
 						registrations,
 						viewDescriptions,
-						views,
+						group.getViews(),
 						fusion.useBlending(),
 						fusion.useContentBased(),
 						fusion.getInterpolation(),

@@ -20,7 +20,6 @@ import net.imglib2.util.Pair;
 import net.imglib2.util.Util;
 import net.imglib2.util.ValuePair;
 import net.imglib2.view.Views;
-import spim.Threads;
 import spim.process.cuda.Block;
 import spim.process.cuda.BlockGeneratorFixedSizePrecise;
 import spim.process.cuda.BlockSorter;
@@ -211,8 +210,7 @@ public class DeconView
 	{
 		final IterableInterval< FloatType > toTest = Views.iterable( Views.interval( Views.extendZero( weight ), blockStruct ) );
 
-		final int nPortions = Threads.numThreads() * 4;
-		final Vector< ImagePortion > portions = FusionTools.divideIntoPortions( toTest.size(), nPortions );
+		final Vector< ImagePortion > portions = FusionTools.divideIntoPortions( toTest.size() );
 		final ArrayList< Callable< Boolean > > tasks = new ArrayList<>();
 
 		for ( final ImagePortion portion : portions )

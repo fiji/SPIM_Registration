@@ -164,7 +164,7 @@ public class BoundingBoxMinFilterThreshold implements BoundingBoxEstimation
 		}
 
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = FusionTools.divideIntoPortions( img.size(), Threads.numThreads() * 2 );
+		final Vector< ImagePortion > portions = FusionTools.divideIntoPortions( img.size() );
 
 		// set up executor service
 		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
@@ -252,7 +252,7 @@ public class BoundingBoxMinFilterThreshold implements BoundingBoxEstimation
 		final Img< T > tmp2 = tmp1.factory().create( tmp1, tmp1.firstElement() );
 		
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = FusionTools.divideIntoPortions( tmp1.size(), Threads.numThreads() * 2 );
+		final Vector< ImagePortion > portions = FusionTools.divideIntoPortions( tmp1.size() );
 
 		// set up executor service
 		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
