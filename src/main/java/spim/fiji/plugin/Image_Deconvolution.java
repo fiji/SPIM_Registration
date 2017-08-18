@@ -123,8 +123,8 @@ public class Image_Deconvolution implements PlugIn
 			if ( decon.getWeightCacheType() == ImgDataType.CACHED )
 			{
 				IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Caching weight images ... " );
-				fusion.cacheNormalizedWeights();
 				fusion.cacheUnnormalizedWeights();
+				fusion.cacheNormalizedWeights();
 			}
 			if ( decon.getWeightCacheType() == ImgDataType.PRECOMPUTED )
 			{
