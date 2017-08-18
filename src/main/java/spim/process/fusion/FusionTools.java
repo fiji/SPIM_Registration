@@ -536,16 +536,7 @@ public class FusionTools
 	{
 		final long numPixels = Views.iterable( input ).size();
 		final int nThreads = Threads.numThreads();
-		final int nPortions;
-
-		if ( numPixels <= nThreads )
-			nPortions = (int)numPixels;
-		else
-			nPortions = Math.max( nThreads, (int)( numPixels / ( 64l*64l*64l ) ) );
-
-		System.out.println( "nPortions for copy:" + nPortions );
-
-		final Vector< ImagePortion > portions = divideIntoPortions( numPixels, nPortions );
+		final Vector< ImagePortion > portions = divideIntoPortions( numPixels );
 		final ArrayList< Callable< Void > > tasks = new ArrayList< Callable< Void > >();
 
 		final AtomicInteger progress = new AtomicInteger( 0 );
@@ -650,7 +641,7 @@ public class FusionTools
 		final IterableInterval< T > iterable = Views.iterable( img );
 		
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = divideIntoPortions( iterable.size(), Threads.numThreads() * 2 );
+		final Vector< ImagePortion > portions = divideIntoPortions( iterable.size() );
 
 		// set up executor service
 		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
@@ -803,7 +794,7 @@ public class FusionTools
 		final IterableInterval< FloatType > iterable = Views.iterable( img );
 		
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = divideIntoPortions( iterable.size(), Threads.numThreads() * 2 );
+		final Vector< ImagePortion > portions = divideIntoPortions( iterable.size() );
 
 		// set up executor service
 		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
@@ -850,8 +841,17 @@ public class FusionTools
 	}
 
 
-	public static final Vector<ImagePortion> divideIntoPortions( final long imageSize, int numPortions )
+	public static final Vector<ImagePortion> divideIntoPortions( final long imageSize )
 	{
+		int numPortions;
+
+		if ( imageSize <= Threads.numThreads() )
+			numPortions = (int)imageSize;
+		else
+			numPortions = Math.max( Threads.numThreads(), (int)( imageSize / ( 64l*64l*64l ) ) );
+
+		System.out.println( "nPortions for copy:" + numPortions );
+
 		final Vector<ImagePortion> portions = new Vector<ImagePortion>();
 
 		if ( imageSize == 0 )

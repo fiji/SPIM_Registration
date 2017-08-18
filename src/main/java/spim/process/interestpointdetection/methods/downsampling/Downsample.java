@@ -83,7 +83,7 @@ public class Downsample
 				//Views.iterable( Views.hyperSlice( Views.zeroMin( output ), d, 0 ) );
 
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = FusionTools.divideIntoPortions( numLines, Threads.numThreads() * 2 );
+		final Vector< ImagePortion > portions = FusionTools.divideIntoPortions( numLines );
 
 		// set up executor service
 		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );

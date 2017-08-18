@@ -13,7 +13,6 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.RealSum;
-import spim.Threads;
 import spim.fiji.ImgLib2Temp.Triple;
 import spim.process.deconvolution.DeconView;
 import spim.process.fusion.FusionTools;
@@ -29,11 +28,8 @@ public class PsiInitializationAvgPrecise implements PsiInitialization
 	{
 		this.max = new float[ views.size() ];
 
-		final int nThreads = Threads.numThreads();
-		final int nPortions = nThreads * 20;
-
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = FusionTools.divideIntoPortions( psi.size(), nPortions );
+		final Vector< ImagePortion > portions = FusionTools.divideIntoPortions( psi.size() );
 		final ArrayList< Callable< Triple< RealSum, Long, float[] > > > tasks = new ArrayList< Callable< Triple< RealSum, Long, float[] > > >();
 
 		final ArrayList< RandomAccessibleInterval< FloatType > > imgs = new ArrayList< RandomAccessibleInterval< FloatType > >();

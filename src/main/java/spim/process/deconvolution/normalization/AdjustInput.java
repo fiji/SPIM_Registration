@@ -40,13 +40,11 @@ public class AdjustInput
 	 */
 	final public static double sumImg( final IterableInterval< FloatType > img )
 	{
-		final int numPortions = Threads.numThreads() * 2;
-
-		final RealSum[] sums = new RealSum[ numPortions ];
 		final AtomicInteger ai = new AtomicInteger( 0 );
 
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = FusionTools.divideIntoPortions( img.size(), numPortions );
+		final Vector< ImagePortion > portions = FusionTools.divideIntoPortions( img.size() );
+		final RealSum[] sums = new RealSum[ portions.size() ];
 
 		// set up executor service
 		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );

@@ -36,7 +36,7 @@ public class Mirror
 
 		// divide the image into chunks
 		final long imageSize = image.size();
-		final Vector< ImagePortion > portions = FusionTools.divideIntoPortions( imageSize, numThreads * 4 );
+		final Vector< ImagePortion > portions = FusionTools.divideIntoPortions( imageSize );
 
 		final long maxMirror = image.dimension( dimension ) - 1;
 		final long sizeMirrorH = image.dimension( dimension ) / 2;
