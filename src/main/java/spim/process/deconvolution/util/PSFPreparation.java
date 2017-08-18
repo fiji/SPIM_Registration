@@ -44,7 +44,7 @@ public class PSFPreparation
 			// basically the same transformation (e.g. angle 0 vs 180, or before after correction of chromatic abberations)
 			psfs.put( virtualView, (ArrayImg< FloatType, ? >)PSFCombination.computeAverageImage( viewPsfs, new ArrayImgFactory< FloatType >(), false ) );
 
-			//DisplayImage.getImagePlusInstance( psfs.get( group ), false, "psf " + group, 0, 1 ).show();
+			//DisplayImage.getImagePlusInstance( psfs.get( virtualView ), false, "psf " + virtualView, 0, 1 ).show();
 		}
 
 		return psfs;
