@@ -27,7 +27,7 @@ public class FusedRandomAccessibleInterval implements RandomAccessibleInterval< 
 		this.interval = interval;
 		this.images = images;
 
-		if ( weights.size() == 0 )
+		if ( weights == null || weights.size() == 0 )
 			this.weights = null;
 		else
 			this.weights = weights;
