@@ -280,7 +280,7 @@
 		<dependency>
 			<groupId>net.imglib2.simulation</groupId>
 			<artifactId>multiview-simulation</artifactId>
-			<version>1.0.4-SNAPSHOT</version>
+			<version>1.0.4</version>
 		</dependency>
 	</dependencies>
 
