@@ -1,6 +1,6 @@
 package spim.fiji.spimdata.boundingbox;
 
-import mpicbg.imglib.util.Util;
+import net.imglib2.util.Util;
 import net.imglib2.Interval;
 import net.imglib2.Positionable;
 import net.imglib2.RealPositionable;

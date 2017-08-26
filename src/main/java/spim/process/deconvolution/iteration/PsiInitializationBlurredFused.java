@@ -5,7 +5,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
-import mpicbg.imglib.util.Util;
+import net.imglib2.util.Util;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
