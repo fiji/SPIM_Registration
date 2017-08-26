@@ -145,22 +145,17 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Fiji_Plugins</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>SPIM_Opener</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>VIB-lib</artifactId>
+			<version>3.1.1</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>fiji-lib</artifactId>
+			<version>2.1.2</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>legacy-imglib1</artifactId>
+			<version>1.1.8</version>
 		</dependency>
 
 		<!-- ImageJ dependencies -->
@@ -223,10 +218,12 @@
 		<dependency>
 			<groupId>ome</groupId>
 			<artifactId>formats-api</artifactId>
+			<version>5.5.1</version>
 		</dependency>
 		<dependency>
 			<groupId>ome</groupId>
 			<artifactId>formats-bsd</artifactId>
+			<version>5.5.1</version>
 		</dependency>
 		<dependency>
 			<groupId>ome</groupId>
@@ -237,14 +234,17 @@
 					<artifactId>jhdf5</artifactId>
 				</exclusion>
 			</exclusions>
+			<version>5.5.1</version>
 		</dependency>
 		<dependency>
-			<groupId>ome</groupId>
+			<groupId>org.openmicroscopy</groupId>
 			<artifactId>ome-xml</artifactId>
+			<version>5.5.2</version>
 		</dependency>
 		<dependency>
-			<groupId>ome</groupId>
-			<artifactId>formats-common</artifactId>
+			<groupId>org.openmicroscopy</groupId>
+			<artifactId>ome-common</artifactId>
+			<version>5.3.1</version>
 		</dependency>
 
 		<!-- Third party dependencies -->
@@ -259,6 +259,7 @@
 		<dependency>
 			<groupId>net.java.dev.jna</groupId>
 			<artifactId>jna</artifactId>
+			<version>4.4.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jdom</groupId>
@@ -267,6 +268,7 @@
 		<dependency>
 			<groupId>org.jfree</groupId>
 			<artifactId>jcommon</artifactId>
+			<version>1.0.24</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jfree</groupId>
