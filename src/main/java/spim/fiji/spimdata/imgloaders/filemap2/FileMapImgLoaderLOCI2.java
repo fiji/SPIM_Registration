@@ -40,7 +40,7 @@ import net.imglib2.view.Views;
 import spim.fiji.spimdata.imgloaders.AbstractImgLoader;
 import spim.fiji.spimdata.imgloaders.LegacyFileMapImgLoaderLOCI;
 
-public class FileMapImgLoaderLOCI2 implements ImgLoader
+public class FileMapImgLoaderLOCI2 implements ImgLoader, FileMapGettable
 {
 	private final HashMap<BasicViewDescription< ? >, Pair<File, Pair<Integer, Integer>>> fileMap;
 	private final AbstractSequenceDescription<?, ?, ?> sd;
@@ -88,6 +88,11 @@ public class FileMapImgLoaderLOCI2 implements ImgLoader
 		return new FileMapSetupImgLoaderLOCI2<>(setupId);
 	}
 	
+	
+	/* (non-Javadoc)
+	 * @see spim.fiji.spimdata.imgloaders.filemap2.FileMapGettable#getFileMap()
+	 */
+	@Override
 	public HashMap< BasicViewDescription< ? >, Pair< File, Pair< Integer, Integer > > > getFileMap()
 	{
 		 return fileMap;
@@ -110,10 +115,14 @@ public class FileMapImgLoaderLOCI2 implements ImgLoader
 
 			// TODO: some logging here? (reading angle .. , tp .., ... from file ...)
 
+			final Dimensions size = vd.getViewSetup().getSize();
+
 			RandomAccessibleInterval< T > img = null;
 			try
 			{
-				img = new VirtualRAIFactoryLOCI().createVirtualCached( reader, imageSource.getA(), imageSource.getB().getA(), imageSource.getB().getB(), allTimepointsInSingleFiles ? 0 : timepointId, null );
+				img = new VirtualRAIFactoryLOCI().createVirtualCached(
+						reader, imageSource.getA(), imageSource.getB().getA(),
+						imageSource.getB().getB(), allTimepointsInSingleFiles ? 0 : timepointId, null, size );
 			}
 			catch ( IncompatibleTypeException e )
 			{
@@ -175,12 +184,16 @@ public class FileMapImgLoaderLOCI2 implements ImgLoader
 			final BasicViewDescription< ? > vd = sd.getViewDescriptions().get( new ViewId( timepointId, setupId ) );
 			final Pair< File, Pair< Integer, Integer > > imageSource = fileMap.get( vd );
 
+			final Dimensions size = vd.getViewSetup().getSize();
+
 			// TODO: some logging here? (reading angle .. , tp .., ... from file ...)
 
 			RandomAccessibleInterval< FloatType > img = null;
 			try
 			{
-				img = new VirtualRAIFactoryLOCI().createVirtualCached( reader, imageSource.getA(), imageSource.getB().getA(), imageSource.getB().getB(), allTimepointsInSingleFiles ? 0 : timepointId, new FloatType() );
+				img = new VirtualRAIFactoryLOCI().createVirtualCached( reader, imageSource.getA(),
+						imageSource.getB().getA(), imageSource.getB().getB(),
+						allTimepointsInSingleFiles ? 0 : timepointId, new FloatType(), size );
 			}
 			catch ( IncompatibleTypeException e )
 			{

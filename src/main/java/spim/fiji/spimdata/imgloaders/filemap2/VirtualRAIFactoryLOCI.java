@@ -12,6 +12,7 @@ import loci.formats.FormatException;
 import loci.formats.FormatTools;
 import loci.formats.IFormatReader;
 import loci.formats.ImageReader;
+import net.imglib2.Dimensions;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.Img;
@@ -48,12 +49,23 @@ public class VirtualRAIFactoryLOCI
 	}
 	
 	@SuppressWarnings("unchecked")
-	public <T extends RealType< T > & NativeType< T >> RandomAccessibleInterval< T > createVirtual( final IFormatReader reader,  final File file, final int series, final int channel, final int timepoint, T type) throws IncompatibleTypeException
+	public <T extends RealType< T > & NativeType< T >> RandomAccessibleInterval< T > createVirtual(
+			final IFormatReader reader,
+			final File file,
+			final int series,
+			final int channel,
+			final int timepoint,
+			T type,
+			Dimensions dim) throws IncompatibleTypeException
 	{
 		setReaderFileAndSeriesIfNecessary( reader, file, series );
 
 		final boolean isLittleEndian = reader.isLittleEndian();		
 		final long[] dims = new long[]{reader.getSizeX(), reader.getSizeY(), reader.getSizeZ()};
+
+		if (dim != null)
+			dim.dimensions( dims );
+
 		final int pixelType = reader.getPixelType();
 		if (pixelType == FormatTools.UINT8)
 			return new VirtualRandomAccessibleIntervalLOCI< T >( reader, file, dims, series, channel, timepoint, type == null ? (T) new UnsignedByteType() : type, (t, buf, i) -> {t.setReal( (int) buf[i] & 0xff);} );
@@ -70,12 +82,23 @@ public class VirtualRAIFactoryLOCI
 	}
 	
 	@SuppressWarnings("unchecked")
-	public <T extends RealType< T > & NativeType< T >> RandomAccessibleInterval< T > createVirtualCached( final IFormatReader reader,  final File file, final int series, final int channel, final int timepoint, T type) throws IncompatibleTypeException
+	public <T extends RealType< T > & NativeType< T >> RandomAccessibleInterval< T > createVirtualCached(
+			final IFormatReader reader,
+			final File file,
+			final int series,
+			final int channel,
+			final int timepoint,
+			T type,
+			Dimensions dim) throws IncompatibleTypeException
 	{
 		setReaderFileAndSeriesIfNecessary( reader, file, series );
 
 		final boolean isLittleEndian = reader.isLittleEndian();		
 		final long[] dims = new long[]{reader.getSizeX(), reader.getSizeY(), reader.getSizeZ()};
+
+		if (dim != null)
+			dim.dimensions( dims );
+
 		final int pixelType = reader.getPixelType();
 		
 		if (pixelType == FormatTools.UINT8)
@@ -129,8 +152,21 @@ public class VirtualRAIFactoryLOCI
 			if (reader.getSeries() != series)
 				reader.setSeries( series );
 		}
+	}
 
-		
+	/** check if the given reader is set to the given file and series
+	 * 
+	 * @param reader the reader
+	 * @param file the file
+	 * @param series the series
+	 * @return true or false
+	 */
+	public static boolean checkReaderFileAndSeries(final IFormatReader reader, final File file, final int series)
+	{
+		if (reader.getCurrentFile() == null || !reader.getCurrentFile().equals( file.getAbsolutePath() ))
+			return false;
+		else
+			return reader.getSeries() == series;
 	}
 	
 	public  static <T extends RealType<T> & NativeType< T > > void main(String[] args)
@@ -139,7 +175,7 @@ public class VirtualRAIFactoryLOCI
 		ImageReader reader = new ImageReader();
 		try
 		{
-		img = new VirtualRAIFactoryLOCI().createVirtualCached( reader, new File( "/Users/david/Desktop/2ch2ill2angle.czi" ), 0, 2, 0 , (T) new DoubleType());
+		img = new VirtualRAIFactoryLOCI().createVirtualCached( reader, new File( "/Users/david/Desktop/2ch2ill2angle.czi" ), 0, 2, 0 , (T) new DoubleType(), null);
 		}
 		catch ( IncompatibleTypeException e )
 		{
