@@ -29,7 +29,7 @@ public class DefaultFlatfieldCorrectionWrappedImgLoader extends LazyLoadingFlatF
 {
 	private ImgLoader wrappedImgLoader;
 	private boolean active;
-	private final boolean cacheResult;
+	private boolean cacheResult;
 
 	public DefaultFlatfieldCorrectionWrappedImgLoader(ImgLoader wrappedImgLoader)
 	{
@@ -81,6 +81,10 @@ public class DefaultFlatfieldCorrectionWrappedImgLoader extends LazyLoadingFlatF
 		@Override
 		public RandomAccessibleInterval< T > getImage(int timepointId, ImgLoaderHint... hints)
 		{
+			if (!active)
+				return (RandomAccessibleInterval< T >) wrappedImgLoader.getSetupImgLoader( setupId ).getImage( timepointId,
+						hints );
+
 			@SuppressWarnings("unchecked")
 			final RandomAccessibleInterval< T > rai = FlatFieldCorrectedRandomAccessibleIntervals.create(
 					(RandomAccessibleInterval< T >) wrappedImgLoader.getSetupImgLoader( setupId ).getImage( timepointId,
@@ -106,6 +110,10 @@ public class DefaultFlatfieldCorrectionWrappedImgLoader extends LazyLoadingFlatF
 		public RandomAccessibleInterval< FloatType > getFloatImage(int timepointId, boolean normalize,
 				ImgLoaderHint... hints)
 		{
+			if (!active)
+				return (RandomAccessibleInterval< FloatType >) wrappedImgLoader.getSetupImgLoader( setupId ).getFloatImage( timepointId,
+						false, hints );
+
 			@SuppressWarnings("unchecked")
 			final RandomAccessibleInterval< FloatType > rai = FlatFieldCorrectedRandomAccessibleIntervals.create(
 					(RandomAccessibleInterval< T >) wrappedImgLoader.getSetupImgLoader( setupId ).getImage( timepointId,
@@ -188,6 +196,18 @@ public class DefaultFlatfieldCorrectionWrappedImgLoader extends LazyLoadingFlatF
 				.downsampleHDF5( image, new int[] { 3, 3, 2 } );
 		ImageJFunctions.show( downsampleBlock, "" );
 
+	}
+
+	@Override
+	public boolean isCached()
+	{
+		return cacheResult;
+	}
+
+	@Override
+	public void setCached(boolean cached)
+	{
+		cacheResult = cached;
 	}
 
 }

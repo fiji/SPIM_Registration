@@ -44,7 +44,7 @@ public class MultiResolutionFlatfieldCorrectionWrappedImgLoader
 
 	private MultiResolutionImgLoader wrappedImgLoader;
 	private boolean active;
-	private final boolean cacheResult;
+	private boolean cacheResult;
 
 	/* downsampled bright/dark images */
 	private final Map< Pair< File, List< Integer > >, RandomAccessibleInterval< FloatType > > dsRaiMap;
@@ -156,10 +156,14 @@ public class MultiResolutionFlatfieldCorrectionWrappedImgLoader
 		{
 			/*
 			 * TODO: should we care about the MipmapTransform here? are there
-			 * other MultiresolutionImgLoaders that do pyramid differently
+			 * other MultiresolutionImgLoaders that do pyramid differently?
 			 */
 
 			final MultiResolutionSetupImgLoader< ? > wrpSetupIL = wrappedImgLoader.getSetupImgLoader( setupId );
+
+			if(!active)
+				return (RandomAccessibleInterval< T >) wrpSetupIL.getImage( timepointId, level, hints );
+
 			final int n = wrpSetupIL.getImageSize( timepointId ).numDimensions();
 
 			final int[] dsFactors = new int[n];
@@ -194,6 +198,10 @@ public class MultiResolutionFlatfieldCorrectionWrappedImgLoader
 				ImgLoaderHint... hints)
 		{
 			final MultiResolutionSetupImgLoader< ? > wrpSetupIL = wrappedImgLoader.getSetupImgLoader( setupId );
+
+			if(!active)
+				return wrpSetupIL.getFloatImage( timepointId, level, normalize, hints );
+
 			final int n = wrpSetupIL.getImageSize( timepointId ).numDimensions();
 
 			final int[] dsFactors = new int[n];
@@ -400,5 +408,17 @@ public class MultiResolutionFlatfieldCorrectionWrappedImgLoader
 		RandomAccessibleInterval< FloatType > image = ( (MultiResolutionImgLoader) data.getSequenceDescription()
 				.getImgLoader() ).getSetupImgLoader( 0 ).getFloatImage( 0, 1, false );
 		ImageJFunctions.show( image );
+	}
+
+	@Override
+	public boolean isCached()
+	{
+		return cacheResult;
+	}
+
+	@Override
+	public void setCached(boolean cached)
+	{
+		cacheResult = cached;
 	}
 }
