@@ -11,9 +11,11 @@ import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.Dimensions;
 import net.imglib2.FinalDimensions;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
 
@@ -140,12 +142,12 @@ public abstract class AbstractImgLoader implements LegacyImgLoader< UnsignedShor
 		return updated;
 	}
 
-	protected static final void normalize( final Img< FloatType > img )
+	public static final void normalize( final RandomAccessibleInterval< FloatType > img )
 	{
 		float min = Float.MAX_VALUE;
 		float max = -Float.MAX_VALUE;
 
-		for ( final FloatType t : img )
+		for ( final FloatType t : Views.flatIterable( img ) )
 		{
 			final float v = t.get();
 
@@ -156,7 +158,7 @@ public abstract class AbstractImgLoader implements LegacyImgLoader< UnsignedShor
 				max = v;
 		}
 
-		for ( final FloatType t : img )
+		for ( final FloatType t : Views.flatIterable( img ) )
 			t.set( ( t.get() - min ) / ( max - min ) );
 	}
 }

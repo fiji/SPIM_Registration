@@ -86,14 +86,17 @@ public class MatcherPairwiseTools
 				final V viewIdA = gpA.getV();
 				final V viewIdB = gpB.getV();
 
-				final String labelA = labelMap.get( viewIdA );
-				final String labelB = labelMap.get( viewIdB );
-
-				final CorrespondingInterestPoints correspondingToA = new CorrespondingInterestPoints( gpA.getId(), viewIdB, labelB, gpB.getId() );
-				final CorrespondingInterestPoints correspondingToB = new CorrespondingInterestPoints( gpB.getId(), viewIdA, labelA, gpA.getId() );
-				
-				cMap.get( viewIdA ).add( correspondingToA );
-				cMap.get( viewIdB ).add( correspondingToB );
+				if ( p.getB().storeCorrespondences() )
+				{
+					final String labelA = labelMap.get( viewIdA );
+					final String labelB = labelMap.get( viewIdB );
+	
+					final CorrespondingInterestPoints correspondingToA = new CorrespondingInterestPoints( gpA.getId(), viewIdB, labelB, gpB.getId() );
+					final CorrespondingInterestPoints correspondingToB = new CorrespondingInterestPoints( gpB.getId(), viewIdA, labelA, gpA.getId() );
+	
+					cMap.get( viewIdA ).add( correspondingToA );
+					cMap.get( viewIdB ).add( correspondingToB );
+				}
 
 				// update transformedMap
 				final Pair< V, V > pair = new ValuePair<>( viewIdA, viewIdB );
@@ -104,7 +107,7 @@ public class MatcherPairwiseTools
 					pwr = transformedMap.get( pair );
 				else
 				{
-					pwr = new PairwiseResult<>();
+					pwr = new PairwiseResult<>( p.getB().storeCorrespondences() );
 					pwr.setInliers( new ArrayList<>(), p.getB().getError() );
 					pwr.setCandidates( new ArrayList<>() );
 					transformedMap.put( pair, pwr );
@@ -131,7 +134,7 @@ public class MatcherPairwiseTools
 					pwr = transformedMap.get( pair );
 				else
 				{
-					pwr = new PairwiseResult<>();
+					pwr = new PairwiseResult<>( p.getB().storeCorrespondences() );
 					pwr.setInliers( new ArrayList<>(), p.getB().getError() );
 					pwr.setCandidates( new ArrayList<>() );
 					transformedMap.put( pair, pwr );
@@ -165,17 +168,8 @@ public class MatcherPairwiseTools
 			final InterestPointList listA,
 			final InterestPointList listB )
 	{
-		final List< CorrespondingInterestPoints > corrListA, corrListB;
-
-		if ( listA.hasCorrespondingInterestPoints() )
-			corrListA = listA.getCorrespondingInterestPointsCopy();
-		else
-			corrListA = new ArrayList<>();
-
-		if ( listB.hasCorrespondingInterestPoints() )
-			corrListB = listA.getCorrespondingInterestPointsCopy();
-		else
-			corrListB = new ArrayList<>();
+		final List< CorrespondingInterestPoints > corrListA = listA.getCorrespondingInterestPointsCopy();
+		final List< CorrespondingInterestPoints > corrListB = listB.getCorrespondingInterestPointsCopy();
 
 		for ( final PointMatchGeneric< I > pm : correspondences )
 		{

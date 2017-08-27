@@ -1,18 +1,25 @@
 package spim.fiji.plugin;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import ij.ImageJ;
 import ij.plugin.PlugIn;
+import mpicbg.spim.data.registration.ViewRegistration;
+import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.SetupImgLoader;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+import net.imglib2.FinalInterval;
+import net.imglib2.Interval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.converter.RealUnsignedShortConverter;
 import net.imglib2.converter.read.ConvertedRandomAccessibleInterval;
 import net.imglib2.img.imageplus.ImagePlusImgFactory;
+import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
@@ -48,9 +55,9 @@ public class Image_Fusion implements PlugIn
 
 	public static boolean fuse(
 			final SpimData2 spimData,
-			final List< ViewId > views )
+			final List< ViewId > viewsToProcess )
 	{
-		final FusionGUI fusion = new FusionGUI( spimData, views );
+		final FusionGUI fusion = new FusionGUI( spimData, viewsToProcess );
 
 		if ( !fusion.queryDetails() )
 			return false;
@@ -62,17 +69,84 @@ public class Image_Fusion implements PlugIn
 		{
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Fusing group " + (++i) + "/" + groups.size() + " (group=" + group + ")" );
 
+			for ( final ViewDescription vd : group )
+				System.out.println( Group.pvid( vd ) );
+			final Interval boundingBox;
+			final double anisoF;
+
+			if ( fusion.preserveAnisotropy() )
+			{
+				anisoF = fusion.getAnisotropyFactor();
+
+				Interval bb = fusion.getBoundingBox();
+				final long[] min = new long[ 3 ];
+				final long[] max = new long[ 3 ];
+
+				bb.min( min );
+				bb.max( max );
+
+				min[ 2 ] = Math.round( Math.floor( min[ 2 ] / anisoF ) );
+				max[ 2 ] = Math.round( Math.ceil( max[ 2 ] / anisoF ) );
+
+				boundingBox = new FinalInterval( min, max );
+
+				// we need to update the bounding box here
+				fusion.setBoundingBox( boundingBox );
+			}
+			else
+			{
+				anisoF = Double.NaN;
+				boundingBox = fusion.getBoundingBox();
+			}
+
 			final double downsampling = fusion.getDownsampling();
 
-			final RandomAccessibleInterval< FloatType > virtual =
-				FusionTools.fuseVirtual(
+			final RandomAccessibleInterval< FloatType > virtual;
+
+			if ( !fusion.preserveAnisotropy() )
+			{
+				virtual = FusionTools.fuseVirtual(
 					spimData,
-					views,
+					group.getViews(),
 					fusion.useBlending(),
 					fusion.useContentBased(),
 					fusion.getInterpolation(),
-					fusion.getBoundingBox(),
+					boundingBox,
 					downsampling );
+			}
+			else
+			{
+				final ImgLoader imgLoader = spimData.getSequenceDescription().getImgLoader();
+
+				final HashMap< ViewId, AffineTransform3D > registrations = new HashMap<>();
+
+				for ( final ViewId viewId : group.getViews() )
+				{
+					final ViewRegistration vr = spimData.getViewRegistrations().getViewRegistration( viewId );
+					vr.updateModel();
+					final AffineTransform3D model = vr.getModel().copy();
+					final AffineTransform3D aniso = new AffineTransform3D();
+					aniso.set(
+							1.0, 0.0, 0.0, 0.0,
+							0.0, 1.0, 0.0, 0.0,
+							0.0, 0.0, 1.0/anisoF, 0.0 );
+					model.preConcatenate( aniso );
+					registrations.put( viewId, model );
+				}
+
+				final Map< ViewId, ViewDescription > viewDescriptions = spimData.getSequenceDescription().getViewDescriptions();
+
+				virtual = FusionTools.fuseVirtual(
+						imgLoader,
+						registrations,
+						viewDescriptions,
+						group.getViews(),
+						fusion.useBlending(),
+						fusion.useContentBased(),
+						fusion.getInterpolation(),
+						boundingBox,
+						downsampling );
+			}
 
 			if ( fusion.getPixelType() == 1 ) // 16 bit
 			{
@@ -91,6 +165,8 @@ public class Image_Fusion implements PlugIn
 					return false;
 			}
 		}
+
+		IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): DONE." );
 
 		return true;
 	}
@@ -133,7 +209,7 @@ public class Image_Fusion implements PlugIn
 		else // Precomputed
 			processedOutput = FusionTools.copyImg( output, new ImagePlusImgFactory< T >(), type, true );
 
-		final String title = getTitle( fusion, group );
+		final String title = getTitle( fusion.getSplittingType(), group );
 
 		if ( minmax == null )
 			return exporter.exportImage( processedOutput, fusion.getBoundingBox(), fusion.getDownsampling(), title, group );
@@ -141,16 +217,16 @@ public class Image_Fusion implements PlugIn
 			return exporter.exportImage( processedOutput, fusion.getBoundingBox(), fusion.getDownsampling(), title, group, minmax[ 0 ], minmax[ 1 ] );
 	}
 
-	public static String getTitle( final FusionGUI fusion, final Group< ViewDescription > group )
+	public static String getTitle( final int splittingType, final Group< ViewDescription > group )
 	{
 		String title;
 		final ViewDescription vd0 = group.iterator().next();
 
-		if ( fusion.getSplittingType() == 0 ) // "Each timepoint & channel"
+		if ( splittingType == 0 ) // "Each timepoint & channel"
 			title = "fused_tp_" + vd0.getTimePointId() + "_ch_" + vd0.getViewSetup().getChannel().getId();
-		else if ( fusion.getSplittingType() == 1 ) // "Each timepoint, channel & illumination"
+		else if ( splittingType == 1 ) // "Each timepoint, channel & illumination"
 			title = "fused_tp_" + vd0.getTimePointId() + "_ch_" + vd0.getViewSetup().getChannel().getId() + "_illum_" + vd0.getViewSetup().getIllumination().getId();
-		else if ( fusion.getSplittingType() == 2 ) // "All views together"
+		else if ( splittingType == 2 ) // "All views together"
 			title = "fused";
 		else // "All views"
 			title = "fused_tp_" + vd0.getTimePointId() + "_vs_" + vd0.getViewSetupId();

@@ -37,7 +37,7 @@ public class IterativeClosestPointPairwise< I extends InterestPoint > implements
 	@Override
 	public PairwiseResult< I > match( final List< I > listAIn, final List< I > listBIn )
 	{
-		final PairwiseResult< I > result = new PairwiseResult< I >();
+		final PairwiseResult< I > result = new PairwiseResult< I >( true );
 
 		final ArrayList< I > listA = new ArrayList<>();
 		final ArrayList< I > listB = new ArrayList< I >();

@@ -7,6 +7,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
@@ -46,7 +47,7 @@ public abstract class PairwiseSetup< V extends Comparable< V > >
 		this.groups = removeNonExistentViewsInGroups( views, groups );
 	}
 
-	public PairwiseSetup( final List< V > views ) { this( views, null ); }
+	public PairwiseSetup( final List< V > views ) { this( views, views.stream().map( v -> new Group< V >(v) ).collect( Collectors.toSet() ) ); }
 
 	public List< V > getViews() { return views; }
 	public Set< Group< V > > getGroups() { return groups; }

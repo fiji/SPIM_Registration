@@ -37,7 +37,7 @@ import net.imglib2.util.Pair;
 import net.imglib2.util.Util;
 import net.imglib2.util.ValuePair;
 import spim.Threads;
-import spim.fiji.plugin.fusion.FusionGUI;
+import spim.fiji.plugin.fusion.FusionExportInterface;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.plugin.resave.Generic_Resave_HDF5;
 import spim.fiji.plugin.resave.Generic_Resave_HDF5.Parameters;
@@ -55,7 +55,7 @@ import spim.process.interestpointregistration.pairwise.constellation.grouping.Gr
 
 public class ExportSpimData2HDF5 implements ImgExport
 {
-	private FusionGUI fusion;
+	private FusionExportInterface fusion;
 
 	private List< TimePoint > newTimepoints;
 
@@ -94,7 +94,7 @@ public class ExportSpimData2HDF5 implements ImgExport
 	}
 
 	@Override
-	public boolean queryParameters( final FusionGUI fusion )
+	public boolean queryParameters( final FusionExportInterface fusion )
 	{
 		this.fusion = fusion;
 

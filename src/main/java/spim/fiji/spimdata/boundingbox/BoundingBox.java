@@ -1,6 +1,6 @@
 package spim.fiji.spimdata.boundingbox;
 
-import mpicbg.imglib.util.Util;
+import net.imglib2.util.Util;
 import net.imglib2.Interval;
 import net.imglib2.Positionable;
 import net.imglib2.RealPositionable;
@@ -21,6 +21,20 @@ public class BoundingBox implements Interval, Comparable< BoundingBox >
 	{
 		this.min = min;
 		this.max = max;
+		this.title = "DefaultBoundingBox";
+	}
+
+	public BoundingBox( final Interval interval )
+	{
+		this.min = new int[ interval.numDimensions() ];
+		this.max = new int[ interval.numDimensions() ];
+
+		for ( int d = 0; d < interval.numDimensions(); ++d )
+		{
+			min[ d ] = (int)interval.min( d );
+			max[ d ] = (int)interval.max( d );
+		}
+
 		this.title = "DefaultBoundingBox";
 	}
 

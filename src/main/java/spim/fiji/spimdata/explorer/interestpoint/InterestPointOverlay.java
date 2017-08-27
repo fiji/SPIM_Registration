@@ -80,7 +80,7 @@ public class InterestPointOverlay implements OverlayRenderer, TransformListener<
 			{
 				pointSource.getLocalToGlobalTransform( viewId, t, transform );
 				transform.preConcatenate( viewerTransform );
-	
+
 				for ( final RealLocalizable p : coordinates.get( viewId ) )
 				{
 					p.localize( lPos );

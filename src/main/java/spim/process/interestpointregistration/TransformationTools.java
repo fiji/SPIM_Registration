@@ -18,14 +18,20 @@ import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
 import mpicbg.models.RigidModel3D;
 import mpicbg.models.Tile;
+import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewTransform;
 import mpicbg.spim.data.registration.ViewTransformAffine;
+import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.data.sequence.ViewSetup;
+import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Dimensions;
 import net.imglib2.realtransform.AffineGet;
 import net.imglib2.realtransform.AffineTransform3D;
+import net.imglib2.util.Pair;
+import net.imglib2.util.ValuePair;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
@@ -40,6 +46,35 @@ import spim.vecmath.Vector3f;
 public class TransformationTools
 {
 	public static NumberFormat f = new DecimalFormat("#.####");
+
+	public static Pair< double[], AffineTransform3D > scaling( final Dimensions dim, final AffineTransform3D transformationModel )
+	{
+		final AffineTransform3D transform = transformationModel.copy();
+
+		final AffineTransform3D mapBack = TransformationTools.computeMapBackModel(
+				dim,
+				new AffineTransform3D(), // identity
+				TransformationTools.getModel( transform ), // current model
+				new RigidModel3D() ); // what to use
+
+		// reset translation
+		mapBack.set( 0.0, 0, 3 );
+		mapBack.set( 0.0, 1, 3 );
+		mapBack.set( 0.0, 2, 3 );
+
+		//System.out.println( "MapBack: " + TransformationTools.printAffine3D( mapBack ) );
+
+		final AffineTransform3D atOrigin = transform.preConcatenate( mapBack );
+
+		//System.out.println( "At origin: " + TransformationTools.printAffine3D( atOrigin ) );
+
+		// there seems to be a bug in Transform3D, it does mix up the y/z dimensions sometimes
+		// TransformationTools.getScaling( atOrigin, scale );
+
+		// the scale is approximately now the diagonal entries in the matrix
+		// and we are only interested in the absolute value since it could be mirrored, in which case the scaling is negative
+		return new ValuePair<>( new double[]{ Math.abs( atOrigin.get( 0, 0 ) ), Math.abs( atOrigin.get( 1, 1 ) ), Math.abs( atOrigin.get( 2, 2 ) ) }, mapBack );
+	}
 
 	public static AffineTransform3D averageTransforms( final Collection< ? extends AffineGet > models )
 	{
@@ -362,16 +397,16 @@ public class TransformationTools
 			final Map< V, String > labelMap,
 			final boolean transform )
 	{
-		final List< InterestPoint > list = loadInterestPoints( interestpoints.get( viewId ).getInterestPointList( labelMap.get( viewId ) ) );
+		final List< InterestPoint > list = interestpoints.get( viewId ).getInterestPointList( labelMap.get( viewId ) ).getInterestPointsCopy();
 
-		if ( list == null )
+		if ( list.size() == 0 )
 		{
 			if ( ViewId.class.isInstance( viewId  ))
-				IOFunctions.println( "WARNING: no interestpoints could be loaded for " + Group.pvid( (ViewId)viewId ) + ", label '" + labelMap.get( viewId ) + "'" );
+				IOFunctions.println( "WARNING: no interestpoints available for " + Group.pvid( (ViewId)viewId ) + ", label '" + labelMap.get( viewId ) + "'" );
 			else
-				IOFunctions.println( "WARNING: no interestpoints could be loaded for " + viewId + ", label '" + labelMap.get( viewId ) + "'" );
+				IOFunctions.println( "WARNING: no interestpoints available for " + viewId + ", label '" + labelMap.get( viewId ) + "'" );
 
-			return new ArrayList<>();
+			return list;
 		}
 		else if ( transform )
 		{
@@ -403,7 +438,7 @@ public class TransformationTools
 			final boolean transform )
 	{
 		final InterestPointList ipList = interestpoints.get( viewId ).getInterestPointList( labelMap.get( viewId ) );
-		final List< InterestPoint > allPoints = loadInterestPoints( ipList );
+		final List< InterestPoint > allPoints = ipList.getInterestPointsCopy();
 		final ArrayList< InterestPoint > corrPoints = new ArrayList<>();
 
 		if ( allPoints == null )
@@ -419,7 +454,7 @@ public class TransformationTools
 		// keep only those interest points who have correspondences
 		final HashSet< Integer > idSet = new HashSet<>();
 
-		for ( final CorrespondingInterestPoints cip : loadCorrespondingInterestPoints( ipList ) )
+		for ( final CorrespondingInterestPoints cip : ipList.getCorrespondingInterestPointsCopy() )
 			idSet.add( cip.getDetectionId() );
 
 		for ( final InterestPoint ip : allPoints )
@@ -435,25 +470,6 @@ public class TransformationTools
 		{
 			return corrPoints;
 		}
-	}
-
-	public static List< InterestPoint > loadInterestPoints( final InterestPointList list )
-	{
-		if ( list == null )
-			return null;
-
-		if ( !list.hasInterestPoints() )
-			list.loadInterestPoints();
-
-		return list.getInterestPointsCopy();
-	}
-
-	public static List< CorrespondingInterestPoints > loadCorrespondingInterestPoints( final InterestPointList list )
-	{
-		if ( !list.hasCorrespondingInterestPoints() )
-			list.loadCorrespondingInterestPoints();
-
-		return list.getCorrespondingInterestPointsCopy();
 	}
 
 	public static <V> AffineTransform3D getTransform( final V viewId, final Map< V, ViewRegistration > registrations )
@@ -501,5 +517,40 @@ public class TransformationTools
 		final ViewTransform vt = new ViewTransformAffine( modelDescription, t );
 		vr.preconcatenateTransform( vt );
 		vr.updateModel();
+	}
+
+	public static double getAverageAnisotropyFactor( final SpimData spimData, final Collection< ? extends ViewId > views )
+	{
+		final SequenceDescription seq = spimData.getSequenceDescription();
+
+		double avgFactor = 0;
+		int count = 0;
+
+		for ( final ViewId vd : views )
+		{
+			final ViewSetup vs = seq.getViewSetups().get( vd.getViewSetupId() );
+
+			final VoxelDimensions vx = vs.getVoxelSize();
+
+			if ( vx != null )
+			{
+				final double x = vx.dimension( 0 );
+				final double y = vx.dimension( 1 );
+				final double z = vx.dimension( 2 );
+
+				if ( x == y )
+				{
+					avgFactor += z / x;
+					++count;
+				}
+			}
+		}
+
+		if ( count > 0 )
+			avgFactor /= (double)count;
+		else
+			avgFactor = 1.0;
+
+		return avgFactor;
 	}
 }

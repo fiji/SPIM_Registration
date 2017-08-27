@@ -27,7 +27,7 @@ public class GeometricHashingPairwise< I extends InterestPoint > implements Matc
 	@Override
 	public PairwiseResult< I > match( final List< I > listAIn, final List< I > listBIn )
 	{
-		final PairwiseResult< I > result = new PairwiseResult<>();
+		final PairwiseResult< I > result = new PairwiseResult<>( true );
 		final GeometricHasher< I > hasher = new GeometricHasher<>();
 		
 		final ArrayList< I > listA = new ArrayList<>();

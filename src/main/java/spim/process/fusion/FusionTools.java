@@ -1,5 +1,6 @@
 package spim.process.fusion;
 
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -22,7 +23,6 @@ import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
-import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.TimePoint;
@@ -50,6 +50,8 @@ import net.imglib2.type.Type;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.complex.ComplexFloatType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.RealSum;
+import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import spim.Threads;
 import spim.fiji.spimdata.SpimData2;
@@ -63,17 +65,19 @@ import spim.process.fusion.transformed.TransformWeight;
 import spim.process.fusion.transformed.weightcombination.CombineWeightsRandomAccessibleInterval;
 import spim.process.fusion.transformed.weightcombination.CombineWeightsRandomAccessibleInterval.CombineType;
 import spim.process.interestpointdetection.methods.downsampling.DownsampleTools;
+import spim.process.interestpointregistration.TransformationTools;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class FusionTools
 {
 	public static enum ImgDataType { VIRTUAL, CACHED, PRECOMPUTED };
 	public static String[] imgDataTypeChoice = new String[]{ "Virtual", "Cached", "Precompute Image" };
 
-	public static float[] defaultBlendingRange = new float[]{ 40, 40, 40 };
-	public static float[] defaultBlendingBorder = new float[]{ 0, 0, 0 };
+	public static float defaultBlendingRange = 40;
+	public static float defaultBlendingBorder = 0;
 
-	public static double[] defaultContentBasedSigma1 = new double[]{ 20, 20, 20 };
-	public static double[] defaultContentBasedSigma2 = new double[]{ 40, 40, 40 };
+	public static double defaultContentBasedSigma1 = 20;
+	public static double defaultContentBasedSigma2 = 40;
 
 	public static long numPixels( final Interval bb, final double downsampling )
 	{
@@ -183,10 +187,11 @@ public class FusionTools
 				// instantiate blending if necessary
 				if ( useBlending )
 				{
-					final float[] blending = defaultBlendingRange.clone();
-					final float[] border = defaultBlendingBorder.clone();
-	
-					adjustBlending( viewDescriptions.get( viewId ), blending, border );
+					final float[] blending = Util.getArrayFromValue( defaultBlendingRange, 3 );
+					final float[] border = Util.getArrayFromValue( defaultBlendingBorder, 3 );
+
+					// adjust both for z-scaling (anisotropy), downsampling, and registrations itself
+					adjustBlending( viewDescriptions.get( viewId ), blending, border, model );
 	
 					transformedBlending = TransformWeight.transformBlending( inputImg, border, blending, model, bb );
 				}
@@ -194,11 +199,12 @@ public class FusionTools
 				// instantiate content based if necessary
 				if ( useContentBased )
 				{
-					final double[] sigma1 = FusionTools.defaultContentBasedSigma1.clone();
-					final double[] sigma2 = FusionTools.defaultContentBasedSigma2.clone();
-	
-					adjustContentBased( viewDescriptions.get( viewId ), sigma1, sigma2, downsampling );
-	
+					final double[] sigma1 = Util.getArrayFromValue( defaultContentBasedSigma1, 3 );
+					final double[] sigma2 = Util.getArrayFromValue( defaultContentBasedSigma2, 3 );
+
+					// adjust both for z-scaling (anisotropy), downsampling, and registrations itself
+					adjustContentBased( viewDescriptions.get( viewId ), sigma1, sigma2, model );
+
 					transformedContentBased = TransformWeight.transformContentBased( inputImg, new CellImgFactory< ComplexFloatType >(), sigma1, sigma2, model, bb );
 				}
 
@@ -318,37 +324,46 @@ public class FusionTools
 		return DisplayImage.getImagePlusInstance( img, true, title, min, max );
 	}
 
-	public static void adjustBlending( final BasicViewDescription< ? extends BasicViewSetup > vd, final float[] blending, final float[] border )
+	/**
+	 * Compute how much blending in the input has to be done so the target values blending and border are achieved in the fused image
+	 *
+	 * @param vd - which view
+	 * @param blending - the target blending range, e.g. 40
+	 * @param border - the target blending border, e.g. 0
+	 * @param transformationModel - the transformation model used to map from the (downsampled) input to the output
+	 */
+	public static void adjustBlending( final BasicViewDescription< ? extends BasicViewSetup > vd, final float[] blending, final float[] border, final AffineTransform3D transformationModel )
 	{
-		final float minRes = (float)getMinRes( vd );
-		VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSize( vd.getViewSetup() );
-		if ( voxelSize == null )
-			voxelSize = new FinalVoxelDimensions( "px", new double[]{ 1, 1, 1 } );
+		final double[] scale = TransformationTools.scaling( vd.getViewSetup().getSize(), transformationModel ).getA();
+
+		final NumberFormat f = TransformationTools.f;
+
+		System.out.println( "View " + Group.pvid( vd ) + " is currently scaled by: (" +
+				f.format( scale[ 0 ] ) + ", " + f.format( scale[ 1 ] ) + ", " + f.format( scale[ 2 ] ) + ")" );
 
 		for ( int d = 0; d < blending.length; ++d )
 		{
-			blending[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
-			border[ d ] /= ( float ) voxelSize.dimension( d ) / minRes;
+			blending[ d ] /= ( float )scale[ d ];
+			border[ d ] /= ( float )scale[ d ];
 		}
 	}
 
-	public static void adjustContentBased( final BasicViewDescription< ? extends BasicViewSetup > vd, final double[] sigma1, final double[] sigma2, final double downsampling )
+	/**
+	 * Compute how much sigma in the input has to be applied so the target values of sigma1 and 2 are achieved in the fused image
+	 *
+	 * @param vd - which view
+	 * @param sigma1 - the target sigma1 for entropy approximation, e.g. 20
+	 * @param sigma2 - the target sigma2 for entropy approximation, e.g. 40
+	 * @param transformationModel - the transformation model used to map from the (downsampled) input to the output
+	 */
+	public static void adjustContentBased( final BasicViewDescription< ? extends BasicViewSetup > vd, final double[] sigma1, final double[] sigma2, final AffineTransform3D transformationModel )
 	{
-		final double minRes = getMinRes( vd );
-		VoxelDimensions voxelSize = ViewSetupUtils.getVoxelSize( vd.getViewSetup() );
-		if ( voxelSize == null )
-			voxelSize = new FinalVoxelDimensions( "px", new double[]{ 1, 1, 1 } );
+		final double[] scale = TransformationTools.scaling( vd.getViewSetup().getSize(), transformationModel ).getA();
 
 		for ( int d = 0; d < sigma1.length; ++d )
 		{
-			sigma1[ d ] /= voxelSize.dimension( d ) / minRes;
-			sigma2[ d ] /= voxelSize.dimension( d ) / minRes;
-
-			if ( !Double.isNaN( downsampling ) )
-			{
-				sigma1[ d ] /= downsampling;
-				sigma2[ d ] /= downsampling;
-			}
+			sigma1[ d ] /= ( float )scale[ d ];
+			sigma2[ d ] /= ( float )scale[ d ];
 		}
 	}
 
@@ -519,9 +534,9 @@ public class FusionTools
 
 	public static < T extends Type< T > > void copyImg( final RandomAccessibleInterval< T > input, final RandomAccessibleInterval< T > output, final boolean showProgress, final ExecutorService service )
 	{
+		final long numPixels = Views.iterable( input ).size();
 		final int nThreads = Threads.numThreads();
-		final int nPortions = nThreads * 4;
-		final Vector< ImagePortion > portions = divideIntoPortions( Views.iterable( input ).size(), nPortions );
+		final Vector< ImagePortion > portions = divideIntoPortions( numPixels );
 		final ArrayList< Callable< Void > > tasks = new ArrayList< Callable< Void > >();
 
 		final AtomicInteger progress = new AtomicInteger( 0 );
@@ -542,6 +557,9 @@ public class FusionTools
 				}
 			});
 		}
+
+		if ( showProgress )
+			IJ.showProgress( 0.01 );
 
 		if ( service == null )
 			execTasks( tasks, nThreads, "copy image" );
@@ -623,7 +641,7 @@ public class FusionTools
 		final IterableInterval< T > iterable = Views.iterable( img );
 		
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = divideIntoPortions( iterable.size(), Threads.numThreads() * 2 );
+		final Vector< ImagePortion > portions = divideIntoPortions( iterable.size() );
 
 		// set up executor service
 		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
@@ -716,6 +734,30 @@ public class FusionTools
 		return new double[]{ min, max };
 	}
 
+	public static < T extends RealType< T > > double[] minMaxAvgApprox( final RandomAccessibleInterval< T > img, final Random rnd, final int numPixels )
+	{
+		final RandomAccess< T > ra = img.randomAccess();
+
+		// run threads and combine results
+		double min = Double.MAX_VALUE;
+		double max = -Double.MAX_VALUE;
+		final RealSum realSum = new RealSum( numPixels );
+
+		for ( int i = 0; i < numPixels; ++i )
+		{
+			for ( int d = 0; d < img.numDimensions(); ++d )
+				ra.setPosition( rnd.nextInt( (int)img.dimension( d ) ) + (int)img.min( d ), d );
+
+			final double v = ra.get().getRealDouble();
+
+			min = Math.min( min, v );
+			max = Math.max( max, v );
+			realSum.add( v );
+		}
+
+		return new double[]{ min, max, realSum.getSum() / (double)numPixels };
+	}
+
 	/**
 	 * Normalizes the image to the range [0...1]
 	 * 
@@ -752,7 +794,7 @@ public class FusionTools
 		final IterableInterval< FloatType > iterable = Views.iterable( img );
 		
 		// split up into many parts for multithreading
-		final Vector< ImagePortion > portions = divideIntoPortions( iterable.size(), Threads.numThreads() * 2 );
+		final Vector< ImagePortion > portions = divideIntoPortions( iterable.size() );
 
 		// set up executor service
 		final ExecutorService taskExecutor = Executors.newFixedThreadPool( Threads.numThreads() );
@@ -799,13 +841,32 @@ public class FusionTools
 	}
 
 
-	public static final Vector<ImagePortion> divideIntoPortions( final long imageSize, final int numPortions )
+	public static final Vector<ImagePortion> divideIntoPortions( final long imageSize )
 	{
-		final long threadChunkSize = imageSize / numPortions;
-		final long threadChunkMod = imageSize % numPortions;
-		
+		int numPortions;
+
+		if ( imageSize <= Threads.numThreads() )
+			numPortions = (int)imageSize;
+		else
+			numPortions = Math.max( Threads.numThreads(), (int)( imageSize / ( 64l*64l*64l ) ) );
+
+		System.out.println( "nPortions for copy:" + numPortions );
+
 		final Vector<ImagePortion> portions = new Vector<ImagePortion>();
-		
+
+		if ( imageSize == 0 )
+			return portions;
+
+		long threadChunkSize = imageSize / numPortions;
+
+		while ( threadChunkSize == 0 )
+		{
+			--numPortions;
+			threadChunkSize = imageSize / numPortions;
+		}
+
+		long threadChunkMod = imageSize % numPortions;
+
 		for ( int portionID = 0; portionID < numPortions; ++portionID )
 		{
 			// move to the starting position of the current thread
@@ -822,5 +883,18 @@ public class FusionTools
 		}
 		
 		return portions;
+	}
+
+	public static void runThreads( final Thread[] threads )
+	{
+		for ( int ithread = 0; ithread < threads.length; ++ithread )
+			threads[ ithread ].start();
+
+		try
+		{
+			for ( int ithread = 0; ithread < threads.length; ++ithread )
+				threads[ ithread ].join();
+		}
+		catch ( InterruptedException ie ) { throw new RuntimeException(ie); }
 	}
 }

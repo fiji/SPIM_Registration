@@ -10,9 +10,7 @@ import java.util.Map;
 
 import ij.IJ;
 import ij.ImagePlus;
-import ij.gui.GUI;
 import ij.gui.GenericDialog;
-import mpicbg.models.RigidModel3D;
 import mpicbg.spim.data.generic.base.Entity;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.Illumination;
@@ -26,7 +24,9 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.imageplus.ImagePlusImgFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Pair;
 import net.imglib2.util.Util;
+import spim.fiji.plugin.fusion.FusionGUI;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
@@ -69,6 +69,7 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 
 	public static double defaultMinIntensity = 0.0;
 	public static double defaultMaxIntensity = 65535.0;
+	public static boolean defaultSameMinMax = false;
 
 	public static int defaultMaxDetections = 3000;
 	public static int defaultMaxDetectionsTypeIndex = 0;
@@ -83,7 +84,8 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 	protected int localization, downsampleXYIndex, downsampleZ;
 
 	public static boolean useAverageMapBack = true;
-	boolean groupTiles, groupIllums;
+
+	boolean groupTiles, groupIllums, sameMinMax;
 	public static int defaultFuseFrom = 0;
 	public static int defaultFuseTo = 100;
 	protected int fuseFrom = 0, fuseTo = 100;
@@ -105,12 +107,12 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 	@Override
 	public void preprocess()
 	{
-		if ( groupIllums || groupTiles )
+		if ( sameMinMax || groupIllums || groupTiles )
 		{
 			// we set the min & max intensity for all individual views
 			if ( Double.isNaN( minIntensity ) || Double.isNaN( maxIntensity ) )
 			{
-				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Min & Max intensity not set manually or through interactive mode, determining it approximately at lowest resolution levels ... " );
+				IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Determining it approximate Min & Max for all views at lowest resolution levels ... " );
 
 				IJ.showProgress( 0 );
 
@@ -125,7 +127,7 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 					final double[] minmax = FusionTools.minMaxApprox( DownsampleTools.openAtLowestLevel( imgLoader, view ) );
 					min = Math.min( min, minmax[ 0 ] );
 					max = Math.max( max, minmax[ 1 ] );
-	
+
 					IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): View " + Group.pvid( view ) + ", Min=" + minmax[ 0 ] + " max=" + minmax[ 1 ] );
 
 					IJ.showProgress( (double)++count / viewIdsToProcess.size() );
@@ -168,6 +170,12 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 		{
 			gd.addNumericField( "Minimal_intensity", defaultMinIntensity, 1 );
 			gd.addNumericField( "Maximal_intensity", defaultMaxIntensity, 1 );
+		}
+		else
+		{
+			if ( !FusionGUI.isMultiResolution( spimData ) )
+				gd.addMessage( "Warning: You are not using multiresolution image data, this could take!", GUIHelper.smallStatusFont, GUIHelper.warning );
+			gd.addCheckbox( "Use_same_min & max intensity for all views", defaultSameMinMax );
 		}
 
 		if ( defineAnisotropy )
@@ -227,10 +235,12 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 		{
 			minIntensity = defaultMinIntensity = gd.getNextNumber();
 			maxIntensity = defaultMaxIntensity = gd.getNextNumber();
+			sameMinMax = false;
 		}
 		else
 		{
 			minIntensity = maxIntensity = Double.NaN;
+			sameMinMax = defaultSameMinMax = gd.getNextBoolean();
 		}
 
 		if ( brightness <= 3 )
@@ -453,9 +463,18 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 			return null;
 		}
 
+		if ( sameMinMax )
+		{
+			IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Determining same Min & Max for all views... " );
+			preprocess();
+		}
+
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Wrapping ImagePlus around input image ... " );
 
-		return DisplayImage.getImagePlusInstance( img, false, "tp: " + viewDescription.getTimePoint().getName() + " viewSetup: " + viewDescription.getViewSetupId(), Double.NaN, Double.NaN );
+		if ( Double.isNaN( minIntensity ) || Double.isNaN( maxIntensity ) )
+			return DisplayImage.getImagePlusInstance( img, false, "tp: " + viewDescription.getTimePoint().getName() + " viewSetup: " + viewDescription.getViewSetupId(), Double.NaN, Double.NaN );
+		else
+			return DisplayImage.getImagePlusInstance( img, false, "tp: " + viewDescription.getTimePoint().getName() + " viewSetup: " + viewDescription.getViewSetupId(), minIntensity, maxIntensity );
 	}
 
 	protected ImagePlus getGroupedImagePlusForInteractive( final String dialogHeader )
@@ -520,37 +539,14 @@ public abstract class DifferenceOfGUI extends InterestPointDetectionGUI
 			vr.updateModel();
 			final AffineTransform3D transform = vr.getModel().copy();
 
-			System.out.println( "Original: " + TransformationTools.printAffine3D( transform ) );
-
-			// mapping back the image first to the origin using a rigid model
-			final AffineTransform3D mapBack = TransformationTools.computeMapBackModel(
-					dim,
-					new AffineTransform3D(), // identity
-					TransformationTools.getModel( transform ), // current model
-					new RigidModel3D() ); // what to use
-
-			// reset translation
-			mapBack.set( 0.0, 0, 3 );
-			mapBack.set( 0.0, 1, 3 );
-			mapBack.set( 0.0, 2, 3 );
-
-			System.out.println( "MapBack: " + TransformationTools.printAffine3D( mapBack ) );
-
-			final AffineTransform3D atOrigin = transform.preConcatenate( mapBack );
-
-			System.out.println( "At origin: " + TransformationTools.printAffine3D( atOrigin ) );
-
-			// there seems to be a bug in Transform3D, it does mix up the y/z dimensions sometimes
-			// TransformationTools.getScaling( atOrigin, scale );
-
-			// the scale is approximately now the diagonal entries in the matrix
-			final double[] scale = new double[]{ atOrigin.get( 0, 0 ), atOrigin.get( 1, 1 ), atOrigin.get( 2, 2 ) };
+			final Pair< double[], AffineTransform3D > scaling = TransformationTools.scaling( dim, transform );
+			final double[] scale = scaling.getA();
 
 			IOFunctions.println( "View " + Group.pvid( viewId ) + " is currently scaled by: (" +
 					f.format( scale[ 0 ] ) + ", " + f.format( scale[ 1 ] ) + ", " + f.format( scale[ 2 ] ) + ")" );
 
 			scales.add( scale );
-			mapBackModels.add( mapBack );
+			mapBackModels.add( scaling.getB() );
 		}
 
 		final AffineTransform3D mapBack;

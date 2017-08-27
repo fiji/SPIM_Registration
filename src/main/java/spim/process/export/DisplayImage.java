@@ -12,7 +12,8 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.img.imageplus.ImagePlusImg;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import spim.fiji.plugin.fusion.FusionGUI;
+import spim.fiji.plugin.fusion.FusionExportInterface;
+import spim.process.deconvolution.DeconViews;
 import spim.process.fusion.FusionTools;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
@@ -62,20 +63,27 @@ public class DisplayImage implements ImgExport
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Approximate min=" + minmax[ 0 ] + ", max=" + minmax[ 1 ] );
 
-		ImagePlus imp = getImagePlusInstance( img, virtualDisplay, title, minmax[ 0 ], minmax[ 1 ] );
+		final ImagePlus imp = getImagePlusInstance( img, virtualDisplay, title, minmax[ 0 ], minmax[ 1 ] );
 
-		if ( bb != null )
-		{
-			imp.getCalibration().xOrigin = -(bb.min( 0 ) / downsampling);
-			imp.getCalibration().yOrigin = -(bb.min( 1 ) / downsampling);
-			imp.getCalibration().zOrigin = -(bb.min( 2 ) / downsampling);
-			imp.getCalibration().pixelWidth = imp.getCalibration().pixelHeight = imp.getCalibration().pixelDepth = downsampling;
-		}
+		setCalibration( imp, bb, downsampling );
 
 		imp.updateAndDraw();
 		imp.show();
 
 		return true;
+	}
+
+	public static void setCalibration( final ImagePlus imp, final Interval bb, final double downsampling )
+	{
+		final double ds = Double.isNaN( downsampling ) ? 1.0 : downsampling;
+
+		if ( bb != null )
+		{
+			imp.getCalibration().xOrigin = -(bb.min( 0 ) / ds);
+			imp.getCalibration().yOrigin = -(bb.min( 1 ) / ds);
+			imp.getCalibration().zOrigin = -(bb.min( 2 ) / ds);
+			imp.getCalibration().pixelWidth = imp.getCalibration().pixelHeight = imp.getCalibration().pixelDepth = ds;
+		}
 	}
 
 	public static < T extends RealType< T > > double[] getFusionMinMax(
@@ -119,9 +127,9 @@ public class DisplayImage implements ImgExport
 		if ( imp == null )
 		{
 			if ( virtualDisplay )
-				imp = ImageJFunctions.wrap( img, title );
+				imp = ImageJFunctions.wrap( img, title, DeconViews.createExecutorService() );
 			else
-				imp = ImageJFunctions.wrap( img, title ).duplicate();
+				imp = ImageJFunctions.wrap( img, title, DeconViews.createExecutorService() ).duplicate();
 		}
 
 		final double[] minmax = getFusionMinMax( img, min, max );
@@ -134,7 +142,7 @@ public class DisplayImage implements ImgExport
 	}
 
 	@Override
-	public boolean queryParameters( final FusionGUI fusion ) { return true; }
+	public boolean queryParameters( final FusionExportInterface fusion ) { return true; }
 
 	@Override
 	public ImgExport newInstance() { return new DisplayImage(); }

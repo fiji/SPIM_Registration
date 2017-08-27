@@ -15,11 +15,14 @@ import mpicbg.spim.data.generic.base.Entity;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.MultiResolutionImgLoader;
+import mpicbg.spim.data.sequence.SetupImgLoader;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Interval;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.util.Intervals;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
@@ -34,9 +37,10 @@ import spim.process.export.Save3dTIFF;
 import spim.process.fusion.FusionTools;
 import spim.process.fusion.transformed.TransformVirtual;
 import spim.process.interestpointdetection.methods.downsampling.DownsampleTools;
+import spim.process.interestpointregistration.TransformationTools;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
-public class FusionGUI
+public class FusionGUI implements FusionExportInterface
 {
 	public static int defaultCache = 2;
 	public static int[] cellDim = new int[]{ 10, 10, 10 };
@@ -61,6 +65,7 @@ public class FusionGUI
 
 	public static boolean defaultUseBlending = true;
 	public static boolean defaultUseContentBased = false;
+	public static boolean defaultPreserveAnisotropy = false;
 
 	public final static ArrayList< ImgExport > staticImgExportAlgorithms = new ArrayList< ImgExport >();
 	public final static String[] imgExportDescriptions;
@@ -74,6 +79,8 @@ public class FusionGUI
 	protected double downsampling = defaultDownsampling;
 	protected boolean useBlending = defaultUseBlending;
 	protected boolean useContentBased = defaultUseContentBased;
+	protected boolean preserveAnisotropy = defaultPreserveAnisotropy;
+	protected double avgAnisoF = 1.0;
 	protected int imgExport = defaultImgExportAlgorithm;
 
 	static
@@ -108,11 +115,21 @@ public class FusionGUI
 
 		// get all bounding boxes and two extra ones
 		this.allBoxes = BoundingBoxTools.getAllBoundingBoxes( spimData, views, true );
+
+		// average anisotropy of input views
+		this.avgAnisoF = TransformationTools.getAverageAnisotropyFactor( spimData, views );
 	}
 
+	@Override
 	public SpimData2 getSpimData() { return spimData; }
+
+	@Override
 	public List< ViewId > getViews() { return views; }
+
 	public Interval getBoundingBox() { return allBoxes.get( boundingBox ); }
+	public void setBoundingBox( final Interval bb ) { this.allBoxes.set( boundingBox, new BoundingBox( bb ) ); }
+
+	@Override
 	public Interval getDownsampledBoundingBox()
 	{
 		if ( !Double.isNaN( downsampling ) )
@@ -121,21 +138,31 @@ public class FusionGUI
 			return getBoundingBox();
 	}
 	public int getInterpolation() { return interpolation; }
+
+	@Override
 	public int getPixelType() { return pixelType; }
+
 	public int getCacheType() { return cacheType; }
+	@Override
+
 	public double getDownsampling(){ return downsampling; }
+
 	public boolean useBlending() { return useBlending; }
+
 	public boolean useContentBased() { return useContentBased; }
+
+	public boolean preserveAnisotropy() { return preserveAnisotropy; }
+
+	public double getAnisotropyFactor() { return avgAnisoF; }
+
+	@Override
 	public int getSplittingType() { return splittingType; }
+
 	public ImgExport getExporter() { return staticImgExportAlgorithms.get( imgExport ).newInstance(); }
 
 	public boolean queryDetails()
 	{
-		final String[] choices = new String[ allBoxes.size() ];
-
-		int i = 0;
-		for ( final BoundingBox b : allBoxes )
-			choices[ i++ ] = b.getTitle() + " [" + b.dimension( 0 ) + "x" + b.dimension( 1 ) + "x" + b.dimension( 2 ) + "px]";
+		final String[] choices = FusionGUI.getBoundingBoxChoices( allBoxes );
 
 		if ( defaultBB >= choices.length )
 			defaultBB = 0;
@@ -150,11 +177,21 @@ public class FusionGUI
 		gd.addChoice( "Pixel_type", pixelTypes, pixelTypes[ defaultPixelType ] );
 		gd.addChoice( "Interpolation", interpolationTypes, interpolationTypes[ defaultInterpolation ] );
 		gd.addChoice( "Image ", FusionTools.imgDataTypeChoice, FusionTools.imgDataTypeChoice[ defaultCache ] );
-		gd.addMessage( "We advise to use use VIRTUAL for saving at TIFF, and CACHED for saving as HDF5 if memory is low", GUIHelper.smallStatusFont, GUIHelper.neutral );
+		gd.addMessage( "We advise using VIRTUAL for saving at TIFF, and CACHED for saving as HDF5 if memory is low", GUIHelper.smallStatusFont, GUIHelper.neutral );
 		gd.addMessage( "" );
 
 		gd.addCheckbox( "Blend images smoothly", defaultUseBlending );
 		gd.addCheckbox( "Use content based fusion (warning, huge memory requirements)", defaultUseContentBased );
+
+		gd.addMessage( "" );
+
+		if ( avgAnisoF > 1.0 )
+		{
+			gd.addCheckbox( "Preserve_original data anisotropy (shrink image " + TransformationTools.f.format( avgAnisoF ) + " times in z) ", defaultPreserveAnisotropy );
+			gd.addMessage(
+					"WARNING: Enabling this means to 'shrink' the dataset in z the same way the input\n" +
+					"images were scaled. Only use this if this is not a multiview dataset.", GUIHelper.smallStatusFont, GUIHelper.warning );
+		}
 
 		gd.addMessage( "" );
 
@@ -173,6 +210,7 @@ public class FusionGUI
 				(Choice)gd.getChoices().get( 1 ),
 				(Choice)gd.getChoices().get( 3 ),
 				(Checkbox)gd.getCheckboxes().get( 1 ),
+				avgAnisoF > 1.0 ? (Checkbox)gd.getCheckboxes().get( 2 ) : null,
 				(Choice)gd.getChoices().get( 4 ),
 				label1,
 				label2,
@@ -196,6 +234,10 @@ public class FusionGUI
 		cacheType = defaultCache = gd.getNextChoiceIndex();
 		useBlending = defaultUseBlending = gd.getNextBoolean();
 		useContentBased = defaultUseContentBased = gd.getNextBoolean();
+		if ( avgAnisoF > 1.0 )
+			preserveAnisotropy = defaultPreserveAnisotropy = gd.getNextBoolean();
+		else
+			preserveAnisotropy = defaultPreserveAnisotropy = false;
 		splittingType = defaultSplittingType = gd.getNextChoiceIndex();
 		imgExport = defaultImgExportAlgorithm = gd.getNextChoiceIndex();
 
@@ -208,6 +250,8 @@ public class FusionGUI
 		IOFunctions.println( "CacheType: " + FusionTools.imgDataTypeChoice[ getCacheType() ] );
 		IOFunctions.println( "Blending: " + useBlending );
 		IOFunctions.println( "Content-based: " + useContentBased );
+		IOFunctions.println( "Preserve Anisotropy: " + preserveAnisotropy );
+		IOFunctions.println( "Anisotropy: " + avgAnisoF );
 		IOFunctions.println( "Split by: " + splittingTypes[ getSplittingType() ] );
 		IOFunctions.println( "Image Export: " + imgExportDescriptions[ imgExport ] );
 		IOFunctions.println( "ImgLoader.isVirtual(): " + isImgLoaderVirtual() );
@@ -237,24 +281,40 @@ public class FusionGUI
 			return false;
 	}
 
+	public static String[] getBoundingBoxChoices( final List< BoundingBox > allBoxes )
+	{
+		final String[] choices = new String[ allBoxes.size() ];
+
+		int i = 0;
+		for ( final BoundingBox b : allBoxes )
+			choices[ i++ ] = b.getTitle() + " [" + b.dimension( 0 ) + "x" + b.dimension( 1 ) + "x" + b.dimension( 2 ) + "px]";
+
+		return choices;
+	}
+
 	public List< Group< ViewDescription > > getFusionGroups()
 	{
-		final ArrayList< ViewDescription > vds = SpimData2.getAllViewDescriptionsSorted( this.spimData, this.views );
+		return getFusionGroups( getSpimData(), getViews(), getSplittingType() );
+	}
+
+	public static List< Group< ViewDescription > > getFusionGroups( final SpimData2 spimData, final List< ViewId > views, final int splittingType )
+	{
+		final ArrayList< ViewDescription > vds = SpimData2.getAllViewDescriptionsSorted( spimData, views );
 		final List< Group< ViewDescription > > grouped;
 
-		if ( this.splittingType < 2 ) // "Each timepoint & channel" or "Each timepoint, channel & illumination"
+		if ( splittingType < 2 ) // "Each timepoint & channel" or "Each timepoint, channel & illumination"
 		{
 			final HashSet< Class< ? extends Entity > > groupingFactors = new HashSet<>();
 
 			groupingFactors.add( TimePoint.class );
 			groupingFactors.add( Channel.class );
 
-			if ( this.splittingType == 1 ) // "Each timepoint, channel & illumination"
+			if ( splittingType == 1 ) // "Each timepoint, channel & illumination"
 				groupingFactors.add( Illumination.class );
 
 			grouped = Group.splitBy( vds, groupingFactors );
 		}
-		else if ( this.splittingType == 2 ) // "All views together"
+		else if ( splittingType == 2 ) // "All views together"
 		{
 			final Group< ViewDescription > allViews = new Group<>( vds );
 			grouped = new ArrayList<>();
@@ -270,11 +330,11 @@ public class FusionGUI
 		return grouped;
 	}
 
-	public long maxNumInputPixelsPerInputGroup()
+	public static long maxNumInputPixelsPerInputGroup( final SpimData2 spimData, final List< ViewId > views, final int splittingType )
 	{
 		long maxNumPixels = 0;
 
-		for ( final Group< ViewDescription > group : getFusionGroups() )
+		for ( final Group< ViewDescription > group : getFusionGroups( spimData, views, splittingType ) )
 		{
 			long numpixels = 0;
 
@@ -285,5 +345,18 @@ public class FusionGUI
 		}
 
 		return maxNumPixels;
+	}
+
+	public static int inputBytePerPixel( final ViewId viewId, final SpimData2 spimData )
+	{
+		SetupImgLoader< ? > loader = spimData.getSequenceDescription().getImgLoader().getSetupImgLoader( viewId.getViewSetupId() );
+		Object type = loader.getImageType();
+
+		if ( UnsignedByteType.class.isInstance( type ) )
+			return 1;
+		else if ( UnsignedShortType.class.isInstance( type ) )
+			return 2;
+		else
+			return 4;
 	}
 }

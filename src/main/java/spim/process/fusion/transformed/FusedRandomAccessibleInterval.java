@@ -27,10 +27,16 @@ public class FusedRandomAccessibleInterval implements RandomAccessibleInterval< 
 		this.interval = interval;
 		this.images = images;
 
-		if ( weights.size() == 0 )
+		if ( weights == null || weights.size() == 0 )
+		{
 			this.weights = null;
+		}
 		else
+		{
 			this.weights = weights;
+			if ( this.images.size() != this.weights.size() )
+				throw new RuntimeException( "Images and weights do not have the same size: " + images.size() + " != " + weights.size() );
+		}
 	}
 
 	public FusedRandomAccessibleInterval(
@@ -40,6 +46,7 @@ public class FusedRandomAccessibleInterval implements RandomAccessibleInterval< 
 		this( interval, images, null );
 	}
 
+	public Interval getInterval() { return interval; }
 	public List< ? extends RandomAccessible< FloatType > > getImages() { return images; }
 	public List< ? extends RandomAccessible< FloatType > > getWeights() { return weights; }
 

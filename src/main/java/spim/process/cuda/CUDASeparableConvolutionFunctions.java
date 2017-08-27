@@ -1,6 +1,6 @@
 package spim.process.cuda;
 
-import mpicbg.imglib.util.Util;
+import net.imglib2.util.Util;
 
 /**
  * Executes gaussian convolution using the native CUDA implementation

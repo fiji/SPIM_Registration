@@ -178,10 +178,6 @@ public class Visualize_Detections implements PlugIn
 			final double downsample )
 	{
 		final InterestPointList ipl = data.getViewInterestPoints().getViewInterestPointLists( viewId ).getInterestPointList( label );
-
-		if ( !ipl.hasInterestPoints() )
-			ipl.loadInterestPoints();
-
 		final List< InterestPoint > list = ipl.getInterestPointsCopy();
 
 		if ( interval == null )
@@ -243,25 +239,22 @@ public class Visualize_Detections implements PlugIn
 		else
 		{
 			final HashMap< Integer, InterestPoint > map = new HashMap< Integer, InterestPoint >();
-			
+
 			for ( final InterestPoint ip : list )
 				map.put( ip.getId(), ip );
-			
-			if ( !ipl.hasCorrespondingInterestPoints() )
-			{
-				if ( !ipl.loadCorrespondingInterestPoints() )
-				{
-					IOFunctions.println( "No corresponding detections available, the dataset was not registered using these detections." );
-					return s;
-				}
-			}
 
 			final List< CorrespondingInterestPoints > cList = ipl.getCorrespondingInterestPointsCopy();
+
+			if ( cList.size() == 0 )
+			{
+				IOFunctions.println( "No corresponding detections available, the dataset was not registered using these detections." );
+				return s;
+			}
 
 			IOFunctions.println( "Visualizing " + cList.size() + " corresponding detections." );
 
 			for ( final CorrespondingInterestPoints ip : cList )
-			{	
+			{
 				for ( int d = 0; d < n; ++d )
 					tmp[ d ] = Math.round( map.get( ip.getDetectionId() ).getL()[ d ] / downsample );
 	

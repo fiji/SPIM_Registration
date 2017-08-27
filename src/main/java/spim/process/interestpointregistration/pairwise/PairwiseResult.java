@@ -14,11 +14,16 @@ public class PairwiseResult< I extends InterestPoint >
 	private long time = 0;
 	private String result = "", desc = "";
 
-	boolean printout = false;
+	boolean printout = false, storeCorrespondences = true;
 
-	public PairwiseResult( final boolean printout ) { this.printout = printout; }
-	public PairwiseResult() { this( true ); }
+	public PairwiseResult( final boolean storeCorrespondences )
+	{
+		this.storeCorrespondences = storeCorrespondences;
+		this.printout = true;
+	}
 
+	public boolean storeCorrespondences() { return storeCorrespondences; }
+	public void setPrintOut( final boolean printOut ) { this.printout = printOut; }
 	public void setResult( final long time, final String result )
 	{
 		this.time = time;

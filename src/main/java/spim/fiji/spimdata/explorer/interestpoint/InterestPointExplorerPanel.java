@@ -33,7 +33,6 @@ import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
 import spim.fiji.spimdata.explorer.FilteredAndGroupedExplorer;
 import spim.fiji.spimdata.interestpoints.CorrespondingInterestPoints;
-import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.process.interestpointdetection.InterestPointTools;
@@ -64,7 +63,7 @@ public class InterestPointExplorerPanel extends JPanel
 	public InterestPointTableModel getTableModel() { return tableModel; }
 	public JTable getTable() { return table; }
 	
-	public void updateViewDescription( final List< BasicViewDescription< ? extends BasicViewSetup > > viewDescriptionsUnfiltered, final boolean isFirst )
+	public void updateViewDescription( final List< BasicViewDescription< ? extends BasicViewSetup > > viewDescriptionsUnfiltered )
 	{
 		final ArrayList< BasicViewDescription< ? extends BasicViewSetup > > viewDescriptions = new ArrayList<>();
 
@@ -79,7 +78,7 @@ public class InterestPointExplorerPanel extends JPanel
 		else
 			this.label.setText( viewDescriptions.size() + " View Descriptions selected");
 
-		tableModel.updateViewDescription( viewDescriptions, isFirst );
+		tableModel.updateViewDescription( viewDescriptions );
 
 		if ( table.getSelectedRowCount() == 0 )
 			table.getSelectionModel().setSelectionInterval( 0, 0 );
@@ -205,8 +204,9 @@ public class InterestPointExplorerPanel extends JPanel
 	
 				IOFunctions.println( "Removing label '' for timepoint_id " + vd.getTimePointId() + " viewsetup_id " + vd.getViewSetupId() + " -- Parsing through all correspondences to remove any links to this interest point list." );
 	
-				final List< CorrespondingInterestPoints > correspondencesList = getCorrespondingInterestPoints( vip, vd, label );
-	
+				final List< CorrespondingInterestPoints > correspondencesList =
+						vip.getViewInterestPointLists( vd ).getInterestPointList( label ).getCorrespondingInterestPointsCopy();
+
 				// sort by timepointid, setupid, and detectionid 
 				Collections.sort( correspondencesList );
 	
@@ -238,7 +238,7 @@ public class InterestPointExplorerPanel extends JPanel
 						IOFunctions.println( "Removing correspondences in timepointid=" + viewIdCorr.getTimePointId() + ", viewid=" + viewIdCorr.getViewSetupId() );
 						lastViewIdCorr = viewIdCorr;
 						//lastLabelCorr = labelCorr;
-						cList = getCorrespondingInterestPoints( vip, viewIdCorr, labelCorr );
+						cList = vip.getViewInterestPointLists( viewIdCorr ).getInterestPointList( labelCorr ).getCorrespondingInterestPointsCopy();
 						size = cList.size();
 					}
 	
@@ -279,26 +279,6 @@ public class InterestPointExplorerPanel extends JPanel
 
 		// update everything
 		tableModel.fireTableDataChanged();
-	}
-
-	public static List< InterestPoint > getInterestPoints( final ViewInterestPoints vip, final ViewId v, final String label )
-	{
-		final InterestPointList ipList = vip.getViewInterestPointLists( v ).getInterestPointList( label );
-
-		if ( !ipList.hasInterestPoints() )
-			ipList.loadInterestPoints();
-
-		return ipList.getInterestPointsCopy();
-	}
-
-	public static List< CorrespondingInterestPoints > getCorrespondingInterestPoints( final ViewInterestPoints vip, final ViewId v, final String label )
-	{
-		final InterestPointList ipList = vip.getViewInterestPointLists( v ).getInterestPointList( label );
-
-		if ( !ipList.hasCorrespondingInterestPoints() )
-			ipList.loadCorrespondingInterestPoints();
-
-		return ipList.getCorrespondingInterestPointsCopy();
 	}
 
 	protected void addPopupMenu( final JTable table )

@@ -78,7 +78,7 @@ public class InterestPointExplorer< AS extends SpimData2, X extends XmlIoAbstrac
 				if ( vd.isPresent() )
 					fullList.add( vd );
 
-		panel.updateViewDescription( fullList, false );
+		panel.updateViewDescription( fullList );
 	}
 
 	@Override

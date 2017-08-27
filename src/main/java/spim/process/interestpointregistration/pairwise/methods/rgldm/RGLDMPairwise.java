@@ -27,7 +27,7 @@ public class RGLDMPairwise< I extends InterestPoint > implements MatcherPairwise
 	@Override
 	public PairwiseResult< I > match( final List< I > listAIn, final List< I > listBIn )
 	{
-		final PairwiseResult< I > result = new PairwiseResult< I >();
+		final PairwiseResult< I > result = new PairwiseResult< I >( true );
 
 		final ArrayList< I > listA = new ArrayList< I >();
 		final ArrayList< I > listB = new ArrayList< I >();

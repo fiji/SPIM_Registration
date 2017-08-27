@@ -28,8 +28,9 @@ public class GroupedInterestPoint< V > extends InterestPoint
 	@Override
 	public GroupedInterestPoint< V > clone() { return new GroupedInterestPoint< V >( this.view, this.id, this.l.clone() ); }
 
+	// TODO: this is also a hack, but we need to assign some view to it
 	@Override
-	public GroupedInterestPoint< V > newInstance( final int id, final double[] l ) { return new GroupedInterestPoint< V > ( null, id, l ); }
+	public GroupedInterestPoint< V > newInstance( final int id, final double[] l ) { return new GroupedInterestPoint< V > ( this.view, id, l ); }
 
 	@Override
 	public boolean equals( final Object obj )

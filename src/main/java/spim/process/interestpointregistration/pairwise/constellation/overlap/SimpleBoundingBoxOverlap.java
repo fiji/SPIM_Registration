@@ -3,7 +3,7 @@ package spim.process.interestpointregistration.pairwise.constellation.overlap;
 import java.util.List;
 import java.util.Map;
 
-import mpicbg.imglib.util.Util;
+import net.imglib2.util.Util;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;

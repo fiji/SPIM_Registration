@@ -131,7 +131,7 @@ public class SpimData2 extends SpimData
 		return null;
 	}
 
-	public static ArrayList< ViewSetup > getAllViewSetupsSorted( final SpimData data, final List< ? extends ViewId > viewIds )
+	public static ArrayList< ViewSetup > getAllViewSetupsSorted( final SpimData data, final Collection< ? extends ViewId > viewIds )
 	{
 		final HashSet< ViewSetup > setups = new HashSet< ViewSetup >();
 
