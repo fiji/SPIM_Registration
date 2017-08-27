@@ -10,8 +10,9 @@ import net.imglib2.img.ImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.util.Pair;
+import spim.fiji.spimdata.imgloaders.filemap2.FileMapGettable;
 
-public class FileMapImgLoaderLOCI extends LegacyImgLoaderWrapper< UnsignedShortType, LegacyFileMapImgLoaderLOCI >
+public class FileMapImgLoaderLOCI extends LegacyImgLoaderWrapper< UnsignedShortType, LegacyFileMapImgLoaderLOCI > implements FileMapGettable
 {
 
 	public FileMapImgLoaderLOCI(
@@ -30,6 +31,7 @@ public class FileMapImgLoaderLOCI extends LegacyImgLoaderWrapper< UnsignedShortT
 		return legacyImgLoader.toString();
 	}
 	
+	@Override
 	public HashMap< BasicViewDescription< ? >, Pair< File, Pair< Integer, Integer > > > getFileMap()
 	{
 		 return ( (LegacyFileMapImgLoaderLOCI) legacyImgLoader ).getFileMap();

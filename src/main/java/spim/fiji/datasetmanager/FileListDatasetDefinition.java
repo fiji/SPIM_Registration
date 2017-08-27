@@ -5,7 +5,6 @@ import java.awt.Component;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Label;
 import java.awt.Panel;
 import java.awt.TextField;
 
@@ -76,6 +75,8 @@ import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBoxes;
 import spim.fiji.spimdata.imgloaders.FileMapImgLoaderLOCI;
 import spim.fiji.spimdata.imgloaders.LegacyFileMapImgLoaderLOCI;
+import spim.fiji.spimdata.imgloaders.filemap2.FileMapGettable;
+import spim.fiji.spimdata.imgloaders.filemap2.FileMapImgLoaderLOCI2;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.fiji.spimdata.pointspreadfunctions.PointSpreadFunctions;
 import spim.fiji.spimdata.stitchingresults.StitchingResults;
@@ -356,7 +357,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		return paths;
 	}
 	
-	private static SpimData2 buildSpimData( FileListViewDetectionState state )
+	private static SpimData2 buildSpimData( FileListViewDetectionState state, boolean withVirtualLoader )
 	{
 		
 		//final Map< Integer, List< Pair< File, Pair< Integer, Integer > > > > fm = tileIdxMap;
@@ -391,10 +392,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		List<ViewSetup> viewSetups = new ArrayList<>();
 		List<ViewId> missingViewIds = new ArrayList<>();
 		List<TimePoint> timePoints = new ArrayList<>();
-		
-		
-		
-		
+
 		HashMap<Pair<Integer, Integer>, Pair<File, Pair<Integer, Integer>>> ViewIDfileMap = new HashMap<>();
 		Integer viewSetupId = 0;
 		for (Integer c = 0; c < nChannels; c++)
@@ -531,27 +529,31 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			System.out.println( vdI );
 			if (vdI != null && vdI.isPresent()){
 				fileMap.put( vdI, ViewIDfileMap.get( k ) );
-			}			
+			}
 		}
-		
-		ImgLoader imgLoader = new FileMapImgLoaderLOCI( fileMap, FileListDatasetDefinitionUtil.selectImgFactory(state.getDimensionMap()), sd );
+
+		final ImgLoader imgLoader;
+		if (withVirtualLoader)
+			imgLoader = new FileMapImgLoaderLOCI2( fileMap, FileListDatasetDefinitionUtil.selectImgFactory(state.getDimensionMap()), sd );
+		else
+			imgLoader = new FileMapImgLoaderLOCI( fileMap, FileListDatasetDefinitionUtil.selectImgFactory(state.getDimensionMap()), sd );
 		sd.setImgLoader( imgLoader );
-		
+
 		double minResolution = Double.MAX_VALUE;
 		for ( VoxelDimensions d : state.getDimensionMap().values().stream().map( p -> p.getB() ).collect( Collectors.toList() ) )
 		{
 			for (int di = 0; di < d.numDimensions(); di++)
 				minResolution = Math.min( minResolution, d.dimension( di ) );
 		}
-		
-		
+
+
 		ViewRegistrations vrs = createViewRegistrations( sd.getViewDescriptions(), minResolution );
-		
+
 		// create the initial view interest point object
 		final ViewInterestPoints viewInterestPoints = new ViewInterestPoints();
 		viewInterestPoints.createViewInterestPoints( sd.getViewDescriptions() );
-		
-		SpimData2 data = new SpimData2( new File("/Users/david/Desktop"), sd, vrs, viewInterestPoints, new BoundingBoxes(), new PointSpreadFunctions(), new StitchingResults() );
+
+		SpimData2 data = new SpimData2( new File("/"), sd, vrs, viewInterestPoints, new BoundingBoxes(), new PointSpreadFunctions(), new StitchingResults() );
 		return data;
 	}
 	
@@ -799,25 +801,27 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 				
 		for (int i = 0; i < numVariables; i++)
 			gd.addChoice( "pattern_" + i + " assignment", choicesAll, choicesAll[0] );
-		
+
+		gd.addCheckbox( "Use_virtual_images_(cached)", true );
+
 		gd.showDialog();
-		
+
 		if (gd.wasCanceled())
 			return null;
-		
+
 		boolean preferAnglesOverTiles = true;
 		boolean preferChannelsOverIlluminations = true;
 		if (state.getAmbiguousAngleTile() || state.getMultiplicityMap().get( Tile.class) ==  CheckResult.MUlTIPLE_NAMED)
 			preferAnglesOverTiles = gd.getNextChoiceIndex() == 0;
 		if (state.getAmbiguousIllumChannel())
 			preferChannelsOverIlluminations = gd.getNextChoiceIndex() == 0;
-		
+
 		fileVariableToUse.put( TimePoint.class, new ArrayList<>() );
 		fileVariableToUse.put( Channel.class, new ArrayList<>() );
 		fileVariableToUse.put( Illumination.class, new ArrayList<>() );
 		fileVariableToUse.put( Tile.class, new ArrayList<>() );
 		fileVariableToUse.put( Angle.class, new ArrayList<>() );
-		
+
 		for (int i = 0; i < numVariables; i++)
 		{
 			String choice = gd.getNextChoice();
@@ -831,59 +835,59 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 				fileVariableToUse.get( Tile.class ).add( i );
 			else if (choice.equals( "Angles" ))
 				fileVariableToUse.get( Angle.class ).add( i );
-			
-				
 		}
-		
+
+		final boolean useVirtualLoader = gd.getNextBoolean();
+
 		// TODO handle Angle-Tile swap here	
 		FileListDatasetDefinitionUtil.resolveAmbiguity( state.getMultiplicityMap(), state.getAmbiguousIllumChannel(), preferChannelsOverIlluminations, state.getAmbiguousAngleTile(), !preferAnglesOverTiles );
-				
-		
+
 		FileListDatasetDefinitionUtil.expandAccumulatedViewInfos(
 				fileVariableToUse, 
 				patternDetector,
 				state);
-		
-		SpimData2 data = buildSpimData( state );
+
+		SpimData2 data = buildSpimData( state, useVirtualLoader );
 
 		//TODO: with translated tiles, we also have to take the center of rotation into account
 		//Apply_Transformation.applyAxis( data );
-		
-		
+
 		GenericDialogPlus gdSave = new GenericDialogPlus( "Save dataset definition" );
-		
+
 		//gdSave.addMessage( "<html> <h1> Saving options </h1> <br /> </html>" );
 		addMessageAsJLabel("<html> <h1> Saving options </h1> <br /> </html>", gdSave);
-		
-		
-		Class<?> imgFactoryClass = ((FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() ).getImgFactory().getClass();
-		if (imgFactoryClass.equals( CellImgFactory.class ))
+
+		if (!useVirtualLoader)
 		{
-			//gdSave.addMessage( "<html> <h2> ImgLib2 container </h2> <br/>"
-			//		+ "<p style=\"color:orange\"> Some views of the dataset are larger than 2^31 pixels, will use CellImg </p>" );
-			
-			addMessageAsJLabel("<html> <h2> ImgLib2 container </h2> <br/>"
-					+ "<p style=\"color:orange\"> Some views of the dataset are larger than 2^31 pixels, will use CellImg </p>", gdSave);
+			Class<?> imgFactoryClass = ((FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() ).getImgFactory().getClass();
+			if (imgFactoryClass.equals( CellImgFactory.class ))
+			{
+				//gdSave.addMessage( "<html> <h2> ImgLib2 container </h2> <br/>"
+				//		+ "<p style=\"color:orange\"> Some views of the dataset are larger than 2^31 pixels, will use CellImg </p>" );
+				
+				addMessageAsJLabel("<html> <h2> ImgLib2 container </h2> <br/>"
+						+ "<p style=\"color:orange\"> Some views of the dataset are larger than 2^31 pixels, will use CellImg </p>", gdSave);
+			}
+			else
+			{
+				//gdSave.addMessage( "<html> <h2> ImgLib2 container </h2> <br/>");
+				addMessageAsJLabel("<html> <h2> ImgLib2 container </h2> <br/>", gdSave);
+				String[] imglibChoice = new String[] {"ArrayImg", "CellImg"};
+				gdSave.addChoice( "imglib2 container", imglibChoice, imglibChoice[0] );
+			}
 		}
-		else
-		{
-			//gdSave.addMessage( "<html> <h2> ImgLib2 container </h2> <br/>");
-			addMessageAsJLabel("<html> <h2> ImgLib2 container </h2> <br/>", gdSave);
-			String[] imglibChoice = new String[] {"ArrayImg", "CellImg"};
-			gdSave.addChoice( "imglib2 container", imglibChoice, imglibChoice[0] );
-		}
-			
+
 		//gdSave.addMessage("<html><h2> Save path </h2></html>");
 		addMessageAsJLabel("<html><h2> Save path </h2></html>", gdSave);
-		
+
 		Set<String> filenames = new HashSet<>();
-		((FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() ).getFileMap().values().stream().forEach(
+		((FileMapGettable)data.getSequenceDescription().getImgLoader() ).getFileMap().values().stream().forEach(
 				p -> 
 				{
 					filenames.add( p.getA().getAbsolutePath());
 					System.out.println( p.getA().getAbsolutePath() );
 				});
-		
+
 		File prefixPath;
 		if (filenames.size() > 1)
 			prefixPath = getLongestPathPrefix( filenames );
@@ -892,11 +896,11 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			String fi = filenames.iterator().next();
 			prefixPath = new File((String)fi.subSequence( 0, fi.lastIndexOf( File.separator )));
 		}
-		
+
 		gdSave.addDirectoryField( "dataset save path", prefixPath.getAbsolutePath(), 55 );		
 
 		// check if all stack sizes are the same (in each file)
-		final boolean zSizeEqualInEveryFile = LegacyFileMapImgLoaderLOCI.isZSizeEqualInEveryFile( data, (FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() );
+		final boolean zSizeEqualInEveryFile = LegacyFileMapImgLoaderLOCI.isZSizeEqualInEveryFile( data, (FileMapGettable)data.getSequenceDescription().getImgLoader() );
 
 		// notify user if all stacks are equally size (in every file)
 		if (zSizeEqualInEveryFile)
@@ -905,20 +909,23 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 
 		// default choice for size re-check: do it if all stacks are the same size
 		gdSave.addCheckbox( "check_stack_sizes", zSizeEqualInEveryFile );
-
 		gdSave.addCheckbox( "resave as HDF5", false );
-		
+
 		gdSave.showDialog();
 		
 		if ( gdSave.wasCanceled() )
 			return null;
-		
-		if (!imgFactoryClass.equals( CellImgFactory.class ))
+
+		if (!useVirtualLoader)
 		{
-			if (gdSave.getNextChoiceIndex() != 0)
-				((FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() ).setImgFactory( new CellImgFactory<>(256) );
+			Class<?> imgFactoryClass = ((FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() ).getImgFactory().getClass();
+			if (!imgFactoryClass.equals( CellImgFactory.class ))
+			{
+				if (gdSave.getNextChoiceIndex() != 0)
+					((FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() ).setImgFactory( new CellImgFactory<>(256) );
+			}
 		}
-		
+
 		File chosenPath = new File( gdSave.getNextString());
 		data.setBasePath( chosenPath );
 
@@ -926,11 +933,10 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		// TODO: remove once the bug is fixed upstream
 		final boolean checkSize = gdSave.getNextBoolean();
 		if (checkSize)
-			LegacyFileMapImgLoaderLOCI.checkAndRemoveZeroVolume( data, (FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() );
+			LegacyFileMapImgLoaderLOCI.checkAndRemoveZeroVolume( data, (ImgLoader & FileMapGettable) data.getSequenceDescription().getImgLoader() );
 
 		boolean resaveAsHDF5 = gdSave.getNextBoolean();
-		
-		
+
 		if (resaveAsHDF5)
 		{
 			final Map< Integer, ExportMipmapInfo > perSetupExportMipmapInfo = Resave_HDF5.proposeMipmaps( data.getSequenceDescription().getViewSetupsOrdered() );

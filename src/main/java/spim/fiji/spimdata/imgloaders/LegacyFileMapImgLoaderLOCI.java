@@ -23,6 +23,7 @@ import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
 import mpicbg.spim.data.sequence.Illumination;
+import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.Tile;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewId;
@@ -44,6 +45,7 @@ import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
 import net.imglib2.view.Views;
 import spim.fiji.spimdata.SpimData2;
+import spim.fiji.spimdata.imgloaders.filemap2.FileMapGettable;
 
 
 public class LegacyFileMapImgLoaderLOCI extends AbstractImgFactoryImgLoader
@@ -98,7 +100,7 @@ public class LegacyFileMapImgLoaderLOCI extends AbstractImgFactoryImgLoader
 	{
 		try
 		{
-			final Img< FloatType > img = openImg( new FloatType(), view );
+			final RandomAccessibleInterval< FloatType > img = openImg( new FloatType(), view );
 
 			if ( img == null )
 				throw new RuntimeException( "Could not load '" + fileMap.get( sd.getViewDescriptions( ).get( view ) ).getA() + "' viewId=" + view.getViewSetupId() + ", tpId=" + view.getTimePointId() );
@@ -121,7 +123,7 @@ public class LegacyFileMapImgLoaderLOCI extends AbstractImgFactoryImgLoader
 		// TODO should the Type here be fixed to UnsignedShortTyppe?
 		try
 		{
-			final Img< UnsignedShortType > img = openImg( new UnsignedShortType(), view );
+			final RandomAccessibleInterval< UnsignedShortType > img = openImg( new UnsignedShortType(), view );
 
 			if ( img == null )
 				throw new RuntimeException( "Could not load '" + fileMap.get( sd.getViewDescriptions( ).get( view ) ).getA() + "' viewId=" + view.getViewSetupId() + ", tpId=" + view.getTimePointId() );
@@ -169,14 +171,14 @@ public class LegacyFileMapImgLoaderLOCI extends AbstractImgFactoryImgLoader
 
 	}
 	
-	protected < T extends RealType< T > & NativeType< T > > Img< T > openImg( final T type, final ViewId view ) throws Exception
+	protected < T extends RealType< T > & NativeType< T > > RandomAccessibleInterval< T > openImg( final T type, final ViewId view ) throws Exception
 	{
 		// sets reader to correct File and series
 		loadMetaData( view );
 
 		final BasicViewDescription< ? > vd = sd.getViewDescriptions().get( view );
 		final BasicViewSetup vs = vd.getViewSetup();		
-		File file = fileMap.get( vd).getA();
+		final File file = fileMap.get( vd).getA();
 
 		final TimePoint t = vd.getTimePoint();
 		final Angle a = getAngle( vd );
@@ -211,7 +213,8 @@ public class LegacyFileMapImgLoaderLOCI extends AbstractImgFactoryImgLoader
 
 			IOFunctions.println(
 					new Date( System.currentTimeMillis() ) + ": Reading image data from '" + file.getName() + "' [" + dim[ 0 ] + "x" + dim[ 1 ] + "x" + dim[ 2 ] +
-					" angle=" + a.getName() + " ch=" + c.getName() + " illum=" + i.getName() + " tp=" + t.getName() + " type=" + FormatTools.getPixelTypeString( reader.getPixelType()) +
+					" angle=" + a.getName() + " ch=" + c.getName() + " illum=" + i.getName() + " tp=" + t.getName() + " tile=" + tile.getName() + 
+					" type=" + FormatTools.getPixelTypeString( reader.getPixelType()) +
 					" img=" + img.getClass().getSimpleName() + "<" + type.getClass().getSimpleName() + ">]" );
 
 			
@@ -341,7 +344,7 @@ public class LegacyFileMapImgLoaderLOCI extends AbstractImgFactoryImgLoader
 	 * @param loader the associated loader
 	 * @return true if z-sizes are equal in every file, false if they differ inside any file
 	 */
-	public static boolean isZSizeEqualInEveryFile(final SpimData2 spimData, final FileMapImgLoaderLOCI loader)
+	public static boolean isZSizeEqualInEveryFile(final SpimData2 spimData, final FileMapGettable loader)
 	{
 		// for every file: collect a vd for every series
 		final Map< File, Map< Integer, BasicViewDescription< ? > > > invertedMap = new HashMap<>();
@@ -387,7 +390,7 @@ public class LegacyFileMapImgLoaderLOCI extends AbstractImgFactoryImgLoader
 	 * @param spimData the SpimData to correct
 	 * @param loader the imgLoader to use
 	 */
-	public static <T extends RealType< T > & NativeType< T >> void checkAndRemoveZeroVolume(final SpimData2 spimData, final FileMapImgLoaderLOCI loader)
+	public static <T extends RealType< T > & NativeType< T >, IL extends ImgLoader & FileMapGettable > void checkAndRemoveZeroVolume(final SpimData2 spimData, final IL loader)
 	{
 		// collect vds for every (file, series) combo
 		final Map< Pair< File, Integer >, List< BasicViewDescription< ViewSetup > > > invertedMap = new HashMap<>();
