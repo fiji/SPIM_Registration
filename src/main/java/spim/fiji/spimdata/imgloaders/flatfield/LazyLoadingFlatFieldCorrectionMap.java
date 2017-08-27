@@ -94,6 +94,11 @@ public abstract class LazyLoadingFlatFieldCorrectionMap<IL extends ImgLoader> im
 		ImageJFunctions.show( brightImg );
 		
 	}
+
+	public Map< ViewId, Pair< File, File > > getFileMap()
+	{
+		return fileMap;
+	}
 	
 
 }
