@@ -94,9 +94,9 @@ class VirtualRandomAccessibleIntervalLOCI<T extends RealType< T > & NativeType< 
 		public T get()
 		{
 			// prevent multithreaded overwriting of buffer
-			synchronized ( buffer )
+			synchronized ( reader )
 			{
-				if ( position[2] != currentZ )
+				if ( position[2] != currentZ  || !VirtualRAIFactoryLOCI.checkReaderFileAndSeries( reader, file, series ))
 				{
 					currentZ = (int) position[2];
 					readIntoBuffer();
