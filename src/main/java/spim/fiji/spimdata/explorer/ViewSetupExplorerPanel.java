@@ -59,6 +59,7 @@ import spim.fiji.spimdata.explorer.popup.DetectInterestPointsPopup;
 import spim.fiji.spimdata.explorer.popup.DisplayFusedImagesPopup;
 import spim.fiji.spimdata.explorer.popup.DisplayRawImagesPopup;
 import spim.fiji.spimdata.explorer.popup.ExplorerWindowSetable;
+import spim.fiji.spimdata.explorer.popup.FlatFieldCorrectionPopup;
 import spim.fiji.spimdata.explorer.popup.FusionPopup;
 import spim.fiji.spimdata.explorer.popup.InterestPointsExplorerPopup;
 import spim.fiji.spimdata.explorer.popup.LabelPopUp;
@@ -715,6 +716,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 
 		popups.add( new LabelPopUp( " Modifications" ) );
 		popups.add( new ResavePopup() );
+		popups.add( new FlatFieldCorrectionPopup() );
 
 		return popups;
 	}
