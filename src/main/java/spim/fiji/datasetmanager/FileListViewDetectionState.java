@@ -2,10 +2,12 @@ package spim.fiji.datasetmanager;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.security.auth.Destroyable;
 
@@ -112,6 +114,32 @@ public class FileListViewDetectionState
 		Integer max = counts.values().stream().reduce( Integer.MIN_VALUE, (x, y) -> Math.max( x, y ) );
 
 		return new ValuePair< Integer, Integer >( min, max );
+	}
+
+	public static boolean allVoxelSizesTheSame(FileListViewDetectionState state)
+	{
+		VoxelDimensions last = null;
+		final Collection< Pair< Dimensions, VoxelDimensions > > sizes = state.getDimensionMap().values();
+		for (final Pair< Dimensions, VoxelDimensions > size : sizes)
+		{
+			if (last == null)
+				last = size.getB();
+			if (!equalCalibration(last, size.getB() ))
+				return false;
+		}
+		return true;
+	}
+
+	public static boolean equalCalibration(VoxelDimensions a, VoxelDimensions b)
+	{
+		if (a.numDimensions() != b.numDimensions())
+			return false;
+		if (!a.unit().equals( b.unit() ))
+			return false;
+		for (int d = 0; d<a.numDimensions(); d++)
+			if (Math.abs( a.dimension( d ) - b.dimension( d ) ) > 1E-5)
+				return false;
+		return true;
 	}
 
 	public Map<Class<? extends Entity>, FileListDatasetDefinitionUtil.CheckResult> getMultiplicityMap()

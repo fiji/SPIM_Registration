@@ -46,6 +46,7 @@ import mpicbg.spim.data.registration.ViewTransform;
 import mpicbg.spim.data.registration.ViewTransformAffine;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.MissingViews;
@@ -57,6 +58,7 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import net.imglib2.Dimensions;
 import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.util.Pair;
@@ -803,6 +805,19 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		for (int i = 0; i < numVariables; i++)
 			gd.addChoice( "Pattern_" + i + " represents", choicesAll, choicesAll[0] );
 
+		addMessageAsJLabel(  "<html> <h2> Voxel Size calibration </h2> </html> ", gd );
+		final boolean allVoxelSizesTheSame = FileListViewDetectionState.allVoxelSizesTheSame( state );
+		if(!allVoxelSizesTheSame)
+			addMessageAsJLabel(  "<html> <p style=\"color:orange\">WARNING: Voxel Sizes are not the same for all views, modify them at your own risk! </p> </html> ", gd );
+
+		final VoxelDimensions someCalib = state.getDimensionMap().values().iterator().next().getB();
+
+		gd.addCheckbox( "Modify_voxel_size?", false );
+		gd.addNumericField( "Voxel_size_X", someCalib.dimension( 0 ), 4 );
+		gd.addNumericField( "Voxel_size_Y", someCalib.dimension( 1 ), 4 );
+		gd.addNumericField( "Voxel_size_Z", someCalib.dimension( 2 ), 4 );
+		gd.addStringField( "Voxel_size_unit", someCalib.unit() );
+
 		gd.showDialog();
 
 		if (gd.wasCanceled())
@@ -844,6 +859,23 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 				fileVariableToUse, 
 				patternDetector,
 				state);
+
+		// query modified calibration
+		final boolean modifyCalibration = gd.getNextBoolean();
+		if (modifyCalibration)
+		{
+			final double calX = gd.getNextNumber();
+			final double calY = gd.getNextNumber();
+			final double calZ = gd.getNextNumber();
+			final String calUnit = gd.getNextString();
+
+			for (final Pair< File, Pair< Integer, Integer > > key : state.getDimensionMap().keySet())
+			{
+				final Pair< Dimensions, VoxelDimensions > pairOld = state.getDimensionMap().get( key );
+				final Pair< Dimensions, VoxelDimensions > pairNew = new ValuePair< Dimensions, VoxelDimensions >( pairOld.getA(), new FinalVoxelDimensions( calUnit, calX, calY, calZ ) );
+				state.getDimensionMap().put( key, pairNew );
+			}
+		}
 
 		// we create a virtual SpimData at first
 		SpimData2 data = buildSpimData( state, true );
@@ -900,15 +932,19 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		gdSave.addDirectoryField( "dataset save path", prefixPath.getAbsolutePath(), 55 );		
 
 		// check if all stack sizes are the same (in each file)
-		final boolean zSizeEqualInEveryFile = LegacyFileMapImgLoaderLOCI.isZSizeEqualInEveryFile( data, (FileMapGettable)data.getSequenceDescription().getImgLoader() );
+		boolean zSizeEqualInEveryFile = LegacyFileMapImgLoaderLOCI.isZSizeEqualInEveryFile( data, (FileMapGettable)data.getSequenceDescription().getImgLoader() );
 
+		// only consider if there are actually multiple angles/tiles
+		zSizeEqualInEveryFile = zSizeEqualInEveryFile && !(data.getSequenceDescription().getAllAnglesOrdered().size() == 1 && data.getSequenceDescription().getAllTilesOrdered().size() == 1);
 		// notify user if all stacks are equally size (in every file)
 		if (zSizeEqualInEveryFile)
+		{
 			addMessageAsJLabel( "<html><p style=\"color:orange\">WARNING: all stacks have the same size, this might be caused by a bug"
 					+ " in BioFormats. </br> Please re-check stack sizes if necessary.</p></html>", gdSave );
 
-		// default choice for size re-check: do it if all stacks are the same size
-		gdSave.addCheckbox( "check_stack_sizes", zSizeEqualInEveryFile );
+			// default choice for size re-check: do it if all stacks are the same size
+			gdSave.addCheckbox( "check_stack_sizes", zSizeEqualInEveryFile );
+		}
 		gdSave.addCheckbox( "resave_as_HDF5", true );
 
 		gdSave.showDialog();
@@ -936,9 +972,12 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 
 		// check and correct stack sizes (the "BioFormats bug")
 		// TODO: remove once the bug is fixed upstream
-		final boolean checkSize = gdSave.getNextBoolean();
-		if (checkSize)
-			LegacyFileMapImgLoaderLOCI.checkAndRemoveZeroVolume( data, (ImgLoader & FileMapGettable) data.getSequenceDescription().getImgLoader() );
+		if (zSizeEqualInEveryFile)
+		{
+			final boolean checkSize = gdSave.getNextBoolean();
+			if (checkSize)
+				LegacyFileMapImgLoaderLOCI.checkAndRemoveZeroVolume( data, (ImgLoader & FileMapGettable) data.getSequenceDescription().getImgLoader() );
+		}
 
 		boolean resaveAsHDF5 = gdSave.getNextBoolean();
 
