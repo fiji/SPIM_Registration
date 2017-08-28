@@ -953,8 +953,10 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			System.out.println( "HDF5 resave finished." );
 			
 			spim.fiji.ImgLib2Temp.Pair< SpimData2, List< String > > result = Resave_HDF5.createXMLObject( data, new ArrayList<>(data.getSequenceDescription().getViewDescriptions().keySet()), params, progressWriter, true );
-			
-						
+
+			// ensure progressbar is gone
+			progressWriter.setProgress( 1.0 );
+
 			return result.getA();
 		}
 		
