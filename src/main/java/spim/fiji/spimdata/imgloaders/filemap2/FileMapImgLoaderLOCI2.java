@@ -120,9 +120,9 @@ public class FileMapImgLoaderLOCI2 implements ImgLoader, FileMapGettable
 			RandomAccessibleInterval< T > img = null;
 			try
 			{
-				img = new VirtualRAIFactoryLOCI().createVirtualCached(
+				img = (RandomAccessibleInterval< T >) new VirtualRAIFactoryLOCI().createVirtualCached(
 						reader, imageSource.getA(), imageSource.getB().getA(),
-						imageSource.getB().getB(), allTimepointsInSingleFiles ? 0 : timepointId, null, size );
+						imageSource.getB().getB(), allTimepointsInSingleFiles ? 0 : timepointId, new UnsignedShortType(), size );
 			}
 			catch ( IncompatibleTypeException e )
 			{
@@ -158,6 +158,9 @@ public class FileMapImgLoaderLOCI2 implements ImgLoader, FileMapGettable
 		@Override
 		public T getImageType()
 		{
+			return (T) new UnsignedShortType();
+
+			/*
 			final BasicViewDescription< ? > aVd = getAnyPresentViewDescriptionForViewSetup( sd, setupId );
 			final Pair< File, Pair< Integer, Integer > > aPair = fileMap.get( aVd );
 
@@ -174,6 +177,7 @@ public class FileMapImgLoaderLOCI2 implements ImgLoader, FileMapGettable
 			else if (reader.getPixelType() == FormatTools.FLOAT)
 				return (T) new FloatType();
 			return null;
+			*/
 		}
 
 		@Override
