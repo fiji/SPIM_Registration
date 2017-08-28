@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+
 import java.util.stream.Collectors;
 
 import javax.swing.JLabel;
@@ -465,8 +466,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 										if (chInfoI.name != null)
 											chI.setName( chInfoI.name );
 									}
-									
-									
+
 									Angle aI = new Angle( angleId, angleId.toString() );
 									
 									if (state.getDetailMap().get( Angle.class ) != null && state.getDetailMap().get( Angle.class ).containsKey( angleId ))
@@ -651,7 +651,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		// summary timepoints
 		if (state.getMultiplicityMap().get( TimePoint.class ) == CheckResult.SINGLE)
 		{
-			inFileSummarySB.append( "<p> No timepoints detected within files </p>" );
+//			inFileSummarySB.append( "<p> No timepoints detected within files </p>" );
 			choices.add( "TimePoints" );
 		}
 		else if (state.getMultiplicityMap().get( TimePoint.class ) == CheckResult.MULTIPLE_INDEXED)
@@ -664,23 +664,27 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 
 		inFileSummarySB.append( "<br />" );
 
+		// we might want to know how many channels/illums or tiles/angles to expect even though we have no metadata
+		// NB: dont use these results if there IS metadata
+		final Pair< Integer, Integer > minMaxNumCannelsIndexed = FileListViewDetectionState.getMinMaxNumCannelsIndexed( state );
+		final Pair< Integer, Integer > minMaxNumSeriesIndexed = FileListViewDetectionState.getMinMaxNumSeriesIndexed( state );
+
 		// summary channel
 		if (state.getMultiplicityMap().get( Channel.class ) == CheckResult.SINGLE)
 		{
-			inFileSummarySB.append( !state.getAmbiguousIllumChannel() ? "<p> No channels detected within files </p>" :
-																	 		"<p> Channels OR Illuminations detected within files </p>");
+			inFileSummarySB.append( !state.getAmbiguousIllumChannel() ? "" : "<p>"+ getRangeRepresentation( minMaxNumCannelsIndexed ) + " Channels OR Illuminations detected within files </p>");
 			choices.add( "Channels" );
 		}
 		else if (state.getMultiplicityMap().get( Channel.class ) == CheckResult.MULTIPLE_INDEXED)
 		{
-			// TODO: find out number here
-			inFileSummarySB.append( "<p > Multiple channels detected within files </p>" );
-			inFileSummarySB.append( "<p style=\"color:orange\">WARNING: no metadata was found for channels </p>" );
+
+			inFileSummarySB.append( "<p > " + getRangeRepresentation( minMaxNumCannelsIndexed ) + " Channels detected within files </p>" );
+			inFileSummarySB.append( "<p style=\"color:orange\">WARNING: no metadata was found for Channels </p>" );
 			if (state.getMultiplicityMap().get( Illumination.class ) == CheckResult.MULTIPLE_INDEXED)
 			{
 				choices.add( "Channels" );
 				inFileSummarySB.append( "<p style=\"color:orange\">WARNING: no matadata for Illuminations found either, cannot distinguish </p>" );
-				inFileSummarySB.append( "<p style=\"color:orange\">WARNING: choose manually wether files contain channels or illuminations below </p>" );
+				inFileSummarySB.append( "<p style=\"color:orange\">WARNING: choose manually whether files contain Channels or Illuminations below </p>" );
 			}
 		} else if (state.getMultiplicityMap().get( Channel.class ) == CheckResult.MUlTIPLE_NAMED)
 		{
@@ -693,16 +697,16 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		// summary illum
 		if ( state.getMultiplicityMap().get( Illumination.class ) == CheckResult.SINGLE )
 		{
-			if (!state.getAmbiguousIllumChannel())
-				inFileSummarySB.append( "<p> No illuminations detected within files </p>" );
+//			if (!state.getAmbiguousIllumChannel())
+//				inFileSummarySB.append( "<p> No illuminations detected within files </p>" );
 			choices.add( "Illuminations" );
 		}
 		else if ( state.getMultiplicityMap().get( Illumination.class ) == CheckResult.MULTIPLE_INDEXED )
 		{
-			// TODO: find out number here
-			inFileSummarySB.append( "<p > Multiple illuminations detected within files </p>" );
 			if (state.getMultiplicityMap().get( Channel.class ).equals( CheckResult.MULTIPLE_INDEXED ))
 				choices.add( "Illuminations" );
+			else
+				inFileSummarySB.append( "<p > " + getRangeRepresentation( minMaxNumCannelsIndexed ) + " Illuminations detected within files </p>" );
 		}
 		else if ( state.getMultiplicityMap().get( Illumination.class ) == CheckResult.MUlTIPLE_NAMED )
 		{
@@ -715,13 +719,12 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		// summary tile
 		if ( state.getMultiplicityMap().get( Tile.class ) == CheckResult.SINGLE )
 		{
-			inFileSummarySB.append( "<p> No tiles detected within files </p>" );
+//			inFileSummarySB.append( "<p> No tiles detected within files </p>" );
 			choices.add( "Tiles" );
 		}
 		else if ( state.getMultiplicityMap().get( Tile.class ) == CheckResult.MULTIPLE_INDEXED )
 		{
-			// TODO: find out number here
-			inFileSummarySB.append( "<p > Multiple Tiles detected within files </p>" );
+			inFileSummarySB.append( "<p > " + getRangeRepresentation( minMaxNumSeriesIndexed ) + " Tiles detected within files </p>" );
 			inFileSummarySB.append( "<p style=\"color:orange\">WARNING: no metadata was found for Tiles </p>" );
 			if (state.getMultiplicityMap().get( Angle.class ) == CheckResult.MULTIPLE_INDEXED)
 			{
@@ -742,24 +745,24 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		// summary angle
 		if ( state.getMultiplicityMap().get( Angle.class ) == CheckResult.SINGLE )
 		{
-			inFileSummarySB.append( "<p> No angles detected within files </p>" );
+//			inFileSummarySB.append( "<p> No angles detected within files </p>" );
 			choices.add( "Angles" );
 		}
 		else if ( state.getMultiplicityMap().get( Angle.class ) == CheckResult.MULTIPLE_INDEXED )
 		{
-			// TODO: find out number here
-			inFileSummarySB.append( "<p > Multiple Angles detected within files </p>" );
 			if (state.getMultiplicityMap().get( Tile.class ) == CheckResult.MULTIPLE_INDEXED)
 				choices.add( "Angles" );
+			else
+				inFileSummarySB.append( "<p > " + getRangeRepresentation( minMaxNumSeriesIndexed ) + " Angles detected within files </p>" );
 		}
 		else if ( state.getMultiplicityMap().get( Angle.class ) == CheckResult.MUlTIPLE_NAMED )
 		{
 			int numAngle = state.getAccumulateMap( Angle.class ).size();
 			inFileSummarySB.append( "<p style=\"color:green\">" + numAngle + " Angles found within files </p>" );
 		}
-		
+
 		inFileSummarySB.append( "</html>" );
-		
+
 		GenericDialogPlus gd = new GenericDialogPlus("Assign attributes");
 		
 		//gd.addMessage( "<html> <h1> View assignment </h1> </html> ");
@@ -769,38 +772,36 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		addMessageAsJLabel(inFileSummarySB.toString(), gd);
 		
 		String[] choicesAngleTile = new String[] {"Angles", "Tiles"};
-		String[] choicesChannelIllum = new String[] {"Channels", "Illums"};
-				
-		
-		
+		String[] choicesChannelIllum = new String[] {"Channels", "Illuminations"};
+
 		//if (state.getAmbiguousAngleTile())
 		String preferedAnglesOrTiles = state.getMultiplicityMap().get( Angle.class ) == CheckResult.MULTIPLE_INDEXED ? "Angles" : "Tiles";
-		if (state.getAmbiguousAngleTile() || state.getMultiplicityMap().get( Tile.class) ==  CheckResult.MUlTIPLE_NAMED)
-			gd.addChoice( "map series to", choicesAngleTile, preferedAnglesOrTiles );
+		if (state.getAmbiguousAngleTile() || state.getMultiplicityMap().get( Tile.class) == CheckResult.MUlTIPLE_NAMED)
+			gd.addChoice( "BioFormats Series are?", choicesAngleTile, preferedAnglesOrTiles );
 		if (state.getAmbiguousIllumChannel())
-			gd.addChoice( "map channels to", choicesChannelIllum, choicesChannelIllum[0] );
-			
-		
-		StringBuilder sbfilePatterns = new StringBuilder();
-		sbfilePatterns.append(  "<html> <h2> Patterns in filenames </h2> " );
-		if (numVariables < 1)
-			sbfilePatterns.append( "<p> No numerical patterns found in filenames</p>" );
-		else
+			gd.addChoice( "BioFormats \"Channels\" are?", choicesChannelIllum, choicesChannelIllum[0] );
+
+
+		if (numVariables >= 1)
+//			sbfilePatterns.append( "<p> No numerical patterns found in filenames</p>" );
+//		else
 		{
-			sbfilePatterns.append( "<p style=\"color:green\"> " + numVariables + " numerical pattern" + ((numVariables > 1) ? "s": "") + " found in filenames</p>" );
-			sbfilePatterns.append( "<p> Patterns: " + patternDetector.getStringRepresentation() + "</p>" );
+			final Pair< String, String > prefixAndPattern = splitIntoPrefixAndPattern( patternDetector );
+			final StringBuilder sbfilePatterns = new StringBuilder();
+			sbfilePatterns.append(  "<html> <h2> Patterns in filenames </h2> " );
+			sbfilePatterns.append( "<h3 style=\"color:green\"> " + numVariables + " numerical pattern" + ((numVariables > 1) ? "s": "") + " found in filenames</h3>" );
+			sbfilePatterns.append( "</br><p> Patterns: " + prefixAndPattern.getB() + "</p>" );
+			sbfilePatterns.append( "</html>" );
+			addMessageAsJLabel(sbfilePatterns.toString(), gd);
 		}
-		sbfilePatterns.append( "</html>" );
-		
+
 		//gd.addMessage( sbfilePatterns.toString() );
-		addMessageAsJLabel(sbfilePatterns.toString(), gd);
-		
-		
-		choices.add( "-- ignore this pattern --"  );
+
+		choices.add( "-- ignore this pattern --" );
 		String[] choicesAll = choices.toArray( new String[]{} );
 				
 		for (int i = 0; i < numVariables; i++)
-			gd.addChoice( "pattern_" + i + " assignment", choicesAll, choicesAll[0] );
+			gd.addChoice( "Pattern_" + i + " represents", choicesAll, choicesAll[0] );
 
 		gd.addCheckbox( "Use_virtual_images_(cached)", true );
 
@@ -978,8 +979,8 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 						else {
 							break;
 						}
-					}	
-					return String.join(File.separator, res );					
+					}
+					return String.join(File.separator, res );
 				});
 		return new File(prefixPath);
 		
@@ -1012,14 +1013,47 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 				return true;
 		return false;
 	}
-	
+
+
+	public static Pair<String, String> splitIntoPrefixAndPattern(FilenamePatternDetector detector)
+	{
+		final String stringRepresentation = detector.getStringRepresentation();
+		final List< String > beforePattern = new ArrayList<>();
+		final List< String > afterPattern = new ArrayList<>();
+		
+		boolean found = false;
+		for (String s : Arrays.asList( stringRepresentation.split(Pattern.quote(File.separator) )))
+		{
+			if (!found && s.contains( "{" ))
+				found = true;
+			if (found)
+				afterPattern.add( s );
+			else
+				beforePattern.add( s );
+		}
+		String prefix = String.join( File.separator, beforePattern );
+		String pattern = String.join( File.separator, afterPattern );
+		return new ValuePair< String, String >( prefix, pattern );
+	}
+
+	public static String getRangeRepresentation(Pair<Integer, Integer> range)
+	{
+		if (range.getA().equals( range.getB() ))
+			return Integer.toString( range.getA() );
+		else
+			if (range.getA() < range.getB())
+				return range.getA() + "-" + range.getB();
+			else
+				return range.getB() + "-" + range.getA();
+	}
+
 	public static Pair<String, String> splitIntoPathAndPattern(String s, String ... templates)
 	{
 		String[] subpaths = s.split( Pattern.quote(File.separator) );
 		ArrayList<String> path = new ArrayList<>(); 
 		ArrayList<String> pattern = new ArrayList<>();
 		boolean noPatternFound = true;
-		
+
 		for (int i = 0; i < subpaths.length; i++){
 			if (noPatternFound && !containsAny( subpaths[i], templates ))
 			{
