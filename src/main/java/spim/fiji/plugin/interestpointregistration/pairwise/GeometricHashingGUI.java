@@ -2,6 +2,7 @@ package spim.fiji.plugin.interestpointregistration.pairwise;
 
 import ij.gui.GenericDialog;
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.interestpointregistration.TransformationModelGUI;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.interestpointregistration.pairwise.MatcherPairwise;
@@ -14,6 +15,7 @@ public class GeometricHashingGUI implements PairwiseGUI
 {
 	public static int defaultModel = 2;
 	public static boolean defaultRegularize = true;
+	public static int defaultRANSACIterationChoice = 1;
 	protected TransformationModelGUI model = null;
 
 	protected RANSACParameters ransacParams;
@@ -42,8 +44,10 @@ public class GeometricHashingGUI implements PairwiseGUI
 	{
 		gd.addChoice( "Transformation model", TransformationModelGUI.modelChoice, TransformationModelGUI.modelChoice[ defaultModel ] );
 		gd.addCheckbox( "Regularize_model", defaultRegularize );
-		gd.addSlider( "Allowed_error_for_RANSAC (px)", 0.5, 20.0, RANSACParameters.max_epsilon );
 		gd.addSlider( "Significance required for a descriptor match", 1.0, 20.0, GeometricHashingParameters.ratioOfDistance );
+		gd.addMessage( "" );
+		gd.addSlider( "Allowed_error_for_RANSAC (px)", 0.5, 100.0, RANSACParameters.max_epsilon );
+		gd.addChoice( "Number_of_RANSAC_iterations", RANSACParameters.ransacChoices, RANSACParameters.ransacChoices[ defaultRANSACIterationChoice ] );
 	}
 
 	@Override
@@ -57,11 +61,27 @@ public class GeometricHashingGUI implements PairwiseGUI
 				return false;
 		}
 
-		final float maxEpsilon = RANSACParameters.max_epsilon = (float)gd.getNextNumber();
 		final float ratioOfDistance = GeometricHashingParameters.ratioOfDistance = (float)gd.getNextNumber();
+		final float maxEpsilon = RANSACParameters.max_epsilon = (float)gd.getNextNumber();
+		final int ransacIterations = RANSACParameters.ransacChoicesIterations[ defaultRANSACIterationChoice = gd.getNextChoiceIndex() ];
 
-		this.ransacParams = new RANSACParameters( maxEpsilon, RANSACParameters.min_inlier_ratio, RANSACParameters.min_inlier_factor, RANSACParameters.num_iterations );
-		this.ghParams = new GeometricHashingParameters( model.getModel(), GeometricHashingParameters.differenceThreshold, ratioOfDistance, GeometricHashingParameters.useAssociatedBeads );
+		final float minInlierRatio;
+		if ( ratioOfDistance >= 2 )
+			minInlierRatio = RANSACParameters.min_inlier_ratio;
+		else if ( ratioOfDistance >= 1.5 )
+			minInlierRatio = RANSACParameters.min_inlier_ratio / 10;
+		else
+			minInlierRatio = RANSACParameters.min_inlier_ratio / 100;
+
+		this.ghParams = new GeometricHashingParameters( model.getModel(), GeometricHashingParameters.differenceThreshold, ratioOfDistance );
+		this.ransacParams = new RANSACParameters( maxEpsilon, minInlierRatio, RANSACParameters.min_inlier_factor, ransacIterations );
+
+		IOFunctions.println( "Selected Paramters:" );
+		IOFunctions.println( "model: " + defaultModel );
+		IOFunctions.println( "ratioOfDistance: " + ratioOfDistance );
+		IOFunctions.println( "maxEpsilon: " + maxEpsilon );
+		IOFunctions.println( "ransacIterations: " + ransacIterations );
+		IOFunctions.println( "minInlierRatio: " + minInlierRatio );
 
 		return true;
 	}

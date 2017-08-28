@@ -4,7 +4,7 @@ import mpicbg.models.Model;
 
 public class RGLDMParameters
 {
-	public static float differenceThreshold = 50; 
+	public static float differenceThreshold = Float.MAX_VALUE;
 	public static float ratioOfDistance = 3; 
 
 	public static int numNeighbors = 3;

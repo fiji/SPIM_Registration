@@ -7,6 +7,9 @@ package spim.process.interestpointregistration.pairwise.methods.ransac;
  */
 public class RANSACParameters
 {
+	public static final String[] ransacChoices = new String[]{ "Fast", "Normal", "Thorough", "Very thorough", "Ridiculous" };
+	public static final int[] ransacChoicesIterations = new int[]{ 1000, 10000, 100000, 1000000, 10000000 };
+
 	public static float max_epsilon = 5;
 	public static float min_inlier_ratio = 0.1f;
 	public static int num_iterations = 10000;

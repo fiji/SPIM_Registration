@@ -21,8 +21,7 @@ public class GeometricHasher< I extends InterestPoint >
 			final ArrayList< I > nodeListA,
 			final ArrayList< I > nodeListB,
 			double differenceThreshold,
-			double ratioOfDistance,
-			final boolean useAssociatedBeads )
+			double ratioOfDistance )
 	{
 		final int numNeighbors = 3;
 		
