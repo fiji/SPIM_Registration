@@ -40,7 +40,7 @@ public class DifferenceOfGaussianNewPeakFinder extends DifferenceOfGaussianReal1
 	@Override
 	public ArrayList<DifferenceOfGaussianPeak< FloatType>> findPeaks( final Image< FloatType > laPlace )
 	{
-		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Detecting peaks." );
+		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Detecting peaks." );
 		simplePeaks = InteractiveIntegral.findPeaks( laPlace, (float)min );
 
 		return new ArrayList<DifferenceOfGaussianPeak< FloatType>>();
