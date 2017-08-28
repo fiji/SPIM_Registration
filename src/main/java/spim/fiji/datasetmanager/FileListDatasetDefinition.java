@@ -799,11 +799,9 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 
 		choices.add( "-- ignore this pattern --" );
 		String[] choicesAll = choices.toArray( new String[]{} );
-				
+
 		for (int i = 0; i < numVariables; i++)
 			gd.addChoice( "Pattern_" + i + " represents", choicesAll, choicesAll[0] );
-
-		gd.addCheckbox( "Use_virtual_images_(cached)", true );
 
 		gd.showDialog();
 
@@ -838,7 +836,6 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 				fileVariableToUse.get( Angle.class ).add( i );
 		}
 
-		final boolean useVirtualLoader = gd.getNextBoolean();
 
 		// TODO handle Angle-Tile swap here	
 		FileListDatasetDefinitionUtil.resolveAmbiguity( state.getMultiplicityMap(), state.getAmbiguousIllumChannel(), preferChannelsOverIlluminations, state.getAmbiguousAngleTile(), !preferAnglesOverTiles );
@@ -848,7 +845,8 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 				patternDetector,
 				state);
 
-		SpimData2 data = buildSpimData( state, useVirtualLoader );
+		// we create a virtual SpimData at first
+		SpimData2 data = buildSpimData( state, true );
 
 		//TODO: with translated tiles, we also have to take the center of rotation into account
 		//Apply_Transformation.applyAxis( data );
@@ -858,25 +856,26 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		//gdSave.addMessage( "<html> <h1> Saving options </h1> <br /> </html>" );
 		addMessageAsJLabel("<html> <h1> Saving options </h1> <br /> </html>", gdSave);
 
-		if (!useVirtualLoader)
-		{
-			Class<?> imgFactoryClass = ((FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() ).getImgFactory().getClass();
-			if (imgFactoryClass.equals( CellImgFactory.class ))
-			{
-				//gdSave.addMessage( "<html> <h2> ImgLib2 container </h2> <br/>"
-				//		+ "<p style=\"color:orange\"> Some views of the dataset are larger than 2^31 pixels, will use CellImg </p>" );
-				
-				addMessageAsJLabel("<html> <h2> ImgLib2 container </h2> <br/>"
-						+ "<p style=\"color:orange\"> Some views of the dataset are larger than 2^31 pixels, will use CellImg </p>", gdSave);
-			}
-			else
-			{
-				//gdSave.addMessage( "<html> <h2> ImgLib2 container </h2> <br/>");
-				addMessageAsJLabel("<html> <h2> ImgLib2 container </h2> <br/>", gdSave);
-				String[] imglibChoice = new String[] {"ArrayImg", "CellImg"};
-				gdSave.addChoice( "imglib2 container", imglibChoice, imglibChoice[0] );
-			}
-		}
+		gdSave.addCheckbox( "Use_virtual_images_(cached)", true );
+
+//		if (!useVirtualLoader)
+//		{
+//			Class<?> imgFactoryClass = ((FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() ).getImgFactory().getClass();
+//			if (imgFactoryClass.equals( CellImgFactory.class ))
+//			{
+//				//gdSave.addMessage( "<html> <h2> ImgLib2 container </h2> <br/>"
+//				//		+ "<p style=\"color:orange\"> Some views of the dataset are larger than 2^31 pixels, will use CellImg </p>" );
+//				addMessageAsJLabel("<html> <h2> ImgLib2 container </h2> <br/>"
+//						+ "<p style=\"color:orange\"> Some views of the dataset are larger than 2^31 pixels, will use CellImg </p>", gdSave);
+//			}
+//			else
+//			{
+//				//gdSave.addMessage( "<html> <h2> ImgLib2 container </h2> <br/>");
+//				addMessageAsJLabel("<html> <h2> ImgLib2 container </h2> <br/>", gdSave);
+//				String[] imglibChoice = new String[] {"ArrayImg", "CellImg"};
+//				gdSave.addChoice( "imglib2 container", imglibChoice, imglibChoice[0] );
+//			}
+//		}
 
 		//gdSave.addMessage("<html><h2> Save path </h2></html>");
 		addMessageAsJLabel("<html><h2> Save path </h2></html>", gdSave);
@@ -917,15 +916,20 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		if ( gdSave.wasCanceled() )
 			return null;
 
+		final boolean useVirtualLoader = gdSave.getNextBoolean();
+		// re-build the SpimData if user explicitly doesn't want virtual loading
 		if (!useVirtualLoader)
-		{
-			Class<?> imgFactoryClass = ((FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() ).getImgFactory().getClass();
-			if (!imgFactoryClass.equals( CellImgFactory.class ))
-			{
-				if (gdSave.getNextChoiceIndex() != 0)
-					((FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() ).setImgFactory( new CellImgFactory<>(256) );
-			}
-		}
+			data = buildSpimData( state, useVirtualLoader );
+
+//		if (!useVirtualLoader)
+//		{
+//			Class<?> imgFactoryClass = ((FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() ).getImgFactory().getClass();
+//			if (!imgFactoryClass.equals( CellImgFactory.class ))
+//			{
+//				if (gdSave.getNextChoiceIndex() != 0)
+//					((FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() ).setImgFactory( new CellImgFactory<>(256) );
+//			}
+//		}
 
 		File chosenPath = new File( gdSave.getNextString());
 		data.setBasePath( chosenPath );
