@@ -50,9 +50,8 @@ public class GeometricHashingPairwise< I extends InterestPoint > implements Matc
 		final ArrayList< PointMatchGeneric< I > > candidates = hasher.extractCorrespondenceCandidates( 
 				listA,
 				listB,
-				gp.getDifferenceThreshold(), 
-				gp.getRatioOfDistance(), 
-				gp.getUseAssociatedBeads() );
+				gp.getDifferenceThreshold(),
+				gp.getRatioOfDistance() );
 
 		result.setCandidates( candidates );
 
