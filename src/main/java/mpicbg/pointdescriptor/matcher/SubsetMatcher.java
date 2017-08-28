@@ -76,7 +76,7 @@ public class SubsetMatcher implements Matcher
 		return fact;
 	}
 
-	protected static int[][] computePD( final int n, final int k, final int offset )
+	public static int[][] computePD( final int n, final int k, final int offset )
 	{
 		final int numCombinations = factorial( n ) / ( factorial( k ) * factorial( n - k ) );
 		final int[][] combinations = new int[ numCombinations ][ k ];
