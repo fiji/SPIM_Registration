@@ -61,7 +61,7 @@ public class TestDeconvolution
 		// load drosophila
 		spimData = new XmlIoSpimData2( "" ).load( "/Users/spreibi/Documents/Microscopy/SPIM/HisYFP-SPIM/dataset.xml" );
 		groups = selectViews( spimData.getSequenceDescription().getViewDescriptions().values() );
-		groups = oneGroupPerView( spimData.getSequenceDescription().getViewDescriptions().values() );
+		groups = Group.toGroups( spimData.getSequenceDescription().getViewDescriptions().values() );
 
 		/*
 		final ArrayList< ViewDescription > two = new ArrayList<>();
@@ -272,16 +272,6 @@ public class TestDeconvolution
 				true,
 				"sum of all normed weights",
 				0, 1 ).show();
-	}
-
-	public static ArrayList< Group< ViewDescription > > oneGroupPerView( final Collection< ViewDescription > views )
-	{
-		final ArrayList< Group< ViewDescription > > groups = new ArrayList<>();
-
-		for ( final ViewDescription vd : views )
-			groups.add( new Group<>( vd ) );
-
-		return groups;
 	}
 
 	public static ArrayList< Group< ViewDescription > > selectViews( final Collection< ViewDescription > views )
