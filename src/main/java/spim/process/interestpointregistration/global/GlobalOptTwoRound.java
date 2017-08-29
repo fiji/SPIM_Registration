@@ -31,7 +31,7 @@ public class GlobalOptTwoRound
 			final WeakLinkFactory wlf,
 			final ConvergenceStrategy cs,
 			final Collection< ViewId > fixedViews,
-			final Set< Group< ViewId > > groupsIn )
+			final Collection< Group< ViewId > > groupsIn )
 	{
 
 		// find strong links, run global opt iterative
