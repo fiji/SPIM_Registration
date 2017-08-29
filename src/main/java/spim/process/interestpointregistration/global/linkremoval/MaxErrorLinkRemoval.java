@@ -1,13 +1,20 @@
 package spim.process.interestpointregistration.global.linkremoval;
 
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+
 import mpicbg.models.PointMatch;
 import mpicbg.models.Tile;
 import mpicbg.models.TileConfiguration;
+import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.io.IOFunctions;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class MaxErrorLinkRemoval implements LinkRemovalStrategy
 {
 	@Override
-	public boolean removeLink( final TileConfiguration tc )
+	public boolean removeLink( final TileConfiguration tc, final HashMap< ViewId, ? extends Tile< ? > > map )
 	{
 		double worstDistance = -Double.MAX_VALUE;
 		Tile<?> worstTile1 = null;
@@ -40,11 +47,23 @@ public class MaxErrorLinkRemoval implements LinkRemovalStrategy
 			System.err.println( "WARNING: can not remove any more links without disconnecting components" );
 			return false;
 		}
-		
+
 		worstTile1.removeConnectedTile( worstTile2 );
-		worstTile2.removeConnectedTile( worstTile1 );	
-		System.out.println( "removed link from " + worstTile1 + " to " + worstTile2 );
+		worstTile2.removeConnectedTile( worstTile1 );
+
+		IOFunctions.println( new Date( System.currentTimeMillis() ) +  ": Removed link from " + findGroup( worstTile1, map ) + " to " + findGroup( worstTile2, map ) );
+
 		return true;
 	}
 
+	public static Group< ViewId > findGroup( final Tile< ? > tile, final HashMap< ViewId, ? extends Tile< ? > > map )
+	{
+		final HashSet< ViewId > views = new HashSet<>();
+
+		for ( final ViewId viewId : map.keySet() )
+			if ( map.get( viewId ) == tile )
+				views.add( viewId );
+
+		return new Group<>( views );
+	}
 }
