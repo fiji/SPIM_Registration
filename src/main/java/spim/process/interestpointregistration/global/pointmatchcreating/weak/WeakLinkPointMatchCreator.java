@@ -12,15 +12,15 @@ import spim.process.interestpointregistration.global.pointmatchcreating.PointMat
 
 public abstract class WeakLinkPointMatchCreator< M extends Model< M > > implements PointMatchCreator
 {
-	final HashMap< ViewId, Tile< M > > models;
+	final HashMap< ViewId, Tile< M > > models1;
 	final HashSet< ViewId > allViews;
 
-	public WeakLinkPointMatchCreator( final HashMap< ViewId, Tile< M > > models )
+	public WeakLinkPointMatchCreator( final HashMap< ViewId, Tile< M > > models1 )
 	{
-		this.models = models;
+		this.models1 = models1;
 		this.allViews = new HashSet<>();
 
-		this.allViews.addAll( models.keySet() );
+		this.allViews.addAll( models1.keySet() );
 	}
 
 	/**

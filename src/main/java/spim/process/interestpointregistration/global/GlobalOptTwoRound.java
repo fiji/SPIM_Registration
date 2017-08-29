@@ -52,10 +52,10 @@ public class GlobalOptTwoRound
 			final Collection< Group< ViewId > > groupsIn )
 	{
 		// find strong links, run global opt iterative
-		final HashMap< ViewId, Tile< M > > models = GlobalOptIterative.compute( model, pmc, csStrong, lms, fixedViews, groupsIn );
+		final HashMap< ViewId, Tile< M > > models1 = GlobalOptIterative.compute( model, pmc, csStrong, lms, fixedViews, groupsIn );
 
 		// identify groups of connected views
-		final List< Set< Tile< ? > > > sets = Tile.identifyConnectedGraphs( models.values() );
+		final List< Set< Tile< ? > > > sets = Tile.identifyConnectedGraphs( models1.values() );
 
 		// there is just one connected component -> all views already aligned
 		// return first round results
@@ -64,8 +64,8 @@ public class GlobalOptTwoRound
 			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Not more than one group left, we are already done." );
 
 			final HashMap< ViewId, AffineTransform3D > finalRelativeModels = new HashMap<>();
-			for ( final ViewId viewId : models.keySet() )
-				finalRelativeModels.put( viewId, combineTransforms( models.get( viewId ), new AffineTransform3D() ) );
+			for ( final ViewId viewId : models1.keySet() )
+				finalRelativeModels.put( viewId, combineTransforms( models1.get( viewId ), new AffineTransform3D() ) );
 
 			return finalRelativeModels;
 		}
@@ -76,14 +76,14 @@ public class GlobalOptTwoRound
 		final ArrayList< Group< ViewId > > groupsNew = new ArrayList<>();
 		for ( final Set< Tile< ? > > connected : sets )
 		{
-			final Group< ViewId > group = assembleViews( connected, models );
+			final Group< ViewId > group = assembleViews( connected, models1 );
 			groupsNew.add( group );
 
 			IOFunctions.println( group );
 		}
 
 		// compute the weak links using the new groups and the results of the first run
-		final WeakLinkPointMatchCreator< M > wlpmc = wlf.create( models );
+		final WeakLinkPointMatchCreator< M > wlpmc = wlf.create( models1 );
 
 		// run global opt without iterative
 		final HashMap< ViewId, Tile< M > > models2 = GlobalOpt.compute( model, wlpmc, csWeak, fixedViews, groupsNew );
