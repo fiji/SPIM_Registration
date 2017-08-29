@@ -89,6 +89,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 
 	protected JCheckBox groupTilesCheckbox;
 	protected JCheckBox groupIllumsCheckbox;
+	private static long colorOffset = 0;
 
 	@Override
 	public boolean tilesGrouped()
@@ -421,7 +422,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 				colorByFactors( bdv, data, factors );
 			}
 			else
-				colorSources( bdv.getSetupAssignments().getConverterSetups(), 0 );
+				colorSources( bdv.getSetupAssignments().getConverterSetups(), colorOffset );
 		}
 		else
 			whiteSources( bdv.getSetupAssignments().getConverterSetups() );
@@ -460,9 +461,9 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 			FilteredAndGroupedExplorerPanel.whiteSources(bdv.getSetupAssignments().getConverterSetups());
 			return;
 		}
-		
+
 		List<ArrayList<ConverterSetup>> groups =  new ArrayList<>();
-		
+
 		for (Group< BasicViewDescription< ? > > lVd : vdGroups)
 		{
 			ArrayList< ConverterSetup > lCs = new ArrayList<>();
@@ -470,9 +471,11 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 				lCs.add( vdToCs.get( vd ) );
 			groups.add( lCs );
 		}
-				
+
 		Iterator< ARGBType > colorIt = ColorStream.iterator();
-				
+		for (int i = 0; i<colorOffset; ++i)
+			colorIt.next();
+
 		for (ArrayList< ConverterSetup > csg : groups)
 		{
 			ARGBType color = colorIt.next();
@@ -600,6 +603,11 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 					
 					System.out.println( "colormode" );
 
+					if (colorMode)
+					{
+						// cycle between color schemes
+						colorOffset = (colorOffset + 1) % 5;
+					}
 					final BDVPopup p = bdvPopup();
 					if ( p != null && p.bdv != null && p.bdv.getViewerFrame().isVisible() )
 						updateBDV( p.bdv, colorMode, data, null, selectedRows );
