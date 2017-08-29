@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.pairwise.methods.geometrichashing;
+package spim.process.interestpointregistration.pairwise.methods.fastrgldm;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,24 +11,24 @@ import spim.process.interestpointregistration.pairwise.PairwiseResult;
 import spim.process.interestpointregistration.pairwise.methods.ransac.RANSAC;
 import spim.process.interestpointregistration.pairwise.methods.ransac.RANSACParameters;
 
-public class GeometricHashingPairwise< I extends InterestPoint > implements MatcherPairwise< I >
+public class FRGLDMPairwise< I extends InterestPoint > implements MatcherPairwise< I >
 {
 	final RANSACParameters rp;
-	final GeometricHashingParameters gp;
+	final FRGLDMParameters fp;
 
-	public GeometricHashingPairwise(
+	public FRGLDMPairwise(
 			final RANSACParameters rp,
-			final GeometricHashingParameters gp )
+			final FRGLDMParameters fp )
 	{ 
 		this.rp = rp;
-		this.gp = gp;
+		this.fp = fp;
 	}
 
 	@Override
 	public PairwiseResult< I > match( final List< I > listAIn, final List< I > listBIn )
 	{
 		final PairwiseResult< I > result = new PairwiseResult<>( true );
-		final GeometricHasher< I > hasher = new GeometricHasher<>();
+		final FRGLDMMatcher< I > hasher = new FRGLDMMatcher<>();
 		
 		final ArrayList< I > listA = new ArrayList<>();
 		final ArrayList< I > listB = new ArrayList<>();
@@ -47,19 +47,18 @@ public class GeometricHashingPairwise< I extends InterestPoint > implements Matc
 			return result;
 		}
 
-		final ArrayList< PointMatchGeneric< I > > candidates = hasher.extractCorrespondenceCandidates( 
+		final ArrayList< PointMatchGeneric< I > > candidates = hasher.extractCorrespondenceCandidates(
 				listA,
 				listB,
-				gp.getDifferenceThreshold(),
-				gp.getRedundancy(),
-				gp.getRatioOfDistance() );
+				fp.getRedundancy(),
+				fp.getRatioOfDistance() );
 
 		result.setCandidates( candidates );
 
 		// compute ransac and remove inconsistent candidates
 		final ArrayList< PointMatchGeneric< I > > inliers = new ArrayList<>();
 
-		final Pair< String, Double > ransacResult = RANSAC.computeRANSAC( candidates, inliers, gp.getModel(), rp.getMaxEpsilon(), rp.getMinInlierRatio(), rp.getMinInlierFactor(), rp.getNumIterations() );
+		final Pair< String, Double > ransacResult = RANSAC.computeRANSAC( candidates, inliers, fp.getModel(), rp.getMaxEpsilon(), rp.getMinInlierRatio(), rp.getMinInlierFactor(), rp.getNumIterations() );
 
 		result.setInliers( inliers, ransacResult.getB() );
 

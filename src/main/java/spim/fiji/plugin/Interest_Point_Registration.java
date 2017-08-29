@@ -29,6 +29,7 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
 import spim.fiji.plugin.interestpointregistration.pairwise.CenterOfMassGUI;
+import spim.fiji.plugin.interestpointregistration.pairwise.FRGLDMGUI;
 import spim.fiji.plugin.interestpointregistration.pairwise.GeometricHashingGUI;
 import spim.fiji.plugin.interestpointregistration.pairwise.IterativeClosestPointGUI;
 import spim.fiji.plugin.interestpointregistration.pairwise.PairwiseGUI;
@@ -53,8 +54,8 @@ import spim.process.interestpointdetection.InterestPointTools;
 import spim.process.interestpointregistration.TransformationTools;
 import spim.process.interestpointregistration.global.GlobalOpt;
 import spim.process.interestpointregistration.global.convergence.ConvergenceStrategy;
-import spim.process.interestpointregistration.global.pointmatchcreating.InterestPointMatchCreator;
 import spim.process.interestpointregistration.global.pointmatchcreating.PointMatchCreator;
+import spim.process.interestpointregistration.global.pointmatchcreating.strong.InterestPointMatchCreator;
 import spim.process.interestpointregistration.pairwise.MatcherPairwiseTools;
 import spim.process.interestpointregistration.pairwise.PairwiseResult;
 import spim.process.interestpointregistration.pairwise.constellation.PairwiseSetup;
@@ -77,6 +78,7 @@ public class Interest_Point_Registration implements PlugIn
 	{
 		IOFunctions.printIJLog = true;
 		staticPairwiseAlgorithms.add( new GeometricHashingGUI() );
+		staticPairwiseAlgorithms.add( new FRGLDMGUI() );
 		staticPairwiseAlgorithms.add( new RGLDMGUI() );
 		staticPairwiseAlgorithms.add( new CenterOfMassGUI() );
 		staticPairwiseAlgorithms.add( new IterativeClosestPointGUI() );

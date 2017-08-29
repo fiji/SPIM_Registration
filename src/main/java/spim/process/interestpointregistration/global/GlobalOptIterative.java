@@ -6,14 +6,17 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 
+import mpicbg.models.Affine3D;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.Model;
 import mpicbg.models.NotEnoughDataPointsException;
+import mpicbg.models.RigidModel3D;
 import mpicbg.models.Tile;
 import mpicbg.models.TileConfiguration;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.util.Pair;
+import spim.process.interestpointregistration.TransformationTools;
 import spim.process.interestpointregistration.global.convergence.IterativeConvergenceStrategy;
 import spim.process.interestpointregistration.global.linkremoval.LinkRemovalStrategy;
 import spim.process.interestpointregistration.global.pointmatchcreating.PointMatchCreator;
@@ -85,12 +88,25 @@ public class GlobalOptIterative
 				finished = false;
 
 				// if we cannot remove any link, then we are finished too
-				if ( !lms.removeLink( tc ) )
+				if ( !lms.removeLink( tc, map ) )
 					finished = true;
 			}
 		}
 
 		IOFunctions.println( "(" + new Date( System.currentTimeMillis() ) + "): Transformation Models:" );
+
+		// TODO: We assume it is Affine3D here
+		for ( final ViewId viewId : views )
+		{
+			final Tile< M > tile = map.get( viewId );
+
+			String output = Group.pvid( viewId ) + ": " + TransformationTools.printAffine3D( (Affine3D<?>)tile.getModel() );
+
+			if ( tile.getModel() instanceof RigidModel3D )
+				IOFunctions.println( output + ", " + TransformationTools.getRotationAxis( (RigidModel3D)tile.getModel() ) );
+			else
+				IOFunctions.println( output + ", " + TransformationTools.getScaling( (Affine3D<?>)tile.getModel() ) );
+		}
 
 		return map;
 	}

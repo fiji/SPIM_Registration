@@ -1,5 +1,7 @@
 package spim.fiji.plugin.interestpointregistration.pairwise;
 
+import java.awt.Font;
+
 import ij.gui.GenericDialog;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
@@ -37,15 +39,20 @@ public class GeometricHashingGUI implements PairwiseGUI
 	public GeometricHashingGUI newInstance() { return new GeometricHashingGUI(); }
 
 	@Override
-	public String getDescription() { return "Fast 3d geometric hashing (rotation invariant)";}
+	public String getDescription() { return "Fast descriptor-based (rotation invariant)";}
 
 	@Override
 	public void addQuery( final GenericDialog gd )
 	{
 		gd.addChoice( "Transformation model", TransformationModelGUI.modelChoice, TransformationModelGUI.modelChoice[ defaultModel ] );
 		gd.addCheckbox( "Regularize_model", defaultRegularize );
+		gd.addSlider( "Redundancy for descriptor matching", 0, 10, GeometricHashingParameters.redundancy );
 		gd.addSlider( "Significance required for a descriptor match", 1.0, 20.0, GeometricHashingParameters.ratioOfDistance );
+
 		gd.addMessage( "" );
+		gd.addMessage( "Parameters for robust model-based outlier removal (RANSAC)", new Font( Font.SANS_SERIF, Font.BOLD, 12 ) );
+		gd.addMessage( "" );
+
 		gd.addSlider( "Allowed_error_for_RANSAC (px)", 0.5, 100.0, RANSACParameters.max_epsilon );
 		gd.addChoice( "Number_of_RANSAC_iterations", RANSACParameters.ransacChoices, RANSACParameters.ransacChoices[ defaultRANSACIterationChoice ] );
 	}
@@ -61,6 +68,7 @@ public class GeometricHashingGUI implements PairwiseGUI
 				return false;
 		}
 
+		final int redundancy = GeometricHashingParameters.redundancy = (int)Math.round( gd.getNextNumber() );
 		final float ratioOfDistance = GeometricHashingParameters.ratioOfDistance = (float)gd.getNextNumber();
 		final float maxEpsilon = RANSACParameters.max_epsilon = (float)gd.getNextNumber();
 		final int ransacIterations = RANSACParameters.ransacChoicesIterations[ defaultRANSACIterationChoice = gd.getNextChoiceIndex() ];
@@ -73,11 +81,12 @@ public class GeometricHashingGUI implements PairwiseGUI
 		else
 			minInlierRatio = RANSACParameters.min_inlier_ratio / 100;
 
-		this.ghParams = new GeometricHashingParameters( model.getModel(), GeometricHashingParameters.differenceThreshold, ratioOfDistance );
+		this.ghParams = new GeometricHashingParameters( model.getModel(), GeometricHashingParameters.differenceThreshold, ratioOfDistance, redundancy );
 		this.ransacParams = new RANSACParameters( maxEpsilon, minInlierRatio, RANSACParameters.min_inlier_factor, ransacIterations );
 
 		IOFunctions.println( "Selected Paramters:" );
 		IOFunctions.println( "model: " + defaultModel );
+		IOFunctions.println( "redundancy: " + redundancy );
 		IOFunctions.println( "ratioOfDistance: " + ratioOfDistance );
 		IOFunctions.println( "maxEpsilon: " + maxEpsilon );
 		IOFunctions.println( "ransacIterations: " + ransacIterations );

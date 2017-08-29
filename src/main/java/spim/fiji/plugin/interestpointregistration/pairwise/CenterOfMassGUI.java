@@ -8,7 +8,6 @@ import spim.process.interestpointregistration.pairwise.MatcherPairwise;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.GroupedInterestPoint;
 import spim.process.interestpointregistration.pairwise.methods.centerofmass.CenterOfMassPairwise;
 import spim.process.interestpointregistration.pairwise.methods.centerofmass.CenterOfMassParameters;
-import spim.process.interestpointregistration.pairwise.methods.ransac.RANSACParameters;
 
 /**
  * Center of mass GUI
@@ -53,7 +52,7 @@ public class CenterOfMassGUI implements PairwiseGUI
 	public CenterOfMassGUI newInstance() { return new CenterOfMassGUI(); }
 
 	@Override
-	public String getDescription() { return "Center of Mass (translation invariant)";}
+	public String getDescription() { return "Center of mass (translation invariant)";}
 
 	@Override
 	public TransformationModelGUI getMatchingModel() { return new TransformationModelGUI( 0 ); }

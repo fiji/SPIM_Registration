@@ -215,12 +215,35 @@ public class Group< V > implements Iterable< V >
 		return groups;
 	}
 
+	public static ArrayList< Group< ViewId > > toViewIdGroups( final Collection< ? extends ViewId > views )
+	{
+		final ArrayList< Group< ViewId > > groups = new ArrayList<>();
+
+		for ( final ViewId view : views )
+			groups.add( new Group< ViewId >( view ) );
+
+		return groups;
+	}
+
 	public static < V extends ViewId > ArrayList< Group< V > > toGroup( final Collection< V > views )
 	{
 		final ArrayList< Group< V > > groups = new ArrayList<>();
 		final Group< V > group = new Group<>();
 
 		for ( final V view : views )
+			group.getViews().add( view );
+
+		groups.add( group );
+
+		return groups;
+	}
+
+	public static ArrayList< Group< ViewId > > toViewIdGroup( final Collection< ? extends ViewId > views )
+	{
+		final ArrayList< Group< ViewId > > groups = new ArrayList<>();
+		final Group< ViewId > group = new Group<>();
+
+		for ( final ViewId view : views )
 			group.getViews().add( view );
 
 		groups.add( group );

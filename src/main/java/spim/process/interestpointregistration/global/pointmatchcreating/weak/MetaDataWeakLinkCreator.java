@@ -1,10 +1,9 @@
-package spim.process.interestpointregistration.global.pointmatchcreating;
+package spim.process.interestpointregistration.global.pointmatchcreating.weak;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +16,7 @@ import mpicbg.models.Tile;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.ViewId;
+import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.realtransform.AffineGet;
 import net.imglib2.realtransform.AffineTransform3D;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
@@ -31,49 +31,53 @@ public class MetaDataWeakLinkCreator< N extends Model< N > > extends WeakLinkPoi
 	HashMap< ViewId, AffineGet > relativeTransforms;
 
 	public MetaDataWeakLinkCreator(
-			final ArrayList< Group< ViewId > > groupsNew,
-			final HashMap< ViewId, Tile< N > > models,
+			final HashMap< ViewId, Tile< N > > models1,
 			final ViewRegistrations viewRegistrations )
 	{
-		super( groupsNew, models );
+		super( models1 );
 
 		this.viewRegistrations = viewRegistrations;
 	}
 
 	@Override
 	public < M extends Model< M > > void assignPointMatches(
-			final HashMap< ViewId, Tile< M > > tileMap,
+			final HashMap< ViewId, Tile< M > > models2,
 			final ArrayList< Group< ViewId > > groups,
 			final Collection< ViewId > fixedViews )
 	{
-		final ArrayList< ViewId > views = new ArrayList<>( tileMap.keySet() );
+		final ArrayList< ViewId > views = new ArrayList<>( this.allViews );
 		Collections.sort( views );
 
 		final HashMap< ViewId, Group< ViewId > > groupMap = new HashMap<>();
 A:		for ( final ViewId v : views )
-			for ( final Group< ViewId > group : groupsNew )
+			for ( final Group< ViewId > group : groups )
 				if ( group.contains( v ) )
 				{
 					groupMap.put( v, group );
 					continue A;
 				}
 
-		// compute an average affine mapback transform for each new group (which was not in the same group for the first global opt run)
-		final HashMap<  ViewId , AffineGet > groupMapback = new HashMap<>();
-		for ( final Group< ViewId > group : groupsNew )
-			for (ViewId vid: group)
-				groupMapback.put( vid, averageMapBackTransform( group, models ) );
+		// compute an average affine mapback transform for each new group
+		// (that was not in the same group for the first global opt run)
+		final HashMap< ViewId , AffineGet > groupMapback = new HashMap<>();
+		for ( final Group< ViewId > group : groups )
+		{
+			final AffineTransform3D avgMapBack = averageMapBackTransform( group, this.models1 );
+
+			for ( final ViewId vid : group )
+				groupMapback.put( vid, avgMapBack.copy() );
+
+			System.out.println( group + " --- " + avgMapBack );
+		}
 
 		// compute and save the transformations that we apply to the pointmatches
+		// relativeTransforms == result from first global opt PLUS avgMapBack
 		this.relativeTransforms = new HashMap<>();
 		final HashMap< ViewId, AffineGet > fullTransforms = new HashMap<>();
 
 		for ( final ViewId viewId : views )
 		{
-			final ViewRegistration vr = viewRegistrations.getViewRegistration( viewId );
-
-			
-			final Affine3D< ? > tilemodel = (Affine3D< ? >)models.get( viewId ).getModel();
+			final Affine3D< ? > tilemodel = (Affine3D< ? >)this.models1.get( viewId ).getModel();
 			final double[][] m = new double[ 3 ][ 4 ];
 			tilemodel.toMatrix( m );
 			
@@ -89,6 +93,7 @@ A:		for ( final ViewId v : views )
 			this.relativeTransforms.put( viewId, firstRunTransform );
 
 			// get the current status from the ViewRegistrations (the METADATA)
+			final ViewRegistration vr = viewRegistrations.getViewRegistration( viewId );
 			vr.updateModel();
 			//final AffineTransform3D oldGlobalCoordinates = vr.getModel().copy();
 			final AffineTransform3D oldGlobalCoordinates = new AffineTransform3D();
@@ -114,7 +119,7 @@ A:		for ( final ViewId v : views )
 					final AffineGet modelA = fullTransforms.get( vA );
 					final AffineGet modelB = fullTransforms.get( vB );
 
-					addPointMatches( modelA, modelB, tileMap.get( vA ), tileMap.get( vB ) );
+					addPointMatches( modelA, modelB, models2.get( vA ), models2.get( vB ) );
 				}
 			}
 	}
@@ -166,17 +171,6 @@ A:		for ( final ViewId v : views )
 	}
 
 	@Override
-	public HashSet< ViewId > getAllViews()
-	{
-		final HashSet< ViewId > set = new HashSet<>();
-
-		for ( final Group< ViewId > group : groupsNew )
-			set.addAll( group.getViews() );
-
-		return set;
-	}
-
-	@Override
 	public < M extends Model< M > > void assignWeights(
 			HashMap< ViewId, Tile< M > > tileMap,
 			ArrayList< Group< ViewId > > groups,
@@ -185,7 +179,7 @@ A:		for ( final ViewId v : views )
 		return;
 	}
 
-	public static < M extends Model< M > > AffineGet averageMapBackTransform(
+	public static < M extends Model< M > > AffineTransform3D averageMapBackTransform(
 			final Group< ViewId > group,
 			final HashMap< ViewId, Tile< M > > models )
 	{

@@ -10,51 +10,50 @@ import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.interestpointregistration.pairwise.MatcherPairwise;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.GroupedInterestPoint;
 import spim.process.interestpointregistration.pairwise.methods.ransac.RANSACParameters;
-import spim.process.interestpointregistration.pairwise.methods.rgldm.RGLDMPairwise;
-import spim.process.interestpointregistration.pairwise.methods.rgldm.RGLDMParameters;
+import spim.process.interestpointregistration.pairwise.methods.fastrgldm.FRGLDMPairwise;
+import spim.process.interestpointregistration.pairwise.methods.fastrgldm.FRGLDMParameters;
 
 /**
- * Redundant Geometric Local Descriptor Matching (RGLDM)
+ * Fast Redundant Geometric Local Descriptor Matching (RGLDM)
  * 
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
-public class RGLDMGUI implements PairwiseGUI
+public class FRGLDMGUI implements PairwiseGUI
 {
 	public static int defaultModel = 2;
 	public static boolean defaultRegularize = true;
 	public static int defaultRANSACIterationChoice = 1;
 	protected TransformationModelGUI model = null;
 
-	protected RGLDMParameters parameters;
+	protected FRGLDMParameters parameters;
 	protected RANSACParameters ransacParams;
 
 	@Override
-	public RGLDMPairwise< InterestPoint > pairwiseMatchingInstance()
+	public FRGLDMPairwise< InterestPoint > pairwiseMatchingInstance()
 	{
-		return new RGLDMPairwise< InterestPoint >( ransacParams, parameters );
+		return new FRGLDMPairwise< InterestPoint >( ransacParams, parameters );
 	}
 
 	@Override
 	public MatcherPairwise< GroupedInterestPoint< ViewId > > pairwiseGroupedMatchingInstance()
 	{
-		return new RGLDMPairwise< GroupedInterestPoint< ViewId > >( ransacParams, parameters );
+		return new FRGLDMPairwise< GroupedInterestPoint< ViewId > >( ransacParams, parameters );
 	}
 
 	@Override
-	public RGLDMGUI newInstance() { return new RGLDMGUI(); }
+	public FRGLDMGUI newInstance() { return new FRGLDMGUI(); }
 
 	@Override
-	public String getDescription() { return "Precise descriptor-based (translation invariant)";}
+	public String getDescription() { return "Fast descriptor-based (translation invariant)";}
 
 	@Override
 	public void addQuery( final GenericDialog gd )
 	{
 		gd.addChoice( "Transformation model", TransformationModelGUI.modelChoice, TransformationModelGUI.modelChoice[ defaultModel ] );
 		gd.addCheckbox( "Regularize_model", defaultRegularize );
-		gd.addSlider( "Number_of_neighbors for the descriptors", 1, 10, RGLDMParameters.numNeighbors );
-		gd.addSlider( "Redundancy for descriptor matching", 0, 10, RGLDMParameters.redundancy );
-		gd.addSlider( "Significance required for a descriptor match", 1.0, 10.0, RGLDMParameters.ratioOfDistance );
+		gd.addSlider( "Redundancy for descriptor matching", 0, 10, FRGLDMParameters.redundancy );
+		gd.addSlider( "Significance required for a descriptor match", 1.0, 10.0, FRGLDMParameters.ratioOfDistance );
 
 		gd.addMessage( "" );
 		gd.addMessage( "Parameters for robust model-based outlier removal (RANSAC)", new Font( Font.SANS_SERIF, Font.BOLD, 12 ) );
@@ -75,9 +74,8 @@ public class RGLDMGUI implements PairwiseGUI
 				return false;
 		}
 
-		final int numNeighbors = RGLDMParameters.numNeighbors = (int)Math.round( gd.getNextNumber() );
-		final int redundancy = RGLDMParameters.redundancy = (int)Math.round( gd.getNextNumber() );
-		final float ratioOfDistance = RGLDMParameters.ratioOfDistance = (float)gd.getNextNumber();
+		final int redundancy = FRGLDMParameters.redundancy = (int)Math.round( gd.getNextNumber() );
+		final float ratioOfDistance = FRGLDMParameters.ratioOfDistance = (float)gd.getNextNumber();
 		final float maxEpsilon = RANSACParameters.max_epsilon = (float)gd.getNextNumber();
 		final int ransacIterations = RANSACParameters.ransacChoicesIterations[ defaultRANSACIterationChoice = gd.getNextChoiceIndex() ];
 
@@ -89,12 +87,11 @@ public class RGLDMGUI implements PairwiseGUI
 		else
 			minInlierRatio = RANSACParameters.min_inlier_ratio / 100;
 
-		this.parameters = new RGLDMParameters( model.getModel(), RGLDMParameters.differenceThreshold, ratioOfDistance, numNeighbors, redundancy );
+		this.parameters = new FRGLDMParameters( model.getModel(), ratioOfDistance, redundancy );
 		this.ransacParams = new RANSACParameters( maxEpsilon, minInlierRatio, RANSACParameters.min_inlier_factor, ransacIterations );
 
 		IOFunctions.println( "Selected Paramters:" );
 		IOFunctions.println( "model: " + defaultModel );
-		IOFunctions.println( "numNeighbors: " + numNeighbors );
 		IOFunctions.println( "redundancy: " + redundancy );
 		IOFunctions.println( "ratioOfDistance: " + ratioOfDistance );
 		IOFunctions.println( "maxEpsilon: " + maxEpsilon );

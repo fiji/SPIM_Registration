@@ -1,12 +1,16 @@
 package spim.process.interestpointregistration.pairwise.methods.geometrichashing;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import mpicbg.pointdescriptor.LocalCoordinateSystemPointDescriptor;
 import mpicbg.pointdescriptor.exception.NoSuitablePointsException;
+import mpicbg.pointdescriptor.matcher.SubsetMatcher;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 import net.imglib2.KDTree;
 import net.imglib2.neighborsearch.KNearestNeighborSearchOnKDTree;
+import net.imglib2.util.Pair;
+import net.imglib2.util.ValuePair;
 import spim.fiji.spimdata.interestpoints.InterestPoint;
 
 /**
@@ -20,19 +24,18 @@ public class GeometricHasher< I extends InterestPoint >
 	public ArrayList< PointMatchGeneric< I > > extractCorrespondenceCandidates( 
 			final ArrayList< I > nodeListA,
 			final ArrayList< I > nodeListB,
-			double differenceThreshold,
-			double ratioOfDistance )
+			final double differenceThreshold,
+			final int redundancy,
+			final double ratioOfDistance )
 	{
-		final int numNeighbors = 3;
-		
 		final KDTree< I > tree1 = new KDTree<>( nodeListA, nodeListA );
 		final KDTree< I > tree2 = new KDTree<>( nodeListB, nodeListB );
 
 		final ArrayList< LocalCoordinateSystemPointDescriptor< I > > descriptors1 =
-			createLocalCoordinateSystemPointDescriptors( tree1, nodeListA, numNeighbors, false );
+			createLocalCoordinateSystemPointDescriptors( tree1, nodeListA, redundancy, false );
 		
 		final ArrayList< LocalCoordinateSystemPointDescriptor< I > > descriptors2 =
-			createLocalCoordinateSystemPointDescriptors( tree2, nodeListB, numNeighbors, false );
+			createLocalCoordinateSystemPointDescriptors( tree2, nodeListB, redundancy, false );
 		
 		// create lookup tree for descriptors2
 		final KDTree< LocalCoordinateSystemPointDescriptor< I > > lookUpTree2 = new KDTree<>( descriptors2, descriptors2 );
@@ -54,6 +57,8 @@ public class GeometricHasher< I extends InterestPoint >
 			final double differenceThreshold, 
 			final double ratioOfDistance )
 	{
+		final HashSet< Pair< I, I > > pairs = new HashSet<>();
+
 		//System.out.println( "BeadA" + "\t" + "BeadB1" + "\t" + "BeadB2" + "\t" + "Diff1" + "\t" + "Diff2" );
 
 		for ( final LocalCoordinateSystemPointDescriptor< I > descriptorA : descriptors1 )
@@ -72,39 +77,51 @@ public class GeometricHasher< I extends InterestPoint >
 
 				//detectionA.addPointDescriptorCorrespondence( detectionB, 1 );
 				//detectionB.addPointDescriptorCorrespondence( detectionA, 1 );
-				
-				correspondences.add( new PointMatchGeneric< I >( detectionA, detectionB, 1 ) );
+
+				// twice the same pair could potentially show up due to redundancy
+				pairs.add( new ValuePair<>( detectionA, detectionB ) );
+
+				//correspondences.add( new PointMatchGeneric< I >( detectionA, detectionB, 1 ) );
 			}
 		}
 
-		//System.exit( 0 );
+		for ( final Pair< I, I > pair : pairs )
+			correspondences.add( new PointMatchGeneric< I >( pair.getA(), pair.getB(), 1 ) );
 	}
 
 	public static < I extends InterestPoint > ArrayList< LocalCoordinateSystemPointDescriptor< I > > createLocalCoordinateSystemPointDescriptors( 
 			final KDTree< I > tree,
 			final ArrayList< I > basisPoints,
-			final int numNeighbors,
+			final int redundancy,
 			final boolean normalize )
 	{
-		final KNearestNeighborSearchOnKDTree< I > nnsearch = new KNearestNeighborSearchOnKDTree<>( tree, numNeighbors + 1 );
+		final int numNeighbors = 3;
+
+		final KNearestNeighborSearchOnKDTree< I > nnsearch = new KNearestNeighborSearchOnKDTree<>( tree, numNeighbors + redundancy + 1 );
 		final ArrayList< LocalCoordinateSystemPointDescriptor< I > > descriptors = new ArrayList<> ( );
-		
+
+		final int[][] neighborIndicies = SubsetMatcher.computePD( numNeighbors + redundancy, numNeighbors, 1 );
+
 		for ( final I p : basisPoints )
 		{
-			final ArrayList< I > neighbors = new ArrayList<>();
 			nnsearch.search( p );
 
-			// the first hit is always the point itself
-			for ( int n = 1; n < numNeighbors + 1; ++n )
-				neighbors.add( nnsearch.getSampler( n ).get() );
+			for ( final int[] neighbors : neighborIndicies )
+			{
+				final ArrayList< I > neighborPoints = new ArrayList<>();
 
-			try
-			{
-				descriptors.add( new LocalCoordinateSystemPointDescriptor< I >( p, neighbors, normalize ) );
-			}
-			catch ( NoSuitablePointsException e )
-			{
-				e.printStackTrace();
+				// the first hit is always the point itself
+				for ( int n = 0; n < numNeighbors; ++n )
+					neighborPoints.add( nnsearch.getSampler( neighbors[ n ] ).get() );
+	
+				try
+				{
+					descriptors.add( new LocalCoordinateSystemPointDescriptor< I >( p, neighborPoints, normalize ) );
+				}
+				catch ( NoSuitablePointsException e )
+				{
+					e.printStackTrace();
+				}
 			}
 		}
 
