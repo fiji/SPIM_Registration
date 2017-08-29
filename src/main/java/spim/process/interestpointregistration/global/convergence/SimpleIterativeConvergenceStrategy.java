@@ -4,7 +4,7 @@ import mpicbg.models.TileConfiguration;
 
 public class SimpleIterativeConvergenceStrategy extends IterativeConvergenceStrategy
 {
-	public static double minMaxError = 0.75;
+	public static double minMaxError = 0.75; // three-quarters of a pixel, ok.
 
 	final double relativeThreshold;
 	final double absoluteThreshold;
@@ -39,6 +39,7 @@ public class SimpleIterativeConvergenceStrategy extends IterativeConvergenceStra
 		double avgErr = tc.getError();
 		double maxErr = tc.getMaxError();
 
+		// the minMaxError makes sure that no links are dropped if the maximal error is already below a pixel
 		if ( ( ( avgErr*relativeThreshold < maxErr && maxErr > minMaxError ) || avgErr > absoluteThreshold ) )
 			return false;
 		else
