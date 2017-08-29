@@ -77,7 +77,7 @@ public class ImageCorrelationPointMatchCreator implements PointMatchCreator
 			if ( res.r() >= correlationT )
 			{
 				strongLinks.add( new Link< Group< ? extends ViewId > >( res.pair().getA(), res.pair().getB(), res.getBoundingBox(), res.getTransform(), LinkType.STRONG ) );
-				System.out.println( "added strong link between " + res.pair().getA() + " and " + res.pair().getB() + ": " + res.getTransform() );
+				System.out.println( "added strong link between " + res.pair().getA() + " and " + res.pair().getB() + ": " + res.getTransform() + " " + res.r() );
 			}
 		}
 
