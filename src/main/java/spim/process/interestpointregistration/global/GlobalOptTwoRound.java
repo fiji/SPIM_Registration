@@ -2,6 +2,7 @@ package spim.process.interestpointregistration.global;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,7 @@ import mpicbg.models.Affine3D;
 import mpicbg.models.Model;
 import mpicbg.models.Tile;
 import mpicbg.spim.data.sequence.ViewId;
+import mpicbg.spim.io.IOFunctions;
 import net.imglib2.realtransform.AffineGet;
 import net.imglib2.realtransform.AffineTransform3D;
 import spim.process.interestpointregistration.global.convergence.ConvergenceStrategy;
@@ -59,6 +61,8 @@ public class GlobalOptTwoRound
 		// return first round results
 		if (sets.size() == 1)
 		{
+			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Not more than one group left, we are already done." );
+
 			final HashMap< ViewId, AffineTransform3D > finalRelativeModels = new HashMap<>();
 			for ( final ViewId viewId : models.keySet() )
 				finalRelativeModels.put( viewId, combineTransforms( models.get( viewId ), new AffineTransform3D() ) );
@@ -67,15 +71,19 @@ public class GlobalOptTwoRound
 		}
 
 		// every connected set becomes one group
+		IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Identified the following (dis)connected groups:" );
+
 		final ArrayList< Group< ViewId > > groupsNew = new ArrayList<>();
 		for ( final Set< Tile< ? > > connected : sets )
 		{
 			final Group< ViewId > group = assembleViews( connected, models );
 			groupsNew.add( group );
+
+			IOFunctions.println( group );
 		}
 
-		// compute the weak links
-		final WeakLinkPointMatchCreator< M > wlpmc = wlf.create( groupsNew, models );
+		// compute the weak links using the new groups and the results of the first run
+		final WeakLinkPointMatchCreator< M > wlpmc = wlf.create( models );
 
 		// run global opt without iterative
 		final HashMap< ViewId, Tile< M > > models2 = GlobalOpt.compute( model, wlpmc, csWeak, fixedViews, groupsNew );

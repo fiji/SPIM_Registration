@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -31,11 +30,10 @@ public class MetaDataWeakLinkCreator< N extends Model< N > > extends WeakLinkPoi
 	HashMap< ViewId, AffineGet > relativeTransforms;
 
 	public MetaDataWeakLinkCreator(
-			final ArrayList< Group< ViewId > > groupsNew,
 			final HashMap< ViewId, Tile< N > > models,
 			final ViewRegistrations viewRegistrations )
 	{
-		super( groupsNew, models );
+		super( models );
 
 		this.viewRegistrations = viewRegistrations;
 	}
@@ -51,7 +49,7 @@ public class MetaDataWeakLinkCreator< N extends Model< N > > extends WeakLinkPoi
 
 		final HashMap< ViewId, Group< ViewId > > groupMap = new HashMap<>();
 A:		for ( final ViewId v : views )
-			for ( final Group< ViewId > group : groupsNew )
+			for ( final Group< ViewId > group : groups )
 				if ( group.contains( v ) )
 				{
 					groupMap.put( v, group );
@@ -60,7 +58,7 @@ A:		for ( final ViewId v : views )
 
 		// compute an average affine mapback transform for each new group (which was not in the same group for the first global opt run)
 		final HashMap<  ViewId , AffineGet > groupMapback = new HashMap<>();
-		for ( final Group< ViewId > group : groupsNew )
+		for ( final Group< ViewId > group : groups )
 			for (ViewId vid: group)
 				groupMapback.put( vid, averageMapBackTransform( group, models ) );
 
@@ -163,17 +161,6 @@ A:		for ( final ViewId v : views )
 		tileB.addMatches( PointMatch.flip( pm ) );
 		tileA.addConnectedTile( tileB );
 		tileB.addConnectedTile( tileA );
-	}
-
-	@Override
-	public HashSet< ViewId > getAllViews()
-	{
-		final HashSet< ViewId > set = new HashSet<>();
-
-		for ( final Group< ViewId > group : groupsNew )
-			set.addAll( group.getViews() );
-
-		return set;
 	}
 
 	@Override
