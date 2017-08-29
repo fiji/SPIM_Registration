@@ -23,19 +23,34 @@ import spim.process.interestpointregistration.pairwise.constellation.grouping.Gr
 
 public class GlobalOptTwoRound
 {
+	/**
+	 * 
+	 * @param model - the transformation model to run the global optimizations on
+	 * @param pmc - the pointmatch creator (makes mpicbg PointMatches from anything,
+	 * e.g. corresponding interest points or stitching results)
+	 * @param csStrong - the Iterative Convergence strategy applied to the strong links,
+	 * as created by the pmc
+	 * @param lms - decides for the iterative global optimization that is run on the
+	 * strong links, which link to drop in an iteration
+	 * @param wlf - a factory for creating weak links for the not optimized views.
+	 * @param csWeak - the convergence strategy for optimizing the weak links, typically
+	 * this is a new ConvergenceStrategy( Double.MAX_VALUE );
+	 * @param fixedViews - which views are fixed
+	 * @param groupsIn - which views are grouped
+	 * @return
+	 */
 	public static < M extends Model< M > > HashMap< ViewId, AffineTransform3D > compute(
 			final M model,
 			final PointMatchCreator pmc,
-			final IterativeConvergenceStrategy ics,
+			final IterativeConvergenceStrategy csStrong,
 			final LinkRemovalStrategy lms,
 			final WeakLinkFactory wlf,
-			final ConvergenceStrategy cs,
+			final ConvergenceStrategy csWeak,
 			final Collection< ViewId > fixedViews,
 			final Collection< Group< ViewId > > groupsIn )
 	{
-
 		// find strong links, run global opt iterative
-		final HashMap< ViewId, Tile< M > > models = GlobalOptIterative.compute( model, pmc, ics, lms, fixedViews, groupsIn );
+		final HashMap< ViewId, Tile< M > > models = GlobalOptIterative.compute( model, pmc, csStrong, lms, fixedViews, groupsIn );
 
 		// identify groups of connected views
 		final List< Set< Tile< ? > > > sets = Tile.identifyConnectedGraphs( models.values() );
@@ -63,7 +78,7 @@ public class GlobalOptTwoRound
 		final WeakLinkPointMatchCreator< M > wlpmc = wlf.create( groupsNew, models );
 
 		// run global opt without iterative
-		final HashMap< ViewId, Tile< M > > models2 = GlobalOpt.compute( model, wlpmc, cs, fixedViews, groupsNew );
+		final HashMap< ViewId, Tile< M > > models2 = GlobalOpt.compute( model, wlpmc, csWeak, fixedViews, groupsNew );
 
 		// the models that were applied before running the second round
 		final Map< ViewId, AffineGet > relativeTransforms = wlpmc.getRelativeTransforms();
