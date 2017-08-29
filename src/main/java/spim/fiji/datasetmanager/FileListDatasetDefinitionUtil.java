@@ -937,125 +937,129 @@ public class FileListDatasetDefinitionUtil
 			reader = new ImageReader();
 			reader.setMetadataStore( new OMEXMLMetadataImpl());
 		}
-		
+
 		IJ.log("" + new Date(System.currentTimeMillis()) + ": Investigating file " + file.getAbsolutePath() );
-		
-		
+
 		try
 		{
 			if (reader.getCurrentFile() != file.getAbsolutePath())
 				reader.setId( file.getAbsolutePath() );
-			
-			usedFiles.addAll( Arrays.asList( reader.getUsedFiles() ));
-			
-			// the format we use employs grouped files
-			if (reader.getUsedFiles().length > 1)
-				state.setGroupedFormat( true );
-			
-			// populate grouped format file usage map
-			for (int i = 0; i < reader.getSeriesCount(); i ++)
-			{
-				reader.setSeries( i );
-				for (String usedFileI : reader.getSeriesUsedFiles())
-					state.getGroupUsageMap().put( usedFileI , new ValuePair< File, Integer >( file, i ));
-			}
-			
-			// for each entity class, create a map from identifying object to series
-			Map<Class<? extends Entity>, Map< ? extends Object, List< Pair< Integer, Integer > > >> infoMap = new HashMap<>();
-			
-			// predict tiles and angles, refine info with format specific refiner
-			List< TileOrAngleInfo > predictTilesAndAngles = predictTilesAndAngles( reader);			
-			TileOrAngleRefiner refiner = tileOrAngleRefiners.get( ((ImageReader)reader).getReader().getClass() );
-			if (refiner != null)
-				refiner.refineTileOrAngleInfo( reader, predictTilesAndAngles );
-						
-			// map to tileMap and angleMap
-			Pair< Map< TileInfo, List< Pair< Integer, Integer > > >, Map< AngleInfo, List< Pair< Integer, Integer > > > > mapTilesAngles = mapTilesAndAnglesToSeries( predictTilesAndAngles );
-			infoMap.put( Tile.class, mapTilesAngles.getA());
-			infoMap.put( Angle.class, mapTilesAngles.getB());
-			
-			// predict and map timepoints, channels, illuminations
-			List< Pair< Integer, List< ChannelOrIlluminationInfo > > > predictTPChannelsIllum = predictTimepointsChannelsAndIllums( reader );
-			Pair< Map< Integer, List< Pair< Integer, Integer > > >, Pair< Map< ChannelInfo, List< Pair< Integer, Integer > > >, Map< Integer, List< Pair< Integer, Integer > > > > > mapTimepointsChannelsIlluminations = mapTimepointsChannelsAndIlluminations(predictTPChannelsIllum);
-			infoMap.put(TimePoint.class, mapTimepointsChannelsIlluminations.getA());
-			infoMap.put(Channel.class, mapTimepointsChannelsIlluminations.getB().getA());
-			infoMap.put(Illumination.class, mapTimepointsChannelsIlluminations.getB().getB());
+		}
+		catch ( FormatException | IOException e )
+		{
+			e.printStackTrace();
+		}
 
-			// check multiplicity of maps			
-			Map<Class<? extends Entity>, CheckResult> multiplicity = new HashMap<>();
-			
 
-			multiplicity.put( TimePoint.class, checkMultipleTimepoints( (Map< Integer, List< Pair< Integer, Integer > > >) infoMap.get( TimePoint.class ) ));			
-			multiplicity.put( Channel.class, checkMultiplicity( infoMap.get( Channel.class ) ));
-			multiplicity.put( Illumination.class, checkMultiplicity( infoMap.get( Illumination.class ) ));
-			
-			
-			// make Maps TileInfo -> Series (is TileInfo -> (Series, Channel) before)
-			Map< ? extends Object, List< Integer > > tileSeriesMap = infoMap.get( Tile.class ).entrySet().stream().collect(
-					Collectors.toMap( 
-							(Entry< ? extends Object, List< Pair< Integer, Integer > > > e) -> e.getKey(),
-							(Entry< ? extends Object, List< Pair< Integer, Integer > > > e) ->
-								new ArrayList<>(e.getValue().stream().map(p -> p.getA()).collect(Collectors.toSet()))) );
-			
-			// same but for Angles
-			Map< ? extends Object, List< Integer > > angleSeriesMap = infoMap.get( Angle.class ).entrySet().stream().collect(
-					Collectors.toMap( 
-							(Entry< ? extends Object, List< Pair< Integer, Integer > > > e) -> e.getKey(),
-							(Entry< ? extends Object, List< Pair< Integer, Integer > > > e) ->
-								new ArrayList<>(e.getValue().stream().map(p -> p.getA()).collect(Collectors.toSet()))) );
-			
-			multiplicity.put( Angle.class, checkMultiplicity( angleSeriesMap ));
-			multiplicity.put( Tile.class, checkMultiplicity( tileSeriesMap));
-			
-			boolean channelIllumAmbiguous = false;
-			// we found multiple illums/channels with metadata for illums -> consider only illums
-			if (multiplicity.get( Channel.class ) == CheckResult.MULTIPLE_INDEXED && multiplicity.get( Illumination.class ) == CheckResult.MUlTIPLE_NAMED)
-				multiplicity.put( Channel.class, CheckResult.SINGLE );
-			// we found multiple illums/channels with metadata for channels -> consider only channels
-			else if (multiplicity.get( Channel.class ) == CheckResult.MUlTIPLE_NAMED && multiplicity.get( Illumination.class ) == CheckResult.MULTIPLE_INDEXED)
-				multiplicity.put( Illumination.class, CheckResult.SINGLE);
-			// we found multiple illums/channels, but no metadata -> ask user to resolve ambiguity later
-			else if (multiplicity.get( Channel.class ) == CheckResult.MULTIPLE_INDEXED && multiplicity.get( Illumination.class ) == CheckResult.MULTIPLE_INDEXED)
+		if (reader.getRGBChannelCount() > 1)
+			throw new IllegalArgumentException("RGB images are not supported at the moment. Please re-save as Composite. Quitting.");
+
+		usedFiles.addAll( Arrays.asList( reader.getUsedFiles() ));
+
+		// the format we use employs grouped files
+		if (reader.getUsedFiles().length > 1)
+			state.setGroupedFormat( true );
+
+		// populate grouped format file usage map
+		for (int i = 0; i < reader.getSeriesCount(); i ++)
+		{
+			reader.setSeries( i );
+			for (String usedFileI : reader.getSeriesUsedFiles())
+				state.getGroupUsageMap().put( usedFileI , new ValuePair< File, Integer >( file, i ));
+		}
+
+		// for each entity class, create a map from identifying object to series
+		Map<Class<? extends Entity>, Map< ? extends Object, List< Pair< Integer, Integer > > >> infoMap = new HashMap<>();
+
+		// predict tiles and angles, refine info with format specific refiner
+		List< TileOrAngleInfo > predictTilesAndAngles = predictTilesAndAngles( reader);
+		TileOrAngleRefiner refiner = tileOrAngleRefiners.get( ((ImageReader)reader).getReader().getClass() );
+		if (refiner != null)
+			refiner.refineTileOrAngleInfo( reader, predictTilesAndAngles );
+
+		// map to tileMap and angleMap
+		Pair< Map< TileInfo, List< Pair< Integer, Integer > > >, Map< AngleInfo, List< Pair< Integer, Integer > > > > mapTilesAngles = mapTilesAndAnglesToSeries( predictTilesAndAngles );
+		infoMap.put( Tile.class, mapTilesAngles.getA());
+		infoMap.put( Angle.class, mapTilesAngles.getB());
+
+		// predict and map timepoints, channels, illuminations
+		List< Pair< Integer, List< ChannelOrIlluminationInfo > > > predictTPChannelsIllum = predictTimepointsChannelsAndIllums( reader );
+		Pair< Map< Integer, List< Pair< Integer, Integer > > >, Pair< Map< ChannelInfo, List< Pair< Integer, Integer > > >, Map< Integer, List< Pair< Integer, Integer > > > > > mapTimepointsChannelsIlluminations = mapTimepointsChannelsAndIlluminations(predictTPChannelsIllum);
+		infoMap.put(TimePoint.class, mapTimepointsChannelsIlluminations.getA());
+		infoMap.put(Channel.class, mapTimepointsChannelsIlluminations.getB().getA());
+		infoMap.put(Illumination.class, mapTimepointsChannelsIlluminations.getB().getB());
+
+		// check multiplicity of maps
+		Map<Class<? extends Entity>, CheckResult> multiplicity = new HashMap<>();
+
+		multiplicity.put( TimePoint.class, checkMultipleTimepoints( (Map< Integer, List< Pair< Integer, Integer > > >) infoMap.get( TimePoint.class ) ));
+		multiplicity.put( Channel.class, checkMultiplicity( infoMap.get( Channel.class ) ));
+		multiplicity.put( Illumination.class, checkMultiplicity( infoMap.get( Illumination.class ) ));
+
+		// make Maps TileInfo -> Series (is TileInfo -> (Series, Channel) before)
+		Map< ? extends Object, List< Integer > > tileSeriesMap = infoMap.get( Tile.class ).entrySet().stream().collect(
+				Collectors.toMap(
+						(Entry< ? extends Object, List< Pair< Integer, Integer > > > e) -> e.getKey(),
+						(Entry< ? extends Object, List< Pair< Integer, Integer > > > e) ->
+							new ArrayList<>(e.getValue().stream().map(p -> p.getA()).collect(Collectors.toSet()))) );
+
+		// same but for Angles
+		Map< ? extends Object, List< Integer > > angleSeriesMap = infoMap.get( Angle.class ).entrySet().stream().collect(
+				Collectors.toMap(
+						(Entry< ? extends Object, List< Pair< Integer, Integer > > > e) -> e.getKey(),
+						(Entry< ? extends Object, List< Pair< Integer, Integer > > > e) ->
+							new ArrayList<>(e.getValue().stream().map(p -> p.getA()).collect(Collectors.toSet()))) );
+
+		multiplicity.put( Angle.class, checkMultiplicity( angleSeriesMap ));
+		multiplicity.put( Tile.class, checkMultiplicity( tileSeriesMap));
+
+		boolean channelIllumAmbiguous = false;
+		// we found multiple illums/channels with metadata for illums -> consider only illums
+		if (multiplicity.get( Channel.class ) == CheckResult.MULTIPLE_INDEXED && multiplicity.get( Illumination.class ) == CheckResult.MUlTIPLE_NAMED)
+			multiplicity.put( Channel.class, CheckResult.SINGLE );
+		// we found multiple illums/channels with metadata for channels -> consider only channels
+		else if (multiplicity.get( Channel.class ) == CheckResult.MUlTIPLE_NAMED && multiplicity.get( Illumination.class ) == CheckResult.MULTIPLE_INDEXED)
+			multiplicity.put( Illumination.class, CheckResult.SINGLE);
+		// we found multiple illums/channels, but no metadata -> ask user to resolve ambiguity later
+		else if (multiplicity.get( Channel.class ) == CheckResult.MULTIPLE_INDEXED && multiplicity.get( Illumination.class ) == CheckResult.MULTIPLE_INDEXED)
+		{
+			multiplicity.put( Channel.class, CheckResult.SINGLE);
+			multiplicity.put( Illumination.class, CheckResult.SINGLE);
+			channelIllumAmbiguous = true;
+		}
+
+		// same as above, but for tiles/angles
+		boolean angleTileAmbiguous = false;
+		if (multiplicity.get( Tile.class ) == CheckResult.MULTIPLE_INDEXED && multiplicity.get( Angle.class ) == CheckResult.MUlTIPLE_NAMED)
+			multiplicity.put( Tile.class, CheckResult.SINGLE);
+		else if (multiplicity.get( Tile.class ) == CheckResult.MUlTIPLE_NAMED && multiplicity.get( Angle.class ) == CheckResult.MULTIPLE_INDEXED)
+			multiplicity.put( Angle.class, CheckResult.SINGLE);
+		else if (multiplicity.get( Tile.class ) == CheckResult.MULTIPLE_INDEXED && multiplicity.get( Angle.class ) == CheckResult.MULTIPLE_INDEXED)
+		{
+			multiplicity.put( Tile.class, CheckResult.SINGLE);
+			multiplicity.put( Angle.class, CheckResult.SINGLE);
+			angleTileAmbiguous = true;
+		}
+
+		// TODO: handle tiles cleanly
+		/*
+		else if (tileMultiplicity == CheckResult.MUlTIPLE_NAMED && angleMultiplicity == CheckResult.MUlTIPLE_NAMED && tileMap.size() == angleMap.size())
+			tileMultiplicity = CheckResult.SINGLE;
+		*/
+
+		// multiplicity of the different entities
+		multiplicityMap.put( file, multiplicity );
+
+		for (Class<? extends Entity> cl : infoMap.keySet())
+		{
+			for (Object id : infoMap.get( cl ).keySet())
 			{
-				multiplicity.put( Channel.class, CheckResult.SINGLE);
-				multiplicity.put( Illumination.class, CheckResult.SINGLE);
-				channelIllumAmbiguous = true;
+				if (!state.getAccumulateMap(cl).containsKey( id ))
+					state.getAccumulateMap(cl).put( id, new ArrayList<>() );
+				infoMap.get( cl ).get( id ).forEach( series -> state.getAccumulateMap(cl).get( id ).add( new ValuePair< File, Pair< Integer, Integer > >( file, series ) ) );
 			}
-			
-			// same as above, but for tiles/angles
-			boolean angleTileAmbiguous = false;
-			if (multiplicity.get( Tile.class ) == CheckResult.MULTIPLE_INDEXED && multiplicity.get( Angle.class ) == CheckResult.MUlTIPLE_NAMED)
-				multiplicity.put( Tile.class, CheckResult.SINGLE);
-			else if (multiplicity.get( Tile.class ) == CheckResult.MUlTIPLE_NAMED && multiplicity.get( Angle.class ) == CheckResult.MULTIPLE_INDEXED)
-				multiplicity.put( Angle.class, CheckResult.SINGLE);
-			else if (multiplicity.get( Tile.class ) == CheckResult.MULTIPLE_INDEXED && multiplicity.get( Angle.class ) == CheckResult.MULTIPLE_INDEXED)
-			{
-				multiplicity.put( Tile.class, CheckResult.SINGLE);
-				multiplicity.put( Angle.class, CheckResult.SINGLE);
-				angleTileAmbiguous = true;				
-			}
-			
-			
-			// TODO: handle tiles cleanly
-			/*
-			else if (tileMultiplicity == CheckResult.MUlTIPLE_NAMED && angleMultiplicity == CheckResult.MUlTIPLE_NAMED && tileMap.size() == angleMap.size())
-				tileMultiplicity = CheckResult.SINGLE;
-			*/
-			
-			// multiplicity of the different entities					
-			multiplicityMap.put( file, multiplicity );
-			
-			
-			for (Class<? extends Entity> cl : infoMap.keySet())
-			{
-				for (Object id : infoMap.get( cl ).keySet())
-				{
-					if (!state.getAccumulateMap(cl).containsKey( id ))
-						state.getAccumulateMap(cl).put( id, new ArrayList<>() );
-					infoMap.get( cl ).get( id ).forEach( series -> state.getAccumulateMap(cl).get( id ).add( new ValuePair< File, Pair< Integer, Integer > >( file, series ) ) );
-				}
-			}
-			
+		}
+
 //			for (Integer tp : timepointMap.keySet())
 //			{
 //				if (!state.getAccumulateMap(TimePoint.class).containsKey( tp ))
@@ -1095,29 +1099,15 @@ public class FileListDatasetDefinitionUtil
 //					state.getAccumulateAngleMap().put( a, new ArrayList<>() );
 //				angleMap.get( a ).forEach( seriesAndIdx -> state.getAccumulateAngleMap().get( a ).add( new ValuePair< File, Pair<Integer,Integer> >( file, seriesAndIdx) ) );
 //			}
-			
-			if (!state.getAmbiguousAngleTile() && angleTileAmbiguous)
-				state.setAmbiguousAngleTile(true);
-			
-			if(!state.getAmbiguousIllumChannel() && channelIllumAmbiguous)
-				state.setAmbiguousIllumChannel(true);
-			
-			//reader.close();
+		
+		if (!state.getAmbiguousAngleTile() && angleTileAmbiguous)
+			state.setAmbiguousAngleTile(true);
 
-		}
-		catch ( FormatException e )
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		catch ( IOException e )
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		
-		
+		if(!state.getAmbiguousIllumChannel() && channelIllumAmbiguous)
+			state.setAmbiguousIllumChannel(true);
+
+		//reader.close();
+
 	}
 	
 	public static void main(String[] args)

@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+
 import java.util.stream.Collectors;
 
 import javax.swing.JLabel;
@@ -45,6 +46,7 @@ import mpicbg.spim.data.registration.ViewTransform;
 import mpicbg.spim.data.registration.ViewTransformAffine;
 import mpicbg.spim.data.sequence.Angle;
 import mpicbg.spim.data.sequence.Channel;
+import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.ImgLoader;
 import mpicbg.spim.data.sequence.MissingViews;
@@ -56,6 +58,7 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import net.imglib2.Dimensions;
 import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.util.Pair;
@@ -465,8 +468,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 										if (chInfoI.name != null)
 											chI.setName( chInfoI.name );
 									}
-									
-									
+
 									Angle aI = new Angle( angleId, angleId.toString() );
 									
 									if (state.getDetailMap().get( Angle.class ) != null && state.getDetailMap().get( Angle.class ).containsKey( angleId ))
@@ -651,7 +653,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		// summary timepoints
 		if (state.getMultiplicityMap().get( TimePoint.class ) == CheckResult.SINGLE)
 		{
-			inFileSummarySB.append( "<p> No timepoints detected within files </p>" );
+//			inFileSummarySB.append( "<p> No timepoints detected within files </p>" );
 			choices.add( "TimePoints" );
 		}
 		else if (state.getMultiplicityMap().get( TimePoint.class ) == CheckResult.MULTIPLE_INDEXED)
@@ -664,23 +666,27 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 
 		inFileSummarySB.append( "<br />" );
 
+		// we might want to know how many channels/illums or tiles/angles to expect even though we have no metadata
+		// NB: dont use these results if there IS metadata
+		final Pair< Integer, Integer > minMaxNumCannelsIndexed = FileListViewDetectionState.getMinMaxNumCannelsIndexed( state );
+		final Pair< Integer, Integer > minMaxNumSeriesIndexed = FileListViewDetectionState.getMinMaxNumSeriesIndexed( state );
+
 		// summary channel
 		if (state.getMultiplicityMap().get( Channel.class ) == CheckResult.SINGLE)
 		{
-			inFileSummarySB.append( !state.getAmbiguousIllumChannel() ? "<p> No channels detected within files </p>" :
-																	 		"<p> Channels OR Illuminations detected within files </p>");
+			inFileSummarySB.append( !state.getAmbiguousIllumChannel() ? "" : "<p>"+ getRangeRepresentation( minMaxNumCannelsIndexed ) + " Channels OR Illuminations detected within files </p>");
 			choices.add( "Channels" );
 		}
 		else if (state.getMultiplicityMap().get( Channel.class ) == CheckResult.MULTIPLE_INDEXED)
 		{
-			// TODO: find out number here
-			inFileSummarySB.append( "<p > Multiple channels detected within files </p>" );
-			inFileSummarySB.append( "<p style=\"color:orange\">WARNING: no metadata was found for channels </p>" );
+
+			inFileSummarySB.append( "<p > " + getRangeRepresentation( minMaxNumCannelsIndexed ) + " Channels detected within files </p>" );
+			inFileSummarySB.append( "<p style=\"color:orange\">WARNING: no metadata was found for Channels </p>" );
 			if (state.getMultiplicityMap().get( Illumination.class ) == CheckResult.MULTIPLE_INDEXED)
 			{
 				choices.add( "Channels" );
 				inFileSummarySB.append( "<p style=\"color:orange\">WARNING: no matadata for Illuminations found either, cannot distinguish </p>" );
-				inFileSummarySB.append( "<p style=\"color:orange\">WARNING: choose manually wether files contain channels or illuminations below </p>" );
+				inFileSummarySB.append( "<p style=\"color:orange\">WARNING: choose manually whether files contain Channels or Illuminations below </p>" );
 			}
 		} else if (state.getMultiplicityMap().get( Channel.class ) == CheckResult.MUlTIPLE_NAMED)
 		{
@@ -693,16 +699,16 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		// summary illum
 		if ( state.getMultiplicityMap().get( Illumination.class ) == CheckResult.SINGLE )
 		{
-			if (!state.getAmbiguousIllumChannel())
-				inFileSummarySB.append( "<p> No illuminations detected within files </p>" );
+//			if (!state.getAmbiguousIllumChannel())
+//				inFileSummarySB.append( "<p> No illuminations detected within files </p>" );
 			choices.add( "Illuminations" );
 		}
 		else if ( state.getMultiplicityMap().get( Illumination.class ) == CheckResult.MULTIPLE_INDEXED )
 		{
-			// TODO: find out number here
-			inFileSummarySB.append( "<p > Multiple illuminations detected within files </p>" );
 			if (state.getMultiplicityMap().get( Channel.class ).equals( CheckResult.MULTIPLE_INDEXED ))
 				choices.add( "Illuminations" );
+			else
+				inFileSummarySB.append( "<p > " + getRangeRepresentation( minMaxNumCannelsIndexed ) + " Illuminations detected within files </p>" );
 		}
 		else if ( state.getMultiplicityMap().get( Illumination.class ) == CheckResult.MUlTIPLE_NAMED )
 		{
@@ -715,13 +721,12 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		// summary tile
 		if ( state.getMultiplicityMap().get( Tile.class ) == CheckResult.SINGLE )
 		{
-			inFileSummarySB.append( "<p> No tiles detected within files </p>" );
+//			inFileSummarySB.append( "<p> No tiles detected within files </p>" );
 			choices.add( "Tiles" );
 		}
 		else if ( state.getMultiplicityMap().get( Tile.class ) == CheckResult.MULTIPLE_INDEXED )
 		{
-			// TODO: find out number here
-			inFileSummarySB.append( "<p > Multiple Tiles detected within files </p>" );
+			inFileSummarySB.append( "<p > " + getRangeRepresentation( minMaxNumSeriesIndexed ) + " Tiles detected within files </p>" );
 			inFileSummarySB.append( "<p style=\"color:orange\">WARNING: no metadata was found for Tiles </p>" );
 			if (state.getMultiplicityMap().get( Angle.class ) == CheckResult.MULTIPLE_INDEXED)
 			{
@@ -742,24 +747,24 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		// summary angle
 		if ( state.getMultiplicityMap().get( Angle.class ) == CheckResult.SINGLE )
 		{
-			inFileSummarySB.append( "<p> No angles detected within files </p>" );
+//			inFileSummarySB.append( "<p> No angles detected within files </p>" );
 			choices.add( "Angles" );
 		}
 		else if ( state.getMultiplicityMap().get( Angle.class ) == CheckResult.MULTIPLE_INDEXED )
 		{
-			// TODO: find out number here
-			inFileSummarySB.append( "<p > Multiple Angles detected within files </p>" );
 			if (state.getMultiplicityMap().get( Tile.class ) == CheckResult.MULTIPLE_INDEXED)
 				choices.add( "Angles" );
+			else
+				inFileSummarySB.append( "<p > " + getRangeRepresentation( minMaxNumSeriesIndexed ) + " Angles detected within files </p>" );
 		}
 		else if ( state.getMultiplicityMap().get( Angle.class ) == CheckResult.MUlTIPLE_NAMED )
 		{
 			int numAngle = state.getAccumulateMap( Angle.class ).size();
 			inFileSummarySB.append( "<p style=\"color:green\">" + numAngle + " Angles found within files </p>" );
 		}
-		
+
 		inFileSummarySB.append( "</html>" );
-		
+
 		GenericDialogPlus gd = new GenericDialogPlus("Assign attributes");
 		
 		//gd.addMessage( "<html> <h1> View assignment </h1> </html> ");
@@ -769,40 +774,49 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		addMessageAsJLabel(inFileSummarySB.toString(), gd);
 		
 		String[] choicesAngleTile = new String[] {"Angles", "Tiles"};
-		String[] choicesChannelIllum = new String[] {"Channels", "Illums"};
-				
-		
-		
+		String[] choicesChannelIllum = new String[] {"Channels", "Illuminations"};
+
 		//if (state.getAmbiguousAngleTile())
 		String preferedAnglesOrTiles = state.getMultiplicityMap().get( Angle.class ) == CheckResult.MULTIPLE_INDEXED ? "Angles" : "Tiles";
-		if (state.getAmbiguousAngleTile() || state.getMultiplicityMap().get( Tile.class) ==  CheckResult.MUlTIPLE_NAMED)
-			gd.addChoice( "map series to", choicesAngleTile, preferedAnglesOrTiles );
+		if (state.getAmbiguousAngleTile() || state.getMultiplicityMap().get( Tile.class) == CheckResult.MUlTIPLE_NAMED)
+			gd.addChoice( "BioFormats Series are?", choicesAngleTile, preferedAnglesOrTiles );
 		if (state.getAmbiguousIllumChannel())
-			gd.addChoice( "map channels to", choicesChannelIllum, choicesChannelIllum[0] );
-			
-		
-		StringBuilder sbfilePatterns = new StringBuilder();
-		sbfilePatterns.append(  "<html> <h2> Patterns in filenames </h2> " );
-		if (numVariables < 1)
-			sbfilePatterns.append( "<p> No numerical patterns found in filenames</p>" );
-		else
-		{
-			sbfilePatterns.append( "<p style=\"color:green\"> " + numVariables + " numerical pattern" + ((numVariables > 1) ? "s": "") + " found in filenames</p>" );
-			sbfilePatterns.append( "<p> Patterns: " + patternDetector.getStringRepresentation() + "</p>" );
-		}
-		sbfilePatterns.append( "</html>" );
-		
-		//gd.addMessage( sbfilePatterns.toString() );
-		addMessageAsJLabel(sbfilePatterns.toString(), gd);
-		
-		
-		choices.add( "-- ignore this pattern --"  );
-		String[] choicesAll = choices.toArray( new String[]{} );
-				
-		for (int i = 0; i < numVariables; i++)
-			gd.addChoice( "pattern_" + i + " assignment", choicesAll, choicesAll[0] );
+			gd.addChoice( "BioFormats \"Channels\" are?", choicesChannelIllum, choicesChannelIllum[0] );
 
-		gd.addCheckbox( "Use_virtual_images_(cached)", true );
+
+		if (numVariables >= 1)
+//			sbfilePatterns.append( "<p> No numerical patterns found in filenames</p>" );
+//		else
+		{
+			final Pair< String, String > prefixAndPattern = splitIntoPrefixAndPattern( patternDetector );
+			final StringBuilder sbfilePatterns = new StringBuilder();
+			sbfilePatterns.append(  "<html> <h2> Patterns in filenames </h2> " );
+			sbfilePatterns.append( "<h3 style=\"color:green\"> " + numVariables + " numerical pattern" + ((numVariables > 1) ? "s": "") + " found in filenames</h3>" );
+			sbfilePatterns.append( "</br><p> Patterns: " + prefixAndPattern.getB() + "</p>" );
+			sbfilePatterns.append( "</html>" );
+			addMessageAsJLabel(sbfilePatterns.toString(), gd);
+		}
+
+		//gd.addMessage( sbfilePatterns.toString() );
+
+		choices.add( "-- ignore this pattern --" );
+		String[] choicesAll = choices.toArray( new String[]{} );
+
+		for (int i = 0; i < numVariables; i++)
+			gd.addChoice( "Pattern_" + i + " represents", choicesAll, choicesAll[0] );
+
+		addMessageAsJLabel(  "<html> <h2> Voxel Size calibration </h2> </html> ", gd );
+		final boolean allVoxelSizesTheSame = FileListViewDetectionState.allVoxelSizesTheSame( state );
+		if(!allVoxelSizesTheSame)
+			addMessageAsJLabel(  "<html> <p style=\"color:orange\">WARNING: Voxel Sizes are not the same for all views, modify them at your own risk! </p> </html> ", gd );
+
+		final VoxelDimensions someCalib = state.getDimensionMap().values().iterator().next().getB();
+
+		gd.addCheckbox( "Modify_voxel_size?", false );
+		gd.addNumericField( "Voxel_size_X", someCalib.dimension( 0 ), 4 );
+		gd.addNumericField( "Voxel_size_Y", someCalib.dimension( 1 ), 4 );
+		gd.addNumericField( "Voxel_size_Z", someCalib.dimension( 2 ), 4 );
+		gd.addStringField( "Voxel_size_unit", someCalib.unit() );
 
 		gd.showDialog();
 
@@ -837,7 +851,6 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 				fileVariableToUse.get( Angle.class ).add( i );
 		}
 
-		final boolean useVirtualLoader = gd.getNextBoolean();
 
 		// TODO handle Angle-Tile swap here	
 		FileListDatasetDefinitionUtil.resolveAmbiguity( state.getMultiplicityMap(), state.getAmbiguousIllumChannel(), preferChannelsOverIlluminations, state.getAmbiguousAngleTile(), !preferAnglesOverTiles );
@@ -847,7 +860,25 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 				patternDetector,
 				state);
 
-		SpimData2 data = buildSpimData( state, useVirtualLoader );
+		// query modified calibration
+		final boolean modifyCalibration = gd.getNextBoolean();
+		if (modifyCalibration)
+		{
+			final double calX = gd.getNextNumber();
+			final double calY = gd.getNextNumber();
+			final double calZ = gd.getNextNumber();
+			final String calUnit = gd.getNextString();
+
+			for (final Pair< File, Pair< Integer, Integer > > key : state.getDimensionMap().keySet())
+			{
+				final Pair< Dimensions, VoxelDimensions > pairOld = state.getDimensionMap().get( key );
+				final Pair< Dimensions, VoxelDimensions > pairNew = new ValuePair< Dimensions, VoxelDimensions >( pairOld.getA(), new FinalVoxelDimensions( calUnit, calX, calY, calZ ) );
+				state.getDimensionMap().put( key, pairNew );
+			}
+		}
+
+		// we create a virtual SpimData at first
+		SpimData2 data = buildSpimData( state, true );
 
 		//TODO: with translated tiles, we also have to take the center of rotation into account
 		//Apply_Transformation.applyAxis( data );
@@ -857,25 +888,26 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		//gdSave.addMessage( "<html> <h1> Saving options </h1> <br /> </html>" );
 		addMessageAsJLabel("<html> <h1> Saving options </h1> <br /> </html>", gdSave);
 
-		if (!useVirtualLoader)
-		{
-			Class<?> imgFactoryClass = ((FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() ).getImgFactory().getClass();
-			if (imgFactoryClass.equals( CellImgFactory.class ))
-			{
-				//gdSave.addMessage( "<html> <h2> ImgLib2 container </h2> <br/>"
-				//		+ "<p style=\"color:orange\"> Some views of the dataset are larger than 2^31 pixels, will use CellImg </p>" );
-				
-				addMessageAsJLabel("<html> <h2> ImgLib2 container </h2> <br/>"
-						+ "<p style=\"color:orange\"> Some views of the dataset are larger than 2^31 pixels, will use CellImg </p>", gdSave);
-			}
-			else
-			{
-				//gdSave.addMessage( "<html> <h2> ImgLib2 container </h2> <br/>");
-				addMessageAsJLabel("<html> <h2> ImgLib2 container </h2> <br/>", gdSave);
-				String[] imglibChoice = new String[] {"ArrayImg", "CellImg"};
-				gdSave.addChoice( "imglib2 container", imglibChoice, imglibChoice[0] );
-			}
-		}
+		gdSave.addCheckbox( "Use_virtual_images_(cached)", true );
+
+//		if (!useVirtualLoader)
+//		{
+//			Class<?> imgFactoryClass = ((FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() ).getImgFactory().getClass();
+//			if (imgFactoryClass.equals( CellImgFactory.class ))
+//			{
+//				//gdSave.addMessage( "<html> <h2> ImgLib2 container </h2> <br/>"
+//				//		+ "<p style=\"color:orange\"> Some views of the dataset are larger than 2^31 pixels, will use CellImg </p>" );
+//				addMessageAsJLabel("<html> <h2> ImgLib2 container </h2> <br/>"
+//						+ "<p style=\"color:orange\"> Some views of the dataset are larger than 2^31 pixels, will use CellImg </p>", gdSave);
+//			}
+//			else
+//			{
+//				//gdSave.addMessage( "<html> <h2> ImgLib2 container </h2> <br/>");
+//				addMessageAsJLabel("<html> <h2> ImgLib2 container </h2> <br/>", gdSave);
+//				String[] imglibChoice = new String[] {"ArrayImg", "CellImg"};
+//				gdSave.addChoice( "imglib2 container", imglibChoice, imglibChoice[0] );
+//			}
+//		}
 
 		//gdSave.addMessage("<html><h2> Save path </h2></html>");
 		addMessageAsJLabel("<html><h2> Save path </h2></html>", gdSave);
@@ -900,15 +932,19 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		gdSave.addDirectoryField( "dataset save path", prefixPath.getAbsolutePath(), 55 );		
 
 		// check if all stack sizes are the same (in each file)
-		final boolean zSizeEqualInEveryFile = LegacyFileMapImgLoaderLOCI.isZSizeEqualInEveryFile( data, (FileMapGettable)data.getSequenceDescription().getImgLoader() );
+		boolean zSizeEqualInEveryFile = LegacyFileMapImgLoaderLOCI.isZSizeEqualInEveryFile( data, (FileMapGettable)data.getSequenceDescription().getImgLoader() );
 
+		// only consider if there are actually multiple angles/tiles
+		zSizeEqualInEveryFile = zSizeEqualInEveryFile && !(data.getSequenceDescription().getAllAnglesOrdered().size() == 1 && data.getSequenceDescription().getAllTilesOrdered().size() == 1);
 		// notify user if all stacks are equally size (in every file)
 		if (zSizeEqualInEveryFile)
+		{
 			addMessageAsJLabel( "<html><p style=\"color:orange\">WARNING: all stacks have the same size, this might be caused by a bug"
 					+ " in BioFormats. </br> Please re-check stack sizes if necessary.</p></html>", gdSave );
 
-		// default choice for size re-check: do it if all stacks are the same size
-		gdSave.addCheckbox( "check_stack_sizes", zSizeEqualInEveryFile );
+			// default choice for size re-check: do it if all stacks are the same size
+			gdSave.addCheckbox( "check_stack_sizes", zSizeEqualInEveryFile );
+		}
 		gdSave.addCheckbox( "resave_as_HDF5", true );
 
 		gdSave.showDialog();
@@ -916,24 +952,32 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		if ( gdSave.wasCanceled() )
 			return null;
 
+		final boolean useVirtualLoader = gdSave.getNextBoolean();
+		// re-build the SpimData if user explicitly doesn't want virtual loading
 		if (!useVirtualLoader)
-		{
-			Class<?> imgFactoryClass = ((FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() ).getImgFactory().getClass();
-			if (!imgFactoryClass.equals( CellImgFactory.class ))
-			{
-				if (gdSave.getNextChoiceIndex() != 0)
-					((FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() ).setImgFactory( new CellImgFactory<>(256) );
-			}
-		}
+			data = buildSpimData( state, useVirtualLoader );
+
+//		if (!useVirtualLoader)
+//		{
+//			Class<?> imgFactoryClass = ((FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() ).getImgFactory().getClass();
+//			if (!imgFactoryClass.equals( CellImgFactory.class ))
+//			{
+//				if (gdSave.getNextChoiceIndex() != 0)
+//					((FileMapImgLoaderLOCI)data.getSequenceDescription().getImgLoader() ).setImgFactory( new CellImgFactory<>(256) );
+//			}
+//		}
 
 		File chosenPath = new File( gdSave.getNextString());
 		data.setBasePath( chosenPath );
 
 		// check and correct stack sizes (the "BioFormats bug")
 		// TODO: remove once the bug is fixed upstream
-		final boolean checkSize = gdSave.getNextBoolean();
-		if (checkSize)
-			LegacyFileMapImgLoaderLOCI.checkAndRemoveZeroVolume( data, (ImgLoader & FileMapGettable) data.getSequenceDescription().getImgLoader() );
+		if (zSizeEqualInEveryFile)
+		{
+			final boolean checkSize = gdSave.getNextBoolean();
+			if (checkSize)
+				LegacyFileMapImgLoaderLOCI.checkAndRemoveZeroVolume( data, (ImgLoader & FileMapGettable) data.getSequenceDescription().getImgLoader() );
+		}
 
 		boolean resaveAsHDF5 = gdSave.getNextBoolean();
 
@@ -978,8 +1022,8 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 						else {
 							break;
 						}
-					}	
-					return String.join(File.separator, res );					
+					}
+					return String.join(File.separator, res );
 				});
 		return new File(prefixPath);
 		
@@ -1012,14 +1056,47 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 				return true;
 		return false;
 	}
-	
+
+
+	public static Pair<String, String> splitIntoPrefixAndPattern(FilenamePatternDetector detector)
+	{
+		final String stringRepresentation = detector.getStringRepresentation();
+		final List< String > beforePattern = new ArrayList<>();
+		final List< String > afterPattern = new ArrayList<>();
+		
+		boolean found = false;
+		for (String s : Arrays.asList( stringRepresentation.split(Pattern.quote(File.separator) )))
+		{
+			if (!found && s.contains( "{" ))
+				found = true;
+			if (found)
+				afterPattern.add( s );
+			else
+				beforePattern.add( s );
+		}
+		String prefix = String.join( File.separator, beforePattern );
+		String pattern = String.join( File.separator, afterPattern );
+		return new ValuePair< String, String >( prefix, pattern );
+	}
+
+	public static String getRangeRepresentation(Pair<Integer, Integer> range)
+	{
+		if (range.getA().equals( range.getB() ))
+			return Integer.toString( range.getA() );
+		else
+			if (range.getA() < range.getB())
+				return range.getA() + "-" + range.getB();
+			else
+				return range.getB() + "-" + range.getA();
+	}
+
 	public static Pair<String, String> splitIntoPathAndPattern(String s, String ... templates)
 	{
 		String[] subpaths = s.split( Pattern.quote(File.separator) );
 		ArrayList<String> path = new ArrayList<>(); 
 		ArrayList<String> pattern = new ArrayList<>();
 		boolean noPatternFound = true;
-		
+
 		for (int i = 0; i < subpaths.length; i++){
 			if (noPatternFound && !containsAny( subpaths[i], templates ))
 			{

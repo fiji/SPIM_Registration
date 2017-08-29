@@ -2,9 +2,12 @@ package spim.fiji.datasetmanager;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.security.auth.Destroyable;
 
@@ -17,6 +20,7 @@ import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.Dimensions;
 import net.imglib2.util.Pair;
+import net.imglib2.util.ValuePair;
 import spim.fiji.datasetmanager.FileListDatasetDefinitionUtil.AngleInfo;
 import spim.fiji.datasetmanager.FileListDatasetDefinitionUtil.ChannelInfo;
 import spim.fiji.datasetmanager.FileListDatasetDefinitionUtil.CheckResult;
@@ -62,6 +66,80 @@ public class FileListViewDetectionState
 		
 		dimensionMap = new HashMap<>();
 		
+	}
+
+	/**
+	 * @param state
+	 * @return
+	 */
+	public static Pair< Integer, Integer > getMinMaxNumCannelsIndexed(final FileListViewDetectionState state)
+	{
+		if ( state.accumulativeMap.get( Channel.class ).size() < 1 )
+			return null;
+
+		final List< Pair< File, Pair< Integer, Integer > > > channelSources = state.accumulativeMap.get( Channel.class )
+				.values().iterator().next();
+		final Map< Pair< File, Integer >, Integer > counts = new HashMap<>();
+		for ( Pair< File, Pair< Integer, Integer > > channelSrc : channelSources )
+		{
+			Pair< File, Integer > key = new ValuePair< File, Integer >( channelSrc.getA(), channelSrc.getB().getA() );
+			if ( !counts.containsKey( key ) )
+				counts.put( key, 0 );
+			counts.put( key, counts.get( key ) + 1 );
+		}
+
+		Integer min = counts.values().stream().reduce( Integer.MAX_VALUE, (x, y) -> Math.min( x, y ) );
+		Integer max = counts.values().stream().reduce( Integer.MIN_VALUE, (x, y) -> Math.max( x, y ) );
+
+		return new ValuePair< Integer, Integer >( min, max );
+	}
+
+	public static Pair< Integer, Integer > getMinMaxNumSeriesIndexed(final FileListViewDetectionState state)
+	{
+		if ( state.accumulativeMap.get( Tile.class ).size() < 1 )
+			return null;
+
+		final List< Pair< File, Pair< Integer, Integer > > > channelSources = state.accumulativeMap.get( Tile.class )
+				.values().iterator().next();
+		final Map< Pair< File, Integer >, Integer > counts = new HashMap<>();
+		for ( Pair< File, Pair< Integer, Integer > > channelSrc : channelSources )
+		{
+			Pair< File, Integer > key = new ValuePair< File, Integer >( channelSrc.getA(), channelSrc.getB().getB() );
+			if ( !counts.containsKey( key ) )
+				counts.put( key, 0 );
+			counts.put( key, counts.get( key ) + 1 );
+		}
+
+		Integer min = counts.values().stream().reduce( Integer.MAX_VALUE, (x, y) -> Math.min( x, y ) );
+		Integer max = counts.values().stream().reduce( Integer.MIN_VALUE, (x, y) -> Math.max( x, y ) );
+
+		return new ValuePair< Integer, Integer >( min, max );
+	}
+
+	public static boolean allVoxelSizesTheSame(FileListViewDetectionState state)
+	{
+		VoxelDimensions last = null;
+		final Collection< Pair< Dimensions, VoxelDimensions > > sizes = state.getDimensionMap().values();
+		for (final Pair< Dimensions, VoxelDimensions > size : sizes)
+		{
+			if (last == null)
+				last = size.getB();
+			if (!equalCalibration(last, size.getB() ))
+				return false;
+		}
+		return true;
+	}
+
+	public static boolean equalCalibration(VoxelDimensions a, VoxelDimensions b)
+	{
+		if (a.numDimensions() != b.numDimensions())
+			return false;
+		if (!a.unit().equals( b.unit() ))
+			return false;
+		for (int d = 0; d<a.numDimensions(); d++)
+			if (Math.abs( a.dimension( d ) - b.dimension( d ) ) > 1E-5)
+				return false;
+		return true;
 	}
 
 	public Map<Class<? extends Entity>, FileListDatasetDefinitionUtil.CheckResult> getMultiplicityMap()

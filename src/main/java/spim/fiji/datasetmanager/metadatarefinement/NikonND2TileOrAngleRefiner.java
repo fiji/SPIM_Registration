@@ -28,7 +28,7 @@ public class NikonND2TileOrAngleRefiner implements TileOrAngleRefiner
 			for (TileOrAngleInfo info: infos)
 			{
 				
-				double[] loc = new double[] {info.locationX, info.locationY};
+				double[] loc = new double[] {info.locationX == null ? 0 : info.locationX, info.locationY == null ? 0 : info.locationY};
 				tr.apply( loc, loc );
 				
 				info.locationX = loc[0];
