@@ -33,8 +33,8 @@ public interface PointMatchCreator
 			final Collection< ViewId > fixedViews );
 
 	/**
-	 * assign pointmatches for all views that this object knows and that are present in tileMap.keySet(), which comes from getAllViews() plus what is in the group definition of the globalopt
-	 * called last
+	 * assign pointmatches for all views that this object knows and that are present in tileMap.keySet(),
+	 * which comes from getAllViews() plus what is in the group definition of the globalopt called last
 	 *
 	 * @param tileMap - the map from viewId to Tile
 	 * @param groups - which groups exist (one might need it?)
