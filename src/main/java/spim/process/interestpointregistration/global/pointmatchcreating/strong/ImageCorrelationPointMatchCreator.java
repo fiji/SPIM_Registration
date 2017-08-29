@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.global.pointmatchcreating;
+package spim.process.interestpointregistration.global.pointmatchcreating.strong;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,6 +19,8 @@ import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.fiji.spimdata.stitchingresults.PairwiseStitchingResult;
 import spim.process.interestpointregistration.global.GlobalOpt;
 import spim.process.interestpointregistration.global.convergence.ConvergenceStrategy;
+import spim.process.interestpointregistration.global.pointmatchcreating.Link;
+import spim.process.interestpointregistration.global.pointmatchcreating.PointMatchCreator;
 import spim.process.interestpointregistration.global.pointmatchcreating.Link.LinkType;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 

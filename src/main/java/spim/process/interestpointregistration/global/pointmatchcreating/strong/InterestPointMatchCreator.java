@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.global.pointmatchcreating;
+package spim.process.interestpointregistration.global.pointmatchcreating.strong;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,6 +13,7 @@ import mpicbg.models.Tile;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
 import net.imglib2.util.Pair;
+import spim.process.interestpointregistration.global.pointmatchcreating.PointMatchCreator;
 import spim.process.interestpointregistration.pairwise.PairwiseResult;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 

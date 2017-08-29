@@ -1,4 +1,4 @@
-package spim.process.interestpointregistration.global.pointmatchcreating;
+package spim.process.interestpointregistration.global.pointmatchcreating.weak;
 
 import java.util.ArrayList;
 import java.util.Collection;

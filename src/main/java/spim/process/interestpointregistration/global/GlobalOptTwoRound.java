@@ -17,8 +17,8 @@ import spim.process.interestpointregistration.global.convergence.ConvergenceStra
 import spim.process.interestpointregistration.global.convergence.IterativeConvergenceStrategy;
 import spim.process.interestpointregistration.global.linkremoval.LinkRemovalStrategy;
 import spim.process.interestpointregistration.global.pointmatchcreating.PointMatchCreator;
-import spim.process.interestpointregistration.global.pointmatchcreating.WeakLinkFactory;
-import spim.process.interestpointregistration.global.pointmatchcreating.WeakLinkPointMatchCreator;
+import spim.process.interestpointregistration.global.pointmatchcreating.weak.WeakLinkFactory;
+import spim.process.interestpointregistration.global.pointmatchcreating.weak.WeakLinkPointMatchCreator;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class GlobalOptTwoRound
