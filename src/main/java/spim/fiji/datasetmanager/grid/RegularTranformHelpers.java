@@ -28,6 +28,7 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.realtransform.Translation3D;
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 
 public class RegularTranformHelpers
@@ -226,12 +227,12 @@ public class RegularTranformHelpers
 
 	public static <AS extends AbstractSpimData<?> > void applyToSpimData(
 			AS data, 
-			List< List< BasicViewDescription< ? extends BasicViewSetup > > > viewDescriptions,
+			List<? extends Group< ? extends BasicViewDescription< ? extends BasicViewSetup > > > viewDescriptions,
 			RegularTranslationParameters params,
 			boolean applyToAllTimePoints)
 	{
 		if (!applyToAllTimePoints)
-			applyToSpimDataSingleTP( data, viewDescriptions, params, viewDescriptions.get( 0 ).get( 0 ).getTimePoint() );
+			applyToSpimDataSingleTP( data, viewDescriptions, params, viewDescriptions.get( 0 ).iterator().next().getTimePoint() );
 		else
 		{
 			for (TimePoint tp : data.getSequenceDescription().getTimePoints().getTimePointsOrdered())
@@ -275,16 +276,16 @@ public class RegularTranformHelpers
 
 	private static <AS extends AbstractSpimData<?> > void applyToSpimDataSingleTP(
 			AS data, 
-			List< List< BasicViewDescription< ? extends BasicViewSetup > > > viewDescriptions,
+			List< ? extends Group< ? extends BasicViewDescription< ? extends BasicViewSetup > > > viewDescriptions,
 			RegularTranslationParameters params,
 			TimePoint tp)
 	{
 		Dimensions size = data.getSequenceDescription().getViewDescriptions()
-				.get( viewDescriptions.get( 0 ).get( 0 ) ).getViewSetup().getSize();
+				.get( viewDescriptions.get( 0 ).iterator().next() ).getViewSetup().getSize();
 		List< Translation3D > generateRegularGrid = RegularTranformHelpers.generateRegularGrid( params, size );
 
 		int i = 0;
-		for (List<BasicViewDescription< ? >> lvd : viewDescriptions)
+		for (Group<? extends BasicViewDescription< ? >> lvd : viewDescriptions)
 		{
 			for (BasicViewDescription< ? > vd : lvd)
 			{
@@ -317,7 +318,7 @@ public class RegularTranformHelpers
 					}
 					vr.updateModel();
 
-					System.out.println(translation);
+					//System.out.println(translation);
 				}
 			}
 
