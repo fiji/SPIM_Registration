@@ -120,7 +120,7 @@ public class FileMapImgLoaderLOCI2 implements ImgLoader, FileMapGettable
 			RandomAccessibleInterval< T > img = null;
 			try
 			{
-				img = (RandomAccessibleInterval< T >) new VirtualRAIFactoryLOCI().createVirtualCached(
+				img = (RandomAccessibleInterval< T >) (Object)new VirtualRAIFactoryLOCI().createVirtualCached(
 						reader, imageSource.getA(), imageSource.getB().getA(),
 						imageSource.getB().getB(), allTimepointsInSingleFiles ? 0 : timepointId, new UnsignedShortType(), size );
 			}

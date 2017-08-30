@@ -15,6 +15,9 @@ public abstract class WeakLinkPointMatchCreator< M extends Model< M > > implemen
 	final HashMap< ViewId, Tile< M > > models1;
 	final HashSet< ViewId > allViews;
 
+	/**
+	 * @param models1 - the models from the first round of global optimization
+	 */
 	public WeakLinkPointMatchCreator( final HashMap< ViewId, Tile< M > > models1 )
 	{
 		this.models1 = models1;

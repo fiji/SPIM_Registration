@@ -16,10 +16,10 @@ import mpicbg.models.Tile;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.ViewId;
-import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.realtransform.AffineGet;
 import net.imglib2.realtransform.AffineTransform3D;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
+import spim.process.interestpointregistration.pairwise.constellation.overlap.OverlapDetection;
 
 /**
  * Uses the previous state as an approximate knowledge for the metadata of the acquisition. New Groups (connected through strong links) will be transformed together,
@@ -27,16 +27,25 @@ import spim.process.interestpointregistration.pairwise.constellation.grouping.Gr
  */
 public class FinalMetaDataWeakLinkCreator< N extends Model< N > > extends WeakLinkPointMatchCreator< N >
 {
-	final ViewRegistrations viewRegistrations;
-	HashMap< ViewId, AffineGet > relativeTransforms;
+	final Map< ViewId, ViewRegistration > viewRegistrations;
+	final OverlapDetection< ViewId > overlapDetection;
 
+	//HashMap< ViewId, AffineGet > relativeTransforms;
+
+	/**
+	 * @param models1 - the models from the first round of global optimization
+	 * @param overlapDetection - an interface implementation to identfiy which views overlap
+	 * @param viewRegistrations - the Registrations that are the basis for the whole global optimization (MetaData)
+	 */
 	public FinalMetaDataWeakLinkCreator(
 			final HashMap< ViewId, Tile< N > > models1,
-			final ViewRegistrations viewRegistrations )
+			final OverlapDetection< ViewId > overlapDetection,
+			final Map< ViewId, ViewRegistration > viewRegistrations )
 	{
 		super( models1 );
 
 		this.viewRegistrations = viewRegistrations;
+		this.overlapDetection = overlapDetection;
 	}
 
 	@Override
@@ -56,6 +65,52 @@ A:		for ( final ViewId v : views )
 					groupMap.put( v, group );
 					continue A;
 				}
+/*
+		// identify current transforms as metadata
+		for ( final ViewId viewId : allViews )
+			viewRegistrations.get( viewId ).updateModel();
+
+		for ( int a = 0; a < this.allViews.size() - 1; ++a )
+			for ( int b = a + 1; b < this.allViews.size(); ++b )
+			{
+				final ViewId viewA = views.get( a );
+				final ViewId viewB = views.get( b );
+
+				// the state before the first global optimization was run
+				final AffineTransform3D tA = viewRegistrations.get( viewA ).getModel();
+				final AffineTransform3D tB = viewRegistrations.get( viewB ).getModel();
+
+				if ( overlapDetection.overlaps( viewA, viewB ) )
+				{
+					// if viewA was transformed, we need to 
+					if ( groupMap.get( viewA ).size() > 1 )
+					{
+						
+					}
+					
+					// we use the vertices of the unit cube and their transformations as point matches 
+					final double[][] pa = new double[][]{
+						{ bb.realMin( 0 ), bb.realMin( 1 ), bb.realMin( 2 ) },
+						{ bb.realMax( 0 ), bb.realMin( 1 ), bb.realMin( 2 ) },
+						{ bb.realMin( 0 ), bb.realMax( 1 ), bb.realMin( 2 ) },
+						{ bb.realMax( 0 ), bb.realMax( 1 ), bb.realMin( 2 ) },
+						{ bb.realMin( 0 ), bb.realMin( 1 ), bb.realMax( 2 ) },
+						{ bb.realMax( 0 ), bb.realMin( 1 ), bb.realMax( 2 ) },
+						{ bb.realMin( 0 ), bb.realMax( 1 ), bb.realMax( 2 ) },
+						{ bb.realMax( 0 ), bb.realMax( 1 ), bb.realMax( 2 ) }};
+
+					final double[][] pb = new double[8][3];
+
+					// the transformed bounding boxes are our corresponding features
+					for (int i = 0; i < pa.length; ++i)
+					{
+						link.getTransform().applyInverse( pb[i], pa[i] );
+						pointsA.add( new Point( pa[i] ) );
+						pointsB.add( new Point( pb[i] ) );
+					}
+
+				}
+			}
 
 		// HOW do we express models1 for the second round?
 		//
@@ -117,11 +172,11 @@ A:		for ( final ViewId v : views )
 
 					addPointMatches( modelA, modelB, models2.get( vA ), models2.get( vB ) );
 				}
-			}
+			}*/
 	}
 
 	@Override
-	public Map< ViewId, AffineGet > getRelativeTransforms() { return relativeTransforms; }
+	public Map< ViewId, AffineGet > getRelativeTransforms() { return null; }
 
 	public static <M extends Model< M >> void addPointMatches( 
 			final AffineGet modelA,
