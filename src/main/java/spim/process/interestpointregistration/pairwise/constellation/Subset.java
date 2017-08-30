@@ -105,7 +105,8 @@ public class Subset< V > extends Group< V >
 					final Group< V > groupB = groups.get( j );
 
 					if ( groupA.contains( a ) && groupB.contains( b ) )
-						groupPairs.add( new ValuePair< Integer, Integer >( i, j ) );
+						if ( !( groupPairs.contains( new ValuePair< Integer, Integer >( i, j ) ) || groupPairs.contains( new ValuePair< Integer, Integer >( j, i ) ) ) )
+							groupPairs.add( new ValuePair< Integer, Integer >( i, j ) );
 				}
 		}
 
