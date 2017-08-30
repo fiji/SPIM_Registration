@@ -60,16 +60,18 @@ public abstract class XmlIoStackImgLoader< T extends StackImgLoader< ? > > imple
 			int layoutChannels = XmlHelpers.getInt( elem, LAYOUT_CHANNEL_TAG );
 			int layoutIllum = XmlHelpers.getInt( elem, LAYOUT_ILLUMINATION_TAG );
 			int layoutAngles = XmlHelpers.getInt( elem, LAYOUT_ANGLE_TAG );
-			int layoutTiles = XmlHelpers.getInt( elem, LAYOUT_TILE_TAG );
+			int layoutTiles = 0;
+
+			try { layoutTiles = XmlHelpers.getInt( elem, LAYOUT_TILE_TAG ); } catch (Exception e) {}
 
 			final String container = XmlHelpers.getText( elem, IMGLIB2CONTAINER_PATTERN_TAG );
 			ImgFactory< FloatType > imgFactory;
 			if ( container == null )
 			{
-				System.out.println( "WARNING: No Img implementation defined, using ArrayImg." );
+				System.out.println( "WARNING: No Img implementation defined, using CellImg." );
 
-				// if no factory is defined we define an ArrayImgFactory
-				imgFactory = new ArrayImgFactory< FloatType >();
+				// if no factory is defined we define an CellImgFactory
+				imgFactory = new CellImgFactory< FloatType >( 256 );
 			}
 			else
 			{
@@ -98,13 +100,13 @@ public abstract class XmlIoStackImgLoader< T extends StackImgLoader< ? > > imple
 		}
 		catch ( final Exception e )
 		{
+			e.printStackTrace();
 			throw new RuntimeException( e );
 		}
 	}
-	
+
 	protected abstract T createImgLoader(
 			final File path, final String fileNamePattern, final ImgFactory< ? extends NativeType< ? > > imgFactory,
 			final int layoutTP, final int layoutChannels, final int layoutIllum, final int layoutAngles, final int layoutTiles,
 			final AbstractSequenceDescription< ?, ?, ? > sequenceDescription );
-
 }
