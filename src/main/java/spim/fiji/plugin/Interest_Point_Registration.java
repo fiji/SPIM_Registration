@@ -106,7 +106,7 @@ public class Interest_Point_Registration implements PlugIn
 	public static boolean defaultSameReferenceView = true;
 	public static boolean[] defaultFixedViews = null;
 	public static int defaultReferenceView = 0;
-	public static int defaultIPGrouping = 0;
+	public static int defaultIPGrouping = 1;
 
 	// Just in case we want to log statistics
 	List< Pair< Pair< ViewId, ViewId >, ? extends PairwiseResult< ? > > > statistics;
@@ -180,6 +180,7 @@ public class Interest_Point_Registration implements PlugIn
 
 		// identify groups/subsets
 		final Set< Group< ViewId > > groups = arp.getGroups( data, viewIds, brp.groupTiles, brp.groupIllums, brp.groupChannels );
+
 		final PairwiseSetup< ViewId > setup = arp.pairwiseSetupInstance( brp.registrationType, viewIds, groups );
 		identifySubsets( setup, brp.getOverlapDetection( data ) );
 
