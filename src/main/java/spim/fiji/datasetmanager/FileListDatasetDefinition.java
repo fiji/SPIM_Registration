@@ -67,6 +67,8 @@ import spim.fiji.datasetmanager.FileListDatasetDefinitionUtil.AngleInfo;
 import spim.fiji.datasetmanager.FileListDatasetDefinitionUtil.ChannelInfo;
 import spim.fiji.datasetmanager.FileListDatasetDefinitionUtil.CheckResult;
 import spim.fiji.datasetmanager.FileListDatasetDefinitionUtil.TileInfo;
+import spim.fiji.datasetmanager.grid.RegularTranformHelpers;
+import spim.fiji.datasetmanager.grid.RegularTranformHelpers.RegularTranslationParameters;
 import spim.fiji.datasetmanager.patterndetector.FilenamePatternDetector;
 import spim.fiji.datasetmanager.patterndetector.NumericalFilenamePatternDetector;
 import spim.fiji.plugin.resave.Generic_Resave_HDF5;
@@ -83,6 +85,7 @@ import spim.fiji.spimdata.imgloaders.filemap2.FileMapImgLoaderLOCI2;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
 import spim.fiji.spimdata.pointspreadfunctions.PointSpreadFunctions;
 import spim.fiji.spimdata.stitchingresults.StitchingResults;
+import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
 
 public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 {
@@ -818,6 +821,15 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		gd.addNumericField( "Voxel_size_Z", someCalib.dimension( 2 ), 4 );
 		gd.addStringField( "Voxel_size_unit", someCalib.unit() );
 
+		// try to guess if we need to move to grid
+		// we suggest move if: we have no tile metadata & we have more tiles than angles
+		// TODO: this is a very crude heuristic
+		int numTiles = state.getAccumulateMap( Tile.class ).size();
+		int numAngles = state.getAccumulateMap( Angle.class ).size();
+		addMessageAsJLabel(  "<html> <h2> Move to Grid </h2> </html> ", gd );
+		boolean haveTileLoc = state.getAccumulateMap( Tile.class ).keySet().stream().filter( t -> ((TileInfo)t).locationX != null && ((TileInfo)t).locationX != 0.0 ).findAny().isPresent();
+		gd.addCheckbox( "Move_Tiles_to_Grid_(per_Angle)?", !haveTileLoc && (state.getMultiplicityMap().get( Tile.class ) == CheckResult.MULTIPLE_INDEXED || (numTiles > numAngles) ) );
+
 		gd.showDialog();
 
 		if (gd.wasCanceled())
@@ -877,8 +889,34 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			}
 		}
 
+		final boolean doGrid = gd.getNextBoolean();
+
 		// we create a virtual SpimData at first
 		SpimData2 data = buildSpimData( state, true );
+
+		// we move to grid, collect parameters first
+		final List<RegularTranslationParameters> gridParams = new ArrayList<>();
+		if (doGrid)
+		{
+			final ArrayList<ViewDescription> vds = new ArrayList<>(data.getSequenceDescription().getViewDescriptions().values());
+
+			final Set<Class<? extends Entity>> angleClassSet = new HashSet<>();
+			angleClassSet.add( Angle.class );
+			final Set<Class<? extends Entity>> tileClassSet = new HashSet<>();
+			tileClassSet.add( Tile.class );
+
+			// first, split by angles (we process each angle separately)
+			final List< Group< ViewDescription > > vdsAngleGrouped = Group.splitBy( vds , angleClassSet );
+			for (Group<ViewDescription> vdsAngle : vdsAngleGrouped)
+			{
+				// second, we split by tiles (all channels/illums/tps of a tile are grouped)
+				final List< Group< ViewDescription > > tilesGrouped = Group.splitBy( new ArrayList<>( vdsAngle.getViews() ), tileClassSet );
+				final String angleName = vdsAngle.getViews().iterator().next().getViewSetup().getAngle().getName();
+				if (tilesGrouped.size() < 2)
+					continue;
+				gridParams.add( RegularTranformHelpers.queryParameters( "Move Tiles of Angle " + angleName, tilesGrouped.size() ) );
+			}
+		}
 
 		//TODO: with translated tiles, we also have to take the center of rotation into account
 		//Apply_Transformation.applyAxis( data );
@@ -977,6 +1015,30 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			final boolean checkSize = gdSave.getNextBoolean();
 			if (checkSize)
 				LegacyFileMapImgLoaderLOCI.checkAndRemoveZeroVolume( data, (ImgLoader & FileMapGettable) data.getSequenceDescription().getImgLoader() );
+		}
+
+		// now, we have a working SpimData and have corrected for unequal z sizes -> do grid move if necessary
+		if (doGrid)
+		{
+			final ArrayList<ViewDescription> vds = new ArrayList<>(data.getSequenceDescription().getViewDescriptions().values());
+
+			final Set<Class<? extends Entity>> angleClassSet = new HashSet<>();
+			angleClassSet.add( Angle.class );
+			final Set<Class<? extends Entity>> tileClassSet = new HashSet<>();
+			tileClassSet.add( Tile.class );
+
+			// first, split by angles (we process each angle separately)
+			final List< Group< ViewDescription > > vdsAngleGrouped = Group.splitBy( vds , angleClassSet );
+			int i = 0;
+			for (Group<ViewDescription> vdsAngle : vdsAngleGrouped)
+			{
+				// second, we split by tiles (all channels/illums/tps of a tile are grouped)
+				final List< Group< ViewDescription > > tilesGrouped = Group.splitBy( new ArrayList<>( vdsAngle.getViews() ), tileClassSet );
+				if (tilesGrouped.size() < 2)
+					continue;
+				RegularTranslationParameters gridParamsI = gridParams.get( i++ );
+				RegularTranformHelpers.applyToSpimData( data, tilesGrouped, gridParamsI, true );
+			}
 		}
 
 		boolean resaveAsHDF5 = gdSave.getNextBoolean();
