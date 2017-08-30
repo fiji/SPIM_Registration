@@ -10,7 +10,7 @@
 	</parent>
 
 	<artifactId>SPIM_Registration</artifactId>
-	<version>6.4.3</version>
+	<version>6.4.4-SNAPSHOT</version>
 
 	<name>SPIM Registration</name>
 	<description>Software for the reconstruction of multi-view microscopic acquisitions like Selective Plane Illumination Microscopy (SPIM) Data.</description>
