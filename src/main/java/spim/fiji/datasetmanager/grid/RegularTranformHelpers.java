@@ -66,9 +66,9 @@ public class RegularTranformHelpers
 	
 	public static class GridPreset
 	{
-		boolean[] alternating;
-		boolean[] increasing;
-		String dimensionOrder;
+		public boolean[] alternating;
+		public boolean[] increasing;
+		public String dimensionOrder;
 		
 		public GridPreset(boolean[] alternating, boolean[] increasing, String dimensionOrder)
 		{
