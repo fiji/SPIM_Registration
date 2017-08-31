@@ -86,7 +86,7 @@ public class RegularTranformHelpers
 		presets.add( new GridPreset( new boolean[] {false, false, false}, new boolean[] {true, true, true} , "x,y,z" ) );
 		presets.add( new GridPreset( new boolean[] {false, false, false}, new boolean[] {false, true, true} , "x,y,z" ) );
 		presets.add( new GridPreset( new boolean[] {false, false, false}, new boolean[] {true, false, true} , "x,y,z" ) );
-		presets.add( new GridPreset( new boolean[] {false, false, false}, new boolean[] {false, false, true} , "x,,zy" ) );
+		presets.add( new GridPreset( new boolean[] {false, false, false}, new boolean[] {false, false, true} , "x,y,z" ) );
 		
 		presets.add( new GridPreset( new boolean[] {false, false, false}, new boolean[] {true, true, true} , "y,x,z" ) );
 		presets.add( new GridPreset( new boolean[] {false, false, false}, new boolean[] {false, true, true} , "y,x,z" ) );
