@@ -1,5 +1,6 @@
 package spim.fiji.plugin.queryXML;
 
+import java.awt.Button;
 import java.awt.Color;
 import java.awt.Label;
 import java.awt.TextField;
@@ -110,6 +111,8 @@ public class GenericLoadParseQueryXML<
 	protected ArrayList< String > buttonText = null;
 	protected ArrayList< ActionListener > listener = null;
 	protected GenericDialog gd = null;
+
+	public Button defineNewDataset = null;
 
 	/*
 	 * Constructor for the class needs an appropriate IO module
@@ -275,6 +278,13 @@ public class GenericLoadParseQueryXML<
 			{
 				gd.addMessage( "", GUIHelper.smallStatusFont );
 				gd.addButton( buttonText.get( i ), listener.get( i ) );
+
+				try
+				{
+					if ( buttonText.get( i ).equals( "Define a new dataset" ) )
+						defineNewDataset = ((Button)gd.getComponent( gd.getComponentCount() - 1 ));
+				}
+				catch (Exception e) { defineNewDataset = null; }
 			}
 		}
 
@@ -716,6 +726,9 @@ public class GenericLoadParseQueryXML<
 				this.message2 = noMsg2;
 				this.color = GUIHelper.error;
 
+				if ( defineNewDataset != null )
+					defineNewDataset.setForeground( Color.BLACK );
+
 				IOFunctions.println( "Cannot parse '" + xmlfile + "': " + e );
 				e.printStackTrace();
 				return false;
@@ -726,9 +739,21 @@ public class GenericLoadParseQueryXML<
 			this.message1 = warningMsg1;
 			this.message2 = noMsg2;
 			this.color = GUIHelper.warning;
+
+			if ( defineNewDataset != null )
+				defineNewDataset.setForeground( Color.BLACK );
+
 			return false;
 		}
-		
+
+		if ( defineNewDataset != null )
+		{
+			if ( message1.equals( neutralMsg1a ) )
+				defineNewDataset.setForeground( Color.RED );
+			else
+				defineNewDataset.setForeground( Color.BLACK );
+		}
+
 		return true;
 	}
 
