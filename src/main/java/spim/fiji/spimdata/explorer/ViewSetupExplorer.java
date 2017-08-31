@@ -15,7 +15,7 @@ public class ViewSetupExplorer< AS extends AbstractSpimData< ? >, X extends XmlI
 	public ViewSetupExplorer( final AS data, final String xml, final X io )
 	{
 		frame = new JFrame( "ViewSetup Explorer" );
-		panel = new ViewSetupExplorerPanel< AS, X >( this, data, xml, io );
+		panel = new ViewSetupExplorerPanel< AS, X >( this, data, xml, io, true );
 
 		frame.add( panel, BorderLayout.CENTER );
 		frame.setSize( panel.getPreferredSize() );

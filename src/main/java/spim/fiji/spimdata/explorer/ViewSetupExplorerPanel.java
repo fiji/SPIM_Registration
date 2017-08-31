@@ -75,6 +75,7 @@ import spim.fiji.spimdata.explorer.popup.Separator;
 import spim.fiji.spimdata.explorer.popup.SpecifyCalibrationPopup;
 import spim.fiji.spimdata.explorer.popup.VisualizeDetectionsPopup;
 import spim.fiji.spimdata.explorer.util.ColorStream;
+import spim.fiji.spimdata.imgloaders.filemap2.FileMapImgLoaderLOCI2;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
 import spim.fiji.spimdata.interestpoints.ViewInterestPointLists;
 import spim.fiji.spimdata.interestpoints.ViewInterestPoints;
@@ -112,14 +113,21 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 	@Override
 	public boolean channelsGrouped() { return false; }
 
-	public ViewSetupExplorerPanel( final FilteredAndGroupedExplorer< AS, X > explorer, final AS data, final String xml, final X io, boolean startBDVifHDF5 )
+	public ViewSetupExplorerPanel( final FilteredAndGroupedExplorer< AS, X > explorer, final AS data, final String xml, final X io, boolean requestStartBDV )
 	{
 		super( explorer, data, xml, io );
+
+		
+		if ( data instanceof SpimData2 )
+			((SpimData2)data).gridMoveRequested = false;
 
 		popups = initPopups();
 		initComponent();
 
-		if ( startBDVifHDF5 && Hdf5ImageLoader.class.isInstance( data.getSequenceDescription().getImgLoader() ) )
+		if ( requestStartBDV && 
+				(Hdf5ImageLoader.class.isInstance( data.getSequenceDescription().getImgLoader() ) 
+				|| data.getSequenceDescription().getImgLoader().getClass().getSimpleName().equals( "FractalImgLoader" )
+				|| FileMapImgLoaderLOCI2.class.isInstance( data.getSequenceDescription().getImgLoader() ) ) )
 		{
 			final BDVPopup bdvpopup = bdvPopup();
 			
@@ -143,14 +151,7 @@ public class ViewSetupExplorerPanel< AS extends AbstractSpimData< ? >, X extends
 		// for access to the current BDV
 		currentInstance = this;
 	}
-	
-	public ViewSetupExplorerPanel( final FilteredAndGroupedExplorer< AS, X > explorer, final AS data, final String xml, final X io)
-	{
-		this(explorer, data, xml, io, true);
-	}
-	
 
-	
 	public void initComponent()
 	{
 		tableModel = new FilteredAndGroupedTableModel< AS >( this );
