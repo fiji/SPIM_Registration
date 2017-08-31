@@ -1,12 +1,13 @@
 package spim.fiji.plugin;
 
-import ij.ImageJ;
-import ij.plugin.PlugIn;
-
+import java.awt.Button;
+import java.awt.TextField;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import spim.fiji.ImgLib2Temp.Pair;
+import ij.ImageJ;
+import ij.plugin.PlugIn;
 import spim.fiji.plugin.queryXML.GenericLoadParseQueryXML;
 import spim.fiji.plugin.queryXML.LoadParseQueryXML;
 import spim.fiji.spimdata.SpimData2;
@@ -17,7 +18,6 @@ import spim.fiji.spimdata.explorer.ViewSetupExplorer;
 public class Data_Explorer implements PlugIn
 {
 	public static boolean showNote = true;
-	boolean newDataset = false;
 
 	@Override
 	public void run( String arg )
@@ -35,42 +35,24 @@ public class Data_Explorer implements PlugIn
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				result.setReturnFalse( true );
-				result.getGenericDialog().dispose();
-				setDefineNewDataset();
+				((TextField)result.getGenericDialog().getStringFields().firstElement()).setText( "define" );
+				Button ok = result.getGenericDialog().getButtons()[ 0 ];
+
+				ActionEvent ae =  new ActionEvent( ok, ActionEvent.ACTION_PERFORMED, "");
+				Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(ae);
 			}
 		});
 
-		if ( !result.queryXML( "XML Explorer", "", false, false, false, false, false ) && !newDataset )
+		if ( !result.queryXML( "XML Explorer", "", false, false, false, false, false ) )
 			return;
 
-		final SpimData2 data;
-		final String xml;
-		final XmlIoSpimData2 io;
-
-		if ( newDataset )
-		{
-			final Pair< SpimData2, String > dataset = new Define_Multi_View_Dataset().defineDataset( true );
-
-			if ( dataset == null )
-				return;
-
-			data = dataset.getA();
-			xml = dataset.getB();
-			io = new XmlIoSpimData2( "" );
-		}
-		else
-		{
-			data = result.getData();
-			xml = result.getXMLFileName();
-			io = result.getIO();
-		}
+		final SpimData2 data = result.getData();
+		final String xml = result.getXMLFileName();
+		final XmlIoSpimData2 io = result.getIO();
 
 		final ViewSetupExplorer< SpimData2, XmlIoSpimData2 > explorer = new ViewSetupExplorer<SpimData2, XmlIoSpimData2 >( data, xml, io );
 
 		explorer.getFrame().toFront();
-
-		
 	}
 
 	public static SimpleInfoBox showNote()
@@ -99,11 +81,6 @@ public class Data_Explorer implements PlugIn
 		text += "too close to each other (e.g. less than 5 pixels)\n";
 
 		return new SimpleInfoBox( "Getting started", text );
-	}
-
-	protected void setDefineNewDataset()
-	{
-		this.newDataset = true;
 	}
 
 	public static void main( String[] args )

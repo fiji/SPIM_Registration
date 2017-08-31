@@ -58,7 +58,8 @@ public class GenericLoadParseQueryXML<
 	protected static String goodMsg1 = "The selected XML file was parsed successfully";
 	protected static String warningMsg1 = "The selected file does not appear to be an xml. Press OK to try to parse anyways.";
 	protected static String errorMsg1 = "An ERROR occured parsing this XML file! Please select a different XML (see log)";
-	protected static String neutralMsg1 = "No XML file selected.";	
+	protected static String neutralMsg1a = "Please select an existing XML - or - Define a new dataset by clicking just below.";
+	protected static String neutralMsg1b = "Please select an existing XML.";
 	protected static String noMsg2 = " ";
 	protected static String[] attributeChoiceList = new String[]{ "All *s", "Single * (Select from List)", "Multiple *s (Select from List)", "Range of *s (Specify by Name)" };
 
@@ -79,7 +80,7 @@ public class GenericLoadParseQueryXML<
 	protected HashMap< String, Integer > attributeChoice = new HashMap< String, Integer >();
 
 	// how to load the XML
-	final protected X io;
+	protected X io;
 
 	// how to sort the attributes (if not by name)
 	protected Comparator< String > comparator = null;
@@ -109,7 +110,6 @@ public class GenericLoadParseQueryXML<
 	protected ArrayList< String > buttonText = null;
 	protected ArrayList< ActionListener > listener = null;
 	protected GenericDialog gd = null;
-	protected boolean returnfalse = false;
 
 	/*
 	 * Constructor for the class needs an appropriate IO module
@@ -194,7 +194,6 @@ public class GenericLoadParseQueryXML<
 	}
 
 	public GenericDialog getGenericDialog() { return gd; }
-	public void setReturnFalse( final boolean value ) { this.returnfalse = value; }
 
 	/*
 	 * Asks the user for a valid XML (real time parsing)
@@ -239,7 +238,10 @@ public class GenericLoadParseQueryXML<
 			gd = new GenericDialogPlus( "Select dataset for " + additionalTitle );
 		else
 			gd = new GenericDialogPlus( "Select Dataset" );
-		gd.addFileField( "Select_XML", defaultXMLfilename, 65 );
+
+		final String text = "Select";
+
+		gd.addFileField( text, defaultXMLfilename, 65 );
 		gd.addMessage( this.message1, GUIHelper.largestatusfont, this.color );
 		Label l1 = (Label)gd.getMessage();
 		
@@ -271,29 +273,35 @@ public class GenericLoadParseQueryXML<
 		{
 			for ( int i = 0; i < buttonText.size(); ++i )
 			{
-				gd.addMessage( "" );
-				gd.addMessage( "OR" );
-				gd.addMessage( "" );
-				gd.addButton( buttonText.get( i ), listener.get(  i ) );
-				this.gd = gd;
+				gd.addMessage( "", GUIHelper.smallStatusFont );
+				gd.addButton( buttonText.get( i ), listener.get( i ) );
 			}
 		}
+
+		this.gd = gd;
 
 		gd.addMessage( "" );
 		GUIHelper.addPreibischLabWebsite( gd );
 
 		gd.showDialog();
 		
-		if ( gd.wasCanceled() || returnfalse )
+		if ( gd.wasCanceled() )
 			return false;
 		
 		String xmlFilename = defaultXMLfilename = gd.getNextString();
-		
+
 		// try to parse the file anyways
 		tryParsing( xmlFilename, true );
 
+		if ( buttonText != null && xmlFilename.toLowerCase().equals( "define" ) && buttonText.get( 0 ).equals( "Define a new dataset" ) )
+		{
+			this.data = null;
+			this.attributes = null;
+			return true;
+		}
+
 		for ( int i = 0; i < specifyAttributes.size(); ++i )
-		{			
+		{
 			final String attribute = specifyAttributes.get( i );
 			final int choice = gd.getNextChoiceIndex();
 			
@@ -670,7 +678,10 @@ public class GenericLoadParseQueryXML<
 	protected boolean tryParsing( final String xmlfile, final boolean parseAllTypes )
 	{
 		this.xmlfilename = xmlfile;
-		this.message1 = neutralMsg1;
+		if ( buttonText != null && buttonText.get( 0 ).equals( "Define a new dataset" ) )
+			this.message1 = neutralMsg1a;
+		else
+			this.message1 = neutralMsg1b;
 		this.message2 = noMsg2;
 		this.color = GUIHelper.neutral;
 		this.data = null;

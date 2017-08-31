@@ -15,6 +15,8 @@ import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.io.IOFunctions;
+import spim.fiji.ImgLib2Temp.Pair;
+import spim.fiji.plugin.Define_Multi_View_Dataset;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.XmlIoSpimData2;
 
@@ -91,6 +93,20 @@ public class LoadParseQueryXML extends GenericLoadParseQueryXML< SpimData2, Sequ
 			List< String > specifyAttributes )
 	{
 		boolean success = super.queryXML( additionalTitle, query, specifyAttributes );
+
+		if ( success && this.data == null && buttonText != null )
+		{
+			final Pair< SpimData2, String > dataset = new Define_Multi_View_Dataset().defineDataset( true );
+
+			if ( dataset == null )
+				return false;
+
+			data = dataset.getA();
+			xmlfilename = dataset.getB();
+			io = new XmlIoSpimData2( "" );
+
+			return true;
+		}
 
 		// make sure the internal IO is updated to reflect the cluster saving
 		if ( success )
