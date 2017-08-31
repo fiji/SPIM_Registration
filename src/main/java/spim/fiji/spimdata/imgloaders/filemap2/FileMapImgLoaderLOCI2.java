@@ -45,7 +45,7 @@ public class FileMapImgLoaderLOCI2 implements ImgLoader, FileMapGettable
 	private final HashMap<BasicViewDescription< ? >, Pair<File, Pair<Integer, Integer>>> fileMap;
 	private final AbstractSequenceDescription<?, ?, ?> sd;
 	private boolean allTimepointsInSingleFiles;
-	private final IFormatReader reader;
+	private final Map< File, IFormatReader > readers;
 	
 	public FileMapImgLoaderLOCI2(HashMap<BasicViewDescription< ? >, Pair<File, Pair<Integer, Integer>>> fileMap,
 			final ImgFactory< ? extends NativeType< ? > > imgFactory, // FIXME: remove this, only here to test quick replacement
@@ -54,7 +54,7 @@ public class FileMapImgLoaderLOCI2 implements ImgLoader, FileMapGettable
 		this.fileMap = fileMap;
 		this.sd = sequenceDescription;
 		
-		this.reader = new ImageReader();
+		this.readers = new HashMap<>();
 		
 		allTimepointsInSingleFiles = true;
 		
@@ -116,6 +116,10 @@ public class FileMapImgLoaderLOCI2 implements ImgLoader, FileMapGettable
 			// TODO: some logging here? (reading angle .. , tp .., ... from file ...)
 
 			final Dimensions size = vd.getViewSetup().getSize();
+
+			if (!readers.containsKey( imageSource.getA() ))
+				readers.put( imageSource.getA(), new ImageReader() );
+			IFormatReader reader = readers.get( imageSource.getA() );
 
 			RandomAccessibleInterval< T > img = null;
 			try
@@ -192,6 +196,10 @@ public class FileMapImgLoaderLOCI2 implements ImgLoader, FileMapGettable
 
 			// TODO: some logging here? (reading angle .. , tp .., ... from file ...)
 
+			if (!readers.containsKey( imageSource.getA() ))
+				readers.put( imageSource.getA(), new ImageReader() );
+			IFormatReader reader = readers.get( imageSource.getA() );
+			
 			RandomAccessibleInterval< FloatType > img = null;
 			try
 			{

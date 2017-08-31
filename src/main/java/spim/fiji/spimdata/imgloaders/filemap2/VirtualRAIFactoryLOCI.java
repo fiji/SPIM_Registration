@@ -82,7 +82,7 @@ public class VirtualRAIFactoryLOCI
 	}
 	
 	@SuppressWarnings("unchecked")
-	public <T extends RealType< T > & NativeType< T >> RandomAccessibleInterval< T > createVirtualCached(
+	public synchronized <T extends RealType< T > & NativeType< T >> RandomAccessibleInterval< T > createVirtualCached(
 			final IFormatReader reader,
 			final File file,
 			final int series,
@@ -127,7 +127,7 @@ public class VirtualRAIFactoryLOCI
 			return FusionTools.cacheRandomAccessibleInterval( virtualImg, Integer.MAX_VALUE,  type == null ? (T) new FloatType() : type, new int[] {(int)virtualImg.dimension( 0 ), (int)virtualImg.dimension( 1 ), 1} ) ;
 		}
 		else
-			throw new IncompatibleTypeException( this, "cannot create virtual image for this pixel type" );
+			throw new IncompatibleTypeException( this, "cannot create virtual image for this pixel type: " + pixelType );
 	}
 	
 	/**
@@ -144,6 +144,7 @@ public class VirtualRAIFactoryLOCI
 			catch ( FormatException | IOException e )
 			{
 				e.printStackTrace();
+				System.exit( 1 );
 			}
 			reader.setSeries( series );
 		}
