@@ -44,6 +44,7 @@ public class SpimData2 extends SpimData
 	private BoundingBoxes boundingBoxes;
 	private PointSpreadFunctions pointSpreadFunctions;
 	private StitchingResults stitchingResults;
+	public boolean gridMoveRequested = false;
 	
 	public SpimData2(
 			final File basePath,
