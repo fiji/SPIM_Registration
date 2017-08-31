@@ -25,9 +25,9 @@ public class StackListLOCI extends StackList
 	public static int defaultTileChoice = 0;
 
 	@Override
-	public String getTitle() 
+	public String getTitle()
 	{
-		return "Image Stacks (LOCI Bioformats)";
+		return "Manual Loader (Bioformats based)";
 	}
 
 	@Override

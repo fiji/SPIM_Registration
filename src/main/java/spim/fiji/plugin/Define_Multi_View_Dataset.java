@@ -1,17 +1,16 @@
 package spim.fiji.plugin;
 
+import java.awt.AWTEvent;
+import java.awt.Choice;
+import java.awt.event.ItemEvent;
+import java.util.ArrayList;
+
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.ImageJ;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
-
-import java.awt.AWTEvent;
-import java.awt.Choice;
-import java.awt.event.ItemEvent;
-import java.util.ArrayList;
-
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.ImgLib2Temp.Pair;
 import spim.fiji.ImgLib2Temp.ValuePair;
@@ -31,7 +30,8 @@ import spim.fiji.spimdata.SpimData2;
 public class Define_Multi_View_Dataset implements PlugIn
 {
 	final public static ArrayList< MultiViewDatasetDefinition > staticDatasetDefinitions = new ArrayList< MultiViewDatasetDefinition >();
-	public static int defaultDatasetDef = 5;
+
+	public static int defaultDatasetDef = 0;
 	public static String defaultXMLName = "dataset.xml";
 
 	final int numLinesDocumentation = 15;
@@ -40,14 +40,15 @@ public class Define_Multi_View_Dataset implements PlugIn
 	static
 	{
 		IOFunctions.printIJLog = true;
+		staticDatasetDefinitions.add( new FileListDatasetDefinition() );
 		staticDatasetDefinitions.add( new StackListLOCI() );
 		staticDatasetDefinitions.add( new StackListImageJ() );
-		staticDatasetDefinitions.add( new MicroManager() );
 		staticDatasetDefinitions.add( new LightSheetZ1() );
-		staticDatasetDefinitions.add( new DHM() );
-		staticDatasetDefinitions.add( new FileListDatasetDefinition() );
+		staticDatasetDefinitions.add( new MicroManager() );
 	}
-	
+
+	public static void supportDHM() { staticDatasetDefinitions.add( new DHM() ); }
+
 	@Override
 	public void run( String arg0 ) 
 	{

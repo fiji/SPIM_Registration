@@ -23,7 +23,7 @@ public class StackListImageJ extends StackList
 	@Override
 	public String getTitle() 
 	{
-		return "Image Stacks (ImageJ Opener)";
+		return "Manual Loader (TIFF only, ImageJ Opener)";
 	}
 
 	@Override

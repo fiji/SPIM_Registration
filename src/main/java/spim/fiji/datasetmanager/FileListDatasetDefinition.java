@@ -5,10 +5,9 @@ import java.awt.Component;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Label;
 import java.awt.Panel;
 import java.awt.TextField;
-import java.awt.Label;
-
 import java.awt.event.TextEvent;
 import java.awt.event.TextListener;
 import java.io.File;
@@ -30,7 +29,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
-
 import java.util.stream.Collectors;
 
 import javax.swing.JLabel;
@@ -61,7 +59,6 @@ import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.Dimensions;
-import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.util.Pair;
@@ -75,9 +72,9 @@ import spim.fiji.datasetmanager.grid.RegularTranformHelpers.RegularTranslationPa
 import spim.fiji.datasetmanager.patterndetector.FilenamePatternDetector;
 import spim.fiji.datasetmanager.patterndetector.NumericalFilenamePatternDetector;
 import spim.fiji.plugin.resave.Generic_Resave_HDF5;
+import spim.fiji.plugin.resave.Generic_Resave_HDF5.Parameters;
 import spim.fiji.plugin.resave.ProgressWriterIJ;
 import spim.fiji.plugin.resave.Resave_HDF5;
-import spim.fiji.plugin.resave.Generic_Resave_HDF5.Parameters;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBoxes;
@@ -1110,7 +1107,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 	}
 
 	@Override
-	public String getTitle() { return "Auto from list of files (LOCI Bioformats)"; }
+	public String getTitle() { return "Automatic Loader (Bioformats based)"; }
 	
 	@Override
 	public String getExtendedDescription()
