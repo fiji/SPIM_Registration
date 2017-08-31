@@ -952,7 +952,10 @@ public class FileListDatasetDefinitionUtil
 
 
 		if (reader.getRGBChannelCount() > 1)
+		{
+			IOFunctions.println("RGB images are not supported at the moment. Please re-save as Composite (Open in Fiji > Image > Color > Make Composite > Save ). Quitting.");
 			throw new IllegalArgumentException("RGB images are not supported at the moment. Please re-save as Composite. Quitting.");
+		}
 
 		usedFiles.addAll( Arrays.asList( reader.getUsedFiles() ));
 
