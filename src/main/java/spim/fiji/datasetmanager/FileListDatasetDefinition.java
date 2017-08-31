@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 import javax.swing.JLabel;
@@ -318,8 +319,17 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		String path = pAndp.getA();
 		String justPattern = pAndp.getB();
 		
-		PathMatcher pm = FileSystems.getDefault().getPathMatcher( "glob:" + 
+		PathMatcher pm;
+		try
+		{
+		pm = FileSystems.getDefault().getPathMatcher( "glob:" + 
 				((justPattern.length() == 0) ? path : String.join("/", path, justPattern )) );
+		}
+		catch (PatternSyntaxException e) {
+			// malformed pattern, return empty list (for now)
+			// if we do not catch this, we will keep logging exceptions e.g. while user is typing something like [0-9]
+			return new ArrayList<>();
+		}
 		
 		List<File> paths = new ArrayList<>();
 		
@@ -1059,8 +1069,11 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			final int firstviewSetupId = data.getSequenceDescription().getViewSetupsOrdered().get( 0 ).getId();
 			Generic_Resave_HDF5.lastExportPath = String.join( File.separator, chosenPath.getAbsolutePath(), "dataset");
 			final Parameters params = Generic_Resave_HDF5.getParameters( perSetupExportMipmapInfo.get( firstviewSetupId ), true, true );
-			
-			
+
+			// HDF5 options dialog was cancelled
+			if (params == null)
+				return null;
+
 			final ProgressWriter progressWriter = new ProgressWriterIJ();
 			progressWriter.out().println( "starting export..." );
 			
