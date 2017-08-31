@@ -513,16 +513,46 @@ public class Group< V > implements Iterable< V >
 	@SuppressWarnings("unchecked")
 	public static String gvids( final Collection< ? > group )
 	{
+		if ( group == null )
+			return "--null--";
+		else if ( group.size() == 0 )
+			return "--empty--";
+
 		String groupS = "";
 
 		if ( ViewId.class.isInstance( group.iterator().next() ) )
-			for ( final ViewId a : getViewsSorted( (Collection<ViewId>)(group) ) )
-				groupS += pvids( a ) + " ";
+		{
+			final List< ViewId > sorted = getViewsSorted( (Collection<ViewId>)(group) );
+
+			if ( sorted.size() == 1 )
+				return pvids( sorted.get( 0 ) );
+
+			final ArrayList< Integer > breaks = new ArrayList<>();
+
+			breaks.add( 0 );
+
+			for ( int i = 1; i < sorted.size(); ++i )
+				if ( sorted.get( i - 1 ).getTimePointId() != sorted.get( i ).getTimePointId() || sorted.get( i ).getViewSetupId() - sorted.get( i - 1 ).getViewSetupId() != 1 )
+					breaks.add( i );
+
+			breaks.add( sorted.size() );
+
+			for ( int i = 0; i < breaks.size() - 1; ++i )
+			{
+				final int from = breaks.get( i );
+				final int to = breaks.get( i + 1 ) - 1;
+
+				if ( from == to )
+					groupS += pvids( sorted.get( from ) ) + ", ";
+				else
+					groupS += pvids( sorted.get( from ) ) + " >-> " + pvids( sorted.get( to ) ) + ", ";
+			}
+		}
 		else
 			for ( final Object a : group )
 				groupS += a + " ";
 
-		return groupS.trim();
+		return groupS.substring( 0, groupS.length() - 2 ).trim();
 	}
 
 	public static String gvids( final Group< ? > group )
@@ -549,7 +579,7 @@ public class Group< V > implements Iterable< V >
 
 		g1.getViews().add( v1 );
 		g1.getViews().add( v3 );
-		//g1.getViews().add( v4 );
+		g1.getViews().add( v4 );
 
 		g2.getViews().add( v2 );
 		g2.getViews().add( v4 );
@@ -563,5 +593,22 @@ public class Group< V > implements Iterable< V >
 		{
 			System.out.println( g );
 		}
+
+		final Group< ViewId > g3 = new Group<>();
+		System.out.println( g3 );
+		g3.getViews().add( new ViewId( 0, 0 ) );
+		System.out.println( g3 );
+
+		for ( int i = 2; i < 20; ++i )
+			g3.getViews().add( new ViewId( 0, i ) );
+		System.out.println( g3 );
+
+		g3.getViews().add( new ViewId( 0, 25 ) );
+		System.out.println( g3 );
+
+		for ( int i = 26; i < 40; ++i )
+			g3.getViews().add( new ViewId( 1, i ) );
+		System.out.println( g3 );
+
 	}
 }
