@@ -7,6 +7,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Panel;
 import java.awt.TextField;
+import java.awt.Label;
 
 import java.awt.event.TextEvent;
 import java.awt.event.TextListener;
@@ -23,6 +24,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -61,6 +63,7 @@ import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.Dimensions;
 import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.realtransform.AffineTransform3D;
+import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
 import spim.fiji.datasetmanager.FileListDatasetDefinitionUtil.AngleInfo;
@@ -78,6 +81,7 @@ import spim.fiji.plugin.resave.Generic_Resave_HDF5.Parameters;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBoxes;
+import spim.fiji.spimdata.explorer.util.ColorStream;
 import spim.fiji.spimdata.imgloaders.FileMapImgLoaderLOCI;
 import spim.fiji.spimdata.imgloaders.LegacyFileMapImgLoaderLOCI;
 import spim.fiji.spimdata.imgloaders.filemap2.FileMapGettable;
@@ -697,7 +701,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			inFileSummarySB.append( "<p style=\"color:green\">" + numChannels + " Channels found within files </p>" );
 		}
 
-		inFileSummarySB.append( "<br />" );
+		//inFileSummarySB.append( "<br />" );
 
 		// summary illum
 		if ( state.getMultiplicityMap().get( Illumination.class ) == CheckResult.SINGLE )
@@ -719,7 +723,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			inFileSummarySB.append( "<p style=\"color:green\">" + numIllum + " Illuminations found within files </p>" );
 		}
 		
-		inFileSummarySB.append( "<br />" );
+		//inFileSummarySB.append( "<br />" );
 		
 		// summary tile
 		if ( state.getMultiplicityMap().get( Tile.class ) == CheckResult.SINGLE )
@@ -745,7 +749,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			
 		}
 		
-		inFileSummarySB.append( "<br />" );
+		//inFileSummarySB.append( "<br />" );
 		
 		// summary angle
 		if ( state.getMultiplicityMap().get( Angle.class ) == CheckResult.SINGLE )
@@ -768,10 +772,10 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 
 		inFileSummarySB.append( "</html>" );
 
-		GenericDialogPlus gd = new GenericDialogPlus("Assign attributes");
+		GenericDialogPlus gd = new GenericDialogPlus("Define Metadata for Views");
 		
 		//gd.addMessage( "<html> <h1> View assignment </h1> </html> ");
-		addMessageAsJLabel( "<html> <h1> View assignment </h1> </html> ", gd);
+		//addMessageAsJLabel( "<html> <h1> View assignment </h1> </html> ", gd);
 		
 		//gd.addMessage( inFileSummarySB.toString() );
 		addMessageAsJLabel(inFileSummarySB.toString(), gd);
@@ -794,8 +798,9 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			final Pair< String, String > prefixAndPattern = splitIntoPrefixAndPattern( patternDetector );
 			final StringBuilder sbfilePatterns = new StringBuilder();
 			sbfilePatterns.append(  "<html> <h2> Patterns in filenames </h2> " );
-			sbfilePatterns.append( "<h3 style=\"color:green\"> " + numVariables + " numerical pattern" + ((numVariables > 1) ? "s": "") + " found in filenames</h3>" );
-			sbfilePatterns.append( "</br><p> Patterns: " + prefixAndPattern.getB() + "</p>" );
+			sbfilePatterns.append( "<h3 style=\"color:green\"> " + numVariables + ""
+					+ " numerical pattern" + ((numVariables > 1) ? "s": "") + " found in filenames</h3>" );
+			sbfilePatterns.append( "</br><p> Patterns: " + getColoredHtmlFromPattern( prefixAndPattern.getB(), false ) + "</p>" );
 			sbfilePatterns.append( "</html>" );
 			addMessageAsJLabel(sbfilePatterns.toString(), gd);
 		}
@@ -806,7 +811,15 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		String[] choicesAll = choices.toArray( new String[]{} );
 
 		for (int i = 0; i < numVariables; i++)
+		{
 			gd.addChoice( "Pattern_" + i + " represents", choicesAll, choicesAll[0] );
+			//do not fail just due to coloring
+			try
+			{
+				((Label) gd.getComponent( gd.getComponentCount() - 2 )).setForeground( getColorN( i ) );
+			}
+			catch (Exception e) {}
+		}
 
 		addMessageAsJLabel(  "<html> <h2> Voxel Size calibration </h2> </html> ", gd );
 		final boolean allVoxelSizesTheSame = FileListViewDetectionState.allVoxelSizesTheSame( state );
@@ -822,13 +835,13 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		gd.addStringField( "Voxel_size_unit", someCalib.unit() );
 
 		// try to guess if we need to move to grid
-		// we suggest move if: we have no tile metadata & we have more tiles than angles
-		// TODO: this is a very crude heuristic
-		int numTiles = state.getAccumulateMap( Tile.class ).size();
-		int numAngles = state.getAccumulateMap( Angle.class ).size();
+		// we suggest move if: we have no tile metadata
 		addMessageAsJLabel(  "<html> <h2> Move to Grid </h2> </html> ", gd );
 		boolean haveTileLoc = state.getAccumulateMap( Tile.class ).keySet().stream().filter( t -> ((TileInfo)t).locationX != null && ((TileInfo)t).locationX != 0.0 ).findAny().isPresent();
-		gd.addCheckbox( "Move_Tiles_to_Grid_(per_Angle)?", !haveTileLoc && (state.getMultiplicityMap().get( Tile.class ) == CheckResult.MULTIPLE_INDEXED || (numTiles > numAngles) ) );
+		
+		String[] choicesGridMove = new String[] {"Do not move Tiles to Grid (use Metadata if available)",
+				"Move Tiles to Grid (interactive)", "Move Tile to Grid (Macro-scriptable)"};
+		gd.addChoice( "Move_Tiles_to_Grid_(per_Angle)?", choicesGridMove, choicesGridMove[!haveTileLoc ? 1 : 0] );
 
 		gd.showDialog();
 
@@ -889,14 +902,14 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			}
 		}
 
-		final boolean doGrid = gd.getNextBoolean();
+		final int gridMoveType = gd.getNextChoiceIndex();
 
 		// we create a virtual SpimData at first
 		SpimData2 data = buildSpimData( state, true );
 
 		// we move to grid, collect parameters first
 		final List<RegularTranslationParameters> gridParams = new ArrayList<>();
-		if (doGrid)
+		if (gridMoveType == 2)
 		{
 			final ArrayList<ViewDescription> vds = new ArrayList<>(data.getSequenceDescription().getViewDescriptions().values());
 
@@ -1018,7 +1031,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		}
 
 		// now, we have a working SpimData and have corrected for unequal z sizes -> do grid move if necessary
-		if (doGrid)
+		if (gridMoveType == 2)
 		{
 			final ArrayList<ViewDescription> vds = new ArrayList<>(data.getSequenceDescription().getViewDescriptions().values());
 
@@ -1063,7 +1076,12 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			// ensure progressbar is gone
 			progressWriter.setProgress( 1.0 );
 
-			return result.getA();
+			data = result.getA();
+		}
+		
+		if (gridMoveType == 1)
+		{
+			data.gridMoveRequested = true;
 		}
 		
 		return data;
@@ -1120,6 +1138,39 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 	}
 
 
+	public static String getColoredHtmlFromPattern(String pattern, boolean withRootTag)
+	{
+		final StringBuilder sb = new StringBuilder();
+		if (withRootTag)
+			sb.append( "<html>" );
+		int n = 0;
+		for (int i = 0; i<pattern.length(); i++)
+		{
+			if (pattern.charAt( i ) == '{')
+			{
+				Color col = getColorN( n++ );
+				sb.append( "<span style=\"color: rgb("+ col.getRed() + "," + col.getGreen() + "," + col.getBlue()   +")\">{" );
+			}
+			else if (pattern.charAt( i ) == '}')
+				sb.append( "}</span>");
+			else
+				sb.append( pattern.charAt( i ) );
+		}
+		if (withRootTag)
+			sb.append( "</html>" );
+		return sb.toString();
+	}
+	
+	public static Color getColorN(long n)
+	{
+		Iterator< ARGBType > iterator = ColorStream.iterator();
+		ARGBType c = new ARGBType();
+		for (int i = 0; i<n+43; i++)
+			for (int j = 0; j<3; j++)
+				c = iterator.next();
+		return new Color( ARGBType.red( c.get() ), ARGBType.green( c.get() ), ARGBType.blue( c.get() ) );
+	}
+	
 	public static Pair<String, String> splitIntoPrefixAndPattern(FilenamePatternDetector detector)
 	{
 		final String stringRepresentation = detector.getStringRepresentation();
@@ -1180,8 +1231,12 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 	
 	public static void main(String[] args)
 	{
-		new FileListDatasetDefinition().createDataset();
+		//new FileListDatasetDefinition().createDataset();
 		//new WildcardFileListChooser().getFileList().forEach( f -> System.out.println( f.getAbsolutePath() ) );
+		GenericDialog gd = new GenericDialog( "A" );
+		gd.addMessage( getColoredHtmlFromPattern( "a{b}c{d}e{aaaaaaaaaa}aa{bbbbbbbbbbbb}ccccc{ddddddd}", true ) );
+		System.out.println( getColoredHtmlFromPattern( "a{b}c{d}e", false ) );
+		gd.showDialog();
 	}
 
 }
