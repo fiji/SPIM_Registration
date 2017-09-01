@@ -19,7 +19,7 @@ import spim.process.interestpointregistration.pairwise.methods.fastrgldm.FRGLDMP
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
-public class FRGLDMGUI implements PairwiseGUI
+public class FRGLDMGUI extends PairwiseGUI
 {
 	public static int defaultModel = 2;
 	public static boolean defaultRegularize = true;
@@ -50,8 +50,12 @@ public class FRGLDMGUI implements PairwiseGUI
 	@Override
 	public void addQuery( final GenericDialog gd )
 	{
-		gd.addChoice( "Transformation model", TransformationModelGUI.modelChoice, TransformationModelGUI.modelChoice[ defaultModel ] );
-		gd.addCheckbox( "Regularize_model", defaultRegularize );
+		if ( presetModel == null )
+		{
+			gd.addChoice( "Transformation model", TransformationModelGUI.modelChoice, TransformationModelGUI.modelChoice[ defaultModel ] );
+			gd.addCheckbox( "Regularize_model", defaultRegularize );
+		}
+
 		gd.addSlider( "Redundancy for descriptor matching", 0, 10, FRGLDMParameters.redundancy );
 		gd.addSlider( "Significance required for a descriptor match", 1.0, 10.0, FRGLDMParameters.ratioOfDistance );
 
@@ -66,12 +70,19 @@ public class FRGLDMGUI implements PairwiseGUI
 	@Override
 	public boolean parseDialog( final GenericDialog gd )
 	{
-		model = new TransformationModelGUI( defaultModel = gd.getNextChoiceIndex() );
-		
-		if ( defaultRegularize = gd.getNextBoolean() )
+		if ( presetModel == null )
 		{
-			if ( !model.queryRegularizedModel() )
-				return false;
+			model = new TransformationModelGUI( defaultModel = gd.getNextChoiceIndex() );
+
+			if ( defaultRegularize = gd.getNextBoolean() )
+			{
+				if ( !model.queryRegularizedModel() )
+					return false;
+			}
+		}
+		else
+		{
+			model = presetModel;
 		}
 
 		final int redundancy = FRGLDMParameters.redundancy = (int)Math.round( gd.getNextNumber() );

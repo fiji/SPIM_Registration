@@ -15,7 +15,7 @@ import spim.process.interestpointregistration.pairwise.methods.centerofmass.Cent
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
-public class CenterOfMassGUI implements PairwiseGUI
+public class CenterOfMassGUI extends PairwiseGUI
 {
 	final static String[] centerChoice = new String[]{ "Average", "Median" };
 	public static int defaultCenterChoice = 0;

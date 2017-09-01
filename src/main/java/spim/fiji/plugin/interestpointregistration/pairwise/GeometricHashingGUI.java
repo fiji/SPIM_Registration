@@ -13,7 +13,7 @@ import spim.process.interestpointregistration.pairwise.methods.geometrichashing.
 import spim.process.interestpointregistration.pairwise.methods.geometrichashing.GeometricHashingParameters;
 import spim.process.interestpointregistration.pairwise.methods.ransac.RANSACParameters;
 
-public class GeometricHashingGUI implements PairwiseGUI
+public class GeometricHashingGUI extends PairwiseGUI
 {
 	public static int defaultModel = 2;
 	public static boolean defaultRegularize = true;
@@ -44,8 +44,12 @@ public class GeometricHashingGUI implements PairwiseGUI
 	@Override
 	public void addQuery( final GenericDialog gd )
 	{
-		gd.addChoice( "Transformation model", TransformationModelGUI.modelChoice, TransformationModelGUI.modelChoice[ defaultModel ] );
-		gd.addCheckbox( "Regularize_model", defaultRegularize );
+		if ( presetModel == null )
+		{
+			gd.addChoice( "Transformation model", TransformationModelGUI.modelChoice, TransformationModelGUI.modelChoice[ defaultModel ] );
+			gd.addCheckbox( "Regularize_model", defaultRegularize );
+		}
+
 		gd.addSlider( "Redundancy for descriptor matching", 0, 10, GeometricHashingParameters.redundancy );
 		gd.addSlider( "Significance required for a descriptor match", 1.0, 20.0, GeometricHashingParameters.ratioOfDistance );
 
@@ -60,12 +64,19 @@ public class GeometricHashingGUI implements PairwiseGUI
 	@Override
 	public boolean parseDialog( final GenericDialog gd )
 	{
-		model = new TransformationModelGUI( defaultModel = gd.getNextChoiceIndex() );
-		
-		if ( defaultRegularize = gd.getNextBoolean() )
+		if ( presetModel == null )
 		{
-			if ( !model.queryRegularizedModel() )
-				return false;
+			model = new TransformationModelGUI( defaultModel = gd.getNextChoiceIndex() );
+
+			if ( defaultRegularize = gd.getNextBoolean() )
+			{
+				if ( !model.queryRegularizedModel() )
+					return false;
+			}
+		}
+		else
+		{
+			model = presetModel;
 		}
 
 		final int redundancy = GeometricHashingParameters.redundancy = (int)Math.round( gd.getNextNumber() );

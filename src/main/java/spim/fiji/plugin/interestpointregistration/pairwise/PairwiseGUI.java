@@ -7,14 +7,16 @@ import spim.fiji.spimdata.interestpoints.InterestPoint;
 import spim.process.interestpointregistration.pairwise.MatcherPairwise;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.GroupedInterestPoint;
 
-public interface PairwiseGUI
+public abstract class PairwiseGUI
 {
+	protected TransformationModelGUI presetModel = null;
+
 	/*
 	 * adds the questions this registration wants to ask
 	 * 
 	 * @param gd
 	 */
-	public void addQuery( final GenericDialog gd );
+	public abstract void addQuery( final GenericDialog gd );
 	
 	/*
 	 * queries the questions asked before
@@ -22,22 +24,22 @@ public interface PairwiseGUI
 	 * @param gd
 	 * @return
 	 */
-	public boolean parseDialog( final GenericDialog gd );
+	public abstract boolean parseDialog( final GenericDialog gd );
 	
 	/**
 	 * @return - a new instance without any special properties
 	 */
-	public PairwiseGUI newInstance();
+	public abstract PairwiseGUI newInstance();
 
 	/**
 	 * @return - to be displayed in the generic dialog
 	 */
-	public String getDescription();
+	public abstract String getDescription();
 
 	/**
 	 * @return - the object that will perform a pairwise matching and can return a result
 	 */
-	public MatcherPairwise< InterestPoint > pairwiseMatchingInstance();
+	public abstract MatcherPairwise< InterestPoint > pairwiseMatchingInstance();
 
 	/**
 	 * This is not good style, but when creating the object we do not know which generic parameter will be required
@@ -45,15 +47,20 @@ public interface PairwiseGUI
 	 * 
 	 * @return - the object that will perform a pairwise matching and can return a result for grouped interestpoints
 	 */
-	public MatcherPairwise< GroupedInterestPoint< ViewId > > pairwiseGroupedMatchingInstance();
+	public abstract MatcherPairwise< GroupedInterestPoint< ViewId > > pairwiseGroupedMatchingInstance();
 
 	/**
 	 * @return - the model the user chose to perform the registration with
 	 */
-	public TransformationModelGUI getMatchingModel();
+	public abstract TransformationModelGUI getMatchingModel();
 
 	/**
 	 * @return - a maximal error as selected by the user or Double.NaN if not applicable
 	 */
-	public double getMaxError();
+	public abstract double getMaxError();
+
+	/**
+	 * @param model - predefines a transformation model to use (if applicable)
+	 */
+	public void presetTransformationModel( final TransformationModelGUI model ) { this.presetModel = model; }
 }

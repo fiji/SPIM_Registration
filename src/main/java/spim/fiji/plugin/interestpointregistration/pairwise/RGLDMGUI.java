@@ -19,7 +19,7 @@ import spim.process.interestpointregistration.pairwise.methods.rgldm.RGLDMParame
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
-public class RGLDMGUI implements PairwiseGUI
+public class RGLDMGUI extends PairwiseGUI
 {
 	public static int defaultModel = 2;
 	public static boolean defaultRegularize = true;
@@ -50,8 +50,12 @@ public class RGLDMGUI implements PairwiseGUI
 	@Override
 	public void addQuery( final GenericDialog gd )
 	{
-		gd.addChoice( "Transformation model", TransformationModelGUI.modelChoice, TransformationModelGUI.modelChoice[ defaultModel ] );
-		gd.addCheckbox( "Regularize_model", defaultRegularize );
+		if ( presetModel == null )
+		{
+			gd.addChoice( "Transformation model", TransformationModelGUI.modelChoice, TransformationModelGUI.modelChoice[ defaultModel ] );
+			gd.addCheckbox( "Regularize_model", defaultRegularize );
+		}
+
 		gd.addSlider( "Number_of_neighbors for the descriptors", 1, 10, RGLDMParameters.numNeighbors );
 		gd.addSlider( "Redundancy for descriptor matching", 0, 10, RGLDMParameters.redundancy );
 		gd.addSlider( "Significance required for a descriptor match", 1.0, 10.0, RGLDMParameters.ratioOfDistance );
@@ -67,14 +71,21 @@ public class RGLDMGUI implements PairwiseGUI
 	@Override
 	public boolean parseDialog( final GenericDialog gd )
 	{
-		model = new TransformationModelGUI( defaultModel = gd.getNextChoiceIndex() );
-		
-		if ( defaultRegularize = gd.getNextBoolean() )
+		if ( presetModel == null )
 		{
-			if ( !model.queryRegularizedModel() )
-				return false;
-		}
+			model = new TransformationModelGUI( defaultModel = gd.getNextChoiceIndex() );
 
+			if ( defaultRegularize = gd.getNextBoolean() )
+			{
+				if ( !model.queryRegularizedModel() )
+					return false;
+			}
+		}
+		else
+		{
+			model = presetModel;
+		}
+	
 		final int numNeighbors = RGLDMParameters.numNeighbors = (int)Math.round( gd.getNextNumber() );
 		final int redundancy = RGLDMParameters.redundancy = (int)Math.round( gd.getNextNumber() );
 		final float ratioOfDistance = RGLDMParameters.ratioOfDistance = (float)gd.getNextNumber();

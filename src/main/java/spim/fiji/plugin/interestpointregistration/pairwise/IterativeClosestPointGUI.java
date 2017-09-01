@@ -15,7 +15,7 @@ import spim.process.interestpointregistration.pairwise.methods.icp.IterativeClos
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
-public class IterativeClosestPointGUI implements PairwiseGUI
+public class IterativeClosestPointGUI extends PairwiseGUI
 {
 	public static int defaultModel = 2;
 	public static boolean defaultRegularize = true;
@@ -40,8 +40,12 @@ public class IterativeClosestPointGUI implements PairwiseGUI
 	@Override
 	public void addQuery( final GenericDialog gd )
 	{
-		gd.addChoice( "Transformation model", TransformationModelGUI.modelChoice, TransformationModelGUI.modelChoice[ defaultModel ] );
-		gd.addCheckbox( "Regularize_model", defaultRegularize );
+		if ( presetModel == null )
+		{
+			gd.addChoice( "Transformation model", TransformationModelGUI.modelChoice, TransformationModelGUI.modelChoice[ defaultModel ] );
+			gd.addCheckbox( "Regularize_model", defaultRegularize );
+		}
+
 		gd.addSlider( "Maximal_distance for correspondence (px)", 0.25, 40.0, IterativeClosestPointParameters.maxDistance );
 		gd.addNumericField( "Maximal_number of iterations", IterativeClosestPointParameters.maxIterations, 0 );
 	}
@@ -49,12 +53,19 @@ public class IterativeClosestPointGUI implements PairwiseGUI
 	@Override
 	public boolean parseDialog( final GenericDialog gd )
 	{
-		model = new TransformationModelGUI( defaultModel = gd.getNextChoiceIndex() );
-		
-		if ( defaultRegularize = gd.getNextBoolean() )
+		if ( presetModel == null )
 		{
-			if ( !model.queryRegularizedModel() )
-				return false;
+			model = new TransformationModelGUI( defaultModel = gd.getNextChoiceIndex() );
+
+			if ( defaultRegularize = gd.getNextBoolean() )
+			{
+				if ( !model.queryRegularizedModel() )
+					return false;
+			}
+		}
+		else
+		{
+			model = presetModel;
 		}
 
 		final double maxDistance = IterativeClosestPointParameters.maxDistance = gd.getNextNumber();
