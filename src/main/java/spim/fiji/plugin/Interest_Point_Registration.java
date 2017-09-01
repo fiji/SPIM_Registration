@@ -77,9 +77,9 @@ public class Interest_Point_Registration implements PlugIn
 	static
 	{
 		IOFunctions.printIJLog = true;
-		staticPairwiseAlgorithms.add( new GeometricHashingGUI() );
-		staticPairwiseAlgorithms.add( new FRGLDMGUI() );
-		staticPairwiseAlgorithms.add( new RGLDMGUI() );
+		staticPairwiseAlgorithms.add( new GeometricHashingGUI() ); // good method
+		staticPairwiseAlgorithms.add( new FRGLDMGUI() ); // good method
+		staticPairwiseAlgorithms.add( new RGLDMGUI() ); // good method
 		staticPairwiseAlgorithms.add( new CenterOfMassGUI() );
 		staticPairwiseAlgorithms.add( new IterativeClosestPointGUI() );
 	}
@@ -151,6 +151,17 @@ public class Interest_Point_Registration implements PlugIn
 			final String xmlFileName,
 			final boolean saveXML )
 	{
+		return register( data, viewCollection, false, "", xmlFileName, saveXML );
+	}
+
+	public boolean register(
+			final SpimData2 data,
+			final Collection< ? extends ViewId > viewCollection,
+			final boolean onlyShowGoodMethods,
+			final String clusterExtension,
+			final String xmlFileName,
+			final boolean saveXML )
+	{
 		// filter not present ViewIds
 		final ArrayList< ViewId > viewIds = new ArrayList<>();
 		viewIds.addAll( viewCollection );
@@ -163,7 +174,7 @@ public class Interest_Point_Registration implements PlugIn
 		final int nAllTimepoints = data.getSequenceDescription().getTimePoints().size();
 
 		// query basic registration parameters
-		final BasicRegistrationParameters brp = basicRegistrationParameters( timepointToProcess, nAllTimepoints, data, viewIds );
+		final BasicRegistrationParameters brp = basicRegistrationParameters( timepointToProcess, nAllTimepoints, onlyShowGoodMethods, data, viewIds );
 
 		if ( brp == null )
 			return false;
@@ -541,6 +552,7 @@ public class Interest_Point_Registration implements PlugIn
 	public BasicRegistrationParameters basicRegistrationParameters(
 			final List< TimePoint > timepointToProcess,
 			final int nAllTimepoints,
+			final boolean onlyShowGoodMethods,
 			final SpimData2 data,
 			final List< ViewId > viewIds )
 	{
@@ -548,8 +560,8 @@ public class Interest_Point_Registration implements PlugIn
 
 		// the GenericDialog needs a list[] of String for the algorithms that can register
 		final String[] descriptions = new String[ staticPairwiseAlgorithms.size() ];
-		
-		for ( int i = 0; i < staticPairwiseAlgorithms.size(); ++i )
+
+		for ( int i = 0; i < ( onlyShowGoodMethods ? 3 : staticPairwiseAlgorithms.size() ); ++i )
 			descriptions[ i ] = staticPairwiseAlgorithms.get( i ).getDescription();
 		
 		if ( defaultAlgorithm >= descriptions.length )
