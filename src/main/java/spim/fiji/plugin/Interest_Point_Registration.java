@@ -559,9 +559,9 @@ public class Interest_Point_Registration implements PlugIn
 		final GenericDialog gd = new GenericDialog( "Basic Registration Parameters" );
 
 		// the GenericDialog needs a list[] of String for the algorithms that can register
-		final String[] descriptions = new String[ staticPairwiseAlgorithms.size() ];
+		final String[] descriptions = new String[ ( onlyShowGoodMethods ? 3 : staticPairwiseAlgorithms.size() ) ];
 
-		for ( int i = 0; i < ( onlyShowGoodMethods ? 3 : staticPairwiseAlgorithms.size() ); ++i )
+		for ( int i = 0; i < descriptions.length; ++i )
 			descriptions[ i ] = staticPairwiseAlgorithms.get( i ).getDescription();
 		
 		if ( defaultAlgorithm >= descriptions.length )
