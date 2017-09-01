@@ -325,7 +325,7 @@ public class BDVPopup extends JMenuItem implements ExplorerWindowSetable, BasicB
 		final double sZ1 = sourceInterval.max( 2 );
 		final double sX = ( sX0 + sX1 + 1 ) / 2;
 		final double sY = ( sY0 + sY1 + 1 ) / 2;
-		final double sZ = ( sZ0 + sZ1 + 1 ) / 2;
+		final double sZ = ( sZ0 != 0 || sZ1 != 0 ) ? ( sZ0 + sZ1 + 1 ) / 2 : 0;
 
 		final double[][] m = new double[ 3 ][ 4 ];
 
