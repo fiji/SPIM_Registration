@@ -9,4 +9,5 @@ public class GroupParameters
 	public enum InterestpointGroupingType { DO_NOT_GROUP, ADD_ALL };
 
 	public InterestpointGroupingType grouping;
+	public double mergeDistance;
 }

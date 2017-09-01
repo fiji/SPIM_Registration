@@ -107,6 +107,7 @@ public class Interest_Point_Registration implements PlugIn
 	public static boolean[] defaultFixedViews = null;
 	public static int defaultReferenceView = 0;
 	public static int defaultIPGrouping = 1;
+	public static double defaultIPDistance = 5;
 
 	// Just in case we want to log statistics
 	List< Pair< Pair< ViewId, ViewId >, ? extends PairwiseResult< ? > > > statistics;
@@ -212,6 +213,7 @@ public class Interest_Point_Registration implements PlugIn
 				setup,
 				brp.pwr,
 				gp.grouping,
+				gp.mergeDistance,
 				fmbp.fixedViews,
 				fmbp.model,
 				fmbp.mapBackViews,
@@ -240,6 +242,7 @@ public class Interest_Point_Registration implements PlugIn
 			final PairwiseSetup< ViewId > setup,
 			final PairwiseGUI pairwiseMatching,
 			final InterestpointGroupingType groupingType,
+			final double interestPointMergeDistance,
 			final Set< ViewId > viewsToFix,
 			final Model< ? > mapBackModel,
 			final Map< Subset< ViewId >, Pair< ViewId, Dimensions > > mapBackViews,
@@ -315,7 +318,7 @@ public class Interest_Point_Registration implements PlugIn
 				final List< Pair< Group< ViewId >, Group< ViewId > > > groupedPairs = subset.getGroupedPairs();
 				final Map< Group< ViewId >, List< GroupedInterestPoint< ViewId > > > groupedInterestpoints = new HashMap<>();
 
-				final double maxError = pairwiseMatching.getMaxError();
+				final double maxError = interestPointMergeDistance;
 				final InterestPointGroupingMinDistance< ViewId > ipGrouping;
 
 				if ( Double.isNaN( maxError ) )
@@ -736,12 +739,14 @@ public class Interest_Point_Registration implements PlugIn
 
 			final GenericDialog gd = new GenericDialog( "Select interest point grouping" );
 			gd.addChoice( "Interestpoint_Grouping" , GroupParameters.ipGroupChoice, GroupParameters.ipGroupChoice[ defaultIPGrouping ] );
+			gd.addSlider( "Interest point merge distance", 0.0, 100.0, defaultIPDistance );
 
 			gd.showDialog();
 			if ( gd.wasCanceled() )
 				return null;
 
 			final int group = defaultIPGrouping = gd.getNextChoiceIndex();
+			gp.mergeDistance = defaultIPDistance = gd.getNextNumber();
 	
 			if ( group == 0 )
 				gp.grouping = InterestpointGroupingType.DO_NOT_GROUP;
@@ -755,6 +760,7 @@ public class Interest_Point_Registration implements PlugIn
 		}
 
 		IOFunctions.println( "Interestpoint grouping type: " + gp.grouping );
+		IOFunctions.println( "Interestpoint merge distance: " + gp.mergeDistance );
 
 		return gp;
 	}
