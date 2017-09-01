@@ -16,6 +16,7 @@ import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.process.boundingbox.BoundingBoxMaximal;
+import spim.process.fusion.FusionTools;
 
 
 public abstract class BoundingBoxGUI extends BoundingBox
@@ -215,26 +216,6 @@ public abstract class BoundingBoxGUI extends BoundingBox
 	}
 	 */
 
-	protected static long numPixels( final long[] min, final long[] max, final int downsampling )
-	{
-		long numpixels = 1;
-		
-		for ( int d = 0; d < min.length; ++d )
-			numpixels *= (max[ d ] - min[ d ])/downsampling;
-		
-		return numpixels;
-	}
-
-	protected static long numPixels( final long[] dim, final int downsampling )
-	{
-		long numpixels = 1;
-		
-		for ( int d = 0; d < dim.length; ++d )
-			numpixels *= (dim[ d ])/downsampling;
-		
-		return numpixels;
-	}
-
 	public class ManageListeners
 	{
 		final GenericDialog gd;
@@ -300,7 +281,7 @@ public abstract class BoundingBoxGUI extends BoundingBox
 
 			final int bytePerPixel = 4;
 			final int downsampling = 1;
-			final long numPixels = numPixels( min, max, downsampling );
+			final long numPixels = FusionTools.numPixels( min, max, downsampling );
 			final long megabytes = (numPixels * bytePerPixel) / (1024*1024);
 			
 			label1.setText( "Fused image: " + megabytes + " MB" );
