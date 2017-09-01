@@ -12,6 +12,7 @@ import mpicbg.spim.io.IOFunctions;
 import mpicbg.util.RealSum;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
+import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.Threads;
 import spim.process.fusion.FusionTools;
@@ -38,7 +39,7 @@ public class AdjustInput
 	 * @param img - the input {@link IterableInterval}
 	 * @return - the sum of all pixels using {@link RealSum}
 	 */
-	final public static double sumImg( final IterableInterval< FloatType > img )
+	final public static < T extends RealType< T > > double sumImg( final IterableInterval< T > img )
 	{
 		final AtomicInteger ai = new AtomicInteger( 0 );
 
@@ -61,11 +62,11 @@ public class AdjustInput
 
 					final RealSum sum = new RealSum();
 
-					final Cursor< FloatType > c = img.cursor();
+					final Cursor< T > c = img.cursor();
 					c.jumpFwd( portion.getStartPosition() );
 
 					for ( long j = 0; j < portion.getLoopSize(); ++j )
-						sum.add( c.next().get() );
+						sum.add( c.next().getRealDouble() );
 
 					sums[ id ] = sum;
 
