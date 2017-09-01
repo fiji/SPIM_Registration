@@ -557,16 +557,14 @@ public class Interest_Point_Registration implements PlugIn
 
 		gd.addChoice( "Registration_algorithm", descriptions, descriptions[ defaultAlgorithm ] );
 
-		final String[] choicesGlobal;
 		if ( timepointToProcess.size() > 1 )
-			choicesGlobal = BasicRegistrationParameters.registrationTypeChoices.clone();
-		else
-			choicesGlobal = new String[]{ BasicRegistrationParameters.registrationTypeChoices[ 0 ] };
+		{
+			if ( defaultRegistrationType >= BasicRegistrationParameters.registrationTypeChoices.length )
+				defaultRegistrationType = 0;
+	
+			gd.addChoice( "Registration_over_time", BasicRegistrationParameters.registrationTypeChoices, BasicRegistrationParameters.registrationTypeChoices[ defaultRegistrationType ] );
+		}
 
-		if ( defaultRegistrationType >= choicesGlobal.length )
-			defaultRegistrationType = 0;
-
-		gd.addChoice( "Registration_over_time", choicesGlobal, choicesGlobal[ defaultRegistrationType ] );
 		gd.addChoice( "Registration_in_between_views", BasicRegistrationParameters.overlapChoices, BasicRegistrationParameters.overlapChoices[ defaultOverlapType ] );
 
 		// check which channels and labels are available and build the choices
@@ -638,22 +636,30 @@ public class Interest_Point_Registration implements PlugIn
 
 		// time registration
 		final RegistrationType registrationType;
-		switch ( defaultRegistrationType = gd.getNextChoiceIndex() )
+
+		if ( timepointToProcess.size() > 1 )
 		{
-			case 0:
-				registrationType = RegistrationType.TIMEPOINTS_INDIVIDUALLY;
-				break;
-			case 1:
-				registrationType = RegistrationType.TO_REFERENCE_TIMEPOINT;
-				break;
-			case 2:
-				registrationType = RegistrationType.ALL_TO_ALL;
-				break;
-			case 3:
-				registrationType = RegistrationType.ALL_TO_ALL_WITH_RANGE;
-				break;
-			default:
-				return null;
+			switch ( defaultRegistrationType = gd.getNextChoiceIndex() )
+			{
+				case 0:
+					registrationType = RegistrationType.TIMEPOINTS_INDIVIDUALLY;
+					break;
+				case 1:
+					registrationType = RegistrationType.TO_REFERENCE_TIMEPOINT;
+					break;
+				case 2:
+					registrationType = RegistrationType.ALL_TO_ALL;
+					break;
+				case 3:
+					registrationType = RegistrationType.ALL_TO_ALL_WITH_RANGE;
+					break;
+				default:
+					return null;
+			}
+		}
+		else
+		{
+			registrationType = RegistrationType.TIMEPOINTS_INDIVIDUALLY;
 		}
 
 		// view registration
