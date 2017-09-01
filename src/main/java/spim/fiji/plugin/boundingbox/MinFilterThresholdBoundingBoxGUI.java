@@ -14,6 +14,7 @@ import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 import spim.process.boundingbox.BoundingBoxMinFilterThreshold;
+import spim.process.fusion.FusionTools;
 
 public class MinFilterThresholdBoundingBoxGUI extends BoundingBoxGUI
 {
@@ -133,7 +134,7 @@ public class MinFilterThresholdBoundingBoxGUI extends BoundingBoxGUI
 				{
 					int downsampling = Integer.parseInt( downsample.getText() );
 					
-					final long numPixels = numPixels( dim, downsampling );
+					final long numPixels = FusionTools.numPixels( dim, downsampling );
 					final long megabytes = (numPixels * 4) / (1024*1024);
 					
 					label.setText( "Image size for segmentation: " + 

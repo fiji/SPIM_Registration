@@ -90,6 +90,20 @@ public class FusionTools
 		return numPixels( min, max, downsampling );
 	}
 
+	public static long numPixels( final long[] dim, final double downsampling )
+	{
+		final long[] min = new long[ dim.length ];
+		final long[] max = new long[ dim.length ];
+
+		for ( int d = 0; d < dim.length; ++d )
+		{
+			min[ d ] = 0;
+			max[ d ] = dim[ d ] - 1;
+		}
+
+		return numPixels( min, max, downsampling );
+	}
+
 	public static long numPixels( final long[] min, final long[] max, final double downsampling )
 	{
 		final double ds;
@@ -102,7 +116,7 @@ public class FusionTools
 		long numpixels = 1;
 
 		for ( int d = 0; d < min.length; ++d )
-			numpixels *= Math.round( (max[ d ] - min[ d ])/ds );
+			numpixels *= Math.round( (max[ d ] - min[ d ] + 1)/ds );
 
 		return numpixels;
 	}
