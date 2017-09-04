@@ -25,7 +25,19 @@ public class TransformWeight
 			final AffineTransform3D transform,
 			final Interval boundingBox )
 	{
-		return transformWeight( new ContentBasedRealRandomAccessible< T >( inputImg, imgFactory, sigma1, sigma2 ), transform, boundingBox );
+		if ( inputImg.dimension( 2 ) == 1 && inputImg.min( 2 ) == 0 )
+		{
+			final double[] sigma1_2d = new double[]{ sigma1[ 0 ], sigma1[ 1 ] };
+			final double[] sigma2_2d = new double[]{ sigma2[ 0 ], sigma2[ 1 ] };
+
+			final ContentBasedRealRandomAccessible< T > content = new ContentBasedRealRandomAccessible< T >( Views.hyperSlice( inputImg, 2, 0 ), imgFactory, sigma1_2d, sigma2_2d );
+
+			return transformWeight( RealViews.addDimension( content ), transform, boundingBox );
+		}
+		else
+		{
+			return transformWeight( new ContentBasedRealRandomAccessible< T >( inputImg, imgFactory, sigma1, sigma2 ), transform, boundingBox );
+		}
 	}
 
 	public static RandomAccessibleInterval< FloatType > transformBlending(
