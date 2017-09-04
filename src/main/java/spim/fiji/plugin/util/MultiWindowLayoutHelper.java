@@ -26,6 +26,9 @@ public class MultiWindowLayoutHelper
 	 */
 	public static void moveToScreenFraction(Component component, double x, double y)
 	{
+		if (component == null)
+			return;
+
 		// ensure we stay within the screen
 		x = Math.min( Math.max( x, 0 ), 1 );
 		y = Math.min( Math.max( y, 0 ), 1 );
