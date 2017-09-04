@@ -2,12 +2,17 @@ package spim.fiji.plugin.util;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 
 import javax.swing.JFrame;
+
+import ij.IJ;
+import ij.ImageJ;
+import ij.WindowManager;
 
 public class MultiWindowLayoutHelper
 {
@@ -42,6 +47,17 @@ public class MultiWindowLayoutHelper
 		component.setLocation( newX, newY );
 	}
 
+	/**
+	 * get the ImageJ log window (if present)
+	 * @return the log window component or null if the log is not open;
+	 */
+	public static Component getIJLogWindow()
+	{
+		// this is how ImageJ itself does it
+		final Component log = WindowManager.getWindow("Log");
+		return log;
+	}
+
 	public static void main(String[] args)
 	{
 		final JFrame theFrame = new JFrame(GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0].getDefaultConfiguration());
@@ -50,5 +66,8 @@ public class MultiWindowLayoutHelper
 		theFrame.setVisible( true );
 
 		moveToScreenFraction(theFrame, 0.5, 0.0);
+		new ImageJ();
+		IJ.log( "AAA" );
+		moveToScreenFraction( getIJLogWindow(), 0, 0.8 );
 	}
 }
