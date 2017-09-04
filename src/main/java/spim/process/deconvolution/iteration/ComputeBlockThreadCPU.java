@@ -14,9 +14,9 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import spim.process.cuda.Block;
 import spim.process.deconvolution.DeconView;
-import spim.process.deconvolution.util.FFTConvolution;
 import spim.process.fusion.FusionTools;
 import spim.process.fusion.ImagePortion;
+import util.FFTConvolution;
 
 public class ComputeBlockThreadCPU extends ComputeBlockThreadAbstract
 {
