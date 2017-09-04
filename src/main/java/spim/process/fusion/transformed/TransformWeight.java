@@ -13,6 +13,7 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import spim.process.fusion.transformed.weights.BlendingRealRandomAccessible;
 import spim.process.fusion.transformed.weights.ContentBasedRealRandomAccessible;
+import util.RealViews;
 
 public class TransformWeight
 {
@@ -34,7 +35,21 @@ public class TransformWeight
 			final AffineTransform3D transform,
 			final Interval boundingBox )
 	{
-		return transformWeight( new BlendingRealRandomAccessible( new FinalInterval( inputImgInterval ), border, blending ), transform, boundingBox );
+		if ( inputImgInterval.dimension( 2 ) == 1 && inputImgInterval.min( 2 ) == 0 )
+		{
+			final float[] border2d = new float[]{ border[ 0 ], border[ 1 ] };
+			final float[] blending2d = new float[]{ blending[ 0 ], blending[ 1 ] };
+			final long[] min = new long[]{ inputImgInterval.min( 0 ), inputImgInterval.min( 1 ) };
+			final long[] max = new long[]{ inputImgInterval.max( 0 ), inputImgInterval.max( 1 ) };
+
+			final BlendingRealRandomAccessible blend = new BlendingRealRandomAccessible( new FinalInterval( min, max ), border2d, blending2d );
+
+			return transformWeight( RealViews.addDimension( blend ), transform, boundingBox );
+		}
+		else
+		{
+			return transformWeight( new BlendingRealRandomAccessible( new FinalInterval( inputImgInterval ), border, blending ), transform, boundingBox );
+		}
 	}
 
 	/**
