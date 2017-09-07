@@ -1,6 +1,7 @@
 package spim.fiji.spimdata.stitchingresults;
 
 import static spim.fiji.spimdata.stitchingresults.XmlKeysStitchingResults.STICHING_CORRELATION_TAG;
+import static spim.fiji.spimdata.stitchingresults.XmlKeysStitchingResults.STITCHING_HASH_TAG;
 import static spim.fiji.spimdata.stitchingresults.XmlKeysStitchingResults.STICHING_SHIFT_TAG;
 import static spim.fiji.spimdata.stitchingresults.XmlKeysStitchingResults.STITCHING_VS_A_TAG;
 import static spim.fiji.spimdata.stitchingresults.XmlKeysStitchingResults.STITCHING_VS_B_TAG;
@@ -65,13 +66,13 @@ public class XmlIoStitchingResults extends XmlIoSingleton<StitchingResults>
 
 			final double[] shift = XmlHelpers.getDoubleArray( pairwiseResultsElement, STICHING_SHIFT_TAG );
 			final double corr = XmlHelpers.getDouble( pairwiseResultsElement, STICHING_CORRELATION_TAG );
-			
+			// default value for hash for backwards compatibility, the results will most likely be ignored though (which is what we want)
+			final double hash = XmlHelpers.getDouble( pairwiseResultsElement, STITCHING_HASH_TAG, 0.0 );
+
 			double[] minmax = null; 
 			if (pairwiseResultsElement.getChild( XmlKeysStitchingResults.STICHING_BBOX_TAG ) != null)
 				minmax = XmlHelpers.getDoubleArray( pairwiseResultsElement, XmlKeysStitchingResults.STICHING_BBOX_TAG );
 
-			
-			
 			AffineTransform3D transform = new AffineTransform3D();
 			// backwards-compatibility with just translation
 			if (shift.length == 3)
@@ -96,7 +97,7 @@ public class XmlIoStitchingResults extends XmlIoSingleton<StitchingResults>
 				bb  = Intervals.createMinMaxReal( minmax );
 
 			
-			final PairwiseStitchingResult< ViewId > pairwiseStitchingResult = new PairwiseStitchingResult<>(pair, bb, transform, corr );
+			final PairwiseStitchingResult< ViewId > pairwiseStitchingResult = new PairwiseStitchingResult<>(pair, bb, transform, corr, hash );
 			stitchingResults.setPairwiseResultForPair( pair, pairwiseStitchingResult );
 		}
 
@@ -114,6 +115,7 @@ public class XmlIoStitchingResults extends XmlIoSingleton<StitchingResults>
 		
 		elem.addContent( XmlHelpers.doubleArrayElement( STICHING_SHIFT_TAG, sr.getTransform().getRowPackedCopy() ) );
 		elem.addContent( XmlHelpers.doubleElement(  STICHING_CORRELATION_TAG, sr.r() ) );
+		elem.addContent( XmlHelpers.doubleElement(  STITCHING_HASH_TAG, sr.getHash() ) );
 		
 		final RealInterval bb = sr.getBoundingBox();
 		final double[] bbox = new double[bb.numDimensions() * 2];

@@ -46,9 +46,9 @@ public class TestGlobalOptTwoRound
 		final BoundingBox bb = new BoundingBox( new int[]{ 0, 0, 0 }, new int[]{ 511, 511, 511 } );
 		final ArrayList< PairwiseStitchingResult< ViewId > > pairwiseResults = new ArrayList<>();
 
-		pairwiseResults.add( new PairwiseStitchingResult<>( new ValuePair<>( group0, group1 ), bb,  new Translation3D( 100, 0, 0 ), 0.5 ) );
-		pairwiseResults.add( new PairwiseStitchingResult<>( new ValuePair<>( group1, group2 ), bb,  new Translation3D( 0, 100.25, 0 ), 0.1 ) );
-		pairwiseResults.add( new PairwiseStitchingResult<>( new ValuePair<>( group0, group2 ), bb,  new Translation3D( 100, 100.5, 0 ), 0.1 ) );
+		pairwiseResults.add( new PairwiseStitchingResult<>( new ValuePair<>( group0, group1 ), bb,  new Translation3D( 100, 0, 0 ), 0.5 , 0.0) );
+		pairwiseResults.add( new PairwiseStitchingResult<>( new ValuePair<>( group1, group2 ), bb,  new Translation3D( 0, 100.25, 0 ), 0.1, 0.0 ) );
+		pairwiseResults.add( new PairwiseStitchingResult<>( new ValuePair<>( group0, group2 ), bb,  new Translation3D( 100, 100.5, 0 ), 0.1, 0.0 ) );
 
 		final IterativeConvergenceStrategy cs = new SimpleIterativeConvergenceStrategy( 10.0, 10.0, 10.0 );
 		final PointMatchCreator pmc = new ImageCorrelationPointMatchCreator( pairwiseResults, 0.3 );
