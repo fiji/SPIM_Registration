@@ -3,7 +3,6 @@ package spim.process.interestpointregistration.pairwise.constellation.overlap;
 import java.util.List;
 import java.util.Map;
 
-import net.imglib2.util.Util;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
@@ -12,8 +11,11 @@ import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.SequenceDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.Dimensions;
+import net.imglib2.FinalInterval;
 import net.imglib2.FinalRealInterval;
+import net.imglib2.Interval;
 import net.imglib2.realtransform.AffineTransform3D;
+import net.imglib2.util.Util;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
 
 public class SimpleBoundingBoxOverlap< V extends ViewId > implements OverlapDetection< V >
@@ -37,8 +39,6 @@ public class SimpleBoundingBoxOverlap< V extends ViewId > implements OverlapDete
 	{
 		final BoundingBox bb1 = getBoundingBox( view1, vss, vrs );
 		final BoundingBox bb2 = getBoundingBox( view1, vss, vrs );
-		
-		
 
 		if ( bb1 == null )
 			throw new RuntimeException( "view1 has no image size" );
@@ -47,6 +47,40 @@ public class SimpleBoundingBoxOverlap< V extends ViewId > implements OverlapDete
 			throw new RuntimeException( "view2 has no image size" );
 
 		return overlaps( bb1, bb2 );
+	}
+
+	@Override
+	public Interval getOverlapInterval( final V view1, final V view2 )
+	{
+		final BoundingBox bb1 = getBoundingBox( view1, vss, vrs );
+		final BoundingBox bb2 = getBoundingBox( view1, vss, vrs );
+
+		if ( bb1 == null )
+			throw new RuntimeException( "view1 has no image size" );
+
+		if ( bb2 == null )
+			throw new RuntimeException( "view2 has no image size" );
+
+		long[] min = new long[ bb1.numDimensions() ];
+		long[] max = new long[ bb1.numDimensions() ];
+
+		if ( overlaps( bb1, bb2 ) )
+		{
+			for ( int d = 0; d < bb1.numDimensions(); ++d )
+			{
+				min[ d ] = Math.max( bb1.getMin()[ d ], bb2.getMin()[ d ] );
+				max[ d ] = Math.min( bb1.getMax()[ d ], bb2.getMax()[ d ] );
+
+				if ( min[ d ] == max[ d ] || max[ d ] < min[ d ] )
+					return null;
+			}
+
+			return new FinalInterval( min, max );
+		}
+		else
+		{
+			return null;
+		}
 	}
 
 	public static boolean overlaps( final BoundingBox bb1, final BoundingBox bb2 )
