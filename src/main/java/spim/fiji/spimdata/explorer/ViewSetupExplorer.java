@@ -8,10 +8,16 @@ import javax.swing.JFrame;
 
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.XmlIoAbstractSpimData;
+import spim.fiji.plugin.util.MultiWindowLayoutHelper;
 import spim.fiji.spimdata.explorer.popup.BasicBDVPopup;
 
 public class ViewSetupExplorer< AS extends AbstractSpimData< ? >, X extends XmlIoAbstractSpimData< ?, AS > > extends FilteredAndGroupedExplorer< AS, X >
 {
+	public static final double xPos = 0.4;
+	public static final double yPos = 0.4;
+	public static final double xPosLog = 0.0;
+	public static final double yPosLog = 0.8;
+
 	public ViewSetupExplorer( final AS data, final String xml, final X io )
 	{
 		frame = new JFrame( "ViewSetup Explorer" );
@@ -32,6 +38,10 @@ public class ViewSetupExplorer< AS extends AbstractSpimData< ? >, X extends XmlI
 
 		frame.pack();
 		frame.setVisible( true );
+
+		// move explorer window and log to initial positions
+		MultiWindowLayoutHelper.moveToScreenFraction( frame, xPos, yPos );
+		MultiWindowLayoutHelper.moveToScreenFraction( MultiWindowLayoutHelper.getIJLogWindow(), xPosLog, yPosLog );
 
 		// set the initial focus to the table
 		panel.table.requestFocus();

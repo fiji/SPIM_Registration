@@ -21,6 +21,8 @@ public class TransformedInputRandomAccessible< T extends RealType< T > > impleme
 	final float minValue;
 	final FloatType outside;
 
+	final boolean is2d;
+
 	InterpolatorFactory< FloatType, RandomAccessible< FloatType > > interpolatorFactory = new NLinearInterpolatorFactory< FloatType >();
 
 	public TransformedInputRandomAccessible(
@@ -37,6 +39,11 @@ public class TransformedInputRandomAccessible< T extends RealType< T > > impleme
 		this.hasMinValue = hasMinValue;
 		this.minValue = minValue;
 		this.outside = outside;
+
+		if ( img.min( 2 ) == 0 && img.max( 2 ) == 0 && offset[ 2 ] == 0)
+			is2d = true;
+		else
+			is2d = false;
 	}
 
 	public TransformedInputRandomAccessible(
@@ -60,7 +67,10 @@ public class TransformedInputRandomAccessible< T extends RealType< T > > impleme
 	@Override
 	public RandomAccess< FloatType > randomAccess()
 	{
-		return new TransformedInputRandomAccess< T >( img, transform, interpolatorFactory, hasMinValue, minValue, outside, offset );
+		if ( is2d )
+			return new TransformedInputRandomAccess2d< T >( img, transform, interpolatorFactory, hasMinValue, minValue, outside, offset );
+		else
+			return new TransformedInputRandomAccess< T >( img, transform, interpolatorFactory, hasMinValue, minValue, outside, offset );
 	}
 
 	@Override
