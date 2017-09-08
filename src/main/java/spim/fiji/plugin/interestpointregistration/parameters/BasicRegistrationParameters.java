@@ -33,7 +33,7 @@ public class BasicRegistrationParameters
 	public OverlapDetection< ViewId > getOverlapDetection( final SpimData spimData )
 	{
 		if ( overlapType == OverlapType.ALL_AGAINST_ALL )
-			return new AllAgainstAllOverlap<>();
+			return new AllAgainstAllOverlap<>( 3 );
 		else
 			return new SimpleBoundingBoxOverlap<>( spimData );
 	}
