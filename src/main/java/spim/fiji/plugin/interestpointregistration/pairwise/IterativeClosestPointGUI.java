@@ -87,4 +87,7 @@ public class IterativeClosestPointGUI extends PairwiseGUI
 
 	@Override
 	public double getMaxError() { return parameters.getMaxDistance(); }
+
+	@Override
+	public double globalOptError() { return parameters.getMaxDistance(); }
 }

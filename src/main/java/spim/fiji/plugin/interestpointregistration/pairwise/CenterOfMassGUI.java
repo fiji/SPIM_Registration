@@ -59,4 +59,7 @@ public class CenterOfMassGUI extends PairwiseGUI
 
 	@Override
 	public double getMaxError() { return Double.NaN; }
+
+	@Override
+	public double globalOptError() { return 5.0; }
 }
