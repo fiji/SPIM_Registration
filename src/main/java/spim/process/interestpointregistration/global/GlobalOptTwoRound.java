@@ -65,7 +65,7 @@ public class GlobalOptTwoRound
 			final HashMap< ViewId, AffineTransform3D > finalRelativeModels = new HashMap<>();
 
 			for ( final ViewId viewId : models1.keySet() )
-				finalRelativeModels.put( viewId, TransformationTools.getAffineTransform( (Affine3D< ? >)models1.get( viewId ) ) );
+				finalRelativeModels.put( viewId, TransformationTools.getAffineTransform( (Affine3D< ? >)models1.get( viewId ).getModel() ) );
 
 			return finalRelativeModels;
 		}
