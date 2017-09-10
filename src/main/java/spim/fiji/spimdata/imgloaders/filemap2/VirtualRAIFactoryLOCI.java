@@ -132,6 +132,9 @@ public class VirtualRAIFactoryLOCI
 	
 	/**
 	 * ensure that the reader we have is set to the correct file and series
+	 * @param reader the reader
+	 * @param file the file to point the reader to
+	 * @param series the series in the file to point the reader to
 	 */
 	public static void setReaderFileAndSeriesIfNecessary(final IFormatReader reader, final File file, final int series)
 	{

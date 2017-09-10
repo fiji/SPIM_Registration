@@ -266,6 +266,8 @@ public class FileMapImgLoaderLOCI2 implements ImgLoader, FileMapGettable
 	 * copy src to dest
 	 * @param src : source, will not be modified
 	 * @param dest : destiantion, will be modified
+	 * @param <T> pixel type source
+	 * @param <S> pixel type destination
 	 */
 	public static <T extends RealType<T>, S extends RealType<S>> void copy(RandomAccessible< T > src, RandomAccessibleInterval< S > dest)
 	{

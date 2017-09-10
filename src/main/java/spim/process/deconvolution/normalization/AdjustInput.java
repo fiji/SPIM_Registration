@@ -37,6 +37,7 @@ public class AdjustInput
 	
 	/**
 	 * @param img - the input {@link IterableInterval}
+	 * @param <T> - the pixel type
 	 * @return - the sum of all pixels using {@link RealSum}
 	 */
 	final public static < T extends RealType< T > > double sumImg( final IterableInterval< T > img )

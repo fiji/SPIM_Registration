@@ -38,7 +38,8 @@ public class GlobalOptTwoRound
 	 * this is a new ConvergenceStrategy( Double.MAX_VALUE );
 	 * @param fixedViews - which views are fixed
 	 * @param groupsIn - which views are grouped
-	 * @return
+	 * @return map from view id to resulting transform
+	 * @param <M> mpicbg model type
 	 */
 	public static < M extends Model< M > > HashMap< ViewId, AffineTransform3D > compute(
 			final M model,

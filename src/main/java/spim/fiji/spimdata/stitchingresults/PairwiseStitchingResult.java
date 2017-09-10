@@ -44,6 +44,7 @@ public class PairwiseStitchingResult <C extends Comparable< C >>
 	 * @param boundingBox - in which bounding box (in global space) was is compared
 	 * @param transform - the transformation mapping A to B
 	 * @param r - the correlation
+	 * @param hash - a hash value of the previous view registrations (at the time the *relative* pairwise shift was calculated)
 	 */
 	public PairwiseStitchingResult(
 			final Pair< Group<C>, Group<C> > pair,

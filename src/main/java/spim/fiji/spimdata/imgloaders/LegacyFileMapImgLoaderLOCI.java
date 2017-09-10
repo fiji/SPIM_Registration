@@ -389,6 +389,8 @@ public class LegacyFileMapImgLoaderLOCI extends AbstractImgFactoryImgLoader
 	 * (use this to fix "the BioFormats bug")
 	 * @param spimData the SpimData to correct
 	 * @param loader the imgLoader to use
+	 * @param <T> pixel type
+	 * @param <IL> ImgLoader type
 	 */
 	public static <T extends RealType< T > & NativeType< T >, IL extends ImgLoader & FileMapGettable > void checkAndRemoveZeroVolume(final SpimData2 spimData, final IL loader)
 	{
@@ -440,6 +442,7 @@ public class LegacyFileMapImgLoaderLOCI extends AbstractImgFactoryImgLoader
 	 * NB: the result is in local image coordinates (i.e. we zero-min the input)
 	 * @param img the input image
 	 * @param dim the dimension along which to check
+	 * @param <T> pixel type
 	 * @return the highest index with nonzero pixels
 	 */
 	public static <T extends RealType< T >> long getMaxNonzero(RandomAccessibleInterval< T > img, int dim)
@@ -459,6 +462,7 @@ public class LegacyFileMapImgLoaderLOCI extends AbstractImgFactoryImgLoader
 	 * NB: we do a raw floating point comparison here, so we might get false results if the image was
 	 * operated on in any way due to numerical inaccuracies.
 	 * @param slice the input image
+	 * @param <T> pixel type
 	 * @return true if slice has nonzero entries else false
 	 */
 	public static <T extends RealType< T >> boolean isNonezero(IterableInterval< T > slice)
