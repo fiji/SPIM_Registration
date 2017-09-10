@@ -69,8 +69,16 @@ public class SimpleBoundingBoxOverlap< V extends ViewId > implements OverlapDete
 				min[ d ] = Math.max( bb1.realMin( d ), bb2.realMin( d ) );
 				max[ d ] = Math.min( bb1.realMax( d ), bb2.realMax( d ) );
 
-				if ( min[ d ] == max[ d ] || max[ d ] < min[ d ] )
+				// is 2d?
+				if ( min[ d ] == max[ d ] && d == 2 && min[ d ] == 0 && vss.get( view1.getViewSetupId() ).getSize().dimension( 2 ) == 1 && vss.get( view2.getViewSetupId() ).getSize().dimension( 2 ) == 1)
+				{
+					min[ d ] = 0.0;
+					max[ d ] = 1.0;
+				}
+				else if ( min[ d ] == max[ d ] || max[ d ] < min[ d ] )
+				{
 					return null;
+				}
 			}
 
 			return new FinalRealInterval( min, max );
@@ -160,41 +168,6 @@ public class SimpleBoundingBoxOverlap< V extends ViewId > implements OverlapDete
 				dims.dimension( 1 ) - 1,
 				dims.dimension( 2 ) - 1 };
 
-		for ( int d = 0; d < max.length; ++d )
-			--max[ d ];
-
 		return transform.estimateBounds( new FinalRealInterval( min, max ) );
 	}
-	/*
-	public static BoundingBox getBoundingBox(
-			final List<Dimensions> dims,
-			final List<AffineTransform3D> transforms )
-	{
-	
-		int numDimensions = dims.get( 0 ).numDimensions();
-		int[] min = Util.getArrayFromValue( Integer.MAX_VALUE, numDimensions );
-		int[] max = Util.getArrayFromValue( Integer.MIN_VALUE, numDimensions );
-		BoundingBox bb = new BoundingBox( min, max );
-
-		for (int i = 0; i < dims.size(); i++)
-		{
-			bb = mergeBoundingBoxes( bb, getBoundingBox( dims.get( i ), transforms.get( i ) ) );
-		}
-		
-		return bb;
-	}
-	
-	// merge two bounding boxes into a bounding box ranging from the smaller min to the larger max in each dimension
-	public static BoundingBox mergeBoundingBoxes(BoundingBox bb1, BoundingBox bb2)
-	{
-		int[] min = new int[bb1.numDimensions()];
-		int[] max = new int[bb1.numDimensions()];
-		
-		for (int d = 0; d < bb1.numDimensions(); d++)
-		{
-			min[d] = (int) Math.min( bb1.min( d ), bb2.min( d ) );
-			max[d] = (int) Math.max( bb1.max( d ), bb2.max( d ) );
-		}
-		return new BoundingBox( min, max );
-	}*/
 }

@@ -13,6 +13,7 @@ import mpicbg.models.PointMatch;
 import mpicbg.models.Tile;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.sequence.ViewId;
+import net.imglib2.RealInterval;
 import net.imglib2.realtransform.AffineTransform3D;
 import spim.process.interestpointregistration.TransformationTools;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
@@ -83,8 +84,13 @@ A:		for ( final ViewId v : views )
 
 					// we use the vertices of the intersection cube between the two views, they are
 					// in the coordinate system defined by the state of registrations BEFORE the first run of the global opt
-					final double[][] pa = TransformationTools.cubeFor( overlapDetection.getOverlapInterval( viewA, viewB ) );
-					final double[][] pb = pa.clone();
+					final RealInterval overlap = overlapDetection.getOverlapInterval( viewA, viewB );
+
+					if ( overlap == null )
+						continue;
+
+					final double[][] pa = TransformationTools.cubeFor( overlap );
+					final double[][] pb = TransformationTools.cubeFor( overlap );
 
 					// and transform them with the respective models from the first round of global optimization,
 					// which will make the deviate from one another >> the second run should try to bring this back
