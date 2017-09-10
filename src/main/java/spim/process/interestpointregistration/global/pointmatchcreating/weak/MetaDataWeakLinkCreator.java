@@ -85,18 +85,12 @@ A:		for ( final ViewId v : views )
 					// we use the vertices of the intersection cube between the two views, they are
 					// in the coordinate system defined by the state of registrations BEFORE the first run of the global opt
 					final RealInterval overlap = overlapDetection.getOverlapInterval( viewA, viewB );
+
 					if ( overlap == null )
-					{
-						System.out.println( "no overlap for " + Group.pvid( viewA ) + " " + Group.pvid( viewB ) );
 						continue;
-					}
-					else
-					{
-						System.out.println( "overlap for " + Group.pvid( viewA ) + " " + Group.pvid( viewB ) + TransformationTools.printRealInterval( overlap ) );
-					}
 
 					final double[][] pa = TransformationTools.cubeFor( overlap );
-					final double[][] pb = pa.clone();
+					final double[][] pb = TransformationTools.cubeFor( overlap );
 
 					// and transform them with the respective models from the first round of global optimization,
 					// which will make the deviate from one another >> the second run should try to bring this back
