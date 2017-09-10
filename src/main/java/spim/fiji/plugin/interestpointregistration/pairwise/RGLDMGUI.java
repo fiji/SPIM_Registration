@@ -120,4 +120,7 @@ public class RGLDMGUI extends PairwiseGUI
 
 	@Override
 	public double getMaxError() { return ransacParams.getMaxEpsilon(); }
+
+	@Override
+	public double globalOptError() { return ransacParams.getMaxEpsilon(); }
 }

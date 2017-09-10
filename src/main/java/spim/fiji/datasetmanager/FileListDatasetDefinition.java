@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -59,6 +60,7 @@ import mpicbg.spim.data.sequence.ViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Dimensions;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.ARGBType;
@@ -1034,7 +1036,11 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		{
 			final boolean checkSize = gdSave.getNextBoolean();
 			if (checkSize)
+			{
+				IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Checking file sizes ... " );
 				LegacyFileMapImgLoaderLOCI.checkAndRemoveZeroVolume( data, (ImgLoader & FileMapGettable) data.getSequenceDescription().getImgLoader() );
+				IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Finished." );
+			}
 		}
 
 		// now, we have a working SpimData and have corrected for unequal z sizes -> do grid move if necessary

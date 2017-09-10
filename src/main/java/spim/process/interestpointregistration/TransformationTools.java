@@ -28,6 +28,7 @@ import mpicbg.spim.data.sequence.ViewSetup;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import mpicbg.spim.io.IOFunctions;
 import net.imglib2.Dimensions;
+import net.imglib2.RealInterval;
 import net.imglib2.realtransform.AffineGet;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.util.Pair;
@@ -502,14 +503,7 @@ public class TransformationTools
 			final String modelDescription )
 	{
 		// TODO: we assume that M is an Affine3D, which is not necessarily true
-		final Affine3D< ? > tilemodel = (Affine3D< ? >)tile.getModel();
-		final double[][] m = new double[ 3 ][ 4 ];
-		tilemodel.toMatrix( m );
-		
-		final AffineTransform3D t = new AffineTransform3D();
-		t.set( m[0][0], m[0][1], m[0][2], m[0][3],
-			   m[1][0], m[1][1], m[1][2], m[1][3],
-			   m[2][0], m[2][1], m[2][2], m[2][3] );
+		final AffineTransform3D t = getAffineTransform( (Affine3D< ? >)tile.getModel() );
 
 		if ( mapBackModel != null )
 			t.preConcatenate( mapBackModel );
@@ -517,6 +511,36 @@ public class TransformationTools
 		final ViewTransform vt = new ViewTransformAffine( modelDescription, t );
 		vr.preconcatenateTransform( vt );
 		vr.updateModel();
+	}
+
+	public static AffineTransform3D getAffineTransform( final Affine3D< ? > model )
+	{
+		final double[][] m = new double[ 3 ][ 4 ];
+		model.toMatrix( m );
+
+		final AffineTransform3D t = new AffineTransform3D();
+		t.set( m[0][0], m[0][1], m[0][2], m[0][3],
+			   m[1][0], m[1][1], m[1][2], m[1][3],
+			   m[2][0], m[2][1], m[2][2], m[2][3] );
+
+		return t;
+	}
+
+	public static boolean affineTransformsEqual( final AffineTransform3D tA, final AffineTransform3D tB )
+	{
+		if ( tA == tB )
+			return true;
+		else
+		{
+			final double[] a = tA.getRowPackedCopy();
+			final double[] b = tB.getRowPackedCopy();
+
+			for ( int i = 0; i < a.length; ++i )
+				if ( a[ i ] != b[ i ] )
+					return false;
+
+			return true;
+		}
 	}
 
 	public static double getAverageAnisotropyFactor( final SpimData spimData, final Collection< ? extends ViewId > views )
@@ -552,5 +576,52 @@ public class TransformationTools
 			avgFactor = 1.0;
 
 		return avgFactor;
+	}
+
+	public static double[][] unitCube()
+	{
+		return new double[][]{
+			{ 0, 0, 0 },
+			{ 0, 0, 1 },
+			{ 0, 1, 0 },
+			{ 0, 1, 1 },
+			{ 1, 0, 0 },
+			{ 1, 0, 1 },
+			{ 1, 1, 0 },
+			{ 1, 1, 1 }};
+	}
+
+	public static double[][] cubeFor( final RealInterval r )
+	{
+		if ( r.numDimensions() == 1 )
+		{
+			return new double[][]{
+				{ r.realMin( 0 ) },
+				{ r.realMax( 0 ) } };
+		}
+		else if ( r.numDimensions() == 2 )
+		{
+			return new double[][]{
+				{ r.realMin( 0 ), r.realMin( 1 ) },
+				{ r.realMin( 0 ), r.realMax( 1 ) },
+				{ r.realMax( 0 ), r.realMin( 1 ) },
+				{ r.realMax( 0 ), r.realMax( 1 ) } };
+		}
+		else if ( r.numDimensions() == 3 )
+		{
+			return new double[][]{
+				{ r.realMin( 0 ), r.realMin( 1 ), r.realMin( 2 ) },
+				{ r.realMin( 0 ), r.realMin( 1 ), r.realMax( 2 ) },
+				{ r.realMin( 0 ), r.realMax( 1 ), r.realMin( 2 ) },
+				{ r.realMin( 0 ), r.realMax( 1 ), r.realMax( 2 ) },
+				{ r.realMax( 0 ), r.realMin( 1 ), r.realMin( 2 ) },
+				{ r.realMax( 0 ), r.realMin( 1 ), r.realMax( 2 ) },
+				{ r.realMax( 0 ), r.realMax( 1 ), r.realMin( 2 ) },
+				{ r.realMax( 0 ), r.realMax( 1 ), r.realMax( 2 ) }};
+		}
+		else
+		{
+			throw new RuntimeException( "TransformationTools.cubeFor( r ): dimensionality " + r.numDimensions() + " not supported." );
+		}
 	}
 }

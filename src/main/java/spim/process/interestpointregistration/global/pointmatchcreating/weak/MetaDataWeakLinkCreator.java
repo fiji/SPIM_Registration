@@ -4,22 +4,19 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.Affine3D;
 import mpicbg.models.Model;
 import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
 import mpicbg.models.Tile;
 import mpicbg.spim.data.registration.ViewRegistration;
-import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.ViewId;
-import net.imglib2.multithreading.SimpleMultiThreading;
-import net.imglib2.realtransform.AffineGet;
 import net.imglib2.realtransform.AffineTransform3D;
+import spim.process.interestpointregistration.TransformationTools;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
+import spim.process.interestpointregistration.pairwise.constellation.overlap.OverlapDetection;
 
 /**
  * Uses the previous state as an approximate knowledge for the metadata of the acquisition. New Groups (connected through strong links) will be transformed together,
@@ -27,16 +24,23 @@ import spim.process.interestpointregistration.pairwise.constellation.grouping.Gr
  */
 public class MetaDataWeakLinkCreator< N extends Model< N > > extends WeakLinkPointMatchCreator< N >
 {
-	final ViewRegistrations viewRegistrations;
-	HashMap< ViewId, AffineGet > relativeTransforms;
+	final Map< ViewId, ViewRegistration > viewRegistrations;
+	final OverlapDetection< ViewId > overlapDetection;
 
+	/**
+	 * @param models1 - the models from the first round of global optimization
+	 * @param overlapDetection - an interface implementation to identify which views overlap
+	 * @param viewRegistrations - the Registrations that are the basis for the whole global optimization (MetaData)
+	 */
 	public MetaDataWeakLinkCreator(
 			final HashMap< ViewId, Tile< N > > models1,
-			final ViewRegistrations viewRegistrations )
+			final OverlapDetection< ViewId > overlapDetection,
+			final Map< ViewId, ViewRegistration > viewRegistrations )
 	{
 		super( models1 );
 
 		this.viewRegistrations = viewRegistrations;
+		this.overlapDetection = overlapDetection;
 	}
 
 	@Override
@@ -57,117 +61,59 @@ A:		for ( final ViewId v : views )
 					continue A;
 				}
 
-		// compute an average affine mapback transform for each new group
-		// (that was not in the same group for the first global opt run)
-		final HashMap< ViewId , AffineGet > groupMapback = new HashMap<>();
-		for ( final Group< ViewId > group : groups )
-		{
-			final AffineTransform3D avgMapBack = averageMapBackTransform( group, this.models1 );
+		// identify current transforms (before first round of global opt) as metadata
+		for ( final ViewId viewId : allViews )
+			viewRegistrations.get( viewId ).updateModel();
 
-			for ( final ViewId vid : group )
-				groupMapback.put( vid, avgMapBack.copy() );
-
-			System.out.println( group + " --- " + avgMapBack );
-		}
-
-		// compute and save the transformations that we apply to the pointmatches
-		// relativeTransforms == result from first global opt PLUS avgMapBack
-		this.relativeTransforms = new HashMap<>();
-		final HashMap< ViewId, AffineGet > fullTransforms = new HashMap<>();
-
-		for ( final ViewId viewId : views )
-		{
-			final Affine3D< ? > tilemodel = (Affine3D< ? >)this.models1.get( viewId ).getModel();
-			final double[][] m = new double[ 3 ][ 4 ];
-			tilemodel.toMatrix( m );
-			
-			final AffineTransform3D firstRunTransform = new AffineTransform3D();
-			firstRunTransform.set(
-					m[0][0], m[0][1], m[0][2], m[0][3],
-					m[1][0], m[1][1], m[1][2], m[1][3],
-					m[2][0], m[2][1], m[2][2], m[2][3] );
-
-			firstRunTransform.preConcatenate( groupMapback.get( viewId ) );
-
-			// this is the relative update from the first global opt run combined with the average mapback model
-			this.relativeTransforms.put( viewId, firstRunTransform );
-
-			// get the current status from the ViewRegistrations (the METADATA)
-			final ViewRegistration vr = viewRegistrations.getViewRegistration( viewId );
-			vr.updateModel();
-			//final AffineTransform3D oldGlobalCoordinates = vr.getModel().copy();
-			final AffineTransform3D oldGlobalCoordinates = new AffineTransform3D();
-
-			// combine this "old" transformation with the relative update
-			fullTransforms.put( viewId, oldGlobalCoordinates.preConcatenate( firstRunTransform ) );
-		}
-
-		for ( int a = 0; a < views.size() - 1; ++a )
-			for ( int b = a + 1; b < views.size(); ++b )
+		for ( int a = 0; a < this.allViews.size() - 1; ++a )
+			for ( int b = a + 1; b < this.allViews.size(); ++b )
 			{
-				final ViewId vA = views.get( a );
-				final ViewId vB = views.get( b );
+				final ViewId viewA = views.get( a );
+				final ViewId viewB = views.get( b );
 
-				final Group< ViewId > gA = groupMap.get( vA );
-				final Group< ViewId > gB = groupMap.get( vB );
+				// they will be part of the same group, no reason to create pointmatches
+				if ( groupMap.get( viewA ) == groupMap.get( viewB ) )
+					continue;
 
-				if ( !gA.equals( gB ) ) // TODO: Test overlay?
+				final ArrayList< PointMatch > pm = new ArrayList< PointMatch >();
+
+				if ( overlapDetection.overlaps( viewA, viewB ) )
 				{
-					// not in the same group, so we need weak links
-					// we use the full transformations (METADATA + 1st run global opt + average Mapback)
-					// to transform the input for the 2nd run of global opt
-					final AffineGet modelA = fullTransforms.get( vA );
-					final AffineGet modelB = fullTransforms.get( vB );
+					// we always transform, no matter if the result from the first run was useful or not as it doesn't matter
 
-					addPointMatches( modelA, modelB, models2.get( vA ), models2.get( vB ) );
+					// we use the vertices of the intersection cube between the two views, they are
+					// in the coordinate system defined by the state of registrations BEFORE the first run of the global opt
+					final double[][] pa = TransformationTools.cubeFor( overlapDetection.getOverlapInterval( viewA, viewB ) );
+					final double[][] pb = pa.clone();
+
+					// and transform them with the respective models from the first round of global optimization,
+					// which will make the deviate from one another >> the second run should try to bring this back
+					// together as good as possible, but will most likely not be able to succeed since parts of them
+					// are now grouped together (the strong links)
+
+					// the result from the first run of the global opt
+					final AffineTransform3D tA = TransformationTools.getAffineTransform( (Affine3D< ? >)models1.get( viewA ).getModel() );
+					final AffineTransform3D tB = TransformationTools.getAffineTransform( (Affine3D< ? >)models1.get( viewB ).getModel() );
+
+					// the transformed cubes are then our corresponding features stored as pointmatches
+					for ( int i = 0; i < pa.length; ++i )
+					{
+						tA.apply( pa[ i ], pa[ i ] );
+						tB.apply( pb[ i ], pb[ i ] );
+
+						pm.add( new PointMatch( new Point( pa[ i ] ), new Point( pb[ i ] ) ) );
+					}
+
+					// connect Tiles
+					final Tile< M > tileA = models2.get( viewA );
+					final Tile< M > tileB = models2.get( viewB );
+
+					tileA.addMatches( pm );
+					tileB.addMatches( PointMatch.flip( pm ) );
+					tileA.addConnectedTile( tileB );
+					tileB.addConnectedTile( tileA );
 				}
 			}
-	}
-
-	@Override
-	public Map< ViewId, AffineGet > getRelativeTransforms() { return relativeTransforms; }
-
-	public static <M extends Model< M >> void addPointMatches( 
-			final AffineGet modelA,
-			final AffineGet modelB,
-			final Tile<M> tileA,
-			final Tile<M> tileB )
-	{
-		final ArrayList< PointMatch > pm = new ArrayList< PointMatch >();
-		final List<Point> pointsA = new ArrayList<>();
-		final List<Point> pointsB = new ArrayList<>();
-
-		// we use the vertices of the unit cube and their transformations as point matches 
-		final double[][] p = new double[][]{
-			{ 0, 0, 0 },
-			{ 1, 0, 0 },
-			{ 0, 1, 0 },
-			{ 1, 1, 0 },
-			{ 0, 0, 1 },
-			{ 1, 0, 1 },
-			{ 0, 1, 1 },
-			{ 1, 1, 1 }};
-
-		final double[][] pa = new double[8][3];
-		final double[][] pb = new double[8][3];
-
-		// the transformed bounding boxes are our corresponding features
-		for (int i = 0; i < pa.length; ++i)
-		{
-			modelA.applyInverse( pb[i], p[i] );
-			modelB.applyInverse( pa[i], p[i] );
-			pointsA.add( new Point( pa[i] ) );
-			pointsB.add( new Point( pb[i] ) );
-		}
-
-		// create PointMatches and connect Tiles
-		for (int i = 0; i < pointsA.size(); ++i)
-			pm.add( new PointMatch( pointsA.get( i ) , pointsB.get( i ) ) );
-
-		tileA.addMatches( pm );
-		tileB.addMatches( PointMatch.flip( pm ) );
-		tileA.addConnectedTile( tileB );
-		tileB.addConnectedTile( tileA );
 	}
 
 	@Override
@@ -177,31 +123,5 @@ A:		for ( final ViewId v : views )
 			Collection< ViewId > fixedViews )
 	{
 		return;
-	}
-
-	public static < M extends Model< M > > AffineTransform3D averageMapBackTransform(
-			final Group< ViewId > group,
-			final HashMap< ViewId, Tile< M > > models )
-	{
-		final double[] sum = new double[ 12 ];
-		final double[] tmp = new double[ 12 ];
-		
-		for ( ViewId viewId : group )
-		{
-			((AbstractAffineModel3D< ? >)models.get( viewId ).getModel()).toArray( tmp );
-			for ( int i = 0; i < sum.length; ++i )
-				sum[ i ] += tmp[ i ];
-		}
-
-		for ( int i = 0; i < sum.length; ++i )
-			sum[ i ] /= (double)group.size();
-
-		AffineTransform3D affine = new AffineTransform3D();
-		affine.set(
-				sum[ 0 ], sum[ 3 ], sum[ 6 ], sum[ 9 ],
-				sum[ 1 ], sum[ 4 ], sum[ 7 ], sum[ 10 ],
-				sum[ 2 ], sum[ 5 ], sum[ 8 ], sum[ 11 ] );
-
-		return affine.inverse();
 	}
 }

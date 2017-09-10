@@ -885,24 +885,24 @@ public class Apply_Transformation implements PlugIn
 
 					final double[] tmp = new double[ 16 ];
 					final double[] axis = a.getRotationAxis();
-					final double degrees = a.getRotationAngleDegrees();
+					final double degrees = -a.getRotationAngleDegrees();
 					final Transform3D t = new Transform3D();
 					final String d;
 
 					if ( axis[ 0 ] == 1 && axis[ 1 ] == 0 && axis[ 2 ] == 0 )
 					{
 						t.rotX( Math.toRadians( degrees ) );
-						d = "Rotation around x-axis by " + degrees + " degrees";
+						d = "Rotation around x-axis by " + (-degrees) + " degrees";
 					}
 					else if ( axis[ 0 ] == 0 && axis[ 1 ] == 1 && axis[ 2 ] == 0 )
 					{
 						t.rotY( Math.toRadians( degrees ) );
-						d = "Rotation around y-axis by " + degrees + " degrees";
+						d = "Rotation around y-axis by " + (-degrees) + " degrees";
 					}
 					else if ( axis[ 0 ] == 1 && axis[ 0 ] == 0 && axis[ 2 ] == 1 )
 					{
 						t.rotZ( Math.toRadians( degrees ) );
-						d = "Rotation around z-axis by " + degrees + " degrees";
+						d = "Rotation around z-axis by " + (-degrees) + " degrees";
 					}
 					else
 					{

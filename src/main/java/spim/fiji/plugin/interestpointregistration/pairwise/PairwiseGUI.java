@@ -60,6 +60,11 @@ public abstract class PairwiseGUI
 	public abstract double getMaxError();
 
 	/**
+	 * @return - the error allowed for the global optimization
+	 */
+	public abstract double globalOptError();
+
+	/**
 	 * @param model - predefines a transformation model to use (if applicable)
 	 */
 	public void presetTransformationModel( final TransformationModelGUI model ) { this.presetModel = model; }

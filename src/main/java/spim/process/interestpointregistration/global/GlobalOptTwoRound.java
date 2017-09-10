@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import mpicbg.models.Affine3D;
@@ -13,8 +12,8 @@ import mpicbg.models.Model;
 import mpicbg.models.Tile;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
-import net.imglib2.realtransform.AffineGet;
 import net.imglib2.realtransform.AffineTransform3D;
+import spim.process.interestpointregistration.TransformationTools;
 import spim.process.interestpointregistration.global.convergence.ConvergenceStrategy;
 import spim.process.interestpointregistration.global.convergence.IterativeConvergenceStrategy;
 import spim.process.interestpointregistration.global.linkremoval.LinkRemovalStrategy;
@@ -59,13 +58,14 @@ public class GlobalOptTwoRound
 
 		// there is just one connected component -> all views already aligned
 		// return first round results
-		if (sets.size() == 1)
+		if ( sets.size() == 1 )
 		{
-			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Not more than one group left, we are already done." );
+			IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Not more than one group left after first round of global opt (all views are connected), this means we are already done." );
 
 			final HashMap< ViewId, AffineTransform3D > finalRelativeModels = new HashMap<>();
+
 			for ( final ViewId viewId : models1.keySet() )
-				finalRelativeModels.put( viewId, combineTransforms( models1.get( viewId ), new AffineTransform3D() ) );
+				finalRelativeModels.put( viewId, TransformationTools.getAffineTransform( (Affine3D< ? >)models1.get( viewId ) ) );
 
 			return finalRelativeModels;
 		}
@@ -88,35 +88,19 @@ public class GlobalOptTwoRound
 		// run global opt without iterative
 		final HashMap< ViewId, Tile< M > > models2 = GlobalOpt.compute( model, wlpmc, csWeak, fixedViews, groupsNew );
 
-		// the models that were applied before running the second round
-		final Map< ViewId, AffineGet > relativeTransforms = wlpmc.getRelativeTransforms();
-
 		// the combination of models from:
 		// the first round of global opt (strong links) + averageMapBack + the second round of global opt (weak links)
 		final HashMap< ViewId, AffineTransform3D > finalRelativeModels = new HashMap<>();
 
 		for ( final ViewId viewId : models2.keySet() )
-			finalRelativeModels.put( viewId, combineTransforms( models2.get( viewId ), relativeTransforms.get( viewId ) ) );
+		{
+			final AffineTransform3D combined = TransformationTools.getAffineTransform( (Affine3D< ? >)models1.get( viewId ) );
+			combined.preConcatenate( TransformationTools.getAffineTransform( (Affine3D< ? >)models2.get( viewId ).getModel() ) );
+	
+			finalRelativeModels.put( viewId, combined );
+		}
 
 		return finalRelativeModels;
-	}
-
-	public static < M extends Model< M > > AffineTransform3D combineTransforms( Tile< M > tile, final AffineGet relativeTransform )
-	{
-		final Affine3D< ? > tilemodel = (Affine3D< ? >)tile.getModel();
-		final double[][] m = new double[ 3 ][ 4 ];
-		tilemodel.toMatrix( m );
-		
-		final AffineTransform3D secondRunTransform = new AffineTransform3D();
-		secondRunTransform.set(
-				m[0][0], m[0][1], m[0][2], m[0][3],
-				m[1][0], m[1][1], m[1][2], m[1][3],
-				m[2][0], m[2][1], m[2][2], m[2][3] );
-
-		// we concatenate, not pre-concatenate since the relativeTransform from the first round comes first
-		secondRunTransform.concatenate( relativeTransform );
-
-		return secondRunTransform;
 	}
 
 	public static Group< ViewId > assembleViews( final Set< Tile< ? > > set, final HashMap< ViewId, ? extends Tile< ? > > models )
