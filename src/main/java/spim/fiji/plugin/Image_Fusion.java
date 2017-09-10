@@ -65,39 +65,34 @@ public class Image_Fusion implements PlugIn
 		final List< Group< ViewDescription > > groups = fusion.getFusionGroups();
 		int i = 0;
 
+		if ( fusion.preserveAnisotropy() )
+		{
+			final double anisoF = fusion.getAnisotropyFactor();
+
+			Interval bb = fusion.getBoundingBox();
+			final long[] min = new long[ 3 ];
+			final long[] max = new long[ 3 ];
+
+			bb.min( min );
+			bb.max( max );
+
+			min[ 2 ] = Math.round( Math.floor( min[ 2 ] / anisoF ) );
+			max[ 2 ] = Math.round( Math.ceil( max[ 2 ] / anisoF ) );
+
+			final Interval boundingBox = new FinalInterval( min, max );
+
+			// we need to update the bounding box here
+			fusion.setBoundingBox( boundingBox );
+		}
+
 		for ( final Group< ViewDescription > group : groups )
 		{
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Fusing group " + (++i) + "/" + groups.size() + " (group=" + group + ")" );
 
 			for ( final ViewDescription vd : group )
 				System.out.println( Group.pvid( vd ) );
-			final Interval boundingBox;
-			final double anisoF;
-
-			if ( fusion.preserveAnisotropy() )
-			{
-				anisoF = fusion.getAnisotropyFactor();
-
-				Interval bb = fusion.getBoundingBox();
-				final long[] min = new long[ 3 ];
-				final long[] max = new long[ 3 ];
-
-				bb.min( min );
-				bb.max( max );
-
-				min[ 2 ] = Math.round( Math.floor( min[ 2 ] / anisoF ) );
-				max[ 2 ] = Math.round( Math.ceil( max[ 2 ] / anisoF ) );
-
-				boundingBox = new FinalInterval( min, max );
-
-				// we need to update the bounding box here
-				fusion.setBoundingBox( boundingBox );
-			}
-			else
-			{
-				anisoF = Double.NaN;
-				boundingBox = fusion.getBoundingBox();
-			}
+			final Interval boundingBox = fusion.getBoundingBox();
+			final double anisoF = fusion.preserveAnisotropy() ? fusion.getAnisotropyFactor() : Double.NaN;
 
 			final double downsampling = fusion.getDownsampling();
 
