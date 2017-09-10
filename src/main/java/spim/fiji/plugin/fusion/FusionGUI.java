@@ -287,7 +287,7 @@ public class FusionGUI implements FusionExportInterface
 
 		int i = 0;
 		for ( final BoundingBox b : allBoxes )
-			choices[ i++ ] = b.getTitle() + " [" + b.dimension( 0 ) + "x" + b.dimension( 1 ) + "x" + b.dimension( 2 ) + "px]";
+			choices[ i++ ] = b.getTitle() + " (" + b.dimension( 0 ) + "x" + b.dimension( 1 ) + "x" + b.dimension( 2 ) + "px)";
 
 		return choices;
 	}

@@ -684,7 +684,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 
 		// we might want to know how many channels/illums or tiles/angles to expect even though we have no metadata
 		// NB: dont use these results if there IS metadata
-		final Pair< Integer, Integer > minMaxNumCannelsIndexed = FileListViewDetectionState.getMinMaxNumCannelsIndexed( state );
+		final Pair< Integer, Integer > minMaxNumCannelsIndexed = FileListViewDetectionState.getMinMaxNumChannelsIndexed( state );
 		final Pair< Integer, Integer > minMaxNumSeriesIndexed = FileListViewDetectionState.getMinMaxNumSeriesIndexed( state );
 
 		// summary channel
@@ -795,9 +795,9 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 		//if (state.getAmbiguousAngleTile())
 		String preferedAnglesOrTiles = state.getMultiplicityMap().get( Angle.class ) == CheckResult.MULTIPLE_INDEXED ? "Angles" : "Tiles";
 		if (state.getAmbiguousAngleTile() || state.getMultiplicityMap().get( Tile.class) == CheckResult.MUlTIPLE_NAMED)
-			gd.addChoice( "BioFormats Series are?", choicesAngleTile, preferedAnglesOrTiles );
+			gd.addChoice( "BioFormats_Series_are?", choicesAngleTile, preferedAnglesOrTiles );
 		if (state.getAmbiguousIllumChannel())
-			gd.addChoice( "BioFormats \"Channels\" are?", choicesChannelIllum, choicesChannelIllum[0] );
+			gd.addChoice( "BioFormats_Channels_are?", choicesChannelIllum, choicesChannelIllum[0] );
 
 
 		if (numVariables >= 1)

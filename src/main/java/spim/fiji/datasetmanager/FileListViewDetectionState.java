@@ -72,7 +72,7 @@ public class FileListViewDetectionState
 	 * @param state the current state, after initial view detection
 	 * @return pair min &amp; max number of channels in each (file, series)-combination
 	 */
-	public static Pair< Integer, Integer > getMinMaxNumCannelsIndexed(final FileListViewDetectionState state)
+	public static Pair< Integer, Integer > getMinMaxNumChannelsIndexed(final FileListViewDetectionState state)
 	{
 		if ( state.accumulativeMap.get( Channel.class ).size() < 1 )
 			return null;
