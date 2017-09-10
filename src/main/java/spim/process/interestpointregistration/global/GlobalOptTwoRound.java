@@ -94,7 +94,7 @@ public class GlobalOptTwoRound
 
 		for ( final ViewId viewId : models2.keySet() )
 		{
-			final AffineTransform3D combined = TransformationTools.getAffineTransform( (Affine3D< ? >)models1.get( viewId ) );
+			final AffineTransform3D combined = TransformationTools.getAffineTransform( (Affine3D< ? >)models1.get( viewId ).getModel() );
 			combined.preConcatenate( TransformationTools.getAffineTransform( (Affine3D< ? >)models2.get( viewId ).getModel() ) );
 	
 			finalRelativeModels.put( viewId, combined );
