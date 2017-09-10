@@ -28,6 +28,7 @@ import net.imglib2.util.Pair;
 import net.imglib2.util.Util;
 import net.imglib2.util.ValuePair;
 import spim.fiji.spimdata.boundingbox.BoundingBox;
+import spim.process.interestpointregistration.TransformationTools;
 
 public class BoundingBoxMaximalGroupOverlap< V extends ViewId > implements BoundingBoxEstimation
 {
@@ -244,38 +245,6 @@ public class BoundingBoxMaximalGroupOverlap< V extends ViewId > implements Bound
 		return new FinalRealInterval( rMin, rMax );
 	}
 
-	/**
-	 * get String representation of RealInterval TODO: PR to ImgLib2 ({@link Util}) ?
-	 * @param interval the interval
-	 * @return String respresentation
-	 */
-	public static String printRealInterval( final RealInterval interval )
-	{
-		String out = "(Interval empty)";
-
-		if ( interval == null || interval.numDimensions() == 0 )
-			return out;
-
-		out = "[" + interval.realMin( 0 );
-
-		for ( int i = 1; i < interval.numDimensions(); i++ )
-			out += ", " + interval.realMin( i );
-
-		out += "] -> [" + interval.realMax( 0 );
-
-		for ( int i = 1; i < interval.numDimensions(); i++ )
-			out += ", " + interval.realMax( i );
-
-		out += "], dimensions (" + (interval.realMax( 0 ) - interval.realMin( 0 ));
-
-		for ( int i = 1; i < interval.numDimensions(); i++ )
-			out += ", " + (interval.realMax( i ) - interval.realMin( i ));
-
-		out += ")";
-
-		return out;
-	}
-
 	public static void main(String[] args)
 	{
 		Collection<Collection<Pair<RealInterval, AffineGet>>> viewGroups = new ArrayList<>();
@@ -294,7 +263,7 @@ public class BoundingBoxMaximalGroupOverlap< V extends ViewId > implements Bound
 		viewGroups.add( viewGroup1 );
 		viewGroups.add( viewGroup2 );
 		
-		System.out.println( printRealInterval( getMinBoundingInterval(  viewGroups ) ) );
+		System.out.println( TransformationTools.printRealInterval( getMinBoundingInterval(  viewGroups ) ) );
 
 	}
 
