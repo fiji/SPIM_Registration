@@ -6,7 +6,6 @@ import java.util.HashSet;
 
 import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.data.registration.ViewRegistration;
-import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.realtransform.Translation3D;
@@ -22,6 +21,7 @@ import spim.process.interestpointregistration.global.pointmatchcreating.PointMat
 import spim.process.interestpointregistration.global.pointmatchcreating.strong.ImageCorrelationPointMatchCreator;
 import spim.process.interestpointregistration.global.pointmatchcreating.weak.MetaDataWeakLinkFactory;
 import spim.process.interestpointregistration.pairwise.constellation.grouping.Group;
+import spim.process.interestpointregistration.pairwise.constellation.overlap.AllAgainstAllOverlap;
 
 public class TestGlobalOptTwoRound
 {
@@ -72,15 +72,13 @@ public class TestGlobalOptTwoRound
 		tr2 = tr2.copy();
 		new ViewRegistration( 0, 2, tr2 );
 		vrMap.put( view2, new ViewRegistration( 0, 2, tr2 ) );
-		
-		ViewRegistrations vrs = new ViewRegistrations( vrMap );
-		
+
 		final HashMap< ViewId, AffineTransform3D > computeResults = GlobalOptTwoRound.compute(
 				new TranslationModel3D(),
 				pmc,
 				cs,
 				new MaxErrorLinkRemoval(),
-				new MetaDataWeakLinkFactory( vrs ),
+				new MetaDataWeakLinkFactory( vrMap, new AllAgainstAllOverlap< ViewId >( bb.numDimensions() ) ),
 				new ConvergenceStrategy( Double.MAX_VALUE ),
 				fixed,
 				groups );
