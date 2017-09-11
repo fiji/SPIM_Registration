@@ -30,8 +30,7 @@ import spim.process.interestpointregistration.pairwise.constellation.grouping.Gr
 
 public class FilteredAndGroupedTableModel < AS extends AbstractSpimData< ? > > extends AbstractTableModel implements ISpimDataTableModel<AS>
 {
-	
-	
+
 	private static final long serialVersionUID = -6526338840427674269L;
 
 	protected List< List< BasicViewDescription< ? > >> elements = null;
@@ -41,9 +40,7 @@ public class FilteredAndGroupedTableModel < AS extends AbstractSpimData< ? > > e
 	Map<Class<? extends Entity>, List<? extends Entity>> filters;
 	List<Class<? extends Entity>> columnClasses;
 	List<Class<? extends Entity>> sortingFactors;
-	
-	
-	
+
 	/* (non-Javadoc)
 	 * @see gui.ISpimDataTableModel#getPanel()
 	 */
@@ -51,16 +48,16 @@ public class FilteredAndGroupedTableModel < AS extends AbstractSpimData< ? > > e
 	public ExplorerWindow< AS, ? > getPanel() {
 		return panel;
 	}
-	
-	
+
 	/* (non-Javadoc)
 	 * @see gui.ISpimDataTableModel#clearSortingFactors()
 	 */
 	@Override
 	public void clearSortingFactors() {
 		sortingFactors.clear();
+		elements = null;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see gui.ISpimDataTableModel#addSortingFactor(java.lang.Class)
 	 */
@@ -69,6 +66,7 @@ public class FilteredAndGroupedTableModel < AS extends AbstractSpimData< ? > > e
 		if(sortingFactors.contains(factor))
 			sortingFactors.remove(factor);
 		sortingFactors.add(factor);
+		elements = null;
 	}
 
 	/* (non-Javadoc)
@@ -77,35 +75,39 @@ public class FilteredAndGroupedTableModel < AS extends AbstractSpimData< ? > > e
 	@Override
 	public void clearGroupingFactors() {
 		groupingFactors.clear();
+		elements = null;
 		fireTableDataChanged();
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see gui.ISpimDataTableModel#addGroupingFactor(java.lang.Class)
 	 */
 	@Override
 	public void addGroupingFactor(Class<? extends Entity> factor ) {
 		groupingFactors.add(factor);
+		elements = null;
 		fireTableDataChanged();
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see gui.ISpimDataTableModel#clearFilters()
 	 */
 	@Override
 	public void clearFilters() {
+		elements = null;
 		filters.clear();	
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see gui.ISpimDataTableModel#addFilter(java.lang.Class, java.util.List)
 	 */
 	@Override
 	public void addFilter(Class<? extends Entity> cl, List<? extends Entity> instances){
 		filters.put(cl, instances);
+		elements = null;
 		fireTableDataChanged();
 	}
-	
+
 	public static ArrayList<Class<? extends Entity>> defaultColumnClassesStitching()
 	{
 		ArrayList<Class <? extends Entity>> res = new ArrayList<>();
@@ -117,7 +119,7 @@ public class FilteredAndGroupedTableModel < AS extends AbstractSpimData< ? > > e
 		res.add(Tile.class);		
 		return res;
 	}
-	
+
 	public static ArrayList<Class<? extends Entity>> defaultColumnClassesMV()
 	{
 		ArrayList<Class <? extends Entity>> res = new ArrayList<>();
@@ -129,9 +131,7 @@ public class FilteredAndGroupedTableModel < AS extends AbstractSpimData< ? > > e
 		res.add(Tile.class);		
 		return res;
 	}
-	
-	
-	
+
 	public FilteredAndGroupedTableModel( final ExplorerWindow< AS, ? > panel )
 	{
 		groupingFactors = new HashSet<>();
@@ -146,11 +146,12 @@ public class FilteredAndGroupedTableModel < AS extends AbstractSpimData< ? > > e
 				
 		elements();
 	}
-	
-	
 
 	protected List<List< BasicViewDescription< ? extends BasicViewSetup > >> elements()
 	{
+		if (elements != null)
+			return elements;
+
 		final List<BasicViewDescription< ? > > ungroupedElements =
 				SpimDataTools.getFilteredViewDescriptions( panel.getSpimData().getSequenceDescription(), filters, false);
 		final List< Group< BasicViewDescription< ? > > > elementsNew = 
@@ -165,13 +166,12 @@ public class FilteredAndGroupedTableModel < AS extends AbstractSpimData< ? > > e
 			for (Class<? extends Entity> cl : sortingFactors)
 				Collections.sort(elementsOut.get( elementsOut.size() - 1 ), SpimDataTools.getVDComparator(cl));
 		}
-		
+
 		// sort the groups of VDS
 		for (Class<? extends Entity> cl : sortingFactors)
 			Collections.sort(elementsOut, SpimDataTools.getVDListComparator(cl));
-		
-		//if ( this.elements == null )
-			this.elements = elementsOut;
+
+		this.elements = elementsOut;
 
 		return elements;
 	}
@@ -184,6 +184,7 @@ public class FilteredAndGroupedTableModel < AS extends AbstractSpimData< ? > > e
 	public void sortByColumn( final int column )
 	{
 		addSortingFactor(columnClasses.get(column));
+		elements = null;
 		elements();
 		fireTableDataChanged();
 	}
@@ -229,7 +230,6 @@ public class FilteredAndGroupedTableModel < AS extends AbstractSpimData< ? > > e
 		List<Entity> sorted = new ArrayList<>(entries);
 		Entity.sortById(sorted);
 
-		
 		final ArrayList<String> entryNames = new ArrayList<>();
 		
 		if (entries.size() < 1)
@@ -244,10 +244,7 @@ public class FilteredAndGroupedTableModel < AS extends AbstractSpimData< ? > > e
 					entryNames.add(Integer.toString(e.getId()));
 			}
 		}
-		
 		return String.join(", ", entryNames);
-		
-		
 	}
 
 	@Override
