@@ -989,7 +989,7 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 			prefixPath = new File((String)fi.subSequence( 0, fi.lastIndexOf( File.separator )));
 		}
 
-		gdSave.addDirectoryField( "dataset save path", prefixPath.getAbsolutePath(), 55 );		
+		gdSave.addDirectoryField( "dataset_save_path", prefixPath.getAbsolutePath(), 55 );
 
 		// check if all stack sizes are the same (in each file)
 		boolean zSizeEqualInEveryFile = LegacyFileMapImgLoaderLOCI.isZSizeEqualInEveryFile( data, (FileMapGettable)data.getSequenceDescription().getImgLoader() );
