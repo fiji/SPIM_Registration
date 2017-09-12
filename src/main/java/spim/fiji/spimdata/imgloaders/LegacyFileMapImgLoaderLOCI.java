@@ -415,15 +415,29 @@ public class LegacyFileMapImgLoaderLOCI extends AbstractImgFactoryImgLoader
 			invertedMap.get( invKey ).add( vd );
 		});
 
+		final ImageReader reader = new ImageReader();
+
 		// collect corrected dimensions
 		final Map< Pair< File, Integer >, Dimensions > dimensionMap = new HashMap<>();
 		invertedMap.entrySet().forEach( e -> {
 
+			IOFunctions.println(new Date(System.currentTimeMillis()) +  ": Checking z size in file: " + e.getKey().getA().getAbsolutePath() + ", series " + e.getKey().getB() );
+
 			final BasicViewDescription< ViewSetup > firstVD = e.getValue().iterator().next();
-			final RandomAccessibleInterval< FloatType > img = loader.getSetupImgLoader( firstVD.getViewSetupId() ).getFloatImage( firstVD.getTimePointId(), false );
+			//final RandomAccessibleInterval< FloatType > img = loader.getSetupImgLoader( firstVD.getViewSetupId() ).getFloatImage( firstVD.getTimePointId(), false );
 			final Dimensions sizeOld = firstVD.getViewSetup().getSize();
 
-			long max = getMaxNonzero( img, 2 );
+			if (reader.getCurrentFile() == null || !reader.getCurrentFile().equals( e.getKey().getA().getAbsolutePath() ))
+			{
+				try { reader.setId( e.getKey().getA().getAbsolutePath() ); }
+				catch ( FormatException | IOException e1 ) { e1.printStackTrace(); }
+			}
+			reader.setSeries( e.getKey().getB() );
+
+			long max = getMaxNonzero( reader );
+
+			IOFunctions.println(new Date(System.currentTimeMillis()) + ": Corrected size is " + (max + 1) + " (was " + sizeOld.dimension( 2 ) + ")");
+
 			dimensionMap.put( e.getKey(), new FinalDimensions( new long[] {sizeOld.dimension( 0 ), sizeOld.dimension( 1 ), max + 1} ) );
 		});
 
@@ -455,6 +469,36 @@ public class LegacyFileMapImgLoaderLOCI extends AbstractImgFactoryImgLoader
 				return i;
 		}
 		return 0l;
+	}
+
+	public static long getMaxNonzero(IFormatReader reader)
+	{
+		final int siz = reader.getBitsPerPixel() / 8 * reader.getRGBChannelCount() * reader.getSizeX()
+				* reader.getSizeY();
+		final byte[] buffer = new byte[siz];
+
+		final int nC = reader.getSizeC() == reader.getRGBChannelCount() ? 1 : reader.getSizeC();
+		final int nT = reader.getSizeT();
+
+		int z = reader.getSizeZ() - 1;
+		for (;z>=0;z--)
+			for (int c = 0; c < nC; c++ )
+				for (int t = 0; t < nT; t++)
+				{
+					try { reader.openBytes( reader.getIndex( z, c, t ), buffer ); }
+					catch ( FormatException | IOException e ) { e.printStackTrace(); }
+					if (isNonzero( buffer ))
+						return z;
+				}
+		return 0l;
+	}
+
+	public static boolean isNonzero(byte[] buf)
+	{
+		for (byte b : buf)
+			if (b != (byte)0)
+				return true;
+		return false;
 	}
 
 	/**

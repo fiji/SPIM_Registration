@@ -75,6 +75,8 @@ class VirtualRandomAccessibleIntervalLOCI<T extends RealType< T > & NativeType< 
 					* reader.getSizeY();
 			buffer = new byte[siz];
 
+//			System.out.println( "reading z plane " + position[2] + " from series " + series + " in file " + file.getAbsolutePath() );
+
 			try
 			{
 				// the image is RGB -> we have to read bytes for all channels at once?
