@@ -936,7 +936,13 @@ public class FileListDatasetDefinition implements MultiViewDatasetDefinition
 				final String angleName = vdsAngle.getViews().iterator().next().getViewSetup().getAngle().getName();
 				if (tilesGrouped.size() < 2)
 					continue;
-				gridParams.add( RegularTranformHelpers.queryParameters( "Move Tiles of Angle " + angleName, tilesGrouped.size() ) );
+
+				final RegularTranslationParameters params = RegularTranformHelpers.queryParameters( "Move Tiles of Angle " + angleName, tilesGrouped.size() );
+				
+				if ( params == null )
+					return null;
+
+				gridParams.add( params );
 			}
 		}
 
