@@ -11,6 +11,9 @@ import javax.swing.JMenuItem;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 
+import ij.ImagePlus;
+import ij.gui.ImageWindow;
+import ij.gui.StackWindow;
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
@@ -161,7 +164,25 @@ public class DisplayFusedImagesPopup extends JMenu implements ExplorerWindowSeta
 				public void run()
 				{
 					IOFunctions.println( new Date( System.currentTimeMillis() ) + ": Fusing " + views.size() + ", downsampling=" + DownsampleTools.printDownsampling( downsampling ) + ", caching strategy=" + imgType );
-					FusionTools.display( FusionTools.fuseVirtual( spimData, views, defaultUseBlending, false, defaultInterpolation, bb, downsampling ), imgType ).show();
+					final ImagePlus imp = FusionTools.display( FusionTools.fuseVirtual( spimData, views, defaultUseBlending, false, defaultInterpolation, bb, downsampling ), imgType );
+
+					if ( imp.getStack().getSize() > 1 )
+					{
+						imp.setSlice( Math.max( 1, imp.getStackSize() / 2 ) );
+						imp.updateAndRepaintWindow();
+					}
+
+					imp.show();
+
+					try
+					{
+						// update the z-slider without redrawing everything
+						final ImageWindow win = imp.getWindow();
+						if ( win != null && StackWindow.class.isInstance( win ) )
+							((StackWindow)win).updateSliceSelector();
+					}
+					catch ( Exception e ){}
+
 				}
 			} ).start();
 		}
