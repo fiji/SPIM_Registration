@@ -85,6 +85,10 @@ public class Image_Fusion implements PlugIn
 			fusion.setBoundingBox( boundingBox );
 		}
 
+		// query exporter parameters
+		if ( !fusion.getExporter().queryParameters( fusion ) )
+			return false;
+
 		for ( final Group< ViewDescription > group : groups )
 		{
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Fusing group " + (++i) + "/" + groups.size() + " (group=" + group + ")" );
@@ -191,10 +195,6 @@ public class Image_Fusion implements PlugIn
 			final Group< ViewDescription > group,
 			final double[] minmax )
 	{
-		final ImgExport exporter = fusion.getExporter();
-
-		exporter.queryParameters( fusion );
-
 		final RandomAccessibleInterval< T > processedOutput;
 
 		if ( fusion.getCacheType() == 0 ) // Virtual
@@ -207,9 +207,9 @@ public class Image_Fusion implements PlugIn
 		final String title = getTitle( fusion.getSplittingType(), group );
 
 		if ( minmax == null )
-			return exporter.exportImage( processedOutput, fusion.getBoundingBox(), fusion.getDownsampling(), title, group );
+			return fusion.getExporter().exportImage( processedOutput, fusion.getBoundingBox(), fusion.getDownsampling(), title, group );
 		else
-			return exporter.exportImage( processedOutput, fusion.getBoundingBox(), fusion.getDownsampling(), title, group, minmax[ 0 ], minmax[ 1 ] );
+			return fusion.getExporter().exportImage( processedOutput, fusion.getBoundingBox(), fusion.getDownsampling(), title, group, minmax[ 0 ], minmax[ 1 ] );
 	}
 
 	public static String getTitle( final int splittingType, final Group< ViewDescription > group )
