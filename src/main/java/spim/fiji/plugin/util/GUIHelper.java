@@ -194,13 +194,18 @@ public class GUIHelper
 	 *
 	 * @param pane
 	 */
-	public static void addScrollBars(Container pane) {
+	public static void addScrollBars(Object obj) {
 //        * <dependency>
 //        * <groupId>${bio-formats.groupId}</groupId>
 //        * <artifactId>loci_plugins</artifactId>
 //        * <version>${bio-formats.version}</version>
 //        * </dependency>
-
+//		System.out.println("Class" + obj.getClass());
+		if (!(obj instanceof Container)) {
+			return;
+		}
+		
+		Container pane = (Container) obj;
 		GridBagLayout layout = (GridBagLayout) pane.getLayout();
 
 		// extract components
