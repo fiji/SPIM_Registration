@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 2 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-2.0.html>.
@@ -21,16 +21,14 @@
  */
 package spim.fiji.plugin.thinout;
 
-import ij.ImageJ;
-
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-
-import net.imglib2.util.ValuePair;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -40,11 +38,13 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.StandardXYBarPainter;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
+import org.jfree.chart.ui.ApplicationFrame;
 import org.jfree.data.xy.IntervalXYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-import org.jfree.ui.ApplicationFrame;
-import org.jfree.ui.RefineryUtilities;
+
+import ij.ImageJ;
+import net.imglib2.util.ValuePair;
 
 public class Histogram extends ApplicationFrame
 {
@@ -63,11 +63,11 @@ public class Histogram extends ApplicationFrame
 		chartPanel.setPreferredSize( new Dimension( 600, 270 ) );
 		setContentPane( chartPanel );
 	}
-	
+
 	public void showHistogram()
 	{
 		this.pack();
-		RefineryUtilities.centerFrameOnScreen( this );
+		centerFrameOnScreen( this );
 		this.setVisible( true );
 	}
 
@@ -86,7 +86,7 @@ public class Histogram extends ApplicationFrame
 			max = Math.max( max, v );
 		}
 
-		return new ValuePair< Double, Double >( min, max );
+		return new ValuePair< >( min, max );
 	}
 
 	public static List< ValuePair< Double, Integer > > binData( final List< Double > data, final double min, final double max, final int numBins )
@@ -101,15 +101,15 @@ public class Histogram extends ApplicationFrame
 			++bins[ (int)Math.floor( ( ( v - min ) / size ) * numBins ) ];
 
 		// make the list of bins
-		final ArrayList< ValuePair< Double, Integer > > hist = new ArrayList< ValuePair< Double, Integer > >();
+		final ArrayList< ValuePair< Double, Integer > > hist = new ArrayList< >();
 
 		final double binSize = size / numBins;
 		for ( int bin = 0; bin < numBins; ++bin )
-			hist.add( new ValuePair< Double, Integer >( min + binSize/2 + binSize * bin, bins[ bin ] ) );
+			hist.add( new ValuePair< >( min + binSize/2 + binSize * bin, bins[ bin ] ) );
 
 		return hist;
 	}
-	
+
 	protected IntervalXYDataset createDataset( final List< Double > values, final int numBins, final String title )
 	{
 		final XYSeries series = new XYSeries( title );
@@ -119,7 +119,7 @@ public class Histogram extends ApplicationFrame
 		this.max = minmax.getB();
 
 		final List< ValuePair< Double, Integer > > hist = binData( values, min, max, numBins );
-		
+
 		for ( final ValuePair< Double, Integer > pair : hist )
 			series.add( pair.getA(), pair.getB() );
 
@@ -133,21 +133,21 @@ public class Histogram extends ApplicationFrame
 	{
 		final JFreeChart chart = ChartFactory.createXYBarChart(
 			title,
-			"Distance [" + units + "]", 
+			"Distance [" + units + "]",
 			false,
-			"Count", 
+			"Count",
 			dataset,
 			PlotOrientation.VERTICAL,
 			false, // legend
 			false,
 			false );
 
-		NumberAxis range = (NumberAxis) chart.getXYPlot().getDomainAxis();
+		final NumberAxis range = (NumberAxis) chart.getXYPlot().getDomainAxis();
 		range.setRange( getMin(), getMax() );
 
-		XYPlot plot = chart.getXYPlot();
-		XYBarRenderer renderer = (XYBarRenderer) plot.getRenderer();
-		
+		final XYPlot plot = chart.getXYPlot();
+		final XYBarRenderer renderer = (XYBarRenderer) plot.getRenderer();
+
 		renderer.setSeriesPaint( 0, Color.red );
 		renderer.setDrawBarOutline( true );
 		renderer.setSeriesOutlinePaint( 0, Color.black );
@@ -167,15 +167,52 @@ public class Histogram extends ApplicationFrame
 	{
 		new ImageJ();
 
-		final List< Double > values = new ArrayList< Double >();
+		final List< Double > values = new ArrayList< >();
 		final Random rnd = new Random();
-		
+
 		for ( int i = 0; i < 10000; ++i )
 			values.add( rnd.nextGaussian() );
 
 		final Histogram demo = new Histogram( values, 100, "Histogram for ...", "pixels" );
 		demo.pack();
-		RefineryUtilities.centerFrameOnScreen(demo);
+		centerFrameOnScreen( demo );
 		demo.setVisible( true );
+	}
+
+	/**
+	 * Positions the specified frame in the middle of the screen.
+	 *
+	 * @param frame
+	 *            the frame to be centered on the screen.
+	 */
+	private static void centerFrameOnScreen( final Window frame )
+	{
+		positionFrameOnScreen( frame, 0.5, 0.5 );
+	}
+
+	/**
+	 * Positions the specified frame at a relative position in the screen, where
+	 * 50% is considered to be the center of the screen.
+	 *
+	 * @param frame
+	 *            the frame.
+	 * @param horizontalPercent
+	 *            the relative horizontal position of the frame (0.0 to 1.0,
+	 *            where 0.5 is the center of the screen).
+	 * @param verticalPercent
+	 *            the relative vertical position of the frame (0.0 to 1.0, where
+	 *            0.5 is the center of the screen).
+	 */
+	private static void positionFrameOnScreen( final Window frame, final double horizontalPercent, final double verticalPercent )
+	{
+
+		final Rectangle s = frame.getGraphicsConfiguration().getBounds();
+		final Dimension f = frame.getSize();
+		final int w = Math.max( s.width - f.width, 0 );
+		final int h = Math.max( s.height - f.height, 0 );
+		final int x = ( int ) ( horizontalPercent * w ) + s.x;
+		final int y = ( int ) ( verticalPercent * h ) + s.y;
+		frame.setBounds( x, y, f.width, f.height );
+
 	}
 }

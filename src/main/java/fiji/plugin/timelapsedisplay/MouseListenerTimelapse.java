@@ -34,8 +34,8 @@ import org.jfree.chart.ChartMouseListener;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.ui.RectangleAnchor;
-import org.jfree.ui.TextAnchor;
+import org.jfree.chart.ui.RectangleAnchor;
+import org.jfree.chart.ui.TextAnchor;
 
 public class MouseListenerTimelapse implements ChartMouseListener
 {
@@ -46,7 +46,7 @@ public class MouseListenerTimelapse implements ChartMouseListener
 	final boolean enableReferenceTimePoint;
 	
 	// update the location of the last right click and the filename to open
-	final ArrayList<FileOpenMenuEntry> updateList = new ArrayList<FileOpenMenuEntry>();
+	final ArrayList<FileOpenMenuEntry> updateList = new ArrayList<>();
 	
 	MouseListenerTimelapse( final ChartPanel panel )
 	{
@@ -121,7 +121,7 @@ public class MouseListenerTimelapse implements ChartMouseListener
 	}
 
 	@Override
-	public void chartMouseMoved( ChartMouseEvent e )
+	public void chartMouseMoved( final ChartMouseEvent e )
 	{
 	}
 }

@@ -30,17 +30,16 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 
-import mpicbg.spim.data.sequence.TimePoint;
-import mpicbg.spim.data.sequence.TimePoints;
-
 import org.jfree.chart.ChartMouseEvent;
 import org.jfree.chart.ChartMouseListener;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.ui.RectangleAnchor;
-import org.jfree.ui.TextAnchor;
+import org.jfree.chart.ui.RectangleAnchor;
+import org.jfree.chart.ui.TextAnchor;
 
+import mpicbg.spim.data.sequence.TimePoint;
+import mpicbg.spim.data.sequence.TimePoints;
 import spim.fiji.plugin.Interest_Point_Registration;
 
 public class MouseListenerTimelapse implements ChartMouseListener
@@ -53,7 +52,7 @@ public class MouseListenerTimelapse implements ChartMouseListener
 	final TimePoints timepoints;
 
 	// update the location of the last right click and the filename to open
-	final ArrayList< SelectTimepointEntry > updateList = new ArrayList< SelectTimepointEntry >();
+	final ArrayList< SelectTimepointEntry > updateList = new ArrayList< >();
 	
 	MouseListenerTimelapse( final TimePoints timepoints, final ChartPanel panel )
 	{
@@ -107,7 +106,7 @@ public class MouseListenerTimelapse implements ChartMouseListener
 		// left mouse click
 		if ( e.getTrigger().getButton() == MouseEvent.BUTTON1 && enableReferenceTimePoint )
 		{
-			int referenceTimePoint = getChartXLocation( e.getTrigger().getPoint(), panel );
+			final int referenceTimePoint = getChartXLocation( e.getTrigger().getPoint(), panel );
 
 			if ( timepoints != null )
 			{
@@ -161,7 +160,7 @@ public class MouseListenerTimelapse implements ChartMouseListener
 	}
 
 	@Override
-	public void chartMouseMoved( ChartMouseEvent e )
+	public void chartMouseMoved( final ChartMouseEvent e )
 	{
 	}
 }
