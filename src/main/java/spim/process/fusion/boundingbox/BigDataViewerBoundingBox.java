@@ -32,19 +32,21 @@ import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 
-import bdv.BigDataViewer;
-import bdv.tools.InitializeViewerState;
-import bdv.tools.boundingbox.BoundingBoxDialog;
-import bdv.viewer.ViewerOptions;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.sequence.BasicViewDescription;
 import mpicbg.spim.data.sequence.ViewId;
 import mpicbg.spim.io.IOFunctions;
+
 import net.imglib2.Interval;
 import net.imglib2.util.Intervals;
-import net.imglib2.util.Util;
 import net.imglib2.util.Pair;
+import net.imglib2.util.Util;
 import net.imglib2.util.ValuePair;
+
+import bdv.BigDataViewer;
+import bdv.tools.InitializeViewerState;
+import bdv.tools.boundingbox.BoundingBoxDialog;
+import bdv.viewer.ViewerOptions;
 import spim.fiji.plugin.apply.BigDataViewerTransformationWindow;
 import spim.fiji.plugin.fusion.Fusion;
 import spim.fiji.spimdata.SpimData2;
@@ -159,12 +161,11 @@ public class BigDataViewerBoundingBox extends BoundingBoxGUI
 					public void actionPerformed( final ActionEvent e )
 					{
 						setVisible( false );
-						System.out.println( "bounding box:" + net.imglib2.util.Util.printInterval( boxRealRandomAccessible.getInterval() ) );
 
 						for ( int d = 0; d < min.length; ++ d )
 						{
-							min[ d ] = (int)boxRealRandomAccessible.getInterval().min( d );
-							max[ d ] = (int)boxRealRandomAccessible.getInterval().max( d );
+							min[ d ] = (int)Math.floor(boxRealRandomAccessible.getInterval().realMin( d ));
+							max[ d ] = (int)Math.ceil(boxRealRandomAccessible.getInterval().realMax( d ));
 						}
 
 						lock.set( true );
