@@ -1,4 +1,4 @@
-[![](https://travis-ci.org/fiji/SPIM_Registration.svg?branch=master)](https://travis-ci.org/fiji/SPIM_Registration)
+[![](https://github.com/fiji/SPIM_Registration/actions/workflows/build-main.yml/badge.svg)](https://github.com/fiji/SPIM_Registration/actions/workflows/build-main.yml)
 
 #  Introduction & Overview
 
