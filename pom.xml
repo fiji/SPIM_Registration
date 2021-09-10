@@ -131,9 +131,6 @@
 
 		<!-- NB: Deploy releases to the SciJava Maven repository. -->
 		<releaseProfiles>sign,deploy-to-scijava</releaseProfiles>
-
-		<bigdataviewer-core.version>9.0.4</bigdataviewer-core.version>
-		<imglib2-ui.version>2.0.1</imglib2-ui.version>
 	</properties>
 
 	<repositories>
@@ -198,11 +195,6 @@
 		<dependency>
 			<groupId>net.imglib2</groupId>
 			<artifactId>imglib2-realtransform</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>net.imglib2</groupId>
-			<artifactId>imglib2-ui</artifactId>
-			<version>${imglib2-ui.version}</version>
 		</dependency>
 
 		<!-- OME dependencies -->

@@ -28,8 +28,8 @@ import java.util.Collection;
 
 import net.imglib2.RealLocalizable;
 import net.imglib2.realtransform.AffineTransform3D;
-import net.imglib2.ui.OverlayRenderer;
-import net.imglib2.ui.TransformListener;
+import bdv.viewer.OverlayRenderer;
+import bdv.viewer.TransformListener;
 import bdv.viewer.ViewerPanel;
 
 public class InterestPointOverlay implements OverlayRenderer, TransformListener< AffineTransform3D >
