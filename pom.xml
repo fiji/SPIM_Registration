@@ -131,6 +131,8 @@
 
 		<!-- NB: Deploy releases to the SciJava Maven repository. -->
 		<releaseProfiles>sign,deploy-to-scijava</releaseProfiles>
+
+		<bigdataviewer-core.version>10.2.0</bigdataviewer-core.version>
 	</properties>
 
 	<repositories>
