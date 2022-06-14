@@ -142,7 +142,7 @@ public class NativeLibraryTools
 			final String fullPath = new File( dir.getAbsolutePath(), gd.getNextChoice() ).getAbsolutePath();
 			IOFunctions.println( "Trying to load following library: " + fullPath );
 
-			return (L)Native.loadLibrary( fullPath, libraryClass );
+			return (L)Native.load( fullPath, libraryClass );
 		}
 		catch ( UnsatisfiedLinkError e )
 		{
