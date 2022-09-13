@@ -852,10 +852,10 @@ public class Multi_View_Deconvolution implements PlugIn
 			{
 		        //String fijiDir = new File( "names.txt" ).getAbsoluteFile().getParentFile().getAbsolutePath();
 		        //IJ.log( "Fiji directory: " + fijiDir );
-				//LRFFT.cuda = (CUDAConvolution) Native.loadLibrary( fijiDir  + File.separator + "libConvolution3D_fftCUDAlib.so", CUDAConvolution.class );
+				//LRFFT.cuda = (CUDAConvolution) Native.load( fijiDir  + File.separator + "libConvolution3D_fftCUDAlib.so", CUDAConvolution.class );
 				
 				// under linux automatically checks lib/linux64
-		        LRFFT.cuda = (CUDAFourierConvolution) Native.loadLibrary( "Convolution3D_fftCUDAlib", CUDAFourierConvolution.class );
+		        LRFFT.cuda = (CUDAFourierConvolution) Native.load( "Convolution3D_fftCUDAlib", CUDAFourierConvolution.class );
 			}
 			catch (UnsatisfiedLinkError e )
 			{
