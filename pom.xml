@@ -131,6 +131,9 @@
 
 		<!-- NB: Deploy releases to the SciJava Maven repository. -->
 		<releaseProfiles>sign,deploy-to-scijava</releaseProfiles>
+
+		<imglib2.version>6.1.0</imglib2.version>
+		<imglib2-realtransform.version>4.0.1</imglib2-realtransform.version>
 	</properties>
 
 	<repositories>

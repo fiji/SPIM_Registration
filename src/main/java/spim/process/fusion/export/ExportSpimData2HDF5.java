@@ -259,7 +259,7 @@ public class ExportSpimData2HDF5 implements ImgExport
 
 		final RealUnsignedShortConverter< T > converter = new RealUnsignedShortConverter< T >( minmax[ 0 ], minmax[ 1 ] );
 
-		return new ConvertedRandomAccessibleInterval<T, UnsignedShortType>( img, converter, new UnsignedShortType() );
+		return new ConvertedRandomAccessibleInterval<T, UnsignedShortType>( img, converter, UnsignedShortType::new );
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })

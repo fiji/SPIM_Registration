@@ -70,7 +70,7 @@ public class ContentBased< T extends RealType< T > > implements RealRandomAccess
 		this.n = input.numDimensions();
 		
 		this.contentBasedImg = approximateEntropy(
-				new ConvertedRandomAccessibleInterval< T, FloatType >( input, new RealFloatConverter< T >(),  new FloatType() ),
+				new ConvertedRandomAccessibleInterval< T, FloatType >( input, new RealFloatConverter< T >(),  FloatType::new ),
 				imgFactory,
 				sigma1,
 				sigma2 );		

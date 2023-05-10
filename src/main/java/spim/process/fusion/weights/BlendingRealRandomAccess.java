@@ -27,7 +27,6 @@ import net.imglib2.Interval;
 import net.imglib2.Localizable;
 import net.imglib2.RealLocalizable;
 import net.imglib2.RealRandomAccess;
-import net.imglib2.Sampler;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
@@ -259,10 +258,7 @@ public class BlendingRealRandomAccess implements RealRandomAccess< FloatType >
 	public void setPosition( final long position, final int d ) { l[ d ] = position; }
 
 	@Override
-	public Sampler<FloatType> copy() { return copyRealRandomAccess(); }
-
-	@Override
-	public RealRandomAccess<FloatType> copyRealRandomAccess()
+	public RealRandomAccess<FloatType> copy()
 	{
 		final BlendingRealRandomAccess r = new BlendingRealRandomAccess( interval, border, blending );
 		r.setPosition( this );
