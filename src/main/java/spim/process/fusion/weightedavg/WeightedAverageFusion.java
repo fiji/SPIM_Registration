@@ -46,6 +46,7 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import spim.fiji.plugin.Apply_Transformation;
 import spim.fiji.plugin.fusion.Fusion;
+import spim.fiji.plugin.resave.PluginHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.process.fusion.FusionHelper;
 import spim.process.fusion.boundingbox.BoundingBoxGUI;
@@ -185,7 +186,7 @@ public class WeightedAverageFusion extends Fusion
 				defaultNumParalellViewsIndex = 0;
 			
 			gd.addChoice( "Process_views_in_paralell", views, views[ defaultNumParalellViewsIndex ] );
-			this.sequentialViews = (Choice)gd.getChoices().lastElement();
+			this.sequentialViews = PluginHelper.isHeadless() ? null : (Choice)gd.getChoices().lastElement();
 		}
 		
 		if ( this.getFusionType() == WeightedAvgFusionType.FUSEDATA )
@@ -218,9 +219,9 @@ public class WeightedAverageFusion extends Fusion
 	@Override
 	public long totalRAM( final long fusedSizeMB, final int bytePerPixel )
 	{
-		if ( type == WeightedAvgFusionType.FUSEDATA && sequentialViews.getSelectedIndex() == 0 )
+		if ( type == WeightedAvgFusionType.FUSEDATA && !PluginHelper.isHeadless() && sequentialViews.getSelectedIndex() == 0 )
 			return fusedSizeMB + (getMaxNumViewsPerTimepoint() * (avgPixels/ ( 1024*1024 )) * bytePerPixel);
-		else if ( type == WeightedAvgFusionType.FUSEDATA )
+		else if ( type == WeightedAvgFusionType.FUSEDATA && !PluginHelper.isHeadless())
 			return fusedSizeMB + ((sequentialViews.getSelectedIndex()) * (avgPixels/ ( 1024*1024 )) * bytePerPixel);
 		else
 			return fusedSizeMB + (avgPixels/ ( 1024*1024 )) * bytePerPixel;

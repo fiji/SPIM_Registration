@@ -54,6 +54,7 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
 import spim.fiji.plugin.fusion.Fusion;
+import spim.fiji.plugin.resave.PluginHelper;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.interestpoints.InterestPointList;
@@ -351,6 +352,9 @@ public class EfficientBayesianBased extends Fusion
 	@Override
 	public void registerAdditionalListeners( final ManageListeners m )
 	{
+		if(PluginHelper.isHeadless()) {
+			return;
+		}
 		block.addItemListener( new ItemListener() { @Override
 		public void itemStateChanged(ItemEvent e) { m.update(); } });
 		gpu.addItemListener( new ItemListener() { @Override
@@ -366,13 +370,20 @@ public class EfficientBayesianBased extends Fusion
 	@Override
 	public void queryAdditionalParameters( final GenericDialog gd )
 	{
+		
 		gd.addChoice( "ImgLib2_container_FFTs", BoundingBoxGUI.imgTypes, BoundingBoxGUI.imgTypes[ defaultFFTImgType ] );
 		gd.addCheckbox( "Save_memory (not keep FFT's on CPU, 2x time & 0.5x memory)", defaultSaveMemory );
-		saveMem = (Checkbox)gd.getCheckboxes().lastElement();
+		if(!PluginHelper.isHeadless()) {
+			saveMem = (Checkbox)gd.getCheckboxes().lastElement();
+		}
 		gd.addChoice( "Type_of_iteration", iterationTypeString, iterationTypeString[ defaultIterationType ] );
-		it = (Choice)gd.getChoices().lastElement();
+		if(!PluginHelper.isHeadless()) {
+			it = (Choice)gd.getChoices().lastElement();
+		}
 		gd.addChoice( "Image_weights", weightsString, weightsString[ defaultWeightType ] );
-		weight = (Choice)gd.getChoices().lastElement();
+		if(!PluginHelper.isHeadless()) {
+			weight = (Choice)gd.getChoices().lastElement();
+		}
 		gd.addChoice( "OSEM_acceleration", osemspeedupChoice, osemspeedupChoice[ defaultOSEMspeedupIndex ] );
 		gd.addNumericField( "Number_of_iterations", defaultNumIterations, 0 );
 		gd.addCheckbox( "Debug_mode", defaultDebugMode );
@@ -380,9 +391,13 @@ public class EfficientBayesianBased extends Fusion
 		gd.addCheckbox( "Use_Tikhonov_regularization", defaultUseTikhonovRegularization );
 		gd.addNumericField( "Tikhonov_parameter", defaultLambda, 4 );
 		gd.addChoice( "Compute", blocksChoice, blocksChoice[ defaultBlockSizeIndex ] );
-		block = (Choice)gd.getChoices().lastElement();
+		if(!PluginHelper.isHeadless()) {
+			block = (Choice)gd.getChoices().lastElement();
+		}
 		gd.addChoice( "Compute_on", computationOnChoice, computationOnChoice[ defaultComputationTypeIndex ] );
-		gpu = (Choice)gd.getChoices().lastElement();
+		if(!PluginHelper.isHeadless()) {
+			gpu = (Choice)gd.getChoices().lastElement();
+		}
 		gd.addChoice( "PSF_estimation", extractPSFChoice, extractPSFChoice[ defaultExtractPSF ] );
 		gd.addChoice( "PSF_display", displayPSFChoice, displayPSFChoice[ defaultDisplayPSF ] );
 	}
@@ -478,17 +493,17 @@ public class EfficientBayesianBased extends Fusion
 		// transformed weight images + input data
 		long totalRam;
 
-		if ( weight.getSelectedIndex() == 0 ) // Precompute weights for all views (more memory, faster)
+		if (PluginHelper.isHeadless() || weight.getSelectedIndex() == 0 ) // Precompute weights for all views (more memory, faster)
 			totalRam = fusedSizeMB * ( getMaxNumViewsPerTimepoint() * 2 );
-		else if ( weight.getSelectedIndex() == 1 ) // Virtual weights (less memory, slower)
+		else if (weight.getSelectedIndex() == 1 ) // Virtual weights (less memory, slower)
 			totalRam = fusedSizeMB * ( getMaxNumViewsPerTimepoint() + 1 );
 		else // No weights (produces artifacts on partially overlapping data)
 			totalRam = fusedSizeMB * ( getMaxNumViewsPerTimepoint() );
 
 		// fft of psf's
-		if ( gpu.getSelectedIndex() == 0 )
+		if (PluginHelper.isHeadless() ||  gpu.getSelectedIndex() == 0 )
 		{
-			if ( saveMem.getState() == true )
+			if (!PluginHelper.isHeadless() &&  saveMem.getState() == true )
 				totalRam += blockSize * 1.5; // cpu, do not keep PSF FFTs
 			else
 				totalRam += blockSize * getMaxNumViewsPerTimepoint() * 1.5; // cpu, keep PSF FFTs
@@ -499,7 +514,7 @@ public class EfficientBayesianBased extends Fusion
 		}
 
 		// memory estimate for computing fft convolutions for images in RAM
-		if ( gpu.getSelectedIndex() == 0 )
+		if (!PluginHelper.isHeadless() &&  gpu.getSelectedIndex() == 0 )
 			totalRam += blockSize * 6 * 1.5;
 		else
 			totalRam += blockSize * 2;

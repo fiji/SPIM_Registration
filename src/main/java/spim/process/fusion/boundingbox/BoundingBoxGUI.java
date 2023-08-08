@@ -49,6 +49,7 @@ import net.imglib2.img.imageplus.ImagePlusImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.ComplexType;
 import spim.fiji.plugin.fusion.Fusion;
+import spim.fiji.plugin.resave.PluginHelper;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.SpimData2;
 import spim.fiji.spimdata.ViewSetupUtils;
@@ -146,12 +147,14 @@ public class BoundingBoxGUI extends BoundingBox
 		gd.addMessage( "???x???x??? pixels", GUIHelper.smallStatusFont, GUIHelper.good );
 		Label l2 = (Label)gd.getMessage();
 
-		final ManageListeners m = new ManageListeners( gd, gd.getNumericFields(), gd.getChoices(), l1, l2, fusion, imgExport, supportsDownsampling, supports16BitUnsigned );
-
-		if ( fusion != null )
-			fusion.registerAdditionalListeners( m );
-
-		m.update();
+		if(!PluginHelper.isHeadless())
+		{
+			final ManageListeners m = new ManageListeners( gd, gd.getNumericFields(), gd.getChoices(), l1, l2, fusion, imgExport, supportsDownsampling, supports16BitUnsigned );
+	
+			if ( fusion != null )
+				fusion.registerAdditionalListeners( m );
+			m.update();
+		}
 
 		gd.showDialog();
 

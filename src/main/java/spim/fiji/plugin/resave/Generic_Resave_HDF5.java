@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
@@ -341,19 +342,19 @@ public class Generic_Resave_HDF5 implements PlugIn
 			final GenericDialogPlus gd = new GenericDialogPlus( dialogTitle );
 
 			gd.addCheckbox( "manual_mipmap_setup", lastSetMipmapManual );
-			final Checkbox cManualMipmap = ( Checkbox ) gd.getCheckboxes().lastElement();
+			final Checkbox cManualMipmap = ( Checkbox ) Generic_Resave_HDF5.getLastOrNullInHeadless( gd.getCheckboxes());
 			gd.addStringField( "Subsampling_factors", lastSubsampling, 25 );
-			final TextField tfSubsampling = ( TextField ) gd.getStringFields().lastElement();
+			final TextField tfSubsampling = ( TextField ) Generic_Resave_HDF5.getLastOrNullInHeadless(gd.getStringFields());
 			gd.addStringField( "Hdf5_chunk_sizes", lastChunkSizes, 25 );
-			final TextField tfChunkSizes = ( TextField ) gd.getStringFields().lastElement();
+			final TextField tfChunkSizes = ( TextField ) Generic_Resave_HDF5.getLastOrNullInHeadless(gd.getStringFields());
 
 			gd.addMessage( "" );
 			gd.addCheckbox( "split_hdf5", lastSplit );
-			final Checkbox cSplit = ( Checkbox ) gd.getCheckboxes().lastElement();
+			final Checkbox cSplit = ( Checkbox ) Generic_Resave_HDF5.getLastOrNullInHeadless(gd.getCheckboxes());
 			gd.addNumericField( "timepoints_per_partition", lastTimepointsPerPartition, 0, 25, "" );
-			final TextField tfSplitTimepoints = ( TextField ) gd.getNumericFields().lastElement();
+			final TextField tfSplitTimepoints = ( TextField ) Generic_Resave_HDF5.getLastOrNullInHeadless(gd.getNumericFields());
 			gd.addNumericField( "setups_per_partition", lastSetupsPerPartition, 0, 25, "" );
-			final TextField tfSplitSetups = ( TextField ) gd.getNumericFields().lastElement();
+			final TextField tfSplitSetups = ( TextField ) Generic_Resave_HDF5.getLastOrNullInHeadless(gd.getNumericFields());
 			if ( displayClusterProcessing )
 			{
 				gd.addNumericField( "run_only_job_number", lastJobIndex, 0, 25, "" );
@@ -366,7 +367,7 @@ public class Generic_Resave_HDF5 implements PlugIn
 			if ( askForXMLPath )
 			{
 				gd.addMessage( "" );
-				PluginHelper.addSaveAsFileField( gd, "Export_path", lastExportPath, 25 );
+				addSaveAsFileField(gd, "Export_path", lastExportPath, 25 );
 			}
 
 			if ( !is16bit )
@@ -416,25 +417,27 @@ public class Generic_Resave_HDF5 implements PlugIn
 					return true;
 				}
 			} );
-
-			tfSubsampling.setEnabled( lastSetMipmapManual );
-			tfChunkSizes.setEnabled( lastSetMipmapManual );
-			if ( !lastSetMipmapManual )
+			
+			if(!PluginHelper.isHeadless()) 
 			{
-				tfSubsampling.setText( autoSubsampling );
-				tfChunkSizes.setText( autoChunkSizes );
+				tfSubsampling.setEnabled( lastSetMipmapManual );
+				tfChunkSizes.setEnabled( lastSetMipmapManual );
+				if ( !lastSetMipmapManual )
+				{
+					tfSubsampling.setText( autoSubsampling );
+					tfChunkSizes.setText( autoChunkSizes );
+				}
+	
+				tfSplitTimepoints.setEnabled( lastSplit );
+				tfSplitSetups.setEnabled( lastSplit );
+	
+				if ( displayClusterProcessing )
+				{
+					cSplit.setEnabled( false );
+					tfSplitTimepoints.setEnabled( false );
+					tfSplitSetups.setEnabled( false );
+				}
 			}
-
-			tfSplitTimepoints.setEnabled( lastSplit );
-			tfSplitSetups.setEnabled( lastSplit );
-
-			if ( displayClusterProcessing )
-			{
-				cSplit.setEnabled( false );
-				tfSplitTimepoints.setEnabled( false );
-				tfSplitSetups.setEnabled( false );
-			}
-
 			gd.showDialog();
 			if ( gd.wasCanceled() )
 				return null;
@@ -528,5 +531,17 @@ public class Generic_Resave_HDF5 implements PlugIn
 					lastTimepointsPerPartition, lastSetupsPerPartition, displayClusterProcessing, lastJobIndex,
 					defaultConvertChoice, defaultMin, defaultMax );
 		}
+	}
+
+	private static void addSaveAsFileField(final GenericDialogPlus dialog, final String label, final String defaultPath, final int columns) {
+		if(!PluginHelper.isHeadless()) {
+			PluginHelper.addSaveAsFileField( dialog, label, defaultPath, columns);
+		} else {
+			dialog.addStringField( label, defaultPath, columns );
+		}
+	}
+	
+	private static Object getLastOrNullInHeadless(Vector checkboxes) {
+		return PluginHelper.isHeadless() ? null:checkboxes.lastElement();
 	}
 }
