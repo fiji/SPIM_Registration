@@ -139,6 +139,12 @@ public class ContentBased< T extends RealType< T > > implements RealRandomAccess
 				).realRandomAccess( interval );
 	}
 
+	@Override
+	public FloatType getType()
+	{
+		return new FloatType();
+	}
+
 	final private static Img< FloatType > createGaussianKernel( final double[] sigmas )
 	{
 		final int numDimensions = sigmas.length;
