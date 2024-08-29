@@ -72,6 +72,12 @@ public class NormalizingRandomAccessibleInterval< T extends RealType< T > > impl
 	public RandomAccess< T > randomAccess( final Interval interval ) { return randomAccess(); }
 
 	@Override
+	public T getType()
+	{
+		return type;
+	}
+
+	@Override
 	public long min( final int d ){ return interval.min( 0 ); }
 
 	@Override
