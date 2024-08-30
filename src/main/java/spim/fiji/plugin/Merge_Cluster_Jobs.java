@@ -40,6 +40,7 @@ import mpicbg.spim.data.SpimDataException;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.cluster.MergeClusterJobs;
 import spim.fiji.plugin.queryXML.GenericLoadParseQueryXML;
+import spim.fiji.plugin.resave.PluginHelper;
 import spim.fiji.plugin.util.GUIHelper;
 
 public class Merge_Cluster_Jobs implements PlugIn
@@ -70,26 +71,32 @@ public class Merge_Cluster_Jobs implements PlugIn
 		gd.addStringField( "Filename_contains", defaultContains1 );
 		gd.addStringField( "Filename_also_contains", defaultContains2 );
 
-		final TextField directory = (TextField)gd.getStringFields().firstElement();
-		final TextField contains1 = (TextField)gd.getStringFields().get( 1 );
-		final TextField contains2 = (TextField)gd.getStringFields().get( 2 );
+		final TextField directory = PluginHelper.isHeadless() ? null : (TextField)gd.getStringFields().firstElement();
+		final TextField contains1 = PluginHelper.isHeadless() ? null : (TextField)gd.getStringFields().get( 1 );
+		final TextField contains2 = PluginHelper.isHeadless() ? null : (TextField)gd.getStringFields().get( 2 );
 
 		gd.addStringField( "Merged_XML", defaultNewXML, 50 );
 		gd.addCheckbox( "Display currently selected XML's in log window", defaultDisplayXMLs );
 
-		final Checkbox display = (Checkbox)gd.getCheckboxes().firstElement();
+		final Checkbox display = PluginHelper.isHeadless() ? null : (Checkbox)gd.getCheckboxes().firstElement();
 		gd.addCheckbox( "Delete_XML's after successful merge", defaultDeleteXMLs );
 
-		// a first run
-		findFiles( new File( directory.getText() ), contains1.getText(), contains2.getText(), defaultDisplayXMLs );
-
+		if(!PluginHelper.isHeadless()) 
+		{
+			// a first run
+			findFiles( new File( directory.getText() ), contains1.getText(), contains2.getText(), defaultDisplayXMLs );
+		}
+		
 		gd.addMessage( "" );
 		gd.addMessage( this.message, GUIHelper.largestatusfont, this.color );
 
 		final Label target = (Label)gd.getMessage();
 
-		addListeners( gd, directory, contains1, contains2, display, target );
-
+		if(!PluginHelper.isHeadless()) 
+		{
+			addListeners( gd, directory, contains1, contains2, display, target );
+		}
+		
 		gd.showDialog();
 
 		if ( gd.wasCanceled() )

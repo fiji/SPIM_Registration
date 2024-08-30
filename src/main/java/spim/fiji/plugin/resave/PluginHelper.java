@@ -21,8 +21,6 @@
  */
 package spim.fiji.plugin.resave;
 
-import fiji.util.gui.GenericDialogPlus;
-
 import java.awt.Button;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
@@ -39,6 +37,10 @@ import java.util.regex.Pattern;
 
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
+
+import fiji.util.gui.GenericDialogPlus;
+import ij.gui.GenericDialog;
+import net.imagej.patcher.HeadlessGenericDialog;
 
 public class PluginHelper
 {
@@ -152,5 +154,9 @@ public class PluginHelper
 					return hdf5File;
 		}
 		throw new RuntimeException( "could not generate new partition filename" );
+	}
+
+	public static boolean isHeadless() {
+		return GenericDialog.class.getSuperclass().equals(HeadlessGenericDialog.class);
 	}
 }

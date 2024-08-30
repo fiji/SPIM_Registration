@@ -58,6 +58,7 @@ import mpicbg.spim.data.sequence.Illumination;
 import mpicbg.spim.data.sequence.TimePoint;
 import mpicbg.spim.io.IOFunctions;
 import spim.fiji.plugin.Toggle_Cluster_Options;
+import spim.fiji.plugin.resave.PluginHelper;
 import spim.fiji.plugin.util.GUIHelper;
 import spim.fiji.spimdata.EmptyEntity;
 import spim.fiji.spimdata.NamePattern;
@@ -288,9 +289,10 @@ public class GenericLoadParseQueryXML<
 			gd.addChoice( "XML_Output", clusterOptions1, clusterOptions1[ defaultClusterOption1 ] );
 			gd.addMessage( "Note: Later on you need to merge the different XML's using Plugins>MultiView Reconstruction>Tools>Cluster>Merge Cluster Jobs", GUIHelper.smallStatusFont );
 		}
-
-		addListeners( gd, (TextField)gd.getStringFields().firstElement(), l1, l2 );
-
+		if(!PluginHelper.isHeadless()) 
+		{
+			addListeners( gd, (TextField)gd.getStringFields().firstElement(), l1, l2 );
+		}
 		if ( buttonText != null && listener != null )
 		{
 			gd.addMessage( "" );
