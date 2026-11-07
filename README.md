@@ -1,4 +1,4 @@
-[![](https://github.com/fiji/SPIM_Registration/actions/workflows/build-main.yml/badge.svg)](https://github.com/fiji/SPIM_Registration/actions/workflows/build-main.yml)
+[![Build Status](https://github.com/fiji/SPIM_Registration/actions/workflows/build.yml/badge.svg)](https://github.com/fiji/SPIM_Registration/actions/workflows/build.yml)
 
 #  Introduction & Overview
 
